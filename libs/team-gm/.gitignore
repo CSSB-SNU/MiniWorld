@@ -1,0 +1,10 @@
+__pycache__/
+.cache/
+/checkpoints/
+/wandb/
+/data/
+/logs/
+
+# pixi environments
+.pixi
+*.egg-info

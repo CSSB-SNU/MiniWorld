@@ -1,0 +1,49 @@
+[project]
+authors = [{ name = "Sanggeun Park", email = "psk6950@snu.ac.kr" }]
+name = "MiniWorld"
+requires-python = ">= 3.10"
+version = "0.3.0"
+dependencies = [
+    "torch>=2.6.0,<3",
+    "ipykernel>=6.29.5,<7",
+    "scipy>=1.13.1,<2",
+    "tqdm>=4.67.1,<5",
+    "requests>=2.32.3,<3",
+    "wandb>=0.19.8,<0.20",
+    "omegaconf>=2.3.0,<3",
+    "click>=8.1.8,<9",
+    "matplotlib>=3.10.1,<4",
+    "pandas>=2.2.3,<3",
+    "numpy>=2.2.5,<3",
+    "biomol @ git+https://github.com/CSSB-SNU/BioMol.git",
+    "einops>=0.8.1,<0.9",
+    "jaxtyping>=0.3.2,<0.4",
+    "beartype>=0.21.0,<0.22",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["MiniWorld*", "team_gm*"]
+
+[tool.setuptools.package-dir]
+team_gm = "team_gm/team_gm"
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.system-requirements]
+cuda = "12"
+
+[tool.pixi.pypi-dependencies]
+MiniWorld = { path = ".", editable = true }
+team_gm = { path = "libs/team-gm", editable = true }
+
+[tool.pixi.dependencies]
+pytest = ">=8.3.5,<9"
+python = "~=3.10.16"
+ruff = ">=0.11.6,<0.12"
+pydantic = ">=2.11.7,<3"

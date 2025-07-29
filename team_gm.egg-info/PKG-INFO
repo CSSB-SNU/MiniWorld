@@ -1,0 +1,18 @@
+Metadata-Version: 2.4
+Name: team-gm
+Version: 0.3.0
+Author-email: Howon Lee <hwlee7771@snu.ac.kr>
+Requires-Python: >=3.10
+Requires-Dist: torch<3,>=2.6.0
+Requires-Dist: ipykernel<7,>=6.29.5
+Requires-Dist: scipy<2,>=1.13.1
+Requires-Dist: tqdm<5,>=4.67.1
+Requires-Dist: requests<3,>=2.32.3
+Requires-Dist: wandb<0.20,>=0.19.8
+Requires-Dist: omegaconf<3,>=2.3.0
+Requires-Dist: click<9,>=8.1.8
+Requires-Dist: matplotlib<4,>=3.10.1
+Requires-Dist: pandas<3,>=2.2.3
+Requires-Dist: numpy<3,>=2.2.5
+Requires-Dist: biomol@ git+https://github.com/CSSB-SNU/BioMol.git
+Requires-Dist: einops<0.9,>=0.8.1

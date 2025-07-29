@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+MiniWorld.egg-info/PKG-INFO
+MiniWorld.egg-info/SOURCES.txt
+MiniWorld.egg-info/dependency_links.txt
+MiniWorld.egg-info/requires.txt
+MiniWorld.egg-info/top_level.txt

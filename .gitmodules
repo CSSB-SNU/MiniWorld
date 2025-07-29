@@ -1,0 +1,3 @@
+[submodule "team-gm"]
+	path = team-gm
+	url = git@github.com:CSSB-SNU/team-gm.git
