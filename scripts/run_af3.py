@@ -12,7 +12,7 @@ import torch.distributed as dist
 
 from team_gm.loggers import WandbLogger
 from team_gm.callbacks import SaveCheckpointPeriodic
-from team_gm.data.dataloader_psk import (
+from team_gm.data.dataloader_BioMol import (
     BioMolData,
     BioMolPreProcessing,
     to_mmcif,
