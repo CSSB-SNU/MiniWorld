@@ -12,7 +12,7 @@ from team_gm.client import BaseClient
 from pydantic import BaseModel
 
 from team_gm.data.features import Batch, NoisyBatch
-from team_gm.data.dataloader_psk import (
+from team_gm.data.dataloader_BioMol import (
     BioMolPreProcessing,
     CropConfig,
     MSAConfig,
