@@ -3,7 +3,7 @@ Name: MiniWorld
 Version: 0.3.0
 Author-email: Sanggeun Park <psk6950@snu.ac.kr>
 Requires-Python: >=3.10
-Requires-Dist: torch<3,>=2.6.0
+Requires-Dist: torch==2.6.0
 Requires-Dist: ipykernel<7,>=6.29.5
 Requires-Dist: scipy<2,>=1.13.1
 Requires-Dist: tqdm<5,>=4.67.1

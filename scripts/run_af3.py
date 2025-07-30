@@ -8,7 +8,6 @@ import numpy as np
 from omegaconf import OmegaConf
 from pathlib import Path
 import os
-import torch.distributed as dist
 
 from team_gm.loggers import WandbLogger
 from team_gm.callbacks import SaveCheckpointPeriodic
@@ -73,7 +72,9 @@ def submit_to_slurm(command, job_name, mem, cpus, gpus) -> str:
 
 @cli.command()
 @click.option("--config", type=click.Path(exists=True), help="config file")
-@click.option("--resume_from_ckpt", type=click.Path(exists=True), help="checkpoint file")
+@click.option(
+    "--resume_from_ckpt", type=click.Path(exists=True), help="checkpoint file"
+)
 @click.option("-w", is_flag=True, help="Use wandb for logging")
 @click.option("--ckpt_dir", default="checkpoints/", help="dir for save checkpoint")
 @click.option("--device", default="cuda", type=str, help="device to use")
@@ -92,7 +93,6 @@ def train(
     device: str = "cuda",
     seed: int | None = 1123,
     slurm: bool = False,
-    local_rank: int = 0,
     **slurm_kwargs,
 ):
     """Train AF3 model."""
@@ -107,9 +107,7 @@ def train(
             command = f"pixi run python -u {__file__} train --config {config}"
         else:
             job_name = Path(resume_from_ckpt).stem
-            command = (
-                f"pixi run python {__file__} train --resume_from_ckpt {resume_from_ckpt}"
-            )
+            command = f"pixi run python {__file__} train --resume_from_ckpt {resume_from_ckpt}"
         command += f" --ckpt_dir {ckpt_dir}"
         command += f" --device {device}"
         if seed is not None:
@@ -119,28 +117,6 @@ def train(
         path = submit_to_slurm(command, job_name=job_name, **slurm_kwargs)
         click.echo(f"✅ Submitted Slurm job: {job_name} ({path})")
         return
-
-    world_size = int(os.environ.get("WORLD_SIZE", 1))
-    click.echo(f"world_size: {world_size}")
-    use_ddp = world_size > 1
-
-    if use_ddp:
-        dist.init_process_group(backend="nccl")  # TODO
-        torch.cuda.set_device(local_rank)
-
-    if device.startswith("cuda"):
-        if not torch.cuda.is_available():
-            raise RuntimeError("CUDA is not available.")
-        device = torch.device(f"cuda:{local_rank}" if use_ddp else "cuda")
-    else:
-        device = torch.device(device)
-
-    if torch.device(device).type == "cuda" and not torch.cuda.is_available():
-        raise RuntimeError("CUDA is not available. Please use CPU instead.")
-
-    rank = dist.get_rank() if use_ddp else 0
-    is_master = rank == 0
-    print(f"rank : {rank}")
 
     from MiniWorld.models.af3_psk_2 import AF3Client
 
@@ -158,10 +134,10 @@ def train(
             raise FileNotFoundError(f"Cannot found checkpoint file: {ckpt_path}")
         client = AF3Client.from_checkpoint(ckpt_path)
 
-    client = client.to(device=device)
+    world_size = int(os.environ.get("WORLD_SIZE", 1))
 
     # Setup wandb
-    if w and is_master:
+    if w and client.is_distributed:
         client.add_logger(
             WandbLogger("-".join([client.name, client.config.experiment.comment]))
         )
@@ -169,14 +145,6 @@ def train(
     if seed is not None:
         set_seed(seed)
         client.log_message(f"Set random seed: {seed}")
-
-    if use_ddp:
-        client.model = torch.nn.parallel.DistributedDataParallel(
-            client.model,
-            device_ids=[local_rank],
-            output_device=local_rank,
-            find_unused_parameters=False,
-        )
 
     ckpt_dir_path = Path(ckpt_dir)
     ckpt_dir_path.mkdir(parents=True, exist_ok=True)
@@ -211,7 +179,7 @@ def train(
     else:
         prefetch_factor = client.config.experiment.prefetch_factor
     train_loader = BioMolData(train_data_config).create_ddp_dataloader(
-        rank=rank,
+        rank=client.local_rank,
         world_size=world_size,
         drop_last=True,
         batch_size=client.config.experiment.num_batch,
@@ -219,27 +187,23 @@ def train(
         prefetch_factor=prefetch_factor,
     )
     valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
-        rank=rank,
+        rank=client.local_rank,
         world_size=world_size,
         drop_last=False,
         batch_size=client.config.experiment.num_batch,  # or 1
         num_workers=0,
     )
 
-    if is_master:
-        client.log_message("-" * 70)
-        client.log_message("")
-        client.log_message("Start training".center(70))
-        client.log_message("")
-        client.log_message("-" * 70)
+    client.log_message("-" * 70)
+    client.log_message("")
+    client.log_message("Start training".center(70))
+    client.log_message("")
+    client.log_message("-" * 70)
 
     client.add_callback(SaveCheckpointPeriodic(ckpt_dir, every_n_epochs=10))
     train_num_item = client.config.experiment.train_item // world_size
     valid_num_item = client.config.experiment.valid_item // world_size
     for epoch in range(client.epoch, client.config.experiment.num_epoch):
-        valid_loader.sampler.set_epoch(epoch)
-        client.validation_epoch(valid_loader, valid_num_item)
-        
         train_loader.sampler.set_epoch(epoch)
         client.training_epoch(train_loader, train_num_item)
         if (client.epoch - 1) % client.config.experiment.eval_freq == 0:
@@ -281,7 +245,7 @@ def inference(
         )
         click.echo(f"✅ Submitted Slurm job: {job_name} ({path})")
         return
-    from team_gm.models.af3_psk_2 import AF3Client
+    from MiniWorld.models.af3_psk_2 import AF3Client
 
     if torch.device(device) == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA is not available.")

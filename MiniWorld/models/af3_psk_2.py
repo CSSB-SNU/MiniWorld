@@ -8,7 +8,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from contextlib import ExitStack
 
-from team_gm.client import BaseClient
+from team_gm import BaseClient
 from pydantic import BaseModel
 
 from team_gm.data.features_BioMol import Batch, NoisyBatch
@@ -108,9 +108,9 @@ class AF3Model(nn.Module):
             n_recycle = random.randint(1, self.n_recycle_max)
         else:
             n_recycle = self.n_recycle_max
-        assert noisy_batch.msa.aligned_sequences.shape[1] == self.n_recycle_max, (
-            "The number of MSA sequences should match the number of recycle steps."
-        )
+        assert (
+            noisy_batch.msa.aligned_sequences.shape[1] == self.n_recycle_max
+        ), "The number of MSA sequences should match the number of recycle steps."
 
         # input feature embedding
         (
@@ -235,9 +235,9 @@ class AF3ModelWrapper(nn.Module):
 
     def forward(self, z_i: torch.Tensor, t_emb: torch.Tensor) -> torch.Tensor:
         assert self.batch_loaded, "Batch must be loaded before forward pass."
-        assert self.conditioned_forwarded, (
-            "Conditioned forward must be called before forward pass."
-        )
+        assert (
+            self.conditioned_forwarded
+        ), "Conditioned forward must be called before forward pass."
 
         noisy_batch = NoisyBatch(
             **self.batch.__dict__,
@@ -432,7 +432,9 @@ class AF3Client(BaseClient):
         with precision_manager(self.model, self.config.model.precision):
             num_augment = self.config.experiment.num_augment
             noisy_atom_pos, t_emb = self.diffuser.sample(
-                batch.structure.atom_pos, num_augment=num_augment, mask=batch.structure.atom_mask
+                batch.structure.atom_pos,
+                num_augment=num_augment,
+                mask=batch.structure.atom_mask,
             )
             noisy_batch = NoisyBatch(**batch.__dict__, t=t_emb, x_t=noisy_atom_pos)
 
@@ -451,7 +453,6 @@ class AF3Client(BaseClient):
             # self.log_message(batch.name[0])
             self.backward(loss)
 
-
     def validation_step(self, batch: Batch):
         # Note that when doing validation, we measure inference quality, not a loss.
         # Please keep in mind that batch is duplicated to eval_sample_num, sample quality
@@ -462,7 +463,9 @@ class AF3Client(BaseClient):
         valid_dict = self.test_inference_quality(
             batch, self.config.experiment.eval_timesteps
         )
-        self.log_metrics({"valid/" + k: v for k, v in valid_dict.items()}, on_epoch=True)
+        self.log_metrics(
+            {"valid/" + k: v for k, v in valid_dict.items()}, on_epoch=True
+        )
         return valid_dict
 
     @torch.no_grad()
@@ -475,7 +478,7 @@ class AF3Client(BaseClient):
         output = self.inference(batch, timesteps=timesteps)
 
         max_lddt, min_rmsd = 0, float("inf")
-        
+
         lddt = metrics.cal_atom_lddt(
             output.atom_pos_pred[0],
             batch.structure.atom_pos[0],

@@ -4,7 +4,7 @@ name = "MiniWorld"
 requires-python = ">= 3.10"
 version = "0.3.0"
 dependencies = [
-    "torch>=2.6.0,<3",
+    "torch==2.6.0",
     "ipykernel>=6.29.5,<7",
     "scipy>=1.13.1,<2",
     "tqdm>=4.67.1,<5",

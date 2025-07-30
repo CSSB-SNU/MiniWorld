@@ -1,4 +1,4 @@
-torch<3,>=2.6.0
+torch==2.6.0
 ipykernel<7,>=6.29.5
 scipy<2,>=1.13.1
 tqdm<5,>=4.67.1

@@ -1,5 +1,5 @@
 data:
-  DB_PATH: /public_data/BioMolDB_2024Oct21/
+  DB_PATH: /home/data/BioMolDB_2024Oct21/
   meta:
     metadata_path: ${data.DB_PATH}/metadata/ID_to_deposition.pkl
     chainID_to_cluster_path: ${data.DB_PATH}/cluster/seq_clust/chain_ID_to_cluster.pkl

@@ -11,8 +11,9 @@
   
 export OMP_NUM_THREADS=20
 torchrun --master_port 12242 \
-  --nproc_per_node=1 scripts/run_af3.py train \
+  --nproc_per_node=4 scripts/run_af3.py train \
   --ckpt_dir=checkpoints/v0.1.6/ \
   --config configs/af3_triton_v0.1.6.yaml \
   --device=cuda \
+  > ./logs/run_af3_v0.1.6.out 2> ./logs/run_af3_v0.1.6.err
   # -w
