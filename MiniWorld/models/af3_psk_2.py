@@ -475,26 +475,22 @@ class AF3Client(BaseClient):
         output = self.inference(batch, timesteps=timesteps)
 
         max_lddt, min_rmsd = 0, float("inf")
-        for atom_pos_pred, sample in zip(output.atom_pos_pred, batch):
-            # TODO: squeeze the batch dimension
-            sample: Batch
+        
+        lddt = metrics.cal_atom_lddt(
+            output.atom_pos_pred[0],
+            batch.structure.atom_pos[0],
+            batch.structure.atom_mask[0],
+        )
+        if max_lddt < lddt:
+            max_lddt = lddt
 
-            lddt = metrics.cal_atom_lddt(
-                atom_pos_pred,
-                sample.atom_pos[0],
-                sample.atom_mask[0],
-            )
-            if max_lddt < lddt:
-                max_lddt = lddt
-
-            rmsd = metrics.cal_aligned_rmsd(
-                atom_pos_pred,
-                sample.atom_pos[0],
-                sample.atom_mask[0],
-            )
-            if min_rmsd > rmsd:
-                min_rmsd = rmsd
-
+        rmsd = metrics.cal_aligned_rmsd(
+            output.atom_pos_pred[0],
+            batch.structure.atom_pos[0],
+            batch.structure.atom_mask[0],
+        )
+        if min_rmsd > rmsd:
+            min_rmsd = rmsd
         # TODO: use dataclass
         return {
             "best_rmsd": min_rmsd,
