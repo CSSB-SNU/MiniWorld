@@ -237,6 +237,9 @@ def train(
     train_num_item = client.config.experiment.train_item // world_size
     valid_num_item = client.config.experiment.valid_item // world_size
     for epoch in range(client.epoch, client.config.experiment.num_epoch):
+        valid_loader.sampler.set_epoch(epoch)
+        client.validation_epoch(valid_loader, valid_num_item)
+        
         train_loader.sampler.set_epoch(epoch)
         client.training_epoch(train_loader, train_num_item)
         if (client.epoch - 1) % client.config.experiment.eval_freq == 0:
@@ -311,22 +314,6 @@ def inference(
     out_dir_path = Path(out_dir)
     out_dir_path.mkdir(parents=True, exist_ok=True)
     client = client.to(device=device)
-    # client_epoch0 = client_epoch0.to(device=device)
-
-    # # debug : gradient explosion or weight explosion
-    # # first of all check all linear layers
-    # weight_diff_dict = {}
-    # for name, module in client.model.named_modules():
-    #     if isinstance(module, torch.nn.Linear):
-    #         weight1 = module.weight
-    #         weight2 = client_epoch0.model.get_submodule(name).weight
-    #         weight_diff = torch.abs(weight1 - weight2).mean().item()
-    #         weight_diff_dict[name] = weight_diff
-
-    # for name, diff in weight_diff_dict.items():
-    #     print(f"Weight difference in {name}: {diff:.6f}")
-
-    # breakpoint()
 
     for ii, batch in enumerate(valid_loader):
         batch = batch.to(device=device, dtype=client.config.model.precision.input)
