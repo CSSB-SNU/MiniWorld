@@ -5,3 +5,4 @@ MiniWorld.egg-info/SOURCES.txt
 MiniWorld.egg-info/dependency_links.txt
 MiniWorld.egg-info/requires.txt
 MiniWorld.egg-info/top_level.txt
+MiniWorld/models/af3_psk_2.py

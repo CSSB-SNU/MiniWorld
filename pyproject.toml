@@ -26,7 +26,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["MiniWorld*", "team_gm*"]
+include = ["MiniWorld*"]
 
 [tool.setuptools.package-dir]
 team_gm = "team_gm/team_gm"

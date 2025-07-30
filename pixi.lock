@@ -1049,7 +1049,7 @@ packages:
 - pypi: ./
   name: miniworld
   version: 0.3.0
-  sha256: b642efcc39e6630275de4ea20f20522bfc1fc31d8d540c4c4338e981a9f23f97
+  sha256: bfe9fa0e86fafea2453f12ebac0bcb626b87f472702963a1eca4ecd4c56020db
   requires_dist:
   - torch>=2.6.0,<3
   - ipykernel>=6.29.5,<7

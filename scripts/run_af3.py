@@ -142,7 +142,6 @@ def train(
     is_master = rank == 0
     print(f"rank : {rank}")
 
-    # from team_gm.models.af3_psk import AF3Client
     from MiniWorld.models.af3_psk_2 import AF3Client
 
     # Load client

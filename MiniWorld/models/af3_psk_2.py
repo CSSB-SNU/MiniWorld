@@ -11,7 +11,7 @@ from contextlib import ExitStack
 from team_gm.client import BaseClient
 from pydantic import BaseModel
 
-from team_gm.data.features import Batch, NoisyBatch
+from team_gm.data.features_BioMol import Batch, NoisyBatch
 from team_gm.data.dataloader_BioMol import (
     BioMolPreProcessing,
     CropConfig,
@@ -108,7 +108,7 @@ class AF3Model(nn.Module):
             n_recycle = random.randint(1, self.n_recycle_max)
         else:
             n_recycle = self.n_recycle_max
-        assert noisy_batch.msa_sequences.shape[1] == self.n_recycle_max, (
+        assert noisy_batch.msa.aligned_sequences.shape[1] == self.n_recycle_max, (
             "The number of MSA sequences should match the number of recycle steps."
         )
 
@@ -133,12 +133,12 @@ class AF3Model(nn.Module):
                     i_cycle,
                     token_pair,
                     token_single_input,
-                    noisy_batch.residue_mask,
+                    noisy_batch.structure.residue_mask,
                 )
                 token_single = token_single_init + self.add_single_recycle(token_single)
 
                 token_pair, token_single = self.pairformer_blocks.forward(
-                    token_pair, token_single, noisy_batch.residue_mask
+                    token_pair, token_single, noisy_batch.structure.residue_mask
                 )
         return (
             token_single_input,
@@ -380,6 +380,7 @@ class AF3Client(BaseClient):
         if config.experiment.compile:
             self.model = torch.compile(self.model)
 
+        self.model = self.setup_model(self.model)
         # diffuser setup
         diffuser_method = config.diffuser.method
         if diffuser_method == "AF3":
@@ -431,7 +432,7 @@ class AF3Client(BaseClient):
         with precision_manager(self.model, self.config.model.precision):
             num_augment = self.config.experiment.num_augment
             noisy_atom_pos, t_emb = self.diffuser.sample(
-                batch.atom_pos, num_augment=num_augment, mask=batch.atom_mask
+                batch.structure.atom_pos, num_augment=num_augment, mask=batch.structure.atom_mask
             )
             noisy_batch = NoisyBatch(**batch.__dict__, t=t_emb, x_t=noisy_atom_pos)
 
@@ -512,7 +513,7 @@ class AF3Client(BaseClient):
         )
         batch = batch.to(device=self.device)
         model_wrapper.prepare_condition(batch)
-        shape = batch.atom_pos.shape
+        shape = batch.structure.atom_pos.shape
 
         atom_pos_pred, inter_traj, model_traj = self.solver.sample(
             model_fn=model_wrapper,
