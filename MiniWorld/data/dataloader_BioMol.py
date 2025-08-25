@@ -14,9 +14,18 @@ from pathlib import PosixPath, Path
 from pydantic import BaseModel, ConfigDict
 
 
-from team_gm.data.features_BioMol import Batch, SequenceFeatures, StructureFeatures, ReferenceFeatures, SchemeFeatures, MSAFeatures
+from team_gm.data.features_BioMol import (
+    Batch,
+    SequenceFeatures,
+    StructureFeatures,
+    ReferenceFeatures,
+    SchemeFeatures,
+    MSAFeatures,
+)
 from BioMol.BioMol import BioMol
 from BioMol import DB_PATH, SEQ_TO_HASH_PATH
+from BioMol.constant.chemical import AA2num
+
 
 with open(SEQ_TO_HASH_PATH, "rb") as f:
     seq_to_hash = pickle.load(f)  # dict of {seq: seq_hash}
@@ -100,6 +109,21 @@ class BaseData(torch.utils.data.Dataset, ABC):
     def __getitem__(self, idx: int) -> Batch:
         pass
 
+class MolTypeConfig(BaseModel):
+    protein: bool = True
+    nucleic_acid: bool = True
+    ligand: bool = True
+
+    @property
+    def mol_types(self) -> list[str]:
+        mol_types = []
+        if self.protein:
+            mol_types.append("protein")
+        if self.nucleic_acid:
+            mol_types.append("nucleic_acid")
+        if self.ligand:
+            mol_types.append("ligand")
+        return mol_types
 
 class BioMolPreProcessing:
     class MetaConfig(BaseModel):
@@ -124,6 +148,7 @@ class BioMolPreProcessing:
     class Config(BaseModel):
         meta: "BioMolPreProcessing.MetaConfig"
         pipeline: "BioMolPreProcessing.PipelineConfig"
+        mol_types: MolTypeConfig
 
     def __init__(self, config: Config):
         self.config = config
@@ -136,6 +161,7 @@ class BioMolPreProcessing:
         self.chainID_to_cluster = self._load_pickle_file(
             self.config.meta.chainID_to_cluster_path
         )
+        self.mol_types = self.config.mol_types.mol_types  # list of mol types
         self._load_items_and_filter(self.config.pipeline.filtered_item_path)
         self._load_node_edge_score()
         self.ideal_ligand = self._load_pickle_file(self.config.meta.ideal_ligand_path)
@@ -212,7 +238,9 @@ class BioMolPreProcessing:
             return
         else:
             if self.config.pipeline.filter_date is not None:
-                date_cutoff = date.strptime(self.config.pipeline.filter_date, "%Y-%m-%d")
+                date_cutoff = date.strptime(
+                    self.config.pipeline.filter_date, "%Y-%m-%d"
+                )
             else:
                 date_cutoff = date.strptime("2099-01-01", "%Y-%m-%d")
 
@@ -230,7 +258,9 @@ class BioMolPreProcessing:
                 self.config.meta.graph_cluster_metadata_path
             )  # cluster : {hash : [IDs]}
 
-            graph_hash = self._read_large_text_file(self.config.pipeline.graph_hash_path)
+            graph_hash = self._read_large_text_file(
+                self.config.pipeline.graph_hash_path
+            )
 
             hash_to_graph = self._load_pickle_file(self.config.meta.unique_graphs_path)
             # filter graph_hash by chain_num
@@ -291,11 +321,12 @@ class BioMolPreProcessing:
 
                         biomol = BioMol(pdb_ID=pdb_ID)
                         biomol.choose(assembly_ID, model_ID, alt_Id)
-                        if (
-                            biomol.structure.residue_tensor[:, 4].sum()
-                            < self.config.pipeline.filter_mask_ratio
-                            * biomol.structure.residue_tensor.shape[0]
-                        ):
+                        biomol.structure.filter_by_type(self.mol_types)
+                                            
+                        valid_residue_indices = torch.where((biomol.structure.residue_tensor[:, 4] == 1) 
+                                                            & (biomol.structure.residue_tensor[:, 0] != AA2num["X"]))[0]
+                        valid_residue_num = valid_residue_indices.size(0)
+                        if valid_residue_num < 5 :
                             continue
                         filtered_ids.append(full_id)
                     if filtered_ids:
@@ -390,21 +421,6 @@ class CropConfig(BaseModel):
         ]
 
 
-class MolTypeConfig(BaseModel):
-    protein: bool = True
-    nucleic_acid: bool = True
-    ligand: bool = True
-
-    @property
-    def mol_types(self) -> list[str]:
-        mol_types = []
-        if self.protein:
-            mol_types.append("protein")
-        if self.nucleic_acid:
-            mol_types.append("nucleic_acid")
-        if self.ligand:
-            mol_types.append("ligand")
-        return mol_types
 
 
 class MSAConfig(BaseModel):
@@ -552,6 +568,17 @@ class BioMolData(BaseData):
             raise ValueError(
                 "After filtering by mol type, no chains left in the biomolecule. You have to filter train/valid items correspondingly."
             )
+        def is_valid_chain(chain_id: str, min_residue_length=1) -> bool:
+            chain_start, chain_end = biomol.structure.residue_chain_break[chain_id]
+            residue_tensor = biomol.structure.residue_tensor[chain_start : chain_end + 1]
+            valid_residue_indices = torch.where((residue_tensor[:, 4] == 1)
+                                                & (residue_tensor[:, 0] != AA2num["X"]))[0]
+            return valid_residue_indices.size(0) >= min_residue_length
+
+        filtered_chain_IDs = [
+            chain for chain in filtered_chain_IDs if is_valid_chain(chain)
+        ]
+
         for chain in list(node_scores.keys()):
             if chain not in filtered_chain_IDs:
                 del node_scores[chain]
@@ -559,7 +586,12 @@ class BioMolData(BaseData):
             if edge[0] not in filtered_chain_IDs or edge[1] not in filtered_chain_IDs:
                 del edge_scores[edge]
 
-        node_probs = self._get_prob_from_score(node_scores)
+        try:
+            node_probs = self._get_prob_from_score(node_scores)
+        except:
+            print(f"idx : {idx}")
+            print(f"biomol structure {biomol.structure}")
+            breakpoint()
 
         # sample node bias and edge bias
         chain_bias = random.choices(
@@ -620,7 +652,9 @@ class BioMolData(BaseData):
             msa_deletion_value_sampled.append(torch.tensor(sampled_deletion_value))
         msa_sequence_sampled = torch.stack(msa_sequence_sampled, dim=0)
         msa_has_deletion_sampled = torch.stack(msa_has_deletion_sampled, dim=0)
-        msa_deletion_value_sampled = torch.stack(msa_deletion_value_sampled, dim=0).float()
+        msa_deletion_value_sampled = torch.stack(
+            msa_deletion_value_sampled, dim=0
+        ).float()
 
         # Now convert biomol to batch
         atom_residue_type = biomol.structure.atom_tensor[:, 0]  # (L_atom)
@@ -711,11 +745,10 @@ class BioMolData(BaseData):
         atom_pos = atom_pos - mean_vector  # (L_atom, 3)
         residue_pos = residue_pos - mean_vector  # (L_res, 3)
 
-
         sequence = SequenceFeatures.from_sample(
-            atom_residue_type = atom_residue_type.long(),
-            residue_type = residue_type.long(),
-            residue_ccd_idx = residue_ccd_idx.long(),
+            atom_residue_type=atom_residue_type.long(),
+            residue_type=residue_type.long(),
+            residue_ccd_idx=residue_ccd_idx.long(),
         )
         structure = StructureFeatures.from_sample(
             atom_pos=atom_pos,
@@ -750,7 +783,6 @@ class BioMolData(BaseData):
             profile=msa_profile,
             deletion_mean=msa_deletion_mean,
         )
-
 
         return Batch(
             name=[f"{pdb_ID}_{assembly_ID}_{model_ID}_{alt_Id}"],
@@ -789,14 +821,19 @@ if __name__ == "__main__":
             ideal_ligand_path=f"{DB_PATH}/metadata/ideal_ligand_list.pkl",
         ),
         pipeline=BioMolPreProcessing.PipelineConfig(
-            graph_hash_path=f"{DB_PATH}/cluster/graph_cluster/train_graph_hash.txt",
+            graph_hash_path=f"{DB_PATH}/cluster/graph_cluster/valid_graph_hash.txt",
             thread_num=64,
             filter_date="2024-10-21",
             filter_resolution=9.0,
             filter_chain_num=40,
-            filtered_item_path="./data_tmp/train/filtered_item.pkl",
+            filtered_item_path="./data_tmp/valid/filtered_item.pkl",
             data_tmp_dir="./data_tmp/",
         ),
+        mol_types=MolTypeConfig(
+            protein=True,
+            nucleic_acid=True,
+            ligand=True
+        )
     )
     config = BioMolData.BioMolConfig(
         crop_config=CropConfig(
@@ -809,9 +846,20 @@ if __name__ == "__main__":
         data_preprocessing_config=data_preprocessing_config,
     )
     dataset = BioMolData(config)
-    # for _ in range(100):
-    #     test_data = dataset[8977]
-    #     breakpoint()
+
+    # # find 8aug
+    # for ii, item in enumerate(dataset.preprocessing.items):
+    #     ID_list = list(item.values())
+    #     # flatten embedded list
+    #     ID_list = [ID for sublist in ID_list for ID in sublist]
+    #     pdb_ID_list = [ID.split("_")[0] for ID in ID_list]
+    #     if "8aug" in pdb_ID_list:
+    #         breakpoint()
+
+
+    for _ in range(1000):
+        test_data = dataset[40604]
+    breakpoint()
 
     # for ii in range(len(dataset)):
     #     out = f"Processing item {ii}..."
@@ -819,8 +867,8 @@ if __name__ == "__main__":
     #         print(f"{ii} / {len(dataset)}")
     #     try:
     #         batch = dataset[ii]
-    #         residue_length = batch.residue_pos.shape[1]
-    #         atom_length = batch.atom_pos.shape[1]
+    #         residue_length = batch.structure.residue_pos.shape[1]
+    #         atom_length = batch.structure.atom_pos.shape[1]
     #         print(
     #             f"{out} {batch.name} | residue length: {residue_length}, atom length: {atom_length}"
     #         )
@@ -828,25 +876,25 @@ if __name__ == "__main__":
     #         out += f" Failed with error: {e}"
     #         print(out)
     #         continue
-    test_data = dataset[601]
-    breakpoint()
+    # test_data = dataset[601]
+    # breakpoint()
 
-    for _ in range(100):
-        try:
-            test_data = dataset[601]
-        except:
-            breakpoint()
+    # for _ in range(100):
+    #     try:
+    #         test_data = dataset[601]
+    #     except:
+    #         breakpoint()
 
-    dataloader = dataset.create_dataloader(
-        batch_size=1,
-        shuffle=False,
-        drop_last=False,
-        num_workers=4,
-        pin_memory=True,
-    )
-    ii = 0
-    for batch in dataloader:
-        print(
-            f"({ii}) Batch {batch.name[0]} | residue length: {batch.residue_pos.shape[1]}, atom length: {batch.atom_pos.shape[1]}"
-        )
-        ii += 1
+    # dataloader = dataset.create_dataloader(
+    #     batch_size=1,
+    #     shuffle=False,
+    #     drop_last=False,
+    #     num_workers=4,
+    #     pin_memory=True,
+    # )
+    # ii = 0
+    # for batch in dataloader:
+    #     print(
+    #         f"({ii}) Batch {batch.name[0]} | residue length: {batch.residue_pos.shape[1]}, atom length: {batch.atom_pos.shape[1]}"
+    #     )
+    #     ii += 1

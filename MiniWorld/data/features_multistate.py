@@ -16,7 +16,6 @@ class SequenceFeatures(BaseBatch):
 @typecheck
 @dataclass(frozen=True)
 class StructureFeatures(BaseBatch):
-    residue_pos: Float[torch.Tensor, "B L_token 3"]
     residue_mask: Bool[torch.Tensor, "B L_token"]
     atom_pos: Float[torch.Tensor, "B N_str L_atom 3"]
     atom_pos_mask: Float[torch.Tensor, "B N_str L_atom"]

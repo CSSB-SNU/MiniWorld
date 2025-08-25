@@ -5,4 +5,10 @@ MiniWorld.egg-info/SOURCES.txt
 MiniWorld.egg-info/dependency_links.txt
 MiniWorld.egg-info/requires.txt
 MiniWorld.egg-info/top_level.txt
+MiniWorld/data/dataloader_BioMol.py
+MiniWorld/data/dataloader_multistate.py
+MiniWorld/data/features_BioMol.py
+MiniWorld/data/features_multistate.py
+MiniWorld/data/test.py
 MiniWorld/models/af3_psk_2.py
+MiniWorld/models/af3_psk_remove_bias.py

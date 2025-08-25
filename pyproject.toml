@@ -30,6 +30,7 @@ include = ["MiniWorld*"]
 
 [tool.setuptools.package-dir]
 team_gm = "team_gm/team_gm"
+kmer_fast_align = "kmer_fast_align/kmer_fast_align"
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -38,9 +39,20 @@ platforms = ["linux-64"]
 [tool.pixi.system-requirements]
 cuda = "12"
 
+[tool.ruff.lint]
+select = ["B", "C4", "E", "F", "W", "UP"]
+ignore = [
+    "E731",
+    "B905",
+    "E741",
+    "F722", # Incompatible with jaxtyping
+]
+
+
 [tool.pixi.pypi-dependencies]
 MiniWorld = { path = ".", editable = true }
 team_gm = { path = "libs/team-gm", editable = true }
+kmer_fast_align = { path = "libs/kmer_fast_align", editable = true }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"

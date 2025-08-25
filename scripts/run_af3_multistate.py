@@ -11,9 +11,9 @@ import os
 
 from team_gm.loggers import WandbLogger
 from team_gm.callbacks import SaveCheckpointPeriodic
-from MiniWorld.data.dataloader_BioMol import (
-    BioMolData,
-    BioMolPreProcessing,
+from MiniWorld.data.dataloader_multistate import (
+    BioMolMonomerData,
+    BioMolMonomerPreProcessing,
     to_mmcif,
 )
 
@@ -32,6 +32,7 @@ def set_seed(seed: int = 42):
 
 # anomaly detection
 torch.autograd.set_detect_anomaly(False)
+# torch.autograd.set_detect_anomaly(True)
 
 
 @click.group()
@@ -118,7 +119,7 @@ def train(
         click.echo(f"✅ Submitted Slurm job: {job_name} ({path})")
         return
 
-    from MiniWorld.models.af3_psk_2 import AF3Client
+    from MiniWorld.models.af3_psk_multistate_monomer import AF3Client
 
     # Load client
     if resume_from_ckpt is None:
@@ -150,27 +151,30 @@ def train(
     ckpt_dir_path.mkdir(parents=True, exist_ok=True)
     ckpt_path = ckpt_dir_path / f"{client.name}.pt"
 
-    train_preprocessing_config = BioMolPreProcessing.Config(
-        meta=client.config.data.meta.model_dump(),
-        pipeline=client.config.data.train.model_dump(),
-        mol_types=client.config.data.mol_types.model_dump(),
+    # 20250510 psk, 나중에 BioMol 혹은 config에 추가할 것. 지금은 하드코딩
+    train_preprocessing_config = BioMolMonomerPreProcessing.Config(
+        meta=client.config.data.meta,
+        pipeline=client.config.data.train,
     )
-    valid_preprocessing_config = BioMolPreProcessing.Config(
-        meta=client.config.data.meta.model_dump(),
-        pipeline=client.config.data.valid.model_dump(),
-        mol_types=client.config.data.mol_types.model_dump(),
+    valid_preprocessing_config = BioMolMonomerPreProcessing.Config(
+        meta=client.config.data.meta,
+        pipeline=client.config.data.valid,
     )
 
-    train_data_config = BioMolData.BioMolConfig(
-        crop_config=client.config.data.crop.model_dump(),
-        mol_types=client.config.data.mol_types.model_dump(),
-        msa_config=client.config.data.msa.model_dump(),
+    train_data_config = BioMolMonomerData.BioMolConfig(
+        crop_config=client.config.data.crop,
+        mol_types=client.config.data.mol_types,
+        msa_config=client.config.data.msa,
+        kmer_fast_align_config = client.config.data.kmer_fast_align,
+        multistate_config = client.config.data.multistate,
         data_preprocessing_config=train_preprocessing_config,
     )
-    valid_data_config = BioMolData.BioMolConfig(
-        crop_config=client.config.data.crop.model_dump(),
-        mol_types=client.config.data.mol_types.model_dump(),
-        msa_config=client.config.data.msa.model_dump(),
+    valid_data_config = BioMolMonomerData.BioMolConfig(
+        crop_config=client.config.data.crop,
+        mol_types=client.config.data.mol_types,
+        msa_config=client.config.data.msa,
+        kmer_fast_align_config = client.config.data.kmer_fast_align,
+        multistate_config = client.config.data.multistate,
         data_preprocessing_config=valid_preprocessing_config,
     )
 
@@ -179,7 +183,7 @@ def train(
         prefetch_factor = None
     else:
         prefetch_factor = client.config.experiment.prefetch_factor
-    train_loader = BioMolData(train_data_config).create_ddp_dataloader(
+    train_loader = BioMolMonomerData(train_data_config).create_ddp_dataloader(
         rank=client.local_rank,
         world_size=world_size,
         drop_last=True,
@@ -187,7 +191,7 @@ def train(
         num_workers=client.config.experiment.num_workers,
         prefetch_factor=prefetch_factor,
     )
-    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
+    valid_loader = BioMolMonomerData(valid_data_config).create_ddp_dataloader(
         rank=client.local_rank,
         world_size=world_size,
         drop_last=False,
@@ -205,6 +209,7 @@ def train(
     train_num_item = client.config.experiment.train_item // world_size
     valid_num_item = client.config.experiment.valid_item // world_size
     for epoch in range(client.epoch, client.config.experiment.num_epoch):
+        # for debugging
         train_loader.sampler.set_epoch(epoch)
         client.training_epoch(train_loader, train_num_item)
         if (client.epoch - 1) % client.config.experiment.eval_freq == 0:
@@ -256,19 +261,21 @@ def inference(
     client = AF3Client.from_checkpoint(ckpt_path)
     # client_epoch0 = AF3Client.from_checkpoint(ckpt_path2)
 
-    valid_preprocessing_config = BioMolPreProcessing.Config(
+    valid_preprocessing_config = BioMolMonomerPreProcessing.Config(
         meta=client.config.data.meta,
         pipeline=client.config.data.valid,
     )
 
-    valid_data_config = BioMolData.BioMolConfig(
+    valid_data_config = BioMolMonomerData.BioMolConfig(
         crop_config=client.config.data.crop,
         mol_types=client.config.data.mol_types,
         msa_config=client.config.data.msa,
         data_preprocessing_config=valid_preprocessing_config,
+        kmer_fast_align_config = client.config.data.kmer_fast_align,
+        multistate_config = client.config.data.multistate,
     )
 
-    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
+    valid_loader = BioMolMonomerData(valid_data_config).create_ddp_dataloader(
         rank=0,
         world_size=1,
         drop_last=False,

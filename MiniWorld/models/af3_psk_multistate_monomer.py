@@ -12,11 +12,13 @@ from team_gm import BaseClient
 from pydantic import BaseModel
 
 from team_gm.data.features_BioMol import Batch, NoisyBatch
-from team_gm.data.dataloader_BioMol import (
-    BioMolPreProcessing,
+from MiniWorld.data.dataloader_multistate import (
+    BioMolMonomerPreProcessing,
     CropConfig,
     MSAConfig,
     MolTypeConfig,
+    KmerFastAlignConfig,
+    MultistateConfig,
 )
 
 from team_gm.utils import metrics  # , losses
@@ -24,7 +26,6 @@ from team_gm.utils import data_utils as du
 from team_gm.utils.diffuser import EuclideanDiffuser
 from team_gm.utils.scheduler import EDM_Scheduler
 from team_gm.utils.solver import AF3Solver
-from team_gm.losses.auxiliary import cal_distogram_loss
 
 
 from team_gm.modules.primitives import (
@@ -41,7 +42,6 @@ from team_gm.modules.diffusion_module import (
 from team_gm.modules.feature_embedder import InputFeatureEmbedder
 from team_gm.modules import Pairformer
 from team_gm.modules.msa_module import MSAModule
-from team_gm.modules.head import DistogramHead
 from team_gm.utils.precision_manager import PrecisionConfig, precision_manager
 
 
@@ -101,9 +101,6 @@ class AF3Model(nn.Module):
         # Diffusion module
         self.diffusion_module = DiffusionModule(config.common, config.diffusion)
 
-        # Distogram prediction
-        self.distogram_head = DistogramHead(config.common)
-
     @torch.no_grad()
     def mini_rollout(self):
         pass  # TODO
@@ -145,13 +142,10 @@ class AF3Model(nn.Module):
                 token_pair, token_single = self.pairformer_blocks.forward(
                     token_pair, token_single, noisy_batch.structure.residue_mask
                 )
-        
-        distogram_logit = self.distogram_head(token_pair)
         return (
             token_single_input,
             token_single,
             token_pair,
-            distogram_logit,
         )
 
     def diffusion_forward(
@@ -191,7 +185,6 @@ class AF3Model(nn.Module):
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
-            distogram_logit,
         ) = self.condition_forward(noisy_batch)
         # Diffusion forward
         atom_pos_update = self.diffusion_forward(
@@ -202,7 +195,7 @@ class AF3Model(nn.Module):
         )
 
         # TODO confidence head & mini_rollout
-        return atom_pos_update, distogram_logit
+        return atom_pos_update
 
 
 class AF3ModelWrapper(nn.Module):
@@ -233,7 +226,6 @@ class AF3ModelWrapper(nn.Module):
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
-            distogram_logit,
         ) = self.model.condition_forward(self.batch)
         self.conditioned_forwarded = True
 
@@ -241,7 +233,6 @@ class AF3ModelWrapper(nn.Module):
             "token_single_input": token_single_input,
             "token_single_trunk": token_single_trunk,
             "token_pair_trunk": token_pair_trunk,
-            "distogram_logit": distogram_logit,
         }
 
     def forward(self, z_i: torch.Tensor, t_emb: torch.Tensor) -> torch.Tensor:
@@ -250,10 +241,14 @@ class AF3ModelWrapper(nn.Module):
             self.conditioned_forwarded
         ), "Conditioned forward must be called before forward pass."
 
+        n_str = z_i.shape[0]
+        t_emb = t_emb[None,None,None,None].repeat(n_str, 1, 1, 1)
+
         noisy_batch = NoisyBatch(
             **self.batch.__dict__,
-            x_t=z_i.unsqueeze(0),  # (B, L, 3) -> (1, B, L, 3)
-            t=t_emb[None, None, None, None],  # (,) -> (1, 1, 1, 1)
+            # x_t=z_i.unsqueeze(0),  # (B, L, 3) -> (1, B, L, 3)
+            x_t=z_i,
+            t=t_emb,
             x_sc=self.z_sc,
         )
 
@@ -263,7 +258,7 @@ class AF3ModelWrapper(nn.Module):
             self.condition["token_single_trunk"],
             self.condition["token_pair_trunk"],
         )
-        z_update = z_update.squeeze(0)  # (1, B, L, 3) -> (B, L, 3)
+        # z_update = z_update.squeeze(0)  # (1, B, L, 3) -> (B, L, 3)
         if self.use_self_condition:
             self.z_sc = z_update
 
@@ -275,9 +270,6 @@ class AF3InferenceOutput:
     # Tensor of final predicted atom coordinate.
     atom_pos_pred: torch.Tensor  # (B, L, 3)
 
-    # Distogram logits
-    distogram_logit: torch.Tensor  # (B, L, L, D)
-
     # Array of predicted atom coordinate trajectory for timesteps T.
     model_traj: np.ndarray  # (B, T, L, 3)
 
@@ -286,15 +278,18 @@ class AF3InferenceOutput:
 
     batch: Batch
 
+
 class AF3Client(BaseClient):
     class DataConfig(BaseModel):
         DB_PATH: str
-        meta: BioMolPreProcessing.MetaConfig
-        train: BioMolPreProcessing.PipelineConfig
-        valid: BioMolPreProcessing.PipelineConfig
+        meta: BioMolMonomerPreProcessing.MetaConfig
+        train: BioMolMonomerPreProcessing.PipelineConfig
+        valid: BioMolMonomerPreProcessing.PipelineConfig
         crop: CropConfig
         msa: MSAConfig
         mol_types: MolTypeConfig
+        kmer_fast_align: KmerFastAlignConfig
+        multistate: MultistateConfig
 
     class LossConfig(BaseModel):
         # TODO
@@ -432,16 +427,14 @@ class AF3Client(BaseClient):
     def loss_fn(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, Mapping]:
         # TODO : implement other losses like smooth lddt or distogram loss etc.
         # loss_config = self.config.experiment.loss
-        atom_pos_update, distogram_logit = self.model.forward(noisy_batch)
+        atom_pos_update = self.model.forward(noisy_batch)
 
         structure_loss = self.diffuser.cal_loss(atom_pos_update)
         # aux_losses = None TODO
 
-        distogram_loss = cal_distogram_loss(distogram_logit, noisy_batch.structure.residue_pos, noisy_batch.structure.residue_mask)
+        loss = 4.0 * structure_loss  # + aux_losses
 
-        loss = 4.0 * structure_loss + 0.03 * distogram_loss
-
-        return loss, {"EDMLoss": structure_loss.item(), "DistogramLoss": distogram_loss.item()}
+        return loss, {"EDMLoss": loss.item()}
 
     def training_step(self, batch: Batch):
         with precision_manager(self.model, self.config.model.precision):
@@ -449,7 +442,7 @@ class AF3Client(BaseClient):
             noisy_atom_pos, t_emb = self.diffuser.sample(
                 batch.structure.atom_pos,
                 num_augment=num_augment,
-                mask=batch.structure.atom_mask,
+                mask=batch.structure.atom_pos_mask,
             )
             noisy_batch = NoisyBatch(**batch.__dict__, t=t_emb, x_t=noisy_atom_pos)
 
@@ -494,25 +487,46 @@ class AF3Client(BaseClient):
 
         max_lddt, min_rmsd = 0, float("inf")
 
-        lddt = metrics.cal_atom_lddt(
-            output.atom_pos_pred[0],
-            batch.structure.atom_pos[0],
-            batch.structure.atom_mask[0],
-        )
-        if max_lddt < lddt:
-            max_lddt = lddt
+        N_sample = output.atom_pos_pred.shape[0]
+        N_str = batch.structure.atom_pos.shape[1]
 
-        rmsd = metrics.cal_aligned_rmsd(
-            output.atom_pos_pred[0],
-            batch.structure.atom_pos[0],
-            batch.structure.atom_mask[0],
-        )
-        if min_rmsd > rmsd:
-            min_rmsd = rmsd
-        # TODO: use dataclass
+        lddt_list = []
+        rmsd_list = []
+
+        # TODO : vectorize
+        for sample_idx in range(N_sample):
+            max_lddt = 0
+            min_rmsd = float("inf")
+            for true_idx in range(N_str):
+                lddt = metrics.cal_atom_lddt(
+                    output.atom_pos_pred[sample_idx,0],
+                    batch.structure.atom_pos[0,true_idx],
+                    batch.structure.atom_pos_mask[0,true_idx],
+                )
+                if max_lddt < lddt:
+                    max_lddt = lddt
+
+                rmsd = metrics.cal_aligned_rmsd(
+                    output.atom_pos_pred[sample_idx,0],
+                    batch.structure.atom_pos[0,true_idx],
+                    batch.structure.atom_pos_mask[0,true_idx],
+                )
+                if min_rmsd > rmsd:
+                    min_rmsd = rmsd
+
+            lddt_list.append(max_lddt)
+            rmsd_list.append(min_rmsd)
+        lddt_list = np.array(lddt_list)
+        rmsd_list = np.array(rmsd_list)
+
+        max_lddt, min_lddt = lddt_list.max(), lddt_list.min()
+        max_rmsd, min_rmsd = rmsd_list.max(), rmsd_list.min()
+
         return {
-            "best_rmsd": min_rmsd,
-            "best_lddt": max_lddt,
+            "max_lddt": max_lddt,
+            "min_lddt": min_lddt,
+            "max_rmsd": max_rmsd,
+            "min_rmsd": min_rmsd,
         }
 
     @torch.no_grad()
@@ -526,8 +540,12 @@ class AF3Client(BaseClient):
             raw_model, use_self_condition=self.config.experiment.self_condition
         )
         batch = batch.to(device=self.device)
+
+        # TODO for now atom_pos shape : (B, N_str, L, 3) -> (N_str, B, L, 3)
+        atom_pos = batch.structure.atom_pos
+        B, N_str, L, _ = atom_pos.shape
+        shape = (N_str, B, L, 3)
         model_wrapper.prepare_condition(batch)
-        shape = batch.structure.atom_pos.shape
 
         atom_pos_pred, inter_traj, model_traj = self.solver.sample(
             model_fn=model_wrapper,
@@ -538,13 +556,11 @@ class AF3Client(BaseClient):
         )
         inter_traj = [du.to_numpy(x) for x in inter_traj]
         model_traj = [du.to_numpy(x) for x in model_traj]
-        distogram_logit = model_wrapper.condition["distogram_logit"]
         return AF3InferenceOutput(
             atom_pos_pred=atom_pos_pred,
             model_traj=np.stack(model_traj, axis=1),
             inter_traj=np.stack(inter_traj, axis=1),
             batch=batch,
-            distogram_logit=distogram_logit,
         )
 
     def sample(self):
