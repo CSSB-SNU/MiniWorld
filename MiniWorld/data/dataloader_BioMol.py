@@ -821,12 +821,12 @@ if __name__ == "__main__":
             ideal_ligand_path=f"{DB_PATH}/metadata/ideal_ligand_list.pkl",
         ),
         pipeline=BioMolPreProcessing.PipelineConfig(
-            graph_hash_path=f"{DB_PATH}/cluster/graph_cluster/valid_graph_hash.txt",
+            graph_hash_path=f"{DB_PATH}/cluster/graph_cluster/train_graph_hash.txt",
             thread_num=64,
             filter_date="2024-10-21",
             filter_resolution=9.0,
             filter_chain_num=40,
-            filtered_item_path="./data_tmp/valid/filtered_item.pkl",
+            filtered_item_path="./data_tmp/train/filtered_item.pkl",
             data_tmp_dir="./data_tmp/",
         ),
         mol_types=MolTypeConfig(
@@ -858,7 +858,7 @@ if __name__ == "__main__":
 
 
     for _ in range(1000):
-        test_data = dataset[40604]
+        test_data = dataset[161471]
     breakpoint()
 
     # for ii in range(len(dataset)):

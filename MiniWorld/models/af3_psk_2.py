@@ -1,3 +1,4 @@
+from pyexpat import model
 import numpy as np
 import random
 import torch
@@ -321,8 +322,10 @@ class AF3Client(BaseClient):
         valid_item: int = 2560
         num_batch: int = 1
         num_epoch: int = 1000
+        optimizer: Literal["AdamW", "Muon"] = "AdamW"
         max_lr: float = 1e-4
         min_lr: float = 1e-5
+        weight_decay: float = 0.01
         warmup_steps: int = 5e3
         decay_steps: int = 5e6
         decay_factor: float = 0.95
@@ -412,8 +415,22 @@ class AF3Client(BaseClient):
             raise NotImplementedError(
                 f"Diffuser method {diffuser_method} is not implemented yet."
             )
+        if config.experiment.optimizer == "AdamW":
+            optimizer = torch.optim.AdamW(self.model.parameters(), config.experiment.max_lr)
+        elif config.experiment.optimizer == "Muon":
+            from muon import MuonWithAuxAdam
+            hidden_weights = [p for p in self.model.parameters() if p.ndim >= 2]
+            other_params = [p for p in self.model.parameters() if p.ndim < 2]
 
-        optimizer = torch.optim.AdamW(self.model.parameters(), config.experiment.max_lr)
+            param_groups = [
+                {"params": hidden_weights, "use_muon": True,
+                    "lr": config.experiment.max_lr, "weight_decay": config.experiment.weight_decay},
+                {"params": other_params, "use_muon": False,
+                    "lr": config.experiment.max_lr, "betas": (0.9, 0.999), "weight_decay": config.experiment.weight_decay},
+            ]
+
+            optimizer = MuonWithAuxAdam(param_groups)
+
         model_scheduler = self.get_step_decay_scheduler_with_warmup(
             optimizer,
             config.experiment.warmup_steps,

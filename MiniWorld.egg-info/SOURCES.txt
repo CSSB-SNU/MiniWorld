@@ -9,6 +9,8 @@ MiniWorld/data/dataloader_BioMol.py
 MiniWorld/data/dataloader_multistate.py
 MiniWorld/data/features_BioMol.py
 MiniWorld/data/features_multistate.py
-MiniWorld/data/test.py
+MiniWorld/data/multistate_train_valid_split.py
+MiniWorld/data/benchmark_data/GPCR_db_parser.py
+MiniWorld/data/benchmark_data/format.py
 MiniWorld/models/af3_psk_2.py
-MiniWorld/models/af3_psk_remove_bias.py
+MiniWorld/models/af3_psk_multistate_monomer.py

@@ -134,13 +134,13 @@ model:
 
 
 experiment:
-  comment: with distogram, QK RMSNorm (v0.2.0 <- hybridnorm; wrong comment)
+  comment: with distogram, QK RMSNorm, muon optimizer
 
   # Training arguments
   num_batch: 1
   num_epoch: 1000
   # max_lr: 1.8e-3
-  optimizer : AdamW
+  optimizer : Muon
   max_lr: 1e-4
   min_lr: 1e-5
   warmup_steps: 0
