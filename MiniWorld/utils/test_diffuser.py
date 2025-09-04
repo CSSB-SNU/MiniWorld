@@ -4,6 +4,10 @@ from MiniWorld.utils.diffuser import DecoupledEDMDiffuser
 from MiniWorld.utils.scheduler import DecoupledEDMScheduler
 from MiniWorld.utils.solver import DecoupledEDMSolver
 
+from Bio.PDB import MMCIFParser, PDBIO
+from pathlib import Path
+
+
 def to_mmcif(
     biomol: BioMol,
     xyz: torch.Tensor,
@@ -56,6 +60,7 @@ def test_forward(pdb_ID):
 
 def test_solver(pdb_ID):
     scheduler, diffuser, solver = setup_diffusion()
+    scheduler.draw_sigma(save_path=f"MiniWorld/utils/test_str/{pdb_ID}_sigma.png")
     biomol = BioMol(pdb_ID=pdb_ID)
     biomol.choose('1','1','.')
 
@@ -79,10 +84,50 @@ def test_solver(pdb_ID):
         return_intermediate=True,
     )
 
+    for ii in range(len(trajectory)):
+        xyz = trajectory[ii][0]
+        to_mmcif(biomol, xyz, save_path=f"MiniWorld/utils/test_str/{pdb_ID}_recon_{ii}.cif")
 
+
+def visualize_cif():
+    cif_dir = Path("/home/psk6950/MiniWorld/MiniWorld/utils/test_str/")
+    cif_list = [cif_dir / f"2mcg_recon_{ii}.cif" for ii in range(0, 50)]
+
+    lines = []
+
+    def change_model_id(line, model_id):
+        line = line.strip().split()
+        line[-1] = str(model_id) + "\n"
+
+        return " ".join(line)
+
+    # reverse
+    cif_list = cif_list[::-1]
+
+    for i, cif_file in enumerate(cif_list, start=1):
+        with open(cif_file) as file:
+            _lines = file.readlines()
+        if len(lines) == 0:
+            lines.extend(_lines)
+            continue
+
+        # find lines starting with "ATOM"
+        atom_lines = [change_model_id(line, i) for line in _lines if line.startswith("ATOM")]
+        lines.extend(atom_lines)
+
+    with open(cif_dir / "merged_multimodel.cif", "w") as file:
+        file.writelines(lines)
+
+
+def test_scheduler():
+    scheduler, diffuser, solver = setup_diffusion()
+    scheduler.draw_sigma(save_path=f"MiniWorld/utils/test_str/sigma_train.png", mode="train")
+    scheduler.draw_sigma(save_path=f"MiniWorld/utils/test_str/sigma_sampling.png", mode="inference")
+    scheduler.draw_sigma(save_path=f"MiniWorld/utils/test_str/sigma_y_to_RT.png", mode="y_to_RT")
 
 
 if __name__ == "__main__":
     pdb_ID = "2mcg"
-    test_forward(pdb_ID)
-    test_solver(pdb_ID)
+    # test_forward(pdb_ID)
+    test_scheduler()
+    # visualize_cif()

@@ -1,11 +1,20 @@
 import torch
 from team_gm.utils.solver import DiffusionSolver
 from MiniWorld.utils.scheduler import DecoupledEDMScheduler
-from MiniWorld.utils.se3 import apply_chain_rt, sample_rigid, exp_se3, log_so3, se3_heat_step_delta_sigma, se3_heat_step_sigma
+from MiniWorld.utils.se3 import (
+    apply_chain_rt,
+    sample_rigid,
+    exp_se3,
+    log_so3,
+    se3_heat_step_delta_sigma,
+    se3_heat_step_sigma,
+)
 
 
 class DecoupledEDMSolver(DiffusionSolver):
-    def __init__(self, config: DiffusionSolver.SolverConfig, scheduler: DecoupledEDMScheduler):
+    def __init__(
+        self, config: DiffusionSolver.SolverConfig, scheduler: DecoupledEDMScheduler
+    ):
         super().__init__(config, scheduler)
 
         # TODO: move it to config
@@ -23,14 +32,13 @@ class DecoupledEDMSolver(DiffusionSolver):
         torch.backends.cudnn.enabled = False
         torch.random.manual_seed(seed)
 
-
     def _add_noise(
         self,
         y: torch.Tensor,
         R: torch.Tensor,
         T: torch.Tensor,
         t_index: int,
-        time_steps: torch.Tensor, 
+        time_steps: torch.Tensor,
         atom_chain_break: dict,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         t_i = time_steps[t_index]
@@ -47,18 +55,23 @@ class DecoupledEDMSolver(DiffusionSolver):
             R, T, sigma_Ri, sigma_Ti, sigma_Rhat, sigma_That, eps=1e-12
         )
 
-        print(f"T_hat.norm : {T_hat.norm():.6f}")
-
-        added_noise = self._lambda * (t_hat**2 - sigma_i**2) ** 0.5 * torch.randn_like(y)
+        added_noise = (
+            self._lambda * (t_hat**2 - sigma_i**2) ** 0.5 * torch.randn_like(y)
+        )
 
         y = y + added_noise
         x_with_noise = apply_chain_rt(y, R_hat, T_hat, atom_chain_break)
         return y, x_with_noise, t_hat
 
     def y_step(
-        self, model_fn: callable, 
-        y: torch.Tensor, R : torch.Tensor, T : torch.Tensor,
-        t_index: int, time_steps: torch.Tensor, atom_chain_break: dict,
+        self,
+        model_fn: callable,
+        y: torch.Tensor,
+        R: torch.Tensor,
+        T: torch.Tensor,
+        t_index: int,
+        time_steps: torch.Tensor,
+        atom_chain_break: dict,
     ) -> torch.Tensor:
         """
         Perform one Euler update in t-space.
@@ -83,7 +96,9 @@ class DecoupledEDMSolver(DiffusionSolver):
         _, sigma_That = self.scheduler.convert_to_sigmaRT(t_hat)
 
         # add noise
-        y, x_with_noise, t_hat = self._add_noise(y, R, T, t_index, time_steps, atom_chain_break)
+        y, x_with_noise, t_hat = self._add_noise(
+            y, R, T, t_index, time_steps, atom_chain_break
+        )
         dt = sigma_next - t_hat
 
         # 4. Query the model for εθ(z_i, sigma_i)
@@ -137,22 +152,25 @@ class DecoupledEDMSolver(DiffusionSolver):
         sigma_Rnext, sigma_Tnext = self.scheduler.convert_to_sigmaRT(sigma_next)
         dt_R, dt_T = sigma_Rnext - sigma_Ri, sigma_Tnext - sigma_Ti
 
-        R_i, T_i = se3_heat_step_delta_sigma(
-            R, T, sigma_Ri, sigma_Ti, dt_R, dt_T
-        )
+        R_i, T_i = se3_heat_step_delta_sigma(R, T, sigma_Ri, sigma_Ti, dt_R, dt_T)
 
         return R_i, T_i
 
     def step(
-        self, model_fn: callable,
-        y: torch.Tensor, R: torch.Tensor, T: torch.Tensor,
-        t_index: int, time_steps: torch.Tensor, atom_chain_break: dict,
+        self,
+        model_fn: callable,
+        y: torch.Tensor,
+        R: torch.Tensor,
+        T: torch.Tensor,
+        t_index: int,
+        time_steps: torch.Tensor,
+        atom_chain_break: dict,
     ) -> torch.Tensor:
 
-        y, x_update = self.y_step(model_fn, y, R, T, t_index, time_steps, atom_chain_break)
+        y, x_update = self.y_step(
+            model_fn, y, R, T, t_index, time_steps, atom_chain_break
+        )
         R, T = self.RT_step(R, T, t_index, time_steps)
-        diff = (x_update - apply_chain_rt(y, R, T, atom_chain_break)).norm()
-        print(f"Step {t_index}: mean abs diff between x_update and y: {diff:.6f}")
         return y, x_update, R, T
 
     def sample(
@@ -202,7 +220,9 @@ class DecoupledEDMSolver(DiffusionSolver):
 
         # 3. Iteratively step from i=0 to N-1
         for i in range(num_steps):
-            y, epsilon_hat, R, T = self.step(model_fn, y, R, T, i, time_steps, atom_chain_break)
+            y, epsilon_hat, R, T = self.step(
+                model_fn, y, R, T, i, time_steps, atom_chain_break
+            )
             if return_intermediate:
                 trajectory.append(y.clone())
                 hat_list.append(epsilon_hat.clone())

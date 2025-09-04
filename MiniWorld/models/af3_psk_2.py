@@ -298,20 +298,8 @@ class AF3Client(BaseClient):
         mol_types: MolTypeConfig
 
     class LossConfig(BaseModel):
-        # TODO
-        t_normalize_clip: float = 0.9
-        translation_loss_weight: float = 2.0
-        aux_loss_weight: float = 1.0
-
-        all_atom_loss_weight: float = 1.0
-        all_atom_loss_t_filter: float = 0.25
-        dist_mat_threshold: float = 6.0
-        dist_mat_loss_weight: float = 1.0
-        dist_mat_loss_t_filter: float = 0.25
-        atom_clash_loss_weight: float = 0.0
-        atom_clash_loss_t_filter: float = 0.25
-        bond_length_loss_weight: float = 1.0
-        bond_length_loss_t_filter: float = 0.25
+        diffusion_loss: float = 4.0
+        distogram_loss: float = 0.03
 
     class ExperimentsConfig(BaseModel):
         comment: str = "default"
@@ -342,7 +330,7 @@ class AF3Client(BaseClient):
         prefetch_factor: int = 4
         seed: int = 0
 
-        # loss: "AF3Client.LossConfig" TODO
+        loss: "AF3Client.LossConfig"
 
     class DiffuserConfig(BaseModel):
         seed: int = 0
@@ -446,6 +434,8 @@ class AF3Client(BaseClient):
             name=name,
         )
 
+        self.loss_weights = config.experiment.loss
+
     def loss_fn(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, Mapping]:
         # TODO : implement other losses like smooth lddt or distogram loss etc.
         # loss_config = self.config.experiment.loss
@@ -456,9 +446,9 @@ class AF3Client(BaseClient):
 
         distogram_loss = cal_distogram_loss(distogram_logit, noisy_batch.structure.residue_pos, noisy_batch.structure.residue_mask)
 
-        loss = 4.0 * structure_loss + 0.03 * distogram_loss
+        loss = self.loss_weights["diffusion_loss"] * structure_loss + self.loss_weights["distogram_loss"] * distogram_loss
 
-        return loss, {"EDMLoss": structure_loss.item(), "DistogramLoss": distogram_loss.item()}
+        return loss, {"diffusion_loss": structure_loss.item(), "distogram_loss": distogram_loss.item()}
 
     def training_step(self, batch: Batch):
         with precision_manager(self.model, self.config.model.precision):
