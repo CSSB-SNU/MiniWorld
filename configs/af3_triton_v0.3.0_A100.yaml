@@ -1,0 +1,187 @@
+data:
+  DB_PATH: /home/data/BioMolDB_2024Oct21/
+  meta:
+    metadata_path: ${data.DB_PATH}/metadata/ID_to_deposition.pkl
+    chainID_to_cluster_path: ${data.DB_PATH}/cluster/seq_clust/chain_ID_to_cluster.pkl
+    graph_cluster_metadata_path : ${data.DB_PATH}/cluster/graph_cluster/graph_cluster_metadata.json
+    node_score_path: ${data.DB_PATH}/statistics/node_score.pkl
+    edge_score_path: ${data.DB_PATH}/statistics/edge_score.pkl
+    unique_graphs_path: ${data.DB_PATH}/cluster/graph_cluster/cluster_level_unique_graphs.pkl
+    ideal_ligand_path: ${data.DB_PATH}/metadata/ideal_ligand_list.pkl
+
+  train:
+    thread_num: 88
+    filter_date: 2024-03-01
+    filter_resolution: 9.0
+    filter_chain_num: 40
+
+    filtered_item_path: ./data_tmp/train/filtered_item.pkl
+    data_tmp_dir: ./data_tmp/train/
+    graph_hash_path: ${data.DB_PATH}/cluster/graph_cluster/train_graph_hash.txt
+
+  valid:
+    thread_num: 88
+    filter_date: 2024-03-01
+    filter_resolution: 9.0
+    filter_chain_num: 40
+
+    filtered_item_path: ./data_tmp/valid/filtered_item.pkl
+    data_tmp_dir: ./data_tmp/valid/
+    graph_hash_path: ${data.DB_PATH}/cluster/graph_cluster/valid_graph_hash.txt
+
+  crop:
+    contiguous_prob: 0.2
+    spatial_prob: 0.4
+    interface_prob: 0.4
+    crop_length: 384
+    level: residue
+
+  msa:
+    n_samples: 1
+    max_msa_depth: 384
+
+  mol_types:
+    protein: True # for now, protein is the only supported type
+    nucleic_acid: True
+    ligand: True
+
+diffuser:
+  seed : 0
+  method : AF3
+  translation_noise : 0.0
+  scheduler:
+    method: AF3
+    P_mean: -1.2
+    P_std: 1.5
+    sigma_data: 16.0
+
+    sigma_y_max: 160.0
+    sigma_y_min: 4e-4
+    rho: 9.0
+
+    sigma_R_max: 4.0
+    sigma_R_min: 4e-4
+    rho_R: 1.5
+
+    sigma_T_max: 8.0
+    sigma_T_min: 4e-4
+    rho_T: 1.0
+    use_time_augmentation: True
+
+model:
+  common:
+    d_token_single: 384
+    d_token_single_input: 449  # 441 = 384 + 32 + 32 + 1
+    d_token_single_diffusion: 768
+    d_token_pair: 128
+    d_time: 256
+    d_msa: 64
+    d_atom_single: 128
+    d_atom_pair: 16
+    num_res_class: 32
+    r_max: 32
+    s_max: 2
+    implementation: triton
+    use_checkpoint: True
+    to_bias_init: zero
+    norm: qk
+
+  trunk:
+    n_recycle_max: 1 # 4
+    pairformer: 
+      n_block: 4
+      d_single: ${model.common.d_token_single}
+      d_pair: ${model.common.d_token_pair}
+      d_hidden_tri_multi: 128
+      d_hidden_tri_attention: 32
+      n_head_tri_attention: 4
+      n_head_attention: 16
+      p_drop: 0.25
+      use_single: True
+      use_single_cond: False
+      use_self_attention: True
+      implementation: triton
+
+    msa_module: 
+      n_block: 2
+      d_msa: 64
+      d_pair: ${model.common.d_token_pair}
+      d_hidden_msa: 32
+      d_hidden_tri_multi: 128
+      d_hidden_tri_attention: 32
+      n_head_tri_attention: 4
+      n_head_attention: 16
+      p_drop_msa: 0.15
+      p_drop: 0.25
+      use_self_attention: True
+      implementation: triton
+  diffusion:
+    frequency_embedding_size: 256
+    n_block_atom: 3
+    n_block_token: 4
+    n_head_atom: 4
+    n_head_token: 24
+    n_transition_expand: 2
+    n_transition_block: 2
+    implementation: triton
+    use_beta: False
+  precision:
+    input: torch.float32
+    use_scaler: False  # Use GradScaler for mixed precision training
+    default:
+      op_dtype: torch.float32  # Default operation dtype
+      out_dtype: torch.float32  # Default output dtype
+    precision_map:
+      "msa_module": 
+        op_dtype : torch.bfloat16
+        out_dtype: torch.bfloat16 
+      "pairformer_blocks": 
+        op_dtype : torch.bfloat16
+        out_dtype: torch.bfloat16  # Precision for pairformer blocks
+      "diffusion_module":
+        op_dtype : torch.float32
+        out_dtype: torch.float32  # Precision for diffusion modules
+
+
+experiment:
+  comment: Decoupled EDM (A100)
+
+  # Training arguments
+  num_batch: 1
+  num_epoch: 1000
+  # max_lr: 1.8e-3
+  max_lr: 1e-4
+  min_lr: 1e-5
+  optimizer : AdamW
+  warmup_steps: 0
+  decay_steps: 5e4
+  self_condition: False
+  compile: False
+  num_augment: 48
+  train_item: 2400
+  valid_item: 640
+
+  # Validation arguments
+  eval_freq: 10
+  eval_sample_num: 1
+  eval_input_num: 50
+  eval_timesteps: 100
+  grad_clip_max_norm: 10.0
+  grad_accum_steps: 1
+  num_workers: 4
+  prefetch_factor: 4
+
+  # # Loss weights
+  # loss:
+  #   t_normalize_clip: 0.9
+  #   aux_loss_weight: 1
+
+  #   translation_loss_weight: 2.0
+  #   rotation_loss_weight: 1.0
+
+  #   all_atom_loss_weight: 0.25
+  #   all_atom_loss_t_filter: 0.75
+
+  #   dist_mat_threshold: 6
+  #   dist_mat_loss_weight: 0
+  #   dist_mat_loss_t_filter: 0.75

@@ -3,7 +3,8 @@
 	url = git@github.com:CSSB-SNU/team-gm.git
 [submodule "libs/team-gm"]
 	path = libs/team-gm
-	url = https://github.com/CSSB-SNU/team-gm
+	url = git@github.com:CSSB-SNU/team-gm.git
+	branch = BioMol
 [submodule "libs/kmer_fast_align"]
 	path = libs/kmer_fast_align
 	url = git@github.com:CSSB-SNU/KmerFastAlign.git
