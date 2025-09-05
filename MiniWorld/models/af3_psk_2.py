@@ -446,7 +446,7 @@ class AF3Client(BaseClient):
 
         distogram_loss = cal_distogram_loss(distogram_logit, noisy_batch.structure.residue_pos, noisy_batch.structure.residue_mask)
 
-        loss = self.loss_weights["diffusion_loss"] * structure_loss + self.loss_weights["distogram_loss"] * distogram_loss
+        loss = self.loss_weights.diffusion_loss * structure_loss + self.loss_weights.distogram_loss * distogram_loss
 
         return loss, {"diffusion_loss": structure_loss.item(), "distogram_loss": distogram_loss.item()}
 
