@@ -21,6 +21,7 @@ from team_gm.data.features_BioMol import (
     ReferenceFeatures,
     SchemeFeatures,
     MSAFeatures,
+    ChainFeatures,
 )
 from BioMol.BioMol import BioMol
 from BioMol import DB_PATH, SEQ_TO_HASH_PATH
@@ -49,7 +50,7 @@ def to_mmcif(
     mol_types: list[str] = ["protein"],
 ):
     pdb_id, assembly_id, model_id, alt_id = batch.name[0].split("_")
-    crop_indices = batch.crop_indices[0]
+    crop_indices = batch.scheme.crop_indices[0]
     biomol = BioMol(pdb_ID=pdb_id, mol_types=mol_types)
     biomol.choose(assembly_id, model_id, alt_id)
     biomol.crop(crop_indices=crop_indices.cpu(), crop_MSA=True)
@@ -315,14 +316,14 @@ class BioMolPreProcessing:
                 for _hash, full_ids in hash_dict.items():
                     filtered_ids = []
                     for full_id in full_ids:
-                        pdb_ID, assembly_ID, model_ID, alt_Id = full_id.split("_")
+                        pdb_ID, assembly_ID, model_ID, alt_ID = full_id.split("_")
                         if pdb_ID not in filtered_IDs:
                             continue
 
                         biomol = BioMol(pdb_ID=pdb_ID)
-                        biomol.choose(assembly_ID, model_ID, alt_Id)
+                        biomol.choose(assembly_ID, model_ID, alt_ID)
                         biomol.structure.filter_by_type(self.mol_types)
-                                            
+
                         valid_residue_indices = torch.where((biomol.structure.residue_tensor[:, 4] == 1) 
                                                             & (biomol.structure.residue_tensor[:, 0] != AA2num["X"]))[0]
                         valid_residue_num = valid_residue_indices.size(0)
@@ -518,10 +519,10 @@ class BioMolData(BaseData):
 
         ID = random.choice(IDs)
 
-        pdb_ID, assembly_ID, model_ID, alt_Id = ID.split("_")
+        pdb_ID, assembly_ID, model_ID, alt_ID = ID.split("_")
 
         biomol = BioMol(pdb_ID=pdb_ID)  # warning, mol type is not filtered out.
-        biomol.choose(assembly_ID, model_ID, alt_Id)
+        biomol.choose(assembly_ID, model_ID, alt_ID)
 
         chains = list(biomol.structure.residue_chain_break.keys())
         ID = biomol.ID
@@ -530,7 +531,7 @@ class BioMolData(BaseData):
             for chain in chains
         }
         contact_edges = biomol.structure.contact_graph.graphs[
-            (assembly_ID, model_ID, alt_Id)
+            (assembly_ID, model_ID, alt_ID)
         ]["edges"]  # list of tuples (chain_idx1, chain_idx2)
         contact_edges = {
             (chains[edge[0]], chains[edge[1]]): tuple(
@@ -578,7 +579,6 @@ class BioMolData(BaseData):
         filtered_chain_IDs = [
             chain for chain in filtered_chain_IDs if is_valid_chain(chain)
         ]
-
         for chain in list(node_scores.keys()):
             if chain not in filtered_chain_IDs:
                 del node_scores[chain]
@@ -773,6 +773,7 @@ class BioMolData(BaseData):
             residue_entity_id=residue_entity_id,
             residue_sym_id=residue_sym_id,
             atom_to_residue_idx_map=atom_to_residue_idx_map,
+            atom_chain_break=biomol.structure.atom_chain_break,
             residue_chain_break=residue_chain_break,
         )
 
@@ -784,13 +785,23 @@ class BioMolData(BaseData):
             deletion_mean=msa_deletion_mean,
         )
 
+        contact_graph = biomol.structure.contact_graph.graphs[(assembly_ID,model_ID,alt_ID)]
+        same_entity = biomol.structure.same_entity
+        entity_list = biomol.structure.entity_list
+        chain = ChainFeatures.from_sample(
+            contact_graph=contact_graph,
+            same_entity=same_entity,
+            entity_list=entity_list,
+        )
+
         return Batch(
-            name=[f"{pdb_ID}_{assembly_ID}_{model_ID}_{alt_Id}"],
+            name=[f"{pdb_ID}_{assembly_ID}_{model_ID}_{alt_ID}"],
             sequence=sequence,
             structure=structure,
             reference=reference,
             scheme=scheme,
             msa=msa,
+            chain=chain,
         )
 
     def create_ddp_dataloader(self, **kwargs):
@@ -858,6 +869,7 @@ if __name__ == "__main__":
 
 
     for _ in range(1000):
+        print(f"Sampling data... {_}")
         test_data = dataset[161471]
     breakpoint()
 

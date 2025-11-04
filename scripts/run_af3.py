@@ -246,7 +246,8 @@ def inference(
         )
         click.echo(f"✅ Submitted Slurm job: {job_name} ({path})")
         return
-    from MiniWorld.models.af3_psk_decoupled_edm import AF3Client
+    from MiniWorld.models.af3_psk_2 import AF3Client
+
 
     if torch.device(device) == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA is not available.")

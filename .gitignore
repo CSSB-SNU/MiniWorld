@@ -3,3 +3,6 @@ checkpoints/
 *.pt
 *.cif
 pixi.lock
+*.mmcif
+output/
+outputs/
