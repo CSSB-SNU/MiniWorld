@@ -8,3 +8,6 @@
 [submodule "libs/kmer_fast_align"]
 	path = libs/kmer_fast_align
 	url = git@github.com:CSSB-SNU/KmerFastAlign.git
+[submodule "libs/datacooker"]
+	path = libs/datacooker
+	url = git@github.com:CSSB-SNU/DataCooker.git
