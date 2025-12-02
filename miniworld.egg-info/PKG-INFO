@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: miniworld
+Version: 0.3.0
+Author-email: Sanggeun Park <psk6950@snu.ac.kr>
+Requires-Python: >=3.10
+Requires-Dist: torch<3,>=2.8.0
+Requires-Dist: wandb<0.20,>=0.19.8
+Requires-Dist: omegaconf<3,>=2.3.0
+Requires-Dist: numpy<3,>=2.2.5
+Requires-Dist: einops<0.9,>=0.8.1
+Requires-Dist: jaxtyping<0.4,>=0.3.2
+Requires-Dist: beartype<0.22,>=0.21.0
+Requires-Dist: scipy<2,>=1.15.3
+Requires-Dist: lightning<3,>=2.5.6
+Requires-Dist: biomol>=1.0.0

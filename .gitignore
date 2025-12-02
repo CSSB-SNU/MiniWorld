@@ -6,3 +6,5 @@ pixi.lock
 *.mmcif
 output/
 outputs/
+*.sh
+wandb/

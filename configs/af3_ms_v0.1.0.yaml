@@ -7,8 +7,8 @@ data:
     ideal_ligand_path: ${data.DB_PATH}/metadata/ideal_ligand_list.pkl
 
   kmer_fast_align:
-    kmer_index: ${data.DB_PATH}/cluster/seq_clust/kmer_fast_align/kmer_index.tsv
-    fasta: ${data.DB_PATH}/cluster/seq_clust/kmer_fast_align/sequence_hashes_wo_signalp.fasta
+    kmer_index: ${data.DB_PATH}/kmer_align/kmer_index.tsv
+    fasta: ${data.DB_PATH}/fasta/protein.fasta
     kmer_threshold: 0.2
     gap_split: 15
     max_mismatch: 15

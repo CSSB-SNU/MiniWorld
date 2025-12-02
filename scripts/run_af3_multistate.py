@@ -11,10 +11,8 @@ import os
 
 from team_gm.loggers import WandbLogger
 from team_gm.callbacks import SaveCheckpointPeriodic
-from MiniWorld.data.dataloader_multistate import (
+from MiniWorld.data.dataloader.dataloader_multistate import (
     BioMolMonomerData,
-    BioMolMonomerPreProcessing,
-    to_mmcif,
 )
 
 
@@ -152,30 +150,20 @@ def train(
     ckpt_path = ckpt_dir_path / f"{client.name}.pt"
 
     # 20250510 psk, 나중에 BioMol 혹은 config에 추가할 것. 지금은 하드코딩
-    train_preprocessing_config = BioMolMonomerPreProcessing.Config(
-        meta=client.config.data.meta,
-        pipeline=client.config.data.train,
-    )
-    valid_preprocessing_config = BioMolMonomerPreProcessing.Config(
-        meta=client.config.data.meta,
-        pipeline=client.config.data.valid,
-    )
 
     train_data_config = BioMolMonomerData.BioMolConfig(
         crop_config=client.config.data.crop,
-        mol_types=client.config.data.mol_types,
         msa_config=client.config.data.msa,
         kmer_fast_align_config = client.config.data.kmer_fast_align,
         multistate_config = client.config.data.multistate,
-        data_preprocessing_config=train_preprocessing_config,
+        preprocess_config=client.config.data.train_preprocessing,
     )
     valid_data_config = BioMolMonomerData.BioMolConfig(
         crop_config=client.config.data.crop,
-        mol_types=client.config.data.mol_types,
         msa_config=client.config.data.msa,
         kmer_fast_align_config = client.config.data.kmer_fast_align,
         multistate_config = client.config.data.multistate,
-        data_preprocessing_config=valid_preprocessing_config,
+        preprocess_config=client.config.data.valid_preprocessing,
     )
 
     # always ddp
@@ -196,7 +184,7 @@ def train(
         world_size=world_size,
         drop_last=False,
         batch_size=client.config.experiment.num_batch,  # or 1
-        num_workers=0,
+        num_workers=1,
     )
 
     client.log_message("-" * 70)
@@ -261,16 +249,11 @@ def inference(
     client = AF3Client.from_checkpoint(ckpt_path)
     # client_epoch0 = AF3Client.from_checkpoint(ckpt_path2)
 
-    valid_preprocessing_config = BioMolMonomerPreProcessing.Config(
-        meta=client.config.data.meta,
-        pipeline=client.config.data.valid,
-    )
-
     valid_data_config = BioMolMonomerData.BioMolConfig(
         crop_config=client.config.data.crop,
         mol_types=client.config.data.mol_types,
         msa_config=client.config.data.msa,
-        data_preprocessing_config=valid_preprocessing_config,
+        data_preprocessing_config=client.config.data.valid_preprocessing,
         kmer_fast_align_config = client.config.data.kmer_fast_align,
         multistate_config = client.config.data.multistate,
     )
@@ -296,14 +279,15 @@ def inference(
             timesteps=timesteps,
         )
 
-        true_mmcif_path = f"{out_dir_path}/{batch.name[0]}_true.mmcif"
-        denoised_mmcif_path = f"{out_dir_path}/{batch.name[0]}_denoised.mmcif"
-        to_mmcif(
-            af3_inference_output.batch,
-            af3_inference_output.atom_pos_pred,
-            true_mmcif_path,
-            denoised_mmcif_path,
-        )
+        # TODO: save outputs
+        # true_mmcif_path = f"{out_dir_path}/{batch.name[0]}_true.mmcif"
+        # denoised_mmcif_path = f"{out_dir_path}/{batch.name[0]}_denoised.mmcif"
+        # to_mmcif(
+        #     af3_inference_output.batch,
+        #     af3_inference_output.atom_pos_pred,
+        #     true_mmcif_path,
+        #     denoised_mmcif_path,
+        # )
         if ii >= num_sample - 1:
             break
 
