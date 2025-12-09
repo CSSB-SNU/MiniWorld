@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: miniworld
-Version: 0.3.0
+Version: 1.0.0
 Author-email: Sanggeun Park <psk6950@snu.ac.kr>
 Requires-Python: >=3.10
 Requires-Dist: torch<3,>=2.8.0

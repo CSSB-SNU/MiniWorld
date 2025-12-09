@@ -1,44 +1,42 @@
-import numpy as np
 import random
-from team_gm.modules.head import DistogramHead
-import torch
-import torch.nn as nn
-
-from jaxtyping import Float
-from einops import rearrange
 from collections.abc import Mapping
-from dataclasses import dataclass
 from contextlib import ExitStack
+from dataclasses import dataclass
 
-from team_gm import BaseClient
-from team_gm.modules.feature_embedder import RelativePositionEmbedding
+import numpy as np
+import torch
+from einops import rearrange
+from jaxtyping import Float
 from pydantic import BaseModel
+from team_gm import BaseClient
+from team_gm.modules import Pairformer
+from torch import nn
 
-from MiniWorld.data.features.features_multistate import Batch, NoisyBatch
-from MiniWorld.data.dataloader.dataloader_multistate import (
-    CropConfig,
-    MSAConfig,
-    KmerFastAlignConfig,
-    MultistateConfig,
+from miniworld.data.dataloader.dataloader_multistate import (
     BioMolMonomerPreProcessingConfig,
+    CropConfig,
+    KmerFastAlignConfig,
+    MSAConfig,
+    MultistateConfig,
 )
-from MiniWorld.utils.structure.sdist import get_shortest_distances
-
-
-
-from team_gm.modules.primitives import (
-    LayerNorm,
-    Linear,
-)
-from team_gm.modules.configs import (
+from miniworld.data.features.features_multistate import Batch, NoisyBatch
+from miniworld.loss.multistate import cal_shortest_distogram_loss
+from miniworld.modules.configs import (
     CommonConfig,
     DiffusionConfig,
 )
-from team_gm.modules import Pairformer
-from team_gm.modules.msa_module import MSAModule
-from team_gm.utils.precision_manager import PrecisionConfig, precision_manager
+from miniworld.modules.feature_embedder import RelativePositionEmbedding
+from miniworld.modules.head import DistogramHead
+from miniworld.modules.msa_module import MSAModule
+from miniworld.modules.primitives import (
+    LayerNorm,
+    Linear,
+)
+from miniworld.utils.precision_manager import PrecisionConfig, precision_manager
+from miniworld.utils.structure.distance import (
+    get_shortest_distances_from_multistructures,
+)
 
-from MiniWorld.losses.multistate import cal_shortest_distogram_loss
 
 class InputFeatureEmbedder(nn.Module):
     def __init__(
@@ -368,7 +366,7 @@ class SdistClient(BaseClient):
         prob = torch.nn.functional.softmax(distogram_logit, dim=-1)  # (B, L, L, D)
         edges = torch.linspace(2.0, 22.0, D, device=distogram_logit.device)
         expected_dist = (prob * edges).sum(dim=-1)  # (B, L, L)
-        residue_dists, residue_pair_mask = get_shortest_distances(
+        residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
             atom_pos=batch.structure.atom_pos,
             atom_pos_mask=batch.structure.atom_pos_mask,
             atom_to_res_idx=batch.scheme.atom_to_residue_idx_map,

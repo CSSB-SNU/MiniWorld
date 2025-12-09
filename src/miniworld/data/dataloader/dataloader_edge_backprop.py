@@ -258,7 +258,6 @@ class MSAConfig(BaseModel):
 
     n_samples: int = 4
     max_msa_depth: int = 512
-    load_all_msa: bool = False
 
 
 class BioMolDBConfig(BaseModel):
@@ -267,6 +266,7 @@ class BioMolDBConfig(BaseModel):
     cif_db_path: Path = Path("cif_lmdb")
     a3m_db_path: Path = Path("a3m_lmdb")
     edge_id_to_cif_ids_path: Path = Path("edge_id_to_cif_ids.tsv")
+    load_all_msa: bool = False
 
 class BioMolData(torch.utils.data.Dataset):
     """Dataset for biomolecular complexes based on BioMolDB."""
@@ -292,10 +292,12 @@ class BioMolData(torch.utils.data.Dataset):
         )
 
         self._load_edge_to_cif_ids()
-        if config.msa_config.load_all_msa:
+        if config.DB_config.load_all_msa:
             self.msa_bytes_dict = load_all_raw_data(
-                db_path=self.config.DB_config.a3m_db_path,
+                env_path=self.config.DB_config.a3m_db_path,
             )
+        else:
+            self.msa_bytes_dict = None
 
 
     def _load_edge_to_cif_ids(self) -> None:
@@ -360,6 +362,7 @@ class BioMolData(torch.utils.data.Dataset):
                 cropped_seq = "".join(cropped_seq)
                 msa = MSA.from_query(query=cropped_seq, seq_id=seq_id, a3m_type="protein")
                 msa_list.append(msa)
+                continue
             msa = MSA.cropped(msa, crop_indices)
             msa_list.append(msa)
 
@@ -481,6 +484,7 @@ class BioMolData(torch.utils.data.Dataset):
         ref_mask = ~np.isnan(ref_pos).any(axis=1)
         ref_element = cifmol.atoms.element.value
         ref_charge = cifmol.atoms.charge.value
+        ref_charge = np.array([float(c) if c not in {"?", "."} else 0.0 for c in ref_charge])
         ref_space_uid = cifmol.index_table.atom_to_res
 
         N_res = ref_space_uid.max() + 1
@@ -587,8 +591,9 @@ class BioMolData(torch.utils.data.Dataset):
         params = {
             "shuffle": False,  # leave False when using a sampler
             "drop_last": False,  # override to True for train
-            "num_workers": 4,
-            "pin_memory": True,
+            "num_workers": kwargs.get("num_workers", 0),
+            "pin_memory": False,
+            "multiprocessing_context": "spawn",
             "collate_fn": Batch.collate_fn,
         }
         params.update(kwargs)
@@ -615,7 +620,7 @@ if __name__ == "__main__":
     )
     DB_config = BioMolDBConfig(
         cif_db_path=Path("/home/psk6950/data/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb"),
-        a3m_db_path=Path("/home/psk6950/data/BioMolDBv2_2024Oct21/a3m.lmdb"),
+        a3m_db_path=Path("/home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb"),
         edge_id_to_cif_ids_path=Path("/home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/train_edges.tsv"),
     )
     config = BioMolData.BioMolConfig(

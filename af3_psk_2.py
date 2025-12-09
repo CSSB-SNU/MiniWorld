@@ -1,76 +1,74 @@
-import random
-from collections.abc import Generator, Mapping
-from contextlib import ExitStack
-from dataclasses import dataclass
-from typing import Any, Literal
-
 import numpy as np
+import random
 import torch
-from lightning.fabric.wrappers import _FabricDataLoader
-from pydantic import BaseModel
-from team_gm import BaseClient
-from team_gm.core.callbacks import ModelEMA
-from team_gm.modules import Pairformer
-from team_gm.utils import data_utils as du
-from torch import nn
-from torch.utils.data import DataLoader
+import torch.nn as nn
+import torch.distributed as dist
 
-from miniworld.data.dataloader.dataloader_edge_backprop import (
-    AdaptiveEdgeSampler,
-    BioMolDBConfig,
-    CropConfig,
-    EdgeWeightConfig,
-    MSAConfig,
-)
-from miniworld.data.features.features_biomol import Batch, NoisyBatch
-from miniworld.loss import metrics  # , losses
-from miniworld.loss.auxiliary import cal_atom_distogram_loss
-from miniworld.modules.configs import (
-    CommonConfig,
-    DiffusionConfig,
-)
-from miniworld.modules.diffusion_module import (
-    DiffusionModule,
-)
-from miniworld.modules.feature_embedder import InputFeatureEmbedder
-from miniworld.modules.head import DistogramHead
-from miniworld.modules.msa_module import MSAModule
-from miniworld.modules.primitives import (
+from typing import Literal
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from contextlib import ExitStack
+
+from team_gm import BaseClient
+from pydantic import BaseModel
+
+from team_gm.utils import metrics  # , losses
+from team_gm.utils import data_utils as du
+from team_gm.utils.diffuser import EuclideanDiffuser
+from team_gm.utils.data_utils import move_data_to_device
+from team_gm.utils.scheduler import EDM_Scheduler
+from team_gm.utils.solver import AF3Solver
+from team_gm.losses.auxiliary import cal_distogram_loss
+from MiniWorld.data.dataloader.dataloader_edge_backprop import AdaptiveEdgeSampler
+
+from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
 )
-from miniworld.utils.diffusion.diffuser import EuclideanDiffuser
-from miniworld.utils.diffusion.scheduler import EDMScheduler
-from miniworld.utils.diffusion.solver import AF3Solver
-from miniworld.utils.precision_manager import PrecisionConfig, precision_manager
+from team_gm.modules.configs import (
+    CommonConfig,
+    DiffusionConfig,
+)
+from team_gm.modules.diffusion_module import (
+    DiffusionModule,
+)
+from team_gm.modules.feature_embedder import InputFeatureEmbedder
+from team_gm.modules import Pairformer
+from team_gm.modules.msa_module import MSAModule
+from team_gm.modules.head import DistogramHead
+from team_gm.utils.precision_manager import PrecisionConfig, precision_manager
+
+from MiniWorld.data.features.features_multistate import Batch, NoisyBatch
+from MiniWorld.data.dataloader.dataloader_edge_backprop import (
+    EdgeWeightConfig,
+    BioMolDBConfig,
+    CropConfig,
+    MSAConfig,
+)
 
 
 class AF3Model(nn.Module):
-    """Structure AF3 model."""
+    """Structure AF3 model"""
 
     class ConditionConfig(BaseModel):
-        """Configuration for condition modules."""
-
         pairformer: Pairformer.Config
         msa_module: MSAModule.Config
         n_recycle_max: int = 4
 
     class Config(BaseModel):
-        """Configuration for the AF3 model."""
-
         common: CommonConfig
         trunk: "AF3Model.ConditionConfig"
         diffusion: DiffusionConfig
         precision: PrecisionConfig
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config):
         super().__init__()
         self.config = config
         self.n_recycle_max = config.trunk.n_recycle_max
 
         # feature initialization
         self.input_feature_embedder = InputFeatureEmbedder(
-            config.common, config.diffusion,
+            config.common, config.diffusion
         )
 
         # Recycle layers
@@ -99,7 +97,8 @@ class AF3Model(nn.Module):
 
         # Trunk forward
         self.msa_module = MSAModule(config.common, config.trunk.msa_module)
-        self.pairformer_blocks = Pairformer(config.trunk.pairformer)
+        # self.template_embedder = TemplateEmbedder(config.diffusion.embedder) # TODO
+        self.pairformer_blocks = Pairformer(config.common, config.trunk.pairformer)
 
         # Diffusion module
         self.diffusion_module = DiffusionModule(config.common, config.diffusion)
@@ -107,15 +106,18 @@ class AF3Model(nn.Module):
         # Distogram prediction
         self.distogram_head = DistogramHead(config.common)
 
+    @torch.no_grad()
+    def mini_rollout(self):
+        pass  # TODO
+
     def condition_forward(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, ...]:
-        """Forward pass of the condition modules with recycling."""
         if self.training:
             n_recycle = random.randint(1, self.n_recycle_max)
         else:
             n_recycle = self.n_recycle_max
-        if noisy_batch.msa.aligned_sequences.shape[1] != self.n_recycle_max:
-            msg = ("The number of MSA sequences should match the number of recycle steps.")
-            raise ValueError(msg)
+        assert (
+            noisy_batch.msa.aligned_sequences.shape[1] == self.n_recycle_max
+        ), "The number of MSA sequences should match the number of recycle steps."
 
         # input feature embedding
         (
@@ -143,7 +145,7 @@ class AF3Model(nn.Module):
                 token_single = token_single_init + self.add_single_recycle(token_single)
 
                 token_pair, token_single = self.pairformer_blocks.forward(
-                    token_pair, token_single, noisy_batch.structure.residue_mask,
+                    token_pair, token_single, noisy_batch.structure.residue_mask
                 )
 
         distogram_logit = self.distogram_head(token_pair)
@@ -177,17 +179,16 @@ class AF3Model(nn.Module):
             Atom single condition representation.
         atom_pair: FloatTensor, (B, L, L, d_atom_pair)
             Atom pair representation.
-
         """
-        return self.diffusion_module(
+        x_update = self.diffusion_module(
             noisy_batch,
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
         )
+        return x_update
 
-    def forward(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, torch.Tensor]:
-        """Forward pass of the AF3 model."""
+    def forward(self, noisy_batch: NoisyBatch) -> torch.Tensor:
         (
             token_single_input,
             token_single_trunk,
@@ -202,13 +203,14 @@ class AF3Model(nn.Module):
             token_pair_trunk,
         )
 
+        # TODO confidence head & mini_rollout
         return atom_pos_update, distogram_logit
 
 
 class AF3ModelWrapper(nn.Module):
     """Wrapper for AF3Model to handle the input and output using solver."""
 
-    def __init__(self, model: AF3Model, use_self_condition: bool = True) -> None:
+    def __init__(self, model: AF3Model, use_self_condition: bool = True):
         super().__init__()
         self.batch_loaded = False
         self.conditioned_forwarded = False
@@ -216,20 +218,16 @@ class AF3ModelWrapper(nn.Module):
         self.use_self_condition = use_self_condition
         self.z_sc = None  # Placeholder for self-conditioned input
 
-    def load_batch(self, batch: Batch) -> None:
+    def load_batch(self, batch: Batch):
         """Load a new batch to the model."""
         self.batch = batch
         self.z_sc = None
         self.batch_loaded = True
 
-    def prepare_condition(self, batch: Batch) -> None:
+    def prepare_condition(self, batch: Batch):
         """Prepare the model for conditioned forward pass."""
-        if self.batch_loaded:
-            msg = "Batch is already loaded. Please create a new AF3ModelWrapper instance for a new batch."
-            raise ValueError(msg)
-        if self.conditioned_forwarded:
-            msg = "Conditioned forward is already done. Please create a new AF3ModelWrapper instance for a new batch."
-            raise ValueError(msg)
+        assert not self.batch_loaded, "Batch is already loaded."
+        assert not self.conditioned_forwarded, "Conditioned forward is already done."
 
         # Load the batch and prepare the model for conditioned forward pass
         self.load_batch(batch)
@@ -249,10 +247,10 @@ class AF3ModelWrapper(nn.Module):
         }
 
     def forward(self, z_i: torch.Tensor, t_emb: torch.Tensor) -> torch.Tensor:
-        """Forward pass of the model wrapper."""
-        if not self.batch_loaded or not self.conditioned_forwarded:
-            msg = "Batch must be loaded and conditioned forward must be called before forward pass."
-            raise ValueError(msg)
+        assert self.batch_loaded, "Batch must be loaded before forward pass."
+        assert (
+            self.conditioned_forwarded
+        ), "Conditioned forward must be called before forward pass."
 
         noisy_batch = NoisyBatch(
             **self.batch.__dict__,
@@ -276,8 +274,6 @@ class AF3ModelWrapper(nn.Module):
 
 @dataclass
 class AF3InferenceOutput:
-    """Output of the AF3 model inference."""
-
     # Tensor of final predicted atom coordinate.
     atom_pos_pred: torch.Tensor  # (B, L, 3)
 
@@ -293,26 +289,18 @@ class AF3InferenceOutput:
     batch: Batch
 
 class AF3Client(BaseClient):
-    """Client for training and inference of AF3 model."""
-
     class DataConfig(BaseModel):
-        """Configuration for data loading."""
-
-        train_db: BioMolDBConfig
-        valid_db: BioMolDBConfig
+        train_DB: BioMolDBConfig
+        valid_DB: BioMolDBConfig
         edge_weight: EdgeWeightConfig
         crop: CropConfig
         msa: MSAConfig
 
     class LossConfig(BaseModel):
-        """Configuration for loss weights."""
-
         diffusion_loss: float = 4.0
         distogram_loss: float = 0.03
 
     class ExperimentsConfig(BaseModel):
-        """Configuration for experiments."""
-
         comment: str = "default"
         name: str = "AF3-PSK-2"
         overfitting: bool = False
@@ -340,37 +328,66 @@ class AF3Client(BaseClient):
         num_workers: int = 4
         prefetch_factor: int = 4
         seed: int = 0
-        use_ema: bool = True
-        ema_decay: float = 0.9999
 
+        loss: "AF3Client.LossConfig"
 
     class DiffuserConfig(BaseModel):
-        """Configuration for the diffuser."""
-
         seed: int = 0
-        scheduler: EDMScheduler.EDMSchedulerConfig
-        method: Literal["AF3", "EDM"] = "AF3"
+        scheduler: EDM_Scheduler.EDM_SchedulerConfig
+        method: Literal["AF3", "EDM"] = "AF3"  # TODO
 
     class Config(BaseModel):
-        """Configuration for the AF3 client."""
-
         data: "AF3Client.DataConfig"
         model: AF3Model.Config
         experiment: "AF3Client.ExperimentsConfig"
         diffuser: "AF3Client.DiffuserConfig"
-        loss: "AF3Client.LossConfig"
 
-    def __init__(self, config: Config) -> None:
-        super().__init__(config)
-        self.config = config
+    def set_seed(self, seed: int):
+        """Set the random seed for reproducibility."""
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        np.random.seed(seed)
+        random.seed(seed)
+
+    def get_step_decay_scheduler_with_warmup(
+        self,
+        optimizer: torch.optim.Optimizer,
+        warmup_steps: int = 1e3,
+        decay_steps: int = 5e4,
+        decay_factor: float = 0.95,
+    ) -> torch.optim.lr_scheduler.LambdaLR:
+        """
+        Return a LambdaLR scheduler that
+        1) linearly warms up from 0 → 1 over the first `warmup_steps`
+        2) thereafter, multiplies the lr by `decay_factor` every `decay_steps`
+        The scheduler multiplies the optimizer's base_lr by the returned factor.
+        """
+
+        def lr_lambda(step: int) -> float:
+            if step < warmup_steps:
+                # warmup: 0 -> 1
+                return step / float(warmup_steps)
+            else:
+                # step decay: factor ** floor((step - warmup_steps) / decay_steps)
+                num_decays = (step - warmup_steps) // decay_steps
+                return decay_factor**num_decays
+
+        return torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+
+    def __init__(self, config: Config, name: str = "AF3-PSK-2"):
+        super().__init__()
         self.set_seed(config.experiment.seed)
-        self.register_model(AF3Model(config.model))
+        self.model = AF3Model(config.model)
+        if config.experiment.compile:
+            self.model = torch.compile(self.model)
 
-        if config.experiment.use_ema:
-            self.add_callback(ModelEMA(config.experiment.ema_decay))
+        self.model = self.setup_model(self.model)
+        # diffuser setup
         diffuser_method = config.diffuser.method
         if diffuser_method == "AF3":
-            self.diffusion_scheduler = EDMScheduler(config.diffuser.scheduler)
+            self.diffusion_scheduler = EDM_Scheduler(config.diffuser.scheduler)
             self.diffuser = EuclideanDiffuser(
                 config=EuclideanDiffuser.EuclideanConfig(
                     seed=config.diffuser.seed,
@@ -382,30 +399,44 @@ class AF3Client(BaseClient):
                 scheduler=self.diffusion_scheduler,
             )
         else:
-            msg = f"Diffuser method {diffuser_method} is not implemented yet."
-            raise NotImplementedError(msg)
+            raise NotImplementedError(
+                f"Diffuser method {diffuser_method} is not implemented yet."
+            )
+        if config.experiment.optimizer == "AdamW":
+            optimizer = torch.optim.AdamW(self.model.parameters(), config.experiment.max_lr)
 
-    def set_seed(self, seed: int) -> None:
-        """Set the random seed for reproducibility."""
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-        np.random.seed(seed)
-        random.seed(seed)
+        model_scheduler = self.get_step_decay_scheduler_with_warmup(
+            optimizer,
+            config.experiment.warmup_steps,
+            config.experiment.decay_steps,
+            config.experiment.decay_factor,
+        )
+        self.setup(
+            config=config,
+            optimizer=optimizer,
+            scheduler=model_scheduler,
+            clip_max_norm=config.experiment.grad_clip_max_norm,
+            accum_steps=config.experiment.grad_accum_steps,
+            name=name,
+        )
+
+        self.loss_weights = config.experiment.loss
 
     def loss_fn(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, Mapping]:
-        """Compute the loss given a noisy batch."""
+        # TODO : implement other losses like smooth lddt or distogram loss etc.
+        # loss_config = self.config.experiment.loss
         atom_pos_update, distogram_logit = self.model.forward(noisy_batch)
 
         structure_loss = self.diffuser.cal_loss(atom_pos_update)
-        distogram_loss = cal_atom_distogram_loss(distogram_logit, noisy_batch.structure.atom_pos, noisy_batch.structure.atom_mask, noisy_batch.scheme.atom_to_residue_idx_map)
-        loss = self.config.loss.diffusion_loss * structure_loss + self.config.loss.distogram_loss * distogram_loss
+        # aux_losses = None TODO
 
-        return loss, {"diffusion_loss": structure_loss.item(), "distogram_loss": distogram_loss.item(), "total_loss": loss.item()}
+        distogram_loss = cal_distogram_loss(distogram_logit, noisy_batch.structure.residue_pos, noisy_batch.structure.residue_mask)
 
-    def training_step(self, batch: Batch) -> dict[str, float]:
-        """Train the model on a batch."""
+        loss = self.loss_weights.diffusion_loss * structure_loss + self.loss_weights.distogram_loss * distogram_loss
+
+        return loss, {"diffusion_loss": structure_loss.item(), "distogram_loss": distogram_loss.item()}
+
+    def training_step(self, batch: Batch) -> float:
         with precision_manager(self.model, self.config.model.precision):
             num_augment = self.config.experiment.num_augment
             noisy_atom_pos, t_emb = self.diffuser.sample(
@@ -421,50 +452,71 @@ class AF3Client(BaseClient):
                     noisy_batch.x_sc = atom_pos_update
             loss, loss_dict = self.loss_fn(noisy_batch)
 
-            self.backward(loss)
-            return loss_dict
+            self.log_metrics(
+                {"train/total_loss": loss.item()},
+                on_step=True,
+                on_epoch=True,
+            )
 
-    def validation_step(self, batch: Batch) -> dict[str, float]:
-        """Valdiate the model on a batch."""
+            # self.log_message(batch.name[0])
+            self.backward(loss)
+            return loss.item()
+
+    def validation_step(self, batch: Batch):
         # Note that when doing validation, we measure inference quality, not a loss.
         # Please keep in mind that batch is duplicated to eval_sample_num, sample quality
         # is measured by the best sample in the batch. Therefore the batch size should be
         # give as 1.
-        if batch.shape[0] != 1:
-            msg = "Batch size for validation must be 1."
-            raise ValueError(msg)
+        assert batch.shape[0] == 1
         batch = batch.duplicate(self.config.experiment.eval_sample_num)
-        return self.test_inference_quality(
-            batch, self.config.experiment.eval_timesteps,
+        valid_dict = self.test_inference_quality(
+            batch, self.config.experiment.eval_timesteps
         )
+        self.log_metrics(
+            {"valid/" + k: v for k, v in valid_dict.items()}, on_epoch=True
+        )
+        return valid_dict
 
-    def training_epoch(self, dataloader: DataLoader) -> Generator[Any, None, None]:
-        """Yield results from training step over the dataloader for one epoch."""
-        if not isinstance(dataloader, _FabricDataLoader):
-            fabric_dataloader = self.fabric.setup_dataloaders(dataloader)
-        else:
-            fabric_dataloader = dataloader
+
+    def training_epoch(self, dataloader: torch.utils.data.DataLoader, num_item: int) -> list:
+        dataloader = self._setup_dataloader(dataloader)
+        self._epoch += 1
+        self._in_training_epoch = True
+        self.train()
+        outputs = []
         sampler: AdaptiveEdgeSampler = dataloader.sampler
 
-        self.model.train()
         self.call_callbacks("on_train_epoch_start")
+        for batch_idx, batch in enumerate(dataloader):
+            batch = move_data_to_device(batch, self.device)
 
-        fabric_iter = iter(fabric_dataloader)
-        for batch_idx, batch in enumerate(fabric_iter):
-            self.call_callbacks("on_train_step_start", batch, batch_idx)
-            loss_dict = self.training_step(batch)
-            loss = self.config.loss.diffusion_loss * loss_dict["diffusion_loss"] + self.config.loss.distogram_loss * loss_dict["distogram_loss"]
+            self.call_callbacks("on_train_batch_start", batch, batch_idx)
+            output = self.training_step(batch)
+            sampler.stats.update(batch.scheme.edge_index, output)
+            outputs.append(output)
+            self.call_callbacks("on_train_batch_end", output, batch, batch_idx)
+            if self.gradient_helper.local_step == 0 or batch_idx == num_item:
+                self._log_on_global_step_complete()
+            self._sync_and_check_stop()
+            if batch_idx == num_item - 1:
+                break
 
-            sampler.stats.update(batch.scheme.edge_index, torch.tensor(loss, device=batch.device))
-            is_accumulating = (batch_idx + 1) % self.gradient_accumulation_steps != 0
-            if not is_accumulating:
-                self._optimizer_step()
-            self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
-            yield loss_dict
-        self.optimizer.zero_grad()
+        self.gradient_helper.finalize()
+        self._log_on_global_step_complete()
+        self._log_on_epoch_complete()
+        self._in_training_epoch = False
 
-        self._epoch += 1
-        self.call_callbacks("on_train_epoch_end")
+        if self._losses and self.is_distributed:
+            local_mean_loss = torch.tensor(self._losses, device=self.device).mean()
+            dist.all_reduce(local_mean_loss, op=dist.ReduceOp.SUM)
+            mean_loss = local_mean_loss.cpu()
+            mean_loss /= self.world_size
+        else:
+            mean_loss = torch.tensor(self._losses).mean()
+        self._losses.clear()
+        self.call_callbacks("on_train_epoch_end", mean_loss, outputs)
+        self._sync_and_check_stop()
+        return outputs
 
     @torch.no_grad()
     def test_inference_quality(
@@ -472,7 +524,6 @@ class AF3Client(BaseClient):
         batch: Batch,
         timesteps: int = 100,
     ) -> dict[str, float]:
-        """Test the inference quality of the model on a batch."""
         batch = batch.to(device=self.device)
         output = self.inference(batch, timesteps=timesteps)
 
@@ -483,23 +534,20 @@ class AF3Client(BaseClient):
             batch.structure.atom_pos[0],
             batch.structure.atom_mask[0],
         )
-        max_lddt = max(max_lddt, lddt)
+        if max_lddt < lddt:
+            max_lddt = lddt
 
         rmsd = metrics.cal_aligned_rmsd(
             output.atom_pos_pred[0],
             batch.structure.atom_pos[0],
             batch.structure.atom_mask[0],
         )
-
-        category_lddt = metrics.category_lddt(
-            batch,
-            output.atom_pos_pred[0],
-        )
-        min_rmsd = min(min_rmsd, rmsd)
+        if min_rmsd > rmsd:
+            min_rmsd = rmsd
+        # TODO: use dataclass
         return {
             "best_rmsd": min_rmsd,
             "best_lddt": max_lddt,
-            **category_lddt,
         }
 
     @torch.no_grad()
@@ -508,10 +556,9 @@ class AF3Client(BaseClient):
         batch: Batch,
         timesteps: int = 100,
     ) -> AF3InferenceOutput:
-        """Inference using the diffusion solver."""
         raw_model = getattr(self.model, "module", self.model)
         model_wrapper = AF3ModelWrapper(
-            raw_model, use_self_condition=self.config.experiment.self_condition,
+            raw_model, use_self_condition=self.config.experiment.self_condition
         )
         batch = batch.to(device=self.device)
         model_wrapper.prepare_condition(batch)
@@ -535,5 +582,5 @@ class AF3Client(BaseClient):
             distogram_logit=distogram_logit,
         )
 
-    def sample(self) -> None:
-        """Sample from the diffusion model using the ODE Euler solver."""
+    def sample(self):
+        pass  # TODO

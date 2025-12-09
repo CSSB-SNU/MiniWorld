@@ -737,34 +737,36 @@ def pdist_clipped(
 
     return dist
 
-def extract_residue_com(cifmol:CIFMolAttached) -> np.ndarray:
+
+def extract_residue_com(cifmol: CIFMolAttached) -> np.ndarray:
     """Extract residue center of mass coordinates from a CIFMolAttached object."""
     atom_to_residue_idx_map = cifmol.index_table.atom_to_res
     xyz = cifmol.atoms.xyz.value
 
-    valid = np.isfinite(xyz).all(axis=1)
+    n_res = atom_to_residue_idx_map.max() + 1
 
-    atom_res = atom_to_residue_idx_map[valid]
-    xyz_valid = xyz[valid]
+    valid_mask = ~np.isnan(xyz)  # shape (n_atoms, 3)
 
-    n_res = atom_res.max() + 1
+    xyz_zeroed = np.nan_to_num(xyz, nan=0.0)
 
-    # Count of valid atoms in each residue
-    res_counts = np.bincount(atom_res, minlength=n_res)  # shape (n_res,)
-
-    # Sum of coordinates per residue, using only valid atoms
     res_xyz_sum = np.zeros((n_res, 3), dtype=xyz.dtype)
+    res_valid_count = np.zeros((n_res, 3), dtype=int)
+
     for i in range(3):
         res_xyz_sum[:, i] = np.bincount(
-            atom_res,
-            weights=xyz_valid[:, i],
+            atom_to_residue_idx_map,
+            weights=xyz_zeroed[:, i],
+            minlength=n_res,
+        )
+        res_valid_count[:, i] = np.bincount(
+            atom_to_residue_idx_map,
+            weights=valid_mask[:, i].astype(int),
             minlength=n_res,
         )
 
-    # Geometric center per residue
     res_center = np.full((n_res, 3), np.nan, dtype=xyz.dtype)
-    nonzero = res_counts > 0
-    res_center[nonzero] = res_xyz_sum[nonzero] / res_counts[nonzero, None]
+    nonzero = res_valid_count > 0
+    res_center[nonzero] = res_xyz_sum[nonzero] / res_valid_count[nonzero]
 
     return res_center
 

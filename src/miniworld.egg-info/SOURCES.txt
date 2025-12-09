@@ -7,17 +7,19 @@ src/miniworld.egg-info/requires.txt
 src/miniworld.egg-info/top_level.txt
 src/miniworld/data/__init__.py
 src/miniworld/data/crop.py
+src/miniworld/data/io.py
 src/miniworld/data/mapping.py
 src/miniworld/data/msa.py
-src/miniworld/data/utils.py
 src/miniworld/data/dataloader/__init__.py
 src/miniworld/data/dataloader/dataloader_edge_backprop.py
+src/miniworld/data/dataloader/dataloader_multistate_contam.py
 src/miniworld/data/features/__init__.py
 src/miniworld/data/features/features_biomol.py
+src/miniworld/data/features/features_multistate.py
+src/miniworld/data/mols/__init__.py
 src/miniworld/data/mols/cifmol_attached.py
 src/miniworld/loss/__init__.py
 src/miniworld/loss/auxiliary.py
-src/miniworld/loss/lddt.py
 src/miniworld/loss/metrics.py
 src/miniworld/loss/multistate.py
 src/miniworld/models/__init__.py
@@ -56,7 +58,6 @@ src/miniworld/modules/kernels/triangle_attention_pair_bias.py
 src/miniworld/modules/kernels/utils.py
 src/miniworld/utils/MoE_utils.py
 src/miniworld/utils/__init__.py
-src/miniworld/utils/precision_manager copy.py
 src/miniworld/utils/precision_manager.py
 src/miniworld/utils/analysis/todo.py
 src/miniworld/utils/diffusion/__init__.py

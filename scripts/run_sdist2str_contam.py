@@ -1,230 +1,244 @@
-import torch
-import click
-import tempfile
-import subprocess
-import random
-import numpy as np
-
-from omegaconf import OmegaConf
+import datetime
+import json
+import logging
 from pathlib import Path
-import os
 
-from team_gm.loggers import WandbLogger
-from team_gm.callbacks import SaveCheckpointPeriodic
-from MiniWorld.data.dataloader.dataloader_multistate_contam import (
+import click
+import torch
+from lightning import Fabric
+from omegaconf import OmegaConf
+from team_gm.utils.script_utils import MetricsAggregator, set_seed
+
+import wandb
+from miniworld.data.dataloader.dataloader_multistate_contam import (
     BioMolMonomerData,
 )
+from miniworld.models.sdist_to_str_contam import Sdist2StrClient
 
-
-def set_seed(seed: int = 42):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    # torch.backends.cudnn.deterministic = True
-    # torch.backends.cudnn.benchmark = False
-
-
-# torch.set_float32_matmul_precision("high")
-
+# torch.set_float32_matmul_precision("high")  # noqa: ERA001
 # anomaly detection
 torch.autograd.set_detect_anomaly(False)
-# torch.autograd.set_detect_anomaly(True)
+
+def setup_logger(client: Sdist2StrClient) -> None:
+    if not client.is_global_zero:
+        return
+
+    client.logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s][%(name)s][%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.INFO)
+    client.logger.addHandler(handler)
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    file_handler = logging.FileHandler(f"logs/structure_flow_{now:%Y%m%d_%H%M%S}.log")
+    file_handler.setFormatter(formatter)
+    client.logger.addHandler(file_handler)
+
+
+
+def get_step_decay_scheduler_with_warmup(
+    optimizer: torch.optim.Optimizer,
+    warmup_steps: int = 1e3,
+    decay_steps: int = 5e4,
+    decay_factor: float = 0.95,
+) -> torch.optim.lr_scheduler.LambdaLR:
+    """
+    Return a LambdaLR scheduler that
+    1) linearly warms up from 0 → 1 over the first `warmup_steps`
+    2) thereafter, multiplies the lr by `decay_factor` every `decay_steps`
+    The scheduler multiplies the optimizer's base_lr by the returned factor.
+    """
+
+    def lr_lambda(step: int) -> float:
+        if step < warmup_steps:
+            # warmup: 0 -> 1
+            return step / float(warmup_steps)
+        # step decay: factor ** floor((step - warmup_steps) / decay_steps)
+        num_decays = (step - warmup_steps) // decay_steps
+        return decay_factor**num_decays
+
+    return torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+
 
 
 @click.group()
 def cli():
     pass
 
+@cli.command()
+@click.option(
+    "--config",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="config file",
+)
+@click.option(
+    "--resume-from-ckpt",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="checkpoint file",
+)
+@click.option(
+    "-w",
+    is_flag=True,
+    help="Use wandb for logging",
+)
+@click.option(
+    "--ckpt-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    default="checkpoints/",
+    help="dir for save checkpoint",
+)
+@click.option(
+    "--seed",
+    type=int,
+    help="random seed",
+)
+def train(  # noqa: PLR0912, PLR0915
+    config: Path | None,
+    resume_from_ckpt: Path | None,
+    w: bool,
+    ckpt_dir: Path,
+    seed: int | None,
+):
+    if config and not resume_from_ckpt:
+        cfg = OmegaConf.load(config)
+        cfg = Sdist2StrClient.Config.model_validate(cfg)
+        client = Sdist2StrClient(cfg)
+    elif not config and resume_from_ckpt:
+        client = Sdist2StrClient.from_checkpoint(resume_from_ckpt)
+    else:
+        msg = "You must provide either a config file or a checkpoint file, but not both."
+        raise ValueError(msg)
 
-def add_slurm_options(func):
-    slurm_options = [
-        click.option("--slurm", is_flag=True, help="Run on SLURM"),
-        click.option("--mem", default="32G", type=str),
-        click.option("--cpus", default=8, type=int),
-        click.option("--gpus", default="A6000:1", type=str),
-    ]
-    for option in reversed(slurm_options):
-        func = option(func)
-    return func
+    fabric = Fabric()
+    fabric.launch()
 
 
-def submit_to_slurm(command, job_name, mem, cpus, gpus) -> str:
-    script = (
-        f"#!/bin/bash\n"
-        "#SBATCH -p gpu\n"
-        f"#SBATCH -J {job_name}\n"
-        f"#SBATCH -c {cpus}\n"
-        f"#SBATCH --mem={mem}\n"
-        f"#SBATCH --gres=gpu:{gpus}\n"
-        f"#SBATCH -o {job_name}.log\n\n"
-        f"{command}"
+    scheduler = get_step_decay_scheduler_with_warmup(
+        torch.optim.AdamW(
+            client.model.parameters(),
+            client.config.experiment.max_lr,
+        ),
+        warmup_steps=client.config.experiment.warmup_steps,
+        decay_steps=client.config.experiment.decay_steps,
+        decay_factor=client.config.experiment.decay_factor,
     )
 
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".sh") as f:
-        f.write(script)
-        path = f.name
-    subprocess.run(["sbatch", path])
-    return path
+    client.setup(
+        fabric=fabric,
+        optimizer=torch.optim.AdamW(
+            client.model.parameters(),
+            client.config.experiment.max_lr,
+        ),
+        scheduler=scheduler,
+        gradient_accumulation_steps=client.config.experiment.grad_accum_steps,
+        gradient_clip_norm=client.config.experiment.grad_clip_max_norm,
+    )
+    setup_logger(client)
 
-
-@cli.command()
-@click.option("--config", type=click.Path(exists=True), help="config file")
-@click.option(
-    "--resume_from_ckpt", type=click.Path(exists=True), help="checkpoint file"
-)
-@click.option("-w", is_flag=True, help="Use wandb for logging")
-@click.option("--ckpt_dir", default="checkpoints/", help="dir for save checkpoint")
-@click.option("--device", default="cuda", type=str, help="device to use")
-@click.option(
-    "--local_rank",
-    default=lambda: int(os.environ.get("LOCAL_RANK", 0)),
-    type=int,
-    help="DDP local rank (torchrun sets this)",
-)
-@add_slurm_options
-def train(
-    config: str | None = None,
-    resume_from_ckpt: str | None = None,
-    w: bool = False,
-    ckpt_dir: str = "checkpoints/",
-    device: str = "cuda",
-    seed: int | None = 1123,
-    slurm: bool = False,
-    **slurm_kwargs,
-):
-    """Train Sdist2Str model."""
-    if (config or resume_from_ckpt) is None:
-        raise ValueError("You must provide either a config file or a checkpoint file.")
-    if config and resume_from_ckpt:
-        raise ValueError("You cannot provide both a config file and a checkpoint file.")
-
-    if slurm:
-        if config:
-            job_name = Path(config).stem
-            command = f"pixi run python -u {__file__} train --config {config}"
-        else:
-            job_name = Path(resume_from_ckpt).stem
-            command = f"pixi run python {__file__} train --resume_from_ckpt {resume_from_ckpt}"
-        command += f" --ckpt_dir {ckpt_dir}"
-        command += f" --device {device}"
-        if seed is not None:
-            command += f" --seed {seed}"
-        if w:
-            command += " -w"
-        path = submit_to_slurm(command, job_name=job_name, **slurm_kwargs)
-        click.echo(f"✅ Submitted Slurm job: {job_name} ({path})")
-        return
-
-    from MiniWorld.models.sdist_to_str_contam import Sdist2StrClient
-
-    # Load client
-    if resume_from_ckpt is None:
-        config_path = Path(config)
-        if not config_path.exists():
-            raise FileNotFoundError(f"Cannot found config file: {config_path}")
-        config = OmegaConf.load(config)
-        config = Sdist2StrClient.Config(**config)
-        client = Sdist2StrClient(config, name="MiniWorld")
-    else:
-        ckpt_path = Path(resume_from_ckpt)
-        if not ckpt_path.exists():
-            raise FileNotFoundError(f"Cannot found checkpoint file: {ckpt_path}")
-        client = Sdist2StrClient.from_checkpoint(ckpt_path)
-
-    world_size = int(os.environ.get("WORLD_SIZE", 1))
-
-    # Setup wandb
-    if w and client.is_distributed:
-        client.add_logger(
-            WandbLogger("-".join([client.name, client.config.experiment.comment]))
+    if resume_from_ckpt is not None:
+        client.load_optimizer_state(resume_from_ckpt)
+        client.logger.info(
+            "Load pretrain weight: %s (%d epoch)",
+            resume_from_ckpt.name,
+            client.epoch,
         )
+
+    if w and client.is_global_zero:
+        wandb.init(name=client.config.experiment.comment)
+        wandb.config.update(client.config.model_dump())
+    msg = f"Config:\n{json.dumps(client.config.model_dump(), indent=4, default=str)}"
+    client.logger.info(msg)
 
     if seed is not None:
         set_seed(seed)
-        client.log_message(f"Set random seed: {seed}")
+        client.logger.info("Set random seed: %d", seed)
 
-    ckpt_dir_path = Path(ckpt_dir)
-    ckpt_dir_path.mkdir(parents=True, exist_ok=True)
-    ckpt_path = ckpt_dir_path / f"{client.name}.pt"
-
-    # 20250510 psk, 나중에 BioMol 혹은 config에 추가할 것. 지금은 하드코딩
-
+    # TODO
     train_data_config = BioMolMonomerData.BioMolConfig(
-        crop_config=client.config.data.crop,
-        msa_config=client.config.data.msa,
-        kmer_fast_align_config = client.config.data.kmer_fast_align,
-        multistate_config = client.config.data.multistate,
-        preprocess_config=client.config.data.train_preprocessing,
+        crop_config=client.config.data.crop.model_dump(),
+        msa_config=client.config.data.msa.model_dump(),
+        kmer_fast_align_config = client.config.data.kmer_fast_align.model_dump(),
+        multistate_config = client.config.data.multistate.model_dump(),
+        preprocess_config=client.config.data.train_preprocessing.model_dump(),
     )
     valid_data_config = BioMolMonomerData.BioMolConfig(
-        crop_config=client.config.data.crop,
-        msa_config=client.config.data.msa,
-        kmer_fast_align_config = client.config.data.kmer_fast_align,
-        multistate_config = client.config.data.multistate,
-        preprocess_config=client.config.data.valid_preprocessing,
+        crop_config=client.config.data.crop.model_dump(),
+        msa_config=client.config.data.msa.model_dump(),
+        kmer_fast_align_config = client.config.data.kmer_fast_align.model_dump(),
+        multistate_config = client.config.data.multistate.model_dump(),
+        preprocess_config=client.config.data.train_preprocessing.model_dump(),
     )
 
-    # always ddp
-    if client.config.experiment.prefetch_factor == 0:
-        prefetch_factor = None
-    else:
-        prefetch_factor = client.config.experiment.prefetch_factor
+    prefetch_factor = None if client.config.experiment.prefetch_factor == 0 else int(client.config.experiment.prefetch_factor)
     train_loader = BioMolMonomerData(train_data_config).create_ddp_dataloader(
-        rank=client.local_rank,
-        world_size=world_size,
+        rank=fabric.local_rank,
         drop_last=True,
         batch_size=client.config.experiment.num_batch,
         num_workers=client.config.experiment.num_workers,
         prefetch_factor=prefetch_factor,
     )
     valid_loader = BioMolMonomerData(valid_data_config).create_ddp_dataloader(
-        rank=client.local_rank,
-        world_size=world_size,
+        rank=fabric.local_rank,
         drop_last=False,
         batch_size=client.config.experiment.num_batch,  # or 1
-        num_workers=1,
+        num_workers=0,
     )
 
-    client.log_message("-" * 70)
-    client.log_message("")
-    client.log_message("Start training".center(70))
-    client.log_message("")
-    client.log_message("-" * 70)
+    client.logger.info("-" * 70)
+    client.logger.info("")
+    client.logger.info("Start training".center(70))
+    client.logger.info("")
+    client.logger.info("-" * 70)
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    train_aggregator = MetricsAggregator(client, "train", use_wandb=w)
+    valid_aggregator = MetricsAggregator(client, "valid", use_wandb=w)
 
-    client.add_callback(SaveCheckpointPeriodic(ckpt_dir, every_n_epochs=2))
+    world_size = fabric.world_size
     train_num_item = client.config.experiment.train_item // world_size
     valid_num_item = client.config.experiment.valid_item // world_size
+    min_train_loss = float("inf")
+
     for epoch in range(client.epoch, client.config.experiment.num_epoch):
+        client.logger.info("Training Epoch %d", client.epoch)
         train_loader.sampler.set_epoch(epoch)
-        client.training_epoch(train_loader, train_num_item)
+        for n_item, result in enumerate(client.training_epoch(train_loader)):
+            train_aggregator.log_step(result)
+            if (n_item + 1) * fabric.world_size >= train_num_item:
+                client._epoch += 1  # noqa: SLF001
+                client.call_callbacks("on_train_epoch_end")
+                break
+
+        means = train_aggregator.log_epoch()
+
+        if client.is_global_zero:
+            train_loss = means["total_loss"]
+            if train_loss < min_train_loss:
+                min_train_loss = train_loss
+                comment = client.config.experiment.comment
+                checkpoint_path = ckpt_dir / f"af3_{comment}_best.pt"
+                client.save_checkpoint(checkpoint_path)
+                client.logger.info(
+                    "Save best checkpoint: %s (train loss: %.4g)",
+                    checkpoint_path.name,
+                    train_loss,
+                )
+
         if (client.epoch - 1) % client.config.experiment.eval_freq == 0:
             valid_loader.sampler.set_epoch(epoch)
-            client.validation_epoch(valid_loader, valid_num_item)
-
-
-@cli.command()
-@click.option(
-    "--ckpt", type=click.Path(exists=True), help="checkpoint file", required=True
-)
-@click.option("--num_sample", type=int, default=1, help="number of samples")
-@click.option("--timesteps", type=int, default=100, help="number of timesteps")
-@click.option("--out_dir", type=click.Path(), default="output/", help="output dir")
-@click.option("--device", default="cuda", type=str, help="device to use")
-@add_slurm_options
-def inference(
-    ckpt: str,
-    num_sample: int = 5,
-    timesteps: int = 100,
-    out_dir: str = "outputs",
-    device: str = "cuda",
-    slurm: bool = False,
-    mem: str = "32G",
-    cpus: int = 8,
-    gpus: str = "A6000:1",
-):
-    pass
+            client.logger.info("Validation Epoch %d", client.epoch)
+            for n_item, result in enumerate(client.validation_epoch(valid_loader)):
+                valid_aggregator.log_step(result, ignore_step=True)
+                if (n_item + 1) * fabric.world_size >= valid_num_item:
+                    client.call_callbacks("on_validation_epoch_end")
+                    break
+            valid_aggregator.log_epoch()
 
 if __name__ == "__main__":
+    # set mp start method
+    torch.multiprocessing.set_start_method("spawn", force=True)
     cli()

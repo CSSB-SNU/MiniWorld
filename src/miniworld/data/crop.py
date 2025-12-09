@@ -283,7 +283,7 @@ def crop_spatial_interface_residue(  # noqa: PLR0915
     interface_bias: tuple[str, str] | None,
     cifmol: CIFMol,
     crop_length: int,
-    interface_distance_cutoff: float = 6.0, # atom level
+    interface_distance_cutoff: float = 12.0, # residue level
 ) -> tuple[ndarray, dict[str, ndarray]]:
     """Crop the structure and sequence into a spatial region."""
     valid_indices = get_valid_indices(cifmol)
@@ -324,7 +324,14 @@ def crop_spatial_interface_residue(  # noqa: PLR0915
 
 
     total_residue_indices = np.concatenate([src_residue_indices, dst_residue_indices])
-    xyz_cropped = residue_xyz[total_residue_indices]
+    try:
+        xyz_cropped = residue_xyz[total_residue_indices]
+    except:
+        # save cifmol for debugging
+        import pickle
+        with open("debug_cifmol.pkl", "wb") as f:
+            pickle.dump(cifmol, f)
+        raise ValueError("Failed to extract residue com for the selected residues.")
     distance_map = pdist_clipped(
         xyz_cropped,
         d_thr=interface_distance_cutoff + 0.1,
@@ -358,6 +365,10 @@ def crop_spatial_interface_residue(  # noqa: PLR0915
         crop_indices = np.sort(crop_indices)
         chain_crop = get_chain_crop_indices(cifmol, crop_indices)
         return crop_indices, chain_crop
+
+    if interface_residues.size == 0:
+        msg = "No interface residues found in the biomolstructure."
+        raise NoInterfaceError(msg)
 
     xyz_interface = residue_xyz[interface_residues]
     distance_map = np.linalg.norm(residue_xyz[:, None, :] - xyz_interface[None, :, :], axis=-1) # (N_residues, N_interface_residues)
@@ -423,7 +434,7 @@ class Cropper:
                     crop_length,
                 )
             except NoInterfaceError:
-                return crop_contiguous_monomer(
+                return crop_spatial_residue(
                     chain_bias,
                     cifmol,
                     crop_length,

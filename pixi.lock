@@ -2204,8 +2204,8 @@ packages:
   timestamp: 1761214578417
 - pypi: ./
   name: miniworld
-  version: 0.3.0
-  sha256: 46795ca04b92b5e76c4a4a5a8749b928f30438a820e17be0326bbdaeb11979ea
+  version: 1.0.0
+  sha256: 1a303e262f7867a6c2b39cc18068850ffad144661eeea712d0e664d648d9602b
   requires_dist:
   - torch>=2.8.0,<3
   - wandb>=0.19.8,<0.20

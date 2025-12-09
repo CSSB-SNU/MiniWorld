@@ -17,8 +17,8 @@ class SequenceFeatures(BaseBatch):
 class StructureFeatures(BaseBatch):
     """Structure features."""
 
-    atom_pos: Float[torch.Tensor, "B L_atom 3"]
-    atom_pos_mask: Float[torch.Tensor, "B L_atom"]
+    atom_pos: Float[torch.Tensor, "B N_str L_atom 3"]
+    atom_pos_mask: Float[torch.Tensor, "B N_str L_atom"]
     atom_mask: Bool[torch.Tensor, "B L_atom"]
     residue_bond: Int[torch.Tensor, "B n_residue_bond 3"]
     residue_mask: Bool[torch.Tensor, "B L_res"]
@@ -50,7 +50,6 @@ class SchemeFeatures(BaseBatch):
     residue_entity_id: Int[torch.Tensor, "B L_res"]
     residue_sym_id: Int[torch.Tensor, "B L_res"]
     atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"]
-    edge_index: Int[torch.Tensor, "B E"]
 
 
 @typecheck
@@ -67,24 +66,25 @@ class MSAFeatures(BaseBatch):
 
 @typecheck
 @dataclass(frozen=True)
-class ChainFeatures(BaseBatch):
-    """Chain features."""
+class ContamFeatures(BaseBatch):
+    """Contaminated features."""
 
-    entity_type: Int[torch.Tensor, "B L_chain"]
-    contact_edges: Int[torch.Tensor, "B N_contact 2"]
+    atom_pos: Float[torch.Tensor, "B N_str L_atom 3"]
+    atom_pos_mask: Float[torch.Tensor, "B N_str L_atom"]
+    atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"]
 
 @dataclass(kw_only=True, frozen=True)
 class Batch(BaseBatch):
     """Batch of features."""
 
-    name: list
-
+    name: list  # (...)
     sequence : SequenceFeatures
     structure: StructureFeatures
     reference: ReferenceFeatures
+    contam: ContamFeatures
     scheme: SchemeFeatures
     msa: MSAFeatures
-    chain: ChainFeatures
+    contam_bias: list
 
     @property
     def shape(self) -> tuple[int]:
@@ -165,6 +165,7 @@ class ContamBatch(BaseBatch):
 
 
 
+
 @dataclass(kw_only=True, frozen=True)
 class NoisyBatch(Batch):
     """Batch with noise for diffusion model."""
@@ -184,3 +185,4 @@ class NoisyBatch(Batch):
         object.__setattr__(self, "x_t", self.x_t.to(self.device, dtype=self.dtype))
         if self.x_sc is not None:
             object.__setattr__(self, "x_sc", self.x_sc.to(self.device, dtype=self.dtype))
+

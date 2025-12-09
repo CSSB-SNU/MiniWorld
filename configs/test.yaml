@@ -1,13 +1,15 @@
 data:
   train_db:
     cif_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
-    a3m_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/a3m.lmdb
+    a3m_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb
     edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/train_edges.tsv
+    load_all_msa: False
     
   valid_db:
     cif_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
     a3m_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/a3m.lmdb
     edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/valid_edges_old.tsv
+    load_all_msa: False
 
   edge_weight:
     PP_edge: 1.0
@@ -23,9 +25,9 @@ data:
     device: "cpu"
 
   crop:
-    contiguous_prob: 0.0
-    spatial_prob: 1.0
-    interface_prob: 0.0
+    contiguous_prob: 0.2
+    spatial_prob: 0.4
+    interface_prob: 0.4
     crop_length: 384
 
   msa:

@@ -126,7 +126,9 @@ def load_all_raw_data(env_path: Path) -> dict[str, bytes]:
     with env.begin(buffers=True) as txn:
         cursor = txn.cursor()
         for key, value in cursor:
-            data_dict[key.decode()] = bytes(value)
+            key_str = bytes(key).decode()
+            value_bytes = bytes(value)
+            data_dict[key_str] = value_bytes
 
     return data_dict
 
@@ -175,7 +177,7 @@ def load_cifmol(db_path:Path, cif_id: str) -> CIFMolAttached:
         msg = f"Key '{pdb_id}' not found in LMDB database at '{db_path}'."
         raise KeyError(msg)
 
-    value = load_bytes(bytes(value))
+    value = load_bytes(value)
     item = value.get(f"{assembly_id}_{model_id}_{alt_id}")
     if item is None:
         msg = f"CIFMolAttached '{cif_id}' not found in LMDB database at '{db_path}'."
@@ -185,11 +187,29 @@ def load_cifmol(db_path:Path, cif_id: str) -> CIFMolAttached:
 
 
 
+def load_cifmols(db_path:Path, seq_id: str) -> list[CIFMol]:
+    """Load CIFMols from the LMDB database for a given seqID."""
+    value = load_raw_data(seq_id, db_path)
+    value = load_bytes(value)
+
+    cifmols = [CIFMol.from_dict(item) for item in value.values()]
+    length_list = [len(cifmol.residues) for cifmol in cifmols]
+    if len(set(length_list)) != 1:
+        msg = f"Different residue lengths found for seqID {seq_id}: {length_list}"
+        raise ValueError(msg)
+    return cifmols
+
+
+
 
 def load_a3m(key: str, env_path: Path) -> MSA:
     """Load MSA from LMDB by key."""
     value = load_raw_data(key, env_path)
+    if value is None:
+        return None
     msa_container = load_bytes(bytes(value))["msa_container"]
+    if "residue_container" not in msa_container or "chain_container" not in msa_container:
+        print(msa_container.keys())
     msa_residue_container = msa_container["residue_container"]
     msa_chain_container = msa_container["chain_container"]
     msa_residue_container = FeatureContainer.from_dict(msa_residue_container)

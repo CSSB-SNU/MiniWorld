@@ -40,6 +40,31 @@ def setup_logger(client: AF3Client) -> None:
     client.logger.addHandler(file_handler)
 
 
+
+def get_step_decay_scheduler_with_warmup(
+    optimizer: torch.optim.Optimizer,
+    warmup_steps: int = 1e3,
+    decay_steps: int = 5e4,
+    decay_factor: float = 0.95,
+) -> torch.optim.lr_scheduler.LambdaLR:
+    """
+    Return a LambdaLR scheduler that
+    1) linearly warms up from 0 → 1 over the first `warmup_steps`
+    2) thereafter, multiplies the lr by `decay_factor` every `decay_steps`
+    The scheduler multiplies the optimizer's base_lr by the returned factor.
+    """
+
+    def lr_lambda(step: int) -> float:
+        if step < warmup_steps:
+            # warmup: 0 -> 1
+            return step / float(warmup_steps)
+        # step decay: factor ** floor((step - warmup_steps) / decay_steps)
+        num_decays = (step - warmup_steps) // decay_steps
+        return decay_factor**num_decays
+
+    return torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+
+
 @click.group()
 def cli():
     pass
@@ -90,19 +115,24 @@ def train(  # noqa: PLR0912, PLR0915
 
     fabric = Fabric()
     fabric.launch()
+
+    scheduler = get_step_decay_scheduler_with_warmup(
+        torch.optim.AdamW(
+            client.model.parameters(),
+            client.config.experiment.max_lr,
+        ),
+        warmup_steps=client.config.experiment.warmup_steps,
+        decay_steps=client.config.experiment.decay_steps,
+        decay_factor=client.config.experiment.decay_factor,
+    )
+
     client.setup(
         fabric=fabric,
         optimizer=torch.optim.AdamW(
             client.model.parameters(),
             client.config.experiment.max_lr,
         ),
-        scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(
-            torch.optim.AdamW(
-                client.model.parameters(),
-                client.config.experiment.max_lr,
-            ),
-            T_max=client.config.experiment.num_epoch,
-        ),
+        scheduler=scheduler,
         gradient_accumulation_steps=client.config.experiment.grad_accum_steps,
         gradient_clip_norm=client.config.experiment.grad_clip_max_norm,
     )
@@ -141,7 +171,6 @@ def train(  # noqa: PLR0912, PLR0915
     )
 
     prefetch_factor = None if client.config.experiment.prefetch_factor == 0 else int(client.config.experiment.prefetch_factor)
-    click.echo(f"Prefetch factor: {prefetch_factor}")
 
     train_loader = BioMolData(train_data_config).create_ddp_dataloader(
         rank=fabric.local_rank,
@@ -154,7 +183,8 @@ def train(  # noqa: PLR0912, PLR0915
         rank=fabric.local_rank,
         drop_last=False,
         batch_size=client.config.experiment.num_batch,  # or 1
-        num_workers=0,
+        num_workers=client.config.experiment.num_workers,
+        prefetch_factor=prefetch_factor,
     )
 
     client.logger.info("-" * 70)
@@ -208,4 +238,6 @@ def train(  # noqa: PLR0912, PLR0915
             valid_aggregator.log_epoch()
 
 if __name__ == "__main__":
+    # set mp start method
+    torch.multiprocessing.set_start_method("spawn", force=True)
     cli()
