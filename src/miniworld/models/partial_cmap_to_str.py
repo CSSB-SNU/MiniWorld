@@ -1,27 +1,29 @@
 import random
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping
 from contextlib import ExitStack
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import torch
+from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
 from team_gm import BaseClient
 from team_gm.core.callbacks import ModelEMA
 from team_gm.modules import Pairformer
 from team_gm.utils import data_utils as du
 from torch import nn
+from torch.utils.data import DataLoader
 
-from miniworld.data.dataloader.dataloader_multistate_contam import (
+from miniworld.data.dataloader.dataloader_edge_backprop import (
+    AdaptiveEdgeSampler,
+    BioMolDBConfig,
     CropConfig,
-    KmerFastAlignConfig,
+    EdgeWeightConfig,
     MSAConfig,
-    MultistateConfig,
-    MultiStatedbConfig,
 )
-from miniworld.data.features.features_multistate import Batch, NoisyBatch
-from miniworld.loss import metrics
+from miniworld.data.features.features_biomol import Batch, NoisyBatch
+from miniworld.loss import metrics  # , losses
 from miniworld.modules.configs import (
     CommonConfig,
     DiffusionConfig,
@@ -39,37 +41,32 @@ from miniworld.utils.diffusion.scheduler import EDMScheduler
 from miniworld.utils.diffusion.solver import AF3Solver
 from miniworld.utils.precision_manager import PrecisionConfig, precision_manager
 from miniworld.utils.structure.distance import (
-    get_shortest_distances_from_multistructures,
+    get_contact_map,
 )
 
 
-class SdistEmbedder(nn.Module):
-    """Shortest Distogram Embedder."""
+class ContactMapEmbedder(nn.Module):
+    """ContactMap Embedder."""
 
-    class Config(BaseModel):
-        """Configuration for SdistEmbedder."""
-
-        min_distance: float = 2.0
-        max_distance: float = 22.0
-        num_bins: int = 64
-        pairformer: Pairformer.Config
-
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Pairformer.Config) -> None:
         super().__init__()
 
-        self.to_pair = Linear(config.num_bins, 128, bias=False)
-        pairformer_config = config.pairformer
+        self.to_pair = Linear(
+            3,
+            128,
+            bias=False,
+        )  # 0 : non-contact, 1: contact, 2: unknown(masked)
         # use_single is False
-        pairformer_config.use_single = False
-        self.pairformer = Pairformer(config.pairformer)
+        config.use_single = False
+        self.pairformer = Pairformer(config)
 
     def forward(
         self,
-        shortest_distogram: torch.Tensor,  # (B, L, L, D)
+        contact_map: torch.Tensor,  # (B, L, L, 3)
         token_mask: torch.Tensor,  # (B, L), bool
     ) -> torch.Tensor:
-        """Forward pass of SdistEmbedder."""
-        token_pair = self.to_pair(shortest_distogram)  # (B, L, L, d_pair)
+        """Forward pass of ContactMapEmbedder."""
+        token_pair = self.to_pair(contact_map)  # (B, L, L, d_pair)
         token_pair, _ = self.pairformer.forward(
             token_pair,
             single=None,
@@ -78,8 +75,8 @@ class SdistEmbedder(nn.Module):
         return token_pair  # (B, L, L, d_pair)
 
 
-class Sdist2StrModel(nn.Module):
-    """Shortest Distogram to Structure Model."""
+class ContactMap2StrModel(nn.Module):
+    """Contact Map to Structure Model."""
 
     class ConditionConfig(BaseModel):
         """Configuration for the trunk condition module."""
@@ -88,11 +85,12 @@ class Sdist2StrModel(nn.Module):
         n_recycle_max: int = 4
 
     class Config(BaseModel):
-        """Configuration for Sdist2StrModel."""
+        """Configuration for ContactMap2StrModel."""
 
+        contact_map_dropout: float = 0.5
         common: CommonConfig
-        distogram: "SdistEmbedder.Config"
-        trunk: "Sdist2StrModel.ConditionConfig"
+        contact_map_pairformer: "Pairformer.Config"
+        trunk: "ContactMap2StrModel.ConditionConfig"
         diffusion: DiffusionConfig
         precision: PrecisionConfig
 
@@ -107,9 +105,9 @@ class Sdist2StrModel(nn.Module):
             config.diffusion,
         )
 
-        # embed sdistogram
-        self.sdist_embedder = SdistEmbedder(config.distogram)
-        self.sdist_to_pair = nn.Sequential(
+        # embed contact map
+        self.contact_map_embedder = ContactMapEmbedder(config.contact_map_pairformer)
+        self.contact_map_to_pair = nn.Sequential(
             LayerNorm(
                 config.common.d_token_pair,
                 implementation=config.common.implementation,
@@ -167,78 +165,30 @@ class Sdist2StrModel(nn.Module):
             )
             raise ValueError(msg)
 
-        # gen sdistogram
+        # gen randomly dropped out contact map
         with torch.no_grad():
-            residue_dists, residue_pair_mask = (
-                get_shortest_distances_from_multistructures(
-                    atom_pos,
-                    noisy_batch.structure.atom_pos_mask,
-                    noisy_batch.scheme.atom_to_residue_idx_map,
-                )
+            contact_map, contact_map_mask = get_contact_map(
+                atom_pos,
+                noisy_batch.structure.atom_pos_mask,
+                noisy_batch.scheme.atom_to_residue_idx_map,
             )
-            edges = torch.linspace(
-                self.config.distogram.min_distance,
-                self.config.distogram.max_distance,
-                self.config.distogram.num_bins - 1,
-                device=atom_pos.device,
-            )
-            if self.training:
-                contam_residue_dists, contam_residue_pair_mask = (
-                    get_shortest_distances_from_multistructures(
-                        noisy_batch.contam.atom_pos,
-                        noisy_batch.contam.atom_pos_mask,
-                        noisy_batch.contam.atom_to_residue_idx_map,
-                    )
-                )
-                contam_start = (
-                    noisy_batch.contam_bias
-                )  # list of int where contamination starts
-                L_contam = contam_residue_dists.shape[1]
-                for b, start in enumerate(contam_start):
-                    end = start + L_contam
-
-                    main_block = residue_dists[
-                        b,
-                        start:end,
-                        start:end,
-                    ]  # (L_contam, L_contam)
-
-                    contam_block = contam_residue_dists[
-                        b,
-                        :L_contam,
-                        :L_contam,
-                    ]  # (L_contam, L_contam)
-                    contam_mask_block = contam_residue_pair_mask[
-                        b,
-                        :L_contam,
-                        :L_contam,
-                    ]
-
-                    merged_block = torch.minimum(main_block, contam_block)
-                    updated_block = torch.where(
-                        contam_mask_block,
-                        merged_block,
-                        main_block,
-                    )
-
-                    residue_dists[b, start:end, start:end] = updated_block
-
-            shortest_distogram = torch.bucketize(
-                residue_dists,
-                edges,
-            )  # (*, L, L), int64 in [0, D-1]
-            shortest_distogram_onehot = nn.functional.one_hot(
-                shortest_distogram,
-                num_classes=self.config.distogram.num_bins,
-            ).to(
-                torch.float32,
-            )  # (*, L, L, D)
-            # mask out invalid pairs
-            shortest_distogram_onehot = (
-                shortest_distogram_onehot
-                * residue_pair_mask.unsqueeze(-1).to(torch.float32)
-            )
-
+            # randomly drop out contact map
+            residue_length = contact_map.shape[1]
+            dropout_length = int(residue_length * self.config.contact_map_dropout)
+            start = random.randint(0, residue_length - dropout_length)
+            dropout_mask = torch.ones_like(contact_map_mask)
+            dropout_mask[:, start : start + dropout_length] = 0.0  # dropped
+            dropout_mask[:, :, start : start + dropout_length] = 0.0  # dropped
+            dropout_mask[
+                :,
+                start + dropout_length :,
+                :start,
+            ] = 0.0  # dropped
+            dropout_mask[:, :start, start + dropout_length :] = 0.0  # dropped
+            contact_map_mask = contact_map_mask * dropout_mask
+            contact_map[~contact_map_mask.bool()] = 2.0  # unknown
+            contact_map = contact_map.long()
+            contact_map = nn.functional.one_hot(contact_map, num_classes=3).float()
         # input feature embedding
         (
             token_single_input,
@@ -246,13 +196,13 @@ class Sdist2StrModel(nn.Module):
             token_pair_init,
         ) = self.input_feature_embedder(noisy_batch)
 
-        # embed sdistogram to pair token
-        token_pair_sdist = self.sdist_embedder(
-            shortest_distogram_onehot,
+        # embed contact map to pair token
+        token_pair_contact_map = self.contact_map_embedder(
+            contact_map,
             noisy_batch.structure.residue_mask,
         )
-        token_pair_sdist = self.sdist_to_pair(token_pair_sdist)
-        token_pair_init = token_pair_init + token_pair_sdist
+        token_pair_contact_map = self.contact_map_to_pair(token_pair_contact_map)
+        token_pair_init = token_pair_init + token_pair_contact_map
 
         token_pair = torch.zeros_like(token_pair_init)
         token_single = torch.zeros_like(token_single_init)
@@ -310,7 +260,7 @@ class Sdist2StrModel(nn.Module):
         )
 
     def forward(self, noisy_batch: NoisyBatch, atom_pos: torch.Tensor) -> torch.Tensor:
-        """Forward pass of Sdist2StrModel."""
+        """Forward pass of ContactMap2StrModel."""
         (
             token_single_input,
             token_single_trunk,
@@ -325,10 +275,14 @@ class Sdist2StrModel(nn.Module):
         )
 
 
-class Sdist2StrModelWrapper(nn.Module):
-    """Wrapper for Sdist2StrModel to handle the input and output using solver."""
+class ContactMap2StrModelWrapper(nn.Module):
+    """Wrapper for ContactMap2StrModel to handle the input and output using solver."""
 
-    def __init__(self, model: Sdist2StrModel, use_self_condition: bool = True) -> None:
+    def __init__(
+        self,
+        model: ContactMap2StrModel,
+        use_self_condition: bool = True,
+    ) -> None:
         super().__init__()
         self.batch_loaded = False
         self.conditioned_forwarded = False
@@ -398,8 +352,8 @@ class Sdist2StrModelWrapper(nn.Module):
 
 
 @dataclass
-class Sdist2StrInferenceOutput:
-    """Output of Sdist2Str inference."""
+class ContactMap2StrInferenceOutput:
+    """Output of ContactMap2Str inference."""
 
     # Tensor of final predicted atom coordinate.
     atom_pos_pred: torch.Tensor  # (B, L, 3)
@@ -413,32 +367,39 @@ class Sdist2StrInferenceOutput:
     batch: Batch
 
 
-class Sdist2StrClient(BaseClient):
-    """Client for training and inference of Sdist2StrModel."""
+class ContactMap2StrClient(BaseClient):
+    """Client for training and inference of ContactMap2StrModel."""
 
     class DataConfig(BaseModel):
         """Configuration for data loading."""
 
+        train_db: BioMolDBConfig
+        valid_db: BioMolDBConfig
+        edge_weight: EdgeWeightConfig
         crop: CropConfig
         msa: MSAConfig
-        kmer_fast_align: KmerFastAlignConfig
-        multistate: MultistateConfig
-        train_preprocessing: MultiStatedbConfig
-        valid_preprocessing: MultiStatedbConfig
+
+    class LossConfig(BaseModel):
+        """Configuration for loss weights."""
+
+        diffusion_loss: float = 4.0
+        distogram_loss: float = 0.03
 
     class ExperimentsConfig(BaseModel):
-        """Configuration for experiment settings."""
+        """Configuration for experiments."""
 
         comment: str = "default"
-        name: str = "Sdist2Str-PSK"
+        name: str = "AF3-PSK-2"
         overfitting: bool = False
         overfitting_dir: str | None = None  # Directory for overfitting mode
         train_item: int = 25600
         valid_item: int = 2560
         num_batch: int = 1
         num_epoch: int = 1000
+        optimizer: Literal["AdamW", "Muon"] = "AdamW"
         max_lr: float = 1e-4
         min_lr: float = 1e-5
+        weight_decay: float = 0.01
         warmup_steps: int = 5e3
         decay_steps: int = 5e6
         decay_factor: float = 0.95
@@ -465,18 +426,19 @@ class Sdist2StrClient(BaseClient):
         method: Literal["AF3", "EDM"] = "AF3"
 
     class Config(BaseModel):
-        """Configuration for Sdist2StrClient."""
+        """Configuration for the AF3 client."""
 
-        data: "Sdist2StrClient.DataConfig"
-        model: Sdist2StrModel.Config
-        experiment: "Sdist2StrClient.ExperimentsConfig"
-        diffuser: "Sdist2StrClient.DiffuserConfig"
+        data: "ContactMap2StrClient.DataConfig"
+        model: ContactMap2StrModel.Config
+        experiment: "ContactMap2StrClient.ExperimentsConfig"
+        diffuser: "ContactMap2StrClient.DiffuserConfig"
+        loss: "ContactMap2StrClient.LossConfig"
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self.config = config
         self.set_seed(config.experiment.seed)
-        self.register_model(Sdist2StrModel(config.model))
+        self.register_model(ContactMap2StrModel(config.model))
 
         if config.experiment.use_ema:
             self.add_callback(ModelEMA(config.experiment.ema_decay))
@@ -558,6 +520,37 @@ class Sdist2StrClient(BaseClient):
             n_sample=self.config.experiment.eval_sample_num,
         )
 
+    def training_epoch(self, dataloader: DataLoader) -> Generator[Any, None, None]:
+        """Yield results from training step over the dataloader for one epoch."""
+        if not isinstance(dataloader, _FabricDataLoader):
+            fabric_dataloader = self.fabric.setup_dataloaders(dataloader)
+        else:
+            fabric_dataloader = dataloader
+        sampler: AdaptiveEdgeSampler = dataloader.sampler
+
+        self.model.train()
+        self.call_callbacks("on_train_epoch_start")
+
+        fabric_iter = iter(fabric_dataloader)
+        for batch_idx, batch in enumerate(fabric_iter):
+            self.call_callbacks("on_train_step_start", batch, batch_idx)
+            loss_dict = self.training_step(batch)
+            loss = loss_dict["EDMLoss"]
+
+            sampler.stats.update(
+                batch.scheme.edge_index,
+                torch.tensor(loss, device=batch.device),
+            )
+            is_accumulating = (batch_idx + 1) % self.gradient_accumulation_steps != 0
+            if not is_accumulating:
+                self._optimizer_step()
+            self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
+            yield loss_dict
+        self.optimizer.zero_grad()
+
+        self._epoch += 1
+        self.call_callbacks("on_train_epoch_end")
+
     @torch.no_grad()
     def test_inference_quality(
         self,
@@ -618,10 +611,10 @@ class Sdist2StrClient(BaseClient):
         n_sample: int = 48,
         batch_size: int = 48,
         return_traj: bool = False,
-    ) -> Sdist2StrInferenceOutput:
+    ) -> ContactMap2StrInferenceOutput:
         """Generate best of N samples for a batch."""
         raw_model = getattr(self.model, "module", self.model)
-        model_wrapper = Sdist2StrModelWrapper(
+        model_wrapper = ContactMap2StrModelWrapper(
             raw_model,
             use_self_condition=self.config.experiment.self_condition,
         )
@@ -670,7 +663,7 @@ class Sdist2StrClient(BaseClient):
             inter_traj = None
             model_traj = None
 
-        return Sdist2StrInferenceOutput(
+        return ContactMap2StrInferenceOutput(
             atom_pos_pred=atom_pos_pred,
             model_traj=model_traj,
             inter_traj=inter_traj,

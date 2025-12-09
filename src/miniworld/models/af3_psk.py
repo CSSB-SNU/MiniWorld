@@ -70,7 +70,8 @@ class AF3Model(nn.Module):
 
         # feature initialization
         self.input_feature_embedder = InputFeatureEmbedder(
-            config.common, config.diffusion,
+            config.common,
+            config.diffusion,
         )
 
         # Recycle layers
@@ -114,7 +115,9 @@ class AF3Model(nn.Module):
         else:
             n_recycle = self.n_recycle_max
         if noisy_batch.msa.aligned_sequences.shape[1] != self.n_recycle_max:
-            msg = ("The number of MSA sequences should match the number of recycle steps.")
+            msg = (
+                "The number of MSA sequences should match the number of recycle steps."
+            )
             raise ValueError(msg)
 
         # input feature embedding
@@ -143,7 +146,9 @@ class AF3Model(nn.Module):
                 token_single = token_single_init + self.add_single_recycle(token_single)
 
                 token_pair, token_single = self.pairformer_blocks.forward(
-                    token_pair, token_single, noisy_batch.structure.residue_mask,
+                    token_pair,
+                    token_single,
+                    noisy_batch.structure.residue_mask,
                 )
 
         distogram_logit = self.distogram_head(token_pair)
@@ -292,6 +297,7 @@ class AF3InferenceOutput:
 
     batch: Batch
 
+
 class AF3Client(BaseClient):
     """Client for training and inference of AF3 model."""
 
@@ -342,7 +348,6 @@ class AF3Client(BaseClient):
         seed: int = 0
         use_ema: bool = True
         ema_decay: float = 0.9999
-
 
     class DiffuserConfig(BaseModel):
         """Configuration for the diffuser."""
@@ -399,10 +404,22 @@ class AF3Client(BaseClient):
         atom_pos_update, distogram_logit = self.model.forward(noisy_batch)
 
         structure_loss = self.diffuser.cal_loss(atom_pos_update)
-        distogram_loss = cal_atom_distogram_loss(distogram_logit, noisy_batch.structure.atom_pos, noisy_batch.structure.atom_mask, noisy_batch.scheme.atom_to_residue_idx_map)
-        loss = self.config.loss.diffusion_loss * structure_loss + self.config.loss.distogram_loss * distogram_loss
+        distogram_loss = cal_atom_distogram_loss(
+            distogram_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+        )
+        loss = (
+            self.config.loss.diffusion_loss * structure_loss
+            + self.config.loss.distogram_loss * distogram_loss
+        )
 
-        return loss, {"diffusion_loss": structure_loss.item(), "distogram_loss": distogram_loss.item(), "total_loss": loss.item()}
+        return loss, {
+            "diffusion_loss": structure_loss.item(),
+            "distogram_loss": distogram_loss.item(),
+            "total_loss": loss.item(),
+        }
 
     def training_step(self, batch: Batch) -> dict[str, float]:
         """Train the model on a batch."""
@@ -435,7 +452,8 @@ class AF3Client(BaseClient):
             raise ValueError(msg)
         batch = batch.duplicate(self.config.experiment.eval_sample_num)
         return self.test_inference_quality(
-            batch, self.config.experiment.eval_timesteps,
+            batch,
+            self.config.experiment.eval_timesteps,
         )
 
     def training_epoch(self, dataloader: DataLoader) -> Generator[Any, None, None]:
@@ -453,9 +471,15 @@ class AF3Client(BaseClient):
         for batch_idx, batch in enumerate(fabric_iter):
             self.call_callbacks("on_train_step_start", batch, batch_idx)
             loss_dict = self.training_step(batch)
-            loss = self.config.loss.diffusion_loss * loss_dict["diffusion_loss"] + self.config.loss.distogram_loss * loss_dict["distogram_loss"]
+            loss = (
+                self.config.loss.diffusion_loss * loss_dict["diffusion_loss"]
+                + self.config.loss.distogram_loss * loss_dict["distogram_loss"]
+            )
 
-            sampler.stats.update(batch.scheme.edge_index, torch.tensor(loss, device=batch.device))
+            sampler.stats.update(
+                batch.scheme.edge_index,
+                torch.tensor(loss, device=batch.device),
+            )
             is_accumulating = (batch_idx + 1) % self.gradient_accumulation_steps != 0
             if not is_accumulating:
                 self._optimizer_step()
@@ -511,7 +535,8 @@ class AF3Client(BaseClient):
         """Inference using the diffusion solver."""
         raw_model = getattr(self.model, "module", self.model)
         model_wrapper = AF3ModelWrapper(
-            raw_model, use_self_condition=self.config.experiment.self_condition,
+            raw_model,
+            use_self_condition=self.config.experiment.self_condition,
         )
         batch = batch.to(device=self.device)
         model_wrapper.prepare_condition(batch)

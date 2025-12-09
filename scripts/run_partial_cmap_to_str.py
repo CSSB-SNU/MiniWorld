@@ -13,14 +13,14 @@ import wandb
 from miniworld.data.dataloader.dataloader_edge_backprop import (
     BioMolData,
 )
-from miniworld.models.af3_psk import AF3Client
+from miniworld.models.partial_cmap_to_str import ContactMap2StrClient
 
 # torch.set_float32_matmul_precision("high")  # noqa: ERA001
 # anomaly detection
 torch.autograd.set_detect_anomaly(False)
 
 
-def setup_logger(client: AF3Client) -> None:
+def setup_logger(client: ContactMap2StrClient) -> None:
     if not client.is_global_zero:
         return
 
@@ -36,7 +36,7 @@ def setup_logger(client: AF3Client) -> None:
     client.logger.addHandler(handler)
 
     now = datetime.datetime.now(datetime.timezone.utc)
-    file_handler = logging.FileHandler(f"logs/af3_{now:%Y%m%d_%H%M%S}.log")
+    file_handler = logging.FileHandler(f"logs/partial_cmap2str_{now:%Y%m%d_%H%M%S}.log")
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)
 
@@ -106,10 +106,10 @@ def train(  # noqa: PLR0912, PLR0915
 ):
     if config and not resume_from_ckpt:
         cfg = OmegaConf.load(config)
-        cfg = AF3Client.Config.model_validate(cfg)
-        client = AF3Client(cfg)
+        cfg = ContactMap2StrClient.Config.model_validate(cfg)
+        client = ContactMap2StrClient(cfg)
     elif not config and resume_from_ckpt:
-        client = AF3Client.from_checkpoint(resume_from_ckpt)
+        client = ContactMap2StrClient.from_checkpoint(resume_from_ckpt)
     else:
         msg = (
             "You must provide either a config file or a checkpoint file, but not both."
@@ -210,12 +210,11 @@ def train(  # noqa: PLR0912, PLR0915
     min_train_loss = float("inf")
 
     for epoch in range(client.epoch, client.config.experiment.num_epoch):
-        # Test
         client.logger.info("Training Epoch %d", client.epoch)
         train_loader.sampler.set_epoch(epoch)
         for n_item, result in enumerate(client.training_epoch(train_loader)):
             train_aggregator.log_step(result)
-            if (n_item + 1) >= train_num_item:
+            if n_item + 1 >= train_num_item:
                 client._epoch += 1  # noqa: SLF001
                 client.call_callbacks("on_train_epoch_end")
                 break
@@ -223,7 +222,7 @@ def train(  # noqa: PLR0912, PLR0915
         means = train_aggregator.log_epoch()
 
         if client.is_global_zero:
-            train_loss = means["total_loss"]
+            train_loss = means["EDMLoss"]
             if train_loss < min_train_loss:
                 min_train_loss = train_loss
                 comment = client.config.experiment.comment
@@ -240,7 +239,7 @@ def train(  # noqa: PLR0912, PLR0915
             client.logger.info("Validation Epoch %d", client.epoch)
             for n_item, result in enumerate(client.validation_epoch(valid_loader)):
                 valid_aggregator.log_step(result, ignore_step=True)
-                if (n_item + 1) >= valid_num_item:
+                if n_item + 1 >= valid_num_item:
                     client.call_callbacks("on_validation_epoch_end")
                     break
             valid_aggregator.log_epoch()

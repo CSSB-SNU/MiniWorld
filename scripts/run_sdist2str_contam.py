@@ -19,6 +19,7 @@ from miniworld.models.sdist_to_str_contam import Sdist2StrClient
 # anomaly detection
 torch.autograd.set_detect_anomaly(False)
 
+
 def setup_logger(client: Sdist2StrClient) -> None:
     if not client.is_global_zero:
         return
@@ -35,10 +36,9 @@ def setup_logger(client: Sdist2StrClient) -> None:
     client.logger.addHandler(handler)
 
     now = datetime.datetime.now(datetime.timezone.utc)
-    file_handler = logging.FileHandler(f"logs/structure_flow_{now:%Y%m%d_%H%M%S}.log")
+    file_handler = logging.FileHandler(f"logs/sdist2str_{now:%Y%m%d_%H%M%S}.log")
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)
-
 
 
 def get_step_decay_scheduler_with_warmup(
@@ -65,10 +65,10 @@ def get_step_decay_scheduler_with_warmup(
     return torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
 
-
 @click.group()
 def cli():
     pass
+
 
 @cli.command()
 @click.option(
@@ -111,12 +111,13 @@ def train(  # noqa: PLR0912, PLR0915
     elif not config and resume_from_ckpt:
         client = Sdist2StrClient.from_checkpoint(resume_from_ckpt)
     else:
-        msg = "You must provide either a config file or a checkpoint file, but not both."
+        msg = (
+            "You must provide either a config file or a checkpoint file, but not both."
+        )
         raise ValueError(msg)
 
     fabric = Fabric()
     fabric.launch()
-
 
     scheduler = get_step_decay_scheduler_with_warmup(
         torch.optim.AdamW(
@@ -158,24 +159,28 @@ def train(  # noqa: PLR0912, PLR0915
         set_seed(seed)
         client.logger.info("Set random seed: %d", seed)
 
-    # TODO
     train_data_config = BioMolMonomerData.BioMolConfig(
         crop_config=client.config.data.crop.model_dump(),
         msa_config=client.config.data.msa.model_dump(),
-        kmer_fast_align_config = client.config.data.kmer_fast_align.model_dump(),
-        multistate_config = client.config.data.multistate.model_dump(),
+        kmer_fast_align_config=client.config.data.kmer_fast_align.model_dump(),
+        multistate_config=client.config.data.multistate.model_dump(),
         preprocess_config=client.config.data.train_preprocessing.model_dump(),
     )
     valid_data_config = BioMolMonomerData.BioMolConfig(
         crop_config=client.config.data.crop.model_dump(),
         msa_config=client.config.data.msa.model_dump(),
-        kmer_fast_align_config = client.config.data.kmer_fast_align.model_dump(),
-        multistate_config = client.config.data.multistate.model_dump(),
+        kmer_fast_align_config=client.config.data.kmer_fast_align.model_dump(),
+        multistate_config=client.config.data.multistate.model_dump(),
         preprocess_config=client.config.data.train_preprocessing.model_dump(),
     )
 
-    prefetch_factor = None if client.config.experiment.prefetch_factor == 0 else int(client.config.experiment.prefetch_factor)
+    prefetch_factor = (
+        None
+        if client.config.experiment.prefetch_factor == 0
+        else int(client.config.experiment.prefetch_factor)
+    )
     train_loader = BioMolMonomerData(train_data_config).create_ddp_dataloader(
+        world_size=fabric.world_size,
         rank=fabric.local_rank,
         drop_last=True,
         batch_size=client.config.experiment.num_batch,
@@ -183,6 +188,7 @@ def train(  # noqa: PLR0912, PLR0915
         prefetch_factor=prefetch_factor,
     )
     valid_loader = BioMolMonomerData(valid_data_config).create_ddp_dataloader(
+        world_size=fabric.world_size,
         rank=fabric.local_rank,
         drop_last=False,
         batch_size=client.config.experiment.num_batch,  # or 1
@@ -208,7 +214,7 @@ def train(  # noqa: PLR0912, PLR0915
         train_loader.sampler.set_epoch(epoch)
         for n_item, result in enumerate(client.training_epoch(train_loader)):
             train_aggregator.log_step(result)
-            if (n_item + 1) * fabric.world_size >= train_num_item:
+            if n_item + 1 >= train_num_item:
                 client._epoch += 1  # noqa: SLF001
                 client.call_callbacks("on_train_epoch_end")
                 break
@@ -216,7 +222,7 @@ def train(  # noqa: PLR0912, PLR0915
         means = train_aggregator.log_epoch()
 
         if client.is_global_zero:
-            train_loss = means["total_loss"]
+            train_loss = means["EDMLoss"]
             if train_loss < min_train_loss:
                 min_train_loss = train_loss
                 comment = client.config.experiment.comment
@@ -233,10 +239,11 @@ def train(  # noqa: PLR0912, PLR0915
             client.logger.info("Validation Epoch %d", client.epoch)
             for n_item, result in enumerate(client.validation_epoch(valid_loader)):
                 valid_aggregator.log_step(result, ignore_step=True)
-                if (n_item + 1) * fabric.world_size >= valid_num_item:
+                if n_item + 1 >= valid_num_item:
                     client.call_callbacks("on_validation_epoch_end")
                     break
             valid_aggregator.log_epoch()
+
 
 if __name__ == "__main__":
     # set mp start method

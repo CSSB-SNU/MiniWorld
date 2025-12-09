@@ -1,13 +1,14 @@
 from pathlib import Path
-import numpy as np
-from numpy import ndarray
-import matplotlib.pyplot as plt
-import torch
-from jaxtyping import Float, Bool, Int
 
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from jaxtyping import Bool, Float, Int
+from numpy import ndarray
 from team_gm import typecheck
 
 from miniworld.data.mols import CIFMolAttached
+
 
 @typecheck
 def get_shortest_distances_from_multistructures(
@@ -17,8 +18,7 @@ def get_shortest_distances_from_multistructures(
     min_distance: float = 2.0,
     max_distance: float = 22.0,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """
-    Compute residue-level shortest distances and corresponding mask from atom coordinates.
+    """Compute residue-level shortest distances and corresponding mask from atom coordinates.
 
     Args:
         atom_pos: Atomic coordinates. Shape: (B, N, L, 3)
@@ -30,6 +30,7 @@ def get_shortest_distances_from_multistructures(
     Returns:
         residue_dists: Residue-level shortest distances. Shape: (B, R_max, R_max)
         residue_mask: Valid residue pair mask. Shape: (B, R_max, R_max)
+
     """
     device = atom_pos.device
     B, N, L, _ = atom_pos.shape
@@ -39,9 +40,9 @@ def get_shortest_distances_from_multistructures(
     dist = torch.linalg.norm(diff, dim=-1)  # (B, N, L, L)
 
     # Apply atom mask
-    mask_i = atom_pos_mask[:, :, :, None]   # (B, N, L, 1)
-    mask_j = atom_pos_mask[:, :, None, :]   # (B, N, 1, L)
-    valid_atom_mask = mask_i & mask_j       # (B, N, L, L)
+    mask_i = atom_pos_mask[:, :, :, None]  # (B, N, L, 1)
+    mask_j = atom_pos_mask[:, :, None, :]  # (B, N, 1, L)
+    valid_atom_mask = mask_i & mask_j  # (B, N, L, L)
 
     dist = dist.masked_fill(~valid_atom_mask, max_distance)
     dist = dist.clamp(min=min_distance, max=max_distance)
@@ -70,23 +71,23 @@ def get_shortest_distances_from_multistructures(
     # Residue pair mask: both residues must exist
     mask_i_res = residue_exists.unsqueeze(2)  # (B, R_max, 1)
     mask_j_res = residue_exists.unsqueeze(1)  # (B, 1, R_max)
-    residue_mask = mask_i_res & mask_j_res    # (B, R_max, R_max)
+    residue_mask = mask_i_res & mask_j_res  # (B, R_max, R_max)
 
     # 3) Aggregate shortest distances to residue level using scatter-reduce (min)
     # Map (i, j) residue pairs to flat indices per batch
     ri = atom_to_res_idx.unsqueeze(2).expand(B, L, L)  # (B, L, L)
     rj = atom_to_res_idx.unsqueeze(1).expand(B, L, L)  # (B, L, L)
-    pair_idx = ri * R_max + rj                  # (B, L, L)
+    pair_idx = ri * R_max + rj  # (B, L, L)
 
     block_size = R_max * R_max
-    batch_offsets = (torch.arange(B, device=device)
-                     .view(B, 1, 1)
-                     * block_size)             # (B, 1, 1)
+    batch_offsets = (
+        torch.arange(B, device=device).view(B, 1, 1) * block_size
+    )  # (B, 1, 1)
 
-    scatter_idx = batch_offsets + pair_idx      # (B, L, L)
+    scatter_idx = batch_offsets + pair_idx  # (B, L, L)
     scatter_idx_flat = scatter_idx.reshape(-1)  # (B * L * L,)
 
-    src = shortest_dist.reshape(-1)             # (B * L * L,)
+    src = shortest_dist.reshape(-1)  # (B * L * L,)
 
     out = torch.full(
         (B * block_size,),
@@ -109,7 +110,6 @@ def get_shortest_distances_from_multistructures(
     return residue_dists, residue_mask
 
 
-
 @typecheck
 def get_shortest_distances(
     atom_pos: Float[torch.Tensor, "* L 3"],
@@ -127,9 +127,9 @@ def get_shortest_distances(
     dist = torch.linalg.norm(diff, dim=-1)  # (B, L, L)
 
     # Apply atom mask
-    mask_i = atom_pos_mask[:, :, None]   # (B, L, 1)
-    mask_j = atom_pos_mask[:, None, :]   # (B, 1, L)
-    valid_atom_mask = mask_i & mask_j       # (B, L, L)
+    mask_i = atom_pos_mask[:, :, None]  # (B, L, 1)
+    mask_j = atom_pos_mask[:, None, :]  # (B, 1, L)
+    valid_atom_mask = mask_i & mask_j  # (B, L, L)
 
     dist = dist.masked_fill(~valid_atom_mask, max_distance)
     dist = dist.clamp(min=min_distance, max=max_distance)
@@ -153,23 +153,23 @@ def get_shortest_distances(
     # Residue pair mask: both residues must exist
     mask_i_res = residue_exists.unsqueeze(2)  # (B, R_max, 1)
     mask_j_res = residue_exists.unsqueeze(1)  # (B, 1, R_max)
-    residue_mask = mask_i_res & mask_j_res    # (B, R_max, R_max)
+    residue_mask = mask_i_res & mask_j_res  # (B, R_max, R_max)
 
     # 3) Aggregate shortest distances to residue level using scatter-reduce (min)
     # Map (i, j) residue pairs to flat indices per batch
     ri = atom_to_res_idx.unsqueeze(2).expand(B, L, L)  # (B, L, L)
     rj = atom_to_res_idx.unsqueeze(1).expand(B, L, L)  # (B, L, L)
-    pair_idx = ri * R_max + rj                  # (B, L, L)
+    pair_idx = ri * R_max + rj  # (B, L, L)
 
     block_size = R_max * R_max
-    batch_offsets = (torch.arange(B, device=device)
-                     .view(B, 1, 1)
-                     * block_size)             # (B, 1, 1)
+    batch_offsets = (
+        torch.arange(B, device=device).view(B, 1, 1) * block_size
+    )  # (B, 1, 1)
 
-    scatter_idx = batch_offsets + pair_idx      # (B, L, L)
+    scatter_idx = batch_offsets + pair_idx  # (B, L, L)
     scatter_idx_flat = scatter_idx.reshape(-1)  # (B * L * L,)
 
-    src = dist.reshape(-1)             # (B * L * L,)
+    src = dist.reshape(-1)  # (B * L * L,)
 
     out = torch.full(
         (B * block_size,),
@@ -192,16 +192,33 @@ def get_shortest_distances(
     return residue_dists, residue_mask
 
 
+@typecheck
+def get_contact_map(
+    atom_pos: Float[torch.Tensor, "* L 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* L"],
+    atom_to_res_idx: Int[torch.Tensor, "* L"],
+    contact_threshold: float = 6.0,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Compute residue-level contact map from atom positions."""
+    residue_dists, residue_mask = get_shortest_distances(
+        atom_pos=atom_pos,
+        atom_pos_mask=atom_pos_mask,
+        atom_to_res_idx=atom_to_res_idx,
+    )
+
+    contact_map = (
+        residue_dists <= contact_threshold
+    ) & residue_mask  # (B, R_max, R_max)
+
+    return contact_map, residue_mask
+
 
 def pairwise_kabsch_rmsd(
-    pred: torch.Tensor,          # (S, L, 3)
-    true: torch.Tensor,          # (N, L, 3)
-    true_mask: torch.Tensor,     # (N, L) (bool or 0/1)
+    pred: torch.Tensor,  # (S, L, 3)
+    true: torch.Tensor,  # (N, L, 3)
+    true_mask: torch.Tensor,  # (N, L) (bool or 0/1)
 ) -> torch.Tensor:
-    """
-    Compute (S, N) RMSD between S predicted structures and N true structures
-    using Kabsch alignment and per-true-structure atom masks.
-    """
+    """Compute (S, N) RMSD between S predicted structures and N true structures using Kabsch alignment and per-true-structure atom masks."""
     device = pred.device
     pred = pred.to(device)
     true = true.to(device)
@@ -215,7 +232,6 @@ def pairwise_kabsch_rmsd(
     pred_valid_L = torch.isfinite(pred).all(dim=0).all(dim=-1)
 
     for j in range(N):
-        # (L,)
         true_valid_L = torch.isfinite(true[j]).all(dim=-1)
         valid = true_mask[j] & true_valid_L & pred_valid_L
 
@@ -224,37 +240,38 @@ def pairwise_kabsch_rmsd(
             rmsd_list.append(torch.full((S,), float("nan"), device=device))
             continue
 
-        xyz_t = true[j, valid]      # (M, 3)
-        xyz_p = pred[:, valid]      # (S, M, 3)
+        xyz_t = true[j, valid]  # (M, 3)
+        xyz_p = pred[:, valid]  # (S, M, 3)
 
         # Center
-        t_c = xyz_t - xyz_t.mean(dim=0, keepdim=True)        # (M, 3)
-        p_c = xyz_p - xyz_p.mean(dim=1, keepdim=True)        # (S, M, 3)
+        t_c = xyz_t - xyz_t.mean(dim=0, keepdim=True)  # (M, 3)
+        p_c = xyz_p - xyz_p.mean(dim=1, keepdim=True)  # (S, M, 3)
 
         # Covariance
-        t_c_exp = t_c.unsqueeze(0).expand(S, -1, -1)         # (S, M, 3)
-        C = torch.bmm(p_c.transpose(1, 2), t_c_exp)          # (S, 3, 3)
+        t_c_exp = t_c.unsqueeze(0).expand(S, -1, -1)  # (S, M, 3)
+        C = torch.bmm(p_c.transpose(1, 2), t_c_exp)  # (S, 3, 3)
 
         # SVD
         U, _, Vh = torch.linalg.svd(C, full_matrices=False)  # U,Vh: (S,3,3)
-        V = Vh.transpose(-2, -1)                              # (S, 3, 3)
+        V = Vh.transpose(-2, -1)  # (S, 3, 3)
 
         # Reflection correction using det(V U^T)
-        detVU = torch.linalg.det(V @ U.transpose(-2, -1))     # (S,)
+        detVU = torch.linalg.det(V @ U.transpose(-2, -1))  # (S,)
         sign = torch.where(detVU < 0, -torch.ones_like(detVU), torch.ones_like(detVU))
         D = torch.zeros_like(C)
         D[..., 0, 0] = 1.0
         D[..., 1, 1] = 1.0
         D[..., 2, 2] = sign
-        R = V @ D @ U.transpose(-2, -1)                       # (S, 3, 3)
+        R = V @ D @ U.transpose(-2, -1)  # (S, 3, 3)
 
         # Align and RMSD
-        p_aligned = torch.bmm(p_c, R)                         # (S, M, 3)
-        diff2 = (p_aligned - t_c_exp).pow(2).sum(dim=-1)      # (S, M)
-        rmsd_j = torch.sqrt(diff2.mean(dim=-1))               # (S,)
+        p_aligned = torch.bmm(p_c, R)  # (S, M, 3)
+        diff2 = (p_aligned - t_c_exp).pow(2).sum(dim=-1)  # (S, M)
+        rmsd_j = torch.sqrt(diff2.mean(dim=-1))  # (S,)
         rmsd_list.append(rmsd_j)
 
-    return torch.stack(rmsd_list, dim=1)                      # (S, N)
+    return torch.stack(rmsd_list, dim=1)  # (S, N)
+
 
 def save_rmsd_boxplot(
     data_2d: np.ndarray | torch.Tensor,
@@ -262,12 +279,8 @@ def save_rmsd_boxplot(
     title: str,
     xlabel: str,
     ylabel: str = "RMSD",
-):
-    """
-    Common helper to draw and save a boxplot from a 2D array.
-    Each row in `data_2d` is treated as one box.
-    Rows are sorted by their minimum RMSD values.
-    """
+) -> None:
+    """Save a boxplot of RMSD values."""
     if isinstance(data_2d, torch.Tensor):
         data_2d = data_2d.detach().cpu().numpy()
     save_path = Path(save_path)
@@ -280,7 +293,7 @@ def save_rmsd_boxplot(
     num_boxes = data_sorted.shape[0]
     ylim = [0, np.nanmax(data_2d) * 1.1]
 
-    fig, ax = plt.subplots(figsize=(num_boxes * 0.25+2, 4))
+    fig, ax = plt.subplots(figsize=(num_boxes * 0.25 + 2, 4))
     ax.set_ylim(ylim)
     min_vals = np.nanmin(data_2d, axis=1)
     min_sorted = min_vals[order]
@@ -316,14 +329,18 @@ def save_rmsd_boxplot(
     plt.close(fig)
 
 
-def plot_rmsd_heatmap(rmsd_pp, save_path: str | Path, title: str = "Pred–Pred RMSD"):
-    """
-    Plot and save a 2D RMSD map between predicted structures.
+def plot_rmsd_heatmap(
+    rmsd_pp: torch.Tensor | np.ndarray,
+    save_path: str | Path,
+    title: str = "Pred-Pred RMSD",
+) -> None:
+    """Plot and save a 2D RMSD map between predicted structures.
 
     Args:
         rmsd_pp: (S, S) tensor/ndarray, pairwise RMSD between S predicted structures.
         save_path: Path to save the figure.
         title: Title of the plot.
+
     """
     # Convert to numpy
     if isinstance(rmsd_pp, torch.Tensor):
@@ -349,12 +366,12 @@ def plot_rmsd_heatmap(rmsd_pp, save_path: str | Path, title: str = "Pred–Pred 
     fig.savefig(save_path, dpi=300)
     plt.close(fig)
 
+
 def cal_radius_of_gyration(
     atom_pos: Float[torch.Tensor, "* N L 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L"],
 ) -> Float[torch.Tensor, "* N"]:
-    """
-    Calculate radius of gyration for each structure in the batch.
+    """Calculate radius of gyration for each structure in the batch.
 
     Args:
         atom_pos: Atomic coordinates. Shape: (N, L, 3)
@@ -362,24 +379,25 @@ def cal_radius_of_gyration(
 
     Returns:
         radius_of_gyration: Radius of gyration for each structure. Shape: (N,)
+
     """
-    device = atom_pos.device
     N, L, _ = atom_pos.shape
 
     # Compute center of mass for each structure
     masked_atom_pos = atom_pos * atom_pos_mask.unsqueeze(-1)  # (N, L, 3)
-    num_valid_atoms = atom_pos_mask.sum(dim=1).unsqueeze(-1)   # (N, 1)
+    num_valid_atoms = atom_pos_mask.sum(dim=1).unsqueeze(-1)  # (N, 1)
 
     center_of_mass = masked_atom_pos.sum(dim=1) / num_valid_atoms  # (N, 3)
 
     # Compute squared distances from center of mass
     diff = masked_atom_pos - center_of_mass.unsqueeze(1)  # (N, L, 3)
-    sq_distances = (diff ** 2).sum(dim=-1) * atom_pos_mask  # (N, L)
+    sq_distances = (diff**2).sum(dim=-1) * atom_pos_mask  # (N, L)
 
     # Compute radius of gyration
-    radius_of_gyration = torch.sqrt(sq_distances.sum(dim=1) / num_valid_atoms.squeeze(-1))  # (N,)
+    return torch.sqrt(
+        sq_distances.sum(dim=1) / num_valid_atoms.squeeze(-1),
+    )  # (N,)
 
-    return radius_of_gyration
 
 def compare_radius_of_gyration_distributions(
     true_rg_values: np.ndarray | torch.Tensor,
@@ -389,9 +407,8 @@ def compare_radius_of_gyration_distributions(
     xlabel: str = "Radius of Gyration (Å)",
     ylabel: str = "Density",
     bins: int = 30,
-):
-    """
-    Plot and save overlaid distributions (histograms) of true vs predicted radius of gyration.
+) -> None:
+    """Plot and save overlaid distributions (histograms) of true vs predicted radius of gyration.
 
     Args:
         true_rg_values: Ground-truth radius of gyration values. Shape: (N,)
@@ -401,6 +418,7 @@ def compare_radius_of_gyration_distributions(
         xlabel: Label for the x-axis.
         ylabel: Label for the y-axis.
         bins: Number of histogram bins.
+
     """
     # Convert to numpy if necessary
     if isinstance(true_rg_values, torch.Tensor):
@@ -458,32 +476,12 @@ def compare_radius_of_gyration_distributions(
     plt.close(fig)
 
 
-def neighbor_list_grid(  # noqa: C901, PLR0912, PLR0915
+def neighbor_list_grid(  # noqa: C901, PLR0915
     xyz: np.ndarray,
     d_thr: float,
     n_max: int,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Compute (n_atom, n_max) neighbor indices using a uniform grid of cell size d_thr.
-
-    Vectorized over atoms; only a tiny fixed loop over 27 neighbor-cell offsets.
-
-    Parameters
-    ----------
-    xyz : (n_atom, 3) float32/64
-        Coordinates; any row containing NaN is ignored.
-    d_thr : float
-        L2 distance threshold for neighbor definition.
-    n_max : int
-        Maximum number of neighbors to keep per atom.
-
-    Returns
-    -------
-    nbrs : (n_atom, n_max) int64
-        Neighbor indices, padded with -1.
-    counts : (n_atom,) int32
-        Actual neighbor counts for each atom (self excluded).
-    """
+    """Compute neighbor list using grid-based spatial partitioning."""
     n_atom = xyz.shape[0]
     nbrs = np.full((n_atom, n_max), -1, dtype=np.int64)
     counts = np.zeros(n_atom, dtype=np.int32)
@@ -652,13 +650,9 @@ def cdist_clipped(
     xyz1: ndarray,
     xyz2: ndarray | None = None,
     d_thr: float = 32.0,
-    n_max: int = 128, # max neighbors per atom
+    n_max: int = 128,  # max neighbors per atom
 ) -> ndarray:
-    """
-    Compute cross distance map (n1, n2) clipped at d_thr using neighbor_list_grid.
-    Only distances <= d_thr are computed exactly; others are set to d_thr.
-    """
-
+    """Compute a dense (n1, n2) distance map clipped at d_thr using neighbor_list_grid."""
     n1 = xyz1.shape[0]
     n2 = 0 if xyz2 is None else xyz2.shape[0]
     # Dense map clipped at threshold
@@ -696,17 +690,13 @@ def cdist_clipped(
 
     return dist
 
+
 def pdist_clipped(
     xyz: ndarray,
     d_thr: float = 32.0,
     n_max: int = 128,
 ) -> ndarray:
-    """
-    Compute a dense (n_atom, n_atom) distance map clipped at d_thr using neighbor_list_grid.
-
-    Distances for pairs with ||x_i - x_j|| <= d_thr are exact; all others are set to d_thr.
-    Any row in xyz containing NaN is treated as invalid and never used as a neighbor.
-    """
+    """Compute a dense (n_atom, n_atom) distance map clipped at d_thr using neighbor_list_grid."""
     n_atom = xyz.shape[0]
 
     # Initialize with clipped distance
@@ -769,4 +759,3 @@ def extract_residue_com(cifmol: CIFMolAttached) -> np.ndarray:
     res_center[nonzero] = res_xyz_sum[nonzero] / res_valid_count[nonzero]
 
     return res_center
-

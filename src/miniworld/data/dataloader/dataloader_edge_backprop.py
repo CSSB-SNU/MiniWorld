@@ -36,16 +36,15 @@ if TYPE_CHECKING:
     from miniworld.data.mols import CIFMolAttached
 
 
-
 class EdgeWeightConfig(BaseModel):
     """Configuration for edge weighting scheme."""
 
-    PP_edge: float = 1.0 # protein-protein edge
-    PN_edge: float = 1.0 # protein-nucleic acid edge
-    PL_edge: float = 2/3 # protein-ligand edge
-    NN_edge: float = 1.0 # nucleic acid-nucleic acid edge
-    NL_edge: float = 2/3 # nucleic acid-ligand edge
-    LL_edge: float = 0.0 # ligand-ligand edge
+    PP_edge: float = 1.0  # protein-protein edge
+    PN_edge: float = 1.0  # protein-nucleic acid edge
+    PL_edge: float = 2 / 3  # protein-ligand edge
+    NN_edge: float = 1.0  # nucleic acid-nucleic acid edge
+    NL_edge: float = 2 / 3  # nucleic acid-ligand edge
+    LL_edge: float = 0.0  # ligand-ligand edge
 
     # params
     eta: float = 0.9
@@ -55,6 +54,7 @@ class EdgeWeightConfig(BaseModel):
     init_freq: float = 0.0
     device: str = "cpu"
     use_freq: bool = True
+
 
 class EdgeScoreStore:
     """Maintains per-edge statistics such as frequency and score.
@@ -113,7 +113,11 @@ class EdgeScoreStore:
             return "L"
         return None
 
-    def _edge_type_weight(self, e_id: str, config: EdgeWeightConfig) -> tuple[float, str]:
+    def _edge_type_weight(
+        self,
+        e_id: str,
+        config: EdgeWeightConfig,
+    ) -> tuple[float, str]:
         cluster1, cluster2 = e_id.split("_")
         c1, c2 = cluster1[1], cluster2[1]
         c1, c2 = self._map_type(c1), self._map_type(c2)
@@ -253,6 +257,7 @@ class CropConfig(BaseModel):
     interface_prob: float = 0.0
     crop_length: int = 384
 
+
 class MSAConfig(BaseModel):
     """Configuration for MSA sampling."""
 
@@ -267,6 +272,7 @@ class BioMolDBConfig(BaseModel):
     a3m_db_path: Path = Path("a3m_lmdb")
     edge_id_to_cif_ids_path: Path = Path("edge_id_to_cif_ids.tsv")
     load_all_msa: bool = False
+
 
 class BioMolData(torch.utils.data.Dataset):
     """Dataset for biomolecular complexes based on BioMolDB."""
@@ -299,7 +305,6 @@ class BioMolData(torch.utils.data.Dataset):
         else:
             self.msa_bytes_dict = None
 
-
     def _load_edge_to_cif_ids(self) -> None:
         # load edge_id to cif_ids mapping
         pdb_id_list = extract_lmdb_keys(self.config.DB_config.cif_db_path)
@@ -312,7 +317,9 @@ class BioMolData(torch.utils.data.Dataset):
                     continue
                 key1, key2, value = line.split("\t")
                 cif_ids = value.split(",")
-                cif_ids = [cif_id for cif_id in cif_ids if cif_id.split("_")[0] in pdb_ids]
+                cif_ids = [
+                    cif_id for cif_id in cif_ids if cif_id.split("_")[0] in pdb_ids
+                ]
                 edge_id = f"{key1}_{key2}"
                 self.edge_id_to_cif_ids[edge_id] = cif_ids
 
@@ -328,9 +335,13 @@ class BioMolData(torch.utils.data.Dataset):
         """Return the number of edges in the dataset."""
         return len(self.edge_id_list)
 
-    def load_msa(self, cifmol: CIFMolAttached, chain_id_to_crop_indices: dict[str, np.ndarray]) -> ComplexMSA:
+    def load_msa(
+        self,
+        cifmol: CIFMolAttached,
+        chain_id_to_crop_indices: dict[str, np.ndarray],
+    ) -> ComplexMSA:
         """Load and crop MSAs for each chain in the cropped cifmol."""
-        msa_list:list[MSA] = []
+        msa_list: list[MSA] = []
         total_length = 0
         for chain_id, crop_indices in chain_id_to_crop_indices.items():
             if len(crop_indices) == 0:
@@ -344,7 +355,9 @@ class BioMolData(torch.utils.data.Dataset):
                 msa_container = load_bytes(bytes(msa_bytes))["msa_container"]
                 msa_residue_container = msa_container["residue_container"]
                 msa_chain_container = msa_container["chain_container"]
-                msa_residue_container = FeatureContainer.from_dict(msa_residue_container)
+                msa_residue_container = FeatureContainer.from_dict(
+                    msa_residue_container,
+                )
                 msa_chain_container = FeatureContainer.from_dict(msa_chain_container)
                 msa = MSA(
                     seq_id=seq_id,
@@ -358,9 +371,15 @@ class BioMolData(torch.utils.data.Dataset):
                 )
             if msa is None:
                 # already cropped
-                cropped_seq = cifmol.chains[cifmol.chains.chain_id == chain_id].residues.one_letter_code_can.value
+                cropped_seq = cifmol.chains[
+                    cifmol.chains.chain_id == chain_id
+                ].residues.one_letter_code_can.value
                 cropped_seq = "".join(cropped_seq)
-                msa = MSA.from_query(query=cropped_seq, seq_id=seq_id, a3m_type="protein")
+                msa = MSA.from_query(
+                    query=cropped_seq,
+                    seq_id=seq_id,
+                    a3m_type="protein",
+                )
                 msa_list.append(msa)
                 continue
             msa = MSA.cropped(msa, crop_indices)
@@ -373,7 +392,7 @@ class BioMolData(torch.utils.data.Dataset):
     def __getitem__(self, idx: int) -> Batch:
         """Get a data sample by index."""
         edge_id = self.edge_id_list[idx]
-        print(f"Edge ID requested: {edge_id}")
+
         return self.get_item_by_id(edge_id=edge_id)
 
     def get_item_by_id(self, edge_id: str) -> Batch:  # noqa: PLR0915
@@ -398,7 +417,10 @@ class BioMolData(torch.utils.data.Dataset):
                 chain_bias=chain_bias,
                 interface_bias=interface_bias,
             )
-            if cifmol.residues[crop_indices].atoms.element.shape[0] < self.config.crop_config.crop_length * 12:
+            if (
+                cifmol.residues[crop_indices].atoms.element.shape[0]
+                < self.config.crop_config.crop_length * 12
+            ):
                 break
             crop_length = int(crop_length * 0.8)  # reduce crop length if too large
 
@@ -419,9 +441,11 @@ class BioMolData(torch.utils.data.Dataset):
                 continue
             edge_index.append(self.edge_id_list.index(e_id))
 
-
         # Load MSA
-        msa = self.load_msa(cifmol=cifmol, chain_id_to_crop_indices=chain_id_to_crop_indices)
+        msa = self.load_msa(
+            cifmol=cifmol,
+            chain_id_to_crop_indices=chain_id_to_crop_indices,
+        )
 
         # sample MSAs
         msa_profile = msa.profile
@@ -430,27 +454,39 @@ class BioMolData(torch.utils.data.Dataset):
         msa_has_deletion_sampled = []
         msa_deletion_value_sampled = []
         for _ in range(self.config.msa_config.n_samples):
-            _, sampled_sequence, sampled_has_deletion, sampled_deletion_value = msa.sample(
-                self.config.msa_config.max_msa_depth,
+            _, sampled_sequence, sampled_has_deletion, sampled_deletion_value = (
+                msa.sample(
+                    self.config.msa_config.max_msa_depth,
+                )
             )
             msa_sequence_sampled.append(sampled_sequence)  # (N_seq, L)
             msa_has_deletion_sampled.append(sampled_has_deletion)  # (N_seq, L)
             msa_deletion_value_sampled.append(sampled_deletion_value)  # (N_seq, L)
-        msa_sequence_sampled = np.stack(msa_sequence_sampled, axis=0)  # (N_sample, N_seq, L)
+        msa_sequence_sampled = np.stack(
+            msa_sequence_sampled,
+            axis=0,
+        )  # (N_sample, N_seq, L)
         msa_has_deletion_sampled = np.stack(msa_has_deletion_sampled, axis=0)
-        msa_deletion_value_sampled = np.stack(msa_deletion_value_sampled, axis=0).astype(np.float32)
+        msa_deletion_value_sampled = np.stack(
+            msa_deletion_value_sampled,
+            axis=0,
+        ).astype(np.float32)
 
         # Now convert biomol to batch
-        atom_bond_type = cifmol.atoms.bond_type.value # (n_atom_bond, )
-        atom_bond_stereo = cifmol.atoms.bond_stereo.value # (n_atom_bond, )
-        atom_bond_aromatic = cifmol.atoms.bond_aromatic.value # (n_atom_bond, )
+        atom_bond_type = cifmol.atoms.bond_type.value  # (n_atom_bond, )
+        atom_bond_stereo = cifmol.atoms.bond_stereo.value  # (n_atom_bond, )
+        atom_bond_aromatic = cifmol.atoms.bond_aromatic.value  # (n_atom_bond, )
         atom_bond = np.stack(
             [atom_bond_type, atom_bond_stereo, atom_bond_aromatic],
             axis=1,
         )  # (n_atom_bond, 3)
         atom_bond = np.zeros_like(atom_bond, dtype=np.int64)  # placeholder
         residue_bond = cifmol.residues.bond
-        value, src, dst = residue_bond.value, residue_bond.src_indices, residue_bond.dst_indices
+        value, src, dst = (
+            residue_bond.value,
+            residue_bond.src_indices,
+            residue_bond.dst_indices,
+        )
         residue_bond = np.stack([src, dst, value], axis=1)  # (n_residue_bond, 3)
 
         # Tensor of residue xyz, mask, bond
@@ -484,7 +520,9 @@ class BioMolData(torch.utils.data.Dataset):
         ref_mask = ~np.isnan(ref_pos).any(axis=1)
         ref_element = cifmol.atoms.element.value
         ref_charge = cifmol.atoms.charge.value
-        ref_charge = np.array([float(c) if c not in {"?", "."} else 0.0 for c in ref_charge])
+        ref_charge = np.array(
+            [float(c) if c not in {"?", "."} else 0.0 for c in ref_charge],
+        )
         ref_space_uid = cifmol.index_table.atom_to_res
 
         N_res = ref_space_uid.max() + 1
@@ -495,7 +533,9 @@ class BioMolData(torch.utils.data.Dataset):
         for ii, atom_indices in enumerate(res_to_atoms):
             R, T = Rs[ii], Ts[ii]
             _ref_pos = ref_pos[atom_indices]
-            _ref_pos = (_ref_pos - _ref_pos.mean(axis=0)) @ R + T  # random SE(3) operation
+            _ref_pos = (
+                _ref_pos - _ref_pos.mean(axis=0)
+            ) @ R + T  # random SE(3) operation
             random_ref_pos.append(_ref_pos)
         ref_pos = np.vstack(random_ref_pos)
 
@@ -512,7 +552,7 @@ class BioMolData(torch.utils.data.Dataset):
         contact_edges = list(zip(src, dst, strict=True))
 
         sequence = SequenceFeatures.from_sample(
-            residue_type = torch.from_numpy(residue_type.astype(np.int64)),
+            residue_type=torch.from_numpy(residue_type.astype(np.int64)),
         )
         atom_pos = cifmol.atoms.xyz.value
         atom_pos_mask = np.isfinite(atom_pos).all(axis=1)
@@ -523,7 +563,7 @@ class BioMolData(torch.utils.data.Dataset):
             atom_pos_mask=torch.from_numpy(atom_pos_mask.astype(np.bool)),
             atom_mask=torch.from_numpy(atom_mask.astype(np.bool)),
             atom_bond=torch.from_numpy(atom_bond.astype(np.int8)),
-            residue_mask=torch.ones((cropped_len,), dtype=torch.bool), # all ones
+            residue_mask=torch.ones((cropped_len,), dtype=torch.bool),  # all ones
             residue_bond=torch.from_numpy(residue_bond.astype(np.int8)),
         )
         reference = ReferenceFeatures.from_sample(
@@ -540,7 +580,9 @@ class BioMolData(torch.utils.data.Dataset):
             residue_asym_id=torch.from_numpy(residue_asym_id.astype(np.int64)),
             residue_entity_id=torch.from_numpy(residue_entity_id.astype(np.int64)),
             residue_sym_id=torch.from_numpy(residue_sym_id.astype(np.int64)),
-            atom_to_residue_idx_map=torch.from_numpy(atom_to_residue_idx_map.astype(np.int64)),
+            atom_to_residue_idx_map=torch.from_numpy(
+                atom_to_residue_idx_map.astype(np.int64),
+            ),
             edge_index=torch.from_numpy(np.array(edge_index, dtype=np.int64)),
         )
         msa = MSAFeatures.from_sample(
@@ -566,17 +608,17 @@ class BioMolData(torch.utils.data.Dataset):
             chain=chain,
         )
 
-
     def create_ddp_dataloader(
         self,
         rank: int,
         drop_last: bool = False,
         **kwargs: object,
-    )-> DataLoader:
+    ) -> DataLoader:
         """Create a distributed DataLoader with AdaptiveEdgeSampler."""
         sampler = AdaptiveEdgeSampler(
             AdaptiveEdgeSampler.Config(
                 dataset=self,
+                num_replicas=kwargs.get("world_size", 1),
                 stats=self.stats,
                 rank=rank,
                 shuffle=kwargs.get("shuffle", True),
@@ -586,6 +628,7 @@ class BioMolData(torch.utils.data.Dataset):
         )
 
         kwargs.pop("shuffle", None)
+        kwargs.pop("world_size", None)
         kwargs.update({"sampler": sampler})
 
         params = {
@@ -607,6 +650,7 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
+
 if __name__ == "__main__":
     crop_config = CropConfig(
         contiguous_prob=0.0,
@@ -619,9 +663,13 @@ if __name__ == "__main__":
         max_msa_depth=512,
     )
     DB_config = BioMolDBConfig(
-        cif_db_path=Path("/home/psk6950/data/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb"),
+        cif_db_path=Path(
+            "/home/psk6950/data/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb",
+        ),
         a3m_db_path=Path("/home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb"),
-        edge_id_to_cif_ids_path=Path("/home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/train_edges.tsv"),
+        edge_id_to_cif_ids_path=Path(
+            "/home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/train_edges.tsv",
+        ),
     )
     config = BioMolData.BioMolConfig(
         crop_config=crop_config,

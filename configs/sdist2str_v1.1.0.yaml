@@ -74,7 +74,7 @@ model:
     r_max: 32
     s_max: 2
     implementation: triton
-    use_checkpoint: False
+    use_checkpoint: True
     to_bias_init: zero
     norm: qk
 
@@ -123,7 +123,7 @@ model:
   diffusion:
     frequency_embedding_size: 256
     n_block_atom: 3
-    n_block_token: 24
+    n_block_token: 4
     n_head_atom: 4
     n_head_token: 24
     n_transition_expand: 2

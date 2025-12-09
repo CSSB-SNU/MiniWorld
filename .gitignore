@@ -8,3 +8,4 @@ output/
 outputs/
 *.sh
 wandb/
+submits/
