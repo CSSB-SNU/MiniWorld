@@ -13,14 +13,14 @@ import wandb
 from miniworld.data.dataloader.dataloader_multistate_contam import (
     BioMolMonomerData,
 )
-from miniworld.models.sdist_to_str_contam import Sdist2StrClient
+from miniworld.models.superposed_dist_to_str import SuperposedDist2StrClient
 
 # torch.set_float32_matmul_precision("high")  # noqa: ERA001
 # anomaly detection
 torch.autograd.set_detect_anomaly(False)
 
 
-def setup_logger(client: Sdist2StrClient) -> None:
+def setup_logger(client: SuperposedDist2StrClient) -> None:
     if not client.is_global_zero:
         return
 
@@ -36,7 +36,9 @@ def setup_logger(client: Sdist2StrClient) -> None:
     client.logger.addHandler(handler)
 
     now = datetime.datetime.now(datetime.timezone.utc)
-    file_handler = logging.FileHandler(f"logs/sdist2str_{now:%Y%m%d_%H%M%S}.log")
+    file_handler = logging.FileHandler(
+        f"logs/superposed_dist2str_{now:%Y%m%d_%H%M%S}.log",
+    )
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)
 
@@ -106,10 +108,10 @@ def train(  # noqa: PLR0912, PLR0915
 ):
     if config and not resume_from_ckpt:
         cfg = OmegaConf.load(config)
-        cfg = Sdist2StrClient.Config.model_validate(cfg)
-        client = Sdist2StrClient(cfg)
+        cfg = SuperposedDist2StrClient.Config.model_validate(cfg)
+        client = SuperposedDist2StrClient(cfg)
     elif not config and resume_from_ckpt:
-        client = Sdist2StrClient.from_checkpoint(resume_from_ckpt)
+        client = SuperposedDist2StrClient.from_checkpoint(resume_from_ckpt)
     else:
         msg = (
             "You must provide either a config file or a checkpoint file, but not both."
@@ -278,7 +280,7 @@ def sample(
     if not ckpt:
         msg = "You must provide a checkpoint file."
         raise ValueError(msg)
-    client = Sdist2StrClient.from_checkpoint(ckpt)
+    client = SuperposedDist2StrClient.from_checkpoint(ckpt)
 
     fabric = Fabric()
     fabric.launch()
@@ -353,8 +355,6 @@ def sample(
             save_dir=Path(save_dir) if save_dir else None,
             save_all=True,
         )
-
-    breakpoint()
 
     client.logger.info("-" * 70)
     client.logger.info("")

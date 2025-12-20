@@ -157,6 +157,10 @@ class BioMolMonomerData(torch.utils.data.Dataset):
             with tmp_cache_path.open("rb") as f:
                 data = pickle.load(f)  # noqa: S301
             self.cluster_id_to_seq_ids = data["cluster_id_to_seq_ids"]
+            self.seq_id_to_cluster_id = {}
+            for cluster_id, seq_ids in self.cluster_id_to_seq_ids.items():
+                for seq_id in seq_ids:
+                    self.seq_id_to_cluster_id[seq_id] = cluster_id
             self.cluster_id_list = data["cluster_id_list"]
             self.seq_id_to_seq = data["seq_id_to_seq"]
             return
@@ -181,6 +185,10 @@ class BioMolMonomerData(torch.utils.data.Dataset):
             if any(seq_id in valid_seq_ids for seq_id in seq_ids)
         }
         self.cluster_id_to_seq_ids = filtered_cluster_ids_to_seq_ids
+        self.seq_id_to_cluster_id = {}
+        for cluster_id, seq_ids in self.cluster_id_to_seq_ids.items():
+            for seq_id in seq_ids:
+                self.seq_id_to_cluster_id[seq_id] = cluster_id
 
         cluster_id_list = []
         with self.config.preprocess_config.cluster_ids_path.open("r") as f:
@@ -244,20 +252,47 @@ class BioMolMonomerData(torch.utils.data.Dataset):
         # uniformly sample a seq _id
         # To avoid this, we will loop until we find a valid one.
         query_id = random.choice(seq_ids)
-        query_sequence, query_structure, query_reference, query_scheme, query_msa = (
-            self.get_item_by_seq_id(query_id=query_id, crop_length=None)
-        )
+        try:
+            item = self.get_item_by_seq_id(query_id=query_id)
+        except:
+            msg = f"Error loading data for seq_id {query_id}."
+            raise ValueError(msg)
+        return item
+
+    def get_item_by_seq_id(
+        self,
+        query_id: str,
+        contam_query_id: str | None = None,
+    ) -> Batch:
+        """Get item by seq_id."""
+        cluster_id = self.seq_id_to_cluster_id[query_id]
+        (
+            query_sequence,
+            query_structure,
+            query_reference,
+            query_scheme,
+            query_msa,
+            additional,
+        ) = self._load_data_by_seq_id(query_id=query_id, crop_length=None)
         query_residue_length = query_msa.aligned_sequences.shape[-1]
         query_msa_depth = query_msa.aligned_sequences.shape[0]
 
         # contam query _id
-        contam_cluster_id = random.choice(
-            list(set(self.cluster_id_list) - {cluster_id}),
-        )
-        contam_query__id = random.choice(self.cluster_id_to_seq_ids[contam_cluster_id])
-        _, contam_structure, _, contam_scheme, contam_msa = self.get_item_by_seq_id(
-            query_id=contam_query__id,
-            crop_length=query_residue_length,
+        if not contam_query_id:
+            contam_cluster_id = random.choice(
+                list(set(self.cluster_id_list) - {cluster_id}),
+            )
+            contam_query_id = random.choice(
+                self.cluster_id_to_seq_ids[contam_cluster_id],
+            )
+        else:
+            contam_cluster_id = self.seq_id_to_cluster_id[contam_query_id]
+
+        _, contam_structure, _, contam_scheme, contam_msa, _ = (
+            self._load_data_by_seq_id(
+                query_id=contam_query_id,
+                crop_length=query_residue_length,
+            )
         )
         contam_msa_depth = contam_msa.aligned_sequences.shape[2]
         contam_residue_length = contam_msa.aligned_sequences.shape[-1]
@@ -348,8 +383,11 @@ class BioMolMonomerData(torch.utils.data.Dataset):
         return Batch(
             name=[
                 f"{cluster_id}_{query_id}",
-                f"{contam_cluster_id}_{contam_query__id}",
+                f"{contam_cluster_id}_{contam_query_id}",
             ],
+            heteros=[additional[0]],
+            atom_ids=[additional[1]],
+            chem_comp_ids=[additional[2]],
             sequence=query_sequence,
             structure=query_structure,
             reference=query_reference,
@@ -359,7 +397,7 @@ class BioMolMonomerData(torch.utils.data.Dataset):
             contam_bias=[random_bias],
         )
 
-    def get_item_by_seq_id(  # noqa: PLR0915
+    def _load_data_by_seq_id(  # noqa: PLR0915
         self,
         query_id: str,
         crop_length: int | None = None,
@@ -369,6 +407,7 @@ class BioMolMonomerData(torch.utils.data.Dataset):
         ReferenceFeatures,
         SchemeFeatures,
         MSAFeatures,
+        tuple,
     ]:
         """Get item by seq_id."""
         cifmols = load_cifmols(
@@ -376,12 +415,13 @@ class BioMolMonomerData(torch.utils.data.Dataset):
             seq_id=query_id,
         )
         atom_length_list = [cifmol.atoms.xyz.shape[0] for cifmol in cifmols]
-        atom_length_list = list(set(atom_length_list))
-        atom_length = random.choice(atom_length_list)
+        atom_length = random.choice(list(set(atom_length_list)))
         indices = [
             i for i, length in enumerate(atom_length_list) if length == atom_length
         ]
         cifmols = [cifmols[i] for i in indices]
+
+        # remove fully invalid atoms
 
         # for cropping we have to sample one _id
         query_cifmol = random.choice(cifmols)
@@ -394,6 +434,25 @@ class BioMolMonomerData(torch.utils.data.Dataset):
         )
         cifmols = [cifmol.residues[crop_indices].extract() for cifmol in cifmols]
         query_cifmol = query_cifmol.residues[crop_indices].extract()
+        query_atom_length = query_cifmol.atoms.xyz.shape[0]
+
+        atom_pos_mask = [
+            ~np.isnan(cifmol.atoms.xyz.value).any(axis=1) for cifmol in cifmols
+        ]
+        atom_len_filter = [
+            cifmol.atoms.xyz.shape[0] == query_atom_length for cifmol in cifmols
+        ]
+        valid_indices = [
+            i
+            for i, (mask, length_match) in enumerate(
+                zip(atom_pos_mask, atom_len_filter, strict=True),
+            )
+            if mask.any() and length_match
+        ]
+        if len(valid_indices) == 0:
+            msg = f"No valid atoms found for seq_id {query_id} after cropping."
+            raise ValueError(msg)
+        cifmols = [cifmols[i] for i in valid_indices]
 
         # Assume only protein chains are handled here
         query_full_seq = self.seq_id_to_seq[query_id]
@@ -559,7 +618,13 @@ class BioMolMonomerData(torch.utils.data.Dataset):
             deletion_mean=torch.from_numpy(msa_deletion_mean),
         )
 
-        return sequence, structure, reference, scheme, msa
+        # ids : to make cif file from batch
+        hetero = query_cifmol.residues.hetero
+        atom_ids = query_cifmol.atoms.atom_id
+        chem_comp_ids = query_cifmol.residues.chem_comp
+        additional = (hetero, atom_ids, chem_comp_ids)
+
+        return sequence, structure, reference, scheme, msa, additional
 
     def create_ddp_dataloader(
         self,
@@ -586,8 +651,11 @@ class BioMolMonomerData(torch.utils.data.Dataset):
         params = {
             "shuffle": False,  # leave False when using a sampler
             "drop_last": False,  # override to True for train
-            "num_workers": 4,
+            "num_workers": kwargs.get("num_workers", 0),
             "pin_memory": True,
+            "multiprocessing_context": (
+                "spawn" if kwargs.get("num_workers", 0) > 0 else None
+            ),
             "collate_fn": Batch.collate_fn,
         }
         params.update(kwargs)
@@ -627,46 +695,24 @@ if __name__ == "__main__":
         ),
         preprocess_config=MultiStatedbConfig(
             cif_db_path=Path(
-                "/home/psk6950/data/miniworld/multistate/seq_id_to_cifmols_wo_signalp.lmdb",
+                "/home/psk6950/data/MiniWorld/multistate/seqID_to_cifmols_filtered.lmdb",
             ),
-            a3m_db_path=db_path / "a3m.lmdb",
+            a3m_db_path=Path("/home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb"),
             tmp_dir=Path(
-                "/home/psk6950/data/miniworld/multistate/data_tmp/monomer/train/",
+                "/home/psk6950/data/MiniWorld/multistate/data_tmp/monomer/train/",
             ),
             cluster_ids_path=Path(
-                "/home/psk6950/data/miniworld/multistate/train_valid_split/train_clusters.txt",
+                "/home/psk6950/data/MiniWorld/multistate/train_valid_split/train_clusters.txt",
             ),
             cluster_id_to_seq_ids_path=Path(
-                "/home/psk6950/data/miniworld/multistate/cluster_id_to_seq_ids.npz",
+                "/home/psk6950/data/MiniWorld/multistate/clusterID_to_seqIDs.npz",
             ),
             seq_id_to_seq=db_path / "fasta" / "protein_wo_signalp.fasta",
         ),
     )
     dataset = BioMolMonomerData(config)
     for _ in range(1000):
-        dataset.get_item_by_seq_id("P0205891")
-        dataset.get_item_by_seq_id("P0205892")
-        dataset.get_item_by_seq_id("P0205893")
-
-    def process_item(i):
-        try:
-            dataset[i]
-            return None
-        except Exception as e:
-            return f"Error at index {i}: {str(e)}"
-
-    print(f"Total dataset size: {len(dataset)}")
-    chunk_size = 1_000
-    chunk_index = [
-        range(i, min(i + chunk_size, len(dataset)))
-        for i in range(0, len(dataset), chunk_size)
-    ]
-
-    for idx_chunk in chunk_index:
-        for ii in idx_chunk:
-            result = process_item(ii)
-            if result is not None:
-                print(result)
-            else:
-                print(f"Processed index {ii} successfully.")
-        breakpoint()
+        dataset._load_data_by_seq_id("P0205891")
+        dataset._load_data_by_seq_id("P0205892")
+        dataset._load_data_by_seq_id("P0205893")
+    breakpoint()

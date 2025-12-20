@@ -2,6 +2,7 @@ import random
 from collections.abc import Mapping
 from contextlib import ExitStack
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
@@ -21,6 +22,7 @@ from miniworld.data.dataloader.dataloader_multistate_contam import (
     MultiStatedbConfig,
 )
 from miniworld.data.features.features_multistate import Batch, NoisyBatch
+from miniworld.data.to_cif import batch_to_cif
 from miniworld.loss import metrics
 from miniworld.modules.configs import (
     CommonConfig,
@@ -176,13 +178,18 @@ class Sdist2StrModel(nn.Module):
                     noisy_batch.scheme.atom_to_residue_idx_map,
                 )
             )
+            test, _ = get_shortest_distances_from_multistructures(
+                atom_pos[:, :1],
+                noisy_batch.structure.atom_pos_mask[:, :1],
+                noisy_batch.scheme.atom_to_residue_idx_map,
+            )
             edges = torch.linspace(
                 self.config.distogram.min_distance,
                 self.config.distogram.max_distance,
                 self.config.distogram.num_bins - 1,
                 device=atom_pos.device,
             )
-            if self.training:
+            if self.training or True:
                 contam_residue_dists, contam_residue_pair_mask = (
                     get_shortest_distances_from_multistructures(
                         noisy_batch.contam.atom_pos,
@@ -220,7 +227,6 @@ class Sdist2StrModel(nn.Module):
                         merged_block,
                         main_block,
                     )
-
                     residue_dists[b, start:end, start:end] = updated_block
 
             shortest_distogram = torch.bucketize(
@@ -377,6 +383,7 @@ class Sdist2StrModelWrapper(nn.Module):
 
         n_str = z_i.shape[0]
         t_emb = t_emb[None, None, None, None].repeat(n_str, 1, 1, 1)
+        x_mask = self.batch.structure.atom_pos_mask[0:1].repeat(n_str, 1)
 
         noisy_batch = NoisyBatch(
             **self.batch.__dict__,
@@ -556,6 +563,7 @@ class Sdist2StrClient(BaseClient):
             batch,
             self.config.experiment.eval_timesteps,
             n_sample=self.config.experiment.eval_sample_num,
+            save_dir=None,
         )
 
     @torch.no_grad()
@@ -564,6 +572,8 @@ class Sdist2StrClient(BaseClient):
         batch: Batch,
         timesteps: int = 100,
         n_sample: int = 48,
+        save_dir: Path | None = None,
+        save_all: bool = True,
     ) -> dict[str, float]:
         """Test the inference quality of the model on a batch."""
         batch = batch.to(device=self.device)
@@ -584,14 +594,14 @@ class Sdist2StrClient(BaseClient):
                 lddt = metrics.cal_atom_lddt(
                     output.atom_pos_pred[sample_idx, 0],
                     batch.structure.atom_pos[0, true_idx],
-                    batch.structure.atom_pos_mask[0, true_idx],
+                    batch.structure.atom_pos_mask[0, 0],
                 )
                 max_lddt = max(max_lddt, lddt)
 
                 rmsd = metrics.cal_aligned_rmsd(
                     output.atom_pos_pred[sample_idx, 0],
                     batch.structure.atom_pos[0, true_idx],
-                    batch.structure.atom_pos_mask[0, true_idx],
+                    batch.structure.atom_pos_mask[0, 0],
                 )
                 min_rmsd = min(min_rmsd, rmsd)
 
@@ -600,8 +610,36 @@ class Sdist2StrClient(BaseClient):
         lddt_list = np.array(lddt_list)
         rmsd_list = np.array(rmsd_list)
 
+        # best idx (rmsd)
+        best_idx = int(np.argmin(rmsd_list))
+        worst_idx = int(np.argmax(rmsd_list))
+        if save_dir:
+            save_dir.mkdir(parents=True, exist_ok=True)
+            batch_to_cif(
+                batch,
+                output.atom_pos_pred[best_idx : best_idx + 1],
+                save_dir / f"{batch.name[0]}_best.cif",
+            )
+            batch_to_cif(
+                batch,
+                output.atom_pos_pred[worst_idx : worst_idx + 1],
+                save_dir / f"{batch.name[0]}_worst.cif",
+            )
+            batch_to_cif(
+                batch,
+                batch.structure.atom_pos[:, 0:1],  # true structure
+                save_dir / f"{batch.name[0]}_true.cif",
+            )
+        if save_all:
+            for sample_idx in range(N_sample):
+                batch_to_cif(
+                    batch,
+                    output.atom_pos_pred[sample_idx : sample_idx + 1],
+                    save_dir / f"{batch.name[0]}_sample_{sample_idx}.cif",
+                )
         max_lddt, min_lddt = lddt_list.max(), lddt_list.min()
         max_rmsd, min_rmsd = rmsd_list.max(), rmsd_list.min()
+        print(f"max_lddt: {max_lddt:.4f}, min_lddt: {min_lddt:.4f}")
 
         return {
             "max_lddt": max_lddt,
@@ -628,7 +666,7 @@ class Sdist2StrClient(BaseClient):
         batch = batch.to(device=self.device)
 
         atom_pos = batch.structure.atom_pos
-        B, _, L, _ = atom_pos.shape
+        B, N_str, L, _ = atom_pos.shape
         model_wrapper.prepare_condition(batch, atom_pos)
 
         cursor = 0

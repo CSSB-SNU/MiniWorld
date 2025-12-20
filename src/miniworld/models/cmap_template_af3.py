@@ -6,6 +6,7 @@ from typing import Any, Literal
 
 import numpy as np
 import torch
+from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
 from team_gm import BaseClient
 from team_gm.core.callbacks import ModelEMA
@@ -23,6 +24,7 @@ from miniworld.data.dataloader.dataloader_edge_backprop import (
 )
 from miniworld.data.features.features_biomol import Batch, NoisyBatch
 from miniworld.loss import metrics  # , losses
+from miniworld.loss.auxiliary import cal_atom_distogram_loss
 from miniworld.modules.configs import (
     CommonConfig,
     DiffusionConfig,
@@ -31,6 +33,8 @@ from miniworld.modules.diffusion_module import (
     DiffusionModule,
 )
 from miniworld.modules.feature_embedder import InputFeatureEmbedder
+from miniworld.modules.head import DistogramHead
+from miniworld.modules.msa_module import MSAModule
 from miniworld.modules.primitives import (
     LayerNorm,
     Linear,
@@ -74,24 +78,69 @@ class ContactMapEmbedder(nn.Module):
         return token_pair  # (B, L, L, d_pair)
 
 
-class ContactMap2StrModel(nn.Module):
-    """Contact Map to Structure Model."""
+def sample_contact_map_vectorized(
+    contact_map: torch.Tensor,
+    contact_mask: torch.Tensor,
+    max_pos: int,
+    max_neg: int,
+) -> torch.Tensor:
+    """Sample contact map with given number of positive and negative contacts."""
+    B, L, _ = contact_map.shape
+
+    pos_mask = (contact_map == 1) & contact_mask.bool()  # (B, L, L)
+    neg_mask = (contact_map == 0) & contact_mask.bool()  # (B, L, L)
+
+    rand_scores = torch.rand((B, L, L), device=contact_map.device)
+
+    pos_scores = rand_scores.masked_fill(~pos_mask, -1e9)
+    neg_scores = rand_scores.masked_fill(~neg_mask, -1e9)
+
+    # --- top-k selection ---
+    pos_scores_flat = pos_scores.view(B, -1)
+    neg_scores_flat = neg_scores.view(B, -1)
+
+    _, pos_idx = torch.topk(pos_scores_flat, k=min(max_pos, L * L), dim=-1)
+    _, neg_idx = torch.topk(neg_scores_flat, k=min(max_neg, L * L), dim=-1)
+
+    keep_pos_mask = torch.zeros_like(pos_scores_flat, dtype=torch.bool)
+    keep_neg_mask = torch.zeros_like(neg_scores_flat, dtype=torch.bool)
+
+    keep_pos_mask.scatter_(1, pos_idx, torch.ones_like(pos_idx, dtype=torch.bool))
+    keep_neg_mask.scatter_(1, neg_idx, torch.ones_like(neg_idx, dtype=torch.bool))
+
+    keep_mask = (keep_pos_mask | keep_neg_mask).view(B, L, L)
+
+    sampled = torch.full_like(contact_map, 2)
+    sampled[keep_mask] = contact_map[keep_mask]
+
+    return sampled
+
+
+class AF3Model(nn.Module):
+    """Structure AF3 model."""
 
     class ConditionConfig(BaseModel):
-        """Configuration for the trunk condition module."""
+        """Configuration for condition modules."""
 
         pairformer: Pairformer.Config
+        msa_module: MSAModule.Config
         n_recycle_max: int = 4
 
-    class Config(BaseModel):
-        """Configuration for ContactMap2StrModel."""
+    class ContactMapConfig(BaseModel):
+        """Configuration for contact map embedding."""
 
-        contact_map_dropout: float = 0.5
+        pairformer: Pairformer.Config
+        max_inputs_pos: int = 16
+        max_inputs_neg: int = 16
+
+    class Config(BaseModel):
+        """Configuration for the AF3 model."""
+
         common: CommonConfig
-        contact_map_pairformer: "Pairformer.Config"
-        trunk: "ContactMap2StrModel.ConditionConfig"
+        trunk: "AF3Model.ConditionConfig"
         diffusion: DiffusionConfig
         precision: PrecisionConfig
+        contact_map: "AF3Model.ContactMapConfig"
 
     def __init__(self, config: Config) -> None:
         super().__init__()
@@ -102,20 +151,6 @@ class ContactMap2StrModel(nn.Module):
         self.input_feature_embedder = InputFeatureEmbedder(
             config.common,
             config.diffusion,
-        )
-
-        # embed contact map
-        self.contact_map_embedder = ContactMapEmbedder(config.contact_map_pairformer)
-        self.contact_map_to_pair = nn.Sequential(
-            LayerNorm(
-                config.common.d_token_pair,
-                implementation=config.common.implementation,
-            ),
-            Linear(
-                config.common.d_token_pair,
-                config.common.d_token_pair,
-                init="zero",
-            ),
         )
 
         # Recycle layers
@@ -142,17 +177,31 @@ class ContactMap2StrModel(nn.Module):
             ),
         )
 
+        self.contact_map_embedder = ContactMapEmbedder(config.contact_map.pairformer)
+        self.contact_map_to_pair = nn.Sequential(
+            LayerNorm(
+                config.common.d_token_pair,
+                implementation=config.common.implementation,
+            ),
+            Linear(
+                config.common.d_token_pair,
+                config.common.d_token_pair,
+                init="zero",
+            ),
+        )
+
         # Trunk forward
+        self.msa_module = MSAModule(config.common, config.trunk.msa_module)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
 
         # Diffusion module
         self.diffusion_module = DiffusionModule(config.common, config.diffusion)
 
-    def condition_forward(
-        self,
-        noisy_batch: NoisyBatch,
-    ) -> tuple[torch.Tensor, ...]:
-        """Forward pass of the trunk condition module."""
+        # Distogram prediction
+        self.distogram_head = DistogramHead(config.common)
+
+    def condition_forward(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, ...]:
+        """Forward pass of the condition modules with recycling."""
         if self.training:
             n_recycle = random.randint(1, self.n_recycle_max)
         else:
@@ -163,30 +212,6 @@ class ContactMap2StrModel(nn.Module):
             )
             raise ValueError(msg)
 
-        # gen randomly dropped out contact map
-        with torch.no_grad():
-            contact_map, contact_map_mask = get_contact_map(
-                noisy_batch.structure.atom_pos,
-                noisy_batch.structure.atom_pos_mask,
-                noisy_batch.scheme.atom_to_residue_idx_map,
-            )
-            # randomly drop out contact map
-            residue_length = contact_map.shape[1]
-            dropout_length = int(residue_length * self.config.contact_map_dropout)
-            start = random.randint(0, residue_length - dropout_length)
-            dropout_mask = torch.ones_like(contact_map_mask)
-            dropout_mask[:, start : start + dropout_length] = 0.0  # dropped
-            dropout_mask[:, :, start : start + dropout_length] = 0.0  # dropped
-            dropout_mask[
-                :,
-                start + dropout_length :,
-                :start,
-            ] = 0.0  # dropped
-            dropout_mask[:, :start, start + dropout_length :] = 0.0  # dropped
-            contact_map_mask = contact_map_mask * dropout_mask
-            contact_map[~contact_map_mask.bool()] = 2.0  # unknown
-            contact_map = contact_map.long()
-            contact_map = nn.functional.one_hot(contact_map, num_classes=3).float()
         # input feature embedding
         (
             token_single_input,
@@ -194,9 +219,23 @@ class ContactMap2StrModel(nn.Module):
             token_pair_init,
         ) = self.input_feature_embedder(noisy_batch)
 
-        # embed contact map to pair token
+        with torch.no_grad():
+            contact_map, contact_map_mask = get_contact_map(
+                noisy_batch.structure.atom_pos,
+                noisy_batch.structure.atom_pos_mask,
+                noisy_batch.scheme.atom_to_residue_idx_map,
+            )
+            max_pos = random.randint(0, self.config.contact_map.max_inputs_pos)
+            max_neg = random.randint(0, self.config.contact_map.max_inputs_neg)
+            contact_map_sampled = sample_contact_map_vectorized(
+                contact_map,
+                contact_map_mask,
+                max_pos,
+                max_neg,
+            )
+
         token_pair_contact_map = self.contact_map_embedder(
-            contact_map,
+            contact_map_sampled,
             noisy_batch.structure.residue_mask,
         )
         token_pair_contact_map = self.contact_map_to_pair(token_pair_contact_map)
@@ -211,6 +250,13 @@ class ContactMap2StrModel(nn.Module):
                     stack.enter_context(torch.no_grad())
                     stack.enter_context(torch.inference_mode())
                 token_pair = token_pair_init + self.add_pair_recycle(token_pair)
+                token_pair = token_pair + self.msa_module(
+                    noisy_batch,
+                    i_cycle,
+                    token_pair,
+                    token_single_input,
+                    noisy_batch.structure.residue_mask,
+                )
                 token_single = token_single_init + self.add_single_recycle(token_single)
 
                 token_pair, token_single = self.pairformer_blocks.forward(
@@ -219,10 +265,12 @@ class ContactMap2StrModel(nn.Module):
                     noisy_batch.structure.residue_mask,
                 )
 
+        distogram_logit = self.distogram_head(token_pair)
         return (
             token_single_input,
             token_single,
             token_pair,
+            distogram_logit,
         )
 
     def diffusion_forward(
@@ -257,30 +305,29 @@ class ContactMap2StrModel(nn.Module):
             token_pair_trunk,
         )
 
-    def forward(self, noisy_batch: NoisyBatch) -> torch.Tensor:
-        """Forward pass of ContactMap2StrModel."""
+    def forward(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, torch.Tensor]:
+        """Forward pass of the AF3 model."""
         (
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
+            distogram_logit,
         ) = self.condition_forward(noisy_batch)
         # Diffusion forward
-        return self.diffusion_forward(
+        atom_pos_update = self.diffusion_forward(
             noisy_batch,
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
         )
 
+        return atom_pos_update, distogram_logit
 
-class ContactMap2StrModelWrapper(nn.Module):
-    """Wrapper for ContactMap2StrModel to handle the input and output using solver."""
 
-    def __init__(
-        self,
-        model: ContactMap2StrModel,
-        use_self_condition: bool = True,
-    ) -> None:
+class AF3ModelWrapper(nn.Module):
+    """Wrapper for AF3Model to handle the input and output using solver."""
+
+    def __init__(self, model: AF3Model, use_self_condition: bool = True) -> None:
         super().__init__()
         self.batch_loaded = False
         self.conditioned_forwarded = False
@@ -296,11 +343,11 @@ class ContactMap2StrModelWrapper(nn.Module):
 
     def prepare_condition(self, batch: Batch) -> None:
         """Prepare the model for conditioned forward pass."""
-        if self.use_self_condition:
-            msg = "Batch is already loaded. Cannot prepare condition again."
+        if self.batch_loaded:
+            msg = "Batch is already loaded. Please create a new AF3ModelWrapper instance for a new batch."
             raise ValueError(msg)
         if self.conditioned_forwarded:
-            msg = "Conditioned forward is already done. Cannot prepare condition again."
+            msg = "Conditioned forward is already done. Please create a new AF3ModelWrapper instance for a new batch."
             raise ValueError(msg)
 
         # Load the batch and prepare the model for conditioned forward pass
@@ -309,6 +356,7 @@ class ContactMap2StrModelWrapper(nn.Module):
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
+            distogram_logit,
         ) = self.model.condition_forward(self.batch)
         self.conditioned_forwarded = True
 
@@ -316,27 +364,20 @@ class ContactMap2StrModelWrapper(nn.Module):
             "token_single_input": token_single_input,
             "token_single_trunk": token_single_trunk,
             "token_pair_trunk": token_pair_trunk,
+            "distogram_logit": distogram_logit,
         }
 
     def forward(self, z_i: torch.Tensor, t_emb: torch.Tensor) -> torch.Tensor:
         """Forward pass of the model wrapper."""
-        if not self.batch_loaded:
-            msg = "Batch must be loaded before forward pass."
+        if not self.batch_loaded or not self.conditioned_forwarded:
+            msg = "Batch must be loaded and conditioned forward must be called before forward pass."
             raise ValueError(msg)
-        if not self.conditioned_forwarded:
-            msg = "Conditioned forward must be called before forward pass."
-            raise ValueError(msg)
-
-        n_str = z_i.shape[0]
-        t_emb = t_emb[None, None, None, None].repeat(n_str, 1, 1, 1)
-        x_mask = self.batch.structure.atom_pos_mask.repeat(n_str, 1)
 
         noisy_batch = NoisyBatch(
             **self.batch.__dict__,
-            x_t=z_i,
-            t=t_emb,
+            x_t=z_i.unsqueeze(0),  # (B, L, 3) -> (1, B, L, 3)
+            t=t_emb[None, None, None, None],  # (,) -> (1, 1, 1, 1)
             x_sc=self.z_sc,
-            x_mask=x_mask,
         )
 
         z_update = self.model.diffusion_forward(
@@ -345,6 +386,7 @@ class ContactMap2StrModelWrapper(nn.Module):
             self.condition["token_single_trunk"],
             self.condition["token_pair_trunk"],
         )
+        z_update = z_update.squeeze(0)  # (1, B, L, 3) -> (B, L, 3)
         if self.use_self_condition:
             self.z_sc = z_update
 
@@ -352,23 +394,26 @@ class ContactMap2StrModelWrapper(nn.Module):
 
 
 @dataclass
-class ContactMap2StrInferenceOutput:
-    """Output of ContactMap2Str inference."""
+class AF3InferenceOutput:
+    """Output of the AF3 model inference."""
 
     # Tensor of final predicted atom coordinate.
     atom_pos_pred: torch.Tensor  # (B, L, 3)
 
+    # Distogram logits
+    distogram_logit: torch.Tensor  # (B, L, L, D)
+
     # Array of predicted atom coordinate trajectory for timesteps T.
-    model_traj: np.ndarray | None  # (B, T, L, 3)
+    model_traj: np.ndarray  # (B, T, L, 3)
 
     # Array of interpolant predicted atom coordinate trajectory for timesteps T.
-    inter_traj: np.ndarray | None  # (B, T, L, 3)
+    inter_traj: np.ndarray  # (B, T, L, 3)
 
     batch: Batch
 
 
-class ContactMap2StrClient(BaseClient):
-    """Client for training and inference of ContactMap2StrModel."""
+class AF3Client(BaseClient):
+    """Client for training and inference of AF3 model."""
 
     class DataConfig(BaseModel):
         """Configuration for data loading."""
@@ -428,17 +473,17 @@ class ContactMap2StrClient(BaseClient):
     class Config(BaseModel):
         """Configuration for the AF3 client."""
 
-        data: "ContactMap2StrClient.DataConfig"
-        model: ContactMap2StrModel.Config
-        experiment: "ContactMap2StrClient.ExperimentsConfig"
-        diffuser: "ContactMap2StrClient.DiffuserConfig"
-        loss: "ContactMap2StrClient.LossConfig"
+        data: "AF3Client.DataConfig"
+        model: AF3Model.Config
+        experiment: "AF3Client.ExperimentsConfig"
+        diffuser: "AF3Client.DiffuserConfig"
+        loss: "AF3Client.LossConfig"
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self.config = config
         self.set_seed(config.experiment.seed)
-        self.register_model(ContactMap2StrModel(config.model))
+        self.register_model(AF3Model(config.model))
 
         if config.experiment.use_ema:
             self.add_callback(ModelEMA(config.experiment.ema_decay))
@@ -468,18 +513,27 @@ class ContactMap2StrClient(BaseClient):
         np.random.seed(seed)
         random.seed(seed)
 
-    def loss_fn(
-        self,
-        noisy_batch: NoisyBatch,
-    ) -> tuple[torch.Tensor, Mapping]:
-        """Compute the loss for a batch."""
-        atom_pos_update = self.model.forward(noisy_batch)
+    def loss_fn(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, Mapping]:
+        """Compute the loss given a noisy batch."""
+        atom_pos_update, distogram_logit = self.model.forward(noisy_batch)
 
         structure_loss = self.diffuser.cal_loss(atom_pos_update)
+        distogram_loss = cal_atom_distogram_loss(
+            distogram_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+        )
+        loss = (
+            self.config.loss.diffusion_loss * structure_loss
+            + self.config.loss.distogram_loss * distogram_loss
+        )
 
-        loss = 4.0 * structure_loss  # + aux_losses
-
-        return loss, {"EDMLoss": loss.item()}
+        return loss, {
+            "diffusion_loss": structure_loss.item(),
+            "distogram_loss": distogram_loss.item(),
+            "total_loss": loss.item(),
+        }
 
     def training_step(self, batch: Batch) -> dict[str, float]:
         """Train the model on a batch."""
@@ -488,13 +542,10 @@ class ContactMap2StrClient(BaseClient):
             noisy_atom_pos, x_mask, t_emb = self.diffuser.sample(
                 batch.structure.atom_pos,
                 num_augment=num_augment,
-                mask=batch.structure.atom_pos_mask,
+                mask=batch.structure.atom_mask,
             )
             noisy_batch = NoisyBatch(
-                **batch.__dict__,
-                t=t_emb,
-                x_t=noisy_atom_pos,
-                x_mask=x_mask,
+                **batch.__dict__, t=t_emb, x_t=noisy_atom_pos, x_mask=x_mask
             )
 
             if self.config.experiment.self_condition and random.random() > 0.5:
@@ -507,7 +558,7 @@ class ContactMap2StrClient(BaseClient):
             return loss_dict
 
     def validation_step(self, batch: Batch) -> dict[str, float]:
-        """Validate the model on a batch."""
+        """Valdiate the model on a batch."""
         # Note that when doing validation, we measure inference quality, not a loss.
         # Please keep in mind that batch is duplicated to eval_sample_num, sample quality
         # is measured by the best sample in the batch. Therefore the batch size should be
@@ -515,6 +566,7 @@ class ContactMap2StrClient(BaseClient):
         if batch.shape[0] != 1:
             msg = "Batch size for validation must be 1."
             raise ValueError(msg)
+        batch = batch.duplicate(self.config.experiment.eval_sample_num)
         return self.test_inference_quality(
             batch,
             self.config.experiment.eval_timesteps,
@@ -522,16 +574,23 @@ class ContactMap2StrClient(BaseClient):
 
     def training_epoch(self, dataloader: DataLoader) -> Generator[Any, None, None]:
         """Yield results from training step over the dataloader for one epoch."""
+        if not isinstance(dataloader, _FabricDataLoader):
+            fabric_dataloader = self.fabric.setup_dataloaders(dataloader)
+        else:
+            fabric_dataloader = dataloader
         sampler: AdaptiveEdgeSampler = dataloader.sampler
 
         self.model.train()
         self.call_callbacks("on_train_epoch_start")
 
-        for batch_idx, batch_cpu in enumerate(iter(dataloader)):
-            batch = batch_cpu.to(device=self.device)
+        fabric_iter = iter(fabric_dataloader)
+        for batch_idx, batch in enumerate(fabric_iter):
             self.call_callbacks("on_train_step_start", batch, batch_idx)
             loss_dict = self.training_step(batch)
-            loss = loss_dict["EDMLoss"]
+            loss = (
+                self.config.loss.diffusion_loss * loss_dict["diffusion_loss"]
+                + self.config.loss.distogram_loss * loss_dict["distogram_loss"]
+            )
 
             sampler.stats.update(
                 batch.scheme.edge_index,
@@ -567,32 +626,31 @@ class ContactMap2StrClient(BaseClient):
         max_lddt = max(max_lddt, lddt)
 
         rmsd = metrics.cal_aligned_rmsd(
-            output.atom_pos_pred[0, 0],
+            output.atom_pos_pred[0],
             batch.structure.atom_pos[0],
             batch.structure.atom_mask[0],
         )
-        min_rmsd = min(min_rmsd, rmsd)
 
         category_lddt = metrics.category_lddt(
             batch,
-            output.atom_pos_pred[0, 0],
+            output.atom_pos_pred[0],
         )
-
-        # test
-        output = {"best_rmsd": min_rmsd, "best_lddt": max_lddt}
-        # for key in category_lddt:
-        #     output[key] = category_lddt[key]
-        return output
+        min_rmsd = min(min_rmsd, rmsd)
+        return {
+            "best_rmsd": min_rmsd,
+            "best_lddt": max_lddt,
+            **category_lddt,
+        }
 
     @torch.no_grad()
     def inference(
         self,
         batch: Batch,
         timesteps: int = 100,
-    ) -> ContactMap2StrInferenceOutput:
+    ) -> AF3InferenceOutput:
         """Inference using the diffusion solver."""
         raw_model = getattr(self.model, "module", self.model)
-        model_wrapper = ContactMap2StrModelWrapper(
+        model_wrapper = AF3ModelWrapper(
             raw_model,
             use_self_condition=self.config.experiment.self_condition,
         )
@@ -609,11 +667,13 @@ class ContactMap2StrClient(BaseClient):
         )
         inter_traj = [du.to_numpy(x) for x in inter_traj]
         model_traj = [du.to_numpy(x) for x in model_traj]
-        return ContactMap2StrInferenceOutput(
+        distogram_logit = model_wrapper.condition["distogram_logit"]
+        return AF3InferenceOutput(
             atom_pos_pred=atom_pos_pred,
             model_traj=np.stack(model_traj, axis=1),
             inter_traj=np.stack(inter_traj, axis=1),
             batch=batch,
+            distogram_logit=distogram_logit,
         )
 
     def sample(self) -> None:

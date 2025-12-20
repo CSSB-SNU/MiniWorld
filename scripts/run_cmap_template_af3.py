@@ -10,17 +10,17 @@ from omegaconf import OmegaConf
 from team_gm.utils.script_utils import MetricsAggregator, set_seed
 
 import wandb
-from miniworld.data.dataloader.dataloader_multistate_contam import (
-    BioMolMonomerData,
+from miniworld.data.dataloader.dataloader_edge_backprop import (
+    BioMolData,
 )
-from miniworld.models.sdist_to_str_contam import Sdist2StrClient
+from miniworld.models.cmap_template_af3 import AF3Client
 
 # torch.set_float32_matmul_precision("high")  # noqa: ERA001
 # anomaly detection
 torch.autograd.set_detect_anomaly(False)
 
 
-def setup_logger(client: Sdist2StrClient) -> None:
+def setup_logger(client: AF3Client) -> None:
     if not client.is_global_zero:
         return
 
@@ -36,7 +36,9 @@ def setup_logger(client: Sdist2StrClient) -> None:
     client.logger.addHandler(handler)
 
     now = datetime.datetime.now(datetime.timezone.utc)
-    file_handler = logging.FileHandler(f"logs/sdist2str_{now:%Y%m%d_%H%M%S}.log")
+    file_handler = logging.FileHandler(
+        f"logs/cmap_template_af3_{now:%Y%m%d_%H%M%S}.log"
+    )
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)
 
@@ -106,10 +108,10 @@ def train(  # noqa: PLR0912, PLR0915
 ):
     if config and not resume_from_ckpt:
         cfg = OmegaConf.load(config)
-        cfg = Sdist2StrClient.Config.model_validate(cfg)
-        client = Sdist2StrClient(cfg)
+        cfg = AF3Client.Config.model_validate(cfg)
+        client = AF3Client(cfg)
     elif not config and resume_from_ckpt:
-        client = Sdist2StrClient.from_checkpoint(resume_from_ckpt)
+        client = AF3Client.from_checkpoint(resume_from_ckpt)
     else:
         msg = (
             "You must provide either a config file or a checkpoint file, but not both."
@@ -159,19 +161,17 @@ def train(  # noqa: PLR0912, PLR0915
         set_seed(seed)
         client.logger.info("Set random seed: %d", seed)
 
-    train_data_config = BioMolMonomerData.BioMolConfig(
+    train_data_config = BioMolData.BioMolConfig(
         crop_config=client.config.data.crop.model_dump(),
         msa_config=client.config.data.msa.model_dump(),
-        kmer_fast_align_config=client.config.data.kmer_fast_align.model_dump(),
-        multistate_config=client.config.data.multistate.model_dump(),
-        preprocess_config=client.config.data.train_preprocessing.model_dump(),
+        DB_config=client.config.data.train_db.model_dump(),
+        edge_weight_config=client.config.data.edge_weight.model_dump(),
     )
-    valid_data_config = BioMolMonomerData.BioMolConfig(
+    valid_data_config = BioMolData.BioMolConfig(
         crop_config=client.config.data.crop.model_dump(),
         msa_config=client.config.data.msa.model_dump(),
-        kmer_fast_align_config=client.config.data.kmer_fast_align.model_dump(),
-        multistate_config=client.config.data.multistate.model_dump(),
-        preprocess_config=client.config.data.valid_preprocessing.model_dump(),
+        DB_config=client.config.data.valid_db.model_dump(),
+        edge_weight_config=client.config.data.edge_weight.model_dump(),
     )
 
     prefetch_factor = (
@@ -179,18 +179,22 @@ def train(  # noqa: PLR0912, PLR0915
         if client.config.experiment.prefetch_factor == 0
         else int(client.config.experiment.prefetch_factor)
     )
-    train_loader = BioMolMonomerData(train_data_config).create_ddp_dataloader(
+
+    train_loader = BioMolData(train_data_config).create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.local_rank,
         drop_last=True,
+        use_adaptive_sampler=True,
         batch_size=client.config.experiment.num_batch,
         num_workers=client.config.experiment.num_workers,
         prefetch_factor=prefetch_factor,
+        shuffle=False,
     )
-    valid_loader = BioMolMonomerData(valid_data_config).create_ddp_dataloader(
+    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.local_rank,
         drop_last=False,
+        use_adaptive_sampler=False,
         batch_size=client.config.experiment.num_batch,  # or 1
         num_workers=0,
     )
@@ -208,6 +212,7 @@ def train(  # noqa: PLR0912, PLR0915
     train_num_item = client.config.experiment.train_item // world_size
     valid_num_item = client.config.experiment.valid_item // world_size
     min_train_loss = float("inf")
+    comment = client.config.experiment.comment
 
     for epoch in range(client.epoch, client.config.experiment.num_epoch):
         client.logger.info("Training Epoch %d", client.epoch)
@@ -225,7 +230,7 @@ def train(  # noqa: PLR0912, PLR0915
             train_loss = means["EDMLoss"]
             if train_loss < min_train_loss:
                 min_train_loss = train_loss
-                checkpoint_path = ckpt_dir / "sdist_to_str_best.pt"
+                checkpoint_path = ckpt_dir / f"partial_cmap_to_str_{comment}_best.pt"
                 client.save_checkpoint(checkpoint_path)
                 client.logger.info(
                     "Save best checkpoint: %s (train loss: %.4g)",
@@ -237,13 +242,20 @@ def train(  # noqa: PLR0912, PLR0915
             valid_loader.sampler.set_epoch(epoch)
             client.logger.info("Validation Epoch %d", client.epoch)
             for n_item, result in enumerate(client.validation_epoch(valid_loader)):
+                print(f"n_item : {n_item}")
                 valid_aggregator.log_step(result, ignore_step=True)
                 if n_item + 1 >= valid_num_item:
+                    print(f"WTF? n_item: {n_item}")
                     client.call_callbacks("on_validation_epoch_end")
+                    print("after on_validation_epoch_end")
                     break
+
             valid_aggregator.log_epoch()
-            checkpoint_path = ckpt_dir / f"sdist_to_str_{epoch}.pt"
+            print(f"after valid_aggregator.log_epoch()")
+
+            checkpoint_path = ckpt_dir / f"partial_cmap_to_str_{comment}_{epoch}.pt"
             client.save_checkpoint(checkpoint_path)
+            print(f"after client.save_checkpoint()")
 
 
 @cli.command()
@@ -262,23 +274,15 @@ def train(  # noqa: PLR0912, PLR0915
     type=int,
     help="random seed",
 )
-@click.option(
-    "--save-dir",
-    type=click.Path(file_okay=False, path_type=Path),
-    default=None,
-    help="directory to save predicted structures",
-)
-@torch.inference_mode()
 def sample(
     ckpt: Path | None,
     w: bool,
     seed: int | None,
-    save_dir: Path | None,
 ):
     if not ckpt:
         msg = "You must provide a checkpoint file."
         raise ValueError(msg)
-    client = Sdist2StrClient.from_checkpoint(ckpt)
+    client = AF3Client.from_checkpoint(ckpt)
 
     fabric = Fabric()
     fabric.launch()
@@ -307,18 +311,11 @@ def sample(
         set_seed(seed)
         client.logger.info("Set random seed: %d", seed)
 
-    preprocess_config = client.config.data.valid_preprocessing.model_dump()
-    # bug
-    preprocess_config["a3m_db_path"] = (
-        "/home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb"
-    )
-
-    valid_data_config = BioMolMonomerData.BioMolConfig(
+    valid_data_config = BioMolData.BioMolConfig(
         crop_config=client.config.data.crop.model_dump(),
         msa_config=client.config.data.msa.model_dump(),
-        kmer_fast_align_config=client.config.data.kmer_fast_align.model_dump(),
-        multistate_config=client.config.data.multistate.model_dump(),
-        preprocess_config=preprocess_config,
+        DB_config=client.config.data.valid_db.model_dump(),
+        edge_weight_config=client.config.data.edge_weight.model_dump(),
     )
 
     prefetch_factor = (
@@ -326,8 +323,7 @@ def sample(
         if client.config.experiment.prefetch_factor == 0
         else int(client.config.experiment.prefetch_factor)
     )
-    dataset = BioMolMonomerData(valid_data_config)
-    valid_loader = dataset.create_ddp_dataloader(
+    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.local_rank,
         drop_last=False,
@@ -336,40 +332,27 @@ def sample(
         prefetch_factor=prefetch_factor,
     )
 
-    # P0147522 : 6LYY, 7CKO (transporter)
-    # P0000373 : calmodulin sequence (multiple structures)
-    transporter_batch = dataset.get_item_by_seq_id(
-        query_id="P0147522",
-    )
-    calmodulin_batch = dataset.get_item_by_seq_id(
-        query_id="P0000373",
-        contam_query_id="P0000373",
-    )
-    manual_batches = [transporter_batch, calmodulin_batch]
-    client.model.eval()
-    for batch in manual_batches:
-        client.test_inference_quality(
-            batch,
-            save_dir=Path(save_dir) if save_dir else None,
-            save_all=True,
-        )
-
-    breakpoint()
-
     client.logger.info("-" * 70)
     client.logger.info("")
     client.logger.info("Start training".center(70))
     client.logger.info("")
     client.logger.info("-" * 70)
+    valid_aggregator = MetricsAggregator(client, "valid", use_wandb=w)
 
-    # test
-    client.model.eval()
+    world_size = fabric.world_size
+    valid_num_item = client.config.experiment.valid_item // world_size
 
-    for batch in valid_loader:
-        client.test_inference_quality(
-            batch,
-            save_dir=Path(save_dir) if save_dir else None,
-        )
+    for epoch in range(client.epoch, client.config.experiment.num_epoch):
+        client.logger.info("Training Epoch %d", client.epoch)
+        valid_loader.sampler.set_epoch(epoch)
+        client.logger.info("Validation Epoch %d", client.epoch)
+        for n_item, result in enumerate(client.validation_epoch(valid_loader)):
+            valid_aggregator.log_step(result, ignore_step=True)
+            if n_item + 1 >= valid_num_item:
+                client.call_callbacks("on_validation_epoch_end")
+                break
+
+        valid_aggregator.log_epoch()
 
 
 if __name__ == "__main__":

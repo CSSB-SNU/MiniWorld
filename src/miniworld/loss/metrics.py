@@ -106,11 +106,12 @@ def cal_aligned_rmsd(
     rmsd = np.mean(np.linalg.norm(aligned_prb_pos - ref_pos[non_gap_idx], axis=-1))
     return rmsd.item()
 
+
 @typecheck
 def cal_atom_lddt(
     pred_atom_pos: Float[Array, "L 3"] | Float[Array, "B L 3"],
-    gt_atom_pos:   Float[Array, "L 3"],
-    atom_mask:     Bool[Array, "L"],      # noqa: F821
+    gt_atom_pos: Float[Array, "L 3"],
+    atom_mask: Bool[Array, "L"],  # noqa: F821
     max_distance: float = 15.0,
     distance_bins: Sequence[float] = (0.5, 1.0, 2.0, 4.0),
 ) -> float:
@@ -130,15 +131,15 @@ def cal_atom_lddt(
         atom_mask = torch.from_numpy(atom_mask)
 
     # Detect and normalize batch dimension on predicted positions
-    single = (pred_atom_pos.ndim == 2)  # [L, 3]
+    single = pred_atom_pos.ndim == 2  # [L, 3]
     if single:
         pred_atom_pos = pred_atom_pos.unsqueeze(0)  # [1, L, 3]
 
     # Ensure dtypes and device
     device = pred_atom_pos.device
     pred_atom_pos = pred_atom_pos.to(device=device, dtype=torch.float32)  # [B, L, 3]
-    gt_atom_pos = gt_atom_pos.to(device=device, dtype=torch.float32)      # [L, 3]
-    atom_mask = atom_mask.to(device=device, dtype=torch.bool)            # [L]
+    gt_atom_pos = gt_atom_pos.to(device=device, dtype=torch.float32)  # [L, 3]
+    atom_mask = atom_mask.to(device=device, dtype=torch.bool)  # [L]
 
     B, L, _ = pred_atom_pos.shape
 
@@ -148,7 +149,7 @@ def cal_atom_lddt(
 
     # Pairwise distance matrix for ground truth: [L, L]
     gt_diff = gt_atom_pos[None, None, :, :] - gt_atom_pos[None, :, None, :]
-    gt_dist = torch.norm(gt_diff, dim=-1)[0]   # [L, L]
+    gt_dist = torch.norm(gt_diff, dim=-1)[0]  # [L, L]
 
     # Valid pair mask based on atom mask and ground-truth distances: [L, L]
     pair_mask = atom_mask[:, None] & atom_mask[None, :]
@@ -190,9 +191,9 @@ def cal_atom_lddt(
 @typecheck
 def cal_atom_interface_lddt(
     pred_atom_pos: Float[Array, "L 3"],
-    gt_atom_pos:   Float[Array, "L 3"],
-    atom_mask:     Bool[Array, "L"],  # noqa: F821
-    chain_mask:    Bool[Array, "L L"],
+    gt_atom_pos: Float[Array, "L 3"],
+    atom_mask: Bool[Array, "L"],  # noqa: F821
+    chain_mask: Bool[Array, "L L"],
     max_distance: float = 15.0,
     distance_bins: Sequence[float] = (0.5, 1.0, 2.0, 4.0),
 ) -> float:
@@ -211,15 +212,15 @@ def cal_atom_interface_lddt(
         atom_mask = torch.from_numpy(atom_mask)
 
     # Detect and normalize batch dimension on predicted positions
-    single = (pred_atom_pos.ndim == 2)  # [L, 3]
+    single = pred_atom_pos.ndim == 2  # [L, 3]
     if single:
         pred_atom_pos = pred_atom_pos.unsqueeze(0)  # [1, L, 3]
 
     # Ensure dtypes and device
     device = pred_atom_pos.device
     pred_atom_pos = pred_atom_pos.to(device=device, dtype=torch.float32)  # [B, L, 3]
-    gt_atom_pos = gt_atom_pos.to(device=device, dtype=torch.float32)      # [L, 3]
-    atom_mask = atom_mask.to(device=device, dtype=torch.bool)            # [L]
+    gt_atom_pos = gt_atom_pos.to(device=device, dtype=torch.float32)  # [L, 3]
+    atom_mask = atom_mask.to(device=device, dtype=torch.bool)  # [L]
 
     B, L, _ = pred_atom_pos.shape
 
@@ -229,7 +230,7 @@ def cal_atom_interface_lddt(
 
     # Pairwise distance matrix for ground truth: [L, L]
     gt_diff = gt_atom_pos[None, None, :, :] - gt_atom_pos[None, :, None, :]
-    gt_dist = torch.norm(gt_diff, dim=-1)[0]   # [L, L]
+    gt_dist = torch.norm(gt_diff, dim=-1)[0]  # [L, L]
 
     # Base valid pair mask (same for all batches): [L, L]
     pair_mask = atom_mask[:, None] & atom_mask[None, :]
@@ -270,9 +271,10 @@ def cal_atom_interface_lddt(
         return float(per_struct_lddt[0].item())
     return float(per_struct_lddt.mean().item())
 
+
 def build_atom_chain_map_and_mask(
     atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"],
-    residue_asym_id:       Int[torch.Tensor, "B L_res"],
+    residue_asym_id: Int[torch.Tensor, "B L_res"],
 ) -> tuple[Int[torch.Tensor, "B L_atom"], Int[torch.Tensor, "L_atom L_atom"]]:
     """Build atom to chain index mapping and chain mask."""
     atom_to_residue_idx_map = atom_to_residue_idx_map[0]  # (L_atom,)
@@ -282,7 +284,7 @@ def build_atom_chain_map_and_mask(
     chain_i = atom_to_chain_idx_map[:, None]  # (L_atom, 1)
     chain_j = atom_to_chain_idx_map[None, :]  # (1, L_atom)
 
-    same_chain_bool: Bool[torch.Tensor, "L_atom L_atom"] = (chain_i == chain_j)
+    same_chain_bool: Bool[torch.Tensor, "L_atom L_atom"] = chain_i == chain_j
     chain_mask: Int[torch.Tensor, "L_atom L_atom"] = same_chain_bool.to(torch.int64)
 
     return atom_to_chain_idx_map, chain_mask
@@ -292,26 +294,26 @@ def category_lddt(  # noqa: C901, PLR0915, PLR0912
     batch: Batch,
     pred_atom_pos: Float[Array, "L 3"],
     distance_bins: Sequence[float] = (0.5, 1.0, 2.0, 4.0),
-    ) -> dict[str, list[float]]:
+) -> dict[str, list[float]]:
     """Calculate lDDT for different categories of molecular complexes."""
     gt_atom_pos = batch.structure.atom_pos[0]
     atom_mask = batch.structure.atom_mask[0].bool()
     lddt_dict = {
-        "intra_protein" : [], # 0
-        "intra_dprotein" : [], # 1
-        "intra_DNA" : [], # 2
-        "intra_RNA" : [], # 3
-        "intra_ligand" : [], # 4
-        "protein-antibody" : [], # 5
-        "protein-protein" : [], # 6
-        "protein-DNA" : [], # 7
-        "protein-RNA" : [], # 8
-        "protein-ligand" : [], # 9
-        "DNA-DNA" : [], # 10
-        "DNA-RNA" : [], # 11
-        "RNA-RNA" : [], # 12
-        "NA-ligand" : [], # 13
-        "total" : [], # 14
+        "intra_protein": [],  # 0
+        "intra_dprotein": [],  # 1
+        "intra_DNA": [],  # 2
+        "intra_RNA": [],  # 3
+        "intra_ligand": [],  # 4
+        "protein-antibody": [],  # 5
+        "protein-protein": [],  # 6
+        "protein-DNA": [],  # 7
+        "protein-RNA": [],  # 8
+        "protein-ligand": [],  # 9
+        "DNA-DNA": [],  # 10
+        "DNA-RNA": [],  # 11
+        "RNA-RNA": [],  # 12
+        "NA-ligand": [],  # 13
+        "total": [],  # 14
     }
     NA_related = [
         "intra_DNA",
@@ -353,7 +355,7 @@ def category_lddt(  # noqa: C901, PLR0915, PLR0912
         pred_pos = pred_atom_pos[atom_idx]
         gt_pos = gt_atom_pos[atom_idx]
         mask = atom_mask[atom_idx]
-        if mask.sum() < 10: # too small to calculate lddt
+        if mask.sum() < 10:  # too small to calculate lddt
             continue
         max_distance = 30.0 if _type in NA_related else 15.0
         lddt = cal_atom_lddt(
@@ -431,8 +433,7 @@ def category_lddt(  # noqa: C901, PLR0915, PLR0912
         lddt_dict[edge_type].append(lddt)
 
     NA_included = any(
-        key in NA_related and len(lddt_dict[key]) > 0
-        for key in NA_related
+        key in NA_related and len(lddt_dict[key]) > 0 for key in NA_related
     )
 
     total_lddt = cal_atom_lddt(

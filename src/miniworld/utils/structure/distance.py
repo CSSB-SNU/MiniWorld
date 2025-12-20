@@ -35,20 +35,24 @@ def get_shortest_distances_from_multistructures(
     device = atom_pos.device
     B, N, L, _ = atom_pos.shape
 
-    # 1) Atom-level pairwise distances (B, N, L, L)
-    diff = atom_pos[:, :, :, None, :] - atom_pos[:, :, None, :, :]
-    dist = torch.linalg.norm(diff, dim=-1)  # (B, N, L, L)
-
-    # Apply atom mask
-    mask_i = atom_pos_mask[:, :, :, None]  # (B, N, L, 1)
-    mask_j = atom_pos_mask[:, :, None, :]  # (B, N, 1, L)
-    valid_atom_mask = mask_i & mask_j  # (B, N, L, L)
-
-    dist = dist.masked_fill(~valid_atom_mask, max_distance)
-    dist = dist.clamp(min=min_distance, max=max_distance)
-
-    # Shortest atom-level distance between residues i, j
-    shortest_dist = dist.min(dim=1).values  # (B, L, L)
+    # 1) Atom-level pairwise distances (B, N, L, L) Due to memory constraints, compute in batches
+    _n_batch = 4
+    shortest_dist = torch.full((B, L, L), max_distance, device=device)
+    for cursor in range(0, N, _n_batch):
+        batch_slice = slice(cursor, min(cursor + _n_batch, N))
+        _diff = (
+            atom_pos[:, batch_slice, :, None, :] - atom_pos[:, batch_slice, None, :, :]
+        )
+        _dist = torch.linalg.norm(_diff, dim=-1)  # (B, n, L, L)
+        mask_i, mask_j = (
+            atom_pos_mask[:, batch_slice, :, None],
+            atom_pos_mask[:, batch_slice, None, :],
+        )
+        valid_atom_mask = mask_i & mask_j  # (B, n, L, L)
+        _dist = _dist.masked_fill(~valid_atom_mask, max_distance)
+        _dist = _dist.clamp(min=min_distance, max=max_distance)
+        _dist = _dist.min(dim=1).values  # (B, L, L)
+        shortest_dist = torch.minimum(shortest_dist, _dist)
 
     # 2) Build residue existence mask (B, R_max)
     R_max = int(atom_to_res_idx.max().item()) + 1
@@ -141,7 +145,7 @@ def get_shortest_distances(
     residue_exists = torch.zeros(B, R_max, dtype=torch.bool, device=device)
 
     # Flatten and mark residues that actually appear
-    batch_idx = torch.arange(B, device=device).expand(B, L).reshape(-1)
+    batch_idx = torch.arange(B, device=device).unsqueeze(-1).expand(B, L).reshape(-1)
     flat_atom_to_res_idx = atom_to_res_idx.reshape(-1)
     flat_pos_mask = atom_pos_mask.reshape(-1)
 
@@ -211,6 +215,121 @@ def get_contact_map(
     ) & residue_mask  # (B, R_max, R_max)
 
     return contact_map, residue_mask
+
+
+@typecheck
+def kernel_convolution(
+    x: Float[torch.Tensor, "* L C_in"],
+    kernel: Float[torch.Tensor, "C_in C_out"],
+) -> Float[torch.Tensor, "* L C_out"]:
+    """Apply 1D convolution with given kernel over the sequence dimension.
+
+    Args:
+        x: Input tensor of shape (..., L, C_in).
+        kernel: Convolution kernel of shape (C_in, C_out).
+
+    Returns:
+        Output tensor of shape (..., L, C_out).
+
+    """
+    return x @ kernel
+
+
+@typecheck
+def gaussian_kernel(
+    c_in: int,
+    c_out: int,
+    sigma: float = 1.0,
+) -> Float[torch.Tensor, "C_in C_out"]:
+    """Generate a (C_in, C_out) Gaussian kernel based on index distance.
+
+    Args:
+        c_in: Number of input channels.
+        c_out: Number of output channels.
+        sigma: Standard deviation of the Gaussian distribution.
+
+    Returns:
+        A tensor of shape (C_in, C_out) where weight[i, j]
+        is proportional to exp(-(i - j)^2 / (2s²)).
+
+    """
+    i = torch.arange(c_in).unsqueeze(1)  # (C_in, 1)
+    j = torch.arange(c_out).unsqueeze(0)  # (1, C_out)
+
+    dist2 = (i - j).float().pow(2)  # (C_in, C_out)
+    kernel = torch.exp(-dist2 / (2 * sigma * sigma))
+
+    # Normalize along output channels so each input channel's weights sum to 1
+    return kernel / kernel.sum(dim=1, keepdim=True)
+
+
+@typecheck
+def get_superposed_distances_from_multistructures(
+    atom_pos: Float[torch.Tensor, "* N L 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* N L"],
+    atom_to_res_idx: Int[torch.Tensor, "* L"],
+    min_distance: float = 2.0,
+    max_distance: float = 22.0,
+    num_bins: int = 64,
+) -> torch.Tensor:
+    """Compute residue-level shortest distances and corresponding mask from atom coordinates.
+
+    Args:
+        atom_pos: Atomic coordinates. Shape: (B, N, L, 3)
+        atom_pos_mask: Atom mask. True for valid atoms. Shape: (B, N, L)
+        atom_to_res_idx: Residue index per position. Shape: (B, L)
+        min_distance: Minimum allowed distance.
+        max_distance: Maximum allowed distance.
+        num_bins: Number of distance bins for discretization.
+        sigma: Standard deviation for Gaussian kernel.
+
+    Returns:
+        residue_dists: Residue-level shortest distances. Shape: (B, R_max, R_max)
+        residue_mask: Valid residue pair mask. Shape: (B, R_max, R_max)
+
+    """
+    B, N, L, _ = atom_pos.shape
+
+    atom_pos = atom_pos.reshape(B * N, L, 3)
+    atom_pos_mask = atom_pos_mask.reshape(B * N, L)
+
+    edges = torch.linspace(
+        min_distance,
+        max_distance,
+        num_bins - 1,
+        device=atom_pos.device,
+    )
+
+    shortest_dists, residue_mask = get_shortest_distances(
+        atom_pos=atom_pos,
+        atom_pos_mask=atom_pos_mask,
+        atom_to_res_idx=atom_to_res_idx.repeat_interleave(N, dim=0),
+        min_distance=min_distance,
+        max_distance=max_distance,
+    )
+    shortest_dists = shortest_dists.view(
+        B,
+        N,
+        shortest_dists.shape[1],
+        shortest_dists.shape[2],
+    )
+    residue_mask = residue_mask.view(B, N, residue_mask.shape[1], residue_mask.shape[2])
+
+    shortest_distogram = torch.bucketize(
+        shortest_dists,
+        edges,
+    )  # (B, N, R_max, R_max)
+
+    superposed_distogram = torch.nn.functional.one_hot(
+        shortest_distogram,
+        num_classes=num_bins,
+    ).float()  # (B, N, R_max, R_max, num_bins)
+    superposed_distogram = superposed_distogram * residue_mask.unsqueeze(-1)
+    superposed_distogram = superposed_distogram.sum(
+        dim=1,
+    )  # (B, R_max, R_max, num_bins)
+
+    return superposed_distogram.to(torch.float32).to(atom_pos.device)
 
 
 def pairwise_kabsch_rmsd(

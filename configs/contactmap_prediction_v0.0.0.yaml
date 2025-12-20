@@ -78,12 +78,11 @@ model:
     to_bias_init: zero
     norm: qk
 
-  distogram:
-    min_distance: 2.0
-    max_distance: 22.0
-    num_bins: 64
+
+  trunk:
+    n_recycle_max: 1 # 4
     pairformer: 
-      n_block: 2
+      n_block: 4
       d_single: ${model.common.d_token_single}
       d_pair: ${model.common.d_token_pair}
       d_hidden_tri_multi: 128
@@ -100,25 +99,20 @@ model:
       single_moe_experts: 1
       single_moe_topk: 1
 
-  trunk:
-    n_recycle_max: 1 # 4
-    pairformer: 
-      n_block: 4
-      d_single: ${model.common.d_token_single}
+    msa_module: 
+      n_block: 2
+      d_msa: 64
       d_pair: ${model.common.d_token_pair}
+      d_hidden_msa: 32
       d_hidden_tri_multi: 128
       d_hidden_tri_attention: 32
       n_head_tri_attention: 4
       n_head_attention: 16
+      p_drop_msa: 0.15
       p_drop: 0.25
-      use_single: True
-      use_single_cond: False
-      use_self_attention: True
+      # use_self_attention: True
+      use_self_attention: False
       implementation: triton
-      pair_moe_experts: 1
-      pair_moe_topk: 1
-      single_moe_experts: 1
-      single_moe_topk: 1
 
   diffusion:
     frequency_embedding_size: 256
@@ -157,7 +151,7 @@ model:
 
 
 experiment:
-  comment: sdist2str_v1.1.0 | contam | wo signalp
+  comment: contactmap_prediction_v0.0.0
 
   # Training arguments
   num_batch: 1

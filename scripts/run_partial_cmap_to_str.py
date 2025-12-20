@@ -182,17 +182,19 @@ def train(  # noqa: PLR0912, PLR0915
         world_size=fabric.world_size,
         rank=fabric.local_rank,
         drop_last=True,
+        use_adaptive_sampler=True,
         batch_size=client.config.experiment.num_batch,
         num_workers=client.config.experiment.num_workers,
         prefetch_factor=prefetch_factor,
+        shuffle=False,
     )
     valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.local_rank,
         drop_last=False,
+        use_adaptive_sampler=False,
         batch_size=client.config.experiment.num_batch,  # or 1
-        num_workers=client.config.experiment.num_workers,
-        prefetch_factor=prefetch_factor,
+        num_workers=0,
     )
 
     client.logger.info("-" * 70)
@@ -208,6 +210,7 @@ def train(  # noqa: PLR0912, PLR0915
     train_num_item = client.config.experiment.train_item // world_size
     valid_num_item = client.config.experiment.valid_item // world_size
     min_train_loss = float("inf")
+    comment = client.config.experiment.comment
 
     for epoch in range(client.epoch, client.config.experiment.num_epoch):
         client.logger.info("Training Epoch %d", client.epoch)
@@ -225,8 +228,7 @@ def train(  # noqa: PLR0912, PLR0915
             train_loss = means["EDMLoss"]
             if train_loss < min_train_loss:
                 min_train_loss = train_loss
-                comment = client.config.experiment.comment
-                checkpoint_path = ckpt_dir / f"af3_{comment}_best.pt"
+                checkpoint_path = ckpt_dir / f"partial_cmap_to_str_{comment}_best.pt"
                 client.save_checkpoint(checkpoint_path)
                 client.logger.info(
                     "Save best checkpoint: %s (train loss: %.4g)",
@@ -242,7 +244,108 @@ def train(  # noqa: PLR0912, PLR0915
                 if n_item + 1 >= valid_num_item:
                     client.call_callbacks("on_validation_epoch_end")
                     break
+
             valid_aggregator.log_epoch()
+
+            checkpoint_path = ckpt_dir / f"partial_cmap_to_str_{comment}_{epoch}.pt"
+            client.save_checkpoint(checkpoint_path)
+
+
+@cli.command()
+@click.option(
+    "--ckpt",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="checkpoint file",
+)
+@click.option(
+    "-w",
+    is_flag=True,
+    help="Use wandb for logging",
+)
+@click.option(
+    "--seed",
+    type=int,
+    help="random seed",
+)
+def sample(
+    ckpt: Path | None,
+    w: bool,
+    seed: int | None,
+):
+    if not ckpt:
+        msg = "You must provide a checkpoint file."
+        raise ValueError(msg)
+    client = ContactMap2StrClient.from_checkpoint(ckpt)
+
+    fabric = Fabric()
+    fabric.launch()
+
+    client.setup(
+        fabric=fabric,
+        optimizer=torch.optim.AdamW(
+            client.model.parameters(),
+            client.config.experiment.max_lr,
+        ),
+        gradient_accumulation_steps=client.config.experiment.grad_accum_steps,
+        gradient_clip_norm=client.config.experiment.grad_clip_max_norm,
+    )
+    setup_logger(client)
+
+    client.logger.info(
+        "Load pretrain weight: %s (%d epoch)",
+        ckpt.name,
+        client.epoch,
+    )
+
+    msg = f"Config:\n{json.dumps(client.config.model_dump(), indent=4, default=str)}"
+    client.logger.info(msg)
+
+    if seed is not None:
+        set_seed(seed)
+        client.logger.info("Set random seed: %d", seed)
+
+    valid_data_config = BioMolData.BioMolConfig(
+        crop_config=client.config.data.crop.model_dump(),
+        msa_config=client.config.data.msa.model_dump(),
+        DB_config=client.config.data.valid_db.model_dump(),
+        edge_weight_config=client.config.data.edge_weight.model_dump(),
+    )
+
+    prefetch_factor = (
+        None
+        if client.config.experiment.prefetch_factor == 0
+        else int(client.config.experiment.prefetch_factor)
+    )
+    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
+        world_size=fabric.world_size,
+        rank=fabric.local_rank,
+        drop_last=False,
+        batch_size=client.config.experiment.num_batch,  # or 1
+        num_workers=client.config.experiment.num_workers,
+        prefetch_factor=prefetch_factor,
+    )
+
+    client.logger.info("-" * 70)
+    client.logger.info("")
+    client.logger.info("Start training".center(70))
+    client.logger.info("")
+    client.logger.info("-" * 70)
+    valid_aggregator = MetricsAggregator(client, "valid", use_wandb=w)
+
+    world_size = fabric.world_size
+    valid_num_item = client.config.experiment.valid_item // world_size
+
+    for epoch in range(client.epoch, client.config.experiment.num_epoch):
+        client.logger.info("Training Epoch %d", client.epoch)
+        valid_loader.sampler.set_epoch(epoch)
+        client.logger.info("Validation Epoch %d", client.epoch)
+        for n_item, result in enumerate(client.validation_epoch(valid_loader)):
+            valid_aggregator.log_step(result, ignore_step=True)
+            if n_item + 1 >= valid_num_item:
+                client.call_callbacks("on_validation_epoch_end")
+                break
+
+        valid_aggregator.log_epoch()
 
 
 if __name__ == "__main__":

@@ -1,8 +1,9 @@
 import random
-from collections.abc import Generator, Mapping
+from collections.abc import Mapping
 from contextlib import ExitStack
 from dataclasses import dataclass
-from typing import Any, Literal
+from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import torch
@@ -12,17 +13,17 @@ from team_gm.core.callbacks import ModelEMA
 from team_gm.modules import Pairformer
 from team_gm.utils import data_utils as du
 from torch import nn
-from torch.utils.data import DataLoader
 
-from miniworld.data.dataloader.dataloader_edge_backprop import (
-    AdaptiveEdgeSampler,
-    BioMolDBConfig,
+from miniworld.data.dataloader.dataloader_multistate_contam import (
     CropConfig,
-    EdgeWeightConfig,
+    KmerFastAlignConfig,
     MSAConfig,
+    MultistateConfig,
+    MultiStatedbConfig,
 )
-from miniworld.data.features.features_biomol import Batch, NoisyBatch
-from miniworld.loss import metrics  # , losses
+from miniworld.data.features.features_multistate import Batch, NoisyBatch
+from miniworld.data.to_cif import batch_to_cif
+from miniworld.loss import metrics
 from miniworld.modules.configs import (
     CommonConfig,
     DiffusionConfig,
@@ -40,32 +41,37 @@ from miniworld.utils.diffusion.scheduler import EDMScheduler
 from miniworld.utils.diffusion.solver import AF3Solver
 from miniworld.utils.precision_manager import PrecisionConfig, precision_manager
 from miniworld.utils.structure.distance import (
-    get_contact_map,
+    get_superposed_distances_from_multistructures,
 )
 
 
-class ContactMapEmbedder(nn.Module):
-    """ContactMap Embedder."""
+class SuperposedDistEmbedder(nn.Module):
+    """Superposed Distogram Embedder."""
 
-    def __init__(self, config: Pairformer.Config) -> None:
+    class Config(BaseModel):
+        """Configuration for SuperposedDistEmbedder."""
+
+        min_distance: float = 2.0
+        max_distance: float = 22.0
+        num_bins: int = 64
+        pairformer: Pairformer.Config
+
+    def __init__(self, config: Config) -> None:
         super().__init__()
 
-        self.to_pair = Linear(
-            3,
-            128,
-            bias=False,
-        )  # 0 : non-contact, 1: contact, 2: unknown(masked)
+        self.to_pair = Linear(config.num_bins, 128, bias=False)
+        pairformer_config = config.pairformer
         # use_single is False
-        config.use_single = False
-        self.pairformer = Pairformer(config)
+        pairformer_config.use_single = False
+        self.pairformer = Pairformer(config.pairformer)
 
     def forward(
         self,
-        contact_map: torch.Tensor,  # (B, L, L, 3)
+        superposed_distogram: torch.Tensor,  # (B, L, L, D)
         token_mask: torch.Tensor,  # (B, L), bool
     ) -> torch.Tensor:
-        """Forward pass of ContactMapEmbedder."""
-        token_pair = self.to_pair(contact_map)  # (B, L, L, d_pair)
+        """Forward pass of SuperposedDistEmbedder."""
+        token_pair = self.to_pair(superposed_distogram)  # (B, L, L, d_pair)
         token_pair, _ = self.pairformer.forward(
             token_pair,
             single=None,
@@ -74,8 +80,8 @@ class ContactMapEmbedder(nn.Module):
         return token_pair  # (B, L, L, d_pair)
 
 
-class ContactMap2StrModel(nn.Module):
-    """Contact Map to Structure Model."""
+class SuperposedDist2StrModel(nn.Module):
+    """Shortest Distogram to Structure Model."""
 
     class ConditionConfig(BaseModel):
         """Configuration for the trunk condition module."""
@@ -84,12 +90,11 @@ class ContactMap2StrModel(nn.Module):
         n_recycle_max: int = 4
 
     class Config(BaseModel):
-        """Configuration for ContactMap2StrModel."""
+        """Configuration for SuperposedDist2StrModel."""
 
-        contact_map_dropout: float = 0.5
         common: CommonConfig
-        contact_map_pairformer: "Pairformer.Config"
-        trunk: "ContactMap2StrModel.ConditionConfig"
+        distogram: "SuperposedDistEmbedder.Config"
+        trunk: "SuperposedDist2StrModel.ConditionConfig"
         diffusion: DiffusionConfig
         precision: PrecisionConfig
 
@@ -104,9 +109,9 @@ class ContactMap2StrModel(nn.Module):
             config.diffusion,
         )
 
-        # embed contact map
-        self.contact_map_embedder = ContactMapEmbedder(config.contact_map_pairformer)
-        self.contact_map_to_pair = nn.Sequential(
+        # embed superposed_distogram
+        self.superposed_dist_embedder = SuperposedDistEmbedder(config.distogram)
+        self.superposed_dist_to_pair = nn.Sequential(
             LayerNorm(
                 config.common.d_token_pair,
                 implementation=config.common.implementation,
@@ -151,6 +156,7 @@ class ContactMap2StrModel(nn.Module):
     def condition_forward(
         self,
         noisy_batch: NoisyBatch,
+        atom_pos: torch.Tensor,
     ) -> tuple[torch.Tensor, ...]:
         """Forward pass of the trunk condition module."""
         if self.training:
@@ -163,30 +169,44 @@ class ContactMap2StrModel(nn.Module):
             )
             raise ValueError(msg)
 
-        # gen randomly dropped out contact map
+        # gen superposed_distogram
         with torch.no_grad():
-            contact_map, contact_map_mask = get_contact_map(
-                noisy_batch.structure.atom_pos,
+            query_superposed_dists = get_superposed_distances_from_multistructures(
+                atom_pos,
                 noisy_batch.structure.atom_pos_mask,
                 noisy_batch.scheme.atom_to_residue_idx_map,
             )
-            # randomly drop out contact map
-            residue_length = contact_map.shape[1]
-            dropout_length = int(residue_length * self.config.contact_map_dropout)
-            start = random.randint(0, residue_length - dropout_length)
-            dropout_mask = torch.ones_like(contact_map_mask)
-            dropout_mask[:, start : start + dropout_length] = 0.0  # dropped
-            dropout_mask[:, :, start : start + dropout_length] = 0.0  # dropped
-            dropout_mask[
-                :,
-                start + dropout_length :,
-                :start,
-            ] = 0.0  # dropped
-            dropout_mask[:, :start, start + dropout_length :] = 0.0  # dropped
-            contact_map_mask = contact_map_mask * dropout_mask
-            contact_map[~contact_map_mask.bool()] = 2.0  # unknown
-            contact_map = contact_map.long()
-            contact_map = nn.functional.one_hot(contact_map, num_classes=3).float()
+            contam_superposed_dists = get_superposed_distances_from_multistructures(
+                noisy_batch.contam.atom_pos,
+                noisy_batch.contam.atom_pos_mask,
+                noisy_batch.contam.atom_to_residue_idx_map,
+            )
+            contam_start = (
+                noisy_batch.contam_bias
+            )  # list of int where contamination starts
+            L_contam = contam_superposed_dists.shape[1]
+            for b, start in enumerate(contam_start):
+                end = start + L_contam
+
+                main_block = query_superposed_dists[
+                    b,
+                    start:end,
+                    start:end,
+                ]  # (L_contam, L_contam)
+
+                contam_block = contam_superposed_dists[
+                    b,
+                    :L_contam,
+                    :L_contam,
+                ]  # (L_contam, L_contam)
+                merged_block = main_block + contam_block
+                query_superposed_dists[b, start:end, start:end] = merged_block
+
+            superposed_distogram = torch.clamp(query_superposed_dists, 0.0, 1.0)
+            if torch.isnan(superposed_distogram).any():
+                msg = "NaN detected in superposed distogram."
+                raise ValueError(msg)
+
         # input feature embedding
         (
             token_single_input,
@@ -194,13 +214,15 @@ class ContactMap2StrModel(nn.Module):
             token_pair_init,
         ) = self.input_feature_embedder(noisy_batch)
 
-        # embed contact map to pair token
-        token_pair_contact_map = self.contact_map_embedder(
-            contact_map,
+        # embed superposed_distogram to pair token
+        token_pair_superposed_dist = self.superposed_dist_embedder(
+            superposed_distogram,
             noisy_batch.structure.residue_mask,
         )
-        token_pair_contact_map = self.contact_map_to_pair(token_pair_contact_map)
-        token_pair_init = token_pair_init + token_pair_contact_map
+        token_pair_superposed_dist = self.superposed_dist_to_pair(
+            token_pair_superposed_dist,
+        )
+        token_pair_init = token_pair_init + token_pair_superposed_dist
 
         token_pair = torch.zeros_like(token_pair_init)
         token_single = torch.zeros_like(token_single_init)
@@ -257,13 +279,13 @@ class ContactMap2StrModel(nn.Module):
             token_pair_trunk,
         )
 
-    def forward(self, noisy_batch: NoisyBatch) -> torch.Tensor:
-        """Forward pass of ContactMap2StrModel."""
+    def forward(self, noisy_batch: NoisyBatch, atom_pos: torch.Tensor) -> torch.Tensor:
+        """Forward pass of SuperposedDist2StrModel."""
         (
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
-        ) = self.condition_forward(noisy_batch)
+        ) = self.condition_forward(noisy_batch, atom_pos)
         # Diffusion forward
         return self.diffusion_forward(
             noisy_batch,
@@ -273,12 +295,12 @@ class ContactMap2StrModel(nn.Module):
         )
 
 
-class ContactMap2StrModelWrapper(nn.Module):
-    """Wrapper for ContactMap2StrModel to handle the input and output using solver."""
+class SuperposedDist2StrModelWrapper(nn.Module):
+    """Wrapper for SuperposedDist2StrModel to handle the input and output using solver."""
 
     def __init__(
         self,
-        model: ContactMap2StrModel,
+        model: SuperposedDist2StrModel,
         use_self_condition: bool = True,
     ) -> None:
         super().__init__()
@@ -294,7 +316,7 @@ class ContactMap2StrModelWrapper(nn.Module):
         self.z_sc = None
         self.batch_loaded = True
 
-    def prepare_condition(self, batch: Batch) -> None:
+    def prepare_condition(self, batch: Batch, atom_pos: torch.Tensor) -> None:
         """Prepare the model for conditioned forward pass."""
         if self.use_self_condition:
             msg = "Batch is already loaded. Cannot prepare condition again."
@@ -309,7 +331,7 @@ class ContactMap2StrModelWrapper(nn.Module):
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
-        ) = self.model.condition_forward(self.batch)
+        ) = self.model.condition_forward(self.batch, atom_pos)
         self.conditioned_forwarded = True
 
         self.condition = {
@@ -329,14 +351,12 @@ class ContactMap2StrModelWrapper(nn.Module):
 
         n_str = z_i.shape[0]
         t_emb = t_emb[None, None, None, None].repeat(n_str, 1, 1, 1)
-        x_mask = self.batch.structure.atom_pos_mask.repeat(n_str, 1)
 
         noisy_batch = NoisyBatch(
             **self.batch.__dict__,
             x_t=z_i,
             t=t_emb,
             x_sc=self.z_sc,
-            x_mask=x_mask,
         )
 
         z_update = self.model.diffusion_forward(
@@ -352,8 +372,8 @@ class ContactMap2StrModelWrapper(nn.Module):
 
 
 @dataclass
-class ContactMap2StrInferenceOutput:
-    """Output of ContactMap2Str inference."""
+class SuperposedDist2StrInferenceOutput:
+    """Output of SuperposedDist2Str inference."""
 
     # Tensor of final predicted atom coordinate.
     atom_pos_pred: torch.Tensor  # (B, L, 3)
@@ -367,39 +387,32 @@ class ContactMap2StrInferenceOutput:
     batch: Batch
 
 
-class ContactMap2StrClient(BaseClient):
-    """Client for training and inference of ContactMap2StrModel."""
+class SuperposedDist2StrClient(BaseClient):
+    """Client for training and inference of SuperposedDist2StrModel."""
 
     class DataConfig(BaseModel):
         """Configuration for data loading."""
 
-        train_db: BioMolDBConfig
-        valid_db: BioMolDBConfig
-        edge_weight: EdgeWeightConfig
         crop: CropConfig
         msa: MSAConfig
-
-    class LossConfig(BaseModel):
-        """Configuration for loss weights."""
-
-        diffusion_loss: float = 4.0
-        distogram_loss: float = 0.03
+        kmer_fast_align: KmerFastAlignConfig
+        multistate: MultistateConfig
+        train_preprocessing: MultiStatedbConfig
+        valid_preprocessing: MultiStatedbConfig
 
     class ExperimentsConfig(BaseModel):
-        """Configuration for experiments."""
+        """Configuration for experiment settings."""
 
         comment: str = "default"
-        name: str = "AF3-PSK-2"
+        name: str = "SuperposedDist2Str-PSK"
         overfitting: bool = False
         overfitting_dir: str | None = None  # Directory for overfitting mode
         train_item: int = 25600
         valid_item: int = 2560
         num_batch: int = 1
         num_epoch: int = 1000
-        optimizer: Literal["AdamW", "Muon"] = "AdamW"
         max_lr: float = 1e-4
         min_lr: float = 1e-5
-        weight_decay: float = 0.01
         warmup_steps: int = 5e3
         decay_steps: int = 5e6
         decay_factor: float = 0.95
@@ -426,19 +439,18 @@ class ContactMap2StrClient(BaseClient):
         method: Literal["AF3", "EDM"] = "AF3"
 
     class Config(BaseModel):
-        """Configuration for the AF3 client."""
+        """Configuration for SuperposedDist2StrClient."""
 
-        data: "ContactMap2StrClient.DataConfig"
-        model: ContactMap2StrModel.Config
-        experiment: "ContactMap2StrClient.ExperimentsConfig"
-        diffuser: "ContactMap2StrClient.DiffuserConfig"
-        loss: "ContactMap2StrClient.LossConfig"
+        data: "SuperposedDist2StrClient.DataConfig"
+        model: SuperposedDist2StrModel.Config
+        experiment: "SuperposedDist2StrClient.ExperimentsConfig"
+        diffuser: "SuperposedDist2StrClient.DiffuserConfig"
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self.config = config
         self.set_seed(config.experiment.seed)
-        self.register_model(ContactMap2StrModel(config.model))
+        self.register_model(SuperposedDist2StrModel(config.model))
 
         if config.experiment.use_ema:
             self.add_callback(ModelEMA(config.experiment.ema_decay))
@@ -471,9 +483,10 @@ class ContactMap2StrClient(BaseClient):
     def loss_fn(
         self,
         noisy_batch: NoisyBatch,
+        atom_pos: torch.Tensor,
     ) -> tuple[torch.Tensor, Mapping]:
         """Compute the loss for a batch."""
-        atom_pos_update = self.model.forward(noisy_batch)
+        atom_pos_update = self.model.forward(noisy_batch, atom_pos)
 
         structure_loss = self.diffuser.cal_loss(atom_pos_update)
 
@@ -499,9 +512,12 @@ class ContactMap2StrClient(BaseClient):
 
             if self.config.experiment.self_condition and random.random() > 0.5:
                 with torch.no_grad():
-                    atom_pos_update = self.model.forward(noisy_batch)
+                    atom_pos_update = self.model.forward(
+                        noisy_batch,
+                        batch.structure.atom_pos,
+                    )
                     noisy_batch.x_sc = atom_pos_update
-            loss, loss_dict = self.loss_fn(noisy_batch)
+            loss, loss_dict = self.loss_fn(noisy_batch, batch.structure.atom_pos)
 
             self.backward(loss)
             return loss_dict
@@ -518,103 +534,154 @@ class ContactMap2StrClient(BaseClient):
         return self.test_inference_quality(
             batch,
             self.config.experiment.eval_timesteps,
+            n_sample=self.config.experiment.eval_sample_num,
+            save_dir=None,
         )
-
-    def training_epoch(self, dataloader: DataLoader) -> Generator[Any, None, None]:
-        """Yield results from training step over the dataloader for one epoch."""
-        sampler: AdaptiveEdgeSampler = dataloader.sampler
-
-        self.model.train()
-        self.call_callbacks("on_train_epoch_start")
-
-        for batch_idx, batch_cpu in enumerate(iter(dataloader)):
-            batch = batch_cpu.to(device=self.device)
-            self.call_callbacks("on_train_step_start", batch, batch_idx)
-            loss_dict = self.training_step(batch)
-            loss = loss_dict["EDMLoss"]
-
-            sampler.stats.update(
-                batch.scheme.edge_index,
-                torch.tensor(loss, device=batch.device),
-            )
-            is_accumulating = (batch_idx + 1) % self.gradient_accumulation_steps != 0
-            if not is_accumulating:
-                self._optimizer_step()
-            self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
-            yield loss_dict
-        self.optimizer.zero_grad()
-
-        self._epoch += 1
-        self.call_callbacks("on_train_epoch_end")
 
     @torch.no_grad()
     def test_inference_quality(
         self,
         batch: Batch,
         timesteps: int = 100,
+        n_sample: int = 48,
+        save_dir: Path | None = None,
+        save_all: bool = True,
     ) -> dict[str, float]:
         """Test the inference quality of the model on a batch."""
         batch = batch.to(device=self.device)
-        output = self.inference(batch, timesteps=timesteps)
+        output = self.best_of_n_sample(batch, timesteps=timesteps, n_sample=n_sample)
 
         max_lddt, min_rmsd = 0, float("inf")
 
-        lddt = metrics.cal_atom_lddt(
-            output.atom_pos_pred[0],
-            batch.structure.atom_pos[0],
-            batch.structure.atom_mask[0],
-        )
-        max_lddt = max(max_lddt, lddt)
+        N_sample = output.atom_pos_pred.shape[0]
+        N_str = batch.structure.atom_pos.shape[1]
 
-        rmsd = metrics.cal_aligned_rmsd(
-            output.atom_pos_pred[0, 0],
-            batch.structure.atom_pos[0],
-            batch.structure.atom_mask[0],
-        )
-        min_rmsd = min(min_rmsd, rmsd)
+        lddt_list = []
+        rmsd_list = []
 
-        category_lddt = metrics.category_lddt(
-            batch,
-            output.atom_pos_pred[0, 0],
-        )
+        for sample_idx in range(N_sample):
+            max_lddt = 0
+            min_rmsd = float("inf")
+            for true_idx in range(N_str):
+                lddt = metrics.cal_atom_lddt(
+                    output.atom_pos_pred[sample_idx, 0],
+                    batch.structure.atom_pos[0, true_idx],
+                    batch.structure.atom_pos_mask[0, 0],
+                )
+                max_lddt = max(max_lddt, lddt)
 
-        # test
-        output = {"best_rmsd": min_rmsd, "best_lddt": max_lddt}
-        # for key in category_lddt:
-        #     output[key] = category_lddt[key]
-        return output
+                rmsd = metrics.cal_aligned_rmsd(
+                    output.atom_pos_pred[sample_idx, 0],
+                    batch.structure.atom_pos[0, true_idx],
+                    batch.structure.atom_pos_mask[0, 0],
+                )
+                min_rmsd = min(min_rmsd, rmsd)
+
+            lddt_list.append(max_lddt)
+            rmsd_list.append(min_rmsd)
+        lddt_list = np.array(lddt_list)
+        rmsd_list = np.array(rmsd_list)
+
+        # best idx (rmsd)
+        best_idx = int(np.argmin(rmsd_list))
+        worst_idx = int(np.argmax(rmsd_list))
+        if save_dir:
+            save_dir.mkdir(parents=True, exist_ok=True)
+            batch_to_cif(
+                batch,
+                output.atom_pos_pred[best_idx : best_idx + 1],
+                save_dir / f"{batch.name[0]}_best.cif",
+            )
+            batch_to_cif(
+                batch,
+                output.atom_pos_pred[worst_idx : worst_idx + 1],
+                save_dir / f"{batch.name[0]}_worst.cif",
+            )
+            batch_to_cif(
+                batch,
+                batch.structure.atom_pos[:, 0:1],  # true structure
+                save_dir / f"{batch.name[0]}_true.cif",
+            )
+        if save_all:
+            for sample_idx in range(N_sample):
+                batch_to_cif(
+                    batch,
+                    output.atom_pos_pred[sample_idx : sample_idx + 1],
+                    save_dir / f"{batch.name[0]}_sample_{sample_idx}.cif",
+                )
+        max_lddt, min_lddt = lddt_list.max(), lddt_list.min()
+        max_rmsd, min_rmsd = rmsd_list.max(), rmsd_list.min()
+
+        return {
+            "max_lddt": max_lddt,
+            "min_lddt": min_lddt,
+            "max_rmsd": max_rmsd,
+            "min_rmsd": min_rmsd,
+        }
 
     @torch.no_grad()
-    def inference(
+    def best_of_n_sample(
         self,
         batch: Batch,
         timesteps: int = 100,
-    ) -> ContactMap2StrInferenceOutput:
-        """Inference using the diffusion solver."""
+        n_sample: int = 48,
+        batch_size: int = 48,
+        return_traj: bool = False,
+    ) -> SuperposedDist2StrInferenceOutput:
+        """Generate best of N samples for a batch."""
         raw_model = getattr(self.model, "module", self.model)
-        model_wrapper = ContactMap2StrModelWrapper(
+        model_wrapper = SuperposedDist2StrModelWrapper(
             raw_model,
             use_self_condition=self.config.experiment.self_condition,
         )
         batch = batch.to(device=self.device)
-        model_wrapper.prepare_condition(batch)
-        shape = batch.structure.atom_pos.shape
 
-        atom_pos_pred, inter_traj, model_traj = self.solver.sample(
-            model_fn=model_wrapper,
-            shape=shape,
-            num_steps=timesteps,
-            device=self.device,
-            return_intermediate=True,
-        )
-        inter_traj = [du.to_numpy(x) for x in inter_traj]
-        model_traj = [du.to_numpy(x) for x in model_traj]
-        return ContactMap2StrInferenceOutput(
+        atom_pos = batch.structure.atom_pos
+        B, N_str, L, _ = atom_pos.shape
+        model_wrapper.prepare_condition(batch, atom_pos)
+
+        cursor = 0
+        atom_pos_pred_stacked = []
+        inter_traj_stacked = []
+        model_traj_stacked = []
+
+        while cursor < n_sample:
+            shape = (min(batch_size, n_sample - cursor), B, L, 3)
+            atom_pos_pred, inter_traj, model_traj = self.solver.sample(
+                model_fn=model_wrapper,
+                shape=shape,
+                num_steps=timesteps,
+                device=self.device,
+                return_intermediate=True,
+            )
+            atom_pos_pred_stacked.append(atom_pos_pred)
+            if return_traj:
+                inter_traj = [
+                    du.to_numpy(x) for x in inter_traj
+                ]  # list of (N_str, B, L, 3)
+                model_traj = [du.to_numpy(x) for x in model_traj]
+                inter_traj = np.stack(inter_traj, axis=1)  # (N_str, T, B, L, 3)
+                model_traj = np.stack(model_traj, axis=1)  # (N_str, T, B, L, 3)
+                inter_traj_stacked.append(inter_traj)
+                model_traj_stacked.append(model_traj)
+            cursor += shape[0]
+        atom_pos_pred = torch.cat(atom_pos_pred_stacked, dim=0)  # (N_sample, B, L, 3)
+        if return_traj:
+            inter_traj = np.concatenate(
+                inter_traj_stacked,
+                axis=0,
+            )  # (N_sample, T, B, L, 3)
+            model_traj = np.concatenate(
+                model_traj_stacked,
+                axis=0,
+            )  # (N_sample, T, B, L, 3)
+        else:
+            inter_traj = None
+            model_traj = None
+
+        return SuperposedDist2StrInferenceOutput(
             atom_pos_pred=atom_pos_pred,
-            model_traj=np.stack(model_traj, axis=1),
-            inter_traj=np.stack(inter_traj, axis=1),
+            model_traj=model_traj,
+            inter_traj=inter_traj,
             batch=batch,
         )
-
-    def sample(self) -> None:
-        """Sample from the diffusion model using the ODE Euler solver."""

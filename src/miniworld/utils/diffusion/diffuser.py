@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 SchedulerT = TypeVar("SchedulerT", bound="DiffusionScheduler")
 
+
 class Diffuser(ABC):
     """Base class for defining a diffusion model. (use solver when sampling)."""
 
@@ -71,7 +72,9 @@ class Diffuser(ABC):
 
         # random rotation matrix
         n = x.shape[0]
-        rot_mats = torch.from_numpy(Rotation.random(n).as_matrix()).to(x.device, x.dtype)
+        rot_mats = torch.from_numpy(Rotation.random(n).as_matrix()).to(
+            x.device, x.dtype
+        )
 
         # random translation vector
         translation = (
@@ -115,8 +118,11 @@ class EuclideanDiffuser(Diffuser, ABC):
         self.clear_buffer()
 
     def sample(
-        self, x0: torch.Tensor, mask: torch.Tensor | None, num_augment: int = 1,
-    ) -> torch.Tensor:
+        self,
+        x0: torch.Tensor,
+        mask: torch.Tensor | None,
+        num_augment: int = 1,
+    ) -> tuple[torch.Tensor, torch.Tensor | None, torch.Tensor]:
         """Add noise to batch.atom_pos and store preconditioning data."""
         if num_augment < 1:
             msg = "num_augment must be at least 1"
@@ -127,11 +133,11 @@ class EuclideanDiffuser(Diffuser, ABC):
         device, dtype = x0.device, self.dtype
         if x0.dtype != dtype:
             x0 = x0.to(device=device, dtype=dtype)
-        if len(x0.shape) == 3: # x0 : (B, L, 3)
+        if len(x0.shape) == 3:  # x0 : (B, L, 3)
             x0 = x0.expand(num_augment, *x0.shape[1:])
             if mask is not None:
                 mask = mask.expand(num_augment, *mask.shape[1:])
-        elif len(x0.shape) == 4: # x0 : (B, N_str, L, 3)
+        elif len(x0.shape) == 4:  # x0 : (B, N_str, L, 3)
             num_expand = num_augment // x0.shape[1]
             num_augment = num_expand * x0.shape[1]
             x0 = x0.reshape(-1, *x0.shape[2:])
@@ -171,7 +177,7 @@ class EuclideanDiffuser(Diffuser, ABC):
             },
         )
 
-        return x_input, t_emb
+        return x_input, mask, t_emb
 
     def cal_loss(self, x_update: torch.Tensor) -> torch.Tensor:
         """Compute EDM loss between model prediction and true signal."""
@@ -179,7 +185,9 @@ class EuclideanDiffuser(Diffuser, ABC):
             msg = "x_update shape must match noisy_x shape in the buffer."
             raise ValueError(msg)
         if x_update.dtype != self.dtype:
-            msg = "x_update must be of type float32, but got dtype: " + str(x_update.dtype)
+            msg = "x_update must be of type float32, but got dtype: " + str(
+                x_update.dtype
+            )
             raise ValueError(msg)
         sigma = self._buffer["sigma"]
         noisy_x = self._buffer["noisy_x"]
@@ -241,10 +249,12 @@ class DecoupledEDMDiffuser(Diffuser):
         self.dtype = torch.float32  # diffuser should always use float32
         self.clear_buffer()
 
-
-
     def sample(
-        self, x0: torch.Tensor, mask: torch.Tensor, atom_chain_break : dict[str, int] | None, num_augment: int = 1,
+        self,
+        x0: torch.Tensor,
+        mask: torch.Tensor,
+        atom_chain_break: dict[str, int] | None,
+        num_augment: int = 1,
     ) -> torch.Tensor:
         """Add noise to batch.atom_pos and store preconditioning data.
 
@@ -259,11 +269,11 @@ class DecoupledEDMDiffuser(Diffuser):
         device, dtype = x0.device, self.dtype
         if x0.dtype != dtype:
             x0 = x0.to(device=device, dtype=dtype)
-        if len(x0.shape) == 3: # x0 : (B, L, 3)
+        if len(x0.shape) == 3:  # x0 : (B, L, 3)
             x0 = x0.expand(num_augment, *x0.shape[1:])
             if mask is not None:
                 mask = mask.expand(num_augment, *mask.shape[1:])
-        elif len(x0.shape) == 4: # x0 : (B, N_str, L, 3)
+        elif len(x0.shape) == 4:  # x0 : (B, N_str, L, 3)
             num_expand = num_augment // x0.shape[1]
             num_augment = num_expand * x0.shape[1]
             x0 = x0.reshape(-1, *x0.shape[2:])
@@ -272,14 +282,14 @@ class DecoupledEDMDiffuser(Diffuser):
                 mask = mask.reshape(-1, *mask.shape[2:])
                 mask = mask.repeat(num_expand, 1)
 
-        x0 = self.random_rotation_and_translation(x0) # (AB, L, 3)
+        x0 = self.random_rotation_and_translation(x0)  # (AB, L, 3)
 
         # random rotation and translation augmentation
         AB = x0.shape[0]
         C = len(atom_chain_break)
         sigma_shape = (AB,) + (1,) * (x0.ndim - 1)
 
-        sigma_y, sigma_R, sigma_T = self.scheduler.sample_noise(AB, uniform = True)
+        sigma_y, sigma_R, sigma_T = self.scheduler.sample_noise(AB, uniform=True)
         sigma_y = sigma_y.to(device=device, dtype=dtype)
         sigma_R = sigma_R.to(device=device, dtype=dtype)
         sigma_T = sigma_T.to(device=device, dtype=dtype)
@@ -291,8 +301,12 @@ class DecoupledEDMDiffuser(Diffuser):
         R, T = sample_rigid(sigma_R, sigma_T, C)
         noisy_x = apply_chain_rt(noisy_x, R, T, atom_chain_break)
 
-        input_scaling = self.scheduler.input_scale(sigma_y, sigma_T).to(device=device, dtype=dtype)
-        t_emb = self.scheduler.noise_condition(sigma_y).to(device=device, dtype=dtype) # follow sigma_y
+        input_scaling = self.scheduler.input_scale(sigma_y, sigma_T).to(
+            device=device, dtype=dtype
+        )
+        t_emb = self.scheduler.noise_condition(sigma_y).to(
+            device=device, dtype=dtype
+        )  # follow sigma_y
         x_input = noisy_x * input_scaling.view(sigma_shape)
 
         x0 = x0.view(num_augment, B, *x0.shape[1:])
@@ -324,7 +338,9 @@ class DecoupledEDMDiffuser(Diffuser):
             msg = "x_update shape must match noisy_x shape in the buffer."
             raise ValueError(msg)
         if x_update.dtype != self.dtype:
-            msg = "x_update must be of type float32, but got dtype: " + str(x_update.dtype)
+            msg = "x_update must be of type float32, but got dtype: " + str(
+                x_update.dtype
+            )
             raise ValueError(msg)
         x0 = self._buffer["x0"]
         R, T = self._buffer["R"], self._buffer["T"]
@@ -374,4 +390,3 @@ class DecoupledEDMDiffuser(Diffuser):
             raise ValueError(msg)
         diff = x_pred - x0_aligned
         return (diff.pow(2) * weight).mean()
-

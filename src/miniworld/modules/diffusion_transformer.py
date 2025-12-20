@@ -23,10 +23,10 @@ from .primitives import (
 def mask_mean(
     mask: Bool[torch.Tensor, "..."],
     value: Float[torch.Tensor, "..."],
-    axis:numbers.Integral|None=None,
-    keepdims:bool=False,
-    eps:float=1e-9,
-    ) -> Float[torch.Tensor, "..."]:
+    axis: numbers.Integral | None = None,
+    keepdims: bool = False,
+    eps: float = 1e-9,
+) -> Float[torch.Tensor, "..."]:
     """Compute the mean of `value` over `axis`, masked by `mask`."""
     is_torch = isinstance(value, torch.Tensor)
 
@@ -179,7 +179,11 @@ class DiffusionTransformerBlock(nn.Module):
             )
         else:
             atom_single_rep = self._forward(
-                noisy_batch, atom_single_rep, atom_single_cond, atom_pair, mask,
+                noisy_batch,
+                atom_single_rep,
+                atom_single_cond,
+                atom_pair,
+                mask,
             )
         return atom_single_rep
 
@@ -222,7 +226,11 @@ class DiffusionTransformer(nn.Module):
         """Forward pass."""
         for block in self.blocks:
             atom_single_rep = block(
-                noisy_batch, atom_single_rep, atom_single_cond, atom_pair, mask,
+                noisy_batch,
+                atom_single_rep,
+                atom_single_cond,
+                atom_pair,
+                mask,
             )
         return atom_single_rep
 
@@ -256,14 +264,19 @@ class AtomAttentionEncoder(nn.Module):
                 implementation=diffusion_config.implementation,
             ),
             Linear(
-                common_config.d_token_single, d_atom_single, bias=False, init="zero",
+                common_config.d_token_single,
+                d_atom_single,
+                bias=False,
+                init="zero",
             ),
         )
         self.token_pair_to_atom_pair = nn.Sequential(
             LayerNorm(d_token_pair, implementation=diffusion_config.implementation),
             Linear(d_token_pair, d_atom_pair, bias=False, init="zero"),
         )
-        self.noisy_to_atom_single_rep = Linear(3, d_atom_single, bias=True) # bias set to true for missing atoms
+        self.noisy_to_atom_single_rep = Linear(
+            3, d_atom_single, bias=True
+        )  # bias set to true for missing atoms
 
         self.atom_single_to_pair_left = nn.Sequential(
             nn.ReLU(),
@@ -284,7 +297,9 @@ class AtomAttentionEncoder(nn.Module):
         )
 
         self.atom_transformer = DiffusionTransformer(
-            common_config=common_config, diffusion_config=diffusion_config, level="atom",
+            common_config=common_config,
+            diffusion_config=diffusion_config,
+            level="atom",
         )
 
         self.atom_single_rep_to_token_single = nn.Sequential(
@@ -324,7 +339,9 @@ class AtomAttentionEncoder(nn.Module):
             atom_pair = (
                 atom_pair
                 + _to_add_pair[
-                    batch_2D_idx, atom_to_residue_idx_map, atom_to_residue_idx_map,
+                    batch_2D_idx,
+                    atom_to_residue_idx_map,
+                    atom_to_residue_idx_map,
                 ]
             )
             # augmentation
@@ -332,9 +349,7 @@ class AtomAttentionEncoder(nn.Module):
             to_add = self.noisy_to_atom_single_rep(
                 noisy_batch.x_t.to(torch.float32),
             )  # (A, B, L_atom, d_atom_single)
-            # if inference don't use mask
-            if self.training:
-                to_add = to_add * noisy_batch.structure.atom_pos_mask.unsqueeze(-1)
+            to_add = to_add * noisy_batch.x_mask.unsqueeze(-1)
             atom_single_rep = atom_single_rep + to_add  # (A, B, L_atom, d_atom_single)
 
             _left = self.atom_single_to_pair_left(atom_single_cond)
@@ -352,7 +367,8 @@ class AtomAttentionEncoder(nn.Module):
 
     @typecheck
     def _get_input_feature(
-        self, noisy_batch: NoisyBatch,
+        self,
+        noisy_batch: NoisyBatch,
     ) -> tuple[
         Float[torch.Tensor, "B L d_atom_single_cond"],
         Float[torch.Tensor, "B L L d_atom_pair"],
@@ -414,7 +430,9 @@ class AtomAttentionEncoder(nn.Module):
         """Scatter atom single representation to token single representation."""
         atom_mask = noisy_batch.structure.atom_mask  # (B, L_atom)
         atom_single_rep = torch.where(
-            atom_mask.unsqueeze(-1), atom_single_rep, torch.zeros_like(atom_single_rep),
+            atom_mask.unsqueeze(-1),
+            atom_single_rep,
+            torch.zeros_like(atom_single_rep),
         )
         to_add_token_single_rep = self.atom_single_rep_to_token_single(atom_single_rep)
 
@@ -428,7 +446,9 @@ class AtomAttentionEncoder(nn.Module):
             B = noisy_batch.shape[0]
             L_token = noisy_batch.residue_length
             count = torch.zeros(
-                (B, L_token), device=noisy_batch.device, dtype=noisy_batch.dtype,
+                (B, L_token),
+                device=noisy_batch.device,
+                dtype=noisy_batch.dtype,
             )
             count.scatter_add_(
                 1,
@@ -450,18 +470,28 @@ class AtomAttentionEncoder(nn.Module):
             # apply augmentation
             A = atom_single_rep.shape[0]  # Number of augmentations
             token_single_rep = token_single_rep.unsqueeze(1).expand(
-                A, -1, -1, -1,
+                A,
+                -1,
+                -1,
+                -1,
             )  # (A, B, L_atom, d_token_single)
             atom_to_residue_idx_map = atom_to_residue_idx_map.unsqueeze(1).unsqueeze(-1)
             atom_to_residue_idx_map = atom_to_residue_idx_map.expand(
-                A, -1, -1, to_add_token_single_rep.shape[-1],
+                A,
+                -1,
+                -1,
+                to_add_token_single_rep.shape[-1],
             )
             atom_mask = atom_mask.unsqueeze(1).unsqueeze(-1)
             to_add_token_single_rep = to_add_token_single_rep * atom_mask
             token_single_rep = token_single_rep.scatter_add(
-                2, atom_to_residue_idx_map, to_add_token_single_rep,
+                2,
+                atom_to_residue_idx_map,
+                to_add_token_single_rep,
             )
-            token_single_rep = token_single_rep / count.unsqueeze(1).unsqueeze(-1).clamp(
+            token_single_rep = token_single_rep / count.unsqueeze(1).unsqueeze(
+                -1
+            ).clamp(
                 min=1.0,
             )
         else:
@@ -515,11 +545,19 @@ class AtomAttentionEncoder(nn.Module):
                 )
             )
         else:
-            atom_single_rep, atom_single_cond, atom_pair = self._before_atom_transformer(
-                noisy_batch, token_single_cond, token_pair_cond,
+            atom_single_rep, atom_single_cond, atom_pair = (
+                self._before_atom_transformer(
+                    noisy_batch,
+                    token_single_cond,
+                    token_pair_cond,
+                )
             )
         atom_single_rep = self.atom_transformer(
-            noisy_batch, atom_single_rep, atom_single_cond, atom_pair, noisy_batch.structure.atom_mask,
+            noisy_batch,
+            atom_single_rep,
+            atom_single_cond,
+            atom_pair,
+            noisy_batch.structure.atom_mask,
         )
 
         if self.use_checkpoint:
@@ -551,7 +589,9 @@ class AtomAttentionDecoder(nn.Module):
         self.add_token_info = Linear(d_token_single, d_atom_single, bias=False)
 
         self.atom_transformer = DiffusionTransformer(
-            common_config=common_config, diffusion_config=diffusion_config, level="atom",
+            common_config=common_config,
+            diffusion_config=diffusion_config,
+            level="atom",
         )
 
         self.final_denoising = nn.Sequential(
@@ -576,7 +616,9 @@ class AtomAttentionDecoder(nn.Module):
         """Forward pass."""
         A, B, L_atom = atom_single_rep.shape[:3]
         device = noisy_batch.device
-        batch_1D_idx = torch.arange(B, device=device).view(1, B, 1).expand(A, -1, L_atom)
+        batch_1D_idx = (
+            torch.arange(B, device=device).view(1, B, 1).expand(A, -1, L_atom)
+        )
         aug_1D_idx = torch.arange(A, device=device).view(A, 1, 1).expand(-1, B, L_atom)
         atom_to_residue_idx_map = noisy_batch.scheme.atom_to_residue_idx_map  # (B, L)
         atom_to_residue_idx_map = atom_to_residue_idx_map.unsqueeze(0).expand(A, -1, -1)

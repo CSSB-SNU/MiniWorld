@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import random
 import re
 from pathlib import Path
@@ -232,19 +233,37 @@ class AdaptiveEdgeSampler(DistributedSampler):
     def __iter__(self) -> iter[int]:
         """Return a generator that yields sampled indices for this rank."""
         # Optional per-epoch RNG for reproducibility across nodes
+
         if self.shuffle:
-            g = torch.Generator(device=self.device)
+            # deterministically shuffle based on epoch and seed
+            g = torch.Generator()
             g.manual_seed(self.seed + self.epoch)
+            indices = torch.randperm(len(self.dataset), generator=g).tolist()  # type: ignore[arg-type]
         else:
-            g = None
+            indices = list(range(len(self.dataset)))  # type: ignore[arg-type]
 
+        if not self.drop_last:
+            # add extra samples to make it evenly divisible
+            padding_size = self.total_size - len(indices)
+            if padding_size <= len(indices):
+                indices += indices[:padding_size]
+            else:
+                indices += (indices * math.ceil(padding_size / len(indices)))[
+                    :padding_size
+                ]
+        else:
+            # remove tail of data to make it evenly divisible.
+            indices = indices[: self.total_size]
         num_samples = self.num_samples  # per-rank
-
+        indices = indices[self.rank : self.total_size : self.num_replicas]
         for _ in range(num_samples):
-            weights = self.stats.get_weights(min_prob=self.min_prob)
+            valid_weights = self.stats.get_weights(min_prob=self.min_prob)
+            weights = torch.zeros_like(valid_weights)
+            weights[indices] = valid_weights[indices]
+            weights = weights / weights.sum()
             cdf = torch.cumsum(weights, dim=0)
             cdf[-1] = 1.0  # To prevent possible numerical issues
-            r = torch.rand(1, generator=g, device=self.device)
+            r = torch.rand(1, device=self.device)
             idx = torch.searchsorted(cdf, r).item()
             yield idx
 
@@ -598,8 +617,16 @@ class BioMolData(torch.utils.data.Dataset):
             contact_edges=torch.from_numpy(np.array(contact_edges, dtype=np.int64)),
         )
 
+        # ids : to make cif file from batch
+        hetero = cifmol.residues.hetero
+        atom_ids = cifmol.atoms.id
+        chem_comp_ids = cifmol.residues.chem_comp_id
+
         return Batch(
             name=[f"{cif_id}"],
+            heteros=[hetero],
+            atom_ids=[atom_ids],
+            chem_comp_ids=[chem_comp_ids],
             sequence=sequence,
             structure=structure,
             reference=reference,
@@ -612,20 +639,32 @@ class BioMolData(torch.utils.data.Dataset):
         self,
         rank: int,
         drop_last: bool = False,
+        use_adaptive_sampler: bool = True,  # train only
         **kwargs: object,
     ) -> DataLoader:
         """Create a distributed DataLoader with AdaptiveEdgeSampler."""
-        sampler = AdaptiveEdgeSampler(
-            AdaptiveEdgeSampler.Config(
+        if use_adaptive_sampler:
+            sampler = AdaptiveEdgeSampler(
+                AdaptiveEdgeSampler.Config(
+                    dataset=self,
+                    num_replicas=kwargs.get("world_size", 1),
+                    stats=self.stats,
+                    rank=rank,
+                    shuffle=kwargs.get("shuffle", True),
+                    seed=kwargs.get("seed", 0),
+                    drop_last=drop_last,
+                ),
+            )
+        else:
+            # default distributed sampler
+            sampler = DistributedSampler(
                 dataset=self,
                 num_replicas=kwargs.get("world_size", 1),
-                stats=self.stats,
                 rank=rank,
-                shuffle=kwargs.get("shuffle", True),
+                shuffle=kwargs.get("shuffle", False),
                 seed=kwargs.get("seed", 0),
                 drop_last=drop_last,
-            ),
-        )
+            )
 
         kwargs.pop("shuffle", None)
         kwargs.pop("world_size", None)
@@ -636,7 +675,9 @@ class BioMolData(torch.utils.data.Dataset):
             "drop_last": False,  # override to True for train
             "num_workers": kwargs.get("num_workers", 0),
             "pin_memory": False,
-            "multiprocessing_context": "spawn",
+            "multiprocessing_context": (
+                "spawn" if kwargs.get("num_workers", 0) > 0 else None
+            ),
             "collate_fn": Batch.collate_fn,
         }
         params.update(kwargs)

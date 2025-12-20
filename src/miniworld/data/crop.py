@@ -118,14 +118,15 @@ def crop_spatial_atom(
 
     pivot_residue_idx = np.random.choice(pivot_valid_residue_indices)
     pivot_atom_indices = cifmol.index_table.residues_to_atoms(
-        np.array([pivot_residue_idx])
+        np.array([pivot_residue_idx]),
     )
     valid_atom_indices = cifmol.index_table.residues_to_atoms(valid_indices)
 
     xyz = cifmol.atoms.xyz.value
     pivot_xyz = xyz[pivot_atom_indices]
     distance_map = np.linalg.norm(
-        xyz[:, None, :] - pivot_xyz[None, :, :], axis=-1
+        xyz[:, None, :] - pivot_xyz[None, :, :],
+        axis=-1,
     )  # (N_atoms, N_pivot_atoms)
     distance_map[np.isnan(distance_map)] = float("inf")
     distance_map[~np.isin(np.arange(xyz.shape[0]), valid_atom_indices), :] = float(

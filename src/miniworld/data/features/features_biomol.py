@@ -12,6 +12,7 @@ class SequenceFeatures(BaseBatch):
 
     residue_type: Int[torch.Tensor, "B L_res"]
 
+
 @typecheck
 @dataclass(frozen=True)
 class StructureFeatures(BaseBatch):
@@ -35,7 +36,6 @@ class ReferenceFeatures(BaseBatch):
     element: Float[torch.Tensor, "B L_atom"]
     charge: Float[torch.Tensor, "B L_atom"]
     space_uid: Int[torch.Tensor, "B L_atom"]
-
 
 
 @typecheck
@@ -73,13 +73,19 @@ class ChainFeatures(BaseBatch):
     entity_type: Int[torch.Tensor, "B L_chain"]
     contact_edges: Int[torch.Tensor, "B N_contact 2"]
 
+
 @dataclass(kw_only=True, frozen=True)
 class Batch(BaseBatch):
     """Batch of features."""
 
     name: list
 
-    sequence : SequenceFeatures
+    # additional info for making cif files
+    heteros: list
+    atom_ids: list
+    chem_comp_ids: list
+
+    sequence: SequenceFeatures
     structure: StructureFeatures
     reference: ReferenceFeatures
     scheme: SchemeFeatures
@@ -119,51 +125,6 @@ class Batch(BaseBatch):
             return self.reference.pos.shape[1]
         return None
 
-@dataclass(kw_only=True, frozen=True)
-class ContamBatch(BaseBatch):
-    """Batch of features with contamination."""
-
-    name: list
-    sequence : SequenceFeatures
-    structure: StructureFeatures
-    reference: ReferenceFeatures
-    scheme: SchemeFeatures
-    msa: MSAFeatures
-
-    @property
-    def shape(self) -> tuple[int]:
-        """Return the shape of atom mask."""
-        return self.structure.atom_mask.shape
-
-    @property
-    def device(self) -> torch.device:
-        """Return the device of atom mask."""
-        return self.structure.atom_mask.device
-
-    @property
-    def dtype(self) -> torch.dtype:
-        """Return the dtype of atom positions."""
-        return self.structure.atom_pos.dtype
-
-    @property
-    def residue_length(self) -> int:
-        """Return the residue length."""
-        if len(self.reference.pos.shape) == 2:
-            return self.scheme.residue_idx.shape[0]
-        if len(self.reference.pos.shape) == 3:
-            return self.scheme.residue_idx.shape[1]
-        return None
-
-    @property
-    def atom_length(self) -> int:
-        """Return the atom length."""
-        if len(self.reference.pos.shape) == 2:
-            return self.reference.pos.shape[0]
-        if len(self.reference.pos.shape) == 3:
-            return self.reference.pos.shape[1]
-        return None
-
-
 
 @dataclass(kw_only=True, frozen=True)
 class NoisyBatch(Batch):
@@ -174,6 +135,7 @@ class NoisyBatch(Batch):
 
     # Noisy rigids of frame atoms
     x_t: torch.Tensor  # (..., L, 3)
+    x_mask: torch.Tensor # (..., L)
 
     # Self condition rigid
     x_sc: torch.Tensor | None = None  # (..., L, 3)
@@ -183,4 +145,8 @@ class NoisyBatch(Batch):
         object.__setattr__(self, "t", self.t.to(self.device, dtype=self.dtype))
         object.__setattr__(self, "x_t", self.x_t.to(self.device, dtype=self.dtype))
         if self.x_sc is not None:
-            object.__setattr__(self, "x_sc", self.x_sc.to(self.device, dtype=self.dtype))
+            object.__setattr__(
+                self,
+                "x_sc",
+                self.x_sc.to(self.device, dtype=self.dtype),
+            )

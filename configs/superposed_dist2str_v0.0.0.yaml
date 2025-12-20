@@ -74,7 +74,7 @@ model:
     r_max: 32
     s_max: 2
     implementation: triton
-    use_checkpoint: False
+    use_checkpoint: True
     to_bias_init: zero
     norm: qk
 
@@ -157,7 +157,7 @@ model:
 
 
 experiment:
-  comment: sdist2str_v1.1.0 | contam | wo signalp
+  comment: superposed_dist2str_v0.0.0 | contam | wo signalp
 
   # Training arguments
   num_batch: 1
