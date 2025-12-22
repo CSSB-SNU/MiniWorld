@@ -173,6 +173,30 @@ def cal_atom_distogram_loss(
 
 
 @typecheck
+def extract_contact_map(
+    atom_pos: Float[torch.Tensor, "* N L_atom 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
+    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    cutoff: float = 6.0,
+    min_distance: float = 2.0,
+    max_distance: float = 22.0,
+) -> tuple[Bool[torch.Tensor, "* L L"], Bool[torch.Tensor, "* L L"]]:
+    """Extract residue-level contact map from atom positions."""
+    # 1) Residue-level shortest distances and mask
+    with torch.no_grad():
+        residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
+            atom_pos=atom_pos,
+            atom_pos_mask=atom_pos_mask,
+            atom_to_res_idx=atom_to_res_idx,
+            min_distance=min_distance,
+            max_distance=max_distance,
+        )  # (..., R_max, R_max), (..., R_max, R_max)
+
+    # 2) Contact targets (0/1) from distances
+    return residue_dists <= cutoff, residue_pair_mask  # (*, L, L), bool
+
+
+@typecheck
 def cal_contact_map_focal_loss(
     logit_pred: Float[torch.Tensor, "* L L 2"],
     atom_pos: Float[torch.Tensor, "* N L_atom 3"],
@@ -203,27 +227,18 @@ def cal_contact_map_focal_loss(
     """
     *lead, L, _, C = logit_pred.shape
     if C != 2:
-        raise ValueError(f"logit_pred last dim must be 2 (got {C})")
+        msg = f"logit_pred last dim must be 2 (got {C})"
+        raise ValueError(msg)
     device = logit_pred.device
 
-    # 1) Residue-level shortest distances and mask
-    with torch.no_grad():
-        residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
-            atom_pos=atom_pos,
-            atom_pos_mask=atom_pos_mask,
-            atom_to_res_idx=atom_to_res_idx,
-            min_distance=min_distance,
-            max_distance=max_distance,
-        )  # (..., R_max, R_max), (..., R_max, R_max)
-
-    if residue_dists.shape[-1] != L:
-        raise ValueError(
-            f"Size mismatch: logit_pred L={L}, "
-            f"residue_dists last dim={residue_dists.shape[-1]}"
-        )
-
-    # 2) Contact targets (0/1) from distances
-    contact_target = residue_dists <= cutoff  # (*, L, L), bool
+    contact_target, residue_pair_mask = extract_contact_map(
+        atom_pos=atom_pos,
+        atom_pos_mask=atom_pos_mask,
+        atom_to_res_idx=atom_to_res_idx,
+        cutoff=cutoff,
+        min_distance=min_distance,
+        max_distance=max_distance,
+    )  # (*, L, L), bool
     target = contact_target.long()  # (*, L, L), in {0,1}
 
     # 3) Valid residue pairs: both residues exist and i < j (upper triangle)

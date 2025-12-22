@@ -1,10 +1,12 @@
 import random
 from collections.abc import Mapping
 from contextlib import ExitStack
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
 import torch
+from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from team_gm import BaseClient
 from team_gm.core.callbacks import ModelEMA
@@ -19,7 +21,7 @@ from miniworld.data.dataloader.dataloader_multistate_contam import (
     MultiStatedbConfig,
 )
 from miniworld.data.features.features_biomol import Batch, NoisyBatch
-from miniworld.loss.auxiliary import cal_contact_map_focal_loss
+from miniworld.loss.auxiliary import cal_contact_map_focal_loss, extract_contact_map
 from miniworld.modules.configs import (
     CommonConfig,
     DiffusionConfig,
@@ -234,3 +236,41 @@ class ContactMapPredictionClient(BaseClient):
             raise ValueError(msg)
         _, loss_dict = self.loss_fn(batch)
         return loss_dict
+
+    @torch.no_grad()
+    def predict_contact_map(
+        self,
+        batch: Batch,
+        save_dir: Path | None = None,
+    ) -> torch.Tensor:
+        """Predict contact maps for the given batch."""
+        self.model.eval()
+        batch = batch.to(self.device)
+        contact_map_logit = self.model.forward(batch)
+        contact_map_prob = torch.softmax(contact_map_logit, dim=-1)[..., 1]
+
+        contact_target, residue_pair_mask = extract_contact_map(
+            batch.structure.atom_pos,
+            batch.structure.atom_pos_mask,
+            batch.scheme.atom_to_residue_idx_map,
+        )
+
+        if save_dir is not None:
+            # save the contact map as an image
+            contact_map_prob = contact_map_prob[0].cpu().numpy()
+            contact_target = contact_target[0].cpu().numpy()
+            residue_pair_mask = residue_pair_mask[0].cpu().numpy()
+            contact_map_prob = contact_map_prob * residue_pair_mask
+            save_path = save_dir / f"{batch.name[0]}_contact_map.png"
+            if not save_dir.exists():
+                save_dir.mkdir(parents=True, exist_ok=True)
+            # 2 panels: predicted and target
+            fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+            axes[0].imshow(contact_map_prob, cmap="Reds", vmin=0, vmax=1)
+            axes[0].set_title("Predicted Contact Map")
+            axes[1].imshow(contact_target, cmap="Reds", vmin=0, vmax=1)
+            axes[1].set_title("Target Contact Map")
+            plt.savefig(save_path)
+            plt.close(fig)
+
+        return contact_map_prob

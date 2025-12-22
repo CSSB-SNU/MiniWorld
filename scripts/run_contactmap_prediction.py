@@ -122,8 +122,8 @@ def train(  # noqa: PLR0912, PLR0915
     fabric.launch()
 
     optimizer = torch.optim.AdamW(
-            client.model.parameters(),
-            client.config.experiment.max_lr,
+        client.model.parameters(),
+        client.config.experiment.max_lr,
     )
     scheduler = get_step_decay_scheduler_with_warmup(
         optimizer=optimizer,
@@ -308,14 +308,16 @@ def sample(
         client.logger.info("Set random seed: %d", seed)
 
     preprocess_config = client.config.data.valid_preprocessing.model_dump()
+    msa_config = client.config.data.msa.model_dump()
     # bug
     preprocess_config["a3m_db_path"] = (
         "/home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb"
     )
+    msa_config["max_msa_depth"] = 512
 
     valid_data_config = BioMolMonomerData.BioMolConfig(
         crop_config=client.config.data.crop.model_dump(),
-        msa_config=client.config.data.msa.model_dump(),
+        msa_config=msa_config,
         kmer_fast_align_config=client.config.data.kmer_fast_align.model_dump(),
         multistate_config=client.config.data.multistate.model_dump(),
         preprocess_config=preprocess_config,
