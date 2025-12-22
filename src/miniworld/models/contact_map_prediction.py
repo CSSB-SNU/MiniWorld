@@ -174,7 +174,7 @@ class ContactMapPredictionClient(BaseClient):
         prefetch_factor: int = 4
         seed: int = 0
         use_ema: bool = True
-        ema_decay: float = 0.9999
+        ema_decay: float = 0.999
 
     class Config(BaseModel):
         """Configuration for the ContactMapPredictor client."""
