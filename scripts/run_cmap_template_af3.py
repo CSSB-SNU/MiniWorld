@@ -37,7 +37,7 @@ def setup_logger(client: AF3Client) -> None:
 
     now = datetime.datetime.now(datetime.timezone.utc)
     file_handler = logging.FileHandler(
-        f"logs/cmap_template_af3_{now:%Y%m%d_%H%M%S}.log"
+        f"logs/cmap_template_af3/cmap_template_af3_{now:%Y%m%d_%H%M%S}.log"
     )
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)
@@ -122,9 +122,9 @@ def train(  # noqa: PLR0912, PLR0915
     fabric.launch()
 
     optimizer = torch.optim.AdamW(
-            client.model.parameters(),
-            client.config.experiment.max_lr,
-        )
+        client.model.parameters(),
+        client.config.experiment.max_lr,
+    )
     scheduler = get_step_decay_scheduler_with_warmup(
         optimizer=optimizer,
         warmup_steps=client.config.experiment.warmup_steps,

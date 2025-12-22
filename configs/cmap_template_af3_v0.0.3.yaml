@@ -53,8 +53,8 @@ model:
 
 
   contact_map:
-    max_inputs_pos: 128
-    max_inputs_neg: 128
+    max_inputs_pos: 256
+    max_inputs_neg: 256
     pairformer:
       n_block: 2
       d_single: ${model.common.d_token_single}
@@ -153,7 +153,7 @@ diffuser:
     use_time_augmentation: True
 
 experiment:
-  comment: "[LG] cmap_template_af3 wo msa_module (pos128, neg128)"
+  comment: "[LG] cmap_template_af3 wo msa_module (pos1024, neg1024)"
 
   # Training arguments
   num_batch: 1
@@ -178,3 +178,4 @@ experiment:
   grad_accum_steps: 1
   num_workers: 4
   prefetch_factor: 8
+  use_ema: False

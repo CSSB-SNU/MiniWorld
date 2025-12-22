@@ -27,7 +27,7 @@ data:
 
   msa:
     n_samples: 1
-    max_msa_depth: 384
+    max_msa_depth: 1024
 
   kmer_fast_align:
     kmer_index: ${data.DB_PATH}/kmer_align/kmer_index.tsv
@@ -151,7 +151,7 @@ model:
 
 
 experiment:
-  comment: contactmap_prediction_v0.0.0
+  comment: contactmap_prediction_v0.0.1 (increasing max_msa_depth to 32 to 1024)
 
   # Training arguments
   num_batch: 1
