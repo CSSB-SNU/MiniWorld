@@ -110,9 +110,11 @@ def sample_contact_map_vectorized(
     keep_mask = (keep_pos_mask | keep_neg_mask).view(B, L, L)
 
     sampled = torch.full_like(contact_map, 2)
-    sampled[keep_mask] = contact_map[keep_mask] # (B, L, L)
+    sampled[keep_mask] = contact_map[keep_mask]  # (B, L, L)
 
-    return torch.nn.functional.one_hot(sampled.long(), num_classes=3).float()  # (B, L, L, 3)
+    return torch.nn.functional.one_hot(
+        sampled.long(), num_classes=3
+    ).float()  # (B, L, L, 3)
 
 
 class AF3Model(nn.Module):
@@ -222,12 +224,14 @@ class AF3Model(nn.Module):
                 noisy_batch.structure.atom_pos_mask,
                 noisy_batch.scheme.atom_to_residue_idx_map,
             )
-            if self.training:
-                max_pos = random.randint(0, self.config.contact_map.max_inputs_pos)
-                max_neg = random.randint(0, self.config.contact_map.max_inputs_neg)
-            else:
-                max_pos = self.config.contact_map.max_inputs_pos
-                max_neg = self.config.contact_map.max_inputs_neg
+            max_pos = random.randint(0, self.config.contact_map.max_inputs_pos)
+            max_neg = random.randint(0, self.config.contact_map.max_inputs_neg)
+            # if self.training:
+            #     max_pos = random.randint(0, self.config.contact_map.max_inputs_pos)
+            #     max_neg = random.randint(0, self.config.contact_map.max_inputs_neg)
+            # else:
+            #     max_pos = self.config.contact_map.max_inputs_pos
+            #     max_neg = self.config.contact_map.max_inputs_neg
             contact_map_sampled = sample_contact_map_vectorized(
                 contact_map,
                 contact_map_mask,
@@ -542,7 +546,10 @@ class AF3Client(BaseClient):
                 mask=batch.structure.atom_mask,
             )
             noisy_batch = NoisyBatch(
-                **batch.__dict__, t=t_emb, x_t=noisy_atom_pos, x_mask=x_mask,
+                **batch.__dict__,
+                t=t_emb,
+                x_t=noisy_atom_pos,
+                x_mask=x_mask,
             )
 
             if self.config.experiment.self_condition and random.random() > 0.5:

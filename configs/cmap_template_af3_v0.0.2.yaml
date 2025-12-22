@@ -170,7 +170,7 @@ experiment:
   valid_item: 640
 
   # Validation arguments
-  eval_freq: 10
+  eval_freq: 1
   eval_sample_num: 1
   eval_input_num: 50
   eval_timesteps: 100

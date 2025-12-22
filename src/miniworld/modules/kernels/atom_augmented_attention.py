@@ -25,7 +25,9 @@ if AUTOTUNE:
     ]
     bwd_configs = [
         triton.Config(
-            {"BLOCK_M": BM, "BLOCK_N": BN, "BLOCK_D": BD}, num_stages=s, num_warps=w,
+            {"BLOCK_M": BM, "BLOCK_N": BN, "BLOCK_D": BD},
+            num_stages=s,
+            num_warps=w,
         )
         for BM in [16, 32, 64]
         for BN in [16, 32, 64]
@@ -50,7 +52,9 @@ else:
     ]
     bwd_configs = [
         triton.Config(
-            {"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_D": 32}, num_stages=2, num_warps=4,
+            {"BLOCK_M": 64, "BLOCK_N": 64, "BLOCK_D": 32},
+            num_stages=2,
+            num_warps=4,
         ),
     ]
 
@@ -83,7 +87,7 @@ def _attn_fwd_inner(
     BLOCK_N: tl.constexpr,
     BLOCK_D: tl.constexpr,
     HEAD_DIM: tl.constexpr,
-    N_CTX: tl.constexpr,
+    N_CTX: int,
     EVEN_N: tl.constexpr,
     EVEN_D: tl.constexpr,
 ):
@@ -375,13 +379,33 @@ def _attn_bwd_dqdkdv(
 @triton.jit
 # fmt: on
 def _attn_bwd(
-    Q, K, V, Bias, sm_scale,
-    DO, DQ, DK, DV, DBias,
-    M, D,
-    stride_a, stride_z, stride_tok, stride_d,
-    bias_stride_z, bias_stride_m, bias_stride_n,
-    B, H: tl.constexpr, N_CTX, N_AUG, HEAD_DIM: tl.constexpr,
-    BLOCK_M: tl.constexpr, BLOCK_N: tl.constexpr, BLOCK_D: tl.constexpr,
+    Q,
+    K,
+    V,
+    Bias,
+    sm_scale,
+    DO,
+    DQ,
+    DK,
+    DV,
+    DBias,
+    M,
+    D,
+    stride_a,
+    stride_z,
+    stride_tok,
+    stride_d,
+    bias_stride_z,
+    bias_stride_m,
+    bias_stride_n,
+    B,
+    H: tl.constexpr,
+    N_CTX,
+    N_AUG,
+    HEAD_DIM: tl.constexpr,
+    BLOCK_M: tl.constexpr,
+    BLOCK_N: tl.constexpr,
+    BLOCK_D: tl.constexpr,
     GROUP_N: tl.constexpr,
 ):
     # q : (A, B, H, N_CTX, HEAD_DIM), M : (A, B, H, N_CTX)
@@ -391,7 +415,7 @@ def _attn_bwd(
 
     pid = tl.program_id(0)
     aid = tl.program_id(1)  # aug id
-    bhid = tl.program_id(2) # batch * head id
+    bhid = tl.program_id(2)  # batch * head id
     qkv_adj = bhid * stride_z + aid * stride_a
     M_adj = bhid * N_CTX + aid * N_CTX * H * B
 
@@ -495,14 +519,15 @@ def _attn_bwd(
         tl.store(dk_ptrs, dk, mask=offs_k[None, :] < HEAD_DIM)
     else:
         tl.store(
-            dv_ptrs, dv, mask=(offs_n[:, None] < N_CTX) & (offs_k[None, :] < HEAD_DIM),
+            dv_ptrs,
+            dv,
+            mask=(offs_n[:, None] < N_CTX) & (offs_k[None, :] < HEAD_DIM),
         )
         tl.store(
-            dk_ptrs, dk, mask=(offs_n[:, None] < N_CTX) & (offs_k[None, :] < HEAD_DIM),
+            dk_ptrs,
+            dk,
+            mask=(offs_n[:, None] < N_CTX) & (offs_k[None, :] < HEAD_DIM),
         )
-
-
-
 
 
 class TritonAtomAugmentedAttentionFunction(torch.autograd.Function):
@@ -537,18 +562,17 @@ class TritonAtomAugmentedAttentionFunction(torch.autograd.Function):
         if D > 64:  # noqa: PLR2004
             msg = f"Only support HEAD_DIM <= 64, but got {D=}."
             raise ValueError(msg)
-        q,k,v = [
-            rearrange(x, "a b h n d -> (a b) h n d", a=A, b=B, h=H)
-            for x in (q, k, v)
+        q, k, v = [
+            rearrange(x, "a b h n d -> (a b) h n d", a=A, b=B, h=H) for x in (q, k, v)
         ]
 
-        bias = F.linear(pair, _W_bias, bias=None) # (B, N, N, H)
+        bias = F.linear(pair, _W_bias, bias=None)  # (B, N, N, H)
         if mask is not None:
-            key_mask   = mask[:, None, :, None]
+            key_mask = mask[:, None, :, None]
             both = ~key_mask
             bias.masked_fill_(both, -65535.0)  # to avoid nan in triton kernel
         bias = rearrange(bias, "b n m h -> b h n m").contiguous()  # (B, H, N, N)
-        bias = bias.expand(A*B, H, N, N)  # (AB, H, N, N)
+        bias = bias.expand(A * B, H, N, N)  # (AB, H, N, N)
 
         sm_scale = D**-0.5
         o = torch.empty_like(q)
@@ -575,7 +599,7 @@ class TritonAtomAugmentedAttentionFunction(torch.autograd.Function):
         # fmt: on
 
         o = o.contiguous()
-        q,k,v,o = [
+        q, k, v, o = [
             rearrange(x, "(a b) h n d -> a b h n d", a=A, b=B, h=H)
             for x in (q, k, v, o)
         ]
@@ -594,7 +618,6 @@ class TritonAtomAugmentedAttentionFunction(torch.autograd.Function):
         q, k, v, W_bias, pair, o, M = [
             x.to(op_dtype).contiguous() for x in (q, k, v, W_bias, pair, o, M)
         ]
-
 
         # saved_tensors = torch.load("./to_rm/saved_tensors.pt")
         # qq, kk, vv, bias, W_bias, pair, mask, o, M = saved_tensors
@@ -618,7 +641,7 @@ class TritonAtomAugmentedAttentionFunction(torch.autograd.Function):
         # bias recalculation
         bias = F.linear(pair, W_bias, bias=None)  # (B, N, N, H)
         if mask is not None:
-            key_mask   = mask[:, None, :, None]   # (B, 1, N, 1) → j축
+            key_mask = mask[:, None, :, None]  # (B, 1, N, 1) → j축
             both = ~key_mask
             bias.masked_fill_(both, -65535.0)  # to avoid nan in triton kernel
         bias = rearrange(bias, "b n m h -> b h n m").contiguous()  # (BH, N, N)
@@ -666,9 +689,9 @@ class TritonAtomAugmentedAttentionFunction(torch.autograd.Function):
         # calculate W_bias and pair bias gradients
         db_flat = rearrange(dbias, "b h n m -> (b n m) h", b=B, h=H).contiguous()
 
-        pair_flat = pair.view(B * N * N, d_pair)      # (B*N*N, d_pair)
+        pair_flat = pair.view(B * N * N, d_pair)  # (B*N*N, d_pair)
 
-        dW_bias = db_flat.t().matmul(pair_flat.float())   # (H, d_pair)
+        dW_bias = db_flat.t().matmul(pair_flat.float())  # (H, d_pair)
         dpair_flat = db_flat.to(W_bias.dtype).matmul(W_bias)
         dpair = dpair_flat.view(B, N, N, d_pair)
 
