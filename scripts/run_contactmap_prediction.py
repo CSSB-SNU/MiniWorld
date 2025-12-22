@@ -348,10 +348,9 @@ def sample(
     manual_batches = [transporter_batch, calmodulin_batch]
     client.model.eval()
     for batch in manual_batches:
-        client.test_inference_quality(
+        client.predict_contact_map(
             batch,
             save_dir=Path(save_dir) if save_dir else None,
-            save_all=True,
         )
 
     client.logger.info("-" * 70)
@@ -360,14 +359,14 @@ def sample(
     client.logger.info("")
     client.logger.info("-" * 70)
 
-    # test
-    client.model.eval()
+    # # test
+    # client.model.eval()
 
-    for batch in valid_loader:
-        client.test_inference_quality(
-            batch,
-            save_dir=Path(save_dir) if save_dir else None,
-        )
+    # for batch in valid_loader:
+    #     client.predict_contact_map(
+    #         batch,
+    #         save_dir=Path(save_dir) if save_dir else None,
+    #     )
 
 
 if __name__ == "__main__":
