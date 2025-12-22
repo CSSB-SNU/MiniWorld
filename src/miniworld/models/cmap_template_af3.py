@@ -34,7 +34,6 @@ from miniworld.modules.diffusion_module import (
 )
 from miniworld.modules.feature_embedder import InputFeatureEmbedder
 from miniworld.modules.head import DistogramHead
-from miniworld.modules.msa_module import MSAModule
 from miniworld.modules.primitives import (
     LayerNorm,
     Linear,
@@ -111,9 +110,9 @@ def sample_contact_map_vectorized(
     keep_mask = (keep_pos_mask | keep_neg_mask).view(B, L, L)
 
     sampled = torch.full_like(contact_map, 2)
-    sampled[keep_mask] = contact_map[keep_mask]
+    sampled[keep_mask] = contact_map[keep_mask] # (B, L, L)
 
-    return sampled
+    return torch.nn.functional.one_hot(sampled.long(), num_classes=3).float()  # (B, L, L, 3)
 
 
 class AF3Model(nn.Module):
@@ -123,15 +122,14 @@ class AF3Model(nn.Module):
         """Configuration for condition modules."""
 
         pairformer: Pairformer.Config
-        msa_module: MSAModule.Config
         n_recycle_max: int = 4
 
     class ContactMapConfig(BaseModel):
         """Configuration for contact map embedding."""
 
         pairformer: Pairformer.Config
-        max_inputs_pos: int = 16
-        max_inputs_neg: int = 16
+        max_inputs_pos: int = 128
+        max_inputs_neg: int = 128
 
     class Config(BaseModel):
         """Configuration for the AF3 model."""
@@ -191,7 +189,6 @@ class AF3Model(nn.Module):
         )
 
         # Trunk forward
-        self.msa_module = MSAModule(config.common, config.trunk.msa_module)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
 
         # Diffusion module
@@ -225,8 +222,12 @@ class AF3Model(nn.Module):
                 noisy_batch.structure.atom_pos_mask,
                 noisy_batch.scheme.atom_to_residue_idx_map,
             )
-            max_pos = random.randint(0, self.config.contact_map.max_inputs_pos)
-            max_neg = random.randint(0, self.config.contact_map.max_inputs_neg)
+            if self.training:
+                max_pos = random.randint(0, self.config.contact_map.max_inputs_pos)
+                max_neg = random.randint(0, self.config.contact_map.max_inputs_neg)
+            else:
+                max_pos = self.config.contact_map.max_inputs_pos
+                max_neg = self.config.contact_map.max_inputs_neg
             contact_map_sampled = sample_contact_map_vectorized(
                 contact_map,
                 contact_map_mask,
@@ -250,13 +251,6 @@ class AF3Model(nn.Module):
                     stack.enter_context(torch.no_grad())
                     stack.enter_context(torch.inference_mode())
                 token_pair = token_pair_init + self.add_pair_recycle(token_pair)
-                token_pair = token_pair + self.msa_module(
-                    noisy_batch,
-                    i_cycle,
-                    token_pair,
-                    token_single_input,
-                    noisy_batch.structure.residue_mask,
-                )
                 token_single = token_single_init + self.add_single_recycle(token_single)
 
                 token_pair, token_single = self.pairformer_blocks.forward(
@@ -373,11 +367,14 @@ class AF3ModelWrapper(nn.Module):
             msg = "Batch must be loaded and conditioned forward must be called before forward pass."
             raise ValueError(msg)
 
+        n_str = z_i.shape[0]
+        x_mask = self.batch.structure.atom_pos_mask.repeat(n_str, 1)
         noisy_batch = NoisyBatch(
             **self.batch.__dict__,
             x_t=z_i.unsqueeze(0),  # (B, L, 3) -> (1, B, L, 3)
             t=t_emb[None, None, None, None],  # (,) -> (1, 1, 1, 1)
             x_sc=self.z_sc,
+            x_mask=x_mask,
         )
 
         z_update = self.model.diffusion_forward(
@@ -461,7 +458,7 @@ class AF3Client(BaseClient):
         prefetch_factor: int = 4
         seed: int = 0
         use_ema: bool = True
-        ema_decay: float = 0.9999
+        ema_decay: float = 0.999
 
     class DiffuserConfig(BaseModel):
         """Configuration for the diffuser."""
@@ -545,7 +542,7 @@ class AF3Client(BaseClient):
                 mask=batch.structure.atom_mask,
             )
             noisy_batch = NoisyBatch(
-                **batch.__dict__, t=t_emb, x_t=noisy_atom_pos, x_mask=x_mask
+                **batch.__dict__, t=t_emb, x_t=noisy_atom_pos, x_mask=x_mask,
             )
 
             if self.config.experiment.self_condition and random.random() > 0.5:
@@ -639,7 +636,7 @@ class AF3Client(BaseClient):
         return {
             "best_rmsd": min_rmsd,
             "best_lddt": max_lddt,
-            **category_lddt,
+            # **category_lddt,
         }
 
     @torch.no_grad()

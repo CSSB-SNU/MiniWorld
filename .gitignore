@@ -9,3 +9,4 @@ outputs/
 *.sh
 wandb/
 submits/
+*.pyc

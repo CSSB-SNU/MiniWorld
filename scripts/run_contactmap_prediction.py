@@ -121,11 +121,12 @@ def train(  # noqa: PLR0912, PLR0915
     fabric = Fabric()
     fabric.launch()
 
-    scheduler = get_step_decay_scheduler_with_warmup(
-        torch.optim.AdamW(
+    optimizer = torch.optim.AdamW(
             client.model.parameters(),
             client.config.experiment.max_lr,
-        ),
+    )
+    scheduler = get_step_decay_scheduler_with_warmup(
+        optimizer=optimizer,
         warmup_steps=client.config.experiment.warmup_steps,
         decay_steps=client.config.experiment.decay_steps,
         decay_factor=client.config.experiment.decay_factor,
@@ -133,10 +134,7 @@ def train(  # noqa: PLR0912, PLR0915
 
     client.setup(
         fabric=fabric,
-        optimizer=torch.optim.AdamW(
-            client.model.parameters(),
-            client.config.experiment.max_lr,
-        ),
+        optimizer=optimizer,
         scheduler=scheduler,
         gradient_accumulation_steps=client.config.experiment.grad_accum_steps,
         gradient_clip_norm=client.config.experiment.grad_clip_max_norm,

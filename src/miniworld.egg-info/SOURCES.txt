@@ -10,6 +10,7 @@ src/miniworld/data/crop.py
 src/miniworld/data/io.py
 src/miniworld/data/mapping.py
 src/miniworld/data/msa.py
+src/miniworld/data/to_cif.py
 src/miniworld/data/dataloader/__init__.py
 src/miniworld/data/dataloader/dataloader_edge_backprop.py
 src/miniworld/data/dataloader/dataloader_multistate_contam.py
@@ -26,10 +27,14 @@ src/miniworld/models/__init__.py
 src/miniworld/models/af3_psk.py
 src/miniworld/models/af3_psk_decoupled_edm.py
 src/miniworld/models/af3_psk_multistate_monomer.py
+src/miniworld/models/cmap_template_af3.py
+src/miniworld/models/contact_map_prediction.py
+src/miniworld/models/partial_cmap_to_str.py
 src/miniworld/models/sdist_prediction.py
 src/miniworld/models/sdist_prediction_contam.py
 src/miniworld/models/sdist_to_str.py
 src/miniworld/models/sdist_to_str_contam.py
+src/miniworld/models/superposed_dist_to_str.py
 src/miniworld/modules/__init__.py
 src/miniworld/modules/allatom_module.py
 src/miniworld/modules/attentions.py
@@ -43,6 +48,7 @@ src/miniworld/modules/msa_module.py
 src/miniworld/modules/primitives.py
 src/miniworld/modules/kernels/MoE_GEMM_meta.py
 src/miniworld/modules/kernels/MoE_transition.py
+src/miniworld/modules/kernels/MoE_transition_v2.py
 src/miniworld/modules/kernels/__init__.py
 src/miniworld/modules/kernels/atom_augmented_attention.py
 src/miniworld/modules/kernels/attention_pair_bias.py

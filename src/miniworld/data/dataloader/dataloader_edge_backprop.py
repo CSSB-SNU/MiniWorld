@@ -576,7 +576,15 @@ class BioMolData(torch.utils.data.Dataset):
         atom_pos = cifmol.atoms.xyz.value
         atom_pos_mask = np.isfinite(atom_pos).all(axis=1)
         atom_mask = np.ones_like(atom_pos_mask, dtype=bool)
-        atom_pos = np.where(atom_pos_mask[..., None], atom_pos, 0.0)
+
+        # centering atom_pos
+        valid_pos = atom_pos[atom_pos_mask]          # (N_valid, 3)
+
+        mean_vector = valid_pos.mean(axis=0, keepdims=True)
+        atom_pos = atom_pos - mean_vector
+
+        atom_pos = np.where(atom_pos_mask[:, None], atom_pos, 0.0)
+
         structure = StructureFeatures.from_sample(
             atom_pos=torch.from_numpy(atom_pos.astype(np.float32)),
             atom_pos_mask=torch.from_numpy(atom_pos_mask.astype(np.bool)),

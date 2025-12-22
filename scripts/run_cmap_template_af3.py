@@ -121,11 +121,12 @@ def train(  # noqa: PLR0912, PLR0915
     fabric = Fabric()
     fabric.launch()
 
-    scheduler = get_step_decay_scheduler_with_warmup(
-        torch.optim.AdamW(
+    optimizer = torch.optim.AdamW(
             client.model.parameters(),
             client.config.experiment.max_lr,
-        ),
+        )
+    scheduler = get_step_decay_scheduler_with_warmup(
+        optimizer=optimizer,
         warmup_steps=client.config.experiment.warmup_steps,
         decay_steps=client.config.experiment.decay_steps,
         decay_factor=client.config.experiment.decay_factor,
@@ -133,10 +134,7 @@ def train(  # noqa: PLR0912, PLR0915
 
     client.setup(
         fabric=fabric,
-        optimizer=torch.optim.AdamW(
-            client.model.parameters(),
-            client.config.experiment.max_lr,
-        ),
+        optimizer=optimizer,
         scheduler=scheduler,
         gradient_accumulation_steps=client.config.experiment.grad_accum_steps,
         gradient_clip_norm=client.config.experiment.grad_clip_max_norm,
@@ -227,10 +225,10 @@ def train(  # noqa: PLR0912, PLR0915
         means = train_aggregator.log_epoch()
 
         if client.is_global_zero:
-            train_loss = means["EDMLoss"]
+            train_loss = means["total_loss"]
             if train_loss < min_train_loss:
                 min_train_loss = train_loss
-                checkpoint_path = ckpt_dir / f"partial_cmap_to_str_{comment}_best.pt"
+                checkpoint_path = ckpt_dir / f"cmap_template_af3_{comment}_best.pt"
                 client.save_checkpoint(checkpoint_path)
                 client.logger.info(
                     "Save best checkpoint: %s (train loss: %.4g)",
@@ -253,7 +251,7 @@ def train(  # noqa: PLR0912, PLR0915
             valid_aggregator.log_epoch()
             print(f"after valid_aggregator.log_epoch()")
 
-            checkpoint_path = ckpt_dir / f"partial_cmap_to_str_{comment}_{epoch}.pt"
+            checkpoint_path = ckpt_dir / f"cmap_template_af3_{comment}_{epoch}.pt"
             client.save_checkpoint(checkpoint_path)
             print(f"after client.save_checkpoint()")
 
