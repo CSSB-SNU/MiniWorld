@@ -365,14 +365,16 @@ def crop_spatial_interface_residue(  # noqa: PLR0915
         ):
             msg = f"Invalid chain: {interface_bias} \
             valid_chain_list = {valid_chain_list}"
-            raise ValueError(msg)
+            print(f"You have to check this cifmol object: {cifmol.id[0]}")
+            raise NoInterfaceError(msg)
         if (interface_bias[0], interface_bias[1]) not in valid_edges and (
             interface_bias[1],
             interface_bias[0],
         ) not in valid_edges:
             msg = f"Invalid interface: {interface_bias} \
             valid_edges = {valid_edges}"
-            raise ValueError(msg)
+            print(f"You have to check this cifmol object: {cifmol.id[0]}")
+            raise NoInterfaceError(msg)
         pivot_edge = interface_bias
     else:
         if len(valid_edges) == 0:
