@@ -37,7 +37,7 @@ def setup_logger(client: ContactMapPredictionClient) -> None:
 
     now = datetime.datetime.now(datetime.timezone.utc)
     file_handler = logging.FileHandler(
-        f"logs/contactmap_prediction_{now:%Y%m%d_%H%M%S}.log",
+        f"logs/contactmap_prediction/contactmap_prediction_{now:%Y%m%d_%H%M%S}.log",
     )
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)

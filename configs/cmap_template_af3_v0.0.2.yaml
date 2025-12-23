@@ -2,13 +2,15 @@ data:
   train_db:
     cif_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
     a3m_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb
-    edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/train_edges.tsv
+    # edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/train_edges.tsv
+    edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/test_edges.tsv
     load_all_msa: False
     
   valid_db:
     cif_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
     a3m_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb
-    edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/valid_edges.tsv
+    # edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/valid_edges.tsv
+    edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/test_edges.tsv
     load_all_msa: False
 
   edge_weight:
@@ -49,7 +51,7 @@ model:
     r_max: 32
     s_max: 2
     implementation: triton
-    use_checkpoint: True
+    use_checkpoint: False
 
 
   contact_map:
@@ -159,18 +161,18 @@ experiment:
   num_batch: 1
   num_epoch: 1000
   # max_lr: 1.8e-3
-  max_lr: 1e-4
-  min_lr: 1e-4
+  max_lr: 1e-3
+  min_lr: 1e-3
   warmup_steps: 0
   decay_steps: 5e4
   self_condition: False
   compile: False
   num_augment: 48
-  train_item: 2400
-  valid_item: 640
+  train_item: 1
+  valid_item: 1
 
   # Validation arguments
-  eval_freq: 1
+  eval_freq: 4
   eval_sample_num: 1
   eval_input_num: 50
   eval_timesteps: 100

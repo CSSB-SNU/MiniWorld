@@ -186,7 +186,7 @@ class EuclideanDiffuser(Diffuser, ABC):
             raise ValueError(msg)
         if x_update.dtype != self.dtype:
             msg = "x_update must be of type float32, but got dtype: " + str(
-                x_update.dtype
+                x_update.dtype,
             )
             raise ValueError(msg)
         sigma = self._buffer["sigma"]

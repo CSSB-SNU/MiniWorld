@@ -229,12 +229,12 @@ def train(  # noqa: PLR0912, PLR0915
             if train_loss < min_train_loss:
                 min_train_loss = train_loss
                 checkpoint_path = ckpt_dir / f"cmap_template_af3_{comment}_best.pt"
-                client.save_checkpoint(checkpoint_path)
-                client.logger.info(
-                    "Save best checkpoint: %s (train loss: %.4g)",
-                    checkpoint_path.name,
-                    train_loss,
-                )
+                # client.save_checkpoint(checkpoint_path)
+                # client.logger.info(
+                #     "Save best checkpoint: %s (train loss: %.4g)",
+                #     checkpoint_path.name,
+                #     train_loss,
+                # )
 
         if (client.epoch - 1) % client.config.experiment.eval_freq == 0:
             valid_loader.sampler.set_epoch(epoch)

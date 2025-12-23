@@ -22,7 +22,7 @@ class CommonConfig(BaseModel):
     use_checkpoint: bool = False
     to_bias_init: Literal["zero", "default"] = "default"
     # 20250824 PreNorm is not compatible with flashattention
-    norm: Literal["qk", "hybrid"] = ("qk",)
+    norm: Literal["qk", "hybrid"] = "qk"
 
 
 class DiffusionConfig(BaseModel):

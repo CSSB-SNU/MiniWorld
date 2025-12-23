@@ -17,6 +17,7 @@ from miniworld.utils.structure.se3 import (
 
 SchedulerT = TypeVar("SchedulerT", bound="DiffusionScheduler")
 
+
 class DiffusionSolver(ABC):
     """Base class for defining a diffusion solver."""
 
@@ -69,11 +70,17 @@ class ODEEulerSolver(DiffusionSolver):
       * dx/dt = α̇(t) · x  -  sigmȧ(t) · v_data.
     """  # noqa: RUF002
 
-    def __init__(self, config: DiffusionSolver.SolverConfig, scheduler: SchedulerT) -> None:
+    def __init__(
+        self, config: DiffusionSolver.SolverConfig, scheduler: SchedulerT
+    ) -> None:
         super().__init__(config, scheduler)
 
     def step(
-        self, model_fn: callable, x: torch.Tensor, t_index: int, time_steps: torch.Tensor,
+        self,
+        model_fn: callable,
+        x: torch.Tensor,
+        t_index: int,
+        time_steps: torch.Tensor,
     ) -> torch.Tensor:
         """Perform one Euler update in t-space.
 
@@ -156,10 +163,13 @@ class ODEEulerSolver(DiffusionSolver):
 class SDESolver(DiffusionSolver):
     """A base class for SDE-based diffusion solvers."""
 
+
 class AF3Solver(DiffusionSolver):
     """A solver implementing the AF3 method."""
 
-    def __init__(self, config: DiffusionSolver.SolverConfig, scheduler: SchedulerT) -> None:
+    def __init__(
+        self, config: DiffusionSolver.SolverConfig, scheduler: SchedulerT
+    ) -> None:
         super().__init__(config, scheduler)
         self.gamma_0 = 0.8
         self.gamma_min = 1.0
@@ -176,7 +186,11 @@ class AF3Solver(DiffusionSolver):
         torch.random.manual_seed(seed)
 
     def step(
-        self, model_fn: callable, x: torch.Tensor, t_index: int, time_steps: torch.Tensor,
+        self,
+        model_fn: callable,
+        x: torch.Tensor,
+        t_index: int,
+        time_steps: torch.Tensor,
     ) -> torch.Tensor:
         """Perform one Euler update in t-space."""
         # 1. Get t_i and t_{i+1}, as well as Δt
@@ -188,7 +202,9 @@ class AF3Solver(DiffusionSolver):
         gamma = self.gamma_0 if sigma_next > self.gamma_min else 0
         t_hat = sigma_i * (1 + gamma)
 
-        added_noise = self._lambda * (t_hat**2 - sigma_i**2) ** 0.5 * torch.randn_like(x)
+        added_noise = (
+            self._lambda * (t_hat**2 - sigma_i**2) ** 0.5 * torch.randn_like(x)
+        )
 
         x = x + added_noise
 
@@ -209,7 +225,7 @@ class AF3Solver(DiffusionSolver):
 
         # 7. One Euler step:  x_{i+1} = x_i + dt * f_i
         x_next = x + self.step_scale * dt * v_i
-        return x_next, x_update
+        return x_next, x_denoised
 
     def sample(
         self,
@@ -248,8 +264,10 @@ class DecoupledEDMSolver(DiffusionSolver):
     """A solver implementing the Decoupled EDM method."""
 
     def __init__(
-        self, config: DiffusionSolver.SolverConfig, scheduler: DecoupledEDMScheduler,
-    )-> None:
+        self,
+        config: DiffusionSolver.SolverConfig,
+        scheduler: DecoupledEDMScheduler,
+    ) -> None:
         super().__init__(config, scheduler)
 
         self.gamma_0 = 0.8
@@ -286,7 +304,13 @@ class DecoupledEDMSolver(DiffusionSolver):
         t_hat = sigma_i * (1 + gamma)
         sigma_Rhat, sigma_That = self.scheduler.convert_to_sigmaRT(t_hat)
         R_hat, T_hat = se3_heat_step_sigma(
-            R, T, sigma_Ri, sigma_Ti, sigma_Rhat, sigma_That, eps=1e-12,
+            R,
+            T,
+            sigma_Ri,
+            sigma_Ti,
+            sigma_Rhat,
+            sigma_That,
+            eps=1e-12,
         )
 
         added_noise = (
@@ -320,7 +344,12 @@ class DecoupledEDMSolver(DiffusionSolver):
 
         # add noise
         y, x_with_noise, t_hat = self._add_noise(
-            y, R, T, t_index, time_steps, atom_chain_break,
+            y,
+            R,
+            T,
+            t_index,
+            time_steps,
+            atom_chain_break,
         )
         dt = sigma_next - t_hat
 
@@ -377,7 +406,13 @@ class DecoupledEDMSolver(DiffusionSolver):
     ) -> torch.Tensor:
         """Perform one Euler update in t-space."""
         y, x_update = self.y_step(
-            model_fn, y, R, T, t_index, time_steps, atom_chain_break,
+            model_fn,
+            y,
+            R,
+            T,
+            t_index,
+            time_steps,
+            atom_chain_break,
         )
         R, T = self.RT_step(R, T, t_index, time_steps)
         return y, x_update, R, T
@@ -414,7 +449,13 @@ class DecoupledEDMSolver(DiffusionSolver):
         # 3. Iteratively step from i=0 to N-1
         for i in range(num_steps):
             y, epsilon_hat, R, T = self.step(
-                model_fn, y, R, T, i, time_steps, atom_chain_break,
+                model_fn,
+                y,
+                R,
+                T,
+                i,
+                time_steps,
+                atom_chain_break,
             )
             if return_intermediate:
                 trajectory.append(y.clone())
@@ -448,7 +489,7 @@ class SPELLSolver(DiffusionSolver):
         self.spell_lambda = config.spell_lambda
 
         # SPELL specific
-        self.x0_list:list[torch.Tensor] = []
+        self.x0_list: list[torch.Tensor] = []
 
     def _set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
@@ -460,7 +501,11 @@ class SPELLSolver(DiffusionSolver):
         torch.random.manual_seed(seed)
 
     def step(
-        self, model_fn: callable, x: torch.Tensor, t_index: int, time_steps: torch.Tensor,
+        self,
+        model_fn: callable,
+        x: torch.Tensor,
+        t_index: int,
+        time_steps: torch.Tensor,
     ) -> torch.Tensor:
         """Perform one Euler update in t-space and apply SPELL.
 
@@ -483,7 +528,9 @@ class SPELLSolver(DiffusionSolver):
         gamma = self.gamma_0 if sigma_next > self.gamma_min else 0
         t_hat = sigma_i * (1 + gamma)
 
-        added_noise = self._lambda * (t_hat**2 - sigma_i**2) ** 0.5 * torch.randn_like(x)
+        added_noise = (
+            self._lambda * (t_hat**2 - sigma_i**2) ** 0.5 * torch.randn_like(x)
+        )
 
         x = x + added_noise
 
@@ -503,10 +550,10 @@ class SPELLSolver(DiffusionSolver):
             spell_force = torch.zeros_like(x)
         else:
             ref_x0s = torch.stack(self.x0_list, dim=0)  # (R, B, L, 3)
-            diff = x_denoised.unsqueeze(0) - ref_x0s # [R, ...]
+            diff = x_denoised.unsqueeze(0) - ref_x0s  # [R, ...]
             diff = diff.view(diff.shape[0], -1)  # [R, D]
-            diff_norm = diff.norm(dim=-1) # [R]
-            act = torch.nn.functional.relu(self.radius/diff_norm - 1) # [R]
+            diff_norm = diff.norm(dim=-1)  # [R]
+            act = torch.nn.functional.relu(self.radius / diff_norm - 1)  # [R]
             delta = (act.unsqueeze(-1) * diff).sum(dim=0)
             spell_force = delta.view_as(x_denoised)
 
@@ -553,4 +600,3 @@ class SPELLSolver(DiffusionSolver):
         if return_intermediate:
             return x, trajectory, hat_list
         return x
-

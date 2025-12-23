@@ -334,6 +334,7 @@ class BioMolData(torch.utils.data.Dataset):
                 line = _line.strip()
                 if line == "":
                     continue
+                print(line)
                 key1, key2, value = line.split("\t")
                 cif_ids = value.split(",")
                 cif_ids = [
@@ -578,7 +579,7 @@ class BioMolData(torch.utils.data.Dataset):
         atom_mask = np.ones_like(atom_pos_mask, dtype=bool)
 
         # centering atom_pos
-        valid_pos = atom_pos[atom_pos_mask]          # (N_valid, 3)
+        valid_pos = atom_pos[atom_pos_mask]  # (N_valid, 3)
 
         mean_vector = valid_pos.mean(axis=0, keepdims=True)
         atom_pos = atom_pos - mean_vector
