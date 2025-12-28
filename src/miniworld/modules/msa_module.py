@@ -210,7 +210,6 @@ class MSAModule(torch.nn.Module):
                 ],
                 dim=-1,
             )  # (B, N, L, num_res_class + 2)
-            print(f"Debug msa shape: {msa.shape}")
         msa = msa.to(pair.dtype)
         msa = self.embed_msa(msa)  # (B, N, L, d_msa)
         msa = msa + self.single_to_msa(single).unsqueeze(1)  # (B, N, L, d_msa)

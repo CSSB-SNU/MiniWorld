@@ -240,20 +240,15 @@ def train(  # noqa: PLR0912, PLR0915
             valid_loader.sampler.set_epoch(epoch)
             client.logger.info("Validation Epoch %d", client.epoch)
             for n_item, result in enumerate(client.validation_epoch(valid_loader)):
-                print(f"n_item : {n_item}")
                 valid_aggregator.log_step(result, ignore_step=True)
                 if n_item + 1 >= valid_num_item:
-                    print(f"WTF? n_item: {n_item}")
                     client.call_callbacks("on_validation_epoch_end")
-                    print("after on_validation_epoch_end")
                     break
 
             valid_aggregator.log_epoch()
-            print(f"after valid_aggregator.log_epoch()")
 
             checkpoint_path = ckpt_dir / f"cmap_template_af3_{comment}_{epoch}.pt"
             client.save_checkpoint(checkpoint_path)
-            print(f"after client.save_checkpoint()")
 
 
 @cli.command()

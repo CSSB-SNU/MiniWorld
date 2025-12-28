@@ -658,8 +658,7 @@ class AF3Client(BaseClient):
             output.atom_pos_pred[0],
         )
         min_rmsd = min(min_rmsd, rmsd)
-        
-        print(f"<<<category_lddt: {category_lddt}>>>")
+        print(f"<<<category_lddt[{batch.name}]: {category_lddt}>>>")
         return {
             "best_rmsd": min_rmsd,
             "best_lddt": max_lddt,
