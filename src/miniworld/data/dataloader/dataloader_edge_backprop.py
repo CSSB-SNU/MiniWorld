@@ -274,6 +274,7 @@ class CropConfig(BaseModel):
     contiguous_prob: float = 0.5
     spatial_prob: float = 0.5
     interface_prob: float = 0.0
+    interface_simple_prob: float = 0.0
     crop_length: int = 384
 
 
@@ -314,6 +315,7 @@ class BioMolData(torch.utils.data.Dataset):
             contiguous_prob=config.crop_config.contiguous_prob,
             spatial_prob=config.crop_config.spatial_prob,
             interface_prob=config.crop_config.interface_prob,
+            interface_simple_prob=config.crop_config.interface_simple_prob,
         )
 
         self._load_edge_to_cif_ids()
