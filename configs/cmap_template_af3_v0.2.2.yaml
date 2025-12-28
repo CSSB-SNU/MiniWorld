@@ -154,7 +154,7 @@ diffuser:
     use_time_augmentation: True
 
 experiment:
-  comment: "[LG] cmap_template_af3 v0.1.2 (pos64, neg64) msa depth 128"
+  comment: "[LG] cmap_template_af3 v0.2.2 (pos64, neg64) msa depth 128"
 
   # Training arguments
   num_batch: 1
