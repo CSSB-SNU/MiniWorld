@@ -344,6 +344,10 @@ class BioMolData(torch.utils.data.Dataset):
 
         self.edge_id_list = list(self.edge_id_to_cif_ids.keys())
 
+        # HACK remove 6ysf (cP0163986_cP0163986) : signal peptide only contact
+        if "cP0163986_cP0163986" in self.edge_id_list:
+            self.edge_id_list.remove("cP0163986_cP0163986")
+
         # gen stats
         self.stats = EdgeScoreStore(
             config=self.config.edge_weight_config,
@@ -728,6 +732,7 @@ if __name__ == "__main__":
     set_seed(42)
     dataset = BioMolData(config=config)
     dataset[0]
+    breakpoint()
 
     for ii in range(len(dataset)):
         dataset[ii]
