@@ -334,7 +334,6 @@ class BioMolData(torch.utils.data.Dataset):
                 line = _line.strip()
                 if line == "":
                     continue
-                print(line)
                 key1, key2, value = line.split("\t")
                 cif_ids = value.split(",")
                 cif_ids = [

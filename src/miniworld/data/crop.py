@@ -68,7 +68,7 @@ def crop_contiguous_monomer(
             and interface_bias[1] not in valid_chain_list
         ):
             msg = f"Invalid chain: {interface_bias} \
-            valid_chain_list = {valid_chain_list}"
+            valid_chain_list = {valid_chain_list} at cifmol {cifmol.id}"
             raise ValueError(msg)
         if interface_bias[0] not in valid_chain_list:
             pivot_chain_id = interface_bias[1]
@@ -106,7 +106,7 @@ def crop_spatial_atom(
     if chain_bias is not None:
         if chain_bias not in valid_chain_list:
             msg = f"Invalid chain: {chain_bias} \
-            valid_chain_list = {valid_chain_list}"
+            valid_chain_list = {valid_chain_list} at cifmol {cifmol.id}"
             raise ValueError(msg)
         pivot_chain_id = chain_bias
     else:
@@ -311,7 +311,7 @@ def crop_spatial_residue(
     if chain_bias is not None:
         if chain_bias not in valid_chain_list:
             msg = f"Invalid chain: {chain_bias} \
-            valid_chain_list = {valid_chain_list}"
+            valid_chain_list = {valid_chain_list} at cifmol {cifmol.id}"
             raise ValueError(msg)
         pivot_chain_id = chain_bias
     else:
@@ -512,8 +512,8 @@ class Cropper:
                     crop_length,
                 )
             except NoInterfaceError:
-                return crop_spatial_residue(
-                    chain_bias,
+                return crop_contiguous_monomer(
+                    interface_bias,
                     cifmol,
                     crop_length,
                 )

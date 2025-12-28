@@ -43,7 +43,9 @@ class MSAModuleBlock(torch.nn.Module):
         pair_moe_topk: int = 1
 
     def __init__(
-        self, config: Config, last_block: bool = False,
+        self,
+        config: Config,
+        last_block: bool = False,
     ) -> None:
         super().__init__()
         self.d_msa = config.d_msa
@@ -80,7 +82,8 @@ class MSAModuleBlock(torch.nn.Module):
                 )
             else:
                 self.transition_msa = Transition(
-                    config.d_msa, implementation=config.implementation,
+                    config.d_msa,
+                    implementation=config.implementation,
                 )
 
         self.tri_multi_outgoing = TriangleMultiplication(
@@ -125,7 +128,8 @@ class MSAModuleBlock(torch.nn.Module):
             )
         else:
             self.transition_pair = Transition(
-                config.d_pair, implementation=config.implementation,
+                config.d_pair,
+                implementation=config.implementation,
             )
 
     @typecheck
@@ -168,15 +172,14 @@ class MSAModule(torch.nn.Module):
 
         self.embed_msa = Linear(self.num_res_class + 2, msa_config.d_msa, bias=False)
         self.single_to_msa = Linear(
-            common_config.d_token_single_input, msa_config.d_msa, bias=False,
+            common_config.d_token_single_input,
+            msa_config.d_msa,
+            bias=False,
         )
 
         # Create multiple blocks
         self.blocks = nn.ModuleList(
-            [
-                MSAModuleBlock(msa_config)
-                for _ in range(msa_config.n_block - 1)
-            ],
+            [MSAModuleBlock(msa_config) for _ in range(msa_config.n_block - 1)],
         )
         self.blocks.append(MSAModuleBlock(msa_config, last_block=True))
 
@@ -196,7 +199,8 @@ class MSAModule(torch.nn.Module):
             msa_deletion_value = batch.msa.deletion_value[:, recycle_idx].float()
 
             msa_sequences = F.one_hot(
-                msa_sequences.long(), num_classes=self.num_res_class,
+                msa_sequences.long(),
+                num_classes=self.num_res_class,
             )
             msa = torch.cat(
                 [
@@ -206,6 +210,7 @@ class MSAModule(torch.nn.Module):
                 ],
                 dim=-1,
             )  # (B, N, L, num_res_class + 2)
+            print(f"Debug msa shape: {msa.shape}")
         msa = msa.to(pair.dtype)
         msa = self.embed_msa(msa)  # (B, N, L, d_msa)
         msa = msa + self.single_to_msa(single).unsqueeze(1)  # (B, N, L, d_msa)

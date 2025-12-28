@@ -34,6 +34,7 @@ from miniworld.modules.diffusion_module import (
 )
 from miniworld.modules.feature_embedder import InputFeatureEmbedder
 from miniworld.modules.head import DistogramHead
+from miniworld.modules.msa_module import MSAModule
 from miniworld.modules.primitives import (
     LayerNorm,
     Linear,
@@ -124,6 +125,7 @@ class AF3Model(nn.Module):
         """Configuration for condition modules."""
 
         pairformer: Pairformer.Config
+        msa_module: MSAModule.Config
         n_recycle_max: int = 4
 
     class ContactMapConfig(BaseModel):
@@ -191,6 +193,7 @@ class AF3Model(nn.Module):
         )
 
         # Trunk forward
+        self.msa_module = MSAModule(config.common, config.trunk.msa_module)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
 
         # Diffusion module
@@ -238,11 +241,6 @@ class AF3Model(nn.Module):
                 max_pos,
                 max_neg,
             )
-            # contact_map_sampled = torch.zeros_like(contact_map_sampled)
-            contact_map_sampled = torch.nn.functional.one_hot(
-                contact_map.long(),
-                num_classes=3,
-            ).float()
 
         token_pair_contact_map = self.contact_map_embedder(
             contact_map_sampled,
@@ -260,6 +258,14 @@ class AF3Model(nn.Module):
                     stack.enter_context(torch.no_grad())
                     stack.enter_context(torch.inference_mode())
                 token_pair = token_pair_init + self.add_pair_recycle(token_pair)
+
+                token_pair = token_pair + self.msa_module(
+                    noisy_batch,
+                    i_cycle,
+                    token_pair,
+                    token_single_input,
+                    noisy_batch.structure.residue_mask,
+                )
                 token_single = token_single_init + self.add_single_recycle(token_single)
 
                 token_pair, token_single = self.pairformer_blocks.forward(
@@ -543,7 +549,6 @@ class AF3Client(BaseClient):
 
     def training_step(self, batch: Batch) -> dict[str, float]:
         """Train the model on a batch."""
-        print(f"batch.name : {batch.name}")
         with precision_manager(self.model, self.config.model.precision):
             num_augment = self.config.experiment.num_augment
             noisy_atom_pos, x_mask, t_emb = self.diffuser.sample(
@@ -595,24 +600,21 @@ class AF3Client(BaseClient):
 
         fabric_iter = iter(fabric_dataloader)
         for batch_idx, batch in enumerate(fabric_iter):
-            for _ in range(32):
-                self.call_callbacks("on_train_step_start", batch, batch_idx)
-                loss_dict = self.training_step(batch)
-                loss = (
-                    self.config.loss.diffusion_loss * loss_dict["diffusion_loss"]
-                    + self.config.loss.distogram_loss * loss_dict["distogram_loss"]
-                )
+            self.call_callbacks("on_train_step_start", batch, batch_idx)
+            loss_dict = self.training_step(batch)
+            loss = (
+                self.config.loss.diffusion_loss * loss_dict["diffusion_loss"]
+                + self.config.loss.distogram_loss * loss_dict["distogram_loss"]
+            )
 
-                sampler.stats.update(
-                    batch.scheme.edge_index,
-                    torch.tensor(loss, device=batch.device),
-                )
-                is_accumulating = (
-                    batch_idx + 1
-                ) % self.gradient_accumulation_steps != 0
-                if not is_accumulating:
-                    self._optimizer_step()
-                self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
+            sampler.stats.update(
+                batch.scheme.edge_index,
+                torch.tensor(loss, device=batch.device),
+            )
+            is_accumulating = (batch_idx + 1) % self.gradient_accumulation_steps != 0
+            if not is_accumulating:
+                self._optimizer_step()
+            self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
             yield loss_dict
         self.optimizer.zero_grad()
 
@@ -627,26 +629,6 @@ class AF3Client(BaseClient):
     ) -> dict[str, float]:
         """Test the inference quality of the model on a batch."""
         batch = batch.to(device=self.device)
-        print(f"batch.name : {batch.name}")
-
-        # test
-        with precision_manager(self.model, self.config.model.precision):
-            self.model.train()
-            num_augment = self.config.experiment.num_augment
-            noisy_atom_pos, x_mask, t_emb = self.diffuser.sample(
-                batch.structure.atom_pos,
-                num_augment=num_augment,
-                mask=batch.structure.atom_mask,
-            )
-            noisy_batch = NoisyBatch(
-                **batch.__dict__,
-                t=t_emb,
-                x_t=noisy_atom_pos,
-                x_mask=x_mask,
-            )
-
-            loss, loss_dict = self.loss_fn(noisy_batch)
-            self.model.eval()
 
         output = self.inference(batch, timesteps=timesteps)
         distogram_logit = output.distogram_logit
@@ -676,11 +658,11 @@ class AF3Client(BaseClient):
             output.atom_pos_pred[0],
         )
         min_rmsd = min(min_rmsd, rmsd)
-        x0_hats = torch.tensor(output.model_traj, device=self.device)
+        
+        print(f"<<<category_lddt: {category_lddt}>>>")
         return {
             "best_rmsd": min_rmsd,
             "best_lddt": max_lddt,
-            "vald_loss": loss.item(),
             "vald_distogram_loss": distogram_loss.item(),
             # **category_lddt,
         }
