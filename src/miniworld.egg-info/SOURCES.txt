@@ -28,6 +28,7 @@ src/miniworld/models/af3_psk.py
 src/miniworld/models/af3_psk_decoupled_edm.py
 src/miniworld/models/af3_psk_multistate_monomer.py
 src/miniworld/models/cmap_template_af3.py
+src/miniworld/models/codiffusion_miniworld.py
 src/miniworld/models/contact_map_prediction.py
 src/miniworld/models/partial_cmap_to_str.py
 src/miniworld/models/sdist_prediction.py

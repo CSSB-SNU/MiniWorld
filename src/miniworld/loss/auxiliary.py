@@ -197,7 +197,7 @@ def extract_contact_map(
 
 
 @typecheck
-def cal_contact_map_focal_loss(
+def cal_contact_map_focal_loss( 
     logit_pred: Float[torch.Tensor, "* L L 2"],
     atom_pos: Float[torch.Tensor, "* N L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
@@ -281,3 +281,290 @@ def cal_contact_map_focal_loss(
     num = focal.sum(dim=(-2, -1))  # (*,)
 
     return num / denom  # (*,)
+@typecheck
+def cal_contact_map_weighted_bce_loss(
+    logit_pred: Float[torch.Tensor, "* L L 2"],
+    atom_pos: Float[torch.Tensor, "* N L_atom 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
+    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    cutoff: float = 6.0,
+    min_distance: float = 2.0,
+    max_distance: float = 22.0,
+    pos_weight: float = 1.0,
+) -> Float[torch.Tensor, "*"]:
+    """Weighted BCE loss for residue-level contact map prediction (2-class logits).
+
+    Args:
+        logit_pred: Contact logits, last dim is class (0: non-contact, 1: contact).
+            Shape: (*, L, L, 2)
+        atom_pos: Atomic coordinates. Shape: (*, N, L_atom, 3)
+        atom_pos_mask: Atom mask. True for valid atoms. Shape: (*, N, L_atom)
+        atom_to_res_idx: Residue index per atom position. Shape: (*, L_atom)
+        cutoff: Distance cutoff (Å) for defining contacts.
+        min_distance: Minimum allowed distance for distance computation.
+        max_distance: Maximum allowed distance for distance computation.
+        pos_weight: Multiplicative weight for positive class (contact). Negative class weight is 1.0.
+
+    Returns:
+        Weighted BCE loss averaged over valid residue pairs. Shape: (*,)
+    """
+    *lead, L, _, C = logit_pred.shape
+    if C != 2:
+        msg = f"logit_pred last dim must be 2 (got {C})"
+        raise ValueError(msg)
+    device = logit_pred.device
+
+    contact_target, residue_pair_mask = extract_contact_map(
+        atom_pos=atom_pos,
+        atom_pos_mask=atom_pos_mask,
+        atom_to_res_idx=atom_to_res_idx,
+        cutoff=cutoff,
+        min_distance=min_distance,
+        max_distance=max_distance,
+    )  # (*, L, L), bool
+    target = contact_target.to(logit_pred.dtype)  # (*, L, L), in {0,1}
+
+    # 3) Valid residue pairs: both residues exist and i < j (upper triangle)
+    tri = torch.triu(
+        torch.ones(L, L, dtype=torch.bool, device=device),
+        diagonal=1,
+    )  # (L, L)
+    residue_pair_mask = residue_pair_mask.to(torch.bool)  # (*, L, L)
+    valid_pair_mask = residue_pair_mask & tri  # (*, L, L)
+
+    # 4) Weighted BCE on 2-class logits
+    # Convert 2-class logits to a single binary logit (pos vs neg), equivalent to 2-class softmax
+    bin_logit = logit_pred[..., 1] - logit_pred[..., 0]  # (*, L, L)
+
+    # Standard BCE loss per pair
+    bce = F.binary_cross_entropy_with_logits(
+        bin_logit,
+        target,
+        reduction="none",
+    )  # (*, L, L)
+
+    # Positive weighting
+    pos_w = torch.as_tensor(pos_weight, dtype=bce.dtype, device=device)
+    weight = torch.where(contact_target, pos_w, torch.ones_like(bce))  # (*, L, L)
+    bce = bce * weight  # (*, L, L)
+
+    # 5) Masked reduction over residue pairs
+    bce = bce * valid_pair_mask.to(bce.dtype)  # (*, L, L)
+
+    denom = valid_pair_mask.sum(dim=(-2, -1)).clamp_min(1).to(bce.dtype)  # (*,)
+    num = bce.sum(dim=(-2, -1))  # (*,)
+
+    return num / denom  # (*,)
+
+@typecheck
+def _extract_long_range_contact_targets_and_mask(
+    atom_pos: Float[torch.Tensor, "* N L_atom 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
+    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    cutoff: float,
+    min_distance: float,
+    max_distance: float,
+    min_seq_sep: int,
+    L: int,
+    device: torch.device,
+) -> tuple[Bool[torch.Tensor, "* L L"], Bool[torch.Tensor, "* L L"]]:
+    """Helper: extract long-range contact targets and valid-pair mask."""
+    with torch.no_grad():
+        residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
+            atom_pos=atom_pos,
+            atom_pos_mask=atom_pos_mask,
+            atom_to_res_idx=atom_to_res_idx,
+            min_distance=min_distance,
+            max_distance=max_distance,
+        )  # (*, L, L), (*, L, L)
+
+    contact_target = residue_dists <= cutoff  # (*, L, L), bool
+
+    # i < j
+    tri = torch.triu(
+        torch.ones(L, L, dtype=torch.bool, device=device),
+        diagonal=1,
+    )
+
+    # |i - j| >= min_seq_sep
+    idx = torch.arange(L, device=device)
+    seq_sep_mask = (idx[None, :, None] - idx[None, None, :]).abs() >= min_seq_sep
+    seq_sep_mask = seq_sep_mask.squeeze(0)  # (L, L)
+
+    valid_pair_mask = (
+        residue_pair_mask.to(torch.bool) & tri & seq_sep_mask
+    )  # (*, L, L)
+
+    return contact_target, valid_pair_mask
+
+
+@typecheck
+def cal_long_range_precision(
+    logit_pred: Float[torch.Tensor, "* L L 2"],
+    atom_pos: Float[torch.Tensor, "* N L_atom 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
+    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    cutoff: float = 6.0,
+    min_distance: float = 2.0,
+    max_distance: float = 22.0,
+    min_seq_sep: int = 16,
+) -> Float[torch.Tensor, "*"]:
+    *lead, L, _, C = logit_pred.shape
+    if C != 2:
+        raise ValueError("logit_pred last dim must be 2")
+    device = logit_pred.device
+
+    contact_target, valid_pair_mask = _extract_long_range_contact_targets_and_mask(
+        atom_pos=atom_pos,
+        atom_pos_mask=atom_pos_mask,
+        atom_to_res_idx=atom_to_res_idx,
+        cutoff=cutoff,
+        min_distance=min_distance,
+        max_distance=max_distance,
+        min_seq_sep=min_seq_sep,
+        L=L,
+        device=device,
+    )
+
+    pred_contact = logit_pred[..., 1] > logit_pred[..., 0]  # (*, L, L)
+
+    tp = (pred_contact & contact_target & valid_pair_mask).sum(dim=(-2, -1))
+    fp = (pred_contact & ~contact_target & valid_pair_mask).sum(dim=(-2, -1))
+
+    denom = (tp + fp).clamp_min(1).to(tp.dtype)
+    return tp.to(denom.dtype) / denom
+
+
+@typecheck
+def cal_long_range_recall(
+    logit_pred: Float[torch.Tensor, "* L L 2"],
+    atom_pos: Float[torch.Tensor, "* N L_atom 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
+    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    cutoff: float = 6.0,
+    min_distance: float = 2.0,
+    max_distance: float = 22.0,
+    min_seq_sep: int = 16,
+) -> Float[torch.Tensor, "*"]:
+    *lead, L, _, C = logit_pred.shape
+    if C != 2:
+        raise ValueError("logit_pred last dim must be 2")
+    device = logit_pred.device
+
+    contact_target, valid_pair_mask = _extract_long_range_contact_targets_and_mask(
+        atom_pos=atom_pos,
+        atom_pos_mask=atom_pos_mask,
+        atom_to_res_idx=atom_to_res_idx,
+        cutoff=cutoff,
+        min_distance=min_distance,
+        max_distance=max_distance,
+        min_seq_sep=min_seq_sep,
+        L=L,
+        device=device,
+    )
+
+    pred_contact = logit_pred[..., 1] > logit_pred[..., 0]
+
+    tp = (pred_contact & contact_target & valid_pair_mask).sum(dim=(-2, -1))
+    fn = (~pred_contact & contact_target & valid_pair_mask).sum(dim=(-2, -1))
+
+    denom = (tp + fn).clamp_min(1).to(tp.dtype)
+    return tp.to(denom.dtype) / denom
+
+
+@typecheck
+def cal_long_range_f1(
+    logit_pred: Float[torch.Tensor, "* L L 2"],
+    atom_pos: Float[torch.Tensor, "* N L_atom 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
+    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    cutoff: float = 6.0,
+    min_distance: float = 2.0,
+    max_distance: float = 22.0,
+    min_seq_sep: int = 16,
+) -> Float[torch.Tensor, "*"]:
+    precision = cal_long_range_precision(
+        logit_pred,
+        atom_pos,
+        atom_pos_mask,
+        atom_to_res_idx,
+        cutoff,
+        min_distance,
+        max_distance,
+        min_seq_sep,
+    )
+    recall = cal_long_range_recall(
+        logit_pred,
+        atom_pos,
+        atom_pos_mask,
+        atom_to_res_idx,
+        cutoff,
+        min_distance,
+        max_distance,
+        min_seq_sep,
+    )
+
+    denom = (precision + recall).clamp_min(1e-8)
+    return 2.0 * precision * recall / denom
+
+
+@typecheck
+def cal_long_range_auroc(
+    logit_pred: Float[torch.Tensor, "* L L 2"],
+    atom_pos: Float[torch.Tensor, "* N L_atom 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
+    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    cutoff: float = 6.0,
+    min_distance: float = 2.0,
+    max_distance: float = 22.0,
+    min_seq_sep: int = 16,
+) -> Float[torch.Tensor, "*"]:
+    *lead, L, _, C = logit_pred.shape
+    if C != 2:
+        raise ValueError("logit_pred last dim must be 2")
+    device = logit_pred.device
+
+    contact_target, valid_pair_mask = _extract_long_range_contact_targets_and_mask(
+        atom_pos=atom_pos,
+        atom_pos_mask=atom_pos_mask,
+        atom_to_res_idx=atom_to_res_idx,
+        cutoff=cutoff,
+        min_distance=min_distance,
+        max_distance=max_distance,
+        min_seq_sep=min_seq_sep,
+        L=L,
+        device=device,
+    )
+
+    # Binary score: P(contact)
+    prob = torch.softmax(logit_pred, dim=-1)[..., 1]  # (*, L, L)
+
+    # Flatten per sample
+    prob = prob[valid_pair_mask]
+    target = contact_target[valid_pair_mask]
+
+    # Handle degenerate cases
+    if prob.numel() == 0:
+        return torch.zeros((), device=device)
+
+    # Rank-based AUROC (equivalent to Mann–Whitney U)
+    order = torch.argsort(prob)
+    ranks = torch.empty_like(order, dtype=torch.float)
+    ranks[order] = torch.arange(
+        1,
+        order.numel() + 1,
+        device=device,
+        dtype=ranks.dtype,
+    )
+
+    pos = target
+    n_pos = pos.sum()
+    n_neg = pos.numel() - n_pos
+
+    if n_pos == 0 or n_neg == 0:
+        return torch.ones((), device=device)
+
+    sum_ranks_pos = ranks[pos].sum()
+    auc = (sum_ranks_pos - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg)
+
+    return auc

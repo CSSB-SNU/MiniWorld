@@ -21,7 +21,15 @@ from miniworld.data.dataloader.dataloader_multistate_contam import (
     MultiStatedbConfig,
 )
 from miniworld.data.features.features_biomol import Batch, NoisyBatch
-from miniworld.loss.auxiliary import cal_contact_map_focal_loss, extract_contact_map
+from miniworld.loss.auxiliary import (
+    cal_contact_map_focal_loss, 
+    cal_contact_map_weighted_bce_loss, 
+    extract_contact_map,
+    cal_long_range_precision,
+    cal_long_range_recall,
+    cal_long_range_f1,
+    cal_long_range_auroc,
+)
 from miniworld.modules.configs import (
     CommonConfig,
     DiffusionConfig,
@@ -175,6 +183,7 @@ class ContactMapPredictionClient(BaseClient):
         seed: int = 0
         use_ema: bool = True
         ema_decay: float = 0.999
+        bce_pos_weight: float = 8.0
 
     class Config(BaseModel):
         """Configuration for the ContactMapPredictor client."""
@@ -211,11 +220,58 @@ class ContactMapPredictionClient(BaseClient):
             noisy_batch.structure.atom_pos_mask,
             noisy_batch.scheme.atom_to_residue_idx_map,
         )
-        loss = focal_loss
+
+        weighted_bce_loss = cal_contact_map_weighted_bce_loss(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            pos_weight=self.config.experiment.bce_pos_weight,
+        )
+
+        loss = weighted_bce_loss
+
+        # Long-range metrics (|i-j| >= min_seq_sep)
+        min_seq_sep = 16
+        long_range_precision = cal_long_range_precision(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+        long_range_recall = cal_long_range_recall(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+        long_range_f1 = cal_long_range_f1(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+        long_range_auroc = cal_long_range_auroc(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+
+        loss = weighted_bce_loss
 
         return loss, {
             "focal_loss": focal_loss.item(),
+            "weighted_bce_loss": weighted_bce_loss.item(),
             "total_loss": loss.item(),
+            "lr_precision": long_range_precision.mean().item(),
+            "lr_recall": long_range_recall.mean().item(),
+            "lr_f1": long_range_f1.mean().item(),
+            "lr_auroc": long_range_auroc.item(),
         }
 
     def training_step(self, batch: Batch) -> dict[str, float]:
