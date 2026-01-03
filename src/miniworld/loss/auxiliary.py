@@ -291,6 +291,9 @@ def cal_contact_map_weighted_bce_loss(
     min_distance: float = 2.0,
     max_distance: float = 22.0,
     pos_weight: float = 1.0,
+    long_range_min_seq_sep: int = 16,
+    long_range_sigmoid_k: float = 1.0,
+    long_range_sigmoid_amp: float = 0.0,
 ) -> Float[torch.Tensor, "*"]:
     """Weighted BCE loss for residue-level contact map prediction (2-class logits).
 
@@ -304,6 +307,9 @@ def cal_contact_map_weighted_bce_loss(
         min_distance: Minimum allowed distance for distance computation.
         max_distance: Maximum allowed distance for distance computation.
         pos_weight: Multiplicative weight for positive class (contact). Negative class weight is 1.0.
+        long_range_min_seq_sep: Sequence separation where long-range boosting starts (≈3x via sigmoid).
+        long_range_sigmoid_k: Slope of the sigmoid used for long-range boost; larger -> sharper transition.
+        long_range_sigmoid_amp: Amplitude of the long-range boost; 0 disables it (default), 2 roughly matches the previous ~3x.
 
     Returns:
         Weighted BCE loss averaged over valid residue pairs. Shape: (*,)
@@ -347,6 +353,16 @@ def cal_contact_map_weighted_bce_loss(
     pos_w = torch.as_tensor(pos_weight, dtype=bce.dtype, device=device)
     weight = torch.where(contact_target, pos_w, torch.ones_like(bce))  # (*, L, L)
     bce = bce * weight  # (*, L, L)
+
+    # Long-range boost: smoothly scale loss toward ~3x when |i-j| exceeds the threshold
+    idx = torch.arange(L, device=device)
+    seq_sep = (idx[None, :, None] - idx[None, None, :]).abs()  # (1, L, L)
+    sigmoid_k = torch.as_tensor(long_range_sigmoid_k, dtype=bce.dtype, device=device)
+    sigmoid_amp = torch.as_tensor(long_range_sigmoid_amp, dtype=bce.dtype, device=device)
+    long_range_weight = 1.0 + sigmoid_amp * torch.sigmoid(
+        (seq_sep - long_range_min_seq_sep).to(bce.dtype) * sigmoid_k
+    )  # (1, L, L) -> in [1, 1+amp]
+    bce = bce * long_range_weight  # (*, L, L)
 
     # 5) Masked reduction over residue pairs
     bce = bce * valid_pair_mask.to(bce.dtype)  # (*, L, L)

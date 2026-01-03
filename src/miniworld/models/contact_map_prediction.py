@@ -184,6 +184,9 @@ class ContactMapPredictionClient(BaseClient):
         use_ema: bool = True
         ema_decay: float = 0.999
         bce_pos_weight: float = 8.0
+        long_range_min_seq_sep: int | None = None
+        long_range_sigmoid_k: float | None = None
+        long_range_sigmoid_amp: float | None = None
 
     class Config(BaseModel):
         """Configuration for the ContactMapPredictor client."""
@@ -214,6 +217,23 @@ class ContactMapPredictionClient(BaseClient):
         """Compute the loss given a noisy batch."""
         contact_map_logit = self.model.forward(noisy_batch)
 
+        # Long-range weighting hyperparameters (fallback to function defaults)
+        lr_min_seq_sep = (
+            self.config.experiment.long_range_min_seq_sep
+            if self.config.experiment.long_range_min_seq_sep is not None
+            else 16
+        )
+        lr_sigmoid_k = (
+            self.config.experiment.long_range_sigmoid_k
+            if self.config.experiment.long_range_sigmoid_k is not None
+            else 1.0
+        )
+        lr_sigmoid_amp = (
+            self.config.experiment.long_range_sigmoid_amp
+            if self.config.experiment.long_range_sigmoid_amp is not None
+            else 0.0
+        )
+
         focal_loss = cal_contact_map_focal_loss(
             contact_map_logit,
             noisy_batch.structure.atom_pos,
@@ -227,10 +247,13 @@ class ContactMapPredictionClient(BaseClient):
             noisy_batch.structure.atom_pos_mask,
             noisy_batch.scheme.atom_to_residue_idx_map,
             pos_weight=self.config.experiment.bce_pos_weight,
+            long_range_min_seq_sep=lr_min_seq_sep,
+            long_range_sigmoid_k=lr_sigmoid_k,
+            long_range_sigmoid_amp=lr_sigmoid_amp,
         )
 
         # Long-range metrics (|i-j| >= min_seq_sep)
-        min_seq_sep = 16
+        min_seq_sep = lr_min_seq_sep
         long_range_precision = cal_long_range_precision(
             contact_map_logit,
             noisy_batch.structure.atom_pos,
