@@ -41,28 +41,28 @@ from miniworld.modules.primitives import (
 )
 from miniworld.utils.diffusion.diffuser import EuclideanDiffuser
 from miniworld.utils.diffusion.scheduler import EDMScheduler
-from miniworld.utils.diffusion.solver import MiniWorldSolver
+from miniworld.utils.diffusion.solver import AF3Solver
 from miniworld.utils.precision_manager import PrecisionConfig, precision_manager
 
 
 class ContactMapEmbedder(nn.Module):
     """ContactMap Embedder."""
 
-    def __init__(self, config: Pairformer.Config) -> None:
+    def __init__(self, common_config, pairformer_config: Pairformer.Config) -> None:
         super().__init__()
 
         self.to_pair = nn.Sequential(
             LayerNorm(
                 2,
-                implementation=config.common.implementation,
+                implementation=common_config.implementation,
             ),
             Linear(
                 2,
-                config.common.d_token_pair,
+                common_config.d_token_pair,
                 init="zero",
             ),
         )
-        self.pairformer = Pairformer(config)
+        self.pairformer = Pairformer(pairformer_config)
 
     def forward(
         self,
@@ -146,19 +146,7 @@ class MiniWorldModel(nn.Module):
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
         self.contact_map_head = ContactMapHead(config.common)
 
-        self.contact_map_embedder = ContactMapEmbedder(config.contact_map.pairformer)
-        self.contact_map_to_pair = nn.Sequential(
-            LayerNorm(
-                config.common.d_token_pair,
-                implementation=config.common.implementation,
-            ),
-            Linear(
-                config.common.d_token_pair,
-                config.common.d_token_pair,
-                init="zero",
-            ),
-        )
-
+        self.contact_map_embedder = ContactMapEmbedder(config.common, config.contact_map.pairformer)
 
         # Diffusion module
         self.diffusion_module = DiffusionModule(config.common, config.diffusion)
@@ -208,6 +196,9 @@ class MiniWorldModel(nn.Module):
                 )
         # reduce token_pair information to contact map
         contact_map_logit = self.contact_map_head(token_pair)
+
+        # grad hack
+        token_single_init = token_single_init + token_single * 0.0
 
         # expand contact map information to pair representation
         token_pair_exp, token_single_exp = self.contact_map_embedder(
@@ -423,7 +414,7 @@ class MiniWorldClient(BaseClient):
 
         seed: int = 0
         scheduler: EDMScheduler.EDMSchedulerConfig
-        method: Literal["MiniWorld", "EDM"] = "MiniWorld"
+        method: Literal["AF3", "EDM"] = "AF3"
 
     class Config(BaseModel):
         """Configuration for the MiniWorld client."""
@@ -443,7 +434,7 @@ class MiniWorldClient(BaseClient):
         if config.experiment.use_ema:
             self.add_callback(ModelEMA(config.experiment.ema_decay))
         diffuser_method = config.diffuser.method
-        if diffuser_method == "MiniWorld":
+        if diffuser_method == "AF3":
             self.diffusion_scheduler = EDMScheduler(config.diffuser.scheduler)
             self.diffuser = EuclideanDiffuser(
                 config=EuclideanDiffuser.EuclideanConfig(
@@ -451,8 +442,8 @@ class MiniWorldClient(BaseClient):
                 ),
                 scheduler=self.diffusion_scheduler,
             )
-            self.solver = MiniWorldSolver(
-                config=MiniWorldSolver.SolverConfig(seed=config.diffuser.seed),
+            self.solver = AF3Solver(
+                config=AF3Solver.SolverConfig(seed=config.diffuser.seed),
                 scheduler=self.diffusion_scheduler,
             )
         else:
@@ -479,7 +470,7 @@ class MiniWorldClient(BaseClient):
             noisy_batch.structure.atom_pos,
             noisy_batch.structure.atom_pos_mask,
             noisy_batch.scheme.atom_to_residue_idx_map,
-            pos_weight=self.config.experiment.bce_pos_weight,
+            pos_weight=self.config.loss.bce_pos_weight,
         )
 
         loss = (
