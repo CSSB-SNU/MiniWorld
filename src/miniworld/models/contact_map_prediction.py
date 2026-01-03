@@ -229,8 +229,6 @@ class ContactMapPredictionClient(BaseClient):
             pos_weight=self.config.experiment.bce_pos_weight,
         )
 
-        loss = weighted_bce_loss
-
         # Long-range metrics (|i-j| >= min_seq_sep)
         min_seq_sep = 16
         long_range_precision = cal_long_range_precision(
