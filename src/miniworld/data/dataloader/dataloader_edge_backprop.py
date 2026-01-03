@@ -349,6 +349,8 @@ class BioMolData(torch.utils.data.Dataset):
         # HACK remove 6ysf (cP0163986_cP0163986) : signal peptide only contact
         if "cP0163986_cP0163986" in self.edge_id_list:
             self.edge_id_list.remove("cP0163986_cP0163986")
+        if "cP0163986_cP0199171" in self.edge_id_list:
+            self.edge_id_list.remove("cP0163986_cP0199171")
 
         # gen stats
         self.stats = EdgeScoreStore(
