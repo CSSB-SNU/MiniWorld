@@ -419,21 +419,27 @@ class BioMolData(torch.utils.data.Dataset):
     def __getitem__(self, idx: int) -> Batch:
         """Get a data sample by index."""
         edge_id = self.edge_id_list[idx]
-
-        return self.get_item_by_id(edge_id=edge_id)
-
-    def get_item_by_id(self, edge_id: str) -> Batch:  # noqa: PLR0915
-        """Get a data sample by edge_id."""
         cif_ids = self.edge_id_to_cif_ids[edge_id]
         cif_id = random.choice(cif_ids)
 
+        return self.get_item_by_id(cif_id=cif_id, chain_bias=None)
+
+    def get_item_by_id(
+        self,
+        cif_id: str,
+        chain_bias: str | None = None,
+        interface_bias: tuple[str, str] | None = None,
+    ) -> Batch:  # noqa: PLR0915
+        """Get a data sample by cif_id."""
         cifmol = load_cifmol(db_path=self.config.DB_config.cif_db_path, cif_id=cif_id)
 
         chain_id1, chain_id2 = re.findall(r"\([^)]*\)|[^_]+", cif_id)[-2:]
         chain_id1 = chain_id1.strip("()")
         chain_id2 = chain_id2.strip("()")
-        chain_bias = random.choice([chain_id1, chain_id2])
-        interface_bias = (chain_id1, chain_id2)
+        if chain_bias is None:
+            chain_bias = random.choice([chain_id1, chain_id2])
+        if interface_bias is None:
+            interface_bias = (chain_id1, chain_id2)
 
         # Crop
         crop_length = self.config.crop_config.crop_length
@@ -736,7 +742,6 @@ if __name__ == "__main__":
     set_seed(42)
     dataset = BioMolData(config=config)
     dataset[0]
-    breakpoint()
 
     for ii in range(len(dataset)):
         dataset[ii]

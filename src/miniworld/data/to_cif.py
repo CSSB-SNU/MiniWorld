@@ -53,8 +53,8 @@ def batch_to_cif(  # noqa: PLR0915
     xyz = (
         atom_pos_pred if atom_pos_pred is not None else batch.structure.atom_pos
     )  # if no prediction, use input coords
-    xyz = xyz[0, 0]
-    mask = batch.structure.atom_pos_mask[0, 0].bool()
+    xyz = xyz[0]
+    mask = batch.structure.atom_pos_mask[0].bool()
     length = mask.sum().item()
     atom_to_res = batch.scheme.atom_to_residue_idx_map[0]
     res_to_asym = batch.scheme.residue_asym_id
@@ -71,7 +71,7 @@ def batch_to_cif(  # noqa: PLR0915
     group_PDB_list = ["HETATM" if g == 1 else "ATOM" for g in group_PDB_list]
     id_list = 1 + np.arange(length)
     type_symbol_list = atom_mapping.index_to_atom(
-        batch.reference.element[0].cpu().numpy()
+        batch.reference.element[0].cpu().numpy(),
     )[mask.cpu()]
     label_alt_id_list = ["."] * length
     label_asym_id_list = atom_to_asym[mask]

@@ -202,7 +202,12 @@ class AF3Model(nn.Module):
         # Distogram prediction
         self.distogram_head = DistogramHead(config.common)
 
-    def condition_forward(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, ...]:
+    def condition_forward(
+        self,
+        noisy_batch: NoisyBatch,
+        contact_map: torch.Tensor | None = None,
+        contact_map_mask: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, ...]:
         """Forward pass of the condition modules with recycling."""
         if self.training:
             n_recycle = random.randint(1, self.n_recycle_max)
@@ -221,26 +226,60 @@ class AF3Model(nn.Module):
             token_pair_init,
         ) = self.input_feature_embedder(noisy_batch)
 
-        with torch.no_grad():
-            contact_map, contact_map_mask = get_contact_map(
-                noisy_batch.structure.atom_pos,
-                noisy_batch.structure.atom_pos_mask,
-                noisy_batch.scheme.atom_to_residue_idx_map,
-            )
-            max_pos = random.randint(0, self.config.contact_map.max_inputs_pos)
-            max_neg = random.randint(0, self.config.contact_map.max_inputs_neg)
-            # if self.training:
-            #     max_pos = random.randint(0, self.config.contact_map.max_inputs_pos)
-            #     max_neg = random.randint(0, self.config.contact_map.max_inputs_neg)
-            # else:
-            #     max_pos = self.config.contact_map.max_inputs_pos
-            #     max_neg = self.config.contact_map.max_inputs_neg
-            contact_map_sampled = sample_contact_map_vectorized(
-                contact_map,
-                contact_map_mask,
-                max_pos,
-                max_neg,
-            )
+        if contact_map is not None:
+            if contact_map.dim() == 4:
+                mask_shape = contact_map.shape[:3]
+            elif contact_map.dim() == 3:
+                mask_shape = contact_map.shape
+            else:
+                msg = "contact_map must have shape (B, L, L) or (B, L, L, 3)."
+                raise ValueError(msg)
+
+            if contact_map_mask is None:
+                contact_map_mask = torch.ones(
+                    mask_shape,
+                    device=contact_map.device,
+                    dtype=torch.bool,
+                )
+            contact_map_mask = contact_map_mask.bool()
+            if contact_map_mask.shape != mask_shape:
+                msg = "contact_map_mask must have shape (B, L, L)."
+                raise ValueError(msg)
+
+            if contact_map.dim() == 4:
+                contact_map_sampled = contact_map.float()
+            else:
+                contact_map = contact_map.long()
+                contact_map = torch.where(
+                    contact_map_mask,
+                    contact_map,
+                    torch.full_like(contact_map, 2),
+                )
+                contact_map_sampled = torch.nn.functional.one_hot(
+                    contact_map.long(),
+                    num_classes=3,
+                ).float()
+        else:
+            with torch.no_grad():
+                contact_map, contact_map_mask = get_contact_map(
+                    noisy_batch.structure.atom_pos,
+                    noisy_batch.structure.atom_pos_mask,
+                    noisy_batch.scheme.atom_to_residue_idx_map,
+                )
+                max_pos = random.randint(0, self.config.contact_map.max_inputs_pos)
+                max_neg = random.randint(0, self.config.contact_map.max_inputs_neg)
+                # if self.training:
+                #     max_pos = random.randint(0, self.config.contact_map.max_inputs_pos)
+                #     max_neg = random.randint(0, self.config.contact_map.max_inputs_neg)
+                # else:
+                #     max_pos = self.config.contact_map.max_inputs_pos
+                #     max_neg = self.config.contact_map.max_inputs_neg
+                contact_map_sampled = sample_contact_map_vectorized(
+                    contact_map,
+                    contact_map_mask,
+                    max_pos,
+                    max_neg,
+                )
 
         token_pair_contact_map = self.contact_map_embedder(
             contact_map_sampled,
@@ -314,14 +353,23 @@ class AF3Model(nn.Module):
             token_pair_trunk,
         )
 
-    def forward(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self,
+        noisy_batch: NoisyBatch,
+        contact_map: torch.Tensor | None = None,
+        contact_map_mask: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Forward pass of the AF3 model."""
         (
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
             distogram_logit,
-        ) = self.condition_forward(noisy_batch)
+        ) = self.condition_forward(
+            noisy_batch,
+            contact_map=contact_map,
+            contact_map_mask=contact_map_mask,
+        )
         # Diffusion forward
         atom_pos_update = self.diffusion_forward(
             noisy_batch,
@@ -350,7 +398,12 @@ class AF3ModelWrapper(nn.Module):
         self.z_sc = None
         self.batch_loaded = True
 
-    def prepare_condition(self, batch: Batch) -> None:
+    def prepare_condition(
+        self,
+        batch: Batch,
+        contact_map: torch.Tensor | None = None,
+        contact_map_mask: torch.Tensor | None = None,
+    ) -> None:
         """Prepare the model for conditioned forward pass."""
         if self.batch_loaded:
             msg = "Batch is already loaded. Please create a new AF3ModelWrapper instance for a new batch."
@@ -366,7 +419,11 @@ class AF3ModelWrapper(nn.Module):
             token_single_trunk,
             token_pair_trunk,
             distogram_logit,
-        ) = self.model.condition_forward(self.batch)
+        ) = self.model.condition_forward(
+            self.batch,
+            contact_map=contact_map,
+            contact_map_mask=contact_map_mask,
+        )
         self.conditioned_forwarded = True
 
         self.condition = {
@@ -671,6 +728,8 @@ class AF3Client(BaseClient):
         self,
         batch: Batch,
         timesteps: int = 100,
+        contact_map: torch.Tensor | None = None,
+        contact_map_mask: torch.Tensor | None = None,
     ) -> AF3InferenceOutput:
         """Inference using the diffusion solver."""
         raw_model = getattr(self.model, "module", self.model)
@@ -679,7 +738,11 @@ class AF3Client(BaseClient):
             use_self_condition=self.config.experiment.self_condition,
         )
         batch = batch.to(device=self.device)
-        model_wrapper.prepare_condition(batch)
+        model_wrapper.prepare_condition(
+            batch,
+            contact_map=contact_map,
+            contact_map_mask=contact_map_mask,
+        )
         shape = batch.structure.atom_pos.shape
 
         atom_pos_pred, inter_traj, model_traj = self.solver.sample(

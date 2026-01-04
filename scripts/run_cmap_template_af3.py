@@ -13,7 +13,10 @@ import wandb
 from miniworld.data.dataloader.dataloader_edge_backprop import (
     BioMolData,
 )
+from miniworld.data.to_cif import batch_to_cif
+from miniworld.loss import metrics  # , losses
 from miniworld.models.cmap_template_af3 import AF3Client
+from miniworld.utils.structure.distance import get_contact_map
 
 # torch.set_float32_matmul_precision("high")  # noqa: ERA001
 # anomaly detection
@@ -37,7 +40,7 @@ def setup_logger(client: AF3Client) -> None:
 
     now = datetime.datetime.now(datetime.timezone.utc)
     file_handler = logging.FileHandler(
-        f"logs/cmap_template_af3/cmap_template_af3_{now:%Y%m%d_%H%M%S}.log"
+        f"logs/cmap_template_af3/cmap_template_af3_{now:%Y%m%d_%H%M%S}.log",
     )
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)
@@ -229,12 +232,6 @@ def train(  # noqa: PLR0912, PLR0915
             if train_loss < min_train_loss:
                 min_train_loss = train_loss
                 checkpoint_path = ckpt_dir / f"cmap_template_af3_{comment}_best.pt"
-                # client.save_checkpoint(checkpoint_path)
-                # client.logger.info(
-                #     "Save best checkpoint: %s (train loss: %.4g)",
-                #     checkpoint_path.name,
-                #     train_loss,
-                # )
 
         if (client.epoch - 1) % client.config.experiment.eval_freq == 0:
             valid_loader.sampler.set_epoch(epoch)
@@ -258,19 +255,19 @@ def train(  # noqa: PLR0912, PLR0915
     help="checkpoint file",
 )
 @click.option(
-    "-w",
-    is_flag=True,
-    help="Use wandb for logging",
-)
-@click.option(
     "--seed",
     type=int,
     help="random seed",
 )
+@click.option(
+    "--save-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="directory to save predicted structures",
+)
 def sample(
     ckpt: Path | None,
-    w: bool,
     seed: int | None,
+    save_dir: Path | None,
 ):
     if not ckpt:
         msg = "You must provide a checkpoint file."
@@ -304,8 +301,120 @@ def sample(
         set_seed(seed)
         client.logger.info("Set random seed: %d", seed)
 
+    crop_config = client.config.data.crop.model_dump()
+    crop_config["crop_length"] = 1024
+    crop_config["contiguous_prob"] = 1.0
+    crop_config["spatial_prob"] = 0.0
+    crop_config["interface_simple_prob"] = 0.0
+    msa_config = client.config.data.msa.model_dump()
+    msa_config["max_msa_depth"] = 128
+
+    train_data_config = BioMolData.BioMolConfig(
+        crop_config=crop_config,
+        msa_config=msa_config,
+        DB_config=client.config.data.train_db.model_dump(),
+        edge_weight_config=client.config.data.edge_weight.model_dump(),
+    )
+    train_dataset = BioMolData(train_data_config)
+    transporter_open_batch = train_dataset.get_item_by_id(
+        cif_id="6lyy_1_1_._(C_1)_(A_1)",
+        chain_bias="A_1",
+    )
+    transporter_closed_batch = train_dataset.get_item_by_id(
+        cif_id="7cko_1_1_._(C_1)_(A_1)",
+        chain_bias="A_1",
+    )
+    # Open form L132,F375 = (118, 307) (contact)  L158, L281 (144, 213) (non-contact)
+    # Closed form L132,F375 = (116, 300) (non-contact)  L158, L281 (142, 206) (contact)
+    open_contact_map, open_contact_map_mask = get_contact_map(
+        transporter_open_batch.structure.atom_pos,
+        transporter_open_batch.structure.atom_pos_mask,
+        transporter_open_batch.scheme.atom_to_residue_idx_map,
+    )
+    closed_contact_map, closed_contact_map_mask = get_contact_map(
+        transporter_closed_batch.structure.atom_pos,
+        transporter_closed_batch.structure.atom_pos_mask,
+        transporter_closed_batch.scheme.atom_to_residue_idx_map,
+    )
+
+    # manual_batches = [transporter_open_batch, transporter_closed_batch]
+    manual_batches = {
+        "open": transporter_open_batch,
+        "closed": transporter_closed_batch,
+    }
+    client.model.eval()
+
+    for state, _batch in manual_batches.items():
+        for steered_state in ["open", "closed"]:
+            batch = _batch.duplicate(client.config.experiment.eval_sample_num)
+            batch = batch.to(device=client.device)
+
+            residue_length = batch.scheme.residue_idx.shape[1]
+            contact_map = torch.zeros(
+                (1, residue_length, residue_length, 3), device=client.device
+            )
+            contact_map[:, :, :, 2] = 1.0  # unknown
+            if state == "open":
+                if steered_state == "open":
+                    contact_map[0, 118, 307, 1] = 1.0  # contact
+                    contact_map[0, 307, 118, 1] = 1.0  # contact
+                    contact_map[0, 144, 213, 0] = 0.0  # non-contact
+                    contact_map[0, 213, 144, 0] = 0.0  # non-contact
+                else:
+                    contact_map[0, 118, 307, 1] = 0.0  # contact
+                    contact_map[0, 307, 118, 1] = 0.0  # contact
+                    contact_map[0, 144, 213, 0] = 1.0  # non-contact
+                    contact_map[0, 213, 144, 0] = 1.0  # non-contact
+                contact_map_mask = open_contact_map_mask
+            else:
+                if steered_state == "open":
+                    contact_map[0, 116, 300, 1] = 1.0  # contact
+                    contact_map[0, 300, 116, 1] = 1.0  # contact
+                    contact_map[0, 142, 206, 0] = 0.0  # non-contact
+                    contact_map[0, 206, 142, 0] = 0.0  # non-contact
+                else:
+                    contact_map[0, 116, 300, 0] = 0.0  # non-contact
+                    contact_map[0, 300, 116, 0] = 0.0  # non-contact
+                    contact_map[0, 142, 206, 1] = 1.0  # contact
+                    contact_map[0, 206, 142, 1] = 1.0  # contact
+                contact_map_mask = closed_contact_map_mask
+
+            output = client.inference(
+                batch,
+                timesteps=client.config.experiment.eval_timesteps,
+                contact_map=contact_map,
+                contact_map_mask=contact_map_mask,
+            )
+
+            max_lddt, min_rmsd = 0, float("inf")
+
+            lddt = metrics.cal_atom_lddt(
+                output.atom_pos_pred[0],
+                batch.structure.atom_pos[0],
+                batch.structure.atom_mask[0],
+            )
+            max_lddt = max(max_lddt, lddt)
+
+            rmsd = metrics.cal_aligned_rmsd(
+                output.atom_pos_pred[0],
+                batch.structure.atom_pos[0],
+                batch.structure.atom_mask[0],
+            )
+            category_lddt = metrics.category_lddt(
+                batch,
+                output.atom_pos_pred[0],
+            )
+            min_rmsd = min(min_rmsd, rmsd)
+            click.echo(f"<<<category_lddt[{batch.name}]: {category_lddt}>>>")
+            batch_to_cif(
+                batch,
+                atom_pos_pred=output.atom_pos_pred,
+                save_path=Path(f"sample_{batch.name[0]}_{steered_state}.cif"),
+            )
+    breakpoint()
+
     valid_data_config = BioMolData.BioMolConfig(
-        crop_config=client.config.data.crop.model_dump(),
+        crop_config=crop_config,
         msa_config=client.config.data.msa.model_dump(),
         DB_config=client.config.data.valid_db.model_dump(),
         edge_weight_config=client.config.data.edge_weight.model_dump(),
@@ -330,22 +439,42 @@ def sample(
     client.logger.info("Start training".center(70))
     client.logger.info("")
     client.logger.info("-" * 70)
-    valid_aggregator = MetricsAggregator(client, "valid", use_wandb=w)
 
-    world_size = fabric.world_size
-    valid_num_item = client.config.experiment.valid_item // world_size
+    for _batch in valid_loader:
+        batch = _batch.duplicate(client.config.experiment.eval_sample_num)
+        batch = batch.to(device=client.device)
 
-    for epoch in range(client.epoch, client.config.experiment.num_epoch):
-        client.logger.info("Training Epoch %d", client.epoch)
-        valid_loader.sampler.set_epoch(epoch)
-        client.logger.info("Validation Epoch %d", client.epoch)
-        for n_item, result in enumerate(client.validation_epoch(valid_loader)):
-            valid_aggregator.log_step(result, ignore_step=True)
-            if n_item + 1 >= valid_num_item:
-                client.call_callbacks("on_validation_epoch_end")
-                break
+        output = client.inference(
+            batch,
+            timesteps=client.config.experiment.eval_timesteps,
+        )
 
-        valid_aggregator.log_epoch()
+        max_lddt, min_rmsd = 0, float("inf")
+
+        lddt = metrics.cal_atom_lddt(
+            output.atom_pos_pred[0],
+            batch.structure.atom_pos[0],
+            batch.structure.atom_mask[0],
+        )
+        max_lddt = max(max_lddt, lddt)
+
+        rmsd = metrics.cal_aligned_rmsd(
+            output.atom_pos_pred[0],
+            batch.structure.atom_pos[0],
+            batch.structure.atom_mask[0],
+        )
+        category_lddt = metrics.category_lddt(
+            batch,
+            output.atom_pos_pred[0],
+        )
+        min_rmsd = min(min_rmsd, rmsd)
+        click.echo(f"<<<category_lddt[{batch.name}]: {category_lddt}>>>")
+        batch_to_cif(
+            batch,
+            atom_pos_pred=output.atom_pos_pred,
+            save_path=Path(f"sample_{batch.name}.cif"),
+        )
+        breakpoint()
 
 
 if __name__ == "__main__":
