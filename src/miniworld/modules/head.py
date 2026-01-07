@@ -29,8 +29,7 @@ class ContactMapHead(nn.Module):
     ) -> Float[torch.Tensor, "B L L D"]:
         """Forward pass."""
         pair = self._symmetrize(pair)
-        x = self.linear(pair.float())
-        return F.log_softmax(x, dim=-1)
+        return self.linear(pair.float())
 
 
 class DistogramHead(nn.Module):
