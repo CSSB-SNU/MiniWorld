@@ -1,5 +1,5 @@
 data:
-  DB_PATH: /mnt/local/data/
+  DB_PATH: /home/psk6950/data/
 
   train_preprocessing:
     cif_db_path: ${data.DB_PATH}/MiniWorld/multistate/seqID_to_cifmols_filtered.lmdb
@@ -151,14 +151,14 @@ model:
 
 
 experiment:
-  comment: contactmap_prediction_v0.2.2 (8 pairformer, 4 msa pairformer, bce p8, weighted loss >16A -> x3)
+  comment: contactmap_prediction_v0.2.2 (8 pairformer, 4 msa pairformer, bce p8, weighted loss >16A -> x3, grad accum 1)
 
   # Training arguments
   num_batch: 1
   num_epoch: 5000
   # max_lr: 1.8e-3
   optimizer : AdamW
-  max_lr: 1e-3
+  min_lr: 1e-4
   max_lr: 1e-3
   warmup_steps: 512
   decay_steps: 5e4
@@ -169,7 +169,7 @@ experiment:
   valid_item: 160
 
   # Validation arguments
-  eval_freq: 10
+  eval_freq: 5
   eval_sample_num: 16
   eval_input_num: 50
   eval_timesteps: 100
