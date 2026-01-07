@@ -4,6 +4,7 @@ from jaxtyping import Bool, Float, Int
 from team_gm import typecheck
 
 from miniworld.utils.structure import (
+    extract_contact_map,
     get_shortest_distances,
     get_shortest_distances_from_multistructures,
 )
@@ -172,42 +173,10 @@ def cal_atom_distogram_loss(
     return num / denom  # (*,)
 
 
-@typecheck
-def extract_contact_map(
-    atom_pos: Float[torch.Tensor, "* N L_atom 3"],
-    atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
-    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
-    cutoff: float = 6.0,
-    min_distance: float = 2.0,
-    max_distance: float = 22.0,
-) -> tuple[Bool[torch.Tensor, "* L L"], Bool[torch.Tensor, "* L L"]]:
-    """Extract residue-level contact map from atom positions."""
-    # 1) Residue-level shortest distances and mask
-    with torch.no_grad():
-        if atom_pos.dim() == 3:
-            # Single structure
-            residue_dists, residue_pair_mask = get_shortest_distances(
-                atom_pos=atom_pos,
-                atom_pos_mask=atom_pos_mask,
-                atom_to_res_idx=atom_to_res_idx,
-                min_distance=min_distance,
-                max_distance=max_distance,
-            )  # (L_max, L_max), (L_max, L_max)
-        else:
-            residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
-                atom_pos=atom_pos,
-                atom_pos_mask=atom_pos_mask,
-                atom_to_res_idx=atom_to_res_idx,
-                min_distance=min_distance,
-                max_distance=max_distance,
-            )  # (..., R_max, R_max), (..., R_max, R_max)
-
-    # 2) Contact targets (0/1) from distances
-    return residue_dists <= cutoff, residue_pair_mask  # (*, L, L), bool
 
 
 @typecheck
-def cal_contact_map_focal_loss( 
+def cal_contact_map_focal_loss(
     logit_pred: Float[torch.Tensor, "* L L 2"],
     atom_pos: Float[torch.Tensor, "* N L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
@@ -229,8 +198,8 @@ def cal_contact_map_focal_loss(
         cutoff: Distance cutoff (Å) for defining contacts.
         min_distance: Minimum allowed distance for distance computation.
         max_distance: Maximum allowed distance for distance computation.
-        alpha: Focal loss α parameter.
-        gamma: Focal loss γ parameter.
+        alpha: Focal loss alpha parameter.
+        gamma: Focal loss gamma parameter.
 
     Returns:
         Focal loss averaged over valid residue pairs. Shape: (*,)
@@ -273,7 +242,7 @@ def cal_contact_map_focal_loss(
     # p_t = exp(-CE) (probability of the true class)
     p_t = torch.exp(-ce)  # (*, L, L)
 
-    # α_t depending on target class
+    # alpha_t depending on target class
     alpha_tensor_pos = torch.as_tensor(alpha, dtype=ce.dtype, device=device)
     alpha_tensor_neg = torch.as_tensor(1.0 - alpha, dtype=ce.dtype, device=device)
     alpha_factor = torch.where(

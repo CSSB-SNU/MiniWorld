@@ -13,7 +13,7 @@ from team_gm.core.callbacks import ModelEMA
 from team_gm.modules import Pairformer
 from torch import nn
 
-from miniworld.data.dataloader.dataloader_multistate_contam import (
+from miniworld.data.dataloader.dataloader_multistate import (
     CropConfig,
     KmerFastAlignConfig,
     MSAConfig,
@@ -22,13 +22,13 @@ from miniworld.data.dataloader.dataloader_multistate_contam import (
 )
 from miniworld.data.features.features_biomol import Batch, NoisyBatch
 from miniworld.loss.auxiliary import (
-    cal_contact_map_focal_loss, 
-    cal_contact_map_weighted_bce_loss, 
-    extract_contact_map,
+    cal_contact_map_focal_loss,
+    cal_contact_map_weighted_bce_loss,
+    cal_long_range_auroc,
+    cal_long_range_f1,
     cal_long_range_precision,
     cal_long_range_recall,
-    cal_long_range_f1,
-    cal_long_range_auroc,
+    extract_contact_map,
 )
 from miniworld.modules.configs import (
     CommonConfig,

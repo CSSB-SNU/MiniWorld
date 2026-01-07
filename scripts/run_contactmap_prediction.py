@@ -10,7 +10,7 @@ from omegaconf import OmegaConf
 from team_gm.utils.script_utils import MetricsAggregator, set_seed
 
 import wandb
-from miniworld.data.dataloader.dataloader_multistate_contam import (
+from miniworld.data.dataloader.dataloader_multistate import (
     BioMolMonomerData,
 )
 from miniworld.models.contact_map_prediction import ContactMapPredictionClient
@@ -345,7 +345,6 @@ def sample(
     )
     calmodulin_batch = dataset.get_item_by_seq_id(
         query_id="P0000373",
-        contam_query_id="P0000373",
     )
     manual_batches = [transporter_batch, calmodulin_batch]
     client.model.eval()

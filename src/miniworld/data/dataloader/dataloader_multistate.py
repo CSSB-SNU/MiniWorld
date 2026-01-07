@@ -6,14 +6,12 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from numpy import ndarray
 from pydantic import BaseModel, ConfigDict
 from torch.utils.data import DataLoader, DistributedSampler
 
 from miniworld.data.crop import Cropper
 from miniworld.data.features.features_multistate import (
     Batch,
-    ContamFeatures,
     MSAFeatures,
     ReferenceFeatures,
     SchemeFeatures,
@@ -23,7 +21,7 @@ from miniworld.data.features.features_multistate import (
 from miniworld.data.io import extract_lmdb_keys, load_a3m, load_cifmols, load_fasta
 from miniworld.data.mapping import AtomMapping
 from miniworld.data.msa import MSA
-from miniworld.utils.structure import SE3_oper
+from miniworld.utils.structure import SE3_oper, extract_contact_map
 
 
 class BioMolSampler(DistributedSampler):
@@ -113,7 +111,7 @@ class MultiStatedbConfig(BaseModel):
 
 
 class BioMolMonomerData(torch.utils.data.Dataset):
-    """Dataset for BioMol monomer data with contamination."""
+    """Dataset for BioMol monomer data."""
 
     class BioMolConfig(BaseModel):
         """Configuration for BioMolMonomerData."""
@@ -225,23 +223,6 @@ class BioMolMonomerData(torch.utils.data.Dataset):
     def __len__(self) -> int:
         return len(self.cluster_id_list)
 
-    def _gen_kmer_query(self, query_full_seq: str, crop_indices: ndarray) -> str:
-        # Step 1: Build mask
-        seq_len = len(query_full_seq)
-        mask = np.zeros(seq_len, dtype=bool)
-        mask[crop_indices] = True
-
-        # Step 2: Build gapped sequence
-        gapped_seq = "".join(
-            res if keep else "-" for res, keep in zip(query_full_seq, mask, strict=True)
-        )
-
-        # Step 3: Trim leading and trailing gaps
-        trimmed_seq = gapped_seq.strip("-")
-        gap_indices = [i for i, char in enumerate(trimmed_seq) if char == "-"]
-
-        return trimmed_seq, gap_indices
-
     def __getitem__(self, idx: int) -> Batch:
         cluster_id = self.cluster_id_list[idx]
         seq_ids = self.cluster_id_to_seq_ids[cluster_id]
@@ -252,152 +233,9 @@ class BioMolMonomerData(torch.utils.data.Dataset):
         # uniformly sample a seq _id
         # To avoid this, we will loop until we find a valid one.
         query_id = random.choice(seq_ids)
-        try:
-            item = self.get_item_by_seq_id(query_id=query_id)
-        except:
-            msg = f"Error loading data for seq_id {query_id}."
-            raise ValueError(msg)
-        return item
+        return self.get_item_by_seq_id(query_id=query_id)
 
-    def get_item_by_seq_id(
-        self,
-        query_id: str,
-        contam_query_id: str | None = None,
-    ) -> Batch:
-        """Get item by seq_id."""
-        cluster_id = self.seq_id_to_cluster_id[query_id]
-        (
-            query_sequence,
-            query_structure,
-            query_reference,
-            query_scheme,
-            query_msa,
-            additional,
-        ) = self._load_data_by_seq_id(query_id=query_id, crop_length=None)
-        query_residue_length = query_msa.aligned_sequences.shape[-1]
-        query_msa_depth = query_msa.aligned_sequences.shape[0]
-
-        # contam query _id
-        if not contam_query_id:
-            contam_cluster_id = random.choice(
-                list(set(self.cluster_id_list) - {cluster_id}),
-            )
-            contam_query_id = random.choice(
-                self.cluster_id_to_seq_ids[contam_cluster_id],
-            )
-        else:
-            contam_cluster_id = self.seq_id_to_cluster_id[contam_query_id]
-
-        _, contam_structure, _, contam_scheme, contam_msa, _ = (
-            self._load_data_by_seq_id(
-                query_id=contam_query_id,
-                crop_length=query_residue_length,
-            )
-        )
-        contam_msa_depth = contam_msa.aligned_sequences.shape[2]
-        contam_residue_length = contam_msa.aligned_sequences.shape[-1]
-        if contam_residue_length < query_residue_length:
-            random_bias = random.randint(
-                0,
-                query_residue_length - contam_residue_length,
-            )
-        else:
-            random_bias = 0
-        contam_msa_aligned_sequences = torch.full(
-            (1, contam_msa_depth, query_residue_length),
-            fill_value=31,
-        )  # gap token
-        contam_msa_has_deletion = torch.zeros(
-            (1, contam_msa_depth, query_residue_length),
-            dtype=torch.int,
-        )
-        contam_msa_deletion_value = torch.zeros(
-            (1, contam_msa_depth, query_residue_length),
-            dtype=torch.float,
-        )
-        contam_msa_profile = query_msa.profile[0].clone()
-        contam_msa_deletion_mean = query_msa.deletion_mean[0].clone()
-        contam_msa_aligned_sequences[
-            :,
-            :,
-            random_bias : random_bias + contam_residue_length,
-        ] = contam_msa.aligned_sequences[0]
-        contam_msa_has_deletion[
-            :,
-            :,
-            random_bias : random_bias + contam_residue_length,
-        ] = contam_msa.has_deletion[0]
-        contam_msa_deletion_value[
-            :,
-            :,
-            random_bias : random_bias + contam_residue_length,
-        ] = contam_msa.deletion_value[0]
-        contam_msa_profile[random_bias : random_bias + contam_residue_length] = (
-            contam_msa.profile[0]
-        )
-        contam_msa_deletion_mean[random_bias : random_bias + contam_residue_length] = (
-            contam_msa.deletion_mean[0]
-        )
-
-        # mix msa
-        resample_depth = min(query_msa_depth, contam_msa_depth)
-
-        aligned_sequences = torch.cat(
-            [
-                query_msa.aligned_sequences[0, :, :resample_depth],
-                contam_msa_aligned_sequences[:resample_depth],
-            ],
-            dim=1,
-        )
-        has_deletion = torch.cat(
-            [
-                query_msa.has_deletion[0, :, :resample_depth],
-                contam_msa_has_deletion[:resample_depth],
-            ],
-            dim=1,
-        )
-        deletion_value = torch.cat(
-            [
-                query_msa.deletion_value[0, :, :resample_depth],
-                contam_msa_deletion_value[:resample_depth],
-            ],
-            dim=1,
-        )
-        profile = 0.5 * (query_msa.profile[0] + contam_msa_profile)
-        deletion_mean = 0.5 * (query_msa.deletion_mean[0] + contam_msa_deletion_mean)
-
-        msa = MSAFeatures.from_sample(
-            aligned_sequences=aligned_sequences,
-            has_deletion=has_deletion,
-            deletion_value=deletion_value,
-            profile=profile,
-            deletion_mean=deletion_mean,
-        )
-
-        contam = ContamFeatures.from_sample(
-            atom_pos=contam_structure.atom_pos[0],
-            atom_pos_mask=contam_structure.atom_pos_mask[0],
-            atom_to_residue_idx_map=contam_scheme.atom_to_residue_idx_map[0],
-        )
-
-        return Batch(
-            name=[
-                f"{cluster_id}_{query_id}",
-                f"{contam_cluster_id}_{contam_query_id}",
-            ],
-            heteros=[additional[0]],
-            atom_ids=[additional[1]],
-            chem_comp_ids=[additional[2]],
-            sequence=query_sequence,
-            structure=query_structure,
-            reference=query_reference,
-            contam=contam,
-            scheme=query_scheme,
-            msa=msa,
-            contam_bias=[random_bias],
-        )
-
-    def _load_data_by_seq_id(  # noqa: PLR0915
+    def get_item_by_seq_id(  # noqa: PLR0915
         self,
         query_id: str,
         crop_length: int | None = None,
@@ -622,9 +460,18 @@ class BioMolMonomerData(torch.utils.data.Dataset):
         hetero = query_cifmol.residues.hetero
         atom_ids = query_cifmol.atoms.atom_id
         chem_comp_ids = query_cifmol.residues.chem_comp
-        additional = (hetero, atom_ids, chem_comp_ids)
 
-        return sequence, structure, reference, scheme, msa, additional
+        return Batch(
+            name=[f"{query_id}"],
+            heteros=[hetero],
+            atom_ids=[atom_ids],
+            chem_comp_ids=[chem_comp_ids],
+            sequence=sequence,
+            structure=structure,
+            reference=reference,
+            scheme=scheme,
+            msa=msa,
+        )
 
     def create_ddp_dataloader(
         self,
@@ -669,7 +516,7 @@ if __name__ == "__main__":
             contiguous_prob=1.0,
             spatial_prob=0.0,
             interface_prob=0.0,
-            crop_length=384,
+            crop_length=9096,
         ),
         kmer_fast_align_config=KmerFastAlignConfig(
             kmer_index=db_path / "kmer_align" / "kmer_index.tsv",
@@ -684,7 +531,7 @@ if __name__ == "__main__":
         ),
         msa_config=MSAConfig(
             n_samples=1,
-            max_msa_depth=512,
+            max_msa_depth=1,
         ),
         multistate_config=MultistateConfig(
             n_prefilter=48,
@@ -711,7 +558,21 @@ if __name__ == "__main__":
         ),
     )
     dataset = BioMolMonomerData(config)
-    for _ in range(1000):
-        dataset.get_item_by_seq_id("P0205891")
-        dataset.get_item_by_seq_id("P0205892")
-        dataset.get_item_by_seq_id("P0205893")
+    contact_num = 0
+    noncontact_num = 0
+    for idx in range(len(dataset)):
+        batch = dataset[idx]
+
+        contact_target, residue_pair_mask = extract_contact_map(
+            batch.structure.atom_pos,
+            batch.structure.atom_pos_mask,
+            batch.scheme.atom_to_residue_idx_map,
+        )
+        contact = contact_target & residue_pair_mask
+        noncontact = (~contact_target) & residue_pair_mask
+        contact_num += contact.sum().item()
+        noncontact_num += noncontact.sum().item()
+    print(f"Contact num: {contact_num}, non-contact num: {noncontact_num}")
+    print(f"Contact ratio: {contact_num / (contact_num + noncontact_num):.6f}")
+    breakpoint()
+

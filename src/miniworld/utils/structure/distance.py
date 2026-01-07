@@ -218,6 +218,40 @@ def get_contact_map(
 
 
 @typecheck
+def extract_contact_map(
+    atom_pos: Float[torch.Tensor, "* N L_atom 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
+    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    cutoff: float = 6.0,
+    min_distance: float = 2.0,
+    max_distance: float = 22.0,
+) -> tuple[Bool[torch.Tensor, "* L L"], Bool[torch.Tensor, "* L L"]]:
+    """Extract residue-level contact map from atom positions."""
+    # 1) Residue-level shortest distances and mask
+    with torch.no_grad():
+        if atom_pos.dim() == 3:
+            # Single structure
+            residue_dists, residue_pair_mask = get_shortest_distances(
+                atom_pos=atom_pos,
+                atom_pos_mask=atom_pos_mask,
+                atom_to_res_idx=atom_to_res_idx,
+                min_distance=min_distance,
+                max_distance=max_distance,
+            )  # (L_max, L_max), (L_max, L_max)
+        else:
+            residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
+                atom_pos=atom_pos,
+                atom_pos_mask=atom_pos_mask,
+                atom_to_res_idx=atom_to_res_idx,
+                min_distance=min_distance,
+                max_distance=max_distance,
+            )  # (..., R_max, R_max), (..., R_max, R_max)
+
+    # 2) Contact targets (0/1) from distances
+    return residue_dists <= cutoff, residue_pair_mask  # (*, L, L), bool
+
+
+@typecheck
 def kernel_convolution(
     x: Float[torch.Tensor, "* L C_in"],
     kernel: Float[torch.Tensor, "C_in C_out"],
