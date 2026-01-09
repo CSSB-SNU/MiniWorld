@@ -13,7 +13,7 @@ class ContactMapHead(nn.Module):
 
     def __init__(self, config: CommonConfig) -> None:
         super().__init__()
-        self.linear = Linear(config.d_token_pair, 2, bias=False)
+        self.linear = Linear(config.d_token_pair, 2, bias=False, init="zero")
 
     @typecheck
     def _symmetrize(
@@ -37,7 +37,7 @@ class DistogramHead(nn.Module):
 
     def __init__(self, config: CommonConfig) -> None:
         super().__init__()
-        self.linear = Linear(config.d_token_pair, config.num_distogram_bins, bias=False)
+        self.linear = Linear(config.d_token_pair, config.num_distogram_bins, bias=False, init="zero")
 
     @typecheck
     def _symmetrize(

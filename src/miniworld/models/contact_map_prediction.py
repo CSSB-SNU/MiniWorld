@@ -22,6 +22,7 @@ from miniworld.data.dataloader.dataloader_multistate import (
 )
 from miniworld.data.features.features_biomol import Batch, NoisyBatch
 from miniworld.loss.auxiliary import (
+    cal_atom_distogram_loss,
     cal_contact_map_focal_loss,
     cal_contact_map_weighted_bce_loss,
     cal_long_range_auroc,
@@ -35,8 +36,9 @@ from miniworld.modules.configs import (
     DiffusionConfig,
 )
 from miniworld.modules.feature_embedder import InputFeatureEmbedder
-from miniworld.modules.head import ContactMapHead
+from miniworld.modules.head import ContactMapHead, DistogramHead
 from miniworld.modules.msa_module import MSAModule
+from miniworld.modules.pairformer import Pairformer
 from miniworld.modules.primitives import (
     LayerNorm,
     Linear,
@@ -61,6 +63,7 @@ class ContactMapPredictionModel(nn.Module):
         trunk: "ContactMapPredictionModel.ConditionConfig"
         diffusion: DiffusionConfig
         precision: PrecisionConfig
+        use_distogram: bool = False
 
     def __init__(self, config: Config) -> None:
         super().__init__()
@@ -90,7 +93,10 @@ class ContactMapPredictionModel(nn.Module):
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
 
         # ContactMap prediction
-        self.contact_map_head = ContactMapHead(config.common)
+        if self.config.use_distogram:
+            self.final_head = DistogramHead(config.common)
+        else:
+            self.final_head = ContactMapHead(config.common)
 
     def forward(self, batch: Batch) -> tuple[torch.Tensor, ...]:
         """Forward pass of the condition modules with recycling."""
@@ -135,7 +141,7 @@ class ContactMapPredictionModel(nn.Module):
                     batch.structure.residue_mask,
                 )
 
-        return self.contact_map_head(token_pair)
+        return self.final_head(token_pair)
 
 
 class ContactMapPredictionClient(BaseClient):
@@ -215,7 +221,6 @@ class ContactMapPredictionClient(BaseClient):
 
     def loss_fn(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, Mapping]:
         """Compute the loss given a noisy batch."""
-        contact_map_logit = self.model.forward(noisy_batch)
 
         # Long-range weighting hyperparameters (fallback to function defaults)
         lr_min_seq_sep = (
@@ -234,22 +239,38 @@ class ContactMapPredictionClient(BaseClient):
             else 0.0
         )
 
+        if self.config.model.use_distogram:
+            distogram_logit = self.model.forward(noisy_batch)
+            contact_logit = distogram_logit[..., :13].sum(dim=-1) # ~ 6Å cutoff
+            noncontact_logit = distogram_logit[..., 13:].sum(dim=-1)
+            contact_map_logit = torch.stack([noncontact_logit, contact_logit], dim=-1)
+
+            loss = cal_atom_distogram_loss(
+                distogram_logit,
+                noisy_batch.structure.atom_pos,
+                noisy_batch.structure.atom_pos_mask,
+                noisy_batch.scheme.atom_to_residue_idx_map,
+            )
+        else:
+            contact_map_logit = self.model.forward(noisy_batch)
+            loss = cal_contact_map_weighted_bce_loss(
+                contact_map_logit,
+                noisy_batch.structure.atom_pos,
+                noisy_batch.structure.atom_pos_mask,
+                noisy_batch.scheme.atom_to_residue_idx_map,
+                pos_weight=self.config.experiment.bce_pos_weight,
+                long_range_min_seq_sep=lr_min_seq_sep,
+                long_range_sigmoid_k=lr_sigmoid_k,
+                long_range_sigmoid_amp=lr_sigmoid_amp,
+            )
+
+
+
         focal_loss = cal_contact_map_focal_loss(
             contact_map_logit,
             noisy_batch.structure.atom_pos,
             noisy_batch.structure.atom_pos_mask,
             noisy_batch.scheme.atom_to_residue_idx_map,
-        )
-
-        weighted_bce_loss = cal_contact_map_weighted_bce_loss(
-            contact_map_logit,
-            noisy_batch.structure.atom_pos,
-            noisy_batch.structure.atom_pos_mask,
-            noisy_batch.scheme.atom_to_residue_idx_map,
-            pos_weight=self.config.experiment.bce_pos_weight,
-            long_range_min_seq_sep=lr_min_seq_sep,
-            long_range_sigmoid_k=lr_sigmoid_k,
-            long_range_sigmoid_amp=lr_sigmoid_amp,
         )
 
         # Long-range metrics (|i-j| >= min_seq_sep)
@@ -283,11 +304,9 @@ class ContactMapPredictionClient(BaseClient):
             min_seq_sep=min_seq_sep,
         )
 
-        loss = weighted_bce_loss
-
         return loss, {
             "focal_loss": focal_loss.item(),
-            "weighted_bce_loss": weighted_bce_loss.item(),
+            "main_loss": loss.item(),
             "total_loss": loss.item(),
             "lr_precision": long_range_precision.mean().item(),
             "lr_recall": long_range_recall.mean().item(),

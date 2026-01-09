@@ -146,14 +146,24 @@ def cal_atom_distogram_loss(
     *lead, L, _, D = logit_pred.shape
     device = logit_pred.device
 
-    # Compute residue-level shortest distances and mask
-    residue_dists, residue_pair_mask = get_shortest_distances(
-        atom_pos=atom_pos,
-        atom_pos_mask=atom_pos_mask,
-        atom_to_res_idx=atom_to_res_idx,
-        min_distance=min_distance,
-        max_distance=max_distance,
-    )  # residue_dists: (*, L, L), residue_pair_mask: (*, L, L)
+
+    if atom_pos.dim() == 3:
+        # Single structure
+        residue_dists, residue_pair_mask = get_shortest_distances(
+            atom_pos=atom_pos,
+            atom_pos_mask=atom_pos_mask,
+            atom_to_res_idx=atom_to_res_idx,
+            min_distance=min_distance,
+            max_distance=max_distance,
+        )  # (L_max, L_max), (L_max, L_max)
+    else:
+        residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
+            atom_pos=atom_pos,
+            atom_pos_mask=atom_pos_mask,
+            atom_to_res_idx=atom_to_res_idx,
+            min_distance=min_distance,
+            max_distance=max_distance,
+        )  # (..., R_max, R_max), (..., R_max, R_max)
 
     # Targets (AF2-style binning; last bin is overflow)
     edges = torch.linspace(min_distance, max_distance, D - 1, device=device)

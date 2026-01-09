@@ -1,0 +1,189 @@
+data:
+  DB_PATH: /home/psk6950/data/
+
+  train_preprocessing:
+    cif_db_path: ${data.DB_PATH}/MiniWorld/multistate/seqID_to_cifmols_filtered.lmdb
+    a3m_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
+    tmp_dir: ${data.DB_PATH}/MiniWorld/multistate/data_tmp/monomer/train/
+    cluster_ids_path: ${data.DB_PATH}/MiniWorld/multistate/train_valid_split/train_clusters.txt
+    cluster_id_to_seq_ids_path: ${data.DB_PATH}/MiniWorld/multistate/clusterID_to_seqIDs.npz
+    seq_id_to_seq: ${data.DB_PATH}/BioMolDBv2_2024Oct21/fasta/protein_wo_signalp.fasta
+    signalp_dir: ${data.DB_PATH}/BioMolDBv2_2024Oct21/signalp/
+  valid_preprocessing:
+    cif_db_path: ${data.DB_PATH}/MiniWorld/multistate/seqID_to_cifmols_filtered.lmdb
+    a3m_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
+    tmp_dir: ${data.DB_PATH}/MiniWorld/multistate/data_tmp/monomer/valid/
+    cluster_ids_path: ${data.DB_PATH}/MiniWorld/multistate/train_valid_split/valid_clusters.txt
+    cluster_id_to_seq_ids_path: ${data.DB_PATH}/MiniWorld/multistate/clusterID_to_seqIDs.npz
+    seq_id_to_seq: ${data.DB_PATH}/BioMolDBv2_2024Oct21/fasta/protein_wo_signalp.fasta
+    signalp_dir: ${data.DB_PATH}/BioMolDBv2_2024Oct21/signalp/
+
+  crop:
+    contiguous_prob: 1.0
+    spatial_prob: 0.0
+    interface_prob: 0.0
+    crop_length: 384
+    level: residue
+
+  msa:
+    n_samples: 1
+    max_msa_depth: 384
+
+  kmer_fast_align:
+    kmer_index: ${data.DB_PATH}/kmer_align/kmer_index.tsv
+    fasta: ${data.DB_PATH}/fasta/protein_wo_signalp.fasta
+    kmer_threshold: 0.2
+    gap_split: 15
+    max_mismatch: 15
+    max_indel: 5
+    align_num: -1  # -1 means no limit
+    align_thr: 0.9
+    seed: 1123  # for reproducibility
+    
+  multistate:
+    n_prefilter: 48
+    n_samples: 48
+    temperatures: 1.0
+    consensus_ratio: 0.9
+    consensus_filter: 0.9
+
+diffuser:
+  seed : 0
+  method : AF3
+  scheduler:
+    method: AF3
+    P_mean: -1.2
+    P_std: 1.5
+    sigma_data: 16.0
+    sigma_max: 160.0
+    sigma_min: 4e-4
+    rho: 7.0
+    use_time_augmentation: True
+
+model:
+  common:
+    d_token_single: 384
+    d_token_single_input: 449  # 441 = 384 + 32 + 32 + 1
+    d_token_single_diffusion: 768
+    d_token_pair: 128
+    d_time: 256
+    d_msa: 64
+    d_atom_single: 128
+    d_atom_pair: 16
+    num_res_class: 32
+    r_max: 32
+    s_max: 2
+    implementation: triton
+    use_checkpoint: False
+    to_bias_init: zero
+    norm: qk
+
+
+  trunk:
+    n_recycle_max: 1 # 4
+    pairformer: 
+      n_block: 8
+      d_single: ${model.common.d_token_single}
+      d_pair: ${model.common.d_token_pair}
+      d_hidden_tri_multi: 128
+      d_hidden_tri_attention: 32
+      n_head_tri_attention: 4
+      n_head_attention: 16
+      p_drop: 0.25
+      use_single: False
+      use_single_cond: False
+      use_self_attention: True
+      implementation: triton
+      pair_moe_experts: 1
+      pair_moe_topk: 1
+      single_moe_experts: 1
+      single_moe_topk: 1
+
+    msa_module: 
+      n_block: 4
+      d_msa: 64
+      d_pair: ${model.common.d_token_pair}
+      d_hidden_msa: 32
+      d_hidden_tri_multi: 128
+      d_hidden_tri_attention: 32
+      n_head_tri_attention: 4
+      n_head_attention: 16
+      p_drop_msa: 0.15
+      p_drop: 0.25
+      # use_self_attention: True
+      use_self_attention: False
+      implementation: triton
+
+  diffusion:
+    frequency_embedding_size: 256
+    n_block_atom: 3
+    n_block_token: 4
+    n_head_atom: 4
+    n_head_token: 24
+    n_transition_expand: 2
+    n_transition_block: 2
+    implementation: triton
+    use_beta: False
+
+    pair_moe_experts: 1  # 1 -> no MoE
+    pair_moe_topk: 1
+    token_single_moe_experts: 1
+    token_single_moe_topk: 1
+    atom_single_moe_experts: 1
+    atom_single_moe_topk: 1
+
+  precision:
+    input: torch.float32
+    use_scaler: False  # Use GradScaler for mixed precision training
+    default:
+      op_dtype: torch.float32  # Default operation dtype
+      out_dtype: torch.float32  # Default output dtype
+    precision_map:
+      "sdist_embedder":
+        op_dtype : torch.bfloat16
+        out_dtype: torch.float32  # Precision for sdist to pair embedding
+      "pairformer_blocks":
+        op_dtype : torch.bfloat16
+        out_dtype: torch.bfloat16  # Precision for pairformer blocks
+      "diffusion_module":
+        op_dtype : torch.float32
+        out_dtype: torch.float32  # Precision for diffusion modules
+  use_distogram: True
+
+
+experiment:
+  comment: cmap_prediction_v0.6.0 (distogram loss, grad accum 16, max lr 1e-3)
+
+  # Training arguments
+  num_batch: 1
+  num_epoch: 5000
+  # max_lr: 1.8e-3
+  optimizer : AdamW
+  min_lr: 1e-4
+  max_lr: 1e-3
+  warmup_steps: 512
+  decay_steps: 5e4
+  self_condition: False
+  compile: False
+  num_augment: 48
+  train_item: 2560
+  valid_item: 160
+
+  # Validation arguments
+  eval_freq: 5
+  eval_sample_num: 16
+  eval_input_num: 50
+  eval_timesteps: 100
+  grad_clip_max_norm: 10.0
+  grad_accum_steps: 16
+  num_workers: 4
+  prefetch_factor: 8
+  use_ema: True
+  ema_decay: 0.999
+  bce_pos_weight: 1.0
+  long_range_sigmoid_amp: 3.0
+
+  # Loss weights
+  loss:
+    diffusion_loss: 4.0
+    distogram_loss: 0.001
