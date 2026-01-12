@@ -10,7 +10,6 @@ from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from team_gm import BaseClient
 from team_gm.core.callbacks import ModelEMA
-from team_gm.modules import Pairformer
 from torch import nn
 
 from miniworld.data.dataloader.dataloader_multistate import (
@@ -221,7 +220,6 @@ class ContactMapPredictionClient(BaseClient):
 
     def loss_fn(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, Mapping]:
         """Compute the loss given a noisy batch."""
-
         # Long-range weighting hyperparameters (fallback to function defaults)
         lr_min_seq_sep = (
             self.config.experiment.long_range_min_seq_sep
@@ -263,8 +261,6 @@ class ContactMapPredictionClient(BaseClient):
                 long_range_sigmoid_k=lr_sigmoid_k,
                 long_range_sigmoid_amp=lr_sigmoid_amp,
             )
-
-
 
         focal_loss = cal_contact_map_focal_loss(
             contact_map_logit,

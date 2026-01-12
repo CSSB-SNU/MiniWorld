@@ -22,9 +22,6 @@ from miniworld.data.dataloader.dataloader_multistate import (
 )
 from miniworld.data.features.features_biomol import Batch
 from miniworld.loss.auxiliary import (
-    cal_contact_map_focal_loss,
-    cal_contact_map_weighted_bce_loss,
-    cal_long_range_auroc,
     cal_long_range_f1,
     cal_long_range_precision,
     cal_long_range_recall,
@@ -44,7 +41,7 @@ from miniworld.modules.primitives import (
 )
 from miniworld.utils.diffusion.diffuser import D3PMDiffuser, SEDDDiffuser
 from miniworld.utils.diffusion.scheduler import D3PMScheduler, SEDDScheduler
-from miniworld.utils.diffusion.solver import DiffusionSolver, D3PMSolver, SEDDSolver
+from miniworld.utils.diffusion.solver import D3PMSolver, DiffusionSolver, SEDDSolver
 from miniworld.utils.precision_manager import PrecisionConfig, precision_manager
 
 
@@ -140,9 +137,14 @@ class ContactMapGenerationModel(nn.Module):
         ) = self.input_feature_embedder(batch)
 
         token_pair = torch.zeros_like(token_pair_init)
-        pair_mask = batch.structure.residue_mask[:, :, None] * batch.structure.residue_mask[
-            :, None, :
-        ]
+        pair_mask = (
+            batch.structure.residue_mask[:, :, None]
+            * batch.structure.residue_mask[
+                :,
+                None,
+                :,
+            ]
+        )
         contact_pair = self.contact_map_embedder(
             noisy_contact_map.to(token_pair_init.dtype),
         )
@@ -244,9 +246,7 @@ class ContactMapGenerationClient(BaseClient):
         data: "ContactMapGenerationClient.DataConfig"
         model: "ContactMapGenerationModel.Config"
         experiment: "ContactMapGenerationClient.ExperimentsConfig"
-        discrete_diffusion: (
-            "ContactMapGenerationClient.DiscreteDiffusionConfig" | None
-        ) = None
+        discrete_diffusion: "ContactMapGenerationClient.DiscreteDiffusionConfig"
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
@@ -286,10 +286,7 @@ class ContactMapGenerationClient(BaseClient):
                 raise ValueError(msg)
             scheduler = SEDDScheduler(cfg.sedd_scheduler)
             diffuser = SEDDDiffuser(cfg.sedd_diffuser, scheduler)
-            if (
-                cfg.sedd_diffuser.num_classes
-                != self.config.model.contact_num_classes
-            ):
+            if cfg.sedd_diffuser.num_classes != self.config.model.contact_num_classes:
                 msg = "SEDD diffuser num_classes must match model.contact_num_classes (ContactMapHead outputs 2)."
                 raise ValueError(msg)
             solver = SEDDSolver(
@@ -312,10 +309,7 @@ class ContactMapGenerationClient(BaseClient):
                 raise ValueError(msg)
             scheduler = D3PMScheduler(cfg.d3pm_scheduler)
             diffuser = D3PMDiffuser(cfg.d3pm_diffuser, scheduler)
-            if (
-                cfg.d3pm_diffuser.num_classes
-                != self.config.model.contact_num_classes
-            ):
+            if cfg.d3pm_diffuser.num_classes != self.config.model.contact_num_classes:
                 msg = "D3PM diffuser num_classes must match model.contact_num_classes (ContactMapHead outputs 2)."
                 raise ValueError(msg)
             solver = D3PMSolver(
@@ -338,23 +332,6 @@ class ContactMapGenerationClient(BaseClient):
         if self.discrete_diffusion is None:
             msg = "Discrete diffusion must be configured for generation."
             raise RuntimeError(msg)
-        # Long-range weighting hyperparameters (fallback to function defaults)
-        lr_min_seq_sep = (
-            self.config.experiment.long_range_min_seq_sep
-            if self.config.experiment.long_range_min_seq_sep is not None
-            else 16
-        )
-        lr_sigmoid_k = (
-            self.config.experiment.long_range_sigmoid_k
-            if self.config.experiment.long_range_sigmoid_k is not None
-            else 1.0
-        )
-        lr_sigmoid_amp = (
-            self.config.experiment.long_range_sigmoid_amp
-            if self.config.experiment.long_range_sigmoid_amp is not None
-            else 0.0
-        )
-
         contact_target, residue_pair_mask = extract_contact_map(
             batch.structure.atom_pos,
             batch.structure.atom_pos_mask,
@@ -367,20 +344,93 @@ class ContactMapGenerationClient(BaseClient):
             contact_labels,
             residue_pair_mask,
         )
-        contact_pred = self.model.forward(batch, xt_one_hot, tau)
-        loss = dd["diffuser"].cal_loss(contact_pred)
+        model_output = self.model.forward(
+            batch,
+            xt_one_hot,
+            tau,
+        )  # d3pm : logit | sedd : ratio
+        loss = dd["diffuser"].cal_loss(model_output)
 
-        if dd["method"] == "d3pm":
-            contact_map_logit = contact_pred
-        else:
-            contact_map_logit = torch.log(contact_pred.clamp_min(1e-8))
+        return loss, {
+            "main_loss": loss.item(),
+            "total_loss": loss.item(),
+        }
 
-        focal_loss = cal_contact_map_focal_loss(
-            contact_map_logit,
-            batch.structure.atom_pos,
-            batch.structure.atom_pos_mask,
-            batch.scheme.atom_to_residue_idx_map,
+    def training_step(self, batch: Batch) -> dict[str, float]:
+        """Train the model on a batch."""
+        with precision_manager(self.model, self.config.model.precision):
+            loss, loss_dict = self.loss_fn(batch)
+            self.backward(loss)
+            return loss_dict
+
+    def validation_step(self, batch: Batch) -> dict[str, float]:
+        """Valdiate the model on a batch."""
+        # Note that when doing validation, we measure inference quality, not a loss.
+        # Please keep in mind that batch is duplicated to eval_sample_num, sample quality
+        # is measured by the best sample in the batch. Therefore the batch size should be
+        # give as 1.
+        if batch.shape[0] != 1:
+            msg = "Batch size for validation must be 1."
+            raise ValueError(msg)
+
+        return self.generate_contact_map(batch)
+
+    @torch.no_grad()
+    def generate_contact_map(
+        self,
+        batch: Batch,
+        num_steps: int | None = None,
+        save_dir: Path | None = None,
+    ) -> torch.Tensor:
+        """Generate contact maps via discrete diffusion solver."""
+        if self.discrete_diffusion is None:
+            msg = "Discrete diffusion must be configured for generation."
+            raise RuntimeError(msg)
+        self.model.eval()
+        batch = batch.to(self.device)
+        dd = self.discrete_diffusion
+        solver = dd["solver"]
+        steps = num_steps or self.config.experiment.eval_timesteps
+
+        pair_mask = (
+            batch.structure.residue_mask[:, :, None]
+            * batch.structure.residue_mask[
+                :,
+                None,
+                :,
+            ]
         )
+
+        def model_fn(xt_one_hot: torch.Tensor, tau: torch.Tensor) -> torch.Tensor:
+            return self.model.forward(batch, xt_one_hot, tau)
+
+        sample = solver.sample(
+            model_fn,
+            shape=torch.Size(
+                (
+                    batch.shape[0],
+                    batch.residue_length,
+                    batch.residue_length,
+                ),
+            ),
+            num_steps=steps,
+            device=self.device,
+        )
+        sample_labels = sample[0] if isinstance(sample, tuple) else sample
+        contact_map_prob = F.one_hot(
+            sample_labels,
+            num_classes=self.config.model.contact_num_classes,
+        ).float()
+        contact_map_prob = contact_map_prob * pair_mask.unsqueeze(-1)
+
+        # Long-range weighting hyperparameters (fallback to function defaults)
+        lr_min_seq_sep = (
+            self.config.experiment.long_range_min_seq_sep
+            if self.config.experiment.long_range_min_seq_sep is not None
+            else 16
+        )
+
+        contact_map_logit = contact_map_prob  # (B, L, L, C)
 
         # Long-range metrics (|i-j| >= min_seq_sep)
         min_seq_sep = lr_min_seq_sep
@@ -405,100 +455,6 @@ class ContactMapGenerationClient(BaseClient):
             batch.scheme.atom_to_residue_idx_map,
             min_seq_sep=min_seq_sep,
         )
-        long_range_auroc = cal_long_range_auroc(
-            contact_map_logit,
-            batch.structure.atom_pos,
-            batch.structure.atom_pos_mask,
-            batch.scheme.atom_to_residue_idx_map,
-            min_seq_sep=min_seq_sep,
-        )
-
-        aux_bce = cal_contact_map_weighted_bce_loss(
-            contact_map_logit,
-            batch.structure.atom_pos,
-            batch.structure.atom_pos_mask,
-            batch.scheme.atom_to_residue_idx_map,
-            pos_weight=self.config.experiment.bce_pos_weight,
-            long_range_min_seq_sep=lr_min_seq_sep,
-            long_range_sigmoid_k=lr_sigmoid_k,
-            long_range_sigmoid_amp=lr_sigmoid_amp,
-        )
-
-        return loss, {
-            "focal_loss": focal_loss.item(),
-            "bce_metric": aux_bce.item(),
-            "main_loss": loss.item(),
-            "total_loss": loss.item(),
-            "lr_precision": long_range_precision.mean().item(),
-            "lr_recall": long_range_recall.mean().item(),
-            "lr_f1": long_range_f1.mean().item(),
-            "lr_auroc": long_range_auroc.item(),
-        }
-
-    def training_step(self, batch: Batch) -> dict[str, float]:
-        """Train the model on a batch."""
-        with precision_manager(self.model, self.config.model.precision):
-            loss, loss_dict = self.loss_fn(batch)
-            self.backward(loss)
-            return loss_dict
-
-    def validation_step(self, batch: Batch) -> dict[str, float]:
-        """Valdiate the model on a batch."""
-        # Note that when doing validation, we measure inference quality, not a loss.
-        # Please keep in mind that batch is duplicated to eval_sample_num, sample quality
-        # is measured by the best sample in the batch. Therefore the batch size should be
-        # give as 1.
-        if batch.shape[0] != 1:
-            msg = "Batch size for validation must be 1."
-            raise ValueError(msg)
-        _, loss_dict = self.loss_fn(batch)
-        return loss_dict
-
-    @torch.no_grad()
-    def generate_contact_map(
-        self,
-        batch: Batch,
-        num_steps: int | None = None,
-        save_dir: Path | None = None,
-    ) -> torch.Tensor:
-        """Generate contact maps via discrete diffusion solver."""
-        if self.discrete_diffusion is None:
-            msg = "Discrete diffusion must be configured for generation."
-            raise RuntimeError(msg)
-        self.model.eval()
-        batch = batch.to(self.device)
-        dd = self.discrete_diffusion
-        solver = dd["solver"]
-        steps = num_steps or self.config.experiment.eval_timesteps
-
-        pair_mask = batch.structure.residue_mask[:, :, None] * batch.structure.residue_mask[
-            :, None, :
-        ]
-
-        def model_fn(xt_one_hot: torch.Tensor, tau: torch.Tensor) -> torch.Tensor:
-            return self.model.forward(batch, xt_one_hot, tau)
-
-        sample = solver.sample(
-            model_fn,
-            shape=torch.Size(
-                (
-                    batch.shape[0],
-                    batch.residue_length,
-                    batch.residue_length,
-                ),
-            ),
-            num_steps=steps,
-            device=self.device,
-        )
-        if isinstance(sample, tuple):
-            sample_labels = sample[0]
-        else:
-            sample_labels = sample
-        contact_map_prob = F.one_hot(
-            sample_labels,
-            num_classes=self.config.model.contact_num_classes,
-        ).float()
-        contact_map_prob = contact_map_prob * pair_mask.unsqueeze(-1)
 
         if save_dir is not None:
             contact_map_np = contact_map_prob[0, ..., 1].cpu().numpy()
@@ -513,4 +469,8 @@ class ContactMapGenerationClient(BaseClient):
             plt.savefig(save_path)
             plt.close(fig)
 
-        return contact_map_prob
+        return {
+            "long_range_precision": long_range_precision,
+            "long_range_recall": long_range_recall,
+            "long_range_f1": long_range_f1,
+        }

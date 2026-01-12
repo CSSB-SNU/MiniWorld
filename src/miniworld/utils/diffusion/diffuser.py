@@ -8,9 +8,9 @@ from pydantic import BaseModel
 from scipy.spatial.transform import Rotation
 
 from miniworld.utils.diffusion.scheduler import (
+    D3PMScheduler,
     DecoupledEDMScheduler,
     SEDDScheduler,
-    D3PMScheduler,
 )
 from miniworld.utils.structure.align import weighted_align
 from miniworld.utils.structure.se3 import apply_chain_rt, sample_rigid
@@ -78,7 +78,8 @@ class Diffuser(ABC):
         # random rotation matrix
         n = x.shape[0]
         rot_mats = torch.from_numpy(Rotation.random(n).as_matrix()).to(
-            x.device, x.dtype
+            x.device,
+            x.dtype,
         )
 
         # random translation vector
@@ -307,10 +308,12 @@ class DecoupledEDMDiffuser(Diffuser):
         noisy_x = apply_chain_rt(noisy_x, R, T, atom_chain_break)
 
         input_scaling = self.scheduler.input_scale(sigma_y, sigma_T).to(
-            device=device, dtype=dtype
+            device=device,
+            dtype=dtype,
         )
         t_emb = self.scheduler.noise_condition(sigma_y).to(
-            device=device, dtype=dtype
+            device=device,
+            dtype=dtype,
         )  # follow sigma_y
         x_input = noisy_x * input_scaling.view(sigma_shape)
 
@@ -344,7 +347,7 @@ class DecoupledEDMDiffuser(Diffuser):
             raise ValueError(msg)
         if x_update.dtype != self.dtype:
             msg = "x_update must be of type float32, but got dtype: " + str(
-                x_update.dtype
+                x_update.dtype,
             )
             raise ValueError(msg)
         x0 = self._buffer["x0"]
@@ -491,7 +494,11 @@ class SEDDDiffuser(Diffuser):
         probs = self.scheduler.forward_prob(x0, t, num_classes=num_classes)
 
         flat_prob = probs.view(probs.shape[0], -1, probs.shape[-1])
-        sampled = torch.multinomial(flat_prob, num_samples=1).squeeze(-1)
+        B, N, C = flat_prob.shape
+        sampled = torch.multinomial(
+            flat_prob.view(B * N, C),
+            num_samples=1,
+        ).view(B, N)
         xt = sampled.view(*x0.shape)
         if self.config.enforce_symmetric:
             xt = _symmetrize_labels(xt.clone())
@@ -550,7 +557,7 @@ class SEDDDiffuser(Diffuser):
                 device=ratio_pred.device,
                 dtype=ratio_pred.dtype,
             )
-            sigma = sigma.view(weight.shape[:-1] + (1,))
+            sigma = sigma.view((sigma.shape[0],) + (1,) * (weight.ndim - 1))
             weight = weight * sigma
 
         loss = (ratio_pred - target_ratio * torch.log(ratio_pred)) * weight
@@ -637,7 +644,7 @@ class D3PMDiffuser(Diffuser):
         alpha_term = alpha_bar.view(sigma_shape + (1,))
         if self.scheduler.config.transition_mode == "uniform":
             prob = alpha_term * one_hot + (1.0 - alpha_term) / float(
-                self.config.num_classes
+                self.config.num_classes,
             )
         elif self.scheduler.config.transition_mode == "absorbing":
             mask_class = self.scheduler.config.mask_class
@@ -655,7 +662,11 @@ class D3PMDiffuser(Diffuser):
             raise ValueError(msg)
 
         flat_prob = prob.view(prob.shape[0], -1, prob.shape[-1])
-        sampled = torch.multinomial(flat_prob, num_samples=1).squeeze(-1)
+        B, N, C = flat_prob.shape
+        sampled = torch.multinomial(
+            flat_prob.view(B * N, C),
+            num_samples=1,
+        ).view(B, N)
         xt = sampled.view(*x0.shape)
         if self.config.enforce_symmetric:
             xt = _symmetrize_labels(xt.clone())

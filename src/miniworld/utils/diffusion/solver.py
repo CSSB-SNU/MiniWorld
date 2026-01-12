@@ -6,8 +6,8 @@ import torch.nn.functional as F
 from pydantic import BaseModel
 
 from miniworld.utils.diffusion.scheduler import (
-    DecoupledEDMScheduler,
     D3PMScheduler,
+    DecoupledEDMScheduler,
     DiffusionScheduler,
     SEDDScheduler,
 )
@@ -90,7 +90,11 @@ class SEDDSolver(DiffusionSolver):
         self.enforce_symmetric = enforce_symmetric
         self.min_ratio = min_ratio
 
-    def _base_init_labels(self, shape: torch.Size, device: torch.device) -> torch.Tensor:
+    def _base_init_labels(
+        self,
+        shape: torch.Size,
+        device: torch.device,
+    ) -> torch.Tensor:
         if self.scheduler.config.transition_mode == "absorbing":
             mask_class = self.scheduler.config.mask_class
             if mask_class is None:
@@ -112,13 +116,16 @@ class SEDDSolver(DiffusionSolver):
         t_index: int,
         time_steps: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Perform one ancestral sampling step."""
         scheduler: SEDDScheduler = self.scheduler
         t_i = time_steps[t_index]
         t_next = time_steps[t_index + 1]
         xt_labels = xt_one_hot.argmax(dim=-1)
 
         sigma_i = scheduler.sigma(t_i)
-        t_emb = scheduler.noise_condition(sigma_i)
+        t_emb = (
+            scheduler.noise_condition(sigma_i).unsqueeze(0).repeat(xt_one_hot.shape[0])
+        )
         ratio_pred = model_fn(xt_one_hot, t_emb).clamp_min(self.min_ratio)
         if self.enforce_symmetric:
             ratio_pred = _symmetrize_pair(ratio_pred)
@@ -138,7 +145,11 @@ class SEDDSolver(DiffusionSolver):
         trans = trans / trans.sum(dim=-1, keepdim=True).clamp_min(1e-8)
 
         flat_prob = trans.view(trans.shape[0], -1, trans.shape[-1])
-        sampled = torch.multinomial(flat_prob, num_samples=1).squeeze(-1)
+        B, N, C = flat_prob.shape
+        sampled = torch.multinomial(
+            flat_prob.view(B * N, C),
+            num_samples=1,
+        ).view(B, N)
         xt_next = sampled.view(*xt_labels.shape)
         xt_one_hot_next = torch.nn.functional.one_hot(
             xt_next,
@@ -162,6 +173,7 @@ class SEDDSolver(DiffusionSolver):
         device: torch.device,
         return_intermediate: bool = False,
     ) -> tuple[torch.Tensor, ...]:
+        """Sample from the diffusion model using ancestral sampling."""
         time_steps = self.scheduler.sampling_time_steps(num_steps).to(device)
 
         init_labels = self._base_init_labels(shape, device)
@@ -207,11 +219,12 @@ class D3PMSolver(DiffusionSolver):
         t_index: int,
         time_steps: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Perform one ancestral sampling step."""
         scheduler: D3PMScheduler = self.scheduler
         t = time_steps[t_index].long()
         xt_labels = xt_one_hot.argmax(dim=-1)
 
-        t_emb = scheduler.noise_condition(t)
+        t_emb = scheduler.noise_condition(t).unsqueeze(0).repeat(xt_one_hot.shape[0])
         logits_x0 = model_fn(xt_one_hot, t_emb)
         x0_hat = logits_x0.argmax(dim=-1)
 
@@ -223,7 +236,11 @@ class D3PMSolver(DiffusionSolver):
         )
 
         flat_prob = q_post.view(q_post.shape[0], -1, q_post.shape[-1])
-        sampled = torch.multinomial(flat_prob, num_samples=1).squeeze(-1)
+        B, N, C = flat_prob.shape
+        sampled = torch.multinomial(
+            flat_prob.view(B * N, C),
+            num_samples=1,
+        ).view(B, N)
         xt_minus_1 = sampled.view(*x0_hat.shape)
         xt_minus_1_one_hot = F.one_hot(
             xt_minus_1,
@@ -247,6 +264,7 @@ class D3PMSolver(DiffusionSolver):
         device: torch.device,
         return_intermediate: bool = False,
     ) -> tuple[torch.Tensor, ...]:
+        """Sample from the diffusion model using ancestral sampling."""
         time_steps = self.scheduler.sampling_time_steps(num_steps).to(device)
         if self.scheduler.config.transition_mode == "absorbing":
             mask_class = self.scheduler.config.mask_class
@@ -293,7 +311,9 @@ class ODEEulerSolver(DiffusionSolver):
     """  # noqa: RUF002
 
     def __init__(
-        self, config: DiffusionSolver.SolverConfig, scheduler: SchedulerT
+        self,
+        config: DiffusionSolver.SolverConfig,
+        scheduler: SchedulerT,
     ) -> None:
         super().__init__(config, scheduler)
 
@@ -390,7 +410,9 @@ class AF3Solver(DiffusionSolver):
     """A solver implementing the AF3 method."""
 
     def __init__(
-        self, config: DiffusionSolver.SolverConfig, scheduler: SchedulerT
+        self,
+        config: DiffusionSolver.SolverConfig,
+        scheduler: SchedulerT,
     ) -> None:
         super().__init__(config, scheduler)
         self.gamma_0 = 0.8

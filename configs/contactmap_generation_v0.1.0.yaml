@@ -108,7 +108,7 @@ model:
     n_transition_expand: 2
     n_transition_block: 2
     implementation: triton
-    use_beta: True
+    use_beta: False
     pair_moe_experts: 1
     pair_moe_topk: 1
     token_single_moe_experts: 1
@@ -117,43 +117,53 @@ model:
     atom_single_moe_topk: 1
 
   precision:
-    bf16: True
-    tf32: False
+    input: torch.float32
+    use_scaler: False  # Use GradScaler for mixed precision training
+    default:
+      op_dtype: torch.float32  # Default operation dtype
+      out_dtype: torch.float32  # Default output dtype
+    precision_map:
+      "sdist_embedder":
+        op_dtype : torch.bfloat16
+        out_dtype: torch.float32  # Precision for sdist to pair embedding
+      "pairformer_blocks":
+        op_dtype : torch.bfloat16
+        out_dtype: torch.bfloat16  # Precision for pairformer blocks
+      "diffusion_module":
+        op_dtype : torch.float32
+        out_dtype: torch.float32  # Precision for diffusion modules
 
 experiment:
   comment: contactmap_generation_v0.1.0_sedd
-  name: contactmap_generation_v0.1.0_sedd
-  overfitting: False
-  overfitting_dir: null
-  train_item: 25600
-  valid_item: 2560
+
+  # Training arguments
   num_batch: 1
-  num_epoch: 1000
-  optimizer: AdamW
-  max_lr: 1.0e-4
-  min_lr: 1.0e-5
-  weight_decay: 0.01
-  warmup_steps: 5000
-  decay_steps: 5000000
-  decay_factor: 0.95
-  self_condition: True
+  num_epoch: 5000
+  # max_lr: 1.8e-3
+  optimizer : AdamW
+  min_lr: 1e-4
+  max_lr: 1e-3
+  warmup_steps: 512
+  decay_steps: 5e4
+  self_condition: False
   compile: False
-  num_augment: 8
-  eval_freq: 10
-  eval_sample_num: 5
-  eval_timesteps: 100
+  num_augment: 48
+  train_item: 2560
+  valid_item: 160
+
+  # Validation arguments
+  eval_freq: 5
+  eval_sample_num: 16
   eval_input_num: 50
-  grad_clip_max_norm: 1.0
-  grad_accum_steps: 256
+  eval_timesteps: 100
+  grad_clip_max_norm: 10.0
+  grad_accum_steps: 1
   num_workers: 4
-  prefetch_factor: 4
-  seed: 0
+  prefetch_factor: 8
   use_ema: True
   ema_decay: 0.999
-  bce_pos_weight: 8.0
-  long_range_min_seq_sep: null
-  long_range_sigmoid_k: null
-  long_range_sigmoid_amp: null
+  bce_pos_weight: 2.0
+  long_range_sigmoid_amp: 3.0
 
 discrete_diffusion:
   method: sedd
