@@ -134,7 +134,7 @@ model:
         out_dtype: torch.float32  # Precision for diffusion modules
 
 experiment:
-  comment: contactmap_generation_v0.1.0_sedd (grad accum 1)
+  comment: contactmap_generation_v0.1.1_sedd (grad accum 16)
 
   # Training arguments
   num_batch: 1
@@ -157,7 +157,7 @@ experiment:
   eval_input_num: 50
   eval_timesteps: 100
   grad_clip_max_norm: 10.0
-  grad_accum_steps: 1
+  grad_accum_steps: 16
   num_workers: 4
   prefetch_factor: 8
   use_ema: True

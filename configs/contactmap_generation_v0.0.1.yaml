@@ -134,7 +134,7 @@ model:
         out_dtype: torch.float32  # Precision for diffusion modules
 
 experiment:
-  comment: contactmap_generation_v0.1.0_sedd (grad accum 1)
+  comment: contactmap_generation_v0.0.1_d3pm (grad accum 16)
 
   # Training arguments
   num_batch: 1
@@ -157,7 +157,7 @@ experiment:
   eval_input_num: 50
   eval_timesteps: 100
   grad_clip_max_norm: 10.0
-  grad_accum_steps: 1
+  grad_accum_steps: 16
   num_workers: 4
   prefetch_factor: 8
   use_ema: True
@@ -166,22 +166,20 @@ experiment:
   long_range_sigmoid_amp: 3.0
 
 discrete_diffusion:
-  method: sedd
-  sedd_scheduler:
-    method: SEDD
+  method: d3pm
+  d3pm_scheduler:
+    method: D3PM
     num_train_timesteps: 1000
-    sigma_min: 1.0e-4
-    sigma_max: 20.0
-    schedule: geometric
+    beta_start: 1.0e-4
+    beta_end: 2.0e-2
+    beta_schedule: linear
     transition_mode: uniform
     mask_class: null
-  sedd_diffuser:
-    method: SEDD
+  d3pm_diffuser:
+    method: D3PM
     seed: 0
     num_classes: 2
     enforce_symmetric: True
-    weight_with_sigma: True
-    min_ratio: 1.0e-5
-  sedd_solver:
+  d3pm_solver:
     method: Euler
     seed: 0
