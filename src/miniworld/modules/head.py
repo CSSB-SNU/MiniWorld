@@ -54,4 +54,4 @@ class DistogramHead(nn.Module):
         """Forward pass."""
         pair = self._symmetrize(pair)
         x = self.linear(pair.float())
-        return F.log_softmax(x, dim=-1)
+        return x

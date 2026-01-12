@@ -241,8 +241,8 @@ class ContactMapPredictionClient(BaseClient):
 
         if self.config.model.use_distogram:
             distogram_logit = self.model.forward(noisy_batch)
-            contact_logit = distogram_logit[..., :13].sum(dim=-1) # ~ 6Å cutoff
-            noncontact_logit = distogram_logit[..., 13:].sum(dim=-1)
+            contact_logit = torch.logsumexp(distogram_logit[..., :13], dim=-1)
+            noncontact_logit = torch.logsumexp(distogram_logit[..., 13:], dim=-1)
             contact_map_logit = torch.stack([noncontact_logit, contact_logit], dim=-1)
 
             loss = cal_atom_distogram_loss(
