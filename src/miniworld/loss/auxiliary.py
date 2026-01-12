@@ -146,7 +146,6 @@ def cal_atom_distogram_loss(
     *lead, L, _, D = logit_pred.shape
     device = logit_pred.device
 
-
     if atom_pos.dim() == 3:
         # Single structure
         residue_dists, residue_pair_mask = get_shortest_distances(
@@ -183,8 +182,6 @@ def cal_atom_distogram_loss(
     return num / denom  # (*,)
 
 
-
-
 @typecheck
 def cal_contact_map_focal_loss(
     logit_pred: Float[torch.Tensor, "* L L 2"],
@@ -213,6 +210,7 @@ def cal_contact_map_focal_loss(
 
     Returns:
         Focal loss averaged over valid residue pairs. Shape: (*,)
+
     """
     *lead, L, _, C = logit_pred.shape
     if C != 2:
@@ -256,7 +254,9 @@ def cal_contact_map_focal_loss(
     alpha_tensor_pos = torch.as_tensor(alpha, dtype=ce.dtype, device=device)
     alpha_tensor_neg = torch.as_tensor(1.0 - alpha, dtype=ce.dtype, device=device)
     alpha_factor = torch.where(
-        contact_target, alpha_tensor_pos, alpha_tensor_neg
+        contact_target,
+        alpha_tensor_pos,
+        alpha_tensor_neg,
     )  # (*, L, L)
 
     modulating_factor = (1.0 - p_t) ** gamma  # (*, L, L)
@@ -270,6 +270,8 @@ def cal_contact_map_focal_loss(
     num = focal.sum(dim=(-2, -1))  # (*,)
 
     return num / denom  # (*,)
+
+
 @typecheck
 def cal_contact_map_weighted_bce_loss(
     logit_pred: Float[torch.Tensor, "* L L 2"],
@@ -302,6 +304,7 @@ def cal_contact_map_weighted_bce_loss(
 
     Returns:
         Weighted BCE loss averaged over valid residue pairs. Shape: (*,)
+
     """
     *lead, L, _, C = logit_pred.shape
     if C != 2:
@@ -347,9 +350,13 @@ def cal_contact_map_weighted_bce_loss(
     idx = torch.arange(L, device=device)
     seq_sep = (idx[None, :, None] - idx[None, None, :]).abs()  # (1, L, L)
     sigmoid_k = torch.as_tensor(long_range_sigmoid_k, dtype=bce.dtype, device=device)
-    sigmoid_amp = torch.as_tensor(long_range_sigmoid_amp, dtype=bce.dtype, device=device)
+    sigmoid_amp = torch.as_tensor(
+        long_range_sigmoid_amp,
+        dtype=bce.dtype,
+        device=device,
+    )
     long_range_weight = 1.0 + sigmoid_amp * torch.sigmoid(
-        (seq_sep - long_range_min_seq_sep).to(bce.dtype) * sigmoid_k
+        (seq_sep - long_range_min_seq_sep).to(bce.dtype) * sigmoid_k,
     )  # (1, L, L) -> in [1, 1+amp]
     bce = bce * long_range_weight  # (*, L, L)
 
@@ -361,6 +368,7 @@ def cal_contact_map_weighted_bce_loss(
 
     return num / denom  # (*,)
 
+
 @typecheck
 def _extract_long_range_contact_targets_and_mask(
     atom_pos: Float[torch.Tensor, "* N L_atom 3"],
@@ -370,11 +378,11 @@ def _extract_long_range_contact_targets_and_mask(
     min_distance: float,
     max_distance: float,
     min_seq_sep: int,
-    L: int,
+    residue_length: int,
     device: torch.device,
 ) -> tuple[Bool[torch.Tensor, "* L L"], Bool[torch.Tensor, "* L L"]]:
-    """Helper: extract long-range contact targets and valid-pair mask."""
-    with torch.no_grad():
+    """Extract long-range contact targets and valid-pair mask."""
+    if atom_pos.dim() == 4:
         residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
             atom_pos=atom_pos,
             atom_pos_mask=atom_pos_mask,
@@ -382,23 +390,29 @@ def _extract_long_range_contact_targets_and_mask(
             min_distance=min_distance,
             max_distance=max_distance,
         )  # (*, L, L), (*, L, L)
+    else:
+        residue_dists, residue_pair_mask = get_shortest_distances(
+            atom_pos=atom_pos,
+            atom_pos_mask=atom_pos_mask,
+            atom_to_res_idx=atom_to_res_idx,
+            min_distance=min_distance,
+            max_distance=max_distance,
+        )  # (L, L), (L, L)
 
     contact_target = residue_dists <= cutoff  # (*, L, L), bool
 
     # i < j
     tri = torch.triu(
-        torch.ones(L, L, dtype=torch.bool, device=device),
+        torch.ones(residue_length, residue_length, dtype=torch.bool, device=device),
         diagonal=1,
     )
 
     # |i - j| >= min_seq_sep
-    idx = torch.arange(L, device=device)
+    idx = torch.arange(residue_length, device=device)
     seq_sep_mask = (idx[None, :, None] - idx[None, None, :]).abs() >= min_seq_sep
     seq_sep_mask = seq_sep_mask.squeeze(0)  # (L, L)
 
-    valid_pair_mask = (
-        residue_pair_mask.to(torch.bool) & tri & seq_sep_mask
-    )  # (*, L, L)
+    valid_pair_mask = residue_pair_mask.to(torch.bool) & tri & seq_sep_mask  # (*, L, L)
 
     return contact_target, valid_pair_mask
 
@@ -414,9 +428,11 @@ def cal_long_range_precision(
     max_distance: float = 22.0,
     min_seq_sep: int = 16,
 ) -> Float[torch.Tensor, "*"]:
+    """Calculate long-range contact precision."""
     *lead, L, _, C = logit_pred.shape
     if C != 2:
-        raise ValueError("logit_pred last dim must be 2")
+        msg = f"logit_pred last dim must be 2 (got {C})"
+        raise ValueError(msg)
     device = logit_pred.device
 
     contact_target, valid_pair_mask = _extract_long_range_contact_targets_and_mask(
@@ -427,7 +443,7 @@ def cal_long_range_precision(
         min_distance=min_distance,
         max_distance=max_distance,
         min_seq_sep=min_seq_sep,
-        L=L,
+        residue_length=L,
         device=device,
     )
 
@@ -451,9 +467,11 @@ def cal_long_range_recall(
     max_distance: float = 22.0,
     min_seq_sep: int = 16,
 ) -> Float[torch.Tensor, "*"]:
+    """Calculate long-range contact recall."""
     *lead, L, _, C = logit_pred.shape
     if C != 2:
-        raise ValueError("logit_pred last dim must be 2")
+        msg = f"logit_pred last dim must be 2 (got {C})"
+        raise ValueError(msg)
     device = logit_pred.device
 
     contact_target, valid_pair_mask = _extract_long_range_contact_targets_and_mask(
@@ -464,7 +482,7 @@ def cal_long_range_recall(
         min_distance=min_distance,
         max_distance=max_distance,
         min_seq_sep=min_seq_sep,
-        L=L,
+        residue_length=L,
         device=device,
     )
 
@@ -488,6 +506,7 @@ def cal_long_range_f1(
     max_distance: float = 22.0,
     min_seq_sep: int = 16,
 ) -> Float[torch.Tensor, "*"]:
+    """Calculate long-range contact F1 score."""
     precision = cal_long_range_precision(
         logit_pred,
         atom_pos,
@@ -524,9 +543,11 @@ def cal_long_range_auroc(
     max_distance: float = 22.0,
     min_seq_sep: int = 16,
 ) -> Float[torch.Tensor, "*"]:
+    """Calculate long-range contact AUROC."""
     *lead, L, _, C = logit_pred.shape
     if C != 2:
-        raise ValueError("logit_pred last dim must be 2")
+        msg = "logit_pred last dim must be 2"
+        raise ValueError(msg)
     device = logit_pred.device
 
     contact_target, valid_pair_mask = _extract_long_range_contact_targets_and_mask(
@@ -537,7 +558,7 @@ def cal_long_range_auroc(
         min_distance=min_distance,
         max_distance=max_distance,
         min_seq_sep=min_seq_sep,
-        L=L,
+        residue_length=L,
         device=device,
     )
 
@@ -552,7 +573,7 @@ def cal_long_range_auroc(
     if prob.numel() == 0:
         return torch.zeros((), device=device)
 
-    # Rank-based AUROC (equivalent to Mann–Whitney U)
+    # Rank-based AUROC (equivalent to Mann-Whitney U)
     order = torch.argsort(prob)
     ranks = torch.empty_like(order, dtype=torch.float)
     ranks[order] = torch.arange(
@@ -570,6 +591,4 @@ def cal_long_range_auroc(
         return torch.ones((), device=device)
 
     sum_ranks_pos = ranks[pos].sum()
-    auc = (sum_ranks_pos - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg)
-
-    return auc
+    return (sum_ranks_pos - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg)

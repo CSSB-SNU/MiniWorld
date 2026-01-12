@@ -1,5 +1,5 @@
 data:
-  DB_PATH: /mnt/local/data/
+  DB_PATH: /home/psk6950/data/
   train_db:
     cif_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
     a3m_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
@@ -137,8 +137,7 @@ model:
 
 loss:
   diffusion_loss: 4.0
-  contact_map_loss: 0.03
-  bce_pos_weight: 8.0
+  contact_map_loss: 1.0
 
 
 diffuser:
@@ -155,20 +154,20 @@ diffuser:
     use_time_augmentation: True
 
 experiment:
-  comment: "[LG] cmap_template_af3 wo msa_module (pos128, neg128)"
+  comment: "MiniWorld, bce p2, (42343)"
 
   # Training arguments
   num_batch: 1
   num_epoch: 1000
   # max_lr: 1.8e-3
-  max_lr: 1e-4
+  max_lr: 1e-3
   min_lr: 1e-4
   warmup_steps: 0
   decay_steps: 5e4
   self_condition: False
   compile: False
   num_augment: 48
-  train_item: 2400
+  train_item: 4
   valid_item: 640
 
   # Validation arguments
@@ -180,4 +179,7 @@ experiment:
   grad_accum_steps: 1
   num_workers: 4
   prefetch_factor: 8
-  use_ema: False
+  use_ema: True
+  ema_decay: 0.999
+  bce_pos_weight: 2.0
+  long_range_sigmoid_amp: 3.0

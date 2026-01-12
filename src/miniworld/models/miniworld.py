@@ -24,7 +24,14 @@ from miniworld.data.dataloader.dataloader_edge_backprop import (
 )
 from miniworld.data.features.features_biomol import Batch, NoisyBatch
 from miniworld.loss import metrics  # , losses
-from miniworld.loss.auxiliary import cal_contact_map_weighted_bce_loss
+from miniworld.loss.auxiliary import (
+    cal_contact_map_focal_loss,
+    cal_contact_map_weighted_bce_loss,
+    cal_long_range_auroc,
+    cal_long_range_f1,
+    cal_long_range_precision,
+    cal_long_range_recall,
+)
 from miniworld.modules.configs import (
     CommonConfig,
     DiffusionConfig,
@@ -48,7 +55,11 @@ from miniworld.utils.precision_manager import PrecisionConfig, precision_manager
 class ContactMapEmbedder(nn.Module):
     """ContactMap Embedder."""
 
-    def __init__(self, common_config, pairformer_config: Pairformer.Config) -> None:
+    def __init__(
+        self,
+        common_config: CommonConfig,
+        pairformer_config: Pairformer.Config,
+    ) -> None:
         super().__init__()
 
         self.to_pair = nn.Sequential(
@@ -140,13 +151,15 @@ class MiniWorldModel(nn.Module):
             ),
         )
 
-
         # Trunk forward
         self.msa_module = MSAModule(config.common, config.trunk.msa_module)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
         self.contact_map_head = ContactMapHead(config.common)
 
-        self.contact_map_embedder = ContactMapEmbedder(config.common, config.contact_map.pairformer)
+        self.contact_map_embedder = ContactMapEmbedder(
+            config.common,
+            config.contact_map.pairformer,
+        )
 
         # Diffusion module
         self.diffusion_module = DiffusionModule(config.common, config.diffusion)
@@ -374,7 +387,6 @@ class MiniWorldClient(BaseClient):
 
         diffusion_loss: float = 4.0
         contact_map_loss: float = 0.03
-        bce_pos_weight: float = 8.0
 
     class ExperimentsConfig(BaseModel):
         """Configuration for experiments."""
@@ -408,6 +420,10 @@ class MiniWorldClient(BaseClient):
         seed: int = 0
         use_ema: bool = True
         ema_decay: float = 0.999
+        bce_pos_weight: float = 2.0
+        long_range_min_seq_sep: int | None = None
+        long_range_sigmoid_k: float | None = None
+        long_range_sigmoid_amp: float = 3.0
 
     class DiffuserConfig(BaseModel):
         """Configuration for the diffuser."""
@@ -459,18 +475,97 @@ class MiniWorldClient(BaseClient):
         np.random.seed(seed)
         random.seed(seed)
 
+    def contact_map_quality(
+        self,
+        noisy_batch: NoisyBatch,
+        contact_map_logit: torch.Tensor,
+    ) -> Mapping:
+        """Compute contact map quality metrics."""
+        # Placeholder for contact map quality metrics
+        # Long-range weighting hyperparameters (fallback to function defaults)
+        lr_min_seq_sep = (
+            self.config.experiment.long_range_min_seq_sep
+            if self.config.experiment.long_range_min_seq_sep is not None
+            else 16
+        )
+
+        focal_loss = cal_contact_map_focal_loss(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+        )
+
+        # Long-range metrics (|i-j| >= min_seq_sep)
+        min_seq_sep = lr_min_seq_sep
+        long_range_precision = cal_long_range_precision(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+        long_range_recall = cal_long_range_recall(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+        long_range_f1 = cal_long_range_f1(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+        long_range_auroc = cal_long_range_auroc(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+        return {
+            "focal_loss": focal_loss.item(),
+            "lr_precision": long_range_precision.mean().item(),
+            "lr_recall": long_range_recall.mean().item(),
+            "lr_f1": long_range_f1.mean().item(),
+            "lr_auroc": long_range_auroc.item(),
+        }
+
     def loss_fn(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, Mapping]:
         """Compute the loss given a noisy batch."""
         atom_pos_update, contact_map_logit = self.model.forward(noisy_batch)
 
         structure_loss = self.diffuser.cal_loss(atom_pos_update)
 
+        # Long-range weighting hyperparameters (fallback to function defaults)
+        lr_min_seq_sep = (
+            self.config.experiment.long_range_min_seq_sep
+            if self.config.experiment.long_range_min_seq_sep is not None
+            else 16
+        )
+        lr_sigmoid_k = (
+            self.config.experiment.long_range_sigmoid_k
+            if self.config.experiment.long_range_sigmoid_k is not None
+            else 1.0
+        )
+        lr_sigmoid_amp = (
+            self.config.experiment.long_range_sigmoid_amp
+            if self.config.experiment.long_range_sigmoid_amp is not None
+            else 0.0
+        )
+
         contact_map_loss = cal_contact_map_weighted_bce_loss(
             contact_map_logit,
             noisy_batch.structure.atom_pos,
             noisy_batch.structure.atom_pos_mask,
             noisy_batch.scheme.atom_to_residue_idx_map,
-            pos_weight=self.config.loss.bce_pos_weight,
+            pos_weight=self.config.experiment.bce_pos_weight,
+            long_range_min_seq_sep=lr_min_seq_sep,
+            long_range_sigmoid_k=lr_sigmoid_k,
+            long_range_sigmoid_amp=lr_sigmoid_amp,
         )
 
         loss = (
@@ -478,10 +573,26 @@ class MiniWorldClient(BaseClient):
             + self.config.loss.contact_map_loss * contact_map_loss
         )
 
+        contact_map_quality_dict = self.contact_map_quality(
+            noisy_batch,
+            contact_map_logit,
+        )
+        focal_loss = contact_map_quality_dict["focal_loss"]
+        lr_precision = contact_map_quality_dict["lr_precision"]
+        lr_recall = contact_map_quality_dict["lr_recall"]
+        lr_f1 = contact_map_quality_dict["lr_f1"]
+        lr_auroc = contact_map_quality_dict["lr_auroc"]
+
         return loss, {
             "diffusion_loss": structure_loss.item(),
             "contact_map_loss": contact_map_loss.item(),
             "total_loss": loss.item(),
+            "main_loss": loss.item(),
+            "focal_loss": focal_loss,
+            "lr_precision": lr_precision,
+            "lr_recall": lr_recall,
+            "lr_f1": lr_f1,
+            "lr_auroc": lr_auroc,
         }
 
     def training_step(self, batch: Batch) -> dict[str, float]:
@@ -596,11 +707,17 @@ class MiniWorldClient(BaseClient):
         )
         min_rmsd = min(min_rmsd, rmsd)
         print(f"<<<category_lddt[{batch.name}]: {category_lddt}>>>")
+
+        contact_map_quality_dict = self.contact_map_quality(
+            batch,
+            contact_map_logit,
+        )
+
         return {
             "best_rmsd": min_rmsd,
             "best_lddt": max_lddt,
             "vald_contact_map_loss": contact_map_loss.item(),
-            # **category_lddt,
+            **contact_map_quality_dict,
         }
 
     @torch.no_grad()
