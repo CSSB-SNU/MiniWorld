@@ -2,11 +2,14 @@ from abc import ABC, abstractmethod
 from typing import Any, TypeVar
 
 import torch
+import torch.nn.functional as F
 from pydantic import BaseModel
 
 from miniworld.utils.diffusion.scheduler import (
     DecoupledEDMScheduler,
+    D3PMScheduler,
     DiffusionScheduler,
+    SEDDScheduler,
 )
 from miniworld.utils.structure.se3 import (
     apply_chain_rt,
@@ -16,6 +19,23 @@ from miniworld.utils.structure.se3 import (
 )
 
 SchedulerT = TypeVar("SchedulerT", bound="DiffusionScheduler")
+
+
+def _symmetrize_pair(x: torch.Tensor) -> torch.Tensor:
+    """Symmetrize pairwise tensors with channel as last dim (…, L, L, C)."""
+    if x.ndim < 4:
+        return x
+    swapped = x.transpose(-3, -2)
+    return 0.5 * (x + swapped)
+
+
+def _symmetrize_labels(x: torch.Tensor) -> torch.Tensor:
+    """Symmetrize integer labels for pairwise matrices."""
+    if x.ndim < 3:
+        return x
+    if x.ndim == 3:
+        return torch.triu(x) + torch.triu(x, 1).transpose(-1, -2)
+    return x
 
 
 class DiffusionSolver(ABC):
@@ -52,6 +72,208 @@ class DiffusionSolver(ABC):
     @abstractmethod
     def step(self, *args: Any, **kwargs: Any) -> Any:
         """Perform one solver step."""
+
+
+class SEDDSolver(DiffusionSolver):
+    """Solver for SEDD discrete diffusion using score-entropy ratios."""
+
+    def __init__(
+        self,
+        config: DiffusionSolver.SolverConfig,
+        scheduler: SEDDScheduler,
+        num_classes: int,
+        enforce_symmetric: bool = True,
+        min_ratio: float = 1e-5,
+    ) -> None:
+        super().__init__(config, scheduler)
+        self.num_classes = num_classes
+        self.enforce_symmetric = enforce_symmetric
+        self.min_ratio = min_ratio
+
+    def _base_init_labels(self, shape: torch.Size, device: torch.device) -> torch.Tensor:
+        if self.scheduler.config.transition_mode == "absorbing":
+            mask_class = self.scheduler.config.mask_class
+            if mask_class is None:
+                msg = "mask_class must be set for absorbing transition_mode."
+                raise ValueError(msg)
+            return torch.full(shape, mask_class, device=device, dtype=torch.long)
+        # uniform base
+        return torch.randint(
+            low=0,
+            high=self.num_classes,
+            size=shape,
+            device=device,
+        )
+
+    def step(
+        self,
+        model_fn: callable,
+        xt_one_hot: torch.Tensor,
+        t_index: int,
+        time_steps: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        scheduler: SEDDScheduler = self.scheduler
+        t_i = time_steps[t_index]
+        t_next = time_steps[t_index + 1]
+        xt_labels = xt_one_hot.argmax(dim=-1)
+
+        sigma_i = scheduler.sigma(t_i)
+        t_emb = scheduler.noise_condition(sigma_i)
+        ratio_pred = model_fn(xt_one_hot, t_emb).clamp_min(self.min_ratio)
+        if self.enforce_symmetric:
+            ratio_pred = _symmetrize_pair(ratio_pred)
+
+        delta_sigma = scheduler.sigma_derivative(t_i, t_next).to(
+            device=xt_one_hot.device,
+            dtype=xt_one_hot.dtype,
+        )
+        q = scheduler.base_q(xt_labels, num_classes=self.num_classes)
+
+        off_diag = 1.0 - xt_one_hot
+        offdiag_trans = delta_sigma.unsqueeze(-1) * q * ratio_pred * off_diag
+        offdiag_mass = offdiag_trans.sum(dim=-1, keepdim=True)
+        diag_prob = (1.0 - offdiag_mass).clamp_min(0.0)
+        trans = offdiag_trans + xt_one_hot * diag_prob
+        trans = torch.clamp(trans, min=0.0)
+        trans = trans / trans.sum(dim=-1, keepdim=True).clamp_min(1e-8)
+
+        flat_prob = trans.view(trans.shape[0], -1, trans.shape[-1])
+        sampled = torch.multinomial(flat_prob, num_samples=1).squeeze(-1)
+        xt_next = sampled.view(*xt_labels.shape)
+        xt_one_hot_next = torch.nn.functional.one_hot(
+            xt_next,
+            num_classes=self.num_classes,
+        ).to(xt_one_hot.dtype)
+
+        if self.enforce_symmetric:
+            xt_next = _symmetrize_labels(xt_next)
+            xt_one_hot_next = torch.nn.functional.one_hot(
+                xt_next,
+                num_classes=self.num_classes,
+            ).to(xt_one_hot.dtype)
+
+        return xt_one_hot_next, ratio_pred
+
+    def sample(
+        self,
+        model_fn: callable,
+        shape: torch.Size,
+        num_steps: int,
+        device: torch.device,
+        return_intermediate: bool = False,
+    ) -> tuple[torch.Tensor, ...]:
+        time_steps = self.scheduler.sampling_time_steps(num_steps).to(device)
+
+        init_labels = self._base_init_labels(shape, device)
+        xt_one_hot = torch.nn.functional.one_hot(
+            init_labels,
+            num_classes=self.num_classes,
+        ).to(torch.float32)
+        if self.enforce_symmetric:
+            xt_one_hot = _symmetrize_pair(xt_one_hot)
+
+        trajectory = []
+        ratio_list = []
+        for i in range(num_steps):
+            xt_one_hot, ratio_pred = self.step(model_fn, xt_one_hot, i, time_steps)
+            if return_intermediate:
+                trajectory.append(xt_one_hot.clone())
+                ratio_list.append(ratio_pred.clone())
+
+        final_labels = xt_one_hot.argmax(dim=-1)
+        if return_intermediate:
+            return final_labels, trajectory, ratio_list
+        return final_labels
+
+
+class D3PMSolver(DiffusionSolver):
+    """Ancestral sampler for D3PM discrete diffusion on pairwise labels."""
+
+    def __init__(
+        self,
+        config: DiffusionSolver.SolverConfig,
+        scheduler: D3PMScheduler,
+        num_classes: int,
+        enforce_symmetric: bool = True,
+    ) -> None:
+        super().__init__(config, scheduler)
+        self.num_classes = num_classes
+        self.enforce_symmetric = enforce_symmetric
+
+    def step(
+        self,
+        model_fn: callable,
+        xt_one_hot: torch.Tensor,
+        t_index: int,
+        time_steps: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        scheduler: D3PMScheduler = self.scheduler
+        t = time_steps[t_index].long()
+        xt_labels = xt_one_hot.argmax(dim=-1)
+
+        t_emb = scheduler.noise_condition(t)
+        logits_x0 = model_fn(xt_one_hot, t_emb)
+        x0_hat = logits_x0.argmax(dim=-1)
+
+        q_post = scheduler.q_posterior(
+            xt_labels,
+            x0_hat,
+            t,
+            num_classes=self.num_classes,
+        )
+
+        flat_prob = q_post.view(q_post.shape[0], -1, q_post.shape[-1])
+        sampled = torch.multinomial(flat_prob, num_samples=1).squeeze(-1)
+        xt_minus_1 = sampled.view(*x0_hat.shape)
+        xt_minus_1_one_hot = F.one_hot(
+            xt_minus_1,
+            num_classes=self.num_classes,
+        ).to(dtype=xt_one_hot.dtype)
+
+        if self.enforce_symmetric:
+            xt_minus_1 = _symmetrize_labels(xt_minus_1)
+            xt_minus_1_one_hot = F.one_hot(
+                xt_minus_1,
+                num_classes=self.num_classes,
+            ).to(dtype=xt_one_hot.dtype)
+
+        return xt_minus_1_one_hot, logits_x0
+
+    def sample(
+        self,
+        model_fn: callable,
+        shape: torch.Size,
+        num_steps: int,
+        device: torch.device,
+        return_intermediate: bool = False,
+    ) -> tuple[torch.Tensor, ...]:
+        time_steps = self.scheduler.sampling_time_steps(num_steps).to(device)
+        if self.scheduler.config.transition_mode == "absorbing":
+            mask_class = self.scheduler.config.mask_class
+            if mask_class is None:
+                msg = "mask_class must be set for absorbing transition_mode."
+                raise ValueError(msg)
+            labels = torch.full(shape, mask_class, device=device, dtype=torch.long)
+        else:
+            labels = torch.randint(
+                low=0,
+                high=self.num_classes,
+                size=shape,
+                device=device,
+            )
+        xt = F.one_hot(labels, num_classes=self.num_classes).to(torch.float32)
+        trajectory = []
+        logits_list = []
+        for i in range(num_steps):
+            xt, logits_x0 = self.step(model_fn, xt, i, time_steps)
+            if return_intermediate:
+                trajectory.append(xt.clone())
+                logits_list.append(logits_x0.clone())
+
+        final_labels = xt.argmax(dim=-1)
+        if return_intermediate:
+            return final_labels, trajectory, logits_list
+        return final_labels
 
 
 class ODEEulerSolver(DiffusionSolver):

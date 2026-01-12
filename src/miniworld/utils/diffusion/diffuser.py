@@ -3,10 +3,15 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from pydantic import BaseModel
 from scipy.spatial.transform import Rotation
 
-from miniworld.utils.diffusion.scheduler import DecoupledEDMScheduler
+from miniworld.utils.diffusion.scheduler import (
+    DecoupledEDMScheduler,
+    SEDDScheduler,
+    D3PMScheduler,
+)
 from miniworld.utils.structure.align import weighted_align
 from miniworld.utils.structure.se3 import apply_chain_rt, sample_rigid
 
@@ -390,3 +395,311 @@ class DecoupledEDMDiffuser(Diffuser):
             raise ValueError(msg)
         diff = x_pred - x0_aligned
         return (diff.pow(2) * weight).mean()
+
+
+def _symmetrize_pair(x: torch.Tensor) -> torch.Tensor:
+    """Symmetrize pairwise tensors with channel as last dim (…, L, L, C)."""
+    if x.ndim < 4:
+        return x
+    swapped = x.transpose(-3, -2)
+    return 0.5 * (x + swapped)
+
+
+def _symmetrize_labels(x: torch.Tensor) -> torch.Tensor:
+    """Symmetrize integer labels for pairwise matrices."""
+    if x.ndim < 3:
+        return x
+    if x.ndim == 3:
+        return torch.triu(x) + torch.triu(x, 1).transpose(-1, -2)
+    # (..., L, L, C) should not hit here for integer labels
+    return x
+
+
+class SEDDDiffuser(Diffuser):
+    """SEDD diffuser using score-entropy loss on discrete pairwise labels."""
+
+    class SEDDConfig(BaseModel):
+        """Configuration for the SEDDDiffuser class."""
+
+        method: str = "SEDD"
+        seed: int = 0
+        num_classes: int
+        enforce_symmetric: bool = True
+        weight_with_sigma: bool = True
+        min_ratio: float = 1e-5
+
+    def __init__(
+        self,
+        config: SEDDConfig,
+        scheduler: "DiffusionScheduler",
+    ) -> None:
+        if not isinstance(scheduler, SEDDScheduler):
+            msg = "SEDDDiffuser requires an SEDDScheduler."
+            raise TypeError(msg)
+        self.config = config
+        self.scheduler = scheduler
+        if (
+            self.scheduler.config.transition_mode == "absorbing"
+            and self.scheduler.config.mask_class is None
+        ):
+            msg = "mask_class must be set in scheduler config for absorbing transition_mode."
+            raise ValueError(msg)
+        if (
+            self.scheduler.config.mask_class is not None
+            and self.scheduler.config.mask_class >= self.config.num_classes
+        ):
+            msg = "mask_class must be within [0, num_classes)."
+            raise ValueError(msg)
+        self._set_seed(config.seed)
+        self.dtype = torch.float32
+        self.clear_buffer()
+
+    def _prepare_inputs(
+        self,
+        x0: torch.Tensor,
+        mask: torch.Tensor | None,
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
+        device = x0.device
+        if x0.dtype not in (torch.int64, torch.int32):
+            x0 = x0.long()
+        if len(x0.shape) not in {3, 4}:
+            msg = f"SEDDDiffuser expects pairwise label tensors, got shape {x0.shape}"
+            raise ValueError(msg)
+        x0 = x0.to(device=device)
+        if mask is not None:
+            mask = mask.to(device=device)
+            if mask.shape != x0.shape:
+                msg = f"Mask shape {mask.shape} must match x0 shape {x0.shape}."
+                raise ValueError(msg)
+            mask = mask.bool()
+        return x0, mask
+
+    @torch.no_grad()
+    def sample(
+        self,
+        x0: torch.Tensor,
+        mask: torch.Tensor | None,
+    ) -> tuple[torch.Tensor, torch.Tensor | None, torch.Tensor]:
+        """Sample xt ~ p_t|0 and store targets for score-entropy loss."""
+        self.clear_buffer()
+        x0, mask = self._prepare_inputs(x0, mask)
+        device = x0.device
+        num_classes = self.config.num_classes
+
+        B = x0.shape[0]
+        t = self.scheduler.sample_noise(B).to(device)
+        probs = self.scheduler.forward_prob(x0, t, num_classes=num_classes)
+
+        flat_prob = probs.view(probs.shape[0], -1, probs.shape[-1])
+        sampled = torch.multinomial(flat_prob, num_samples=1).squeeze(-1)
+        xt = sampled.view(*x0.shape)
+        if self.config.enforce_symmetric:
+            xt = _symmetrize_labels(xt.clone())
+            x0 = _symmetrize_labels(x0.clone())
+        xt_one_hot = F.one_hot(xt, num_classes=num_classes).to(self.dtype)
+        if self.config.enforce_symmetric:
+            probs = _symmetrize_pair(probs)
+
+        # Target ratios p_t(y|x0) / p_t(xt|x0)
+        denom = torch.gather(probs, dim=-1, index=xt.unsqueeze(-1)).clamp_min(
+            self.config.min_ratio,
+        )
+        target_ratio = probs / denom
+        target_ratio = target_ratio * (1.0 - xt_one_hot)
+
+        sigma = self.scheduler.sigma(t).to(device)
+        t_emb = self.scheduler.noise_condition(sigma).to(
+            device=device,
+            dtype=self.dtype,
+        )
+
+        self._buffer.update(
+            {
+                "xt_one_hot": xt_one_hot,
+                "target_ratio": target_ratio,
+                "mask": mask.to(self.dtype) if mask is not None else None,
+                "t": t,
+            },
+        )
+
+        return xt_one_hot, mask, t_emb
+
+    def cal_loss(self, ratio_pred: torch.Tensor) -> torch.Tensor:
+        """Score-entropy loss: sum_y≠x [s - r log s] with optional sigma weight."""
+        if "target_ratio" not in self._buffer:
+            msg = "Buffer is empty. Call sample before cal_loss."
+            raise RuntimeError(msg)
+
+        target_ratio: torch.Tensor = self._buffer["target_ratio"].to(
+            dtype=ratio_pred.dtype,
+        )
+        xt_one_hot: torch.Tensor = self._buffer["xt_one_hot"].to(
+            dtype=ratio_pred.dtype,
+        )
+        mask: torch.Tensor | None = self._buffer["mask"]
+        t: torch.Tensor = self._buffer["t"]
+
+        ratio_pred = ratio_pred.clamp_min(self.config.min_ratio)
+        off_diag = 1.0 - xt_one_hot.to(dtype=ratio_pred.dtype)
+        weight = off_diag
+        if mask is not None:
+            mask = mask.to(dtype=ratio_pred.dtype)
+            weight = weight * mask.unsqueeze(-1)
+        if self.config.weight_with_sigma:
+            sigma = self.scheduler.sigma(t.view(-1)).to(
+                device=ratio_pred.device,
+                dtype=ratio_pred.dtype,
+            )
+            sigma = sigma.view(weight.shape[:-1] + (1,))
+            weight = weight * sigma
+
+        loss = (ratio_pred - target_ratio * torch.log(ratio_pred)) * weight
+        denom = weight.sum()
+        if denom <= 0:
+            return torch.tensor(0.0, device=ratio_pred.device, dtype=ratio_pred.dtype)
+        return loss.sum() / denom
+
+
+class D3PMDiffuser(Diffuser):
+    """D3PM diffuser for discrete pairwise labels (e.g., contact/distance bins)."""
+
+    class D3PMConfig(BaseModel):
+        """Configuration for the D3PMDiffuser class."""
+
+        method: str = "D3PM"
+        seed: int = 0
+        num_classes: int
+        enforce_symmetric: bool = True
+
+    def __init__(
+        self,
+        config: D3PMConfig,
+        scheduler: "DiffusionScheduler",
+    ) -> None:
+        if not isinstance(scheduler, D3PMScheduler):
+            msg = "D3PMDiffuser requires a D3PMScheduler."
+            raise TypeError(msg)
+        self.config = config
+        self.scheduler = scheduler
+        if (
+            self.scheduler.config.transition_mode == "absorbing"
+            and self.scheduler.config.mask_class is None
+        ):
+            msg = "mask_class must be set in scheduler config for absorbing transition_mode."
+            raise ValueError(msg)
+        if (
+            self.scheduler.config.mask_class is not None
+            and self.scheduler.config.mask_class >= self.config.num_classes
+        ):
+            msg = "mask_class must be within [0, num_classes)."
+            raise ValueError(msg)
+        self._set_seed(config.seed)
+        self.dtype = torch.float32
+        self.clear_buffer()
+
+    def _prepare_inputs(
+        self,
+        x0: torch.Tensor,
+        mask: torch.Tensor | None,
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
+        device = x0.device
+        if x0.dtype not in (torch.int64, torch.int32):
+            x0 = x0.long()
+        if len(x0.shape) not in {3, 4}:
+            msg = f"D3PMDiffuser expects pairwise label tensors, got shape {x0.shape}"
+            raise ValueError(msg)
+        x0 = x0.to(device=device)
+        if mask is not None:
+            mask = mask.to(device=device)
+            if mask.shape != x0.shape:
+                msg = f"Mask shape {mask.shape} must match x0 shape {x0.shape}."
+                raise ValueError(msg)
+            mask = mask.bool()
+        return x0, mask
+
+    @torch.no_grad()
+    def sample(
+        self,
+        x0: torch.Tensor,
+        mask: torch.Tensor | None,
+    ) -> tuple[torch.Tensor, torch.Tensor | None, torch.Tensor]:
+        """Add discrete corruption to pairwise labels and return one-hot x_t."""
+        self.clear_buffer()
+        x0, mask = self._prepare_inputs(x0, mask)
+        device = x0.device
+        B = x0.shape[0]
+        sigma_shape = (B,) + (1,) * (x0.ndim - 1)
+
+        timesteps = self.scheduler.sample_noise(B).to(device)
+        alpha_bar = self.scheduler.alpha_bar(timesteps).to(device=device)
+
+        one_hot = F.one_hot(x0, num_classes=self.config.num_classes).to(self.dtype)
+        alpha_term = alpha_bar.view(sigma_shape + (1,))
+        if self.scheduler.config.transition_mode == "uniform":
+            prob = alpha_term * one_hot + (1.0 - alpha_term) / float(
+                self.config.num_classes
+            )
+        elif self.scheduler.config.transition_mode == "absorbing":
+            mask_class = self.scheduler.config.mask_class
+            if mask_class is None:
+                msg = "mask_class must be provided for absorbing transition_mode."
+                raise ValueError(msg)
+            mask_labels = torch.full_like(x0, mask_class)
+            mask_one_hot = F.one_hot(
+                mask_labels,
+                num_classes=self.config.num_classes,
+            ).to(self.dtype)
+            prob = alpha_term * one_hot + (1.0 - alpha_term) * mask_one_hot
+        else:
+            msg = f"Unknown transition_mode {self.scheduler.config.transition_mode}"
+            raise ValueError(msg)
+
+        flat_prob = prob.view(prob.shape[0], -1, prob.shape[-1])
+        sampled = torch.multinomial(flat_prob, num_samples=1).squeeze(-1)
+        xt = sampled.view(*x0.shape)
+        if self.config.enforce_symmetric:
+            xt = _symmetrize_labels(xt.clone())
+            x0 = _symmetrize_labels(x0.clone())
+        xt_one_hot = F.one_hot(xt, num_classes=self.config.num_classes).to(self.dtype)
+        if self.config.enforce_symmetric:
+            one_hot = _symmetrize_pair(one_hot)
+
+        t_emb = self.scheduler.noise_condition(timesteps).to(
+            device=device,
+            dtype=self.dtype,
+        )
+
+        self._buffer.update(
+            {
+                "x0_labels": x0,
+                "x0_one_hot": one_hot,
+                "mask": mask.to(self.dtype) if mask is not None else None,
+                "timesteps": timesteps,
+            },
+        )
+
+        return xt_one_hot, mask, t_emb
+
+    def cal_loss(self, logits: torch.Tensor) -> torch.Tensor:
+        """Compute cross-entropy loss to original labels."""
+        if "x0_labels" not in self._buffer:
+            msg = "Buffer is empty. Call sample before cal_loss."
+            raise RuntimeError(msg)
+        labels: torch.Tensor = self._buffer["x0_labels"]
+        mask: torch.Tensor | None = self._buffer["mask"]
+        if logits.shape[:-1] != labels.shape:
+            msg = f"Logits shape {logits.shape} incompatible with labels {labels.shape}"
+            raise ValueError(msg)
+        num_classes = logits.shape[-1]
+        logits_flat = logits.view(-1, num_classes)
+        labels_flat = labels.view(-1)
+        loss = F.cross_entropy(logits_flat, labels_flat, reduction="none")
+        loss = loss.view(labels.shape)
+        if mask is not None:
+            mask = mask.to(dtype=loss.dtype)
+            loss = loss * mask
+            denom = mask.sum()
+            if denom <= 0:
+                return torch.tensor(0.0, device=loss.device, dtype=loss.dtype)
+            return loss.sum() / denom
+        return loss.mean()
