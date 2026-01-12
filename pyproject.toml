@@ -1,0 +1,80 @@
+[project]
+authors = [{ name = "Sanggeun Park", email = "psk6950@snu.ac.kr" }]
+name = "miniworld"
+requires-python = ">= 3.10"
+version = "1.0.0"
+dependencies = [
+  "torch>=2.8.0,<3",
+  "wandb>=0.19.8,<0.20",
+  "omegaconf>=2.3.0,<3",
+  "numpy>=2.2.5,<3",
+  "einops>=0.8.1,<0.9",
+  "jaxtyping>=0.3.2,<0.4",
+  "beartype>=0.21.0,<0.22",
+  "scipy>=1.15.3,<2",
+  "lightning>=2.5.6,<3",
+  "biomol>=1.0.0",
+  "matplotlib>=3.10.7,<4",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.system-requirements]
+cuda = "12"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "E731",
+  "E741",
+  "F722",    # Incompatible with jaxtyping
+  "S311",
+  "D105",
+  "D100",
+  "D107",
+  "D203",
+  "D213",
+  "PLR0913",
+  "ANN401",
+  "N812",
+  "E501",
+  "N806",
+  "FBT001",
+  "FBT002",
+  "PLR2004",
+  "NPY002",
+]
+
+[tool.pixi.pypi-dependencies]
+miniworld = { path = ".", editable = true }
+team_gm = { path = "libs/team-gm", editable = true }
+kmer_fast_align = { path = "libs/kmer_fast_align", editable = true }
+datacooker = { path = "libs/datacooker", editable = true }
+
+[tool.pixi.dependencies]
+pytest = ">=8.3.5,<9"
+python = "~=3.10.16"
+ruff = ">=0.11.6,<0.12"
+ipykernel = ">=7.1.0,<8"
+matplotlib = ">=3.10.7,<4"
+pandas = ">=2.3.3,<3"
+tqdm = ">=4.67.1,<5"
+click = ">=8.3.1,<9"
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["D", "ANN201", "S101", "INP001", "FBT001", "PLC0415", "C901"]
+"src/miniworld/modules/kernels/*" = ["N806", "N803", "ANN", "ARG001", "D"]
+"src/miniworld/utils/diffusion/*" = ["RUF", "N803",]
+"src/miniworld/data/msa.py" = ["N802","N803"]
+
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "src/miniworld",
+]
