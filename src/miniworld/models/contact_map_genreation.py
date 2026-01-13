@@ -470,7 +470,7 @@ class ContactMapGenerationClient(BaseClient):
             plt.close(fig)
 
         return {
-            "long_range_precision": long_range_precision,
-            "long_range_recall": long_range_recall,
-            "long_range_f1": long_range_f1,
+            "long_range_precision": long_range_precision.mean().item(),
+            "long_range_recall": long_range_recall.mean().item(),
+            "long_range_f1": long_range_f1.mean().item(),
         }
