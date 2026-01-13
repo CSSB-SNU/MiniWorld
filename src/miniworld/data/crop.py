@@ -34,8 +34,10 @@ def get_chain_crop_indices(
     return chain_crop
 
 
-def get_valid_indices(cifmol: CIFMol) -> ndarray:
+def get_valid_indices(cifmol: CIFMol, remain_invalid_residues: bool = False) -> ndarray:
     """Get valid residue indices with non-nan atom coordinates."""
+    if remain_invalid_residues:
+        return np.arange(len(cifmol.residues))
     valid_atoms_indices = np.any(~np.isnan(cifmol.atoms.xyz), axis=-1)
     valid_residue_indices = cifmol.index_table.atoms_to_residues(valid_atoms_indices)
     return np.unique(valid_residue_indices)
@@ -45,9 +47,10 @@ def crop_contiguous_monomer(
     interface_bias: str | None,
     cifmol: CIFMol,
     crop_length: int,
+    remain_invalid_residues: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
     """Crop the structure and sequence into a contiguous region (polymer only)."""
-    valid_indices = get_valid_indices(cifmol)
+    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
     valid_chain_list = cifmol.residues[valid_indices].chains.chain_id.value
     if len(valid_chain_list) == 0:
         cifID = cifmol.id[0]
@@ -96,9 +99,10 @@ def crop_spatial_atom(
     chain_bias: str | None,
     cifmol: CIFMol,
     crop_length: int,
+    remain_invalid_residues: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
     """Crop the structure and sequence into a spatial region."""
-    valid_indices = get_valid_indices(cifmol)
+    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
     if valid_indices.size < crop_length:
         chain_crop = get_chain_crop_indices(cifmol, valid_indices)
         return valid_indices, chain_crop
@@ -152,9 +156,10 @@ def crop_spatial_interface(  # noqa: PLR0915
     cifmol: CIFMol,
     crop_length: int,
     interface_distance_cutoff: float = 6.0,  # atom level
+    remain_invalid_residues: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
     """Crop the structure and sequence into a spatial region."""
-    valid_indices = get_valid_indices(cifmol)
+    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
     if valid_indices.size < crop_length:
         chain_crop = get_chain_crop_indices(cifmol, valid_indices)
         return valid_indices, chain_crop
@@ -301,9 +306,10 @@ def crop_spatial_residue(
     chain_bias: str | None,
     cifmol: CIFMol,
     crop_length: int,
+    remain_invalid_residues: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
     """Crop the structure and sequence into a spatial region."""
-    valid_indices = get_valid_indices(cifmol)
+    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
     if valid_indices.size < crop_length:
         chain_crop = get_chain_crop_indices(cifmol, valid_indices)
         return valid_indices, chain_crop
@@ -343,9 +349,10 @@ def crop_spatial_interface_residue(  # noqa: PLR0915
     cifmol: CIFMol,
     crop_length: int,
     interface_distance_cutoff: float = 12.0,  # residue level
+    remain_invalid_residues: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
     """Crop the structure and sequence into a spatial region."""
-    valid_indices = get_valid_indices(cifmol)
+    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
     if valid_indices.size < crop_length:
         chain_crop = get_chain_crop_indices(cifmol, valid_indices)
         return valid_indices, chain_crop
@@ -538,9 +545,10 @@ def crop_spatial_interface_residue_simple(
     cifmol: CIFMol,
     crop_length: int,
     interface_distance_cutoff: float = 12.0,
+    remain_invalid_residues: bool = False,
 ) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     """Find interface residues, pick one at random as pivot, then crop by spatial proximity (like crop_spatial_residue)."""
-    valid_indices = get_valid_indices(cifmol)
+    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
     if valid_indices.size < crop_length:
         chain_crop = get_chain_crop_indices(cifmol, valid_indices)
         return valid_indices, chain_crop
@@ -592,6 +600,7 @@ class Cropper:
         crop_length: int,
         chain_bias: str | None = None,
         interface_bias: tuple[str, str] | None = None,
+        remain_invalid_residues: bool = False,
     ) -> ndarray:  # residue level indices
         """Return cropped residue indices and chain crop dict."""
         if len(cifmol.chains.chain_id) == 1:
@@ -606,12 +615,14 @@ class Cropper:
                 interface_bias,
                 cifmol,
                 crop_length,
+                remain_invalid_residues=remain_invalid_residues,
             )
         if method == "spatial":
             return crop_spatial_residue(
                 chain_bias,
                 cifmol,
                 crop_length,
+                remain_invalid_residues=remain_invalid_residues,
             )
         if method == "spatial_interface":
             try:
@@ -619,12 +630,14 @@ class Cropper:
                     interface_bias,
                     cifmol,
                     crop_length,
+                    remain_invalid_residues=remain_invalid_residues,
                 )
             except NoInterfaceError:
                 return crop_contiguous_monomer(
                     interface_bias,
                     cifmol,
                     crop_length,
+                    remain_invalid_residues=remain_invalid_residues,
                 )
         if method == "spatial_interface_simple":
             try:
@@ -632,12 +645,14 @@ class Cropper:
                     interface_bias,
                     cifmol,
                     crop_length,
+                    remain_invalid_residues=remain_invalid_residues,
                 )
             except NoInterfaceError:
                 return crop_contiguous_monomer(
                     interface_bias,
                     cifmol,
                     crop_length,
+                    remain_invalid_residues=remain_invalid_residues,
                 )
         else:
             msg = f"Invalid cropping method: {method}"

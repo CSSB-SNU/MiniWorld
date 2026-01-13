@@ -13,7 +13,7 @@ from biomol.core.utils import load_bytes
 from pydantic import BaseModel, ConfigDict
 from torch.utils.data import DataLoader, DistributedSampler
 
-from miniworld.data.crop import Cropper
+from miniworld.data.crop import Cropper, get_chain_crop_indices
 from miniworld.data.features.features_biomol import (
     Batch,
     ChainFeatures,
@@ -429,6 +429,8 @@ class BioMolData(torch.utils.data.Dataset):
         cif_id: str,
         chain_bias: str | None = None,
         interface_bias: tuple[str, str] | None = None,
+        remain_invalid_residues: bool = False,
+        crop_indices: np.ndarray | None = None,
     ) -> Batch:  # noqa: PLR0915
         """Get a data sample by cif_id."""
         cifmol = load_cifmol(db_path=self.config.DB_config.cif_db_path, cif_id=cif_id)
@@ -442,21 +444,27 @@ class BioMolData(torch.utils.data.Dataset):
             interface_bias = (chain_id1, chain_id2)
 
         # Crop
-        crop_length = self.config.crop_config.crop_length
-        while crop_length > 0:
-            crop_indices, chain_id_to_crop_indices = self.cropper.crop(
+        if crop_indices is None:
+            crop_length = self.config.crop_config.crop_length
+            while crop_length > 0:
+                crop_indices, chain_id_to_crop_indices = self.cropper.crop(
+                    cifmol=cifmol,
+                    crop_length=crop_length,
+                    chain_bias=chain_bias,
+                    interface_bias=interface_bias,
+                    remain_invalid_residues=remain_invalid_residues,
+                )
+                if (
+                    cifmol.residues[crop_indices].atoms.element.shape[0]
+                    < self.config.crop_config.crop_length * 12
+                ):
+                    break
+                crop_length = int(crop_length * 0.8)  # reduce crop length if too large
+        else:
+            chain_id_to_crop_indices = get_chain_crop_indices(
                 cifmol=cifmol,
-                crop_length=crop_length,
-                chain_bias=chain_bias,
-                interface_bias=interface_bias,
+                crop_indices=crop_indices,
             )
-            if (
-                cifmol.residues[crop_indices].atoms.element.shape[0]
-                < self.config.crop_config.crop_length * 12
-            ):
-                break
-            crop_length = int(crop_length * 0.8)  # reduce crop length if too large
-
         cifmol: CIFMolAttached = cifmol.residues[crop_indices].extract()
         contact = cifmol.chains.contact
         src, dst = contact.src_indices, contact.dst_indices

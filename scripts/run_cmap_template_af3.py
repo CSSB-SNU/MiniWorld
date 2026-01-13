@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 import click
+import numpy as np
 import torch
 from lightning import Fabric
 from omegaconf import OmegaConf
@@ -255,6 +256,11 @@ def train(  # noqa: PLR0912, PLR0915
     help="checkpoint file",
 )
 @click.option(
+    "--config",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="config file",
+)
+@click.option(
     "--seed",
     type=int,
     help="random seed",
@@ -266,9 +272,12 @@ def train(  # noqa: PLR0912, PLR0915
 )
 def sample(
     ckpt: Path | None,
+    config: Path | None,
     seed: int | None,
     save_dir: Path | None,
 ):
+    config = OmegaConf.load(config)
+    config = AF3Client.Config.model_validate(config)
     if not ckpt:
         msg = "You must provide a checkpoint file."
         raise ValueError(msg)
@@ -307,46 +316,74 @@ def sample(
     crop_config["spatial_prob"] = 0.0
     crop_config["interface_simple_prob"] = 0.0
     msa_config = client.config.data.msa.model_dump()
-    msa_config["max_msa_depth"] = 128
+    msa_config["max_msa_depth"] = 32
 
+    crop_indices1 = [ii for ii in range(15,200)]
+    crop_indices2 = [ii for ii in range(259,459)]
+    crop_indices = crop_indices1 + crop_indices2
+    crop_indices = np.array(crop_indices, dtype=np.int32)
     train_data_config = BioMolData.BioMolConfig(
         crop_config=crop_config,
         msa_config=msa_config,
-        DB_config=client.config.data.train_db.model_dump(),
-        edge_weight_config=client.config.data.edge_weight.model_dump(),
+        DB_config=config.data.train_db.model_dump(),
+        edge_weight_config=config.data.edge_weight.model_dump(),
     )
     train_dataset = BioMolData(train_data_config)
     transporter_open_batch = train_dataset.get_item_by_id(
         cif_id="6lyy_1_1_._(C_1)_(A_1)",
         chain_bias="A_1",
+        remain_invalid_residues=False,
+        crop_indices=crop_indices,
     )
     transporter_closed_batch = train_dataset.get_item_by_id(
         cif_id="7cko_1_1_._(C_1)_(A_1)",
         chain_bias="A_1",
+        remain_invalid_residues=False,
+        crop_indices=crop_indices,
     )
-    # Open form L132,F375 = (118, 307) (contact)  L158, L281 (144, 213) (non-contact)
-    # Closed form L132,F375 = (116, 300) (non-contact)  L158, L281 (142, 206) (contact)
     open_contact_map, open_contact_map_mask = get_contact_map(
         transporter_open_batch.structure.atom_pos,
         transporter_open_batch.structure.atom_pos_mask,
         transporter_open_batch.scheme.atom_to_residue_idx_map,
-    )
+    ) # (B, N_res, N_res)
     closed_contact_map, closed_contact_map_mask = get_contact_map(
         transporter_closed_batch.structure.atom_pos,
         transporter_closed_batch.structure.atom_pos_mask,
         transporter_closed_batch.scheme.atom_to_residue_idx_map,
     )
+    B, L, _ = open_contact_map.shape
+    diag_mask = ~torch.eye(L, dtype=torch.bool, device=open_contact_map.device)
+    diag_mask = diag_mask.unsqueeze(0)  # [1, L, L]
+    tri_mask  = torch.triu(torch.ones(L, L, dtype=torch.bool, device=open_contact_map.device), diagonal=1)[None, :, :]  # i<j만
 
-    # manual_batches = [transporter_open_batch, transporter_closed_batch]
-    manual_batches = {
-        "open": transporter_open_batch,
-        "closed": transporter_closed_batch,
-    }
+    open_contact_map = open_contact_map & open_contact_map_mask
+    open_noncontact_map = (~open_contact_map) & open_contact_map_mask
+    closed_contact_map = closed_contact_map & closed_contact_map_mask
+    closed_noncontact_map = (~closed_contact_map) & closed_contact_map_mask
+
+    msa_depth = msa_config["max_msa_depth"]
+    save_dir = f"./transporter/msa_depth_{msa_depth}/"
+    if save_dir is not None:
+        save_dir = Path(save_dir)
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+    open_only_contact = open_contact_map & closed_noncontact_map & tri_mask
+    open_only_noncontact = open_noncontact_map & closed_contact_map & tri_mask
+    closed_only_contact = closed_contact_map & open_noncontact_map & tri_mask
+    closed_only_noncontact = closed_noncontact_map & open_contact_map & tri_mask
+
+    open_only_contact = open_only_contact.to(client.device)
+    open_only_noncontact = open_only_noncontact.to(client.device)
+    closed_only_contact = closed_only_contact.to(client.device)
+    closed_only_noncontact = closed_only_noncontact.to(client.device)
+
     client.model.eval()
 
-    for state, _batch in manual_batches.items():
+    # sample_ratio_list = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.8, 1.0]
+    sample_ratio_list = [0.0, 0.005, 0.01, 0.02, 0.03, 0.04]
+    for sample_ratio in sample_ratio_list:
         for steered_state in ["open", "closed"]:
-            batch = _batch.duplicate(client.config.experiment.eval_sample_num)
+            batch = transporter_open_batch.duplicate(client.config.experiment.eval_sample_num)
             batch = batch.to(device=client.device)
 
             residue_length = batch.scheme.residue_idx.shape[1]
@@ -354,30 +391,56 @@ def sample(
                 (1, residue_length, residue_length, 3), device=client.device
             )
             contact_map[:, :, :, 2] = 1.0  # unknown
-            if state == "open":
-                if steered_state == "open":
-                    contact_map[0, 118, 307, 1] = 1.0  # contact
-                    contact_map[0, 307, 118, 1] = 1.0  # contact
-                    contact_map[0, 144, 213, 0] = 0.0  # non-contact
-                    contact_map[0, 213, 144, 0] = 0.0  # non-contact
-                else:
-                    contact_map[0, 118, 307, 1] = 0.0  # contact
-                    contact_map[0, 307, 118, 1] = 0.0  # contact
-                    contact_map[0, 144, 213, 0] = 1.0  # non-contact
-                    contact_map[0, 213, 144, 0] = 1.0  # non-contact
-                contact_map_mask = open_contact_map_mask
+            if steered_state == "open":
+                # one-hot encode open contact map
+                num_contact_sampled = int(open_only_contact.sum().item() * sample_ratio)
+                num_noncontact_sampled = int(open_only_noncontact.sum().item() * sample_ratio)
+                sampled_contact_indices = torch.nonzero(open_only_contact, as_tuple=False)
+                perm = torch.randperm(sampled_contact_indices.shape[0], device=client.device)[:num_contact_sampled]
+                sampled_contact_indices = sampled_contact_indices[perm]
+                sampled_noncontact_indices = torch.nonzero(open_only_noncontact, as_tuple=False)
+                perm = torch.randperm(sampled_noncontact_indices.shape[0], device=client.device)[:num_noncontact_sampled]
+                sampled_noncontact_indices = sampled_noncontact_indices[perm]
+                for idx in sampled_contact_indices:
+                    i, j = idx[1], idx[2]
+                    contact_map[0, i, j, 2] = 0.0  # unknown
+                    contact_map[0, j, i, 2] = 0.0  # unknown
+                    contact_map[0, i, j, 1] = 1.0  # contact
+                    contact_map[0, j, i, 1] = 1.0  # contact
+                for idx in sampled_noncontact_indices:
+                    i, j = idx[1], idx[2]
+                    contact_map[0, i, j, 2] = 0.0  # unknown
+                    contact_map[0, j, i, 2] = 0.0  # unknown
+                    contact_map[0, i, j, 0] = 1.0  # noncontact
+                    contact_map[0, j, i, 0] = 1.0  # noncontact
+                # contact_map[..., 0] = ((open_contact_map == 0) & (open_contact_map_mask==1)).float()  # noncontact
+                # contact_map[..., 1] = ((open_contact_map == 1) & (open_contact_map_mask==1)).float()  # contact
             else:
-                if steered_state == "open":
-                    contact_map[0, 116, 300, 1] = 1.0  # contact
-                    contact_map[0, 300, 116, 1] = 1.0  # contact
-                    contact_map[0, 142, 206, 0] = 0.0  # non-contact
-                    contact_map[0, 206, 142, 0] = 0.0  # non-contact
-                else:
-                    contact_map[0, 116, 300, 0] = 0.0  # non-contact
-                    contact_map[0, 300, 116, 0] = 0.0  # non-contact
-                    contact_map[0, 142, 206, 1] = 1.0  # contact
-                    contact_map[0, 206, 142, 1] = 1.0  # contact
-                contact_map_mask = closed_contact_map_mask
+                # one-hot encode closed contact map
+                num_contact_sampled = int(closed_only_contact.sum().item() * sample_ratio)
+                num_noncontact_sampled = int(closed_only_noncontact.sum().item() * sample_ratio)
+                sampled_contact_indices = torch.nonzero(closed_only_contact, as_tuple=False)
+                perm = torch.randperm(sampled_contact_indices.shape[0], device=client.device)[:num_contact_sampled]
+                sampled_contact_indices = sampled_contact_indices[perm]
+                sampled_noncontact_indices = torch.nonzero(closed_only_noncontact, as_tuple=False)
+                perm = torch.randperm(sampled_noncontact_indices.shape[0], device=client.device)[:num_noncontact_sampled]
+                sampled_noncontact_indices = sampled_noncontact_indices[perm]
+                for idx in sampled_contact_indices:
+                    i, j = idx[1], idx[2]
+                    contact_map[0, i, j, 2] = 0.0  # unknown
+                    contact_map[0, j, i, 2] = 0.0  # unknown
+                    contact_map[0, i, j, 1] = 1.0  # contact
+                    contact_map[0, j, i, 1] = 1.0  # contact
+                for idx in sampled_noncontact_indices:
+                    i, j = idx[1], idx[2]
+                    contact_map[0, i, j, 2] = 0.0  # unknown
+                    contact_map[0, j, i, 2] = 0.0  # unknown
+                    contact_map[0, i, j, 0] = 1.0  # noncontact
+                    contact_map[0, j, i, 0] = 1.0  # noncontact
+                # contact_map[..., 0] = ((closed_contact_map == 0) & (closed_contact_map_mask==1)).float()  # noncontact
+                # contact_map[..., 1] = ((closed_contact_map == 1) & (closed_contact_map_mask==1)).float()  # contact
+            contact_map_mask = open_contact_map_mask if steered_state == "open" else closed_contact_map_mask
+            contact_map_mask = contact_map_mask.to(client.device)
 
             output = client.inference(
                 batch,
@@ -404,12 +467,34 @@ def sample(
                 batch,
                 output.atom_pos_pred[0],
             )
+            predicted_contact_map, _ = get_contact_map(
+                output.atom_pos_pred,
+                batch.structure.atom_pos_mask,
+                batch.scheme.atom_to_residue_idx_map,
+            )
+            if steered_state == "open":
+                true_contact_map = open_only_contact
+                true_noncontact_map = open_only_noncontact
+            else:
+                true_contact_map = closed_only_contact
+                true_noncontact_map = closed_only_noncontact
+            correct_contacts = (predicted_contact_map.bool() & true_contact_map).sum().item()
+            total_contacts = true_contact_map.sum().item()
+            correct_noncontacts = ((~predicted_contact_map.bool()) & true_noncontact_map).sum().item()
+            total_noncontacts = true_noncontact_map.sum().item()
+            contact_accuracy = correct_contacts / total_contacts if total_contacts > 0 else 0.0
+            noncontact_accuracy = correct_noncontacts / total_noncontacts if total_noncontacts > 0 else 0.0
+            click.echo(f"Steered state: {steered_state}, Sample ratio: {sample_ratio}")
+            click.echo(f"Contact accuracy: {contact_accuracy:.4f}, Non-contact accuracy: {noncontact_accuracy:.4f}")
+            
             min_rmsd = min(min_rmsd, rmsd)
             click.echo(f"<<<category_lddt[{batch.name}]: {category_lddt}>>>")
+            batch_name = batch.name[0]
+            batch_name = batch_name.split("_")[0]
             batch_to_cif(
                 batch,
                 atom_pos_pred=output.atom_pos_pred,
-                save_path=Path(f"sample_{batch.name[0]}_{steered_state}.cif"),
+                save_path=Path(f"{save_dir}/sample_{batch_name}_{steered_state}_{sample_ratio}.cif"),
             )
     breakpoint()
 

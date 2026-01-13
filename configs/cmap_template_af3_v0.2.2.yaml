@@ -1,16 +1,17 @@
 data:
+  DB_PATH: /public_data/BioMolDBv2_2024Oct21
   train_db:
-    cif_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
-    a3m_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb
-    edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/train_edges.tsv
-    # edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/test_edges.tsv
+    cif_db_path: ${data.DB_PATH}/cif_20210930_res9.lmdb
+    a3m_db_path: ${data.DB_PATH}/slim_a3m.lmdb
+    edge_id_to_cif_ids_path: ${data.DB_PATH}/metadata/graph_split_20210930_res9/train_edges.tsv
+    # edge_id_to_cif_ids_path: ${data.DB_PATH}/metadata/graph_split_20210930_res9/test_edges.tsv
     load_all_msa: False
     
   valid_db:
-    cif_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
-    a3m_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb
-    edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/valid_edges.tsv
-    # edge_id_to_cif_ids_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/test_edges.tsv
+    cif_db_path: ${data.DB_PATH}/cif_20210930_res9.lmdb
+    a3m_db_path: ${data.DB_PATH}/slim_a3m.lmdb
+    edge_id_to_cif_ids_path: ${data.DB_PATH}/metadata/graph_split_20210930_res9/valid_edges.tsv
+    # edge_id_to_cif_ids_path: ${data.DB_PATH}/metadata/graph_split_20210930_res9/test_edges.tsv
     load_all_msa: False
 
   edge_weight:
