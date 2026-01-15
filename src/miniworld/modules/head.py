@@ -1,5 +1,4 @@
 import torch
-import torch.nn.functional as F
 from jaxtyping import Float
 from team_gm import typecheck
 from team_gm.modules.primitives import Linear
@@ -53,5 +52,4 @@ class DistogramHead(nn.Module):
     ) -> Float[torch.Tensor, "B L L D"]:
         """Forward pass."""
         pair = self._symmetrize(pair)
-        x = self.linear(pair.float())
-        return x
+        return self.linear(pair.float())

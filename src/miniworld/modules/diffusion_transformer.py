@@ -275,7 +275,7 @@ class AtomAttentionEncoder(nn.Module):
             Linear(d_token_pair, d_atom_pair, bias=False, init="zero"),
         )
         self.noisy_to_atom_single_rep = Linear(
-            3, d_atom_single, bias=True
+            3, d_atom_single, bias=True,
         )  # bias set to true for missing atoms
 
         self.atom_single_to_pair_left = nn.Sequential(
@@ -490,7 +490,7 @@ class AtomAttentionEncoder(nn.Module):
                 to_add_token_single_rep,
             )
             token_single_rep = token_single_rep / count.unsqueeze(1).unsqueeze(
-                -1
+                -1,
             ).clamp(
                 min=1.0,
             )
