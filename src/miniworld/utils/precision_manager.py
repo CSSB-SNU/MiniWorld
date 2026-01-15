@@ -58,7 +58,8 @@ class PrecisionConfig(BaseModel):
     )
 
     @field_validator("precision_map", mode="before")
-    def _build_precision_map(self, v: dict[str, dict] | dict[str, DtypeConfig] | DictConfig) -> dict[str, DtypeConfig]:
+    @classmethod
+    def _build_precision_map(cls, v: dict[str, dict] | dict[str, DtypeConfig] | DictConfig) -> dict[str, DtypeConfig]:
         # 1) support OmegaConf DictConfig
         if isinstance(v, DictConfig):
             v = OmegaConf.to_container(v, resolve=True)

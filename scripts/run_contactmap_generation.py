@@ -217,7 +217,7 @@ def train(  # noqa: PLR0912, PLR0915
             if train_loss < min_train_loss:
                 min_train_loss = train_loss
                 checkpoint_path = ckpt_dir / "contactmap_generation_best.pt"
-                client.save_checkpoint(checkpoint_path)
+                # client.save_checkpoint(checkpoint_path)
                 client.logger.info(
                     "Save best checkpoint: %s (train loss: %.4g)",
                     checkpoint_path.name,
@@ -234,7 +234,7 @@ def train(  # noqa: PLR0912, PLR0915
                     break
             valid_aggregator.log_epoch()
             checkpoint_path = ckpt_dir / f"contactmap_generation_{epoch}.pt"
-            client.save_checkpoint(checkpoint_path)
+            # client.save_checkpoint(checkpoint_path)
 
 
 @cli.command()

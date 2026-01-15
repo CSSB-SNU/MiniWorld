@@ -5,7 +5,7 @@ data:
     cif_db_path: ${data.DB_PATH}/MiniWorld/multistate/seqID_to_cifmols_filtered.lmdb
     a3m_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
     tmp_dir: ${data.DB_PATH}/MiniWorld/multistate/data_tmp/monomer/train/
-    cluster_ids_path: ${data.DB_PATH}/MiniWorld/multistate/train_valid_split/overfitting.txt
+    cluster_ids_path: ${data.DB_PATH}/MiniWorld/multistate/train_valid_split/train_clusters.txt
     cluster_id_to_seq_ids_path: ${data.DB_PATH}/MiniWorld/multistate/clusterID_to_seqIDs.npz
     seq_id_to_seq: ${data.DB_PATH}/BioMolDBv2_2024Oct21/fasta/protein_wo_signalp.fasta
     signalp_dir: ${data.DB_PATH}/BioMolDBv2_2024Oct21/signalp/
@@ -13,7 +13,7 @@ data:
     cif_db_path: ${data.DB_PATH}/MiniWorld/multistate/seqID_to_cifmols_filtered.lmdb
     a3m_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
     tmp_dir: ${data.DB_PATH}/MiniWorld/multistate/data_tmp/monomer/valid/
-    cluster_ids_path: ${data.DB_PATH}/MiniWorld/multistate/train_valid_split/overfitting.txt
+    cluster_ids_path: ${data.DB_PATH}/MiniWorld/multistate/train_valid_split/valid_clusters.txt
     cluster_id_to_seq_ids_path: ${data.DB_PATH}/MiniWorld/multistate/clusterID_to_seqIDs.npz
     seq_id_to_seq: ${data.DB_PATH}/BioMolDBv2_2024Oct21/fasta/protein_wo_signalp.fasta
     signalp_dir: ${data.DB_PATH}/BioMolDBv2_2024Oct21/signalp/
@@ -36,9 +36,9 @@ data:
     gap_split: 15
     max_mismatch: 15
     max_indel: 5
-    align_num: -1
+    align_num: -1  # -1 means no limit
     align_thr: 0.9
-    seed: 1123
+    seed: 1123  # for reproducibility
     
   multistate:
     n_prefilter: 48
@@ -47,10 +47,23 @@ data:
     consensus_ratio: 0.9
     consensus_filter: 0.9
 
+diffuser:
+  seed : 0
+  method : AF3
+  scheduler:
+    method: AF3
+    P_mean: -1.2
+    P_std: 1.5
+    sigma_data: 16.0
+    sigma_max: 160.0
+    sigma_min: 4e-4
+    rho: 7.0
+    use_time_augmentation: True
+
 model:
   common:
     d_token_single: 384
-    d_token_single_input: 449
+    d_token_single_input: 449  # 441 = 384 + 32 + 32 + 1
     d_token_single_diffusion: 768
     d_token_pair: 128
     d_time: 256
@@ -61,14 +74,14 @@ model:
     r_max: 32
     s_max: 2
     implementation: triton
-    use_checkpoint: False
     to_bias_init: zero
     norm: qk
 
+
   trunk:
-    n_recycle_max: 1
+    n_recycle_max: 1 # 4
     pairformer: 
-      n_block: 8
+      n_block: 48
       d_single: ${model.common.d_token_single}
       d_pair: ${model.common.d_token_pair}
       d_hidden_tri_multi: 128
@@ -84,6 +97,8 @@ model:
       pair_moe_topk: 1
       single_moe_experts: 1
       single_moe_topk: 1
+      use_checkpoint: True
+
 
     msa_module: 
       n_block: 4
@@ -96,6 +111,7 @@ model:
       n_head_attention: 16
       p_drop_msa: 0.15
       p_drop: 0.25
+      # use_self_attention: True
       use_self_attention: False
       implementation: triton
 
@@ -109,7 +125,8 @@ model:
     n_transition_block: 2
     implementation: triton
     use_beta: False
-    pair_moe_experts: 1
+
+    pair_moe_experts: 1  # 1 -> no MoE
     pair_moe_topk: 1
     token_single_moe_experts: 1
     token_single_moe_topk: 1
@@ -133,53 +150,40 @@ model:
         op_dtype : torch.float32
         out_dtype: torch.float32  # Precision for diffusion modules
 
+
 experiment:
-  comment: contactmap_generation_v0.0.0_d3pm
+  comment: cmap_prediction_v0.8.2 (grad accum 16, 48 pairformer, lr 5e-4)
 
   # Training arguments
   num_batch: 1
   num_epoch: 5000
   # max_lr: 1.8e-3
   optimizer : AdamW
-  min_lr: 1e-4
-  max_lr: 1e-3
+  min_lr: 1e-5
+  max_lr: 5e-4
   warmup_steps: 512
   decay_steps: 5e4
   self_condition: False
   compile: False
   num_augment: 48
-  train_item: 1
-  valid_item: 1
+  train_item: 2560
+  valid_item: 160
 
   # Validation arguments
-  eval_freq: 50
+  eval_freq: 5
   eval_sample_num: 16
   eval_input_num: 50
   eval_timesteps: 100
   grad_clip_max_norm: 10.0
-  grad_accum_steps: 1
-  num_workers: 0
-  prefetch_factor: 0
-  use_ema: False
+  grad_accum_steps: 16
+  num_workers: 4
+  prefetch_factor: 8
+  use_ema: True
   ema_decay: 0.999
   bce_pos_weight: 2.0
   long_range_sigmoid_amp: 3.0
 
-discrete_diffusion:
-  method: d3pm
-  transition_mode: absorbing
-  d3pm_scheduler:
-    method: D3PM
-    num_train_timesteps: 1000
-    beta_start: 1.0e-4
-    beta_end: 2.0e-2
-    beta_schedule: linear
-    num_classes: 2
-    transition_mode: ${discrete_diffusion.transition_mode}
-  d3pm_diffuser:
-    method: D3PM
-    seed: 0
-    enforce_symmetric: True
-  d3pm_solver:
-    method: Euler
-    seed: 0
+  # Loss weights
+  loss:
+    diffusion_loss: 4.0
+    distogram_loss: 0.001

@@ -176,19 +176,16 @@ class D3PMScheduler(DiffusionScheduler):
         beta_end: float = 0.02
         beta_schedule: Literal["linear", "cosine"] = "linear"
         transition_mode: Literal["uniform", "absorbing"] = "uniform"
-        mask_class: int | None = None  # still present in uniform for API symmetry
+        num_classes: int = 2 # number of classes in the discrete data excluding absorbing state
 
     def __init__(self, config: D3PMSchedulerConfig) -> None:
         self.config = config
-        if (
-            self.config.transition_mode == "absorbing"
-            and self.config.mask_class is None
-        ):
-            msg = "mask_class must be set when using absorbing transition_mode."
-            raise ValueError(msg)
-        if self.config.mask_class is not None and self.config.mask_class < 0:
-            msg = "mask_class must be non-negative."
-            raise ValueError(msg)
+        if self.config.transition_mode == "absorbing":
+            self.num_classes = self.config.num_classes + 1
+            self.mask_class = self.config.num_classes
+        else:
+            self.num_classes = self.config.num_classes
+            self.mask_class = None
         self._setup_betas()
 
     def _cosine_beta_schedule(self, timesteps: int) -> torch.Tensor:
@@ -213,6 +210,7 @@ class D3PMScheduler(DiffusionScheduler):
         self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)
 
     def sample_noise(self, batch_size: int) -> torch.Tensor:
+        """Sample noise timesteps uniformly."""
         return torch.randint(
             low=0,
             high=self.config.num_train_timesteps,
@@ -220,30 +218,37 @@ class D3PMScheduler(DiffusionScheduler):
         )
 
     def alpha_bar(self, timesteps: torch.Tensor) -> torch.Tensor:
+        """Cumulative product of alphas at given timesteps."""
         idx = timesteps.long().clamp(max=self.config.num_train_timesteps - 1)
         return self.alphas_cumprod.to(timesteps.device)[idx]
 
     def beta_at(self, timesteps: torch.Tensor) -> torch.Tensor:
+        """Beta at given timesteps."""
         idx = timesteps.long().clamp(max=self.config.num_train_timesteps - 1)
         return self.betas.to(timesteps.device)[idx]
 
-    def input_scale(self, sigma: torch.Tensor) -> torch.Tensor:  # noqa: ARG002
+    def input_scale(self, sigma: torch.Tensor) -> torch.Tensor:
+        """Compute the input scaling term."""
         return torch.ones_like(sigma, dtype=torch.float32)
 
-    def output_scale(self, sigma: torch.Tensor) -> torch.Tensor:  # noqa: ARG002
+    def output_scale(self, sigma: torch.Tensor) -> torch.Tensor:
+        """Compute the output scaling term."""
         return torch.ones_like(sigma, dtype=torch.float32)
 
-    def skip_scale(self, sigma: torch.Tensor) -> torch.Tensor:  # noqa: ARG002
+    def skip_scale(self, sigma: torch.Tensor) -> torch.Tensor:
+        """Compute the skip scaling term."""
         return torch.ones_like(sigma, dtype=torch.float32)
 
-    def loss_weight(self, sigma: torch.Tensor) -> torch.Tensor:  # noqa: ARG002
+    def loss_weight(self, sigma: torch.Tensor) -> torch.Tensor:
+        """Compute the loss weighting term."""
         return torch.ones_like(sigma, dtype=torch.float32)
 
     def noise_condition(self, sigma: torch.Tensor) -> torch.Tensor:
+        """Compute the noise conditioning term."""
         return sigma.float() / float(self.config.num_train_timesteps)
 
     def sampling_time_steps(self, num_steps: int) -> torch.Tensor:
-        # integer schedule to avoid skipped/duplicated steps after rounding
+        """Generate a schedule of time steps for sampling."""
         step = max(1, self.config.num_train_timesteps // num_steps)
         times = torch.arange(
             self.config.num_train_timesteps - 1,
@@ -256,24 +261,27 @@ class D3PMScheduler(DiffusionScheduler):
         return times
 
     def sampling_schedule(self, time_steps: torch.Tensor) -> torch.Tensor:
+        """Generate a schedule of noise levels for sampling."""
         return torch.clamp(time_steps, min=0.0, max=self.config.num_train_timesteps - 1)
 
     def sampling_schedule_derivative(self, time_steps: torch.Tensor) -> torch.Tensor:
+        """Generate a schedule of noise level derivatives for sampling."""
         return torch.zeros_like(time_steps)
 
-    def sampling_scale(self, time_steps: torch.Tensor) -> torch.Tensor:  # noqa: ARG002
+    def sampling_scale(self, time_steps: torch.Tensor) -> torch.Tensor:
+        """Generate a schedule of scaling factors for sampling."""
         return torch.ones_like(time_steps)
 
     def sampling_scale_derivative(self, time_steps: torch.Tensor) -> torch.Tensor:
+        """Generate a schedule of scaling factor derivatives for sampling."""
         return torch.zeros_like(time_steps)
 
     def forward_prob(
         self,
         x0: torch.Tensor,
         t: torch.Tensor,
-        num_classes: int,
     ) -> torch.Tensor:
-        """Closed form q(x_t | x0)."""
+        """Calculate closed form q(x_t | x0) with rate alpha_bar(t)."""
         alpha_bar_t = self.alpha_bar(t).to(x0.device)
         alpha_shape = (x0.shape[0],) + (1,) * (x0.ndim - 1)
         alpha_bar_t = alpha_bar_t.view(alpha_shape)
@@ -281,23 +289,20 @@ class D3PMScheduler(DiffusionScheduler):
         if self.config.transition_mode == "uniform":
             one_hot = torch.nn.functional.one_hot(
                 x0,
-                num_classes=num_classes,
+                num_classes=self.num_classes,
             ).to(torch.float32)
-            uniform = torch.full_like(one_hot, 1.0 / float(num_classes))
+            uniform = torch.full_like(one_hot, 1.0 / float(self.num_classes))
             return alpha_bar_t * one_hot + (1.0 - alpha_bar_t) * uniform
 
         if self.config.transition_mode == "absorbing":
-            if self.config.mask_class is None:
-                msg = "mask_class must be set for absorbing transition_mode."
-                raise ValueError(msg)
             one_hot = torch.nn.functional.one_hot(
                 x0,
-                num_classes=num_classes,
+                num_classes=self.num_classes,
             ).to(torch.float32)
-            mask = torch.full_like(x0, self.config.mask_class)
+            mask = torch.full_like(x0, self.mask_class)
             mask_hot = torch.nn.functional.one_hot(
                 mask,
-                num_classes=num_classes,
+                num_classes=self.num_classes,
             ).to(torch.float32)
             return alpha_bar_t * one_hot + (1.0 - alpha_bar_t) * mask_hot
 
@@ -309,20 +314,22 @@ class D3PMScheduler(DiffusionScheduler):
         xt: torch.Tensor,
         x0: torch.Tensor,
         t: torch.Tensor,
-        num_classes: int,
+        t_prev: torch.Tensor,
         ) -> torch.Tensor:
-        """Posterior q(x_{t-1} | x_t, x0) using explicit kernels."""
-        beta_t = self.beta_at(t).to(xt.device)
-        alpha_t = 1.0 - beta_t
-        alpha_bar_prev = self.alpha_bar(torch.clamp(t - 1, min=0)).to(xt.device)
+        """Posterior q(x_{t_prev} | x_t, x0) allowing strided timesteps."""
+        alpha_bar_t = self.alpha_bar(t).to(xt.device)
+        alpha_bar_prev = self.alpha_bar(torch.clamp(t_prev, min=0)).to(xt.device)
+        # Effective single-step parameters when we skip >1 step (forward α = ᾱ_t / ᾱ_{t_prev})
+        alpha_t = (alpha_bar_t / alpha_bar_prev).clamp(0.0, 1.0)
+        beta_t = 1.0 - alpha_t
 
-        shape = xt.shape + (num_classes,)
+        shape = xt.shape + (self.num_classes,)
         probs = torch.zeros(shape, device=xt.device, dtype=torch.float32)
 
-        x0_one_hot = torch.nn.functional.one_hot(x0, num_classes=num_classes).to(
+        x0_one_hot = torch.nn.functional.one_hot(x0, num_classes=self.num_classes).to(
             torch.float32,
         )
-        xt_one_hot = torch.nn.functional.one_hot(xt, num_classes=num_classes).to(
+        xt_one_hot = torch.nn.functional.one_hot(xt, num_classes=self.num_classes).to(
             torch.float32,
         )
         alpha_shape = (xt.shape[0],) + (1,) * (xt.ndim - 1)
@@ -331,46 +338,40 @@ class D3PMScheduler(DiffusionScheduler):
         beta = beta_t.view(alpha_shape + (1,))
 
         if self.config.transition_mode == "uniform":
-            uniform = torch.full_like(x0_one_hot, 1.0 / float(num_classes))
+            uniform = torch.full_like(x0_one_hot, 1.0 / float(self.num_classes))
             prior = a_prev * x0_one_hot + (1.0 - a_prev) * uniform
 
-            diff = beta / float(max(1, num_classes - 1))
+            diff = beta / float(max(1, self.num_classes - 1))
             weights = torch.where(xt_one_hot.bool(), same, diff)
             probs = weights * prior
 
         elif self.config.transition_mode == "absorbing":
-            if self.config.mask_class is None:
-                msg = "mask_class must be set for absorbing transition_mode."
-                raise ValueError(msg)
-            mask = self.config.mask_class
+            mask = self.mask_class
             mask_hot = torch.nn.functional.one_hot(
                 torch.full_like(x0, mask),
-                num_classes=num_classes,
+                num_classes=self.num_classes,
             ).to(torch.float32)
             prior = a_prev * x0_one_hot + (1.0 - a_prev) * mask_hot
 
             to_mask = beta
 
-            k_vals = torch.arange(num_classes, device=xt.device)
-            k_shape = (1,) * xt.ndim + (num_classes,)
+            k_vals = torch.arange(self.num_classes, device=xt.device)
+            k_shape = (1,) * xt.ndim + (self.num_classes,)
             k_vals = k_vals.view(k_shape)
             xt_exp = xt.unsqueeze(-1)
 
             kernel = torch.zeros_like(prior)
 
-            # k == mask and xt == mask
             kernel = torch.where(
                 (xt_exp == mask) & (k_vals == mask),
                 torch.ones_like(kernel),
                 kernel,
             )
-            # k != mask, xt == k
             kernel = torch.where(
                 (xt_exp == k_vals) & (k_vals != mask),
                 same.expand_as(kernel),
                 kernel,
             )
-            # k != mask, xt == mask
             kernel = torch.where(
                 (xt_exp == mask) & (k_vals != mask),
                 to_mask.expand_as(kernel),
@@ -384,43 +385,37 @@ class D3PMScheduler(DiffusionScheduler):
             raise ValueError(msg)
 
         probs = torch.clamp(probs, min=0.0)
-        probs = probs / probs.sum(dim=-1, keepdim=True).clamp_min(1e-8)
-        return probs
+        return probs / probs.sum(dim=-1, keepdim=True).clamp_min(1e-8)
 
     def forward_probs(
         self,
         x0: torch.Tensor,
         t: torch.Tensor,
-        num_classes: int,
     ) -> torch.Tensor:
-        """Closed form p_t|0 for uniform or absorbing transitions."""
+        """Calculate forward probabilities p_t|0 for uniform or absorbing transitions."""
         sigma_t = self.sigma(t).to(device=x0.device, dtype=torch.float32)
         sigma_shape = (x0.shape[0],) + (1,) * (x0.ndim - 1)
         sigma_t = sigma_t.view(sigma_shape)
 
         if self.config.transition_mode == "uniform":
-            # p_t = e^{-σ} * one_hot(x0) + (1 - e^{-σ}) * Uniform
             decay = torch.exp(-sigma_t)
             one_hot = torch.nn.functional.one_hot(
                 x0,
-                num_classes=num_classes,
+                num_classes=self.num_classes,
             ).to(torch.float32)
-            uniform = torch.full_like(one_hot, 1.0 / float(num_classes))
+            uniform = torch.full_like(one_hot, 1.0 / float(self.num_classes))
             return decay * one_hot + (1.0 - decay) * uniform
 
         if self.config.transition_mode == "absorbing":
-            if self.config.mask_class is None:
-                msg = "mask_class must be set for absorbing transition_mode."
-                raise ValueError(msg)
             decay = torch.exp(-sigma_t)
             one_hot = torch.nn.functional.one_hot(
                 x0,
-                num_classes=num_classes,
+                num_classes=self.num_classes,
             ).to(torch.float32)
-            mask = torch.full_like(x0, self.config.mask_class)
+            mask = torch.full_like(x0, self.mask_class)
             mask_hot = torch.nn.functional.one_hot(
                 mask,
-                num_classes=num_classes,
+                num_classes=self.num_classes,
             ).to(torch.float32)
             return decay * one_hot + (1.0 - decay) * mask_hot
 
@@ -430,25 +425,21 @@ class D3PMScheduler(DiffusionScheduler):
     def base_q(
         self,
         xt: torch.Tensor,
-        num_classes: int,
     ) -> torch.Tensor:
-        """Generator Q entries Q(y, x_t) for all y."""
+        """Calculate generator Q entries for D3PM (rate 1)."""
         device = xt.device
-        shape = xt.shape + (num_classes,)
+        shape = xt.shape + (self.num_classes,)
         q = torch.zeros(shape, device=device, dtype=torch.float32)
 
         if self.config.transition_mode == "uniform":
-            off_diag = 1.0 / float(max(1, num_classes - 1))
+            off_diag = 1.0 / float(max(1, self.num_classes - 1))
             q[:] = off_diag
             idx = xt.unsqueeze(-1)
             q.scatter_(-1, idx, -torch.ones_like(idx, dtype=torch.float32))
             return q
 
         if self.config.transition_mode == "absorbing":
-            if self.config.mask_class is None:
-                msg = "mask_class must be set for absorbing transition_mode."
-                raise ValueError(msg)
-            mask = self.config.mask_class
+            mask = self.mask_class
             # transitions to mask at rate 1, diag -1 for non-mask
             mask_tensor = torch.full_like(xt, mask)
             q.scatter_(-1, mask_tensor.unsqueeze(-1), torch.ones_like(mask_tensor, dtype=torch.float32))
@@ -476,21 +467,18 @@ class SEDDScheduler(DiffusionScheduler):
         sigma_max: float = 20.0
         schedule: Literal["geometric", "linear"] = "geometric"
         transition_mode: Literal["uniform", "absorbing"] = "uniform"
-        mask_class: int | None = None
+        num_classes: int = 2  # number of classes in the discrete data excluding absorbing state
 
     def __init__(self, config: SEDDSchedulerConfig) -> None:
         self.config = config
-        if (
-            self.config.transition_mode == "absorbing"
-            and self.config.mask_class is None
-        ):
-            msg = "mask_class must be set when using absorbing transition_mode."
-            raise ValueError(msg)
-        if self.config.mask_class is not None and self.config.mask_class < 0:
-            msg = "mask_class must be non-negative."
-            raise ValueError(msg)
+        if self.config.transition_mode == "absorbing":
+            self.num_classes = self.config.num_classes + 1
+            self.mask_class = self.config.num_classes
+        else:
+            self.mask_class = None
 
     def sample_noise(self, batch_size: int) -> torch.Tensor:
+        """Sample noise magnitudes uniformly between sigma_min and sigma_max."""
         return torch.rand(batch_size)
 
     def sigma(self, t: torch.Tensor) -> torch.Tensor:
@@ -511,67 +499,70 @@ class SEDDScheduler(DiffusionScheduler):
         """Finite difference Δσ used for Euler stepping."""
         return self.sigma(t) - self.sigma(t_next)
 
-    def alpha_sigma(self, log_snr: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        raise NotImplementedError("alpha_sigma not used in SEDD discrete formulation.")
-
-    def input_scale(self, sigma: torch.Tensor) -> torch.Tensor:  # noqa: ARG002
+    def input_scale(self, sigma: torch.Tensor) -> torch.Tensor:
+        """Compute the input scaling term."""
         return torch.ones_like(sigma, dtype=torch.float32)
 
-    def output_scale(self, sigma: torch.Tensor) -> torch.Tensor:  # noqa: ARG002
+    def output_scale(self, sigma: torch.Tensor) -> torch.Tensor:
+        """Compute the output scaling term."""
         return torch.ones_like(sigma, dtype=torch.float32)
 
-    def skip_scale(self, sigma: torch.Tensor) -> torch.Tensor:  # noqa: ARG002
+    def skip_scale(self, sigma: torch.Tensor) -> torch.Tensor:
+        """Compute the skip scaling term."""
         return torch.ones_like(sigma, dtype=torch.float32)
 
-    def loss_weight(self, sigma: torch.Tensor) -> torch.Tensor:  # noqa: ARG002
+    def loss_weight(self, sigma: torch.Tensor) -> torch.Tensor:
+        """Compute the loss weighting term."""
         return torch.ones_like(sigma, dtype=torch.float32)
 
     def noise_condition(self, sigma: torch.Tensor) -> torch.Tensor:
+        """Compute the noise conditioning term."""
         return torch.log1p(sigma)
 
     def sampling_time_steps(self, num_steps: int) -> torch.Tensor:
+        """Generate a schedule of time steps for sampling."""
         return torch.linspace(1.0, 0.0, steps=num_steps + 1)
 
     def sampling_schedule(self, time_steps: torch.Tensor) -> torch.Tensor:
+        """Generate a schedule of noise levels for sampling."""
         return time_steps
 
     def sampling_schedule_derivative(self, time_steps: torch.Tensor) -> torch.Tensor:
+        """Generate a schedule of noise level derivatives for sampling."""
         return torch.zeros_like(time_steps)
 
-    def sampling_scale(self, time_steps: torch.Tensor) -> torch.Tensor:  # noqa: ARG002
+    def sampling_scale(self, time_steps: torch.Tensor) -> torch.Tensor:
+        """Generate a schedule of scaling factors for sampling."""
         return torch.ones_like(time_steps)
 
     def sampling_scale_derivative(self, time_steps: torch.Tensor) -> torch.Tensor:
+        """Generate a schedule of scaling factor derivatives for sampling."""
         return torch.zeros_like(time_steps)
 
     def forward_prob(
         self,
         x0: torch.Tensor,
         t: torch.Tensor,
-        num_classes: int,
     ) -> torch.Tensor:
-        """Closed form q(x_t | x0) with rate sigma(t)."""
+        """Calculate closed form q(x_t | x0) with rate exp(-sigma(t))."""
         sigma_t = self.sigma(t).to(x0.device)
         sigma_shape = (x0.shape[0],) + (1,) * (x0.ndim - 1)
         sigma_t = sigma_t.view(sigma_shape)
         decay = torch.exp(-sigma_t)
         one_hot = torch.nn.functional.one_hot(
             x0,
-            num_classes=num_classes,
+            num_classes=self.num_classes,
         ).to(torch.float32)
 
         if self.config.transition_mode == "uniform":
-            uniform = torch.full_like(one_hot, 1.0 / float(num_classes))
+            uniform = torch.full_like(one_hot, 1.0 / float(self.num_classes))
             return decay * one_hot + (1.0 - decay) * uniform
 
         if self.config.transition_mode == "absorbing":
-            if self.config.mask_class is None:
-                msg = "mask_class must be set for absorbing transition_mode."
-                raise ValueError(msg)
-            mask = torch.full_like(x0, self.config.mask_class)
+            mask = torch.full_like(x0, self.mask_class)
             mask_hot = torch.nn.functional.one_hot(
                 mask,
-                num_classes=num_classes,
+                num_classes=self.num_classes,
             ).to(torch.float32)
             return decay * one_hot + (1.0 - decay) * mask_hot
 
@@ -581,24 +572,20 @@ class SEDDScheduler(DiffusionScheduler):
     def base_q(
         self,
         xt: torch.Tensor,
-        num_classes: int,
     ) -> torch.Tensor:
-        """Generator Q entries for SEDD (rate 1)."""
+        """Calculate generator Q entries for SEDD (rate 1)."""
         device = xt.device
-        shape = xt.shape + (num_classes,)
+        shape = xt.shape + (self.num_classes,)
         q = torch.zeros(shape, device=device, dtype=torch.float32)
 
         if self.config.transition_mode == "uniform":
-            off_diag = 1.0 / float(max(1, num_classes - 1))
+            off_diag = 1.0 / float(max(1, self.num_classes - 1))
             q[:] = off_diag
             q.scatter_(-1, xt.unsqueeze(-1), -torch.ones_like(xt, dtype=torch.float32).unsqueeze(-1))
             return q
 
         if self.config.transition_mode == "absorbing":
-            if self.config.mask_class is None:
-                msg = "mask_class must be set for absorbing transition_mode."
-                raise ValueError(msg)
-            mask = self.config.mask_class
+            mask = self.mask_class
             mask_tensor = torch.full_like(xt, mask)
             q.scatter_(-1, mask_tensor.unsqueeze(-1), torch.ones_like(mask_tensor, dtype=torch.float32))
             diag_updates = torch.where(

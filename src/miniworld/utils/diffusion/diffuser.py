@@ -426,7 +426,6 @@ class SEDDDiffuser(Diffuser):
 
         method: str = "SEDD"
         seed: int = 0
-        num_classes: int
         enforce_symmetric: bool = True
         weight_with_sigma: bool = True
         min_ratio: float = 1e-5
@@ -441,18 +440,6 @@ class SEDDDiffuser(Diffuser):
             raise TypeError(msg)
         self.config = config
         self.scheduler = scheduler
-        if (
-            self.scheduler.config.transition_mode == "absorbing"
-            and self.scheduler.config.mask_class is None
-        ):
-            msg = "mask_class must be set in scheduler config for absorbing transition_mode."
-            raise ValueError(msg)
-        if (
-            self.scheduler.config.mask_class is not None
-            and self.scheduler.config.mask_class >= self.config.num_classes
-        ):
-            msg = "mask_class must be within [0, num_classes)."
-            raise ValueError(msg)
         self._set_seed(config.seed)
         self.dtype = torch.float32
         self.clear_buffer()
@@ -487,11 +474,10 @@ class SEDDDiffuser(Diffuser):
         self.clear_buffer()
         x0, mask = self._prepare_inputs(x0, mask)
         device = x0.device
-        num_classes = self.config.num_classes
 
         B = x0.shape[0]
         t = self.scheduler.sample_noise(B).to(device)
-        probs = self.scheduler.forward_prob(x0, t, num_classes=num_classes)
+        probs = self.scheduler.forward_prob(x0, t)
 
         flat_prob = probs.view(probs.shape[0], -1, probs.shape[-1])
         B, N, C = flat_prob.shape
@@ -503,7 +489,7 @@ class SEDDDiffuser(Diffuser):
         if self.config.enforce_symmetric:
             xt = _symmetrize_labels(xt.clone())
             x0 = _symmetrize_labels(x0.clone())
-        xt_one_hot = F.one_hot(xt, num_classes=num_classes).to(self.dtype)
+        xt_one_hot = F.one_hot(xt, num_classes=self.scheduler.num_classes).to(self.dtype)
         if self.config.enforce_symmetric:
             probs = _symmetrize_pair(probs)
 
@@ -575,7 +561,6 @@ class D3PMDiffuser(Diffuser):
 
         method: str = "D3PM"
         seed: int = 0
-        num_classes: int
         enforce_symmetric: bool = True
 
     def __init__(
@@ -588,18 +573,6 @@ class D3PMDiffuser(Diffuser):
             raise TypeError(msg)
         self.config = config
         self.scheduler = scheduler
-        if (
-            self.scheduler.config.transition_mode == "absorbing"
-            and self.scheduler.config.mask_class is None
-        ):
-            msg = "mask_class must be set in scheduler config for absorbing transition_mode."
-            raise ValueError(msg)
-        if (
-            self.scheduler.config.mask_class is not None
-            and self.scheduler.config.mask_class >= self.config.num_classes
-        ):
-            msg = "mask_class must be within [0, num_classes)."
-            raise ValueError(msg)
         self._set_seed(config.seed)
         self.dtype = torch.float32
         self.clear_buffer()
@@ -640,21 +613,17 @@ class D3PMDiffuser(Diffuser):
         timesteps = self.scheduler.sample_noise(B).to(device)
         alpha_bar = self.scheduler.alpha_bar(timesteps).to(device=device)
 
-        one_hot = F.one_hot(x0, num_classes=self.config.num_classes).to(self.dtype)
+        one_hot = F.one_hot(x0, num_classes=self.scheduler.num_classes).to(self.dtype)
         alpha_term = alpha_bar.view(sigma_shape + (1,))
         if self.scheduler.config.transition_mode == "uniform":
             prob = alpha_term * one_hot + (1.0 - alpha_term) / float(
-                self.config.num_classes,
+                self.scheduler.num_classes,
             )
         elif self.scheduler.config.transition_mode == "absorbing":
-            mask_class = self.scheduler.config.mask_class
-            if mask_class is None:
-                msg = "mask_class must be provided for absorbing transition_mode."
-                raise ValueError(msg)
-            mask_labels = torch.full_like(x0, mask_class)
+            mask_labels = torch.full_like(x0, self.scheduler.mask_class)
             mask_one_hot = F.one_hot(
                 mask_labels,
-                num_classes=self.config.num_classes,
+                num_classes=self.scheduler.num_classes,
             ).to(self.dtype)
             prob = alpha_term * one_hot + (1.0 - alpha_term) * mask_one_hot
         else:
@@ -671,7 +640,7 @@ class D3PMDiffuser(Diffuser):
         if self.config.enforce_symmetric:
             xt = _symmetrize_labels(xt.clone())
             x0 = _symmetrize_labels(x0.clone())
-        xt_one_hot = F.one_hot(xt, num_classes=self.config.num_classes).to(self.dtype)
+        xt_one_hot = F.one_hot(xt, num_classes=self.scheduler.num_classes).to(self.dtype)
         if self.config.enforce_symmetric:
             one_hot = _symmetrize_pair(one_hot)
 

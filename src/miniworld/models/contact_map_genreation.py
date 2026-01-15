@@ -64,10 +64,11 @@ class ContactMapGenerationModel(nn.Module):
         precision: PrecisionConfig
         contact_num_classes: int = 2
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, transition_mode: Literal["absorbing", "other"]) -> None:
         super().__init__()
         self.config = config
         self.n_recycle_max = config.trunk.n_recycle_max
+        self.transition_mode = transition_mode
 
         # feature initialization
         self.input_feature_embedder = InputFeatureEmbedder(
@@ -92,8 +93,9 @@ class ContactMapGenerationModel(nn.Module):
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
 
         # Embed noisy contact map and time
+        input_num_classes = config.contact_num_classes + 1 if transition_mode == "absorbing" else config.contact_num_classes
         self.contact_map_embedder = nn.Linear(
-            config.contact_num_classes,
+            input_num_classes,
             config.common.d_token_pair,
             bias=False,
         )
@@ -233,6 +235,7 @@ class ContactMapGenerationClient(BaseClient):
         """Configuration for discrete diffusion contact map generation."""
 
         method: Literal["none", "d3pm", "sedd"] = "none"
+        transition_mode: Literal["absorbing", "other"] = "absorbing"
         d3pm_scheduler: D3PMScheduler.D3PMSchedulerConfig | None = None
         d3pm_diffuser: D3PMDiffuser.D3PMConfig | None = None
         d3pm_solver: DiffusionSolver.SolverConfig | None = None
@@ -252,7 +255,7 @@ class ContactMapGenerationClient(BaseClient):
         super().__init__(config)
         self.config = config
         self.set_seed(config.experiment.seed)
-        self.register_model(ContactMapGenerationModel(config.model))
+        self.register_model(ContactMapGenerationModel(config.model, config.discrete_diffusion.transition_mode))
         self.discrete_diffusion = None
         if (
             config.discrete_diffusion is not None
@@ -286,13 +289,18 @@ class ContactMapGenerationClient(BaseClient):
                 raise ValueError(msg)
             scheduler = SEDDScheduler(cfg.sedd_scheduler)
             diffuser = SEDDDiffuser(cfg.sedd_diffuser, scheduler)
-            if cfg.sedd_diffuser.num_classes != self.config.model.contact_num_classes:
+            if scheduler.config.transition_mode == "absorbing" and scheduler.num_classes - 1 != self.config.model.contact_num_classes:
+                    msg = (
+                        "For absorbing SEDD, diffuser num_classes must be"
+                        " contact_num_classes + 1 (ContactMapHead outputs 2)."
+                    )
+                    raise ValueError(msg)
+            if scheduler.num_classes != self.config.model.contact_num_classes:
                 msg = "SEDD diffuser num_classes must match model.contact_num_classes (ContactMapHead outputs 2)."
                 raise ValueError(msg)
             solver = SEDDSolver(
                 cfg.sedd_solver,
                 scheduler,
-                num_classes=cfg.sedd_diffuser.num_classes,
                 enforce_symmetric=cfg.sedd_diffuser.enforce_symmetric,
                 min_ratio=cfg.sedd_diffuser.min_ratio,
             )
@@ -309,13 +317,9 @@ class ContactMapGenerationClient(BaseClient):
                 raise ValueError(msg)
             scheduler = D3PMScheduler(cfg.d3pm_scheduler)
             diffuser = D3PMDiffuser(cfg.d3pm_diffuser, scheduler)
-            if cfg.d3pm_diffuser.num_classes != self.config.model.contact_num_classes:
-                msg = "D3PM diffuser num_classes must match model.contact_num_classes (ContactMapHead outputs 2)."
-                raise ValueError(msg)
             solver = D3PMSolver(
                 cfg.d3pm_solver,
                 scheduler,
-                num_classes=cfg.d3pm_diffuser.num_classes,
                 enforce_symmetric=cfg.d3pm_diffuser.enforce_symmetric,
             )
             return {
@@ -350,6 +354,8 @@ class ContactMapGenerationClient(BaseClient):
             tau,
         )  # d3pm : logit | sedd : ratio
         loss = dd["diffuser"].cal_loss(model_output)
+        # for test
+        xt = xt_one_hot.argmax(dim=-1)
 
         return loss, {
             "main_loss": loss.item(),
@@ -417,6 +423,9 @@ class ContactMapGenerationClient(BaseClient):
             device=self.device,
         )
         sample_labels = sample[0] if isinstance(sample, tuple) else sample
+
+        sample_labels[sample_labels >= self.config.model.contact_num_classes] = 0.0
+
         contact_map_prob = F.one_hot(
             sample_labels,
             num_classes=self.config.model.contact_num_classes,

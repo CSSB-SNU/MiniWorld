@@ -81,12 +81,10 @@ class SEDDSolver(DiffusionSolver):
         self,
         config: DiffusionSolver.SolverConfig,
         scheduler: SEDDScheduler,
-        num_classes: int,
         enforce_symmetric: bool = True,
         min_ratio: float = 1e-5,
     ) -> None:
         super().__init__(config, scheduler)
-        self.num_classes = num_classes
         self.enforce_symmetric = enforce_symmetric
         self.min_ratio = min_ratio
 
@@ -96,7 +94,7 @@ class SEDDSolver(DiffusionSolver):
         device: torch.device,
     ) -> torch.Tensor:
         if self.scheduler.config.transition_mode == "absorbing":
-            mask_class = self.scheduler.config.mask_class
+            mask_class = self.scheduler.mask_class
             if mask_class is None:
                 msg = "mask_class must be set for absorbing transition_mode."
                 raise ValueError(msg)
@@ -104,7 +102,7 @@ class SEDDSolver(DiffusionSolver):
         # uniform base
         return torch.randint(
             low=0,
-            high=self.num_classes,
+            high=self.scheduler.num_classes,
             size=shape,
             device=device,
         )
@@ -134,7 +132,7 @@ class SEDDSolver(DiffusionSolver):
             device=xt_one_hot.device,
             dtype=xt_one_hot.dtype,
         )
-        q = scheduler.base_q(xt_labels, num_classes=self.num_classes)
+        q = scheduler.base_q(xt_labels)
 
         off_diag = 1.0 - xt_one_hot
         offdiag_trans = delta_sigma.unsqueeze(-1) * q * ratio_pred * off_diag
@@ -153,14 +151,14 @@ class SEDDSolver(DiffusionSolver):
         xt_next = sampled.view(*xt_labels.shape)
         xt_one_hot_next = torch.nn.functional.one_hot(
             xt_next,
-            num_classes=self.num_classes,
+            num_classes=self.scheduler.num_classes,
         ).to(xt_one_hot.dtype)
 
         if self.enforce_symmetric:
             xt_next = _symmetrize_labels(xt_next)
             xt_one_hot_next = torch.nn.functional.one_hot(
                 xt_next,
-                num_classes=self.num_classes,
+                num_classes=self.scheduler.num_classes,
             ).to(xt_one_hot.dtype)
 
         return xt_one_hot_next, ratio_pred
@@ -179,7 +177,7 @@ class SEDDSolver(DiffusionSolver):
         init_labels = self._base_init_labels(shape, device)
         xt_one_hot = torch.nn.functional.one_hot(
             init_labels,
-            num_classes=self.num_classes,
+            num_classes=self.scheduler.num_classes,
         ).to(torch.float32)
         if self.enforce_symmetric:
             xt_one_hot = _symmetrize_pair(xt_one_hot)
@@ -205,11 +203,9 @@ class D3PMSolver(DiffusionSolver):
         self,
         config: DiffusionSolver.SolverConfig,
         scheduler: D3PMScheduler,
-        num_classes: int,
         enforce_symmetric: bool = True,
     ) -> None:
         super().__init__(config, scheduler)
-        self.num_classes = num_classes
         self.enforce_symmetric = enforce_symmetric
 
     def step(
@@ -222,6 +218,7 @@ class D3PMSolver(DiffusionSolver):
         """Perform one ancestral sampling step."""
         scheduler: D3PMScheduler = self.scheduler
         t = time_steps[t_index].long()
+        t_prev = time_steps[t_index + 1].long()
         xt_labels = xt_one_hot.argmax(dim=-1)
 
         t_emb = scheduler.noise_condition(t).unsqueeze(0).repeat(xt_one_hot.shape[0])
@@ -232,7 +229,7 @@ class D3PMSolver(DiffusionSolver):
             xt_labels,
             x0_hat,
             t,
-            num_classes=self.num_classes,
+            t_prev,
         )
 
         flat_prob = q_post.view(q_post.shape[0], -1, q_post.shape[-1])
@@ -244,14 +241,14 @@ class D3PMSolver(DiffusionSolver):
         xt_minus_1 = sampled.view(*x0_hat.shape)
         xt_minus_1_one_hot = F.one_hot(
             xt_minus_1,
-            num_classes=self.num_classes,
+            num_classes=self.scheduler.num_classes,
         ).to(dtype=xt_one_hot.dtype)
 
         if self.enforce_symmetric:
             xt_minus_1 = _symmetrize_labels(xt_minus_1)
             xt_minus_1_one_hot = F.one_hot(
                 xt_minus_1,
-                num_classes=self.num_classes,
+                num_classes=self.scheduler.num_classes,
             ).to(dtype=xt_one_hot.dtype)
 
         return xt_minus_1_one_hot, logits_x0
@@ -267,7 +264,7 @@ class D3PMSolver(DiffusionSolver):
         """Sample from the diffusion model using ancestral sampling."""
         time_steps = self.scheduler.sampling_time_steps(num_steps).to(device)
         if self.scheduler.config.transition_mode == "absorbing":
-            mask_class = self.scheduler.config.mask_class
+            mask_class = self.scheduler.mask_class
             if mask_class is None:
                 msg = "mask_class must be set for absorbing transition_mode."
                 raise ValueError(msg)
@@ -275,11 +272,13 @@ class D3PMSolver(DiffusionSolver):
         else:
             labels = torch.randint(
                 low=0,
-                high=self.num_classes,
+                high=self.scheduler.num_classes,
                 size=shape,
                 device=device,
             )
-        xt = F.one_hot(labels, num_classes=self.num_classes).to(torch.float32)
+        if self.enforce_symmetric:
+            labels = _symmetrize_labels(labels)
+        xt = F.one_hot(labels, num_classes=self.scheduler.num_classes).to(torch.float32)
         trajectory = []
         logits_list = []
         for i in range(num_steps):
