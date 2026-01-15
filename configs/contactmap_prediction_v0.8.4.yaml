@@ -152,7 +152,7 @@ model:
 
 
 experiment:
-  comment: cmap_prediction_v0.8.0 (48 pairformer, lr 3e-4, grad accum 16)
+  comment: cmap_prediction_v0.8.4 (48 pairformer, lr 7e-4, grad accum 16)
 
   # Training arguments
   num_batch: 1
@@ -160,7 +160,7 @@ experiment:
   # max_lr: 1.8e-3
   optimizer : AdamW
   min_lr: 1e-5
-  max_lr: 3e-4
+  max_lr: 7e-4
   warmup_steps: 2048
   decay_steps: 5e4
   self_condition: False
