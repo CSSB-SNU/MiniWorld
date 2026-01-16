@@ -62,7 +62,7 @@ class ContactMapPredictionModel(nn.Module):
         trunk: "ContactMapPredictionModel.ConditionConfig"
         diffusion: DiffusionConfig
         precision: PrecisionConfig
-        use_distogram: bool = False
+        use_distogram: bool = True
 
     def __init__(self, config: Config) -> None:
         super().__init__()
