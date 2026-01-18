@@ -553,18 +553,18 @@ class InputAtomAttentionEncoder(nn.Module):
         self.common_config = common_config
         self.diffusion_config = diffusion_config
         self.use_beta = diffusion_config.use_beta
-        d_atom_single = common_config.d_atom_single
+        # d_atom_single = common_config.d_atom_single
         d_atom_pair = common_config.d_atom_pair
         self.d_token_single = common_config.d_token_single
 
         self.use_checkpoint = common_config.use_checkpoint
 
-        self.to_atom_single_cond = Linear(
-            6,
-            common_config.d_atom_single,
-            init="default",
-            bias=False,
-        )
+        # self.to_atom_single_cond = Linear(
+        #     6,
+        #     common_config.d_atom_single,
+        #     init="default",
+        #     bias=False,
+        # )
 
         self.to_atom_pair = Linear(
             5,
@@ -573,13 +573,13 @@ class InputAtomAttentionEncoder(nn.Module):
             bias=False,
         )
 
-        self.atom_single_to_pair_left = nn.Sequential(
-            nn.ReLU(), Linear(d_atom_single, d_atom_pair, bias=False),
-        )
+        # self.atom_single_to_pair_left = nn.Sequential(
+        #     nn.ReLU(), Linear(d_atom_single, d_atom_pair, bias=False),
+        # )
 
-        self.atom_single_to_pair_right = nn.Sequential(
-            nn.ReLU(), Linear(d_atom_single, d_atom_pair, bias=False),
-        )
+        # self.atom_single_to_pair_right = nn.Sequential(
+        #     nn.ReLU(), Linear(d_atom_single, d_atom_pair, bias=False),
+        # )
 
         self.mlp_atom_pair = nn.Sequential(
             Linear(d_atom_pair, d_atom_pair, init="relu", bias=False),
@@ -607,10 +607,7 @@ class InputAtomAttentionEncoder(nn.Module):
 
     def _get_input_feature(
         self, noisy_batch: NoisyBatch,
-    ) -> tuple[
-        Float[torch.Tensor, "B L d_atom_single"],
-        Float[torch.Tensor, "B L L d_atom_pair"],
-    ]:
+    ) -> Float[torch.Tensor, "B L L d_atom_pair"]:
         """Get input feature for atom single and pair embedding.
 
         Parameters
@@ -626,15 +623,15 @@ class InputAtomAttentionEncoder(nn.Module):
             Atom pair representation.
 
         """
-        ref_infos = torch.cat(
-            [
-                noisy_batch.reference.pos,
-                noisy_batch.reference.mask.unsqueeze(-1),
-                noisy_batch.reference.element.unsqueeze(-1),
-                torch.arcsinh(noisy_batch.reference.charge).unsqueeze(-1),
-            ],
-            dim=-1,
-        )
+        # ref_infos = torch.cat(
+        #     [
+        #         noisy_batch.reference.pos,
+        #         noisy_batch.reference.mask.unsqueeze(-1),
+        #         noisy_batch.reference.element.unsqueeze(-1),
+        #         torch.arcsinh(noisy_batch.reference.charge).unsqueeze(-1),
+        #     ],
+        #     dim=-1,
+        # )
         with torch.no_grad():
             if not self.use_beta:
                 d_lm = (
@@ -654,27 +651,28 @@ class InputAtomAttentionEncoder(nn.Module):
             arctan_d_lm = arctan_d_lm.unsqueeze(-1)
             d_lm = torch.cat([d_lm, arctan_d_lm, v_lm], dim=-1)
             atom_pair = d_lm * v_lm
-        atom_single_cond = self.to_atom_single_cond(ref_infos)
-        atom_single_cond = atom_single_cond * noisy_batch.reference.mask.unsqueeze(-1)
+        # atom_single_cond = self.to_atom_single_cond(ref_infos)
+        # atom_single_cond = atom_single_cond * noisy_batch.reference.mask.unsqueeze(-1)
         atom_pair = self.to_atom_pair(atom_pair)
 
-        return atom_single_cond, atom_pair
+        return atom_pair
+        # return atom_single_cond, atom_pair
 
     def _scatter_single_to_pair(
         self,
         noisy_batch: NoisyBatch,  # noqa: ARG002
-        atom_single_cond: Float[torch.Tensor, "B L d_atom_single"],
+        # atom_single_cond: Float[torch.Tensor, "B L d_atom_single"],
         atom_pair: Float[torch.Tensor, "B L L d_atom_pair"],
     ) -> Float[torch.Tensor, "B L L d_atom_pair"]:
-        if not self.use_beta:
-            _left = self.atom_single_to_pair_left(atom_single_cond)
-            _right = self.atom_single_to_pair_right(atom_single_cond)
+        # if not self.use_beta:
+        #     _left = self.atom_single_to_pair_left(atom_single_cond)
+        #     _right = self.atom_single_to_pair_right(atom_single_cond)
 
-        else:
-            msg = "Beta version does not support scatter single to pair yet."
-            raise NotImplementedError(msg)
+        # else:
+        #     msg = "Beta version does not support scatter single to pair yet."
+        #     raise NotImplementedError(msg)
 
-        atom_pair = atom_pair + _left[..., None, :] + _right[..., None, :, :]
+        # atom_pair = atom_pair + _left[..., None, :] + _right[..., None, :, :]
         return atom_pair + self.mlp_atom_pair(atom_pair)
 
     def _scatter_atom_to_token(
@@ -723,14 +721,14 @@ class InputAtomAttentionEncoder(nn.Module):
 
     def _before_atom_transformer(self, noisy_batch: NoisyBatch) -> torch.Tensor:
         """Prepare atom single representation before transformer."""
-        atom_single_cond, atom_pair = self._get_input_feature(noisy_batch)
-        atom_single_rep = atom_single_cond
+        atom_pair = self._get_input_feature(noisy_batch)
+        # atom_single_rep = atom_single_cond
         atom_pair = self._scatter_single_to_pair(
             noisy_batch,
-            atom_single_cond,
+            # atom_single_cond,
             atom_pair,
         )
-        return atom_single_rep, atom_single_cond, atom_pair
+        return atom_pair
 
     def forward(
         self,
@@ -738,13 +736,13 @@ class InputAtomAttentionEncoder(nn.Module):
     ) -> Float[torch.Tensor, "B L_token d_token_single"]:
         """Forward pass."""
         if self.use_checkpoint:
-            atom_single_rep, atom_single_cond, atom_pair = (
+            atom_pair = (
                 torch.utils.checkpoint.checkpoint(
                     self._before_atom_transformer, noisy_batch, use_reentrant=False,
                 )
             )
         else:
-            atom_single_rep, atom_single_cond, atom_pair = self._before_atom_transformer(
+            atom_pair = self._before_atom_transformer(
                 noisy_batch,
             )
         atom_single_rep = self.atom_transformer(

@@ -621,12 +621,13 @@ class AugmentedAttention(nn.Module):
     @typecheck
     def _self_attention(
         self,
-        single_rep: Float[torch.Tensor, "B L d_single"],
-        single_cond: Float[torch.Tensor, "B L d_single"],
+        # single_rep: Float[torch.Tensor, "B L d_single"],
+        # single_cond: Float[torch.Tensor, "B L d_single"],
         pair: Float[torch.Tensor, "B L L d_pair"],
         mask: Bool[torch.Tensor, "B L"] | None = None,
     ) -> Float[torch.Tensor, "B L d_single"]:
         original_shape = single_rep.shape
+        self.d_single_rep
         single_rep, single_cond, pair = self.check_input(
             single_rep, single_cond, pair, mask,
         )
@@ -662,15 +663,16 @@ class AugmentedAttention(nn.Module):
     def forward(
         self,
         noisy_batch: NoisyBatch,  # noqa: ARG002
-        single_rep: Float[torch.Tensor, "B L d_single"],
-        single_cond: Float[torch.Tensor, "B L d_single"],
+        # single_rep: Float[torch.Tensor, "B L d_single"],
+        # single_cond: Float[torch.Tensor, "B L d_single"],
         pair: Float[torch.Tensor, "B L L d_pair"] | None = None,
         mask: Bool[torch.Tensor, "B L"] | None = None,
     ) -> Float[torch.Tensor, "B L d_single"]:
         """Forward pass."""
         if not self.use_beta:
             return self._self_attention(
-                single_rep, single_cond, pair, mask,
+                # single_rep, single_cond, 
+                pair, mask,
             )
         msg = "Beta attention is not implemented yet."
         raise NotImplementedError(msg)

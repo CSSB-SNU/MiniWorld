@@ -218,8 +218,6 @@ class DiffusionTransformer(nn.Module):
     def forward(
         self,
         noisy_batch: NoisyBatch,
-        atom_single_rep: Float[torch.Tensor, "B L d_atom_single_rep"],
-        atom_single_cond: Float[torch.Tensor, "B L d_atom_single_cond"] | None = None,
         atom_pair: Float[torch.Tensor, "B L L d_atom_pair"] | None = None,
         mask: Bool[torch.Tensor, "B L"] | None = None,
     ) -> torch.Tensor:
