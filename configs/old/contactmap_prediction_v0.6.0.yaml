@@ -82,7 +82,7 @@ model:
   trunk:
     n_recycle_max: 1 # 4
     pairformer: 
-      n_block: 8
+      n_block: 2
       d_single: ${model.common.d_token_single}
       d_pair: ${model.common.d_token_pair}
       d_hidden_tri_multi: 128
