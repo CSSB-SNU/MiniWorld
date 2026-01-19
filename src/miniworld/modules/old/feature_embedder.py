@@ -553,7 +553,7 @@ class InputAtomAttentionEncoder(nn.Module):
         self.common_config = common_config
         self.diffusion_config = diffusion_config
         self.use_beta = diffusion_config.use_beta
-        # d_atom_single = common_config.d_atom_single
+        d_atom_single = common_config.d_atom_single
         d_atom_pair = common_config.d_atom_pair
         self.d_token_single = common_config.d_token_single
 
@@ -589,21 +589,21 @@ class InputAtomAttentionEncoder(nn.Module):
             Linear(d_atom_pair, d_atom_pair, init="zero", bias=False),
         )
 
-        self.atom_transformer = DiffusionTransformer(
-            common_config=common_config,
-            diffusion_config=diffusion_config,
-            level="atom",
-        )
+        # self.atom_transformer = DiffusionTransformer(
+        #     common_config=common_config,
+        #     diffusion_config=diffusion_config,
+        #     level="atom",
+        # )
 
-        self.atom_single_rep_to_token_single = nn.Sequential(
-            Linear(
-                d_atom_single,
-                self.d_token_single,
-                init="default",
-                bias=False,
-            ),
-            nn.ReLU(),
-        )
+        # self.atom_single_rep_to_token_single = nn.Sequential(
+        #     Linear(
+        #         d_atom_single,
+        #         self.d_token_single,
+        #         init="default",
+        #         bias=False,
+        #     ),
+        #     nn.ReLU(),
+        # )
 
     def _get_input_feature(
         self, noisy_batch: NoisyBatch,
@@ -678,12 +678,12 @@ class InputAtomAttentionEncoder(nn.Module):
     def _scatter_atom_to_token(
         self,
         noisy_batch: NoisyBatch,
-        atom_single_rep: Float[torch.Tensor, "B L d_atom_single"],
+        # atom_single_rep: Float[torch.Tensor, "B L d_atom_single"],
     ) -> Float[torch.Tensor, "B L_token d_token_single"]:
         """Scatter atom single representation to token single representation."""
         atom_mask = noisy_batch.structure.atom_mask  # (B, L_atom)
-        atom_single_rep = atom_single_rep * atom_mask[..., None]
-        to_add_token_single_rep = self.atom_single_rep_to_token_single(atom_single_rep)
+        # atom_single_rep = atom_single_rep * atom_mask[..., None]
+        # to_add_token_single_rep = self.atom_single_rep_to_token_single(atom_single_rep) # linear, relu
 
         # Convert back to token-atom layout and aggregate to tokens
         if not self.use_beta:
@@ -705,14 +705,14 @@ class InputAtomAttentionEncoder(nn.Module):
                 ),
                 device=noisy_batch.device,
             )
-            token_single_rep = token_single_rep.scatter_add(
-                1,
-                atom_to_residue_idx_map.unsqueeze(-1).expand(
-                    -1, -1, to_add_token_single_rep.shape[-1],
-                ),
-                to_add_token_single_rep,
-            )
-            token_single_rep = token_single_rep / count.unsqueeze(-1).clamp(min=1.0)
+            # token_single_rep = token_single_rep.scatter_add(
+            #     1,
+            #     atom_to_residue_idx_map.unsqueeze(-1).expand(
+            #         -1, -1, self.d_token_single,
+            #     ),
+            #     to_add_token_single_rep,
+            # )
+            # token_single_rep = token_single_rep / count.unsqueeze(-1).clamp(min=1.0)
         else:
             msg = "Beta version does not support scatter atom to token yet."
             raise NotImplementedError(msg)
@@ -735,29 +735,29 @@ class InputAtomAttentionEncoder(nn.Module):
         noisy_batch: NoisyBatch,
     ) -> Float[torch.Tensor, "B L_token d_token_single"]:
         """Forward pass."""
-        if self.use_checkpoint:
-            atom_pair = (
-                torch.utils.checkpoint.checkpoint(
-                    self._before_atom_transformer, noisy_batch, use_reentrant=False,
-                )
-            )
-        else:
-            atom_pair = self._before_atom_transformer(
-                noisy_batch,
-            )
-        atom_single_rep = self.atom_transformer(
-            noisy_batch, atom_single_rep, atom_single_cond, atom_pair,
-        )
+        # if self.use_checkpoint:
+        #     atom_pair = (
+        #         torch.utils.checkpoint.checkpoint(
+        #             self._before_atom_transformer, noisy_batch, use_reentrant=False,
+        #         )
+        #     )
+        # else:
+        #     atom_pair = self._before_atom_transformer(
+        #         noisy_batch,
+        #     )
+        # atom_single_rep = self.atom_transformer(
+        #     noisy_batch, atom_single_rep, atom_single_cond, atom_pair,
+        # )
 
         if self.use_checkpoint:
             token_single_rep = torch.utils.checkpoint.checkpoint(
                 self._scatter_atom_to_token,
                 noisy_batch,
-                atom_single_rep,
+                # atom_single_rep,
                 use_reentrant=False,
             )
         else:
-            token_single_rep = self._scatter_atom_to_token(noisy_batch, atom_single_rep)
+            token_single_rep = self._scatter_atom_to_token(noisy_batch)#, atom_single_rep)
 
         return token_single_rep
 

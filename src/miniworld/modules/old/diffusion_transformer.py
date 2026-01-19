@@ -10,7 +10,7 @@ from torch import nn
 
 from miniworld.data.features.batch_edge_backprop import NoisyBatch
 
-from .attentions import AugmentedAttention
+# from .attentions import AugmentedAttention
 from .configs import CommonConfig, DiffusionConfig
 from .primitives import (
     ConditionedMoETransition,
@@ -108,84 +108,84 @@ class DiffusionTransformerBlock(nn.Module):
         else:
             self.use_checkpoint = common_config.use_checkpoint
 
-        self.atom_attention_pair_bias = AugmentedAttention(
-            d_single_rep=d_single_rep,
-            d_single_cond=d_single_cond,
-            d_pair_cond=d_pair_cond,
-            n_head=n_head,
-            level=level,
-            use_beta=diffusion_config.use_beta,
-            implementation=implementation,
-            to_bias_init=common_config.to_bias_init,
-        )
-        if experts > 1:
-            self.conditioned_transition = ConditionedMoETransition(
-                d_rep=d_single_rep,
-                d_cond=d_single_cond,
-                experts=experts,
-                topk=topk,
-                implementation=implementation,
-                use_checkpoint=not self.use_checkpoint,
-            )
-        else:
-            self.conditioned_transition = ConditionedTransition(
-                d_rep=d_single_rep,
-                d_cond=d_single_cond,
-                implementation=implementation,
-                use_checkpoint=not self.use_checkpoint,
-            )
+        # self.atom_attention_pair_bias = AugmentedAttention(
+        #     d_single_rep=d_single_rep,
+        #     d_single_cond=d_single_cond,
+        #     d_pair_cond=d_pair_cond,
+        #     n_head=n_head,
+        #     level=level,
+        #     use_beta=diffusion_config.use_beta,
+        #     implementation=implementation,
+        #     to_bias_init=common_config.to_bias_init,
+        # )
+        # if experts > 1:
+        #     self.conditioned_transition = ConditionedMoETransition(
+        #         d_rep=d_single_rep,
+        #         d_cond=d_single_cond,
+        #         experts=experts,
+        #         topk=topk,
+        #         implementation=implementation,
+        #         use_checkpoint=not self.use_checkpoint,
+        #     )
+        # else:
+        #     self.conditioned_transition = ConditionedTransition(
+        #         d_rep=d_single_rep,
+        #         d_cond=d_single_cond,
+        #         implementation=implementation,
+        #         use_checkpoint=not self.use_checkpoint,
+        #     )
 
     @typecheck
     def _forward(
         self,
         noisy_batch: NoisyBatch,
-        atom_single_rep: Float[torch.Tensor, "B L d_atom_single_rep"],
-        atom_single_cond: Float[torch.Tensor, "B L d_atom_single_cond"] | None = None,
+        # atom_single_rep: Float[torch.Tensor, "B L d_atom_single_rep"],
+        # atom_single_cond: Float[torch.Tensor, "B L d_atom_single_cond"] | None = None,
         atom_pair: Float[torch.Tensor, "B L L d_atom_pair"] | None = None,
         mask: Bool[torch.Tensor, "B L"] | None = None,
     ) -> torch.Tensor:
-        atom_single_rep = atom_single_rep + self.atom_attention_pair_bias(
-            noisy_batch,
-            atom_single_rep,
-            atom_single_cond,
-            atom_pair,
-            mask,
-        )
+        # atom_single_rep = atom_single_rep + self.atom_attention_pair_bias(
+        #     noisy_batch,
+        #     atom_single_rep,
+        #     atom_single_cond,
+        #     atom_pair,
+        #     mask,
+        # )
 
-        return atom_single_rep + self.conditioned_transition(
-            atom_single_rep,
-            atom_single_cond,
-        )
+        # return atom_single_rep + self.conditioned_transition(
+        #     atom_single_rep,
+        #     atom_single_cond,
+        # )
 
     @typecheck
     def forward(
         self,
         noisy_batch: NoisyBatch,
-        atom_single_rep: Float[torch.Tensor, "B L d_atom_single_rep"],
-        atom_single_cond: Float[torch.Tensor, "B L d_atom_single_cond"] | None = None,
+        # atom_single_rep: Float[torch.Tensor, "B L d_atom_single_rep"],
+        # atom_single_cond: Float[torch.Tensor, "B L d_atom_single_cond"] | None = None,
         atom_pair: Float[torch.Tensor, "B L L d_atom_pair"] | None = None,
         mask: Bool[torch.Tensor, "B L"] | None = None,
     ) -> torch.Tensor:
         """Forward pass."""
-        if self.use_checkpoint:
-            atom_single_rep = torch.utils.checkpoint.checkpoint(
-                self._forward,
-                noisy_batch,
-                atom_single_rep,
-                atom_single_cond,
-                atom_pair,
-                mask,
-                use_reentrant=False,
-            )
-        else:
-            atom_single_rep = self._forward(
-                noisy_batch,
-                atom_single_rep,
-                atom_single_cond,
-                atom_pair,
-                mask,
-            )
-        return atom_single_rep
+        # if self.use_checkpoint:
+        #     atom_single_rep = torch.utils.checkpoint.checkpoint(
+        #         self._forward,
+        #         noisy_batch,
+        #         atom_single_rep,
+        #         atom_single_cond,
+        #         atom_pair,
+        #         mask,
+        #         use_reentrant=False,
+        #     )
+        # else:
+        #     atom_single_rep = self._forward(
+        #         noisy_batch,
+        #         atom_single_rep,
+        #         atom_single_cond,
+        #         atom_pair,
+        #         mask,
+        #     )
+        # return atom_single_rep
 
 
 class DiffusionTransformer(nn.Module):
@@ -203,16 +203,16 @@ class DiffusionTransformer(nn.Module):
             if level == "token"
             else diffusion_config.n_block_atom
         )
-        self.blocks = nn.ModuleList(
-            [
-                DiffusionTransformerBlock(
-                    common_config=common_config,
-                    diffusion_config=diffusion_config,
-                    level=level,
-                )
-                for _ in range(n_block)
-            ],
-        )
+        # self.blocks = nn.ModuleList(
+        #     [
+        #         DiffusionTransformerBlock(
+        #             common_config=common_config,
+        #             diffusion_config=diffusion_config,
+        #             level=level,
+        #         )
+        #         for _ in range(n_block)
+        #     ],
+        # )
 
     @typecheck
     def forward(
@@ -222,15 +222,15 @@ class DiffusionTransformer(nn.Module):
         mask: Bool[torch.Tensor, "B L"] | None = None,
     ) -> torch.Tensor:
         """Forward pass."""
-        for block in self.blocks:
-            atom_single_rep = block(
-                noisy_batch,
-                atom_single_rep,
-                atom_single_cond,
-                atom_pair,
-                mask,
-            )
-        return atom_single_rep
+        # for block in self.blocks:
+        #     atom_single_rep = block(
+        #         noisy_batch,
+        #         atom_single_rep,
+        #         atom_single_cond,
+        #         atom_pair,
+        #         mask,
+        #     )
+        # return atom_single_rep
 
 
 class AtomAttentionEncoder(nn.Module):

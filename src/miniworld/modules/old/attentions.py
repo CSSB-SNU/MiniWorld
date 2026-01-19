@@ -557,35 +557,36 @@ class AugmentedAttention(nn.Module):
 
     def _kernel_attention_pair_bias(
         self,
-        query: Float[torch.Tensor, "A B H L D"],
-        key: Float[torch.Tensor, "A B H L D"],
-        value: Float[torch.Tensor, "A B H L D"],
+        # query: Float[torch.Tensor, "A B H L D"],
+        # key: Float[torch.Tensor, "A B H L D"],
+        # value: Float[torch.Tensor, "A B H L D"],
         pair: Float[torch.Tensor, "B L L d_pair"],
         mask: Bool[torch.Tensor, "B L"] | None = None,
     ) -> Float[torch.Tensor, "A B H L D"]:
         if self.implementation == "pytorch":
-            query.mul_(query.shape[-1] ** -0.5)
-            attention = torch.einsum("abhld,abhkd->abhlk", query, key)
+            # query.mul_(query.shape[-1] ** -0.5)
+            # attention = torch.einsum("abhld,abhkd->abhlk", query, key)
             bias = F.linear(pair, self.W_bias, bias=None)
             bias = rearrange(
                 bias, "B L1 L2 H -> 1 B H L1 L2", H=self.n_head,
             ).contiguous()
             if mask is not None:
                 bias.masked_fill_(~mask[None, :, None, None, :], float("-inf"))
-            attention = attention + bias
+            # attention = attention + bias
+            attention = bias
             attention = F.softmax(attention, dim=-1)
-            return torch.einsum("abhlk,abhkd->abhld", attention, value)
+            # return torch.einsum("abhlk,abhkd->abhld", attention, value)
 
-        if self.implementation == "triton" and self.level == "atom":
-            return triton_atom_augmented_attention(
-                query, key, value, self.W_bias, pair, mask,
-            )
+        # if self.implementation == "triton" and self.level == "atom":
+        #     return triton_atom_augmented_attention(
+        #         query, key, value, self.W_bias, pair, mask,
+        #     )
 
-        if self.implementation == "triton" and self.level == "token":
-            bias = F.linear(pair, self.W_bias, bias=None)
-            if mask is not None:
-                bias.masked_fill_(~mask[:, None, :, None], float("-inf"))
-            return triton_token_augmented_attention(query, key, value, bias)
+        # if self.implementation == "triton" and self.level == "token":
+        #     bias = F.linear(pair, self.W_bias, bias=None)
+        #     if mask is not None:
+        #         bias.masked_fill_(~mask[:, None, :, None], float("-inf"))
+        #     return triton_token_augmented_attention(query, key, value, bias)
 
         msg = (
             f"Invalid implementation: {self.implementation}. "
@@ -595,8 +596,8 @@ class AugmentedAttention(nn.Module):
 
     def check_input(
         self,
-        single_rep: torch.Tensor,
-        single_cond: torch.Tensor,
+        # single_rep: torch.Tensor,
+        # single_cond: torch.Tensor,
         pair: torch.Tensor | None,
         mask: torch.Tensor | None,
     )-> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -612,11 +613,12 @@ class AugmentedAttention(nn.Module):
                 msg = f"{mask.shape=} must be (B, L)"
                 raise ValueError(msg)
 
-        if single_rep.ndim == 3:  # (B, L, d_single)
-            single_rep = single_rep.unsqueeze(0)  # (1, B, L, d_single)
-            single_cond = single_cond.unsqueeze(0)  # (1, B, L, d_single)
+        # if single_rep.ndim == 3:  # (B, L, d_single)
+        #     single_rep = single_rep.unsqueeze(0)  # (1, B, L, d_single)
+        #     single_cond = single_cond.unsqueeze(0)  # (1, B, L, d_single)
 
-        return single_rep, single_cond, pair
+        # return single_rep, single_cond, pair
+        return pair
 
     @typecheck
     def _self_attention(
@@ -626,38 +628,42 @@ class AugmentedAttention(nn.Module):
         pair: Float[torch.Tensor, "B L L d_pair"],
         mask: Bool[torch.Tensor, "B L"] | None = None,
     ) -> Float[torch.Tensor, "B L d_single"]:
-        original_shape = single_rep.shape
-        self.d_single_rep
-        single_rep, single_cond, pair = self.check_input(
-            single_rep, single_cond, pair, mask,
-        )
-        query_norm, key_norm = (
-            self.ln_query(single_rep, single_cond),
-            self.ln_key(single_rep, single_cond),
-        )
-        query, key, value = (
-            self.to_query(query_norm),
-            self.to_key(key_norm),
-            self.to_value(key_norm),
-        )
+        B, L, _, _ = pair.shape
+        original_shape = (B, L, self.d_single)
+        # original_shape = single_rep.shape
+
+        # single_rep, single_cond, pair = self.check_input(
+        #     single_rep, single_cond, pair, mask,
+        # )
+        pair = self.check_input(pair, mask)
+        
+        # query_norm, key_norm = (
+        #     self.ln_query(single_rep, single_cond),
+        #     self.ln_key(single_rep, single_cond),
+        # )
+        # query, key, value = (
+        #     self.to_query(query_norm),
+        #     self.to_key(key_norm),
+        #     self.to_value(key_norm),
+        # )
 
         # to reduce memory usage, head must come before augmentation
-        query, key, value = (
-            rearrange(t, "A B L (H D) -> A B H L D", H=self.n_head).contiguous()
-            for t in (query, key, value)
-        )
+        # query, key, value = (
+        #     rearrange(t, "A B L (H D) -> A B H L D", H=self.n_head).contiguous()
+        #     for t in (query, key, value)
+        # )
 
         pair = self.ln_pair(pair)
-        out = self._kernel_attention_pair_bias(query, key, value, pair, mask)
-        gate = self.to_gate(query_norm)
-        gate = rearrange(gate, "A B L H -> A B H L 1")
-        out = self.sigmoid_gate(gate, out)
-        out = rearrange(out, "A B H L D -> A B L (H D)")
-        out = self.to_out(out)
+        # out = self._kernel_attention_pair_bias(query, key, value, pair, mask)
+        # gate = self.to_gate(query_norm)
+        # gate = rearrange(gate, "A B L H -> A B H L 1")
+        # out = self.sigmoid_gate(gate, out)
+        # out = rearrange(out, "A B H L D -> A B L (H D)")
+        # out = self.to_out(out)
 
-        last_conditioning = self.last_conditioning(single_cond)
-        out = self.sigmoid_gate(last_conditioning, out)
-        return out.view(original_shape)  # Restore original shape
+        # last_conditioning = self.last_conditioning(single_cond)
+        # out = self.sigmoid_gate(last_conditioning, out)
+        # return out.view(original_shape)  # Restore original shape
 
     @typecheck
     def forward(
@@ -669,10 +675,10 @@ class AugmentedAttention(nn.Module):
         mask: Bool[torch.Tensor, "B L"] | None = None,
     ) -> Float[torch.Tensor, "B L d_single"]:
         """Forward pass."""
-        if not self.use_beta:
-            return self._self_attention(
-                # single_rep, single_cond, 
-                pair, mask,
-            )
+        # if not self.use_beta:
+            # return self._self_attention(
+            #     # single_rep, single_cond, 
+            #     pair, mask,
+            # )
         msg = "Beta attention is not implemented yet."
         raise NotImplementedError(msg)
