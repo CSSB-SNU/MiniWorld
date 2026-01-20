@@ -1,5 +1,5 @@
 """Utils package for MiniWorld."""
 
-from .utils import set_seed
+from .utils import get_step_decay_scheduler_with_warmup, set_seed, to_numpy
 
-__all__ = ["set_seed"]
+__all__ = ["get_step_decay_scheduler_with_warmup", "set_seed", "to_numpy"]

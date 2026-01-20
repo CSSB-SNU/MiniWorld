@@ -3,12 +3,12 @@ from contextlib import ExitStack
 
 import torch
 from pydantic import BaseModel
-from team_gm.modules import DiffusionTransformer
-from team_gm.modules.blocks import MSAModule, Pairformer
+from team_gm.modules import DiffusionTransformer, MSAModule, Pairformer
 from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
 )
+from team_gm.utils.precision_manager import PrecisionConfig
 from torch import nn
 
 from miniworld.configs import SharedConfig
@@ -16,7 +16,6 @@ from miniworld.data.features.features_biomol import Batch
 from miniworld.modules.heads import ContactMapHead, DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.msa_util import init_msa
-from miniworld.utils.precision_manager import PrecisionConfig
 
 
 class ContactMapPredictionModel(nn.Module):

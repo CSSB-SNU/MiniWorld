@@ -82,10 +82,10 @@ class AtomAttentionEncoder(nn.Module):
 
         self.token_single_to_atom_single_cond = nn.Sequential(
             LayerNorm(
-                shared_config.d_single_token,
+                shared_config.d_single,
             ),
             Linear(
-                shared_config.d_single_token,
+                shared_config.d_single,
                 d_single_atom,
                 bias=False,
                 init="zero",
@@ -132,7 +132,7 @@ class AtomAttentionEncoder(nn.Module):
         atom_single_init: Float[torch.Tensor, "B L_atom d_single_atom_init"],
         atom_pair_init: Float[torch.Tensor, "B L_atom L_atom d_pair_atom_init"],
         atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"],
-        token_single_cond: Float[torch.Tensor, "B L_token d_single_token"],
+        token_single_cond: Float[torch.Tensor, "B L_token d_single"],
         token_pair_cond: Float[torch.Tensor, "B L_token L_token d_pair"],
     ) -> tuple[
         Float[torch.Tensor, "A B L_atom d_single_atom_rep"],
@@ -182,8 +182,10 @@ class AtomAttentionEncoder(nn.Module):
 
 
     @typecheck
+    @torch.compiler.disable
     def _scatter_atom_to_token(
         self,
+        crop_indices: Int[torch.Tensor, "B L_token"],
         atom_mask: Bool[torch.Tensor, "B L_atom"],
         atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"],
         atom_single_rep: Float[torch.Tensor, "B L_atom d_single_atom_rep"],
@@ -198,8 +200,8 @@ class AtomAttentionEncoder(nn.Module):
         )
 
         # Convert back to token-atom layout and aggregate to tokens
-        token_length = int(atom_to_residue_idx_map.max().item() + 1)
-        count = torch.zeros((batch_size, token_length),device=device,dtype=torch.long)
+        token_length = int(crop_indices.shape[1])
+        count = torch.zeros((batch_size, token_length),device=device,dtype=dtype)
         count.scatter_add_(
             1,
             atom_to_residue_idx_map,
@@ -246,7 +248,7 @@ class AtomAttentionEncoder(nn.Module):
         structure: StructureFeatures,
         x_t: Float[torch.Tensor, "A B L_atom 3"],
         x_mask: Bool[torch.Tensor, "A B L_atom"],
-        token_single_cond: Float[torch.Tensor, "B L_token d_single_token"],
+        token_single_cond: Float[torch.Tensor, "B L_token d_single"],
         token_pair_cond: Float[torch.Tensor, "B L_token L_token d_pair"],
     ) -> tuple[
         Float[torch.Tensor, "B L_token d_single_token_rep"],
@@ -292,6 +294,7 @@ class AtomAttentionEncoder(nn.Module):
         if self.use_checkpoint:
             token_single_rep = checkpoint(
                 self._scatter_atom_to_token,
+                scheme.crop_indices,
                 structure.atom_mask,
                 atom_to_residue_idx_map,
                 atom_single_rep,
@@ -299,6 +302,7 @@ class AtomAttentionEncoder(nn.Module):
             )
         else:
             token_single_rep = self._scatter_atom_to_token(
+                scheme.crop_indices,
                 structure.atom_mask,
                 atom_to_residue_idx_map,
                 atom_single_rep,
@@ -390,16 +394,14 @@ class DiffusionConditioning(nn.Module):
         dit_cond_config: Config,
     ) -> None:
         super().__init__()
-        d_single_token = shared_config.d_single_token
         d_pair = shared_config.d_pair
         d_time = shared_config.d_time
+        d_single = shared_config.d_single
         self.relative_position_embedder = RelativePositionEmbedding(
             d_hidden=d_pair,
             r_max=shared_config.r_max,
             s_max=shared_config.s_max,
         )
-
-        implementation = shared_config.implementation
 
         self.linear_token_pair = nn.Sequential(
             LayerNorm(
@@ -412,18 +414,17 @@ class DiffusionConditioning(nn.Module):
                 Transition(
                     d_hidden=d_pair,
                     n=dit_cond_config.n_expand,
-                    implementation=implementation,
                 )
                 for _ in range(dit_cond_config.n_blocks)
             ],
         )
         self.linear_token_single = nn.Sequential(
             LayerNorm(
-                shared_config.d_single_token_input + shared_config.d_single_token,
+                shared_config.d_single_token_input + shared_config.d_single,
             ),
             Linear(
-                shared_config.d_single_token_input + shared_config.d_single_token,
-                d_single_token,
+                shared_config.d_single_token_input + shared_config.d_single,
+                d_single,
                 bias=False,
             ),
         )
@@ -431,14 +432,13 @@ class DiffusionConditioning(nn.Module):
             LayerNorm(
                 d_time,
             ),
-            Linear(d_time, d_single_token, bias=False),
+            Linear(d_time, d_single, bias=False),
         )
         self.single_transitions = nn.ModuleList(
             [
                 Transition(
-                    d_hidden=d_single_token,
+                    d_hidden=d_single,
                     n=dit_cond_config.n_expand,
-                    implementation=implementation,
                 )
                 for _ in range(dit_cond_config.n_blocks)
             ],
@@ -453,7 +453,7 @@ class DiffusionConditioning(nn.Module):
         token_single_trunk: Float[torch.Tensor, "B L_token d_single"],
         token_pair_trunk: Float[torch.Tensor, "B L_token L_token d_pair"],
     ) -> tuple[
-        Float[torch.Tensor, "B L_token d_single_token"],
+        Float[torch.Tensor, "B L_token d_single"],
         Float[torch.Tensor, "B L_token L_token d_pair"],
     ]:
         """Forward pass of the diffusion conditioning module."""
@@ -503,10 +503,10 @@ class DiffusionModule(nn.Module):
         )
         self.add_single_token_cond = nn.Sequential(
             LayerNorm(
-                shared_config.d_single_token,
+                shared_config.d_single,
             ),
             Linear(
-                shared_config.d_single_token,
+                shared_config.d_single,
                 shared_config.d_single_token,
                 bias=False,
                 init="zero",
@@ -531,7 +531,7 @@ class DiffusionModule(nn.Module):
         x_mask: Bool[torch.Tensor, "A B L_atom"],
         t_emb: Float[torch.Tensor, "A B"],
         token_single_input: Float[torch.Tensor, "B L_token d_single_token_input"],
-        token_single_trunk: Float[torch.Tensor, "B L_token d_single_token"],
+        token_single_trunk: Float[torch.Tensor, "B L_token d_single"],
         token_pair_trunk: Float[torch.Tensor, "B L_token L_token d_pair"],
     ) -> Float[torch.Tensor, "B L_atom 3"]:
         """Forward pass of the diffusion module."""

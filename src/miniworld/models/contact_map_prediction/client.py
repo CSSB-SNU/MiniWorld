@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from team_gm import BaseClient
 from team_gm.core.callbacks import ModelEMA
+from team_gm.utils.precision_manager import precision_manager
 
 from miniworld.data.dataloader.dataloader_multistate import (
     CropConfig,
@@ -27,7 +28,6 @@ from miniworld.loss.auxiliary import (
     cal_long_range_recall,
     extract_contact_map,
 )
-from miniworld.utils.precision_manager import precision_manager
 
 from .model import ContactMapPredictionModel
 
@@ -81,8 +81,6 @@ class ContactMapPredictionClient(BaseClient):
         long_range_min_seq_sep: int | None = None
         long_range_sigmoid_k: float | None = None
         long_range_sigmoid_amp: float | None = None
-
-        compile: bool = False
 
     class Config(BaseModel):
         """Configuration for the ContactMapPredictor client."""

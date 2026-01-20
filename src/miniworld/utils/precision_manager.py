@@ -96,6 +96,7 @@ def _wrap_with_casts(module_cls: type[ModuleT], op_dtype: str, out_dtype: str) -
             """Forward with casts to op_dtype and out_dtype."""
             # 1) autocast ops
             device_type = args[0].device.type
+
             op_dtype_torch = convert_dtype(op_dtype)
             out_dtype_torch = convert_dtype(out_dtype)
 

@@ -4,10 +4,10 @@ import numpy as np
 import torch
 from jaxtyping import Bool, Float, Int
 from team_gm import typecheck
-from team_gm.utils.data_utils import to_numpy
 
 from miniworld.data.features.features_biomol import Batch
 from miniworld.data.mapping import EntityMapping, MoleculeType
+from miniworld.utils import to_numpy
 
 Array = np.ndarray | torch.Tensor
 
@@ -210,6 +210,8 @@ def cal_atom_interface_lddt(
         gt_atom_pos = torch.from_numpy(gt_atom_pos)
     if isinstance(atom_mask, np.ndarray):
         atom_mask = torch.from_numpy(atom_mask)
+    if isinstance(chain_mask, np.ndarray):
+        chain_mask = torch.from_numpy(chain_mask)
 
     # Detect and normalize batch dimension on predicted positions
     single = pred_atom_pos.ndim == 2  # [L, 3]
@@ -421,7 +423,7 @@ def category_lddt(  # noqa: C901, PLR0915, PLR0912
         pred_pos = pred_atom_pos[atom_idx]
         gt_pos = gt_atom_pos[atom_idx]
         mask = atom_mask[atom_idx]
-        max_distance = 30.0 if _type in NA_related else 15.0
+        max_distance = 30.0 if edge_type in NA_related else 15.0
         lddt = cal_atom_interface_lddt(
             pred_atom_pos=pred_pos,
             gt_atom_pos=gt_pos,

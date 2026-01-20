@@ -431,7 +431,7 @@ class BioMolData(torch.utils.data.Dataset):
         interface_bias: tuple[str, str] | None = None,
         remain_invalid_residues: bool = False,
         crop_indices: np.ndarray | None = None,
-    ) -> Batch:  # noqa: PLR0915
+    ) -> Batch:
         """Get a data sample by cif_id."""
         cifmol = load_cifmol(db_path=self.config.DB_config.cif_db_path, cif_id=cif_id)
 
@@ -668,7 +668,12 @@ class BioMolData(torch.utils.data.Dataset):
     def create_ddp_dataloader(
         self,
         rank: int,
+        *,
+        world_size: int = 1,
+        shuffle: bool = True,
+        seed: int = 0,
         drop_last: bool = False,
+        num_workers: int = 0,
         use_adaptive_sampler: bool = True,  # train only
         **kwargs: object,
     ) -> DataLoader:
@@ -677,11 +682,11 @@ class BioMolData(torch.utils.data.Dataset):
             sampler = AdaptiveEdgeSampler(
                 AdaptiveEdgeSampler.Config(
                     dataset=self,
-                    num_replicas=kwargs.get("world_size", 1),
+                    num_replicas=world_size,
                     stats=self.stats,
                     rank=rank,
-                    shuffle=kwargs.get("shuffle", True),
-                    seed=kwargs.get("seed", 0),
+                    shuffle=shuffle,
+                    seed=seed,
                     drop_last=drop_last,
                 ),
             )
@@ -689,10 +694,10 @@ class BioMolData(torch.utils.data.Dataset):
             # default distributed sampler
             sampler = DistributedSampler(
                 dataset=self,
-                num_replicas=kwargs.get("world_size", 1),
+                num_replicas=world_size,
                 rank=rank,
-                shuffle=kwargs.get("shuffle", False),
-                seed=kwargs.get("seed", 0),
+                shuffle=shuffle,
+                seed=seed,
                 drop_last=drop_last,
             )
 
@@ -703,59 +708,13 @@ class BioMolData(torch.utils.data.Dataset):
         params = {
             "shuffle": False,  # leave False when using a sampler
             "drop_last": False,  # override to True for train
-            "num_workers": kwargs.get("num_workers", 0),
+            "num_workers": num_workers,
             "pin_memory": False,
             "multiprocessing_context": (
-                "spawn" if kwargs.get("num_workers", 0) > 0 else None
+                "spawn" if num_workers > 0 else None
             ),
             "collate_fn": Batch.collate_fn,
         }
         params.update(kwargs)
         return DataLoader(self, **params)
 
-
-def set_seed(seed: int) -> None:
-    """Set random seed for reproducibility."""
-    random.seed(seed)
-    np.random.default_rng(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-
-
-if __name__ == "__main__":
-    crop_config = CropConfig(
-        contiguous_prob=0.0,
-        spatial_prob=1.0,
-        interface_prob=0.0,
-        crop_length=384,
-    )
-    msa_config = MSAConfig(
-        n_samples=4,
-        max_msa_depth=512,
-    )
-    DB_config = BioMolDBConfig(
-        cif_db_path=Path(
-            "/home/psk6950/data/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb",
-        ),
-        a3m_db_path=Path("/home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb"),
-        edge_id_to_cif_ids_path=Path(
-            "/home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/train_edges.tsv",
-        ),
-    )
-    config = BioMolData.BioMolConfig(
-        crop_config=crop_config,
-        msa_config=msa_config,
-        DB_config=DB_config,
-    )
-    set_seed(42)
-    dataset = BioMolData(config=config)
-    dataset[0]
-
-    for ii in range(len(dataset)):
-        dataset[ii]
-        try:
-            dataset[ii]
-        except Exception as e:  # noqa: BLE001
-            print(f"Error at index {ii}: {e}")  # noqa: T201
-            continue
-        print(f"Processed {ii} samples.")  # noqa: T201
