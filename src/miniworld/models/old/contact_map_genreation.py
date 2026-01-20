@@ -32,7 +32,7 @@ from miniworld.modules.configs import (
     DiffusionConfig,
 )
 from miniworld.modules.feature_embedder import InputFeatureEmbedder, fourier_embedding
-from miniworld.modules.head import ContactMapHead
+from miniworld.modules.heads import ContactMapHead
 from miniworld.modules.msa_module import MSAModule
 from miniworld.modules.pairformer import Pairformer
 from miniworld.modules.primitives import (

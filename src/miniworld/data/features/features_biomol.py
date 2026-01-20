@@ -6,7 +6,7 @@ from team_gm import BaseBatch, typecheck
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass()
 class SequenceFeatures(BaseBatch):
     """Sequence features."""
 
@@ -14,7 +14,7 @@ class SequenceFeatures(BaseBatch):
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass()
 class StructureFeatures(BaseBatch):
     """Structure features."""
 
@@ -27,7 +27,7 @@ class StructureFeatures(BaseBatch):
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass()
 class ReferenceFeatures(BaseBatch):
     """Reference features."""
 
@@ -39,7 +39,7 @@ class ReferenceFeatures(BaseBatch):
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass()
 class SchemeFeatures(BaseBatch):
     """Scheme features."""
 
@@ -54,7 +54,7 @@ class SchemeFeatures(BaseBatch):
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass()
 class MSAFeatures(BaseBatch):
     """MSA features."""
 
@@ -66,7 +66,7 @@ class MSAFeatures(BaseBatch):
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass()
 class ChainFeatures(BaseBatch):
     """Chain features."""
 
@@ -74,7 +74,7 @@ class ChainFeatures(BaseBatch):
     contact_edges: Int[torch.Tensor, "B N_contact 2"]
 
 
-@dataclass(kw_only=True, frozen=True)
+@dataclass(kw_only=True)
 class Batch(BaseBatch):
     """Batch of features."""
 
@@ -93,7 +93,7 @@ class Batch(BaseBatch):
     chain: ChainFeatures
 
     @property
-    def shape(self) -> tuple[int]:
+    def shape(self) -> torch.Size:
         """Return the shape of atom mask."""
         return self.structure.atom_mask.shape
 
@@ -114,7 +114,8 @@ class Batch(BaseBatch):
             return self.scheme.residue_idx.shape[0]
         if len(self.reference.pos.shape) == 3:
             return self.scheme.residue_idx.shape[1]
-        return None
+        msg = "Cannot infer residue length from reference positions."
+        raise ValueError(msg)
 
     @property
     def atom_length(self) -> int:
@@ -123,30 +124,5 @@ class Batch(BaseBatch):
             return self.reference.pos.shape[0]
         if len(self.reference.pos.shape) == 3:
             return self.reference.pos.shape[1]
-        return None
-
-
-@dataclass(kw_only=True, frozen=True)
-class NoisyBatch(Batch):
-    """Batch with noise for diffusion model."""
-
-    # Tensor of timesteps
-    t: torch.Tensor  # (..., 1)
-
-    # Noisy rigids of frame atoms
-    x_t: torch.Tensor  # (..., L, 3)
-    x_mask: torch.Tensor # (..., L)
-
-    # Self condition rigid
-    x_sc: torch.Tensor | None = None  # (..., L, 3)
-
-    def __post_init__(self) -> None:
-        """Post-initialization to move tensors to correct device and dtype."""
-        object.__setattr__(self, "t", self.t.to(self.device, dtype=self.dtype))
-        object.__setattr__(self, "x_t", self.x_t.to(self.device, dtype=self.dtype))
-        if self.x_sc is not None:
-            object.__setattr__(
-                self,
-                "x_sc",
-                self.x_sc.to(self.device, dtype=self.dtype),
-            )
+        msg = "Cannot infer atom length from reference positions."
+        raise ValueError(msg)

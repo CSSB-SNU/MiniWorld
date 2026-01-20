@@ -26,7 +26,7 @@ from miniworld.modules.configs import (
     DiffusionConfig,
 )
 from miniworld.modules.feature_embedder import RelativePositionEmbedding
-from miniworld.modules.head import DistogramHead
+from miniworld.modules.heads import DistogramHead
 from miniworld.modules.msa_module import MSAModule
 from miniworld.modules.primitives import (
     LayerNorm,

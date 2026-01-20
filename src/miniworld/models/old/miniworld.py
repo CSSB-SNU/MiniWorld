@@ -24,7 +24,14 @@ from miniworld.data.dataloader.dataloader_edge_backprop import (
 )
 from miniworld.data.features.features_biomol import Batch, NoisyBatch
 from miniworld.loss import metrics  # , losses
-from miniworld.loss.auxiliary import cal_atom_distogram_loss
+from miniworld.loss.auxiliary import (
+    cal_contact_map_focal_loss,
+    cal_contact_map_weighted_bce_loss,
+    cal_long_range_auroc,
+    cal_long_range_f1,
+    cal_long_range_precision,
+    cal_long_range_recall,
+)
 from miniworld.modules.configs import (
     CommonConfig,
     DiffusionConfig,
@@ -33,7 +40,7 @@ from miniworld.modules.diffusion_module import (
     DiffusionModule,
 )
 from miniworld.modules.feature_embedder import InputFeatureEmbedder
-from miniworld.modules.head import DistogramHead
+from miniworld.modules.heads import ContactMapHead
 from miniworld.modules.msa_module import MSAModule
 from miniworld.modules.primitives import (
     LayerNorm,
@@ -45,8 +52,48 @@ from miniworld.utils.diffusion.solver import AF3Solver
 from miniworld.utils.precision_manager import PrecisionConfig, precision_manager
 
 
-class AF3Model(nn.Module):
-    """Structure AF3 model."""
+class ContactMapEmbedder(nn.Module):
+    """ContactMap Embedder."""
+
+    def __init__(
+        self,
+        common_config: CommonConfig,
+        pairformer_config: Pairformer.Config,
+    ) -> None:
+        super().__init__()
+
+        self.to_pair = nn.Sequential(
+            LayerNorm(
+                2,
+                implementation=common_config.implementation,
+            ),
+            Linear(
+                2,
+                common_config.d_token_pair,
+                init="zero",
+            ),
+        )
+        self.pairformer = Pairformer(pairformer_config)
+
+    def forward(
+        self,
+        contact_map: torch.Tensor,  # (B, L, L, 2)
+        token_single_init: torch.Tensor,  # (B, L, d_single)
+        token_pair_init: torch.Tensor,  # (B, L, L, d_pair)
+        token_mask: torch.Tensor,  # (B, L), bool
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Forward pass of ContactMapEmbedder."""
+        token_pair = token_pair_init + self.to_pair(contact_map)  # (B, L, L, d_pair)
+        token_pair, token_single = self.pairformer(
+            token_pair,
+            single=token_single_init,
+            mask=token_mask,
+        )  # (B, L, L, d_pair), (B, L, d_single)
+        return token_pair, token_single  # (B, L, L, d_pair)
+
+
+class MiniWorldModel(nn.Module):
+    """Structure MiniWorld model."""
 
     class ConditionConfig(BaseModel):
         """Configuration for condition modules."""
@@ -55,13 +102,19 @@ class AF3Model(nn.Module):
         msa_module: MSAModule.Config
         n_recycle_max: int = 4
 
+    class ContactMapConfig(BaseModel):
+        """Configuration for contact map embedding."""
+
+        pairformer: Pairformer.Config
+
     class Config(BaseModel):
-        """Configuration for the AF3 model."""
+        """Configuration for the MiniWorld model."""
 
         common: CommonConfig
-        trunk: "AF3Model.ConditionConfig"
+        trunk: "MiniWorldModel.ConditionConfig"
         diffusion: DiffusionConfig
         precision: PrecisionConfig
+        contact_map: "MiniWorldModel.ContactMapConfig"
 
     def __init__(self, config: Config) -> None:
         super().__init__()
@@ -101,12 +154,15 @@ class AF3Model(nn.Module):
         # Trunk forward
         self.msa_module = MSAModule(config.common, config.trunk.msa_module)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
+        self.contact_map_head = ContactMapHead(config.common)
+
+        self.contact_map_embedder = ContactMapEmbedder(
+            config.common,
+            config.contact_map.pairformer,
+        )
 
         # Diffusion module
         self.diffusion_module = DiffusionModule(config.common, config.diffusion)
-
-        # Distogram prediction
-        self.distogram_head = DistogramHead(config.common)
 
     def condition_forward(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, ...]:
         """Forward pass of the condition modules with recycling."""
@@ -136,6 +192,7 @@ class AF3Model(nn.Module):
                     stack.enter_context(torch.no_grad())
                     stack.enter_context(torch.inference_mode())
                 token_pair = token_pair_init + self.add_pair_recycle(token_pair)
+
                 token_pair = token_pair + self.msa_module(
                     noisy_batch,
                     i_cycle,
@@ -150,13 +207,25 @@ class AF3Model(nn.Module):
                     token_single,
                     noisy_batch.structure.residue_mask,
                 )
+        # reduce token_pair information to contact map
+        contact_map_logit = self.contact_map_head(token_pair)
 
-        distogram_logit = self.distogram_head(token_pair)
+        # grad hack
+        token_single_init = token_single_init + token_single * 0.0
+
+        # expand contact map information to pair representation
+        token_pair_exp, token_single_exp = self.contact_map_embedder(
+            contact_map_logit.detach(),
+            token_single_init,
+            token_pair_init,
+            noisy_batch.structure.residue_mask,
+        )
+
         return (
             token_single_input,
-            token_single,
-            token_pair,
-            distogram_logit,
+            token_single_exp,
+            token_pair_exp,
+            contact_map_logit,
         )
 
     def diffusion_forward(
@@ -192,12 +261,12 @@ class AF3Model(nn.Module):
         )
 
     def forward(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, torch.Tensor]:
-        """Forward pass of the AF3 model."""
+        """Forward pass of the MiniWorld model."""
         (
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
-            distogram_logit,
+            contact_map_logit,
         ) = self.condition_forward(noisy_batch)
         # Diffusion forward
         atom_pos_update = self.diffusion_forward(
@@ -207,13 +276,13 @@ class AF3Model(nn.Module):
             token_pair_trunk,
         )
 
-        return atom_pos_update, distogram_logit
+        return atom_pos_update, contact_map_logit
 
 
-class AF3ModelWrapper(nn.Module):
-    """Wrapper for AF3Model to handle the input and output using solver."""
+class MiniWorldModelWrapper(nn.Module):
+    """Wrapper for MiniWorldModel to handle the input and output using solver."""
 
-    def __init__(self, model: AF3Model, use_self_condition: bool = True) -> None:
+    def __init__(self, model: MiniWorldModel, use_self_condition: bool = True) -> None:
         super().__init__()
         self.batch_loaded = False
         self.conditioned_forwarded = False
@@ -230,10 +299,10 @@ class AF3ModelWrapper(nn.Module):
     def prepare_condition(self, batch: Batch) -> None:
         """Prepare the model for conditioned forward pass."""
         if self.batch_loaded:
-            msg = "Batch is already loaded. Please create a new AF3ModelWrapper instance for a new batch."
+            msg = "Batch is already loaded. Please create a new MiniWorldModelWrapper instance for a new batch."
             raise ValueError(msg)
         if self.conditioned_forwarded:
-            msg = "Conditioned forward is already done. Please create a new AF3ModelWrapper instance for a new batch."
+            msg = "Conditioned forward is already done. Please create a new MiniWorldModelWrapper instance for a new batch."
             raise ValueError(msg)
 
         # Load the batch and prepare the model for conditioned forward pass
@@ -242,7 +311,7 @@ class AF3ModelWrapper(nn.Module):
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
-            distogram_logit,
+            contact_map_logit,
         ) = self.model.condition_forward(self.batch)
         self.conditioned_forwarded = True
 
@@ -250,7 +319,7 @@ class AF3ModelWrapper(nn.Module):
             "token_single_input": token_single_input,
             "token_single_trunk": token_single_trunk,
             "token_pair_trunk": token_pair_trunk,
-            "distogram_logit": distogram_logit,
+            "contact_map_logit": contact_map_logit,
         }
 
     def forward(self, z_i: torch.Tensor, t_emb: torch.Tensor) -> torch.Tensor:
@@ -259,11 +328,14 @@ class AF3ModelWrapper(nn.Module):
             msg = "Batch must be loaded and conditioned forward must be called before forward pass."
             raise ValueError(msg)
 
+        n_str = z_i.shape[0]
+        x_mask = self.batch.structure.atom_mask.repeat(n_str, 1).unsqueeze(0)
         noisy_batch = NoisyBatch(
             **self.batch.__dict__,
             x_t=z_i.unsqueeze(0),  # (B, L, 3) -> (1, B, L, 3)
             t=t_emb[None, None, None, None],  # (,) -> (1, 1, 1, 1)
             x_sc=self.z_sc,
+            x_mask=x_mask,
         )
 
         z_update = self.model.diffusion_forward(
@@ -280,14 +352,14 @@ class AF3ModelWrapper(nn.Module):
 
 
 @dataclass
-class AF3InferenceOutput:
-    """Output of the AF3 model inference."""
+class MiniWorldInferenceOutput:
+    """Output of the MiniWorld model inference."""
 
     # Tensor of final predicted atom coordinate.
     atom_pos_pred: torch.Tensor  # (B, L, 3)
 
-    # Distogram logits
-    distogram_logit: torch.Tensor  # (B, L, L, D)
+    # Contact map logits
+    contact_map_logit: torch.Tensor  # (B, L, L, 2)
 
     # Array of predicted atom coordinate trajectory for timesteps T.
     model_traj: np.ndarray  # (B, T, L, 3)
@@ -298,8 +370,8 @@ class AF3InferenceOutput:
     batch: Batch
 
 
-class AF3Client(BaseClient):
-    """Client for training and inference of AF3 model."""
+class MiniWorldClient(BaseClient):
+    """Client for training and inference of MiniWorld model."""
 
     class DataConfig(BaseModel):
         """Configuration for data loading."""
@@ -314,13 +386,13 @@ class AF3Client(BaseClient):
         """Configuration for loss weights."""
 
         diffusion_loss: float = 4.0
-        distogram_loss: float = 0.03
+        contact_map_loss: float = 0.03
 
     class ExperimentsConfig(BaseModel):
         """Configuration for experiments."""
 
         comment: str = "default"
-        name: str = "AF3-PSK-2"
+        name: str = "MiniWorld-PSK-2"
         overfitting: bool = False
         overfitting_dir: str | None = None  # Directory for overfitting mode
         train_item: int = 25600
@@ -347,7 +419,11 @@ class AF3Client(BaseClient):
         prefetch_factor: int = 4
         seed: int = 0
         use_ema: bool = True
-        ema_decay: float = 0.9999
+        ema_decay: float = 0.999
+        bce_pos_weight: float = 2.0
+        long_range_min_seq_sep: int | None = None
+        long_range_sigmoid_k: float | None = None
+        long_range_sigmoid_amp: float = 3.0
 
     class DiffuserConfig(BaseModel):
         """Configuration for the diffuser."""
@@ -357,19 +433,19 @@ class AF3Client(BaseClient):
         method: Literal["AF3", "EDM"] = "AF3"
 
     class Config(BaseModel):
-        """Configuration for the AF3 client."""
+        """Configuration for the MiniWorld client."""
 
-        data: "AF3Client.DataConfig"
-        model: AF3Model.Config
-        experiment: "AF3Client.ExperimentsConfig"
-        diffuser: "AF3Client.DiffuserConfig"
-        loss: "AF3Client.LossConfig"
+        data: "MiniWorldClient.DataConfig"
+        model: MiniWorldModel.Config
+        experiment: "MiniWorldClient.ExperimentsConfig"
+        diffuser: "MiniWorldClient.DiffuserConfig"
+        loss: "MiniWorldClient.LossConfig"
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self.config = config
         self.set_seed(config.experiment.seed)
-        self.register_model(AF3Model(config.model))
+        self.register_model(MiniWorldModel(config.model))
 
         if config.experiment.use_ema:
             self.add_callback(ModelEMA(config.experiment.ema_decay))
@@ -399,38 +475,141 @@ class AF3Client(BaseClient):
         np.random.seed(seed)
         random.seed(seed)
 
-    def loss_fn(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, Mapping]:
-        """Compute the loss given a noisy batch."""
-        atom_pos_update, distogram_logit = self.model.forward(noisy_batch)
+    def contact_map_quality(
+        self,
+        noisy_batch: NoisyBatch,
+        contact_map_logit: torch.Tensor,
+    ) -> Mapping:
+        """Compute contact map quality metrics."""
+        # Placeholder for contact map quality metrics
+        # Long-range weighting hyperparameters (fallback to function defaults)
+        lr_min_seq_sep = (
+            self.config.experiment.long_range_min_seq_sep
+            if self.config.experiment.long_range_min_seq_sep is not None
+            else 16
+        )
 
-        structure_loss = self.diffuser.cal_loss(atom_pos_update)
-        distogram_loss = cal_atom_distogram_loss(
-            distogram_logit,
+        focal_loss = cal_contact_map_focal_loss(
+            contact_map_logit,
             noisy_batch.structure.atom_pos,
-            noisy_batch.structure.atom_mask,
+            noisy_batch.structure.atom_pos_mask,
             noisy_batch.scheme.atom_to_residue_idx_map,
         )
+
+        # Long-range metrics (|i-j| >= min_seq_sep)
+        min_seq_sep = lr_min_seq_sep
+        long_range_precision = cal_long_range_precision(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+        long_range_recall = cal_long_range_recall(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+        long_range_f1 = cal_long_range_f1(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+        long_range_auroc = cal_long_range_auroc(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            min_seq_sep=min_seq_sep,
+        )
+        return {
+            "focal_loss": focal_loss.item(),
+            "lr_precision": long_range_precision.mean().item(),
+            "lr_recall": long_range_recall.mean().item(),
+            "lr_f1": long_range_f1.mean().item(),
+            "lr_auroc": long_range_auroc.item(),
+        }
+
+    def loss_fn(self, noisy_batch: NoisyBatch) -> tuple[torch.Tensor, Mapping]:
+        """Compute the loss given a noisy batch."""
+        atom_pos_update, contact_map_logit = self.model.forward(noisy_batch)
+
+        structure_loss = self.diffuser.cal_loss(atom_pos_update)
+
+        # Long-range weighting hyperparameters (fallback to function defaults)
+        lr_min_seq_sep = (
+            self.config.experiment.long_range_min_seq_sep
+            if self.config.experiment.long_range_min_seq_sep is not None
+            else 16
+        )
+        lr_sigmoid_k = (
+            self.config.experiment.long_range_sigmoid_k
+            if self.config.experiment.long_range_sigmoid_k is not None
+            else 1.0
+        )
+        lr_sigmoid_amp = (
+            self.config.experiment.long_range_sigmoid_amp
+            if self.config.experiment.long_range_sigmoid_amp is not None
+            else 0.0
+        )
+
+        contact_map_loss = cal_contact_map_weighted_bce_loss(
+            contact_map_logit,
+            noisy_batch.structure.atom_pos,
+            noisy_batch.structure.atom_pos_mask,
+            noisy_batch.scheme.atom_to_residue_idx_map,
+            pos_weight=self.config.experiment.bce_pos_weight,
+            long_range_min_seq_sep=lr_min_seq_sep,
+            long_range_sigmoid_k=lr_sigmoid_k,
+            long_range_sigmoid_amp=lr_sigmoid_amp,
+        )
+
         loss = (
             self.config.loss.diffusion_loss * structure_loss
-            + self.config.loss.distogram_loss * distogram_loss
+            + self.config.loss.contact_map_loss * contact_map_loss
         )
+
+        contact_map_quality_dict = self.contact_map_quality(
+            noisy_batch,
+            contact_map_logit,
+        )
+        focal_loss = contact_map_quality_dict["focal_loss"]
+        lr_precision = contact_map_quality_dict["lr_precision"]
+        lr_recall = contact_map_quality_dict["lr_recall"]
+        lr_f1 = contact_map_quality_dict["lr_f1"]
+        lr_auroc = contact_map_quality_dict["lr_auroc"]
 
         return loss, {
             "diffusion_loss": structure_loss.item(),
-            "distogram_loss": distogram_loss.item(),
+            "contact_map_loss": contact_map_loss.item(),
             "total_loss": loss.item(),
+            "main_loss": loss.item(),
+            "focal_loss": focal_loss,
+            "lr_precision": lr_precision,
+            "lr_recall": lr_recall,
+            "lr_f1": lr_f1,
+            "lr_auroc": lr_auroc,
         }
 
     def training_step(self, batch: Batch) -> dict[str, float]:
         """Train the model on a batch."""
         with precision_manager(self.model, self.config.model.precision):
             num_augment = self.config.experiment.num_augment
-            noisy_atom_pos, t_emb = self.diffuser.sample(
+            noisy_atom_pos, x_mask, t_emb = self.diffuser.sample(
                 batch.structure.atom_pos,
                 num_augment=num_augment,
                 mask=batch.structure.atom_mask,
             )
-            noisy_batch = NoisyBatch(**batch.__dict__, t=t_emb, x_t=noisy_atom_pos)
+            noisy_batch = NoisyBatch(
+                **batch.__dict__,
+                t=t_emb,
+                x_t=noisy_atom_pos,
+                x_mask=x_mask,
+            )
 
             if self.config.experiment.self_condition and random.random() > 0.5:
                 with torch.no_grad():
@@ -473,7 +652,7 @@ class AF3Client(BaseClient):
             loss_dict = self.training_step(batch)
             loss = (
                 self.config.loss.diffusion_loss * loss_dict["diffusion_loss"]
-                + self.config.loss.distogram_loss * loss_dict["distogram_loss"]
+                + self.config.loss.contact_map_loss * loss_dict["contact_map_loss"]
             )
 
             sampler.stats.update(
@@ -498,7 +677,15 @@ class AF3Client(BaseClient):
     ) -> dict[str, float]:
         """Test the inference quality of the model on a batch."""
         batch = batch.to(device=self.device)
+
         output = self.inference(batch, timesteps=timesteps)
+        contact_map_logit = output.contact_map_logit
+        contact_map_loss = cal_contact_map_weighted_bce_loss(
+            contact_map_logit,
+            batch.structure.atom_pos,
+            batch.structure.atom_pos_mask,
+            batch.scheme.atom_to_residue_idx_map,
+        )
 
         max_lddt, min_rmsd = 0, float("inf")
 
@@ -514,16 +701,23 @@ class AF3Client(BaseClient):
             batch.structure.atom_pos[0],
             batch.structure.atom_mask[0],
         )
-
         category_lddt = metrics.category_lddt(
             batch,
             output.atom_pos_pred[0],
         )
         min_rmsd = min(min_rmsd, rmsd)
+        print(f"<<<category_lddt[{batch.name}]: {category_lddt}>>>")
+
+        contact_map_quality_dict = self.contact_map_quality(
+            batch,
+            contact_map_logit,
+        )
+
         return {
             "best_rmsd": min_rmsd,
             "best_lddt": max_lddt,
-            **category_lddt,
+            "vald_contact_map_loss": contact_map_loss.item(),
+            **contact_map_quality_dict,
         }
 
     @torch.no_grad()
@@ -531,10 +725,10 @@ class AF3Client(BaseClient):
         self,
         batch: Batch,
         timesteps: int = 100,
-    ) -> AF3InferenceOutput:
+    ) -> MiniWorldInferenceOutput:
         """Inference using the diffusion solver."""
         raw_model = getattr(self.model, "module", self.model)
-        model_wrapper = AF3ModelWrapper(
+        model_wrapper = MiniWorldModelWrapper(
             raw_model,
             use_self_condition=self.config.experiment.self_condition,
         )
@@ -551,13 +745,13 @@ class AF3Client(BaseClient):
         )
         inter_traj = [du.to_numpy(x) for x in inter_traj]
         model_traj = [du.to_numpy(x) for x in model_traj]
-        distogram_logit = model_wrapper.condition["distogram_logit"]
-        return AF3InferenceOutput(
+        contact_map_logit = model_wrapper.condition["contact_map_logit"]
+        return MiniWorldInferenceOutput(
             atom_pos_pred=atom_pos_pred,
             model_traj=np.stack(model_traj, axis=1),
             inter_traj=np.stack(inter_traj, axis=1),
             batch=batch,
-            distogram_logit=distogram_logit,
+            contact_map_logit=contact_map_logit,
         )
 
     def sample(self) -> None:

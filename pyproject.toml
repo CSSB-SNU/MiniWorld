@@ -74,6 +74,14 @@ click = ">=8.3.1,<9"
 "src/miniworld/data/msa.py" = ["N802","N803"]
 
 
+[tool.ruff]
+line-length = 89
+target-version = "py310"
+
+
+[tool.pyright]
+enableReachabilityAnalysis = false
+
 [tool.hatch.build.targets.wheel]
 packages = [
   "src/miniworld",

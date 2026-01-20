@@ -21,7 +21,7 @@ from miniworld.data.features.features_multistate import (
 from miniworld.data.io import extract_lmdb_keys, load_a3m, load_cifmols, load_fasta
 from miniworld.data.mapping import AtomMapping
 from miniworld.data.msa import MSA
-from miniworld.utils.structure import SE3_oper, extract_contact_map
+from miniworld.utils.structure import SE3_oper
 
 
 class BioMolSampler(DistributedSampler):
@@ -239,14 +239,7 @@ class BioMolMonomerData(torch.utils.data.Dataset):
         self,
         query_id: str,
         crop_length: int | None = None,
-    ) -> tuple[
-        SequenceFeatures,
-        StructureFeatures,
-        ReferenceFeatures,
-        SchemeFeatures,
-        MSAFeatures,
-        tuple,
-    ]:
+    ) -> Batch:
         """Get item by seq_id."""
         cifmols = load_cifmols(
             db_path=self.config.preprocess_config.cif_db_path,
@@ -476,17 +469,22 @@ class BioMolMonomerData(torch.utils.data.Dataset):
     def create_ddp_dataloader(
         self,
         rank: int,
+        *,
+        world_size: int = 1,
+        shuffle: bool = True,
+        seed: int = 0,
         drop_last: bool = False,
+        num_workers: int = 0,
         **kwargs: object,
     ) -> DataLoader:
-        """Create a distributed DataLoader with AdaptiveEdgeSampler."""
+        """Create a distributed dataloader for the dataset."""
         sampler = BioMolSampler(
             BioMolSampler.Config(
                 dataset=self,
-                num_replicas=kwargs.get("world_size", 1),
+                num_replicas=world_size,
                 rank=rank,
-                shuffle=kwargs.get("shuffle", True),
-                seed=kwargs.get("seed", 0),
+                shuffle=shuffle,
+                seed=seed,
                 drop_last=drop_last,
             ),
         )
@@ -498,81 +496,12 @@ class BioMolMonomerData(torch.utils.data.Dataset):
         params = {
             "shuffle": False,  # leave False when using a sampler
             "drop_last": False,  # override to True for train
-            "num_workers": kwargs.get("num_workers", 0),
+            "num_workers": num_workers,
             "pin_memory": True,
             "multiprocessing_context": (
-                "spawn" if kwargs.get("num_workers", 0) > 0 else None
+                "spawn" if num_workers > 0 else None
             ),
             "collate_fn": Batch.collate_fn,
         }
         params.update(kwargs)
         return DataLoader(self, **params)
-
-
-if __name__ == "__main__":
-    db_path = Path("/home/psk6950/data/BioMoldbv2_204Oct21/")
-    config = BioMolMonomerData.BioMolConfig(
-        crop_config=CropConfig(
-            contiguous_prob=1.0,
-            spatial_prob=0.0,
-            interface_prob=0.0,
-            crop_length=9096,
-        ),
-        kmer_fast_align_config=KmerFastAlignConfig(
-            kmer_index=db_path / "kmer_align" / "kmer_index.tsv",
-            fasta=db_path / "fasta" / "protein_wo_signalp.fasta",
-            kmer_threshold=0.2,
-            gap_split=15,
-            max_mismatch=15,
-            max_indel=5,
-            align_num=-1,  # -1 means no limit
-            align_thr=0.9,
-            seed=1123,  # for reproducibility
-        ),
-        msa_config=MSAConfig(
-            n_samples=1,
-            max_msa_depth=1,
-        ),
-        multistate_config=MultistateConfig(
-            n_prefilter=48,
-            n_samples=48,
-            temperatures=1.0,
-            consensus_ratio=0.9,
-            consensus_filter=0.9,
-        ),
-        preprocess_config=MultiStatedbConfig(
-            cif_db_path=Path(
-                "/home/psk6950/data/MiniWorld/multistate/seqID_to_cifmols_filtered.lmdb",
-            ),
-            a3m_db_path=Path("/home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb"),
-            tmp_dir=Path(
-                "/home/psk6950/data/MiniWorld/multistate/data_tmp/monomer/train/",
-            ),
-            cluster_ids_path=Path(
-                "/home/psk6950/data/MiniWorld/multistate/train_valid_split/train_clusters.txt",
-            ),
-            cluster_id_to_seq_ids_path=Path(
-                "/home/psk6950/data/MiniWorld/multistate/clusterID_to_seqIDs.npz",
-            ),
-            seq_id_to_seq=db_path / "fasta" / "protein_wo_signalp.fasta",
-        ),
-    )
-    dataset = BioMolMonomerData(config)
-    contact_num = 0
-    noncontact_num = 0
-    for idx in range(len(dataset)):
-        batch = dataset[idx]
-
-        contact_target, residue_pair_mask = extract_contact_map(
-            batch.structure.atom_pos,
-            batch.structure.atom_pos_mask,
-            batch.scheme.atom_to_residue_idx_map,
-        )
-        contact = contact_target & residue_pair_mask
-        noncontact = (~contact_target) & residue_pair_mask
-        contact_num += contact.sum().item()
-        noncontact_num += noncontact.sum().item()
-    print(f"Contact num: {contact_num}, non-contact num: {noncontact_num}")
-    print(f"Contact ratio: {contact_num / (contact_num + noncontact_num):.6f}")
-    breakpoint()
-

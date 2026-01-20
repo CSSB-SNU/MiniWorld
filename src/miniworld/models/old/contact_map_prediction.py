@@ -35,7 +35,7 @@ from miniworld.modules.configs import (
     DiffusionConfig,
 )
 from miniworld.modules.feature_embedder import InputFeatureEmbedder
-from miniworld.modules.head import ContactMapHead, DistogramHead
+from miniworld.modules.heads import ContactMapHead, DistogramHead
 from miniworld.modules.msa_module import MSAModule
 from miniworld.modules.pairformer import Pairformer
 from miniworld.modules.primitives import (

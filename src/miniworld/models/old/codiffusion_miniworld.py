@@ -33,7 +33,7 @@ from miniworld.modules.diffusion_module import (
     DiffusionModule,
 )
 from miniworld.modules.feature_embedder import InputFeatureEmbedder
-from miniworld.modules.head import DistogramHead
+from miniworld.modules.heads import DistogramHead
 from miniworld.modules.primitives import (
     LayerNorm,
     Linear,
