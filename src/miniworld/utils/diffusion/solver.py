@@ -231,6 +231,7 @@ class D3PMSolver(DiffusionSolver):
             t,
             t_prev,
         )
+        q_post = q_post / q_post.sum(dim=-1, keepdim=True).clamp_min(1e-8)
 
         flat_prob = q_post.view(q_post.shape[0], -1, q_post.shape[-1])
         B, N, C = flat_prob.shape
@@ -253,6 +254,15 @@ class D3PMSolver(DiffusionSolver):
 
         return xt_minus_1_one_hot, logits_x0
 
+    def _set_seed(self, seed: int) -> None:
+        """Set the random seed for reproducibility."""
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.enabled = False
+        torch.random.manual_seed(seed)
+
     def sample(
         self,
         model_fn: callable,
@@ -260,6 +270,7 @@ class D3PMSolver(DiffusionSolver):
         num_steps: int,
         device: torch.device,
         return_intermediate: bool = False,
+        seed: int = 0,
     ) -> tuple[torch.Tensor, ...]:
         """Sample from the diffusion model using ancestral sampling."""
         time_steps = self.scheduler.sampling_time_steps(num_steps).to(device)
@@ -278,6 +289,7 @@ class D3PMSolver(DiffusionSolver):
             )
         if self.enforce_symmetric:
             labels = _symmetrize_labels(labels)
+        self._set_seed(seed)
         xt = F.one_hot(labels, num_classes=self.scheduler.num_classes).to(torch.float32)
         trajectory = []
         logits_list = []

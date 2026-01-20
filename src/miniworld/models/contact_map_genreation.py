@@ -354,8 +354,6 @@ class ContactMapGenerationClient(BaseClient):
             tau,
         )  # d3pm : logit | sedd : ratio
         loss = dd["diffuser"].cal_loss(model_output)
-        # for test
-        xt = xt_one_hot.argmax(dim=-1)
 
         return loss, {
             "main_loss": loss.item(),
@@ -408,6 +406,14 @@ class ContactMapGenerationClient(BaseClient):
         )
 
         def model_fn(xt_one_hot: torch.Tensor, tau: torch.Tensor) -> torch.Tensor:
+            try:
+                output = self.model.forward(batch, xt_one_hot, tau)
+            except:
+                # save batch for debugging
+                torch.save(batch, "debug_batch.pt")
+                torch.save(xt_one_hot, "debug_xt_one_hot.pt")
+                torch.save(tau, "debug_tau.pt")
+                raise ValueError("Error in model forward during sampling. Debug data saved.")
             return self.model.forward(batch, xt_one_hot, tau)
 
         sample = solver.sample(
@@ -422,64 +428,66 @@ class ContactMapGenerationClient(BaseClient):
             num_steps=steps,
             device=self.device,
         )
-        sample_labels = sample[0] if isinstance(sample, tuple) else sample
+        # sample_labels = sample[0] if isinstance(sample, tuple) else sample
 
-        sample_labels[sample_labels >= self.config.model.contact_num_classes] = 0.0
+        # sample_labels[sample_labels >= self.config.model.contact_num_classes] = 0.0
 
-        contact_map_prob = F.one_hot(
-            sample_labels,
-            num_classes=self.config.model.contact_num_classes,
-        ).float()
-        contact_map_prob = contact_map_prob * pair_mask.unsqueeze(-1)
+        # contact_map_prob = F.one_hot(
+        #     sample_labels,
+        #     num_classes=self.config.model.contact_num_classes,
+        # ).float()
+        # contact_map_prob = contact_map_prob * pair_mask.unsqueeze(-1)
 
-        # Long-range weighting hyperparameters (fallback to function defaults)
-        lr_min_seq_sep = (
-            self.config.experiment.long_range_min_seq_sep
-            if self.config.experiment.long_range_min_seq_sep is not None
-            else 16
-        )
+        # # Long-range weighting hyperparameters (fallback to function defaults)
+        # lr_min_seq_sep = (
+        #     self.config.experiment.long_range_min_seq_sep
+        #     if self.config.experiment.long_range_min_seq_sep is not None
+        #     else 16
+        # )
 
-        contact_map_logit = contact_map_prob  # (B, L, L, C)
+        # contact_map_logit = contact_map_prob  # (B, L, L, C)
 
-        # Long-range metrics (|i-j| >= min_seq_sep)
-        min_seq_sep = lr_min_seq_sep
-        long_range_precision = cal_long_range_precision(
-            contact_map_logit,
-            batch.structure.atom_pos,
-            batch.structure.atom_pos_mask,
-            batch.scheme.atom_to_residue_idx_map,
-            min_seq_sep=min_seq_sep,
-        )
-        long_range_recall = cal_long_range_recall(
-            contact_map_logit,
-            batch.structure.atom_pos,
-            batch.structure.atom_pos_mask,
-            batch.scheme.atom_to_residue_idx_map,
-            min_seq_sep=min_seq_sep,
-        )
-        long_range_f1 = cal_long_range_f1(
-            contact_map_logit,
-            batch.structure.atom_pos,
-            batch.structure.atom_pos_mask,
-            batch.scheme.atom_to_residue_idx_map,
-            min_seq_sep=min_seq_sep,
-        )
+        # # Long-range metrics (|i-j| >= min_seq_sep)
+        # min_seq_sep = lr_min_seq_sep
+        # long_range_precision = cal_long_range_precision(
+        #     contact_map_logit,
+        #     batch.structure.atom_pos,
+        #     batch.structure.atom_pos_mask,
+        #     batch.scheme.atom_to_residue_idx_map,
+        #     min_seq_sep=min_seq_sep,
+        # )
+        # long_range_recall = cal_long_range_recall(
+        #     contact_map_logit,
+        #     batch.structure.atom_pos,
+        #     batch.structure.atom_pos_mask,
+        #     batch.scheme.atom_to_residue_idx_map,
+        #     min_seq_sep=min_seq_sep,
+        # )
+        # long_range_f1 = cal_long_range_f1(
+        #     contact_map_logit,
+        #     batch.structure.atom_pos,
+        #     batch.structure.atom_pos_mask,
+        #     batch.scheme.atom_to_residue_idx_map,
+        #     min_seq_sep=min_seq_sep,
+        # )
 
-        if save_dir is not None:
-            contact_map_np = contact_map_prob[0, ..., 1].cpu().numpy()
-            mask_np = pair_mask[0].cpu().numpy()
-            contact_map_np = contact_map_np * mask_np
-            save_path = save_dir / f"{batch.name[0]}_contact_map.png"
-            if not save_dir.exists():
-                save_dir.mkdir(parents=True, exist_ok=True)
-            fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-            ax.imshow(contact_map_np, cmap="Reds", vmin=0, vmax=1)
-            ax.set_title("Generated Contact Map")
-            plt.savefig(save_path)
-            plt.close(fig)
+        # if save_dir is not None:
+        #     contact_map_np = contact_map_prob[0, ..., 1].cpu().numpy()
+        #     mask_np = pair_mask[0].cpu().numpy()
+        #     contact_map_np = contact_map_np * mask_np
+        #     save_path = save_dir / f"{batch.name[0]}_contact_map.png"
+        #     if not save_dir.exists():
+        #         save_dir.mkdir(parents=True, exist_ok=True)
+        #     fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+        #     ax.imshow(contact_map_np, cmap="Reds", vmin=0, vmax=1)
+        #     ax.set_title("Generated Contact Map")
+        #     plt.savefig(save_path)
+        #     plt.close(fig)
 
-        return {
-            "long_range_precision": long_range_precision.mean().item(),
-            "long_range_recall": long_range_recall.mean().item(),
-            "long_range_f1": long_range_f1.mean().item(),
-        }
+        # return {
+        #     "long_range_precision": long_range_precision.mean().item(),
+        #     "long_range_recall": long_range_recall.mean().item(),
+        #     "long_range_f1": long_range_f1.mean().item(),
+        # }
+
+        return {"test" : 0.0}
