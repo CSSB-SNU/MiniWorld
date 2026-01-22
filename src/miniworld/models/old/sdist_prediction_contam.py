@@ -19,7 +19,7 @@ from miniworld.data.dataloader.dataloader_multistate import (
     MSAConfig,
     MultistateConfig,
 )
-from miniworld.data.features.features_multistate import Batch, NoisyBatch
+from miniworld.data.features.batch_multistate import Batch, NoisyBatch
 from miniworld.loss.multistate import cal_shortest_distogram_loss
 from miniworld.modules.configs import (
     CommonConfig,

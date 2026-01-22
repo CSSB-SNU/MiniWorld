@@ -3,12 +3,15 @@ from __future__ import annotations
 from collections import Counter
 
 import numpy as np
+from biomol.cif import CIFMol
 from biomol.core.container import FeatureContainer
 from biomol.core.feature import NodeFeature
 from numpy import ndarray
 
 from miniworld.data.mapping import ResidueMapping
+from miniworld.data.mols.cifmol_attached import CIFMolAttached
 
+CIFMOL = CIFMol | CIFMolAttached
 GAP_IDX = ResidueMapping().protein.GAP_INDEX
 
 class MSA:
@@ -153,18 +156,6 @@ class MSA:
         """Return the deletion mean."""
         return self.deletion_mean
 
-    def sample(self, n_seq:int) -> tuple[ndarray, ndarray, ndarray]:
-        """Randomly sample n_seq sequences from the MSA."""
-        if n_seq >= self.num_seqs:
-            return self.sequences, self.deletions, self.species
-        sampled_idx = np.random.choice(self.num_seqs, n_seq, replace=False)
-        sampled_idx = np.sort(sampled_idx)
-        sampled_sequences = self.sequences[sampled_idx]
-        sampled_deletions = self.deletions[sampled_idx]
-        sampled_species = self.species[sampled_idx]
-        return sampled_sequences, sampled_deletions, sampled_species
-
-
 
 class ComplexMSA:
     """Complex MSA class that combines multiple MSAs."""
@@ -186,7 +177,7 @@ class ComplexMSA:
         self.max_paired_depth = max_paired_depth
         self._prepare_MSA(MSAs)
 
-    def _test_uniqueness(self, input_dict: dict[int, list[int]]) -> bool:
+    def _test_uniqueness(self, input_dict: dict[int, ndarray]) -> None:
         """Test the uniqueness of the values in a dictionary for each key."""
         out = True
         for _value in input_dict.values():
@@ -224,7 +215,7 @@ class ComplexMSA:
         )
         sorted_species = [species for species, count in sorted_species]
 
-        msa_indices: dict[int, list[int]] = {key: [] for key in MSAs}
+        msa_indices_list: dict[int, list[int]] = {key: [] for key in MSAs}
         empty = np.array([], dtype=int)
         num_of_paired = 0
         paired_species = set()
@@ -245,9 +236,9 @@ class ComplexMSA:
             min_num_seqs = min(temp_list)
             for key, valid_idx in valid_idx_dict.items():
                 if num_seqs[key] > 0:
-                    msa_indices[key].extend(valid_idx[:min_num_seqs].tolist())
+                    msa_indices_list[key].extend(valid_idx[:min_num_seqs].tolist())
                 else:
-                    msa_indices[key].extend([-1] * min_num_seqs)
+                    msa_indices_list[key].extend([-1] * min_num_seqs)
 
             num_of_paired += min_num_seqs
             paired_species.add(species)
@@ -256,7 +247,7 @@ class ComplexMSA:
 
         msa_indices = {
             key: np.array(indices, dtype=int) if len(indices) > 0 else np.empty((0,), dtype=int)
-            for key, indices in msa_indices.items()
+            for key, indices in msa_indices_list.items()
         }
 
         self._test_uniqueness(msa_indices)
@@ -277,8 +268,8 @@ class ComplexMSA:
         return msa_indices, paired_species, num_of_seqs
 
 
-    def _prepare_MSA(self, MSAs: list[MSA]) -> None:  # noqa: PLR0915
-        MSAs: dict[int, MSA] = dict(enumerate(MSAs))
+    def _prepare_MSA(self, _MSAs: list[MSA]) -> None:  # noqa: PLR0915
+        MSAs: dict[int, MSA] = dict(enumerate(_MSAs))
         max_msa_depth = self.max_MSA_depth
 
         # 0. Query sequence
@@ -295,8 +286,8 @@ class ComplexMSA:
 
         # 3. Add extra MSAs
         final_msa_indices = {}
-        for key in MSAs:
-            msa_depth = len(MSAs[key])
+        for key, values in MSAs.items():
+            msa_depth = len(values)
             full_indices = list(range(msa_depth))
             paired_indices = paired_msa_indices[key]
 
@@ -323,9 +314,9 @@ class ComplexMSA:
         for ii in range(max_msa_depth):
             seqs = []
             deletion = []
-            for key in MSAs:
+            for key, values in MSAs.items():
                 idx = final_msa_indices[key][ii]
-                msa = MSAs[key]
+                msa = values
                 if idx == -1:
                     seqs.append(np.full((msa.length,), GAP_IDX))
                     deletion.append(np.zeros(msa.length))
@@ -382,7 +373,7 @@ class ComplexMSA:
         self,
         max_msa_depth: int = 256,
         ratio: tuple[float, float] = (0.5, 0.5),
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Randomly sample sequences from the complex MSA."""
         max_msa_depth = min(max_msa_depth, self.total_depth)
         sampled = [int(ratio[ii] * max_msa_depth) for ii in range(2)]
@@ -421,3 +412,4 @@ class ComplexMSA:
             sampled_has_deletion,
             sampled_deletion_value,
         )
+

@@ -1,41 +1,15 @@
 from dataclasses import dataclass
 
 import torch
-from jaxtyping import Bool, Float, Int
+from jaxtyping import Int
 from team_gm import BaseBatch, typecheck
 
-
-@typecheck
-@dataclass()
-class SequenceFeatures(BaseBatch):
-    """Sequence features."""
-
-    residue_type: Int[torch.Tensor, "B L_res"]
-
-
-@typecheck
-@dataclass()
-class StructureFeatures(BaseBatch):
-    """Structure features."""
-
-    atom_pos: Float[torch.Tensor, "B L_atom 3"]
-    atom_pos_mask: Float[torch.Tensor, "B L_atom"]
-    atom_mask: Bool[torch.Tensor, "B L_atom"]
-    residue_bond: Int[torch.Tensor, "B n_residue_bond 3"]
-    residue_mask: Bool[torch.Tensor, "B L_res"]
-    atom_bond: Int[torch.Tensor, "B n_atom_bond 6"]
-
-
-@typecheck
-@dataclass()
-class ReferenceFeatures(BaseBatch):
-    """Reference features."""
-
-    pos: Float[torch.Tensor, "B L_atom 3"]
-    mask: Float[torch.Tensor, "B L_atom"]
-    element: Float[torch.Tensor, "B L_atom"]
-    charge: Float[torch.Tensor, "B L_atom"]
-    space_uid: Int[torch.Tensor, "B L_atom"]
+from .features import (
+    MSAFeatures,
+    MultiStateStructureFeatures,
+    ReferenceFeatures,
+    SequenceFeatures,
+)
 
 
 @typecheck
@@ -43,42 +17,18 @@ class ReferenceFeatures(BaseBatch):
 class SchemeFeatures(BaseBatch):
     """Scheme features."""
 
-    crop_indices: Int[torch.Tensor, "B L_res"]
     residue_idx: Int[torch.Tensor, "B L_res"]
     residue_idx_mono: Int[torch.Tensor, "B L_res"]
     residue_asym_id: Int[torch.Tensor, "B L_res"]
     residue_entity_id: Int[torch.Tensor, "B L_res"]
     residue_sym_id: Int[torch.Tensor, "B L_res"]
     atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"]
-    edge_index: Int[torch.Tensor, "B E"]
-
-
-@typecheck
-@dataclass()
-class MSAFeatures(BaseBatch):
-    """MSA features."""
-
-    aligned_sequences: Int[torch.Tensor, "B N_sampled N_msa L_token"]
-    has_deletion: Int[torch.Tensor, "B N_sampled N_msa L_token"]
-    deletion_value: Float[torch.Tensor, "B N_sampled N_msa L_token"]
-    profile: Float[torch.Tensor, "B L_token d_profile"]
-    deletion_mean: Float[torch.Tensor, "B L_token"]
-
-
-@typecheck
-@dataclass()
-class ChainFeatures(BaseBatch):
-    """Chain features."""
-
-    entity_type: Int[torch.Tensor, "B L_chain"]
-    contact_edges: Int[torch.Tensor, "B N_contact 2"]
-
 
 @dataclass(kw_only=True)
 class Batch(BaseBatch):
     """Batch of features."""
 
-    name: list
+    name: list  # (...)
 
     # additional info for making cif files
     heteros: list
@@ -86,11 +36,10 @@ class Batch(BaseBatch):
     chem_comp_ids: list
 
     sequence: SequenceFeatures
-    structure: StructureFeatures
+    structure: MultiStateStructureFeatures
     reference: ReferenceFeatures
     scheme: SchemeFeatures
     msa: MSAFeatures
-    chain: ChainFeatures
 
     @property
     def shape(self) -> torch.Size:

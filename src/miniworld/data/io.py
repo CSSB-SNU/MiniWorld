@@ -4,6 +4,7 @@ from pathlib import Path
 import lmdb
 from biomol.cif import CIFMol
 from biomol.core.container import FeatureContainer
+from biomol.core.types import BioMolDict
 from biomol.core.utils import load_bytes
 from datacooker import Cooker, ParsingCache
 
@@ -65,7 +66,7 @@ def extract_lmdb_keys(env_path: Path) -> list[str]:
     return key_list
 
 
-def load_raw_data(key: str, env_path: Path) -> bytes:
+def load_raw_data(key: str, env_path: Path) -> bytes | None:
     """Read a value from the LMDB database by key.
 
     Args:
@@ -81,7 +82,7 @@ def load_raw_data(key: str, env_path: Path) -> bytes:
     cache = getattr(load_raw_data, "_env_cache", None)
     if cache is None:
         cache = {}
-        load_raw_data._env_cache = cache  # noqa: SLF001
+        load_raw_data._env_cache = cache  # pyright: ignore[reportFunctionMemberAccess] # noqa: SLF001
 
     env_key = str(env_path)
     env = cache.get(env_key)
@@ -147,7 +148,11 @@ def load_cif(key: str, env_path: Path) -> dict[str, dict[str, CIFMol]]:
             The data dictionary retrieved from the LMDB database.
 
     """
-    value = load_bytes(bytes(load_raw_data(key, env_path)))
+    raw_data = load_raw_data(key, env_path)
+    if raw_data is None:
+        msg = f"Key '{key}' not found in LMDB database at '{env_path}'."
+        raise KeyError(msg)
+    value = load_bytes(raw_data)
     value, metadata = value["assembly_dict"], value["metadata_dict"]
 
     cifmol_dict: dict[str, dict[str, CIFMol]] = {}
@@ -159,7 +164,7 @@ def load_cif(key: str, env_path: Path) -> dict[str, dict[str, CIFMol]]:
         md["model_id"] = model_id
         md["alt_id"] = alt_id
 
-        item = dict(_item)
+        item = BioMolDict(_item)
         item["metadata"] = md
 
         cifmol_dict[cif_key] = {"cifmol": CIFMol.from_dict(item)}
@@ -190,6 +195,9 @@ def load_cifmol(db_path:Path, cif_id: str) -> CIFMolAttached:
 def load_cifmols(db_path:Path, seq_id: str) -> list[CIFMol]:
     """Load CIFMols from the LMDB database for a given seqID."""
     value = load_raw_data(seq_id, db_path)
+    if value is None:
+        msg = f"Key '{seq_id}' not found in LMDB database at '{db_path}'."
+        raise KeyError(msg)
     value = load_bytes(value)
 
     cifmols = [CIFMol.from_dict(item) for item in value.values()]
@@ -200,16 +208,12 @@ def load_cifmols(db_path:Path, seq_id: str) -> list[CIFMol]:
     return cifmols
 
 
-
-
-def load_a3m(key: str, env_path: Path) -> MSA:
+def load_a3m(key: str, env_path: Path) -> MSA | None:
     """Load MSA from LMDB by key."""
     value = load_raw_data(key, env_path)
     if value is None:
         return None
     msa_container = load_bytes(bytes(value))["msa_container"]
-    if "residue_container" not in msa_container or "chain_container" not in msa_container:
-        print(msa_container.keys())
     msa_residue_container = msa_container["residue_container"]
     msa_chain_container = msa_container["chain_container"]
     msa_residue_container = FeatureContainer.from_dict(msa_residue_container)
@@ -241,7 +245,7 @@ def load_fasta(fasta_path: Path) -> dict[str, str]:
     return seq_dict
 
 
-def parse_signalp(signalp_path: Path) -> tuple[int, int]:
+def parse_signalp(signalp_path: Path) -> tuple[int, int] | None:
     """Parse the signalp output file and extract the sequence IDs."""
     if not signalp_path.exists():
         return None

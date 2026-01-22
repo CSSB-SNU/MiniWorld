@@ -15,7 +15,7 @@ from team_gm.utils.precision_manager import PrecisionConfig
 from torch import nn
 
 from miniworld.configs import SharedConfig
-from miniworld.data.features.features_biomol import (
+from miniworld.data.features.batch_edge_backprop import (
     MSAFeatures,
     ReferenceFeatures,
     SchemeFeatures,

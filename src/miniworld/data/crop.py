@@ -1,18 +1,21 @@
 import random
 
 import numpy as np
-from biomol.cif.mol import CIFMol
+from biomol.cif import CIFMol
 from numpy import ndarray
 
+from miniworld.data.mols import CIFMolAttached
 from miniworld.utils.structure import extract_residue_com, pdist_clipped
 
 
 class NoInterfaceError(Exception):
     """Raised when no interface is found in the biomolecular structure."""
 
+CIFMOL = CIFMol | CIFMolAttached
+
 
 def get_chain_crop_indices(
-    cifmol: CIFMol,
+    cifmol: CIFMOL,
     crop_indices: ndarray,
 ) -> dict[str, ndarray]:
     """Get chain-wise crop indices."""
@@ -34,7 +37,7 @@ def get_chain_crop_indices(
     return chain_crop
 
 
-def get_valid_indices(cifmol: CIFMol, remain_invalid_residues: bool = False) -> ndarray:
+def get_valid_indices(cifmol: CIFMOL, remain_invalid_residues: bool = False) -> ndarray:
     """Get valid residue indices with non-nan atom coordinates."""
     if remain_invalid_residues:
         return np.arange(len(cifmol.residues))
@@ -45,7 +48,7 @@ def get_valid_indices(cifmol: CIFMol, remain_invalid_residues: bool = False) -> 
 
 def crop_contiguous_monomer(
     interface_bias: str | None,
-    cifmol: CIFMol,
+    cifmol: CIFMOL,
     crop_length: int,
     remain_invalid_residues: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
@@ -97,7 +100,7 @@ def crop_contiguous_monomer(
 
 def crop_spatial_atom(
     chain_bias: str | None,
-    cifmol: CIFMol,
+    cifmol: CIFMOL,
     crop_length: int,
     remain_invalid_residues: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
@@ -153,7 +156,7 @@ def crop_spatial_atom(
 
 def crop_spatial_interface(  # noqa: PLR0915
     interface_bias: tuple[str, str] | None,
-    cifmol: CIFMol,
+    cifmol: CIFMOL,
     crop_length: int,
     interface_distance_cutoff: float = 6.0,  # atom level
     remain_invalid_residues: bool = False,
@@ -304,7 +307,7 @@ def crop_spatial_interface(  # noqa: PLR0915
 
 def crop_spatial_residue(
     chain_bias: str | None,
-    cifmol: CIFMol,
+    cifmol: CIFMOL,
     crop_length: int,
     remain_invalid_residues: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
@@ -346,7 +349,7 @@ def crop_spatial_residue(
 
 def crop_spatial_interface_residue(  # noqa: PLR0915
     interface_bias: tuple[str, str] | None,
-    cifmol: CIFMol,
+    cifmol: CIFMOL,
     crop_length: int,
     interface_distance_cutoff: float = 12.0,  # residue level
     remain_invalid_residues: bool = False,
@@ -463,7 +466,7 @@ def crop_spatial_interface_residue(  # noqa: PLR0915
 
 def _get_interface_residues(
     interface_bias: tuple[str, str] | None,
-    cifmol: CIFMol,
+    cifmol: CIFMOL,
     valid_indices: np.ndarray,
     interface_distance_cutoff: float,
 ) -> np.ndarray:
@@ -542,7 +545,7 @@ def _get_interface_residues(
 
 def crop_spatial_interface_residue_simple(
     interface_bias: tuple[str, str] | None,
-    cifmol: CIFMol,
+    cifmol: CIFMOL,
     crop_length: int,
     interface_distance_cutoff: float = 12.0,
     remain_invalid_residues: bool = False,
@@ -596,7 +599,7 @@ class Cropper:
 
     def crop(
         self,
-        cifmol: CIFMol,
+        cifmol: CIFMOL,
         crop_length: int,
         chain_bias: str | None = None,
         interface_bias: tuple[str, str] | None = None,

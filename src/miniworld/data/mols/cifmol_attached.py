@@ -1,6 +1,9 @@
 # pyright: reportReturnType=false
+import numpy as np
 from biomol import BioMol
+from biomol.cif import CIFMol
 from biomol.core import EdgeFeature, NodeFeature, View
+from biomol.core.types import NodeFeatureDict
 
 
 class CIFAtomView(
@@ -160,3 +163,22 @@ class CIFMolAttached(BioMol["CIFAtomView", "CIFResidueView", "CIFChainView"]):
     def alt_id(self) -> str:
         """Alternate location ID of the molecule."""
         return self.metadata["alt_id"]
+
+def cifmol_attached_from_cifmol(
+    cifmol: CIFMol,
+    cluster_id_list: list[str],
+    seq_id_list: list[str],
+) -> CIFMolAttached:
+    """Convert CIFMol to CIFMolAttached by adding cluster_id and seq_id."""
+    if len(cifmol.chains) != len(cluster_id_list) or  len(cifmol.chains) != len(seq_id_list):
+        msg = f"Number of chains in cifmol: {len(cifmol.chains)}, length of cluster_id_list: {len(cluster_id_list)}, length of seq_id_list: {len(seq_id_list)}"
+        raise ValueError(msg)
+    cifmol_dict = cifmol.to_dict()
+    chains = cifmol_dict["chains"]
+    cluster_id_feature = NodeFeatureDict(value=np.array(cluster_id_list, dtype=str))
+    seq_id_feature = NodeFeatureDict(value=np.array(seq_id_list, dtype=str))
+    chains["nodes"]["cluster_id"] = cluster_id_feature
+    chains["nodes"]["seq_id"] = seq_id_feature
+    cifmol_dict["chains"] = chains
+
+    return CIFMolAttached.from_dict(cifmol_dict)

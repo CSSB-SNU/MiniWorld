@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from miniworld.data.features.features_biomol import Batch
+from miniworld.data.features.batch_edge_backprop import Batch
 from miniworld.data.mapping import AtomMapping
 
 

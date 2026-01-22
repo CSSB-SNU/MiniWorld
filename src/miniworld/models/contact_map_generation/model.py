@@ -1,5 +1,6 @@
 import random
 from contextlib import ExitStack
+from typing import Literal
 
 import torch
 from pydantic import BaseModel
@@ -13,12 +14,13 @@ from torch import nn
 
 from miniworld.configs import SharedConfig
 from miniworld.data.features.batch_edge_backprop import Batch
+from miniworld.modules.embeddings import fourier_embedding
 from miniworld.modules.heads import ContactMapHead, DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.msa_util import init_msa
 
 
-class ContactMapPredictionModel(nn.Module):
+class ContactMapGenerationModel(nn.Module):
     """Structure Contact Map Prediction model."""
 
     class ConditionConfig(BaseModel):
@@ -32,15 +34,18 @@ class ContactMapPredictionModel(nn.Module):
         """Configuration for the AF3 model."""
 
         shared: SharedConfig
-        trunk: "ContactMapPredictionModel.ConditionConfig"
+        trunk: "ContactMapGenerationModel.ConditionConfig"
         input_feat_embbeder: DiffusionTransformer.Config
         precision: PrecisionConfig
         use_distogram: bool = False
+        contact_num_classes: int = 2
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, transition_mode: Literal["absorbing", "other"]) -> None:
         super().__init__()
         self.config = config
         self.n_recycle_max = config.trunk.n_recycle_max
+        self.transition_mode = transition_mode
+        input_num_classes = config.contact_num_classes + 1 if transition_mode == "absorbing" else config.contact_num_classes
 
         # feature initialization
         self.input_feature_embedder = InputFeatureEmbedder(
@@ -59,6 +64,20 @@ class ContactMapPredictionModel(nn.Module):
                 init="zero",
             ),
         )
+        self.contact_map_embedder = nn.Linear(
+            input_num_classes,
+            config.shared.d_pair,
+            bias=False,
+        )
+        self.tau_proj = nn.Sequential(
+            LayerNorm(config.shared.d_time),
+            Linear(
+                config.shared.d_time,
+                config.shared.d_pair,
+                bias=False,
+            ),
+        )
+
         # Trunk forward
         self.msa_module = MSAModule(config.trunk.msa_module)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
@@ -69,8 +88,13 @@ class ContactMapPredictionModel(nn.Module):
         else:
             self.final_head = ContactMapHead(config.shared.d_pair)
 
-    def forward(self, batch: Batch) -> tuple[torch.Tensor, ...]:
-        """Forward pass of the condition modules with recycling."""
+    def forward(
+        self,
+        batch: Batch,
+        noisy_contact_map: torch.Tensor,
+        tau: torch.Tensor,
+    ) -> torch.Tensor:
+        """Forward pass conditioned on noisy contact map and time embedding."""
         if self.training:
             n_recycle = random.randint(1, self.n_recycle_max)
         else:
@@ -95,6 +119,22 @@ class ContactMapPredictionModel(nn.Module):
         )
 
         token_pair = torch.zeros_like(token_pair_init)
+        pair_mask = (
+            batch.structure.residue_mask[:, :, None]
+            * batch.structure.residue_mask[
+                :,
+                None,
+                :,
+            ]
+        )
+        contact_pair = self.contact_map_embedder(
+            noisy_contact_map.to(token_pair_init.dtype),
+        )
+        token_pair_init = token_pair_init + contact_pair * pair_mask.unsqueeze(-1)
+        tau_embed = fourier_embedding(tau).to(token_pair_init.dtype)
+        tau_embed = self.tau_proj(tau_embed)
+        token_pair_init = token_pair_init + tau_embed[:, None, None, :]
+
         # backprop cheating
         token_single_input = token_single_input + 0.0 * token_single_init.sum()
         # Trunk forward with recycling
@@ -103,6 +143,7 @@ class ContactMapPredictionModel(nn.Module):
                 if i_cycle < n_recycle - 1:
                     stack.enter_context(torch.no_grad())
                     stack.enter_context(torch.inference_mode())
+                token_pair = token_pair_init + self.add_pair_recycle(token_pair)
 
                 msa_feat = init_msa(
                     batch.msa,
@@ -125,4 +166,3 @@ class ContactMapPredictionModel(nn.Module):
                 )
 
         return self.final_head(token_pair)
-

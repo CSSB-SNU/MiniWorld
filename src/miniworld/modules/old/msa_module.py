@@ -12,7 +12,7 @@ from team_gm.modules.attentions import (
 from team_gm.modules.primitives import Dropout, Linear, Transition
 from torch import nn
 
-from miniworld.data.features.features_biomol import NoisyBatch
+from miniworld.data.features.batch_edge_backprop import NoisyBatch
 from miniworld.modules.attentions import MSAPairWeightedAveraging, OuterProductMean
 from miniworld.modules.primitives import MoETransition
 

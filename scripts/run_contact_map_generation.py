@@ -13,7 +13,7 @@ import wandb
 from miniworld.data.dataloader.dataloader_multistate import (
     BioMolMonomerData,
 )
-from miniworld.models.contact_map_prediction import ContactMapPredictionClient
+from miniworld.models.contact_map_generation import ContactMapGenerationClient
 from miniworld.utils import set_seed
 
 # torch.set_float32_matmul_precision("high")  # noqa: ERA001
@@ -21,7 +21,7 @@ from miniworld.utils import set_seed
 torch.autograd.set_detect_anomaly(False)
 
 
-def setup_logger(client: ContactMapPredictionClient) -> None:
+def setup_logger(client: ContactMapGenerationClient) -> None:
     if not client.is_global_zero:
         return
 
@@ -38,7 +38,7 @@ def setup_logger(client: ContactMapPredictionClient) -> None:
 
     now = datetime.datetime.now(datetime.timezone.utc)
     file_handler = logging.FileHandler(
-        f"logs/contactmap_prediction/contactmap_prediction_{now:%Y%m%d_%H%M%S}.log",
+        f"logs/contactmap_generation/contactmap_generation_{now:%Y%m%d_%H%M%S}.log",
     )
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)
@@ -109,8 +109,8 @@ def train(  # noqa: PLR0912, PLR0915
 ):
     if config and not resume_from_ckpt:
         cfg = OmegaConf.load(config)
-        cfg = ContactMapPredictionClient.Config.model_validate(cfg)
-        client = ContactMapPredictionClient(cfg)
+        cfg = ContactMapGenerationClient.Config.model_validate(cfg)
+        client = ContactMapGenerationClient(cfg)
     else:
         msg = (
             "You must provide either a config file or a checkpoint file, but not both."
@@ -227,7 +227,7 @@ def train(  # noqa: PLR0912, PLR0915
             train_loss = means["total_loss"]
             if train_loss < min_train_loss:
                 min_train_loss = train_loss
-                checkpoint_path = ckpt_dir / "contact_map_prediction_best.pt"
+                checkpoint_path = ckpt_dir / "contact_map_generation.pt"
                 client.save_checkpoint(checkpoint_path)
                 client.logger.info(
                     "Save best checkpoint: %s (train loss: %.4g)",
@@ -244,7 +244,7 @@ def train(  # noqa: PLR0912, PLR0915
                     client.call_callbacks("on_validation_epoch_end")
                     break
             valid_aggregator.log_epoch()
-            checkpoint_path = ckpt_dir / f"contact_map_prediction_{epoch}.pt"
+            checkpoint_path = ckpt_dir / f"contact_map_generation_{epoch}.pt"
             client.save_checkpoint(checkpoint_path)
 
 
@@ -274,7 +274,7 @@ def sample(
     if not ckpt:
         msg = "You must provide a checkpoint file."
         raise ValueError(msg)
-    client = ContactMapPredictionClient.from_checkpoint(ckpt)
+    client = ContactMapGenerationClient.from_checkpoint(ckpt)
 
     fabric = Fabric()
     fabric.launch()
@@ -346,7 +346,7 @@ def sample(
     manual_batches = [transporter_batch, calmodulin_batch]
     client.model.eval()
     for batch in manual_batches:
-        client.predict_contact_map(
+        client.generate_contact_map(
             batch,
             save_dir=Path(save_dir) if save_dir else None,
         )

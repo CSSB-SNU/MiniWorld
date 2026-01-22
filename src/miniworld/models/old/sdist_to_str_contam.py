@@ -21,7 +21,7 @@ from miniworld.data.dataloader.dataloader_multistate_contam import (
     MultistateConfig,
     MultiStatedbConfig,
 )
-from miniworld.data.features.features_multistate import Batch, NoisyBatch
+from miniworld.data.features.batch_multistate import Batch, NoisyBatch
 from miniworld.data.to_cif import batch_to_cif
 from miniworld.loss import metrics
 from miniworld.modules.configs import (

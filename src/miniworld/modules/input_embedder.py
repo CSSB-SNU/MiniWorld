@@ -8,7 +8,7 @@ from torch import nn
 from torch.utils.checkpoint import checkpoint
 
 from miniworld.configs import SharedConfig
-from miniworld.data.features.features_biomol import (
+from miniworld.data.features.batch_edge_backprop import (
     MSAFeatures,
     ReferenceFeatures,
     SchemeFeatures,
@@ -140,7 +140,7 @@ class InputAtomAttentionEncoder(nn.Module):
 
     def _scatter_atom_to_token(
         self,
-        crop_indices: Int[torch.Tensor, "B L_token"],
+        residue_idx: Int[torch.Tensor, "B L_token"],
         atom_mask: Bool[torch.Tensor, "B L_atom"],
         atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"],
         atom_single_rep: Float[torch.Tensor, "B L_atom d_single_atom"],
@@ -152,7 +152,7 @@ class InputAtomAttentionEncoder(nn.Module):
         to_add_single_token_rep = self.atom_single_rep_to_token_single(atom_single_rep)
 
         # Convert back to token-atom layout and aggregate to tokens
-        token_length = int(crop_indices.shape[1])
+        token_length = int(residue_idx.shape[1])
         count = torch.zeros((batch_size, token_length),device=device,dtype=torch.long)
         count.scatter_add_(
             1,
@@ -205,7 +205,7 @@ class InputAtomAttentionEncoder(nn.Module):
         if self.use_checkpoint:
             token_single_rep = checkpoint(
                 self._scatter_atom_to_token,
-                scheme.crop_indices,
+                scheme.residue_idx,
                 structure.atom_mask,
                 scheme.atom_to_residue_idx_map,
                 atom_single_rep,
@@ -213,7 +213,7 @@ class InputAtomAttentionEncoder(nn.Module):
             )
         else:
             token_single_rep = self._scatter_atom_to_token(
-                scheme.crop_indices,
+                scheme.residue_idx,
                 structure.atom_mask,
                 scheme.atom_to_residue_idx_map,
                 atom_single_rep,

@@ -20,7 +20,7 @@ from miniworld.data.dataloader.dataloader_edge_backprop import (
     EdgeWeightConfig,
     MSAConfig,
 )
-from miniworld.data.features.features_biomol import (
+from miniworld.data.features.batch_edge_backprop import (
     Batch,
 )
 from miniworld.loss import metrics  # , losses

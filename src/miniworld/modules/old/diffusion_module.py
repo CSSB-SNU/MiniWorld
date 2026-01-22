@@ -4,7 +4,7 @@ from team_gm import typecheck
 from team_gm.modules.primitives import Linear, Transition
 from torch import nn
 
-from miniworld.data.features.features_biomol import NoisyBatch
+from miniworld.data.features.batch_edge_backprop import NoisyBatch
 
 from .configs import CommonConfig, DiffusionConfig
 from .diffusion_transformer import (

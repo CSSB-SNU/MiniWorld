@@ -8,7 +8,7 @@ from jaxtyping import Bool, Float
 from team_gm import typecheck
 from torch import nn
 
-from miniworld.data.features.features_biomol import NoisyBatch
+from miniworld.data.features.batch_edge_backprop import NoisyBatch
 
 from .attentions import AugmentedAttention
 from .configs import CommonConfig, DiffusionConfig

@@ -19,7 +19,7 @@ from miniworld.data.dataloader.dataloader_multistate import (
     MultistateConfig,
     MultiStatedbConfig,
 )
-from miniworld.data.features.features_biomol import Batch, NoisyBatch
+from miniworld.data.features.batch_edge_backprop import Batch, NoisyBatch
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
     cal_contact_map_focal_loss,

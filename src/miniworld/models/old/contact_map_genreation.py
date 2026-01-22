@@ -20,7 +20,7 @@ from miniworld.data.dataloader.dataloader_multistate import (
     MultistateConfig,
     MultiStatedbConfig,
 )
-from miniworld.data.features.features_biomol import Batch
+from miniworld.data.features.batch_edge_backprop import Batch
 from miniworld.loss.auxiliary import (
     cal_long_range_f1,
     cal_long_range_precision,

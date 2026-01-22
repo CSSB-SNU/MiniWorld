@@ -14,7 +14,7 @@ from team_gm.modules.primitives import (
 )
 from torch import nn
 
-from miniworld.data.features.features_biomol import NoisyBatch
+from miniworld.data.features.batch_edge_backprop import NoisyBatch
 from miniworld.modules.kernels import (
     triton_atom_augmented_attention,
     triton_token_augmented_attention,

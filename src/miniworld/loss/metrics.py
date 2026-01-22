@@ -5,7 +5,7 @@ import torch
 from jaxtyping import Bool, Float, Int
 from team_gm import typecheck
 
-from miniworld.data.features.features_biomol import Batch
+from miniworld.data.features.batch_edge_backprop import Batch
 from miniworld.data.mapping import EntityMapping, MoleculeType
 from miniworld.utils import to_numpy
 

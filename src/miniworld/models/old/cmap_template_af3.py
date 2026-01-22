@@ -22,7 +22,7 @@ from miniworld.data.dataloader.dataloader_edge_backprop import (
     EdgeWeightConfig,
     MSAConfig,
 )
-from miniworld.data.features.features_biomol import Batch, NoisyBatch
+from miniworld.data.features.batch_edge_backprop import Batch, NoisyBatch
 from miniworld.loss import metrics  # , losses
 from miniworld.loss.auxiliary import cal_atom_distogram_loss
 from miniworld.modules.configs import (

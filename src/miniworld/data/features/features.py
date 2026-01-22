@@ -18,6 +18,19 @@ class SequenceFeatures(BaseBatch):
 class StructureFeatures(BaseBatch):
     """Structure features."""
 
+    atom_pos: Float[torch.Tensor, "B L_atom 3"]
+    atom_pos_mask: Float[torch.Tensor, "B L_atom"]
+    atom_mask: Bool[torch.Tensor, "B L_atom"]
+    residue_bond: Int[torch.Tensor, "B n_residue_bond 3"]
+    residue_mask: Bool[torch.Tensor, "B L_res"]
+    atom_bond: Int[torch.Tensor, "B n_atom_bond 6"]
+
+
+@typecheck
+@dataclass()
+class MultiStateStructureFeatures(BaseBatch):
+    """Structure features."""
+
     atom_pos: Float[torch.Tensor, "B N_str L_atom 3"]
     atom_pos_mask: Float[torch.Tensor, "B N_str L_atom"]
     atom_mask: Bool[torch.Tensor, "B L_atom"]
@@ -50,6 +63,7 @@ class SchemeFeatures(BaseBatch):
     residue_entity_id: Int[torch.Tensor, "B L_res"]
     residue_sym_id: Int[torch.Tensor, "B L_res"]
     atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"]
+    edge_index: Int[torch.Tensor, "B E"]
 
 
 @typecheck
@@ -64,11 +78,20 @@ class MSAFeatures(BaseBatch):
     deletion_mean: Float[torch.Tensor, "B L_token"]
 
 
+@typecheck
+@dataclass()
+class ChainFeatures(BaseBatch):
+    """Chain features."""
+
+    entity_type: Int[torch.Tensor, "B L_chain"]
+    contact_edges: Int[torch.Tensor, "B N_contact 2"]
+
+
 @dataclass(kw_only=True)
 class Batch(BaseBatch):
     """Batch of features."""
 
-    name: list  # (...)
+    name: list
 
     # additional info for making cif files
     heteros: list
@@ -80,6 +103,7 @@ class Batch(BaseBatch):
     reference: ReferenceFeatures
     scheme: SchemeFeatures
     msa: MSAFeatures
+    chain: ChainFeatures
 
     @property
     def shape(self) -> torch.Size:

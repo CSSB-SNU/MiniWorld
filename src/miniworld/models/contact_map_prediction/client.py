@@ -10,14 +10,13 @@ from team_gm import BaseClient
 from team_gm.core.callbacks import ModelEMA
 from team_gm.utils.precision_manager import precision_manager
 
-from miniworld.data.dataloader.dataloader_multistate import (
+from miniworld.data.dataloader.configs import (
     CropConfig,
-    KmerFastAlignConfig,
     MSAConfig,
     MultistateConfig,
-    MultiStatedbConfig,
+    MultiStateDBConfig,
 )
-from miniworld.data.features.features_multistate import Batch
+from miniworld.data.features.batch_multistate import Batch
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
     cal_contact_map_focal_loss,
@@ -40,10 +39,9 @@ class ContactMapPredictionClient(BaseClient):
 
         crop: CropConfig
         msa: MSAConfig
-        kmer_fast_align: KmerFastAlignConfig
         multistate: MultistateConfig
-        train_preprocessing: MultiStatedbConfig
-        valid_preprocessing: MultiStatedbConfig
+        train_preprocessing: MultiStateDBConfig
+        valid_preprocessing: MultiStateDBConfig
 
     class ExperimentsConfig(BaseModel):
         """Configuration for experiments."""

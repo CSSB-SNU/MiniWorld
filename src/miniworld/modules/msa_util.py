@@ -1,7 +1,7 @@
 import torch
 from jaxtyping import Float
 
-from miniworld.data.features.features_biomol import MSAFeatures
+from miniworld.data.features.batch_edge_backprop import MSAFeatures
 
 
 @torch.no_grad()
