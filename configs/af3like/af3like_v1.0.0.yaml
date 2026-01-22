@@ -158,7 +158,7 @@ diffuser:
     use_time_augmentation: True
 
 experiment:
-  comment: "MiniWorld, bce p2, (42343)"
+  comment: "af3like v1.0.0 (42343)"
 
   # Training arguments
   num_batch: 1

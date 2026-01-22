@@ -175,7 +175,7 @@ diffuser:
     use_time_augmentation: True
 
 experiment:
-  comment: "MiniWorld, bce p2, (42343)"
+  comment: "MiniWorld v1.0.0, bce p2, (42343)"
 
   # Training arguments
   num_batch: 1
