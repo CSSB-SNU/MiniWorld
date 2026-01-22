@@ -176,26 +176,6 @@ class D3PMSolver(DiffusionSolver):
             t,
             t_prev,
         )
-
-        p = q_post.view(q_post.shape[0], -1, q_post.shape[-1])
-        B, N, C = p.shape
-        p2 = p.reshape(B * N, C)
-
-        if torch.isnan(p2).any():
-            raise RuntimeError("q_post has NaN")
-        if torch.isinf(p2).any():
-            raise RuntimeError("q_post has Inf")
-        if (p2 < 0).any():
-            raise RuntimeError(f"q_post has negative values, min={p2.min().item()}")
-
-        s = p2.sum(dim=-1)
-        bad = (s <= 0).nonzero(as_tuple=False)
-        if bad.numel():
-            i = bad[0, 0].item()
-            b = i // N
-            n = i % N
-            breakpoint()
-            raise RuntimeError(f"q_post row-sum<=0 at (b={b}, n={n}), sum={s[i].item()}")
         q_post = q_post / q_post.sum(dim=-1, keepdim=True).clamp_min(1e-8)
 
         flat_prob = q_post.view(q_post.shape[0], -1, q_post.shape[-1])

@@ -146,7 +146,7 @@ class ContactMapGenerationClient(BaseClient):
                         " contact_num_classes + 1 (ContactMapHead outputs 2)."
                     )
                     raise ValueError(msg)
-            if scheduler.num_classes != self.config.model.contact_num_classes:
+            if scheduler.config.transition_mode == "uniform" and scheduler.num_classes != self.config.model.contact_num_classes:
                 msg = "SEDD diffuser num_classes must match model.contact_num_classes (ContactMapHead outputs 2)."
                 raise ValueError(msg)
             solver = SEDDSolver(
