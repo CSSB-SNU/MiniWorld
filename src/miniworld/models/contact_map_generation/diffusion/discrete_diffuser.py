@@ -103,6 +103,12 @@ class SEDDDiffuser(Diffuser):
         target_ratio = probs / denom
         target_ratio = target_ratio * (1.0 - xt_one_hot)
 
+        if mask is not None:
+            # Masked positions are not trained on: zero-out targets and labels there.
+            mask = mask.bool()
+            mask_exp = mask.unsqueeze(-1)
+            target_ratio = target_ratio * mask_exp
+
         sigma = self.scheduler.sigma(t).to(device)
         t_emb = self.scheduler.noise_condition(sigma).to(
             device=device,

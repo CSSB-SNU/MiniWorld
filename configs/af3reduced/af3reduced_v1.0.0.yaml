@@ -39,7 +39,6 @@ data:
 
 
 model:
-
   shared:
     d_single: 384
     d_single_atom: 128
@@ -65,22 +64,6 @@ model:
     d_pair: ${model.shared.d_pair_atom}
     n_head: 4
     implementation: triton
-
-  contact_map:
-    pairformer:
-      n_block: 2
-      n_checkpoint_segments: null
-
-      d_single: ${model.shared.d_single}
-      d_pair: ${model.shared.d_pair}
-      d_hidden_tri_multi: 128
-      d_hidden_tri_attention: 32
-      n_head_tri_attention: 4
-      n_head_attention: 16
-      p_drop: 0.25
-      use_single: False
-      use_self_attention: True
-      implementation: triton
 
   trunk:
     n_recycle_max: 1 # 4
@@ -119,20 +102,12 @@ model:
 
   diffusion:
     atom_dit:
-      n_block: 3
+      n_block: 10
       n_checkpoint_segments: null
       d_single: ${model.shared.d_single_atom}
       d_cond: ${model.shared.d_single_atom}
       d_pair: ${model.shared.d_pair_atom}
       n_head: 4
-      implementation: triton
-    token_dit:
-      n_block: 4
-      n_checkpoint_segments: 4
-      d_single: ${model.shared.d_single_token_diffusion}
-      d_cond: ${model.shared.d_single}
-      d_pair: ${model.shared.d_pair}
-      n_head: 24
       implementation: triton
     dit_cond:
       n_expand: 2
@@ -158,7 +133,7 @@ model:
 
 loss:
   diffusion_loss: 4.0
-  contact_map_loss: 1.0
+  distogram_loss: 0.03
 
 
 diffuser:
@@ -175,7 +150,7 @@ diffuser:
     use_time_augmentation: True
 
 experiment:
-  comment: "MiniWorld, bce p2, (42343)"
+  comment: "AF3Reduced_v1.0.0 no token dit, only atom dit. (10 blocks atom dit)"
 
   # Training arguments
   num_batch: 1
