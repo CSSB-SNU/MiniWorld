@@ -156,6 +156,7 @@ class DiffusionTransformerBlock(nn.Module):
         #     atom_single_rep,
         #     atom_single_cond,
         # )
+        pass
 
     @typecheck
     def forward(

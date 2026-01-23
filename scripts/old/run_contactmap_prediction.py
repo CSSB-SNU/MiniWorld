@@ -6,6 +6,7 @@ from pathlib import Path
 import click
 import torch
 from lightning import Fabric
+from lightning.fabric.strategies import DDPStrategy
 from omegaconf import OmegaConf
 from team_gm.utils.script_utils import MetricsAggregator, set_seed
 
@@ -18,7 +19,7 @@ from miniworld.models.contact_map_prediction import ContactMapPredictionClient
 # torch.set_float32_matmul_precision("high")  # noqa: ERA001
 # anomaly detection
 torch.autograd.set_detect_anomaly(False)
-
+torch.set_float32_matmul_precision('medium')
 
 def setup_logger(client: ContactMapPredictionClient) -> None:
     if not client.is_global_zero:
@@ -118,7 +119,7 @@ def train(  # noqa: PLR0912, PLR0915
         )
         raise ValueError(msg)
 
-    fabric = Fabric()
+    fabric = Fabric(strategy=DDPStrategy(find_unused_parameters=True))
     fabric.launch()
 
     optimizer = torch.optim.AdamW(
