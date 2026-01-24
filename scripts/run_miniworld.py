@@ -7,12 +7,18 @@ import click
 import torch
 from lightning import Fabric
 from omegaconf import OmegaConf
+from pydantic import BaseModel
 from team_gm.utils.script_utils import MetricsAggregator
 
 import wandb
 from miniworld.data.dataloader.dataloader_edge_backprop import (
     BioMolData,
+    BioMolDBConfig,
+    CropConfig,
+    EdgeWeightConfig,
+    MSAConfig,
 )
+from miniworld.data.to_cif import batch_to_cif
 from miniworld.models.miniworld import MiniWorldClient
 from miniworld.utils import get_step_decay_scheduler_with_warmup, set_seed
 
@@ -232,49 +238,63 @@ def train(  # noqa: PLR0912, PLR0915
 
 @cli.command()
 @click.option(
+    "--config",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="config file for validation data",
+)
+@click.option(
     "--ckpt",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     help="checkpoint file",
-)
-@click.option(
-    "-w",
-    is_flag=True,
-    help="Use wandb for logging",
 )
 @click.option(
     "--seed",
     type=int,
     help="random seed",
 )
-def sample(
+def validate(
+    config: Path,
     ckpt: Path | None,
-    w: bool,
     seed: int | None,
 ):
+    class ValidateDBConfig(BaseModel):
+        """Configuration for validation data loading."""
+
+        valid_db: BioMolDBConfig
+        crop: CropConfig
+        msa: MSAConfig
+        edge_weight: EdgeWeightConfig
+
+    class ValidateExperimentConfig(BaseModel):
+        """Configuration for validation experiments."""
+
+        num_batch: int = 1
+        compile: bool = False
+        valid_item: int = 640
+
+        # Validation arguments
+        timesteps: int = 100
+        num_workers: int = 4
+        prefetch_factor: int = 8
+        use_ema: bool = True
+
+    class ValidateConfig(BaseModel):
+        """Overall configuration for validation."""
+
+        data: ValidateDBConfig
+        experiment: ValidateExperimentConfig
+
+    cfg = OmegaConf.load(config)
+    cfg = ValidateConfig.model_validate(cfg)
     if not ckpt:
         msg = "You must provide a checkpoint file."
         raise ValueError(msg)
     client = MiniWorldClient.from_checkpoint(ckpt)
+    client.model.to("cuda")
+    if cfg.experiment.compile:
+        client.model.compile()
 
-    fabric = Fabric()
-    fabric.launch()
-
-    client.setup(
-        fabric=fabric,
-        optimizer=torch.optim.AdamW(
-            client.model.parameters(),
-            client.config.experiment.max_lr,
-        ),
-        gradient_accumulation_steps=client.config.experiment.grad_accum_steps,
-        gradient_clip_norm=client.config.experiment.grad_clip_max_norm,
-    )
     setup_logger(client)
-
-    client.logger.info(
-        "Load pretrain weight: %s (%d epoch)",
-        ckpt.name,
-        client.epoch,
-    )
 
     msg = f"Config:\n{json.dumps(client.config.model_dump(), indent=4, default=str)}"
     client.logger.info(msg)
@@ -284,47 +304,69 @@ def sample(
         client.logger.info("Set random seed: %d", seed)
 
     valid_data_config = BioMolData.BioMolConfig(
-        crop_config=client.config.data.crop,
-        msa_config=client.config.data.msa,
-        DB_config=client.config.data.valid_db,
-        edge_weight_config=client.config.data.edge_weight,
+        crop_config=cfg.data.crop,
+        msa_config=cfg.data.msa,
+        DB_config=cfg.data.valid_db,
+        edge_weight_config=cfg.data.edge_weight,
     )
 
     prefetch_factor = (
         None
-        if client.config.experiment.prefetch_factor == 0
-        else int(client.config.experiment.prefetch_factor)
+        if cfg.experiment.prefetch_factor == 0
+        else int(cfg.experiment.prefetch_factor)
     )
+
+    fabric = Fabric()
+    fabric.launch()
+
+    world_size = fabric.world_size
+    local_rank = fabric.local_rank
+
     valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
-        world_size=fabric.world_size,
-        rank=fabric.local_rank,
+        world_size=world_size,
+        rank=local_rank,
         drop_last=False,
-        batch_size=client.config.experiment.num_batch,  # or 1
-        num_workers=client.config.experiment.num_workers,
+        batch_size=cfg.experiment.num_batch,  # or 1
+        num_workers=cfg.experiment.num_workers,
         prefetch_factor=prefetch_factor,
     )
 
     client.logger.info("-" * 70)
     client.logger.info("")
-    client.logger.info("Start training".center(70))
+    client.logger.info("Start Validation".center(70))
     client.logger.info("")
     client.logger.info("-" * 70)
-    valid_aggregator = MetricsAggregator(client, "valid", use_wandb=w)
 
-    world_size = fabric.world_size
-    valid_num_item = client.config.experiment.valid_item // world_size
+    valid_num_item = cfg.experiment.valid_item // world_size
 
-    for epoch in range(client.epoch, client.config.experiment.num_epoch):
-        client.logger.info("Training Epoch %d", client.epoch)
-        valid_loader.sampler.set_epoch(epoch) # pyright: ignore[reportAttributeAccessIssue]
-        client.logger.info("Validation Epoch %d", client.epoch)
-        for n_item, result in enumerate(client.validation_epoch(valid_loader)):
-            valid_aggregator.log_step(result, ignore_step=True)
-            if n_item + 1 >= valid_num_item:
-                client.call_callbacks("on_validation_epoch_end")
-                break
+    # >9000 : 147
+    # >5000 : 209
+    # >3000 : 463
+    # >2000 : 865
+    # >1000 : 1573
+    # total num: 4182
 
-        valid_aggregator.log_epoch()
+
+    for ii, _batch in enumerate(valid_loader):
+        batch = fabric.to_device(_batch)
+        click.echo(f"residue length : {batch.scheme.residue_idx.shape[1]} \
+                   atom length : {batch.structure.atom_pos.shape[1]}")
+
+        batch = batch.duplicate(client.config.experiment.eval_sample_num)
+        output = client.inference(batch, timesteps=client.config.experiment.eval_timesteps)
+
+        result_dict = client.test_inference_quality(
+            batch,
+            output,
+        )
+        batch_to_cif(batch, output.atom_pos_pred, Path(f"outputs/miniworld_v1.0.0/{batch.name[0]}_pred.cif"))
+        click.echo(
+            f"result for {batch.name[0]}: " +
+            ", ".join([f"{k}: {v:.4g}" for k, v in result_dict.items()]),
+        )
+        if ii >= valid_num_item:
+            client.call_callbacks("on_validation_epoch_end")
+            break
 
 
 if __name__ == "__main__":

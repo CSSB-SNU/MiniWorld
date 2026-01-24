@@ -17,7 +17,7 @@ from miniworld.data.dataloader.configs import (
     EdgeWeightConfig,
     MSAConfig,
 )
-from miniworld.data.dataloader.utils import load_msa, sample_msa
+from miniworld.data.dataloader.utils import load_msa, remove_terminal_oxygen, sample_msa
 from miniworld.data.features.batch_edge_backprop import (
     Batch,
     ChainFeatures,
@@ -521,6 +521,9 @@ class BioMolData(torch.utils.data.Dataset):
             )
         crop_indices = cast("np.ndarray", crop_indices)
         cifmol: CIFMolAttached = cifmol.residues[crop_indices].extract()
+
+        cifmol = remove_terminal_oxygen(cifmol)
+
         contact = cifmol.chains.contact
         src, dst = contact.src_indices, contact.dst_indices
         edge_index = []
