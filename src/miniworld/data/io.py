@@ -103,6 +103,7 @@ def load_raw_data(key: str, env_path: Path) -> bytes | None:
         return None
     return bytes(value)
 
+
 def load_all_raw_data(env_path: Path) -> dict[str, bytes]:
     """Read all key-value pairs from the LMDB database.
 

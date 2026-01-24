@@ -182,63 +182,45 @@ class AtomAttentionEncoder(nn.Module):
 
 
     @typecheck
-    @torch.compiler.disable
     def _scatter_atom_to_token(
         self,
         residue_idx: Int[torch.Tensor, "B L_token"],
         atom_mask: Bool[torch.Tensor, "B L_atom"],
         atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"],
-        atom_single_rep: Float[torch.Tensor, "B L_atom d_single_atom_rep"],
+        atom_single_rep: Float[torch.Tensor, "A B L_atom d_single_atom_rep"],
     ) -> Float[torch.Tensor, "B L_token d_single_token"]:
         """Scatter atom single representation to token single representation."""
-        num_aug, batch_size = atom_single_rep.shape[:2]  # Number of augmentations
-        device, dtype = atom_single_rep.device, atom_single_rep.dtype
+        dtype = atom_single_rep.dtype
+
         atom_single_rep = torch.where(
             atom_mask.unsqueeze(-1),
             atom_single_rep,
             torch.zeros_like(atom_single_rep),
         )
 
-        # Convert back to token-atom layout and aggregate to tokens
         token_length = int(residue_idx.shape[1])
-        count = torch.zeros((batch_size, token_length),device=device,dtype=dtype)
-        count.scatter_add_(
-            1,
-            atom_to_residue_idx_map,
-            torch.ones_like(atom_to_residue_idx_map, dtype=dtype)
-            * atom_mask,
-        )
-        token_single_rep = torch.zeros(
-            (
-                batch_size,
-                token_length,
-                self.d_single_token,
-            ),
-            device=device,
-            dtype=dtype,
-        )
+
+        # one-hot assignment: (B, L_atom, L_token)
+        mapping = torch.nn.functional.one_hot(atom_to_residue_idx_map, num_classes=token_length).to(dtype)
+        mask_f = atom_mask.to(dtype)  # (B, L_atom)
+        count = torch.einsum("bal,ba->bl", mapping, mask_f)
+
+        # project atoms -> token feature dim: (A, B, L_atom, d_single_token)
         to_add_single_token_rep = self.atom_single_rep_to_token_single(atom_single_rep)
-        # apply augmentation
-        token_single_rep = token_single_rep.unsqueeze(1).expand(num_aug,-1,-1,-1)
-        atom_to_residue_idx_map = atom_to_residue_idx_map.unsqueeze(1).unsqueeze(-1)
-        atom_to_residue_idx_map = atom_to_residue_idx_map.expand(
-            num_aug,
-            -1,
-            -1,
-            to_add_single_token_rep.shape[-1],
-        )
-        atom_mask = atom_mask.unsqueeze(1).unsqueeze(-1)
-        to_add_single_token_rep = to_add_single_token_rep * atom_mask
-        token_single_rep = token_single_rep.scatter_add(
-            2,
-            atom_to_residue_idx_map,
-            to_add_single_token_rep,
-        )
-        return token_single_rep / count.unsqueeze(1).unsqueeze(
-            -1,
-        ).clamp(min=1.0)
+
+        # apply mask AFTER projection (prevents bias leakage if projection has bias)
+        atom_mask = atom_mask.unsqueeze(0).unsqueeze(-1)  # (1, B, L_atom, 1)
+        to_add_single_token_rep = to_add_single_token_rep * atom_mask  # (A, B, L_atom, d)
 
 
+        # einsum over atoms -> token sum: (A, B, L_token, d)
+        token_single_rep = torch.einsum("bal,nbac->nblc", mapping, to_add_single_token_rep)
+        # Explanation of labels:
+        # A:    (B, L_atom, L_token) -> "bal" (b=batch, a=atom, l=token)
+        # to_add (A, B, L_atom, d)   -> "abac" where c=d, reuse a=atom
+        # out:  (A, B, L_token, d)   -> "ablc"
+
+        return token_single_rep / count.unsqueeze(0).unsqueeze(-1).clamp(min=1.0)
 
     @typecheck
     def forward(

@@ -138,6 +138,7 @@ class InputAtomAttentionEncoder(nn.Module):
         return atom_single_rep, atom_single_cond, atom_pair
 
 
+    @typecheck
     def _scatter_atom_to_token(
         self,
         residue_idx: Int[torch.Tensor, "B L_token"],
@@ -153,6 +154,20 @@ class InputAtomAttentionEncoder(nn.Module):
 
         # Convert back to token-atom layout and aggregate to tokens
         token_length = int(residue_idx.shape[1])
+
+        # A[b, a, t] = 1 if atom a maps to token t else 0
+        mapping = torch.nn.functional.one_hot(atom_to_residue_idx_map, num_classes=token_length).to(to_add_single_token_rep.dtype)  # (B, L_atom, L_token)
+
+        # token sums: (B, L_token, d) = einsum_{a}(A[b,a,t] * to_add[b,a,d])
+        token_sum = torch.einsum("bat,bad->btd", mapping, to_add_single_token_rep)
+
+        # counts: (B, L_token) = einsum_{a}(A[b,a,t] * mask[b,a])
+        mask_f = atom_mask.to(to_add_single_token_rep.dtype)
+        count = torch.einsum("bat,ba->bt", mapping, mask_f)
+
+        return token_sum / count.unsqueeze(-1).clamp(min=1.0)
+
+
         count = torch.zeros((batch_size, token_length),device=device,dtype=torch.long)
         count.scatter_add_(
             1,

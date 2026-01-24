@@ -318,9 +318,11 @@ class MiniWorldClient(BaseClient):
             msg = "Batch size for validation must be 1."
             raise ValueError(msg)
         batch = batch.duplicate(self.config.experiment.eval_sample_num)
+        output = self.inference(batch, timesteps=self.config.experiment.eval_timesteps)
+
         return self.test_inference_quality(
             batch,
-            self.config.experiment.eval_timesteps,
+            output,
         )
 
     def training_epoch(self, dataloader: DataLoader) -> Generator[Any, None, None]:
@@ -359,16 +361,15 @@ class MiniWorldClient(BaseClient):
         self._epoch += 1
         self.call_callbacks("on_train_epoch_end")
 
-    @torch.no_grad()
+    @torch.inference_mode()
     def test_inference_quality(
         self,
         batch: Batch,
-        timesteps: int = 100,
+        output: MiniWorldInferenceOutput,
     ) -> dict[str, float]:
         """Test the inference quality of the model on a batch."""
         batch = batch.to(device=self.device)
 
-        output = self.inference(batch, timesteps=timesteps)
         contact_map_logit = output.contact_map_logit
         contact_map_loss = cal_contact_map_weighted_bce_loss(
             contact_map_logit,

@@ -474,7 +474,7 @@ class BioMolData(torch.utils.data.Dataset):
         cif_ids = self.edge_id_to_cif_ids[edge_id]
         cif_id = random.choice(cif_ids)
 
-        return self.get_item_by_id(cif_id=cif_id, chain_bias=None)
+        return self.get_item_by_id(cif_id=cif_id, chain_bias=None, remain_invalid_residues=self.config.crop_config.remain_invalid_residues)
 
     def get_item_by_id(
         self,
