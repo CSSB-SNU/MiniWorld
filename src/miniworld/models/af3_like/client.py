@@ -218,9 +218,11 @@ class AF3LikeClient(BaseClient):
             msg = "Batch size for validation must be 1."
             raise ValueError(msg)
         batch = batch.duplicate(self.config.experiment.eval_sample_num)
+        output = self.inference(batch, timesteps=self.config.experiment.eval_timesteps)
+
         return self.test_inference_quality(
             batch,
-            self.config.experiment.eval_timesteps,
+            output,
         )
 
     def training_epoch(self, dataloader: DataLoader) -> Generator[Any, None, None]:
@@ -263,12 +265,11 @@ class AF3LikeClient(BaseClient):
     def test_inference_quality(
         self,
         batch: Batch,
-        timesteps: int = 100,
+        output: AF3LikeInferenceOutput,
     ) -> dict[str, float]:
         """Test the inference quality of the model on a batch."""
         batch = batch.to(device=self.device)
 
-        output = self.inference(batch, timesteps=timesteps)
         distogram_logit = output.distogram_logit
         distogram_loss = cal_atom_distogram_loss(
             distogram_logit,
