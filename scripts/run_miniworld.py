@@ -290,7 +290,7 @@ def validate(
         msg = "You must provide a checkpoint file."
         raise ValueError(msg)
     client = MiniWorldClient.from_checkpoint(ckpt)
-    client.model.to("cuda")
+    # client.model.to("cuda")
     if cfg.experiment.compile:
         client.model.compile()
 
@@ -330,7 +330,6 @@ def validate(
         num_workers=cfg.experiment.num_workers,
         prefetch_factor=prefetch_factor,
     )
-
     client.logger.info("-" * 70)
     client.logger.info("")
     client.logger.info("Start Validation".center(70))

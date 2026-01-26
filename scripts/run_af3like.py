@@ -95,6 +95,11 @@ def train(  # noqa: PLR0912, PLR0915
         )
         raise ValueError(msg)
 
+
+    if cfg.experiment.compile:
+        client.model.compile()
+        client.logger.info("Compiled model")
+
     fabric = Fabric()
     fabric.launch()
 

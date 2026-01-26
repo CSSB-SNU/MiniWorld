@@ -1,0 +1,46 @@
+data:
+  DB_PATH: /home/psk6950/data/
+
+  valid_db:
+    cif_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
+    a3m_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
+    edge_id_to_cif_ids_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/valid_edges.tsv
+    load_all_msa: False
+
+  crop:
+    contiguous_prob: 00.0
+    spatial_prob: 0.0
+    interface_prob: 0.0
+    interface_simple_prob: 1.0
+    residue_crop_length: 384
+    atom_crop_length: 4608
+    remain_invalid_residues: True
+
+  msa:
+    n_samples: 1
+    max_msa_depth: 384
+  
+  edge_weight:
+    PP_edge: 1.0
+    PN_edge: 1.0
+    PL_edge: 0.666
+    NN_edge: 1.0
+    NL_edge: 0.666
+    LL_edge: 0.0
+    eta: 0.9
+    decay: 0.999
+    init_score: 1.0
+    init_freq: 0.0
+    device: "cpu"
+
+experiment:
+  # Training arguments
+  num_batch: 1
+  compile: True
+  valid_item: 640
+
+  # Validation arguments
+  timesteps: 100
+  num_workers: 8
+  prefetch_factor: 4
+  use_ema: True

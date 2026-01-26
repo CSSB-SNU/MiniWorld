@@ -158,7 +158,7 @@ diffuser:
     use_time_augmentation: True
 
 experiment:
-  comment: "af3like v1.0.0 (42343)"
+  comment: "af3like v1.0.0 with compile (42343)"
 
   # Training arguments
   num_batch: 1
@@ -169,7 +169,7 @@ experiment:
   warmup_steps: 0
   decay_steps: 5e4
   self_condition: False
-  compile: False
+  compile: True
   num_augment: 48
   train_item: 2560
   valid_item: 640
@@ -178,7 +178,7 @@ experiment:
   eval_freq: 5
   eval_sample_num: 1
   eval_input_num: 50
-  eval_timesteps: 100
+  eval_timesteps: 25
   grad_clip_max_norm: 10.0
   grad_accum_steps: 1
   num_workers: 4
