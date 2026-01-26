@@ -69,7 +69,7 @@ model:
     n_recycle_max: 1 # 4
     pairformer: 
       n_block: 16
-      n_checkpoint_segments: null
+      n_checkpoint_segments: 4
 
       d_single: ${model.shared.d_single}
       d_pair: ${model.shared.d_pair}
@@ -169,7 +169,7 @@ experiment:
   warmup_steps: 0
   decay_steps: 5e4
   self_condition: False
-  compile: False
+  compile: True
   num_augment: 48
   train_item: 2560
   valid_item: 640
