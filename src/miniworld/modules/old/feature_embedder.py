@@ -849,7 +849,7 @@ class InputFeatureEmbedder(nn.Module):
             init="default",
             bias=False,
         )
-        self.to_token_pair_right = Linear(
+        self.to_token_pair_right = Linear(  
             d_init,
             common_config.d_token_pair,
             init="default",
@@ -917,7 +917,7 @@ class InputFeatureEmbedder(nn.Module):
             [
                 token_single_input,
                 residue_type,
-                noisy_batch.msa.profile.to(dtype=token_single_input.dtype),
+                # noisy_batch.msa.profile.to(dtype=token_single_input.dtype),
                 noisy_batch.msa.deletion_mean.unsqueeze(-1).to(dtype=token_single_input.dtype),
             ],
             dim=-1,

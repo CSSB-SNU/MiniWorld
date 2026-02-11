@@ -15,6 +15,7 @@ from torch import nn
 from miniworld.data.features.batch_edge_backprop import NoisyBatch
 from miniworld.modules.attentions import MSAPairWeightedAveraging, OuterProductMean
 from miniworld.modules.primitives import MoETransition
+from miniworld.data.residue_fingerprint import load_residue_fingerprint_table
 
 from .diffusion_module import CommonConfig
 
@@ -165,17 +166,44 @@ class MSAModule(torch.nn.Module):
         """Configuration for MSAModule."""
 
         n_block: int = 4
+        msa_fingerprint_path: str = "/home/bsoohyuncd/software/MiniWorld/fp_clamp_embeddings.pt"
+        d_msa_fingerprint: int = 768
+        trainable_msa_fingerprint: bool = False
 
     def __init__(self, common_config: CommonConfig, msa_config: Config) -> None:
         super().__init__()
         self.num_res_class = common_config.num_res_class
 
-        self.embed_msa = Linear(self.num_res_class + 2, msa_config.d_msa, bias=False)
+        if not msa_config.msa_fingerprint_path:
+            msg = "msa_fingerprint_path must be set when using fingerprint embedding."
+            raise ValueError(msg)
+
+        fp_table = load_residue_fingerprint_table(msa_config.msa_fingerprint_path)
+        if fp_table.shape[1] != msa_config.d_msa_fingerprint:
+            msg = (
+                f"d_msa_fingerprint mismatch: config={msa_config.d_msa_fingerprint}, "
+                f"table={fp_table.shape[1]}"
+            )
+            raise ValueError(msg)
+
+        self.fingerprint_embedding = nn.Embedding.from_pretrained(
+            fp_table,
+            freeze=not msa_config.trainable_msa_fingerprint,
+        )
+        self.embed_msa = Linear(msa_config.d_msa_fingerprint + 2, msa_config.d_msa, bias=False)
+
         self.single_to_msa = Linear(
             common_config.d_token_single_input,
             msa_config.d_msa,
             bias=False,
         )
+
+        # self.embed_msa = Linear(self.num_res_class + 2, msa_config.d_msa, bias=False)
+        # self.single_to_msa = Linear(
+        #     common_config.d_token_single_input,
+        #     msa_config.d_msa,
+        #     bias=False,
+        # )
 
         # Create multiple blocks
         self.blocks = nn.ModuleList(
@@ -198,18 +226,28 @@ class MSAModule(torch.nn.Module):
             msa_has_deletion = batch.msa.has_deletion[:, recycle_idx]
             msa_deletion_value = batch.msa.deletion_value[:, recycle_idx].float()
 
-            msa_sequences = F.one_hot(
-                msa_sequences.long(),
-                num_classes=self.num_res_class,
-            )
+            msa_sequences_fingerprint = self.fingerprint_embedding(msa_sequences.long())
+            # msa_sequences = F.one_hot(
+            #     msa_sequences.long(),
+            #     num_classes=self.num_res_class,
+            # )
+            
             msa = torch.cat(
                 [
-                    msa_sequences,
+                    msa_sequences_fingerprint,
                     msa_has_deletion.unsqueeze(-1),
                     msa_deletion_value.unsqueeze(-1),
                 ],
                 dim=-1,
-            )  # (B, N, L, num_res_class + 2)
+            )  # (B, N, L, d_msa_fingerprint + 2)
+            # msa = torch.cat(
+            #     [
+            #         msa_sequences,
+            #         msa_has_deletion.unsqueeze(-1),
+            #         msa_deletion_value.unsqueeze(-1),
+            #     ],
+            #     dim=-1,
+            # )  # (B, N, L, d_fingerprint + 2)
         msa = msa.to(pair.dtype)
         msa = self.embed_msa(msa)  # (B, N, L, d_msa)
         msa = msa + self.single_to_msa(single).unsqueeze(1)  # (B, N, L, d_msa)

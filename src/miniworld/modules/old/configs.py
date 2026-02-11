@@ -7,7 +7,7 @@ class CommonConfig(BaseModel):
     """Common configuration for the model architecture."""
 
     d_token_single: int = 384
-    d_token_single_input: int = 441  # 441 = 384 + 32 + 24 + 1
+    d_token_single_input: int = 1153  # 1153 = 384 + 768 + 1
     d_token_single_diffusion: int = 768
     d_token_pair: int = 128
     d_time: int = 256
