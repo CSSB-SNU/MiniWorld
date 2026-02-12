@@ -14,6 +14,9 @@ class CommonConfig(BaseModel):
     d_msa: int = 64
     d_atom_single: int = 128
     d_atom_pair: int = 16
+    residue_fingerprint_path: str = "/home/bsoohyuncd/software/MiniWorld/fp_clamp_embeddings.pt"
+    d_residue_fingerprint: int = 768
+    trainable_residue_fingerprint: bool = False
     num_res_class: int = 32
     num_distogram_bins: int = 64
     r_max: int = 32

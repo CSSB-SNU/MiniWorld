@@ -9,7 +9,8 @@ from team_gm.modules.primitives import (
 )
 from torch import nn
 
-from miniworld.data.features.batch_edge_backprop import NoisyBatch
+from miniworld.data.features.features_biomol import NoisyBatch
+from miniworld.data.residue_fingerprint import load_residue_fingerprint_table
 
 from .configs import CommonConfig, DiffusionConfig
 from .diffusion_transformer import DiffusionTransformer
@@ -830,6 +831,22 @@ class InputFeatureEmbedder(nn.Module):
     ) -> None:
         super().__init__()
         self.num_res_class = common_config.num_res_class
+        if not common_config.residue_fingerprint_path:
+            msg = "residue_fingerprint_path must be set when using fingerprint embedding."
+            raise ValueError(msg)
+
+        fp_table = load_residue_fingerprint_table(common_config.residue_fingerprint_path)
+        if fp_table.shape[1] != common_config.d_residue_fingerprint:
+            msg = (
+                f"d_residue_fingerprint mismatch: config={common_config.d_residue_fingerprint}, "
+                f"table={fp_table.shape[1]}"
+            )
+            raise ValueError(msg)
+
+        self.residue_fingerprint_embedding = nn.Embedding.from_pretrained(
+            fp_table,
+            freeze=not common_config.trainable_residue_fingerprint,
+        )
         self.use_checkpoint = common_config.use_checkpoint
         self.d_token_pair = common_config.d_token_pair
         self.atom_attention_encoder = InputAtomAttentionEncoder(
@@ -909,15 +926,14 @@ class InputFeatureEmbedder(nn.Module):
         """Forward pass."""
         token_single_input = self.atom_attention_encoder(noisy_batch)
 
-        residue_type = F.one_hot(
-            noisy_batch.sequence.residue_type.long(), num_classes=self.num_res_class,
+        residue_type = self.residue_fingerprint_embedding(
+            noisy_batch.sequence.residue_type.long(),
         ).to(token_single_input.device, dtype=token_single_input.dtype)
 
         token_single_input = torch.concat(
             [
                 token_single_input,
                 residue_type,
-                # noisy_batch.msa.profile.to(dtype=token_single_input.dtype),
                 noisy_batch.msa.deletion_mean.unsqueeze(-1).to(dtype=token_single_input.dtype),
             ],
             dim=-1,

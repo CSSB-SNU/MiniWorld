@@ -198,13 +198,6 @@ class MSAModule(torch.nn.Module):
             bias=False,
         )
 
-        # self.embed_msa = Linear(self.num_res_class + 2, msa_config.d_msa, bias=False)
-        # self.single_to_msa = Linear(
-        #     common_config.d_token_single_input,
-        #     msa_config.d_msa,
-        #     bias=False,
-        # )
-
         # Create multiple blocks
         self.blocks = nn.ModuleList(
             [MSAModuleBlock(msa_config) for _ in range(msa_config.n_block - 1)],
@@ -227,10 +220,6 @@ class MSAModule(torch.nn.Module):
             msa_deletion_value = batch.msa.deletion_value[:, recycle_idx].float()
 
             msa_sequences_fingerprint = self.fingerprint_embedding(msa_sequences.long())
-            # msa_sequences = F.one_hot(
-            #     msa_sequences.long(),
-            #     num_classes=self.num_res_class,
-            # )
             
             msa = torch.cat(
                 [
@@ -240,14 +229,7 @@ class MSAModule(torch.nn.Module):
                 ],
                 dim=-1,
             )  # (B, N, L, d_msa_fingerprint + 2)
-            # msa = torch.cat(
-            #     [
-            #         msa_sequences,
-            #         msa_has_deletion.unsqueeze(-1),
-            #         msa_deletion_value.unsqueeze(-1),
-            #     ],
-            #     dim=-1,
-            # )  # (B, N, L, d_fingerprint + 2)
+
         msa = msa.to(pair.dtype)
         msa = self.embed_msa(msa)  # (B, N, L, d_msa)
         msa = msa + self.single_to_msa(single).unsqueeze(1)  # (B, N, L, d_msa)

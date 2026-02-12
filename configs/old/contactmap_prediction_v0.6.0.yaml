@@ -64,7 +64,10 @@ diffuser:
 model:
   common:
     d_token_single: 384
-    d_token_single_input: 417  # 417 = 384 + 32 + 1
+    d_token_single_input: 1153  # 1153 = 384 + 768 + 1
+    residue_fingerprint_path: /home/bsoohyuncd/software/MiniWorld/fp_clamp_embeddings.pt
+    d_residue_fingerprint: 768
+    trainable_residue_fingerprint: false
     d_token_single_diffusion: 768
     d_token_pair: 128
     d_time: 256
