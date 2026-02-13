@@ -1,18 +1,18 @@
 data:
-  DB_PATH: /home/bsoohyuncd/software/MiniWorld/pskdata/
+  DB_PATH: /home/bsoohyuncd/software/MiniWorld/pskdata_mix
   BIOMOL_DB_PATH: /home/bsoohyuncd/software/MiniWorld/BioMolDBv2_2024Oct21/
 
   train_preprocessing:
-    cif_db_path: ${data.DB_PATH}/MiniWorld/multistate/seqID_to_cifmols_filtered.lmdb
-    a3m_db_path: ${data.BIOMOL_DB_PATH}/slim_a3m.lmdb
+    cif_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
+    a3m_db_path: ${data.BIOMOL_DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
     tmp_dir: ${data.DB_PATH}/MiniWorld/multistate/data_tmp/monomer/train/
     cluster_ids_path: ${data.DB_PATH}/MiniWorld/multistate/train_valid_split/train_clusters.txt
     cluster_id_to_seq_ids_path: ${data.DB_PATH}/MiniWorld/multistate/clusterID_to_seqIDs.npz
     seq_id_to_seq: ${data.BIOMOL_DB_PATH}/fasta/protein_wo_signalp.fasta
     signalp_dir: ${data.BIOMOL_DB_PATH}/signalp/
   valid_preprocessing:
-    cif_db_path: ${data.DB_PATH}/MiniWorld/multistate/seqID_to_cifmols_filtered.lmdb
-    a3m_db_path: ${data.BIOMOL_DB_PATH}/slim_a3m.lmdb
+    cif_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
+    a3m_db_path: ${data.BIOMOL_DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
     tmp_dir: ${data.DB_PATH}/MiniWorld/multistate/data_tmp/monomer/valid/
     cluster_ids_path: ${data.DB_PATH}/MiniWorld/multistate/train_valid_split/valid_clusters.txt
     cluster_id_to_seq_ids_path: ${data.DB_PATH}/MiniWorld/multistate/clusterID_to_seqIDs.npz
@@ -86,7 +86,7 @@ model:
   trunk:
     n_recycle_max: 1 # 4
     pairformer: 
-      n_block: 2
+      n_block: 4
       n_block_per_group: 1
       d_single: ${model.common.d_token_single}
       d_pair: ${model.common.d_token_pair}
@@ -105,7 +105,7 @@ model:
       single_moe_topk: 1
 
     msa_module: 
-      n_block: 4
+      n_block: 2
       d_msa: 64
       d_pair: ${model.common.d_token_pair}
       d_hidden_msa: 32
