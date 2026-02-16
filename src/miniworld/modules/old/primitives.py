@@ -12,7 +12,7 @@ from team_gm.modules.primitives import (
 )
 from torch import nn
 
-from miniworld.modules.moe_utils import group_by_expert, loss_free_route, scatter_expert
+from miniworld.modules.old.moe_utils import group_by_expert, loss_free_route, scatter_expert
 
 from . import kernels
 

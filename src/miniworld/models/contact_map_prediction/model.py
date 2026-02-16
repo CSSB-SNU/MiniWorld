@@ -3,12 +3,14 @@ from contextlib import ExitStack
 
 import torch
 from pydantic import BaseModel
-from team_gm.modules import DiffusionTransformer, MSAModule, Pairformer
+from miniworld.modules.old.diffusion_module import DiffusionModule
+from miniworld.modules.old.msa_module import MSAModule
+from miniworld.modules.old.pairformer import Pairformer
 from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
 )
-from team_gm.utils.precision_manager import PrecisionConfig
+from miniworld.utils.precision_manager import PrecisionConfig
 from torch import nn
 
 from miniworld.configs import SharedConfig
@@ -33,9 +35,9 @@ class ContactMapPredictionModel(nn.Module):
 
         shared: SharedConfig
         trunk: "ContactMapPredictionModel.ConditionConfig"
-        input_feat_embbeder: DiffusionTransformer.Config
+        input_feat_embbeder: DiffusionModule.Config
         precision: PrecisionConfig
-        use_distogram: bool = False
+        use_distogram: bool = True
 
     def __init__(self, config: Config) -> None:
         super().__init__()
@@ -60,7 +62,7 @@ class ContactMapPredictionModel(nn.Module):
             ),
         )
         # Trunk forward
-        self.msa_module = MSAModule(config.trunk.msa_module)
+        self.msa_module = MSAModule(config.shared, config.trunk.msa_module)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
 
         # ContactMap prediction
@@ -125,4 +127,3 @@ class ContactMapPredictionModel(nn.Module):
                 )
 
         return self.final_head(token_pair)
-

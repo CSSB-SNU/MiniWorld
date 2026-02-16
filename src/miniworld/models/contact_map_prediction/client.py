@@ -8,15 +8,17 @@ from matplotlib import pyplot as plt
 from pydantic import BaseModel
 from team_gm import BaseClient
 from team_gm.core.callbacks import ModelEMA
-from team_gm.utils.precision_manager import precision_manager
+from miniworld.utils.precision_manager import precision_manager
 
-from miniworld.data.dataloader.configs import (
+from miniworld.data.dataloader.dataloader_edge_backprop import (
+    BioMolDBConfig,
     CropConfig,
+    EdgeWeightConfig,
     MSAConfig,
-    MultistateConfig,
-    MultiStateDBConfig,
 )
-from miniworld.data.features.batch_multistate import Batch
+from miniworld.data.features.batch_edge_backprop import (
+    Batch,
+)
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
     cal_contact_map_focal_loss,
@@ -39,9 +41,9 @@ class ContactMapPredictionClient(BaseClient):
 
         crop: CropConfig
         msa: MSAConfig
-        multistate: MultistateConfig
-        train_preprocessing: MultiStateDBConfig
-        valid_preprocessing: MultiStateDBConfig
+        edge_weight: EdgeWeightConfig
+        train_preprocessing: BioMolDBConfig
+        valid_preprocessing: BioMolDBConfig
 
     class ExperimentsConfig(BaseModel):
         """Configuration for experiments."""
@@ -136,18 +138,18 @@ class ContactMapPredictionClient(BaseClient):
                 batch.structure.atom_pos_mask,
                 batch.scheme.atom_to_residue_idx_map,
             )
-        else:
-            contact_map_logit = self.model.forward(batch)
-            loss = cal_contact_map_weighted_bce_loss(
-                contact_map_logit,
-                batch.structure.atom_pos,
-                batch.structure.atom_pos_mask,
-                batch.scheme.atom_to_residue_idx_map,
-                pos_weight=self.config.experiment.bce_pos_weight,
-                long_range_min_seq_sep=lr_min_seq_sep,
-                long_range_sigmoid_k=lr_sigmoid_k,
-                long_range_sigmoid_amp=lr_sigmoid_amp,
-            )
+        # else:
+        #     contact_map_logit = self.model.forward(batch)
+        #     loss = cal_contact_map_weighted_bce_loss(
+        #         contact_map_logit,
+        #         batch.structure.atom_pos,
+        #         batch.structure.atom_pos_mask,
+        #         batch.scheme.atom_to_residue_idx_map,
+        #         pos_weight=self.config.experiment.bce_pos_weight,
+        #         long_range_min_seq_sep=lr_min_seq_sep,
+        #         long_range_sigmoid_k=lr_sigmoid_k,
+        #         long_range_sigmoid_amp=lr_sigmoid_amp,
+        #     )
 
         focal_loss = cal_contact_map_focal_loss(
             contact_map_logit,

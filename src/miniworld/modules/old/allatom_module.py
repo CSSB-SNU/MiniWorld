@@ -7,7 +7,7 @@ from team_gm import typecheck
 from team_gm.modules.primitives import Linear
 from torch import nn
 
-from miniworld.modules.primitives import LayerNorm
+from miniworld.modules.old.primitives import LayerNorm
 
 
 class AllAtomModule(nn.Module):

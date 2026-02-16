@@ -8,13 +8,17 @@ import torch
 from lightning import Fabric
 from omegaconf import OmegaConf
 from team_gm.utils.script_utils import MetricsAggregator
+from miniworld.utils import get_step_decay_scheduler_with_warmup, set_seed
 
 import wandb
-from miniworld.data.dataloader.dataloader_multistate import (
-    BioMolMonomerData,
+from miniworld.data.dataloader.dataloader_edge_backprop import (
+    BioMolData,
+    BioMolDBConfig,
+    CropConfig,
+    EdgeWeightConfig,
+    MSAConfig,
 )
 from miniworld.models.contact_map_prediction import ContactMapPredictionClient
-from miniworld.utils import set_seed
 
 # torch.set_float32_matmul_precision("high")  # noqa: ERA001
 # anomaly detection
@@ -42,31 +46,6 @@ def setup_logger(client: ContactMapPredictionClient) -> None:
     )
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)
-
-
-def get_step_decay_scheduler_with_warmup(
-    optimizer: torch.optim.Optimizer,
-    warmup_steps: int = int(1e3),
-    decay_steps: int = int(5e4),
-    decay_factor: float = 0.95,
-) -> torch.optim.lr_scheduler.LambdaLR:
-    """
-    Return a LambdaLR scheduler that
-    1) linearly warms up from 0 → 1 over the first `warmup_steps`
-    2) thereafter, multiplies the lr by `decay_factor` every `decay_steps`
-    The scheduler multiplies the optimizer's base_lr by the returned factor.
-    """
-
-    def lr_lambda(step: int) -> float:
-        if step < warmup_steps:
-            # warmup: 0 -> 1
-            return step / float(warmup_steps)
-        # step decay: factor ** floor((step - warmup_steps) / decay_steps)
-        num_decays = (step - warmup_steps) // decay_steps
-        return decay_factor**num_decays
-
-    return torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
-
 
 @click.group()
 def cli():
@@ -117,7 +96,7 @@ def train(  # noqa: PLR0912, PLR0915
         )
         raise ValueError(msg)
 
-    if client.config.experiment.compile:
+    if cfg.experiment.compile:
         client.model.compile()
         client.logger.info("Compiled model")
 
@@ -163,36 +142,40 @@ def train(  # noqa: PLR0912, PLR0915
         set_seed(seed)
         client.logger.info("Set random seed: %d", seed)
 
-    train_data_config = BioMolMonomerData.BioMolConfig(
+    train_data_config = BioMolData.BioMolConfig(
+            crop_config=client.config.data.crop,
+            msa_config=client.config.data.msa,
+            DB_config=client.config.data.train_db,
+            edge_weight_config=client.config.data.edge_weight,
+    )
+    valid_data_config = BioMolData.BioMolConfig(
         crop_config=client.config.data.crop,
         msa_config=client.config.data.msa,
-        multistate_config=client.config.data.multistate,
-        preprocess_config=client.config.data.train_preprocessing,
+        DB_config=client.config.data.valid_db,
+        edge_weight_config=client.config.data.edge_weight,
     )
-    valid_data_config = BioMolMonomerData.BioMolConfig(
-        crop_config=client.config.data.crop,
-        msa_config=client.config.data.msa,
-        multistate_config=client.config.data.multistate,
-        preprocess_config=client.config.data.valid_preprocessing,
-    )
-
+    
     prefetch_factor = (
         None
         if client.config.experiment.prefetch_factor == 0
         else int(client.config.experiment.prefetch_factor)
     )
-    train_loader = BioMolMonomerData(train_data_config).create_ddp_dataloader(
-        world_size=fabric.world_size,
-        rank=fabric.local_rank,
-        drop_last=True,
-        batch_size=client.config.experiment.num_batch,
-        num_workers=client.config.experiment.num_workers,
-        prefetch_factor=prefetch_factor,
+    
+    train_loader = BioMolData(train_data_config).create_ddp_dataloader(
+            world_size=fabric.world_size,
+            rank=fabric.local_rank,
+            drop_last=True,
+            use_adaptive_sampler=True,
+            batch_size=client.config.experiment.num_batch,
+            num_workers=client.config.experiment.num_workers,
+            prefetch_factor=prefetch_factor,
+            shuffle=False,
     )
-    valid_loader = BioMolMonomerData(valid_data_config).create_ddp_dataloader(
+    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.local_rank,
         drop_last=False,
+        use_adaptive_sampler=False,
         batch_size=client.config.experiment.num_batch,  # or 1
         num_workers=0,
     )
@@ -210,6 +193,7 @@ def train(  # noqa: PLR0912, PLR0915
     train_num_item = client.config.experiment.train_item // world_size
     valid_num_item = client.config.experiment.valid_item // world_size
     min_train_loss = float("inf")
+    comment = client.config.experiment.comment
 
     for epoch in range(client.epoch, client.config.experiment.num_epoch):
         client.logger.info("Training Epoch %d", client.epoch)
@@ -244,11 +228,16 @@ def train(  # noqa: PLR0912, PLR0915
                     client.call_callbacks("on_validation_epoch_end")
                     break
             valid_aggregator.log_epoch()
-            checkpoint_path = ckpt_dir / f"contact_map_prediction_{epoch}.pt"
+            checkpoint_path = ckpt_dir / f"contact_map_prediction_{comment}_{epoch}.pt"
             client.save_checkpoint(checkpoint_path)
 
 
 @cli.command()
+@click.option(
+    "--config",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="config file for validation data",
+)
 @click.option(
     "--ckpt",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
@@ -267,28 +256,55 @@ def train(  # noqa: PLR0912, PLR0915
 )
 @torch.inference_mode()
 def sample(
+    config: Path,
     ckpt: Path | None,
     seed: int | None,
     save_dir: Path | None,
 ):
+    class ValidateDBConfig(BaseModel):
+        """Configuration for validation data loading."""
+
+        valid_db: BioMolDBConfig
+        crop: CropConfig
+        msa: MSAConfig
+        edge_weight: EdgeWeightConfig
+
+    class ValidateExperimentConfig(BaseModel):
+        """Configuration for validation experiments."""
+
+        num_batch: int = 1
+        compile: bool = False
+        valid_item: int = 640
+
+        # Validation arguments
+        timesteps: int = 100
+        num_workers: int = 4
+        prefetch_factor: int = 8
+        use_ema: bool = True
+
+    class ValidateConfig(BaseModel):
+        """Overall configuration for validation."""
+
+        data: ValidateDBConfig
+        experiment: ValidateExperimentConfig
+
+    cfg = OmegaConf.load(config)
+    cfg = ValidateConfig.model_validate(cfg)
     if not ckpt:
         msg = "You must provide a checkpoint file."
         raise ValueError(msg)
     client = ContactMapPredictionClient.from_checkpoint(ckpt)
+    client.model.to("cuda")
+    if cfg.experiment.compile:
+        client.model.compile()
+
+    setup_logger(client)
 
     fabric = Fabric()
     fabric.launch()
-
-    client.setup(
-        fabric=fabric,
-        optimizer=torch.optim.AdamW(
-            client.model.parameters(),
-            client.config.experiment.max_lr,
-        ),
-        gradient_accumulation_steps=client.config.experiment.grad_accum_steps,
-        gradient_clip_norm=client.config.experiment.grad_clip_max_norm,
-    )
-    setup_logger(client)
+    
+    world_size = fabric.world_size
+    local_rank = fabric.local_rank
 
     client.logger.info(
         "Load pretrain weight: %s (%d epoch)",
@@ -302,38 +318,27 @@ def sample(
     if seed is not None:
         set_seed(seed)
         client.logger.info("Set random seed: %d", seed)
-
-    preprocess_config = client.config.data.valid_preprocessing
-    msa_config = client.config.data.msa
-    # bug
-    preprocess_config = preprocess_config.model_copy(
-        update={"a3m_db_path": "/home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb"},
+    valid_data_config = BioMolData.BioMolConfig(
+        crop_config=cfg.data.crop,
+        msa_config=cfg.data.msa,
+        DB_config=cfg.data.valid_db,
+        edge_weight_config=cfg.data.edge_weight,
     )
-    msa_config = msa_config.model_copy(
-        update={"max_msa_depth": 512},
-    )
-
-    valid_data_config = BioMolMonomerData.BioMolConfig(
-        crop_config=client.config.data.crop,
-        msa_config=msa_config,
-        multistate_config=client.config.data.multistate,
-        preprocess_config=preprocess_config,
-    )
-
+    
     prefetch_factor = (
         None
         if client.config.experiment.prefetch_factor == 0
         else int(client.config.experiment.prefetch_factor)
     )
-    dataset = BioMolMonomerData(valid_data_config)
-    valid_loader = dataset.create_ddp_dataloader(
-        world_size=fabric.world_size,
-        rank=fabric.local_rank,
+    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
+        world_size=world_size,
+        rank=local_rank,
         drop_last=False,
-        batch_size=client.config.experiment.num_batch,  # or 1
-        num_workers=client.config.experiment.num_workers,
+        batch_size=cfg.experiment.num_batch,  # or 1
+        num_workers=cfg.experiment.num_workers,
         prefetch_factor=prefetch_factor,
     )
+    
 
     # P0147522 : 6LYY, 7CKO (transporter)
     # P0000373 : calmodulin sequence (multiple structures)
@@ -356,7 +361,22 @@ def sample(
     client.logger.info("Start training".center(70))
     client.logger.info("")
     client.logger.info("-" * 70)
+    
+    valid_num_item = cfg.experiment.valid_item // world_size
+    client.model.eval()
+    for ii, _batch in enumerate(valid_loader):
+        batch = fabric.to_device(_batch)
+        click.echo(f"residue length : {batch.scheme.residue_idx.shape[1]} \
+                   atom length : {batch.structure.atom_pos.shape[1]}")
 
+        batch = batch.duplicate(client.config.experiment.eval_sample_num)
+        client.predict_contact_map(
+            batch,
+            save_dir=Path(save_dir) if save_dir else None,
+        )
+        if ii >= valid_num_item:
+            client.call_callbacks("on_validation_epoch_end")
+            break
 
 if __name__ == "__main__":
     # set mp start method

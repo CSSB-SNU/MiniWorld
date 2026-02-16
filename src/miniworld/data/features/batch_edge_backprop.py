@@ -14,7 +14,7 @@ from .features import (
 
 
 @typecheck
-@dataclass()
+@dataclass(frozen=True)
 class SchemeFeatures(BaseBatch):
     """Scheme features."""
 
@@ -28,7 +28,7 @@ class SchemeFeatures(BaseBatch):
 
 
 
-@dataclass(kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class Batch(BaseBatch):
     """Batch of features."""
 
