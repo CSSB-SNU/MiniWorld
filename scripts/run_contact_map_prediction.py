@@ -13,7 +13,7 @@ import wandb
 from miniworld.data.dataloader.dataloader_multistate import (
     BioMolMonomerData,
 )
-from miniworld.models.contact_map_prediction import ContactMapPredictionClient
+from miniworld.models.contact_map_prediction.client import ContactMapPredictionClient
 from miniworld.utils import set_seed
 
 # torch.set_float32_matmul_precision("high")  # noqa: ERA001
