@@ -88,7 +88,6 @@ model:
       d_msa: 128
       d_pair: ${model.shared.d_pair}
       d_single_token_input: ${model.shared.d_single_token_input}
-      d_token_single_input: ${model.shared.d_single_token_input}
       d_hidden_msa: 32
       d_hidden_tri_multi: 128
       d_hidden_tri_attention: 32
