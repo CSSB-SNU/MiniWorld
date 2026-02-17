@@ -13,7 +13,7 @@ from .features import (
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass
 class SchemeFeatures(BaseBatch):
     """Scheme features."""
 
@@ -24,7 +24,7 @@ class SchemeFeatures(BaseBatch):
     residue_sym_id: Int[torch.Tensor, "B L_res"]
     atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"]
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class Batch(BaseBatch):
     """Batch of features."""
 

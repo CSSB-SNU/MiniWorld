@@ -6,7 +6,7 @@ from team_gm import BaseBatch, typecheck
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass
 class SequenceFeatures(BaseBatch):
     """Sequence features."""
 
@@ -14,7 +14,7 @@ class SequenceFeatures(BaseBatch):
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass
 class StructureFeatures(BaseBatch):
     """Structure features."""
 
@@ -27,7 +27,7 @@ class StructureFeatures(BaseBatch):
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass
 class MultiStateStructureFeatures(BaseBatch):
     """Structure features."""
 
@@ -40,7 +40,7 @@ class MultiStateStructureFeatures(BaseBatch):
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass
 class ReferenceFeatures(BaseBatch):
     """Reference features."""
 
@@ -52,7 +52,7 @@ class ReferenceFeatures(BaseBatch):
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass
 class SchemeFeatures(BaseBatch):
     """Scheme features."""
 
@@ -67,7 +67,7 @@ class SchemeFeatures(BaseBatch):
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass
 class MSAFeatures(BaseBatch):
     """MSA features."""
 
@@ -79,7 +79,7 @@ class MSAFeatures(BaseBatch):
 
 
 @typecheck
-@dataclass(frozen=True)
+@dataclass
 class ChainFeatures(BaseBatch):
     """Chain features."""
 
@@ -87,7 +87,7 @@ class ChainFeatures(BaseBatch):
     contact_edges: Int[torch.Tensor, "B N_contact 2"]
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class Batch(BaseBatch):
     """Batch of features."""
 

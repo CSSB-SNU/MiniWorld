@@ -3,14 +3,16 @@ from contextlib import ExitStack
 
 import torch
 from pydantic import BaseModel
-from miniworld.modules.old.diffusion_module import DiffusionModule
-from miniworld.modules.old.msa_module import MSAModule
-from miniworld.modules.old.pairformer import Pairformer
+from team_gm.modules.blocks.diffusion_transformer import DiffusionTransformer
+from team_gm.modules.blocks.msa_module import MSAModule
+from team_gm.modules.blocks.pairformer import Pairformer
+
 from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
 )
-from miniworld.utils.precision_manager import PrecisionConfig
+
+from team_gm.utils.precision_manager import PrecisionConfig
 from torch import nn
 
 from miniworld.configs import SharedConfig
@@ -35,7 +37,7 @@ class ContactMapPredictionModel(nn.Module):
 
         shared: SharedConfig
         trunk: "ContactMapPredictionModel.ConditionConfig"
-        input_feat_embbeder: DiffusionModule.Config
+        input_feat_embbeder: DiffusionTransformer.Config
         precision: PrecisionConfig
         use_distogram: bool = True
 
@@ -62,7 +64,7 @@ class ContactMapPredictionModel(nn.Module):
             ),
         )
         # Trunk forward
-        self.msa_module = MSAModule(config.shared, config.trunk.msa_module)
+        self.msa_module = MSAModule(config.trunk.msa_module)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
 
         # ContactMap prediction
@@ -97,6 +99,7 @@ class ContactMapPredictionModel(nn.Module):
         )
 
         token_pair = torch.zeros_like(token_pair_init)
+        dummy_single = torch.zeros_like(token_single_init)  # (B, L, d_single)
         # backprop cheating
         token_single_input = token_single_input + 0.0 * token_single_init.sum()
         # Trunk forward with recycling
@@ -120,10 +123,11 @@ class ContactMapPredictionModel(nn.Module):
                     batch.structure.residue_mask,
                 )
 
-                token_pair, _ = self.pairformer_blocks.forward(
+                token_pair, single_out = self.pairformer_blocks(
                     token_pair,
-                    None,
+                    dummy_single,
                     batch.structure.residue_mask,
                 )
+                token_pair = token_pair + 0.0 * single_out.sum()
 
         return self.final_head(token_pair)

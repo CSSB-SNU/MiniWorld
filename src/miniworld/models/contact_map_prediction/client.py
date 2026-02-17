@@ -42,8 +42,9 @@ class ContactMapPredictionClient(BaseClient):
         crop: CropConfig
         msa: MSAConfig
         edge_weight: EdgeWeightConfig
-        train_preprocessing: BioMolDBConfig
-        valid_preprocessing: BioMolDBConfig
+        train_db: BioMolDBConfig
+        valid_db: BioMolDBConfig
+
 
     class ExperimentsConfig(BaseModel):
         """Configuration for experiments."""

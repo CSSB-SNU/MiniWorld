@@ -8,7 +8,7 @@ class SharedConfig(BaseModel):
     d_single: int = 384
     d_single_atom: int = 128
     d_single_token: int = 768
-    d_single_token_input: int = 441  # 441 = 384 + 32 + 24 + 1
+    d_single_token_input: int = 449  # 441 = 384 + 32 + 24 + 1
 
     d_pair: int = 128
     d_pair_atom: int = 16
