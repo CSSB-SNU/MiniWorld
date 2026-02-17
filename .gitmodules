@@ -11,3 +11,6 @@
 [submodule "libs/datacooker"]
 	path = libs/datacooker
 	url = git@github.com:CSSB-SNU/DataCooker.git
+[submodule "libs/foldbench"]
+	path = libs/foldbench
+	url = https://github.com/BEAM-Labs/FoldBench.git
