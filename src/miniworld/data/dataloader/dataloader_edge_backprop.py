@@ -41,8 +41,6 @@ if TYPE_CHECKING:
     from miniworld.data.mols import CIFMolAttached
 
 
-
-
 class EdgeScoreStore:
     """Maintains per-edge statistics such as frequency and score.
 
@@ -252,6 +250,7 @@ class AdaptiveEdgeSampler(DistributedSampler):
             r = torch.rand(1, device=self.device)
             yield int(torch.searchsorted(cdf, r).item())
 
+
 def make_batch(  # noqa: PLR0915
     cifmol: CIFMolAttached,
     msa: MSAFeatures,
@@ -326,9 +325,7 @@ def make_batch(  # noqa: PLR0915
     for ii, atom_indices in enumerate(res_to_atoms):
         R, T = Rs[ii], Ts[ii]
         _ref_pos = ref_pos[atom_indices]
-        _ref_pos = (
-            _ref_pos - _ref_pos.mean(axis=0)
-        ) @ R + T  # random SE(3) operation
+        _ref_pos = (_ref_pos - _ref_pos.mean(axis=0)) @ R + T  # random SE(3) operation
         random_ref_pos.append(_ref_pos)
     ref_pos = np.vstack(random_ref_pos)
 
@@ -474,7 +471,29 @@ class BioMolData(torch.utils.data.Dataset):
         cif_ids = self.edge_id_to_cif_ids[edge_id]
         cif_id = random.choice(cif_ids)
 
-        return self.get_item_by_id(cif_id=cif_id, chain_bias=None, remain_invalid_residues=self.config.crop_config.remain_invalid_residues)
+        # TODO remove it
+        item = self.get_item_by_id(
+            cif_id=cif_id,
+            chain_bias=None,
+            remain_invalid_residues=self.config.crop_config.remain_invalid_residues,
+        )
+
+        if item.sequence.residue_type.shape[1] < 16:
+            # too small, resample
+            while True:
+                idx = random.randint(0, len(self) - 1)
+                edge_id = self.edge_id_list[idx]
+                cif_ids = self.edge_id_to_cif_ids[edge_id]
+                cif_id = random.choice(cif_ids)
+                item = self.get_item_by_id(
+                    cif_id=cif_id,
+                    chain_bias=None,
+                    remain_invalid_residues=self.config.crop_config.remain_invalid_residues,
+                )
+                if item.sequence.residue_type.shape[1] >= 16:
+                    break
+
+        return item
 
     def get_item_by_id(
         self,
@@ -485,8 +504,8 @@ class BioMolData(torch.utils.data.Dataset):
         crop_indices: np.ndarray | None = None,
     ) -> Batch:
         """Get a data sample by cif_id."""
+        # TODO : remove this bug
         cifmol = load_cifmol(db_path=self.config.DB_config.cif_db_path, cif_id=cif_id)
-
         chain_id1, chain_id2 = re.findall(r"\([^)]*\)|[^_]+", cif_id)[-2:]
         chain_id1 = chain_id1.strip("()")
         chain_id2 = chain_id2.strip("()")
@@ -498,7 +517,7 @@ class BioMolData(torch.utils.data.Dataset):
         # Crop
         if crop_indices is None:
             crop_length = self.config.crop_config.residue_crop_length
-            if crop_length < 0 :
+            if crop_length < 0:
                 crop_length = len(cifmol.residues)
             while crop_length > 0:
                 crop_indices, chain_id_to_crop_indices = self.cropper.crop(
@@ -543,7 +562,7 @@ class BioMolData(torch.utils.data.Dataset):
         # Load MSA
         complex_msa = load_msa(
             cifmol=cifmol,
-            chain_id_to_crop_indices=chain_id_to_crop_indices, # pyright: ignore[reportPossiblyUnboundVariable]
+            chain_id_to_crop_indices=chain_id_to_crop_indices,  # pyright: ignore[reportPossiblyUnboundVariable]
             env_path=self.config.DB_config.a3m_db_path,
         )
         msa = sample_msa(
@@ -615,17 +634,17 @@ class BioMolData(torch.utils.data.Dataset):
         kwargs.pop("shuffle", None)
         kwargs.pop("world_size", None)
         kwargs.update({"sampler": sampler})
+        if num_workers == 0 :
+            # remove prefetch_factor
+            kwargs.pop("prefetch_factor", None)
 
         params = {
             "shuffle": False,  # leave False when using a sampler
             "drop_last": False,  # override to True for train
             "num_workers": num_workers,
             "pin_memory": False,
-            "multiprocessing_context": (
-                "spawn" if num_workers > 0 else None
-            ),
+            "multiprocessing_context": ("spawn" if num_workers > 0 else None),
             "collate_fn": Batch.collate_fn,
         }
         params.update(kwargs)
         return DataLoader(self, **params)
-

@@ -219,8 +219,8 @@ def get_contact_map(
 
 @typecheck
 def extract_contact_map(
-    atom_pos: Float[torch.Tensor, "* N L_atom 3"],
-    atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
+    atom_pos: Float[torch.Tensor, "* N L_atom 3"] | Float[torch.Tensor, "* L_atom 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* N L_atom"] | Bool[torch.Tensor, "* L_atom"],
     atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
     cutoff: float = 6.0,
     min_distance: float = 2.0,
