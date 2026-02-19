@@ -1,5 +1,5 @@
 data:
-  DB_PATH: /home/psk6950/data/
+  DB_PATH: /public_data
   train_db:
     cif_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
     a3m_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
@@ -28,8 +28,8 @@ data:
   crop:
     contiguous_prob: 0.2
     spatial_prob: 0.4
-    interface_prob: 0.4
-    interface_simple_prob: 0.0
+    interface_prob: 0.0
+    interface_simple_prob: 0.4
     crop_length: 384
 
 
@@ -54,8 +54,8 @@ model:
     num_res_class: 32
     implementation: triton
     use_checkpoint: True
+    use_ref_pos: False
 
-  
   input_feat_embbeder:
     n_block: 3
     n_checkpoint_segments: null
@@ -78,14 +78,15 @@ model:
       n_head_tri_attention: 4
       n_head_attention: 16
       p_drop: 0.25
-      use_single: True
+      use_single: False
+      use_single_cond: False
       use_self_attention: True
       implementation: triton
 
     msa_module: 
       n_block: 2
 
-      d_msa: 64
+      d_msa: 128
       d_pair: ${model.shared.d_pair}
       d_single_token_input: ${model.shared.d_single_token_input}
       d_hidden_msa: 32
@@ -139,11 +140,6 @@ model:
         out_dtype: torch.float32  # Precision for diffusion modules
 
 
-loss:
-  diffusion_loss: 4.0
-  distogram_loss: 0.03
-
-
 diffuser:
   seed : 0
   method : AF3
@@ -158,25 +154,26 @@ diffuser:
     use_time_augmentation: True
 
 experiment:
-  comment: "af3like v1.0.1 interface_crop (42343)"
+  comment: "noRefpos_onehot af3like_v1.0.1 (distogram loss, grad accum 1, max lr 1e-3)"
 
   # Training arguments
   num_batch: 1
-  num_epoch: 1000
+  num_epoch: 5000
   # max_lr: 1.8e-3
+  optimizer : AdamW
   max_lr: 1e-3
-  min_lr: 1e-4
-  warmup_steps: 0
+  min_lr: 1e-3
+  warmup_steps: 512
   decay_steps: 5e4
   self_condition: False
   compile: False
   num_augment: 48
   train_item: 2560
-  valid_item: 640
+  valid_item: 160
 
   # Validation arguments
   eval_freq: 5
-  eval_sample_num: 1
+  eval_sample_num: 16
   eval_input_num: 50
   eval_timesteps: 100
   grad_clip_max_norm: 10.0
@@ -185,5 +182,10 @@ experiment:
   prefetch_factor: 8
   use_ema: True
   ema_decay: 0.999
-  bce_pos_weight: 2.0
+  bce_pos_weight: 1.0
   long_range_sigmoid_amp: 3.0
+
+# Loss weights
+loss:
+  diffusion_loss: 4.0
+  distogram_loss: 0.001
