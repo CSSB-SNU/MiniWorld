@@ -157,7 +157,7 @@ diffuser:
     use_time_augmentation: True
 
 experiment:
-  comment: "noRefpos_fp|af3like_v1.0.1(distogram_loss/grad_accum:1/max_lr:1e-3)"
+  comment: "noRefpos_fp af3like_v1.0.2 (distogram loss, grad accum 1, max lr 1e-3)"
 
   # Training arguments
   num_batch: 1
