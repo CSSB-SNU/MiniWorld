@@ -1,0 +1,23 @@
+data:
+  cif_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/cif_raw.lmdb
+  a3m_db_path: /home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb
+  fold_bench_csv_dir: /home/psk6950/MiniWorld/libs/foldbench/targets_full/
+  fasta_path: /home/psk6950/data/BioMolDBv2_2024Oct21/fasta/merged.fasta
+  seq_hash_map_path: /home/psk6950/data/BioMolDBv2_2024Oct21/metadata/seq_hash_map.tsv
+  signalp_dir: /home/psk6950/data/BioMolDBv2_2024Oct21/signalp/
+
+msa:
+  n_samples: 1
+  max_msa_depth: 1024
+
+
+experiment:
+  # Training arguments
+  num_batch: 1
+  compile: True
+
+  # Validation arguments
+  timesteps: 100
+  num_workers: 8
+  prefetch_factor: 4
+  use_ema: True
