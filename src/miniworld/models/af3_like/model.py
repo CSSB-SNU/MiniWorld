@@ -93,7 +93,10 @@ class AF3LikeModel(nn.Module):
         # Trunk forward
         self.msa_module = MSAModule(config.trunk.msa_module)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer)
-        self.distogram_head = DistogramHead(config.shared.d_pair, config.shared.n_distogram_bins)
+        self.distogram_head = DistogramHead(
+            config.shared.d_pair,
+            config.shared.n_distogram_bins,
+        )
 
         # Diffusion module
         self.diffusion_module = DiffusionModule(
@@ -164,7 +167,7 @@ class AF3LikeModel(nn.Module):
 
         return (
             token_single_input,
-            token_single, # pyright: ignore[reportReturnType]
+            token_single,  # pyright: ignore[reportReturnType]
             token_pair,
             distogram_logit,
         )
@@ -205,9 +208,9 @@ class AF3LikeModel(nn.Module):
         x_mask: Bool[torch.Tensor, "A B L_atom"],
         t_emb: Float[torch.Tensor, "A B"],
     ) -> tuple[
-            Float[torch.Tensor, "B L_atom 3"],
-            Float[torch.Tensor, "B L_token L_token"],
-        ]:
+        Float[torch.Tensor, "B L_atom 3"],
+        Float[torch.Tensor, "B L_token L_token"],
+    ]:
         """Forward pass of the AF3Like model."""
         (
             token_single_input,
@@ -307,6 +310,7 @@ class AF3LikeModelWrapper(nn.Module):
             token_pair_trunk=self.condition["token_pair_trunk"],
         )
         return x_update.squeeze(0)  # (1, B, L, 3) -> (B, L, 3)
+
 
 @dataclass
 class AF3LikeInferenceOutput:

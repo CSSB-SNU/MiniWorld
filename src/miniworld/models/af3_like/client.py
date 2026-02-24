@@ -231,7 +231,7 @@ class AF3LikeClient(BaseClient):
             fabric_dataloader = self.fabric.setup_dataloaders(dataloader)
         else:
             fabric_dataloader = dataloader
-        sampler= dataloader.sampler
+        sampler = dataloader.sampler
         sampler = cast("AdaptiveEdgeSampler", sampler)
 
         self.model.train()
@@ -297,8 +297,6 @@ class AF3LikeClient(BaseClient):
             output.atom_pos_pred[0],
         )
         min_rmsd = min(min_rmsd, rmsd)
-        print(f"<<<category_lddt[{batch.name}]: {category_lddt}>>>")  # noqa: T201 (Debug)
-
 
         return {
             "best_rmsd": min_rmsd,
@@ -327,7 +325,6 @@ class AF3LikeClient(BaseClient):
             structure=batch.structure,
         )
         shape = batch.structure.atom_pos.shape
-
         atom_pos_pred, inter_traj, model_traj = self.solver.sample(
             model_fn=model_wrapper,
             shape=shape,

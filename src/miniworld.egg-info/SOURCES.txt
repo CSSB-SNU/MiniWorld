@@ -16,11 +16,13 @@ src/miniworld/data/to_cif.py
 src/miniworld/data/dataloader/__init__.py
 src/miniworld/data/dataloader/configs.py
 src/miniworld/data/dataloader/dataloader_edge_backprop.py
+src/miniworld/data/dataloader/dataloader_foldbench.py
 src/miniworld/data/dataloader/dataloader_multistate.py
 src/miniworld/data/dataloader/samplers.py
 src/miniworld/data/dataloader/utils.py
 src/miniworld/data/features/__init__.py
 src/miniworld/data/features/batch_edge_backprop.py
+src/miniworld/data/features/batch_foldbench.py
 src/miniworld/data/features/batch_multistate.py
 src/miniworld/data/features/features.py
 src/miniworld/data/mols/__init__.py

@@ -40,14 +40,8 @@ def init_atom_features(
     )
     atom_single_init = atom_single_init * reference.mask.unsqueeze(-1)
 
-    d_lm = (
-        reference.pos[:, :, None]
-        - reference.pos[:, None, :]
-    )
-    v_lm = (
-        reference.space_uid[:, :, None]
-        == reference.space_uid[:, None, :]
-    )
+    d_lm = reference.pos[:, :, None] - reference.pos[:, None, :]
+    v_lm = reference.space_uid[:, :, None] == reference.space_uid[:, None, :]
 
     v_lm = v_lm[..., None].to(d_lm.dtype)
     arctan_d_lm = 1 / (1 + d_lm.norm(dim=-1) ** 2)
@@ -96,7 +90,9 @@ class AtomAttentionEncoder(nn.Module):
             Linear(d_pair, d_pair_atom, bias=False, init="zero"),
         )
         self.noisy_to_atom_single_rep = Linear(
-            3, d_single_atom, bias=True,
+            3,
+            d_single_atom,
+            bias=True,
         )  # bias set to true for missing atoms
 
         self.atom_single_to_pair_left = nn.Sequential(
@@ -155,7 +151,9 @@ class AtomAttentionEncoder(nn.Module):
         )
         batch_2d_idx = torch.arange(batch_size, device=device)
         batch_2d_idx = batch_2d_idx.view(batch_size, 1, 1).expand(
-            -1, atom_length, atom_length,
+            -1,
+            atom_length,
+            atom_length,
         )
         atom_pair = (
             atom_pair
@@ -180,7 +178,6 @@ class AtomAttentionEncoder(nn.Module):
         atom_pair = atom_pair + self.mlp_atom_pair(atom_pair)
         return atom_single_rep, atom_single_cond, atom_pair
 
-
     @typecheck
     def _scatter_atom_to_token(
         self,
@@ -201,7 +198,10 @@ class AtomAttentionEncoder(nn.Module):
         token_length = int(residue_idx.shape[1])
 
         # one-hot assignment: (B, L_atom, L_token)
-        mapping = torch.nn.functional.one_hot(atom_to_residue_idx_map, num_classes=token_length).to(dtype)
+        mapping = torch.nn.functional.one_hot(
+            atom_to_residue_idx_map,
+            num_classes=token_length,
+        ).to(dtype)
         mask_f = atom_mask.to(dtype)  # (B, L_atom)
         count = torch.einsum("bal,ba->bl", mapping, mask_f)
 
@@ -210,11 +210,16 @@ class AtomAttentionEncoder(nn.Module):
 
         # apply mask AFTER projection (prevents bias leakage if projection has bias)
         atom_mask = atom_mask.unsqueeze(0).unsqueeze(-1)  # (1, B, L_atom, 1)
-        to_add_single_token_rep = to_add_single_token_rep * atom_mask  # (A, B, L_atom, d)
-
+        to_add_single_token_rep = (
+            to_add_single_token_rep * atom_mask
+        )  # (A, B, L_atom, d)
 
         # einsum over atoms -> token sum: (A, B, L_token, d)
-        token_single_rep = torch.einsum("bal,nbac->nblc", mapping, to_add_single_token_rep)
+        token_single_rep = torch.einsum(
+            "bal,nbac->nblc",
+            mapping,
+            to_add_single_token_rep,
+        )
         # Explanation of labels:
         # A:    (B, L_atom, L_token) -> "bal" (b=batch, a=atom, l=token)
         # to_add (A, B, L_atom, d)   -> "abac" where c=d, reuse a=atom
@@ -253,18 +258,16 @@ class AtomAttentionEncoder(nn.Module):
                 token_single_cond,
                 token_pair_cond,
                 use_reentrant=False,
-            ) # pyright: ignore[reportGeneralTypeIssues]
+            )  # pyright: ignore[reportGeneralTypeIssues]
         else:
-            atom_single_rep, atom_single_cond, atom_pair = (
-                self._before_atom_transformer(
-                    x_t,
-                    x_mask,
-                    atom_single_init,
-                    atom_pair_init,
-                    atom_to_residue_idx_map,
-                    token_single_cond,
-                    token_pair_cond,
-                )
+            atom_single_rep, atom_single_cond, atom_pair = self._before_atom_transformer(
+                x_t,
+                x_mask,
+                atom_single_init,
+                atom_pair_init,
+                atom_to_residue_idx_map,
+                token_single_cond,
+                token_pair_cond,
             )
         atom_single_rep = self.atom_transformer(
             atom_single_rep,
@@ -284,12 +287,12 @@ class AtomAttentionEncoder(nn.Module):
             )
         else:
             token_single_rep = self._scatter_atom_to_token(
-                scheme.residue_idx, # pyright: ignore[reportCallIssue]
-                structure.atom_mask, # pyright: ignore[reportCallIssue]
+                scheme.residue_idx,  # pyright: ignore[reportCallIssue]
+                structure.atom_mask,  # pyright: ignore[reportCallIssue]
                 atom_to_residue_idx_map,
                 atom_single_rep,
             )
-        return token_single_rep, atom_single_rep, atom_single_cond, atom_pair # pyright: ignore[reportReturnType]
+        return token_single_rep, atom_single_rep, atom_single_cond, atom_pair  # pyright: ignore[reportReturnType]
 
 
 class AtomAttentionDecoder(nn.Module):
@@ -335,15 +338,21 @@ class AtomAttentionDecoder(nn.Module):
         device = atom_single_rep.device
         batch_1d_idx = torch.arange(batch_size, device=device)
         batch_1d_idx = batch_1d_idx.view(1, batch_size, 1).expand(
-            num_augment, -1, atom_length,
+            num_augment,
+            -1,
+            atom_length,
         )
         aug_1d_idx = torch.arange(num_augment, device=device)
         aug_1d_idx = aug_1d_idx.view(num_augment, 1, 1).expand(
-            -1, batch_size, atom_length,
+            -1,
+            batch_size,
+            atom_length,
         )
         atom_to_residue_idx_map = scheme.atom_to_residue_idx_map
         atom_to_residue_idx_map = atom_to_residue_idx_map.unsqueeze(0).expand(
-            num_augment, -1, -1,
+            num_augment,
+            -1,
+            -1,
         )
 
         _to_add_single = self.add_token_info(token_single_rep)
@@ -440,12 +449,12 @@ class DiffusionConditioning(nn.Module):
     ]:
         """Forward pass of the diffusion conditioning module."""
         rel_emb = self.relative_position_embedder(
-            asym_id = scheme.residue_asym_id,
-            residue_idx = scheme.residue_idx,
-            entity_id = scheme.residue_entity_id,
-            sym_id = scheme.residue_sym_id,
+            asym_id=scheme.residue_asym_id,
+            residue_idx=scheme.residue_idx,
+            entity_id=scheme.residue_entity_id,
+            sym_id=scheme.residue_sym_id,
         )
-        token_pair = torch.cat([token_pair_trunk, rel_emb],dim=-1)
+        token_pair = torch.cat([token_pair_trunk, rel_emb], dim=-1)
         token_pair = self.linear_token_pair(token_pair)
 
         for transition in self.pair_transitions:
@@ -539,7 +548,9 @@ class DiffusionModule(nn.Module):
             token_single_cond,
         )
         token_single_rep = self.diffusion_transformer(
-            token_single_rep, token_single_cond, token_pair_cond,
+            token_single_rep,
+            token_single_cond,
+            token_pair_cond,
         )
 
         token_single_rep = self.ln_token_single_rep(token_single_rep)
@@ -551,8 +562,3 @@ class DiffusionModule(nn.Module):
             atom_single_cond,
             atom_pair,
         )
-
-
-
-
-
