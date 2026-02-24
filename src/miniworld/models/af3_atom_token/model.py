@@ -31,8 +31,8 @@ from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.msa_util import init_msa
 
 
-class AF3LikeModel(nn.Module):
-    """Structure AF3-like model."""
+class Model(nn.Module):
+    """Structure model."""
 
     class TrunkConfig(BaseModel):
         """Configuration for trunk modules."""
@@ -49,12 +49,12 @@ class AF3LikeModel(nn.Module):
         dit_cond: DiffusionConditioning.Config
 
     class Config(BaseModel):
-        """Configuration for the AF3Like model."""
+        """Configuration for the model."""
 
         shared: SharedConfig
         input_feat_embbeder: DiffusionTransformer.Config
-        trunk: "AF3LikeModel.TrunkConfig"
-        diffusion: "AF3LikeModel.DiffusionConfig"
+        trunk: "Model.TrunkConfig"
+        diffusion: "Model.DiffusionConfig"
         precision: PrecisionConfig
 
     def __init__(self, config: Config) -> None:
@@ -132,7 +132,7 @@ class AF3LikeModel(nn.Module):
             sequence,
             structure,
         )
-        token_mask = structure.token_mask
+        residue_mask = structure.residue_mask
 
         token_pair = torch.zeros_like(token_pair_init)
         token_single = torch.zeros_like(token_single_init)
@@ -153,14 +153,14 @@ class AF3LikeModel(nn.Module):
                     msa_feat,
                     token_pair,
                     token_single_input,
-                    token_mask,
+                    residue_mask,
                 )
                 token_single = token_single_init + self.add_single_recycle(token_single)
 
                 token_pair, token_single = self.pairformer_blocks.forward(
                     token_pair,
                     token_single,
-                    token_mask,
+                    residue_mask,
                 )
         # reduce token_pair information to distogram
         distogram_logit = self.distogram_head(token_pair)
@@ -211,7 +211,7 @@ class AF3LikeModel(nn.Module):
         Float[torch.Tensor, "B L_atom 3"],
         Float[torch.Tensor, "B L_token L_token"],
     ]:
-        """Forward pass of the AF3Like model."""
+        """Forward pass of the model."""
         (
             token_single_input,
             token_single_trunk,
@@ -240,10 +240,10 @@ class AF3LikeModel(nn.Module):
         return atom_pos_update, distogram_logit
 
 
-class AF3LikeModelWrapper(nn.Module):
-    """Wrapper for AF3LikeModel to handle the input and output using solver."""
+class ModelWrapper(nn.Module):
+    """Wrapper for Model to handle the input and output using solver."""
 
-    def __init__(self, model: AF3LikeModel) -> None:
+    def __init__(self, model: Model) -> None:
         super().__init__()
         self.conditioned_forwarded = False
         self.model = model
@@ -313,8 +313,8 @@ class AF3LikeModelWrapper(nn.Module):
 
 
 @dataclass
-class AF3LikeInferenceOutput:
-    """Output of the AF3Like model inference."""
+class InferenceOutput:
+    """Output of the model inference."""
 
     # Tensor of final predicted atom coordinate.
     atom_pos_pred: torch.Tensor  # (B, L, 3)

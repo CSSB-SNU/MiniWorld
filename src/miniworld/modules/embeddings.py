@@ -528,7 +528,7 @@ _BIAS = [
 
 def fourier_embedding(
     sigma_nosie_level: Float[torch.Tensor, " B"],
-    ) -> Float[torch.Tensor, " B d"]:
+) -> Float[torch.Tensor, " B d"]:
     """Return Fourier noise level embeddings for diffusion model."""
     sigma_nosie_level = sigma_nosie_level.to(dtype=torch.float32)
     weight = torch.tensor(_WEIGHT, dtype=torch.float32, device=sigma_nosie_level.device)
@@ -537,11 +537,10 @@ def fourier_embedding(
     return torch.cos(2 * math.pi * embeddings)
 
 
-
 class RelativePositionEmbedding(nn.Module):
     """Relative position embedding module.
 
-    Relative position embedding is used to encode the relative position of residues.
+    Relative position embedding is used to encode the relative position of tokens.
 
     Parameters
     ----------
@@ -564,37 +563,59 @@ class RelativePositionEmbedding(nn.Module):
         self.d_hidden = d_hidden
         self.r_max = r_max
         self.s_max = s_max
-        self.embed_rel_pos = Linear(73, d_hidden, init="default", bias=False)
+        dim = (2 * r_max + 2) * 2 + (2 * s_max + 2) + 1  # 139
+        self.embed_rel_pos = Linear(dim, d_hidden, init="default", bias=False)
 
     def forward(
         self,
         asym_id: Float[torch.Tensor, "B L"],
-        residue_idx: Float[torch.Tensor, "B L"],
+        token_residue_idx: Float[torch.Tensor, "B L"],
+        token_idx: Float[torch.Tensor, "B L"],
         entity_id: Float[torch.Tensor, "B L"],
         sym_id: Float[torch.Tensor, "B L"],
     ) -> Float[torch.Tensor, "B L L d_hidden"]:
         """Forward pass."""
         with torch.no_grad():
             b_same_chain = asym_id[:, :, None] == asym_id[:, None, :]
+            b_same_residue = (
+                token_residue_idx[:, :, None] == token_residue_idx[:, None, :]
+            )
             b_same_entity = entity_id[:, :, None] == entity_id[:, None, :]
+
             d_residue = (
-                residue_idx[:, :, None] - residue_idx[:, None, :] + self.r_max
+                token_residue_idx[:, :, None]
+                - token_residue_idx[:, None, :]
+                + self.r_max
             )  # (B, L, L)
             d_residue = torch.clamp(d_residue, 0, 2 * self.r_max) * b_same_chain
             d_residue = d_residue + ~b_same_chain * (2 * self.r_max + 1)
+
+            d_token = (
+                token_idx[:, :, None] - token_idx[:, None, :] + self.r_max
+            )  # (B, L, L)
+            d_token = torch.clamp(d_token, 0, 2 * self.r_max) * (
+                b_same_chain & b_same_residue
+            )
+            d_token = d_token + ~(b_same_chain * b_same_residue) * (2 * self.r_max + 1)
+
             d_chain = sym_id[:, :, None] - sym_id[:, None, :] + self.s_max
             d_chain = torch.clamp(d_chain, 0, 2 * self.s_max) * b_same_entity
             d_chain = d_chain + ~b_same_entity * (2 * self.s_max + 1)
             a_rel_pos = F.one_hot(
-                d_residue.long(), num_classes=2 * self.r_max + 2,
+                d_residue.long(),
+                num_classes=2 * self.r_max + 2,
+            )
+            a_rel_token = F.one_hot(
+                d_token.long(),
+                num_classes=2 * self.r_max + 2,
             )
             a_rel_chain = F.one_hot(
-                d_chain.long(), num_classes=2 * self.s_max + 2,
+                d_chain.long(),
+                num_classes=2 * self.s_max + 2,
             )
             token_pair = torch.cat(
-                [a_rel_pos, a_rel_chain, b_same_entity.unsqueeze(-1)], dim=-1,
+                [a_rel_pos, a_rel_token, a_rel_chain, b_same_entity.unsqueeze(-1)],
+                dim=-1,
             )
             token_pair = token_pair.float()
         return self.embed_rel_pos(token_pair)  # (B, L, L, d_hidden)
-
-

@@ -11,6 +11,7 @@ from miniworld.utils.structure import extract_residue_com, pdist_clipped
 class NoInterfaceError(Exception):
     """Raised when no interface is found in the biomolecular structure."""
 
+
 CIFMOL = CIFMol | CIFMolAttached
 
 
@@ -37,9 +38,9 @@ def get_chain_crop_indices(
     return chain_crop
 
 
-def get_valid_indices(cifmol: CIFMOL, remain_invalid_residues: bool = False) -> ndarray:
+def get_valid_indices(cifmol: CIFMOL, remain_invalid_tokens: bool = False) -> ndarray:
     """Get valid residue indices with non-nan atom coordinates."""
-    if remain_invalid_residues:
+    if remain_invalid_tokens:
         return np.arange(len(cifmol.residues))
     valid_atoms_indices = np.any(~np.isnan(cifmol.atoms.xyz), axis=-1)
     valid_residue_indices = cifmol.index_table.atoms_to_residues(valid_atoms_indices)
@@ -50,10 +51,12 @@ def crop_contiguous_monomer(
     interface_bias: str | None,
     cifmol: CIFMOL,
     crop_length: int,
-    remain_invalid_residues: bool = False,
+    remain_invalid_tokens: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
     """Crop the structure and sequence into a contiguous region (polymer only)."""
-    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
+    valid_indices = get_valid_indices(
+        cifmol, remain_invalid_tokens=remain_invalid_tokens
+    )
     valid_chain_list = cifmol.residues[valid_indices].chains.chain_id.value
     if len(valid_chain_list) == 0:
         cifID = cifmol.id[0]
@@ -102,10 +105,12 @@ def crop_spatial_atom(
     chain_bias: str | None,
     cifmol: CIFMOL,
     crop_length: int,
-    remain_invalid_residues: bool = False,
+    remain_invalid_tokens: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
     """Crop the structure and sequence into a spatial region."""
-    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
+    valid_indices = get_valid_indices(
+        cifmol, remain_invalid_tokens=remain_invalid_tokens
+    )
     if valid_indices.size < crop_length:
         chain_crop = get_chain_crop_indices(cifmol, valid_indices)
         return valid_indices, chain_crop
@@ -159,10 +164,12 @@ def crop_spatial_interface(  # noqa: PLR0915
     cifmol: CIFMOL,
     crop_length: int,
     interface_distance_cutoff: float = 6.0,  # atom level
-    remain_invalid_residues: bool = False,
+    remain_invalid_tokens: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
     """Crop the structure and sequence into a spatial region."""
-    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
+    valid_indices = get_valid_indices(
+        cifmol, remain_invalid_tokens=remain_invalid_tokens
+    )
     if valid_indices.size < crop_length:
         chain_crop = get_chain_crop_indices(cifmol, valid_indices)
         return valid_indices, chain_crop
@@ -224,7 +231,8 @@ def crop_spatial_interface(  # noqa: PLR0915
     )
 
     interface_distance_map = distance_map[
-        : len(src_atom_indices), len(src_atom_indices) :,
+        : len(src_atom_indices),
+        len(src_atom_indices) :,
     ]  # (L_src, L_dst)
 
     interface_src_atoms_distance = interface_distance_map.min(axis=1)  # (L_src,)
@@ -292,7 +300,8 @@ def crop_spatial_interface(  # noqa: PLR0915
     )
     rest_min_distance_sorted = rest_min_distance[rest_order]
     rest_min_distance_per_res = np.minimum.reduceat(
-        rest_min_distance_sorted, rest_starts,
+        rest_min_distance_sorted,
+        rest_starts,
     )
     rest_residue_indices = rest_res_sorted[rest_starts]
 
@@ -309,10 +318,12 @@ def crop_spatial_residue(
     chain_bias: str | None,
     cifmol: CIFMOL,
     crop_length: int,
-    remain_invalid_residues: bool = False,
+    remain_invalid_tokens: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
     """Crop the structure and sequence into a spatial region."""
-    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
+    valid_indices = get_valid_indices(
+        cifmol, remain_invalid_tokens=remain_invalid_tokens
+    )
     if valid_indices.size < crop_length:
         chain_crop = get_chain_crop_indices(cifmol, valid_indices)
         return valid_indices, chain_crop
@@ -335,7 +346,8 @@ def crop_spatial_residue(
 
     pivot_xyz = residue_xyz[pivot_residue_idx]
     distance_map = np.linalg.norm(
-        residue_xyz - pivot_xyz[None, :], axis=-1,
+        residue_xyz - pivot_xyz[None, :],
+        axis=-1,
     )  # (N_residues, )
     distance_map[np.isnan(distance_map)] = float("inf")
     distance_map[~np.isin(np.arange(residue_xyz.shape[0]), valid_indices)] = float(
@@ -352,10 +364,12 @@ def crop_spatial_interface_residue(  # noqa: PLR0915
     cifmol: CIFMOL,
     crop_length: int,
     interface_distance_cutoff: float = 12.0,  # residue level
-    remain_invalid_residues: bool = False,
+    remain_invalid_tokens: bool = False,
 ) -> tuple[ndarray, dict[str, ndarray]]:
     """Crop the structure and sequence into a spatial region."""
-    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
+    valid_indices = get_valid_indices(
+        cifmol, remain_invalid_tokens=remain_invalid_tokens
+    )
     if valid_indices.size < crop_length:
         chain_crop = get_chain_crop_indices(cifmol, valid_indices)
         return valid_indices, chain_crop
@@ -413,7 +427,8 @@ def crop_spatial_interface_residue(  # noqa: PLR0915
     )
 
     interface_distance_map = distance_map[
-        : len(src_residue_indices), len(src_residue_indices) :,
+        : len(src_residue_indices),
+        len(src_residue_indices) :,
     ]  # (L_src, L_dst)
 
     interface_src_distance = interface_distance_map.min(axis=1)  # (L_src,)
@@ -453,7 +468,8 @@ def crop_spatial_interface_residue(  # noqa: PLR0915
 
     xyz_interface = residue_xyz[interface_residues]
     distance_map = np.linalg.norm(
-        residue_xyz[:, None, :] - xyz_interface[None, :, :], axis=-1,
+        residue_xyz[:, None, :] - xyz_interface[None, :, :],
+        axis=-1,
     )  # (N_residues, N_interface_residues)
     distance_map[np.isnan(distance_map)] = float("inf")
     distance_map = distance_map.min(axis=1)  # (N_residues,)
@@ -476,7 +492,9 @@ def _get_interface_residues(
 
     src, dst = cifmol.chains.contact.src_indices, cifmol.chains.contact.dst_indices
     edges = [(chain_list[src[i]], chain_list[dst[i]]) for i in range(len(src))]
-    valid_edges = [(a, b) for (a, b) in edges if a in valid_chain_list and b in valid_chain_list]
+    valid_edges = [
+        (a, b) for (a, b) in edges if a in valid_chain_list and b in valid_chain_list
+    ]
 
     if interface_bias is not None:
         a, b = interface_bias
@@ -498,10 +516,14 @@ def _get_interface_residues(
     residue_xyz = extract_residue_com(cifmol)
 
     src_chain_indices = np.where(cifmol.chains.chain_id == pivot_edge[0])[0]
-    src_residue_indices = np.unique(cifmol.index_table.chains_to_residues(src_chain_indices))
+    src_residue_indices = np.unique(
+        cifmol.index_table.chains_to_residues(src_chain_indices)
+    )
 
     dst_chain_indices = np.where(cifmol.chains.chain_id == pivot_edge[1])[0]
-    dst_residue_indices = np.unique(cifmol.index_table.chains_to_residues(dst_chain_indices))
+    dst_residue_indices = np.unique(
+        cifmol.index_table.chains_to_residues(dst_chain_indices)
+    )
 
     # (optional) keep only valid residues
     src_residue_indices = np.intersect1d(src_residue_indices, valid_indices)
@@ -548,10 +570,12 @@ def crop_spatial_interface_residue_simple(
     cifmol: CIFMOL,
     crop_length: int,
     interface_distance_cutoff: float = 12.0,
-    remain_invalid_residues: bool = False,
+    remain_invalid_tokens: bool = False,
 ) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     """Find interface residues, pick one at random as pivot, then crop by spatial proximity (like crop_spatial_residue)."""
-    valid_indices = get_valid_indices(cifmol, remain_invalid_residues=remain_invalid_residues)
+    valid_indices = get_valid_indices(
+        cifmol, remain_invalid_tokens=remain_invalid_tokens
+    )
     if valid_indices.size < crop_length:
         chain_crop = get_chain_crop_indices(cifmol, valid_indices)
         return valid_indices, chain_crop
@@ -570,14 +594,15 @@ def crop_spatial_interface_residue_simple(
     pivot_xyz = residue_xyz[pivot_residue_idx]
 
     # crop like crop_spatial_residue: nearest residues to pivot, restricted to valid_indices
-    distance_map = np.linalg.norm(residue_xyz - pivot_xyz[None, :], axis=-1)  # (N_residues,)
+    distance_map = np.linalg.norm(
+        residue_xyz - pivot_xyz[None, :], axis=-1
+    )  # (N_residues,)
     distance_map[np.isnan(distance_map)] = float("inf")
     distance_map[~np.isin(np.arange(residue_xyz.shape[0]), valid_indices)] = float("inf")
 
     crop_indices = np.argsort(distance_map)[:crop_length]
     crop_indices = np.sort(crop_indices)
     return crop_indices, get_chain_crop_indices(cifmol, crop_indices)
-
 
 
 class Cropper:
@@ -603,14 +628,24 @@ class Cropper:
         crop_length: int,
         chain_bias: str | None = None,
         interface_bias: tuple[str, str] | None = None,
-        remain_invalid_residues: bool = False,
+        remain_invalid_tokens: bool = False,
     ) -> ndarray:  # residue level indices
         """Return cropped residue indices and chain crop dict."""
         if len(cifmol.chains.chain_id) == 1:
             method = "contiguous"
         method = random.choices(
-            population=["contiguous", "spatial", "spatial_interface", "spatial_interface_simple"],
-            weights=[self.contiguous_prob, self.spatial_prob, self.interface_prob, self.interface_simple_prob],
+            population=[
+                "contiguous",
+                "spatial",
+                "spatial_interface",
+                "spatial_interface_simple",
+            ],
+            weights=[
+                self.contiguous_prob,
+                self.spatial_prob,
+                self.interface_prob,
+                self.interface_simple_prob,
+            ],
             k=1,
         )[0]
         if method == "contiguous":
@@ -618,14 +653,14 @@ class Cropper:
                 interface_bias,
                 cifmol,
                 crop_length,
-                remain_invalid_residues=remain_invalid_residues,
+                remain_invalid_tokens=remain_invalid_tokens,
             )
         if method == "spatial":
             return crop_spatial_residue(
                 chain_bias,
                 cifmol,
                 crop_length,
-                remain_invalid_residues=remain_invalid_residues,
+                remain_invalid_tokens=remain_invalid_tokens,
             )
         if method == "spatial_interface":
             try:
@@ -633,14 +668,14 @@ class Cropper:
                     interface_bias,
                     cifmol,
                     crop_length,
-                    remain_invalid_residues=remain_invalid_residues,
+                    remain_invalid_tokens=remain_invalid_tokens,
                 )
             except NoInterfaceError:
                 return crop_contiguous_monomer(
                     interface_bias,
                     cifmol,
                     crop_length,
-                    remain_invalid_residues=remain_invalid_residues,
+                    remain_invalid_tokens=remain_invalid_tokens,
                 )
         if method == "spatial_interface_simple":
             try:
@@ -648,14 +683,14 @@ class Cropper:
                     interface_bias,
                     cifmol,
                     crop_length,
-                    remain_invalid_residues=remain_invalid_residues,
+                    remain_invalid_tokens=remain_invalid_tokens,
                 )
             except NoInterfaceError:
                 return crop_contiguous_monomer(
                     interface_bias,
                     cifmol,
                     crop_length,
-                    remain_invalid_residues=remain_invalid_residues,
+                    remain_invalid_tokens=remain_invalid_tokens,
                 )
         else:
             msg = f"Invalid cropping method: {method}"

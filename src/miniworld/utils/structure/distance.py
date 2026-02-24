@@ -14,7 +14,7 @@ from miniworld.data.mols import CIFMolAttached
 def get_shortest_distances_from_multistructures(
     atom_pos: Float[torch.Tensor, "* N L 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L"],
-    atom_to_res_idx: Int[torch.Tensor, "* L"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L"],
     min_distance: float = 2.0,
     max_distance: float = 22.0,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -23,7 +23,7 @@ def get_shortest_distances_from_multistructures(
     Args:
         atom_pos: Atomic coordinates. Shape: (B, N, L, 3)
         atom_pos_mask: Atom mask. True for valid atoms. Shape: (B, N, L)
-        atom_to_res_idx: Residue index per position. Shape: (B, L)
+        atom_to_token_idx_map: Residue index per position. Shape: (B, L)
         min_distance: Minimum allowed distance.
         max_distance: Maximum allowed distance.
 
@@ -55,7 +55,7 @@ def get_shortest_distances_from_multistructures(
         shortest_dist = torch.minimum(shortest_dist, _dist)
 
     # 2) Build residue existence mask (B, R_max)
-    R_max = int(atom_to_res_idx.max().item()) + 1
+    R_max = int(atom_to_token_idx_map.max().item()) + 1
 
     # A position is valid if any atom at that position is valid
     pos_mask = atom_pos_mask.any(dim=1)  # (B, L)
@@ -64,11 +64,11 @@ def get_shortest_distances_from_multistructures(
 
     # Flatten and mark residues that actually appear
     batch_idx = torch.arange(B, device=device).unsqueeze(1).expand(B, L).reshape(-1)
-    flat_atom_to_res_idx = atom_to_res_idx.reshape(-1)
+    flat_atom_to_token_idx_map = atom_to_token_idx_map.reshape(-1)
     flat_pos_mask = pos_mask.reshape(-1)
 
     valid_batch_idx = batch_idx[flat_pos_mask]
-    valid_res_idx = flat_atom_to_res_idx[flat_pos_mask]
+    valid_res_idx = flat_atom_to_token_idx_map[flat_pos_mask]
 
     residue_exists[valid_batch_idx, valid_res_idx] = True
 
@@ -79,8 +79,8 @@ def get_shortest_distances_from_multistructures(
 
     # 3) Aggregate shortest distances to residue level using scatter-reduce (min)
     # Map (i, j) residue pairs to flat indices per batch
-    ri = atom_to_res_idx.unsqueeze(2).expand(B, L, L)  # (B, L, L)
-    rj = atom_to_res_idx.unsqueeze(1).expand(B, L, L)  # (B, L, L)
+    ri = atom_to_token_idx_map.unsqueeze(2).expand(B, L, L)  # (B, L, L)
+    rj = atom_to_token_idx_map.unsqueeze(1).expand(B, L, L)  # (B, L, L)
     pair_idx = ri * R_max + rj  # (B, L, L)
 
     block_size = R_max * R_max
@@ -118,7 +118,7 @@ def get_shortest_distances_from_multistructures(
 def get_shortest_distances(
     atom_pos: Float[torch.Tensor, "* L 3"],
     atom_pos_mask: Bool[torch.Tensor, "* L"],
-    atom_to_res_idx: Int[torch.Tensor, "* L"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L"],
     min_distance: float = 2.0,
     max_distance: float = 22.0,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -139,18 +139,18 @@ def get_shortest_distances(
     dist = dist.clamp(min=min_distance, max=max_distance)
 
     # 2) Build residue existence mask (B, R_max)
-    R_max = int(atom_to_res_idx.max().item()) + 1
+    R_max = int(atom_to_token_idx_map.max().item()) + 1
 
     # A position is valid if any atom at that position is valid
     residue_exists = torch.zeros(B, R_max, dtype=torch.bool, device=device)
 
     # Flatten and mark residues that actually appear
     batch_idx = torch.arange(B, device=device).unsqueeze(-1).expand(B, L).reshape(-1)
-    flat_atom_to_res_idx = atom_to_res_idx.reshape(-1)
+    flat_atom_to_token_idx_map = atom_to_token_idx_map.reshape(-1)
     flat_pos_mask = atom_pos_mask.reshape(-1)
 
     valid_batch_idx = batch_idx[flat_pos_mask]
-    valid_res_idx = flat_atom_to_res_idx[flat_pos_mask]
+    valid_res_idx = flat_atom_to_token_idx_map[flat_pos_mask]
 
     residue_exists[valid_batch_idx, valid_res_idx] = True
 
@@ -161,8 +161,8 @@ def get_shortest_distances(
 
     # 3) Aggregate shortest distances to residue level using scatter-reduce (min)
     # Map (i, j) residue pairs to flat indices per batch
-    ri = atom_to_res_idx.unsqueeze(2).expand(B, L, L)  # (B, L, L)
-    rj = atom_to_res_idx.unsqueeze(1).expand(B, L, L)  # (B, L, L)
+    ri = atom_to_token_idx_map.unsqueeze(2).expand(B, L, L)  # (B, L, L)
+    rj = atom_to_token_idx_map.unsqueeze(1).expand(B, L, L)  # (B, L, L)
     pair_idx = ri * R_max + rj  # (B, L, L)
 
     block_size = R_max * R_max
@@ -200,14 +200,14 @@ def get_shortest_distances(
 def get_contact_map(
     atom_pos: Float[torch.Tensor, "* L 3"],
     atom_pos_mask: Bool[torch.Tensor, "* L"],
-    atom_to_res_idx: Int[torch.Tensor, "* L"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L"],
     contact_threshold: float = 6.0,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Compute residue-level contact map from atom positions."""
     residue_dists, residue_mask = get_shortest_distances(
         atom_pos=atom_pos,
         atom_pos_mask=atom_pos_mask,
-        atom_to_res_idx=atom_to_res_idx,
+        atom_to_token_idx_map=atom_to_token_idx_map,
     )
 
     contact_map = (
@@ -221,7 +221,7 @@ def get_contact_map(
 def extract_contact_map(
     atom_pos: Float[torch.Tensor, "* N L_atom 3"] | Float[torch.Tensor, "* L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L_atom"] | Bool[torch.Tensor, "* L_atom"],
-    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
     cutoff: float = 6.0,
     min_distance: float = 2.0,
     max_distance: float = 22.0,
@@ -234,17 +234,19 @@ def extract_contact_map(
             residue_dists, residue_pair_mask = get_shortest_distances(
                 atom_pos=atom_pos,
                 atom_pos_mask=atom_pos_mask,
-                atom_to_res_idx=atom_to_res_idx,
+                atom_to_token_idx_map=atom_to_token_idx_map,
                 min_distance=min_distance,
                 max_distance=max_distance,
             )  # (L_max, L_max), (L_max, L_max)
         else:
-            residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
-                atom_pos=atom_pos,
-                atom_pos_mask=atom_pos_mask,
-                atom_to_res_idx=atom_to_res_idx,
-                min_distance=min_distance,
-                max_distance=max_distance,
+            residue_dists, residue_pair_mask = (
+                get_shortest_distances_from_multistructures(
+                    atom_pos=atom_pos,
+                    atom_pos_mask=atom_pos_mask,
+                    atom_to_token_idx_map=atom_to_token_idx_map,
+                    min_distance=min_distance,
+                    max_distance=max_distance,
+                )
             )  # (..., R_max, R_max), (..., R_max, R_max)
 
     # 2) Contact targets (0/1) from distances
@@ -301,7 +303,7 @@ def gaussian_kernel(
 def get_superposed_distances_from_multistructures(
     atom_pos: Float[torch.Tensor, "* N L 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L"],
-    atom_to_res_idx: Int[torch.Tensor, "* L"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L"],
     min_distance: float = 2.0,
     max_distance: float = 22.0,
     num_bins: int = 64,
@@ -311,7 +313,7 @@ def get_superposed_distances_from_multistructures(
     Args:
         atom_pos: Atomic coordinates. Shape: (B, N, L, 3)
         atom_pos_mask: Atom mask. True for valid atoms. Shape: (B, N, L)
-        atom_to_res_idx: Residue index per position. Shape: (B, L)
+        atom_to_token_idx_map: Residue index per position. Shape: (B, L)
         min_distance: Minimum allowed distance.
         max_distance: Maximum allowed distance.
         num_bins: Number of distance bins for discretization.
@@ -337,7 +339,7 @@ def get_superposed_distances_from_multistructures(
     shortest_dists, residue_mask = get_shortest_distances(
         atom_pos=atom_pos,
         atom_pos_mask=atom_pos_mask,
-        atom_to_res_idx=atom_to_res_idx.repeat_interleave(N, dim=0),
+        atom_to_token_idx_map=atom_to_token_idx_map.repeat_interleave(N, dim=0),
         min_distance=min_distance,
         max_distance=max_distance,
     )
@@ -719,10 +721,7 @@ def neighbor_list_grid(  # noqa: C901, PLR0915
 
         # Cartesian product per (src_cell, dst_cell) pair (vectorized at cell level)
         src_idx_sorted = np.concatenate(
-            [
-                np.repeat(r, len(d))
-                for r, d in zip(src_ranges, dst_ranges, strict=False)
-            ],
+            [np.repeat(r, len(d)) for r, d in zip(src_ranges, dst_ranges, strict=False)],
         )
         if src_idx_sorted.size == 0:
             continue

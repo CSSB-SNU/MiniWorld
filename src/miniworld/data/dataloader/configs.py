@@ -15,7 +15,7 @@ class CropConfig(BaseModel):
     residue_crop_length: int = 384
     atom_crop_length: int = 4096
     monomer_only: bool = False
-    remain_invalid_residues: bool = False
+    remain_invalid_tokens: bool = False
 
 
 class EdgeWeightConfig(BaseModel):

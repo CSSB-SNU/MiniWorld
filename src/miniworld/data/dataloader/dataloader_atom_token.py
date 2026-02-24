@@ -32,7 +32,7 @@ from miniworld.data.io import (
     load_all_raw_data,
     load_cifmol,
 )
-from miniworld.data.mapping import AtomMapping, EntityMapping
+from miniworld.data.mapping import CANONICAL_CHEMCOMPS, AtomMapping, EntityMapping
 from miniworld.utils.structure import SE3_oper
 
 if TYPE_CHECKING:
@@ -251,6 +251,80 @@ class AdaptiveEdgeSampler(DistributedSampler):
             yield int(torch.searchsorted(cdf, r).item())
 
 
+def build_atom_token_maps(
+    canonical_residue_mask: np.ndarray,
+    atom_to_residue_idx_map: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Build mapping from atom indices to token indices and from token indices to residue indices."""
+    # tokens are an intermediate grouping between atoms and residues
+    canonical = canonical_residue_mask.astype(bool)
+    atom_res = atom_to_residue_idx_map
+    n_res = canonical.shape[0]
+
+    counts = np.bincount(atom_res, minlength=n_res)
+    token_counts = np.where(canonical, 1, counts)
+
+    token_starts = np.cumsum(
+        np.concatenate(([0], token_counts[:-1])),
+    )
+
+    order = np.argsort(atom_res, kind="stable")
+    sorted_res = atom_res[order]
+
+    group_starts = np.r_[0, np.flatnonzero(np.diff(sorted_res)) + 1]
+    group_sizes = np.diff(np.r_[group_starts, len(atom_res)])
+
+    offsets_sorted = np.arange(len(atom_res)) - np.repeat(group_starts, group_sizes)
+
+    offsets = np.empty_like(offsets_sorted)
+    offsets[order] = offsets_sorted
+
+    atom_to_token_idx_map = token_starts[atom_res] + np.where(
+        canonical[atom_res],
+        0,
+        offsets,
+    )
+
+    token_residue_idx = np.repeat(np.arange(n_res), token_counts)
+
+    return atom_to_token_idx_map, token_residue_idx
+
+
+def atom_bonds_to_token_bonds(
+    atom_bond_src: np.ndarray,
+    atom_bond_dst: np.ndarray,
+    atom_bond_value: np.ndarray,  # (n_bonds, 3) e.g., type/stereo/aromatic
+    atom_to_token_idx_map: np.ndarray,  # (n_atoms,)
+    atom_to_residue_idx_map: np.ndarray,  # (n_atoms,)
+    canonical_residue_mask: np.ndarray,  # (n_res,)
+) -> tuple[np.ndarray, np.ndarray]:
+    """Convert atom-level bonds to token-level bonds, keeping only inter-residue bonds between non-canonical residues."""
+    canonical = canonical_residue_mask.astype(bool)
+
+    src = atom_bond_src.astype(np.int64, copy=False)
+    dst = atom_bond_dst.astype(np.int64, copy=False)
+
+    src_res = atom_to_residue_idx_map[src]
+    dst_res = atom_to_residue_idx_map[dst]
+
+    keep = (src_res == dst_res) & (~canonical[src_res])
+    src = src[keep]
+    dst = dst[keep]
+    value = atom_bond_value[keep]
+
+    t_src = atom_to_token_idx_map[src]
+    t_dst = atom_to_token_idx_map[dst]
+
+    a = np.minimum(t_src, t_dst)
+    b = np.maximum(t_src, t_dst)
+    pairs = np.stack([a, b], axis=1)
+
+    uniq_pairs, uniq_idx = np.unique(pairs, axis=0, return_index=True)
+    uniq_value = value[uniq_idx]
+
+    return uniq_pairs.astype(np.int64, copy=False), uniq_value
+
+
 def make_batch(  # noqa: PLR0915
     cifmol: CIFMolAttached,
     msa: MSAFeatures,
@@ -272,18 +346,43 @@ def make_batch(  # noqa: PLR0915
         axis=1,
     )  # (n_atom_bond, 3)
     atom_bond = np.zeros_like(atom_bond, dtype=np.int64)  # placeholder
-    token_bond = cifmol.residues.bond
-    src, dst = (
-        token_bond.src_indices,
-        token_bond.dst_indices,
-    )
-    token_bond = np.stack([src, dst], axis=1)  # (n_token_bond, 3)
-
-    # Tensor of token xyz, mask, bond
-    cropped_len = len(cifmol.residues)
 
     # idx map
-    atom_to_token_idx_map = cifmol.index_table.atom_to_res
+    atom_to_residue_idx_map = cifmol.index_table.atom_to_res
+
+    canonical_residue_mask = np.isin(
+        cifmol.residues.chem_comp_id.value,
+        np.array(list(CANONICAL_CHEMCOMPS)),
+    )
+
+    atom_to_token_idx_map, token_residue_idx = build_atom_token_maps(
+        canonical_residue_mask,
+        atom_to_residue_idx_map,
+    )
+
+    cropped_residue_len = len(cifmol.residues)
+    cropped_token_len = token_residue_idx.shape[0]
+
+    # generate token-level bond from residue-level bond and atom-level bond
+    residue_bond = cifmol.residues.bond  # canonical bond + branch bond
+    residue_src, residue_dst = (
+        residue_bond.src,
+        residue_bond.dst,
+    )
+    token_src, token_dst = token_residue_idx[residue_src], token_residue_idx[residue_dst]
+    token_canonical_bond = np.stack(
+        [token_src, token_dst],
+        axis=1,
+    )  # (n_residue_bond, 3)
+    token_atom_bond, token_atom_bond_value = atom_bonds_to_token_bonds(
+        atom_bond_src=cifmol.atoms.bond_type.src,
+        atom_bond_dst=cifmol.atoms.bond_type.dst,
+        atom_bond_value=cifmol.atoms.bond_type.value,
+        atom_to_token_idx_map=atom_to_token_idx_map,
+        atom_to_residue_idx_map=atom_to_residue_idx_map,
+        canonical_residue_mask=canonical_residue_mask,
+    )
+    token_bond = np.concatenate([token_canonical_bond, token_atom_bond], axis=0)
 
     # ids
     chain_num = cifmol.chains.chain_id.shape[0]
@@ -292,9 +391,9 @@ def make_batch(  # noqa: PLR0915
     same_entity = chain_entity_id[:, None] == chain_entity_id[None, :]
     chain_sym_id = np.triu(same_entity, k=0).sum(axis=0) - 1
 
-    token_residue_idx = cifmol.residues.cif_idx.value
-    token_idx = np.arange(cropped_len, dtype=np.int64)
-    token_to_chain = cifmol.index_table.res_to_chain
+    token_idx = np.arange(cropped_token_len, dtype=np.int64)
+    res_to_chain = cifmol.index_table.res_to_chain
+    token_to_chain = np.take(res_to_chain, token_residue_idx)
     token_asym_id = np.take(chain_asym_id, token_to_chain)
     token_entity_id = np.take(chain_entity_id, token_to_chain)
     token_sym_id = np.take(chain_sym_id, token_to_chain)
@@ -319,7 +418,7 @@ def make_batch(  # noqa: PLR0915
     N_res = ref_space_uid.max() + 1
     res_to_atoms = [np.where(ref_space_uid == i)[0] for i in range(N_res)]
 
-    Rs, Ts = SE3_oper(cropped_len)
+    Rs, Ts = SE3_oper(cropped_residue_len)
     random_ref_pos = []
     for ii, atom_indices in enumerate(res_to_atoms):
         R, T = Rs[ii], Ts[ii]
@@ -359,9 +458,9 @@ def make_batch(  # noqa: PLR0915
         atom_pos=torch.from_numpy(atom_pos.astype(np.float32)),
         atom_pos_mask=torch.from_numpy(atom_pos_mask.astype(np.bool)),
         atom_mask=torch.from_numpy(atom_mask.astype(np.bool)),
-        atom_bond=torch.from_numpy(atom_bond.astype(np.int32)),
-        token_mask=torch.ones((cropped_len,), dtype=torch.bool),  # all ones
-        token_bond=torch.from_numpy(token_bond.astype(np.int32)),
+        atom_bond=torch.from_numpy(atom_bond.astype(np.int8)),
+        token_mask=torch.ones((cropped_token_len,), dtype=torch.bool),  # all ones
+        token_bond=torch.from_numpy(token_bond.astype(np.int8)),
     )
     reference = ReferenceFeatures.from_sample(
         pos=torch.from_numpy(ref_pos.astype(np.float32)),
@@ -377,7 +476,7 @@ def make_batch(  # noqa: PLR0915
         token_entity_id=torch.from_numpy(token_entity_id.astype(np.int64)),
         token_sym_id=torch.from_numpy(token_sym_id.astype(np.int64)),
         atom_to_token_idx_map=torch.from_numpy(
-            atom_to_token_idx_map.astype(np.int64),
+            atom_to_residue_idx_map.astype(np.int64),
         ),
         edge_index=torch.from_numpy(np.array(edge_index, dtype=np.int64)),
     )

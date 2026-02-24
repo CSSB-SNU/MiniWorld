@@ -12,12 +12,12 @@ if TYPE_CHECKING:
 class MoleculeType(Enum):
     """Enumeration of biological polymer types."""
 
-    ANTIBODY = "antibody" # including nanobody, scFv etc.
+    ANTIBODY = "antibody"  # including nanobody, scFv etc.
     PROTEIN = "protein"
-    DPROTEIN = "dprotein" # D-amino acid protein
+    DPROTEIN = "dprotein"  # D-amino acid protein
     RNA = "rna"
     DNA = "dna"
-    NA = "na" # non-specific nucleic acid
+    NA = "na"  # non-specific nucleic acid
     LIGAND = "ligand"
     BRANCHED = "branched"  # for branched polymers like glycans etc.
 
@@ -146,28 +146,60 @@ _atom_mapping = {
 }
 
 _entity_tag_to_idx_mapping = {
-    "A" : 0, # MoleculeType.ANTIBODY,
-    "P" : 1, # MoleculeType.PROTEIN,
-    "Q" : 2, # MoleculeType.DPROTEIN,
-    "R" : 3, # MoleculeType.RNA,
-    "D" : 4, # MoleculeType.DNA,
-    "N" : 5, # MoleculeType.NA,
-    "L" : 6, # MoleculeType.LIGAND,
-    "B" : 7, # MoleculeType.BRANCHED,
-    "X" : 6,  # unknown molecule type treated as ligand
+    "A": 0,  # MoleculeType.ANTIBODY,
+    "P": 1,  # MoleculeType.PROTEIN,
+    "Q": 2,  # MoleculeType.DPROTEIN,
+    "R": 3,  # MoleculeType.RNA,
+    "D": 4,  # MoleculeType.DNA,
+    "N": 5,  # MoleculeType.NA,
+    "L": 6,  # MoleculeType.LIGAND,
+    "B": 7,  # MoleculeType.BRANCHED,
+    "X": 6,  # unknown molecule type treated as ligand
 }
 
 _entity_idx_to_type_mapping = {
-    0 : MoleculeType.ANTIBODY,
-    1 : MoleculeType.PROTEIN,
-    2 : MoleculeType.DPROTEIN,
-    3 : MoleculeType.RNA,
-    4 : MoleculeType.DNA,
-    5 : MoleculeType.NA,
-    6 : MoleculeType.LIGAND,
-    7 : MoleculeType.BRANCHED,
+    0: MoleculeType.ANTIBODY,
+    1: MoleculeType.PROTEIN,
+    2: MoleculeType.DPROTEIN,
+    3: MoleculeType.RNA,
+    4: MoleculeType.DNA,
+    5: MoleculeType.NA,
+    6: MoleculeType.LIGAND,
+    7: MoleculeType.BRANCHED,
 }
 
+CANONICAL_CHEMCOMPS: set[str] = {
+    # amino acids
+    "ALA",
+    "ARG",
+    "ASN",
+    "ASP",
+    "CYS",
+    "GLN",
+    "GLU",
+    "GLY",
+    "HIS",
+    "ILE",
+    "LEU",
+    "LYS",
+    "MET",
+    "PHE",
+    "PRO",
+    "SER",
+    "THR",
+    "TRP",
+    "TYR",
+    "VAL",
+    # nucleotides
+    "A",
+    "U",
+    "G",
+    "C",
+    "DA",
+    "DT",
+    "DG",
+    "DC",
+}
 
 
 class AtomMapping:
@@ -318,6 +350,7 @@ class ResidueMapping:
             case _:
                 return self.ligand
 
+
 class EntityMapping:
     """Mapping of entity types to MoleculeType enums."""
 
@@ -329,10 +362,14 @@ class EntityMapping:
         """Map a sequence of entity type symbols into MoleculeType enums."""
         if isinstance(entities, str):
             entities = [entities]
-        return np.array([self._entity_tag_to_idx.get(e, MoleculeType.LIGAND) for e in entities])
+        return np.array(
+            [self._entity_tag_to_idx.get(e, MoleculeType.LIGAND) for e in entities]
+        )
 
     def idx_to_type(self, indices: Sequence[int] | np.ndarray) -> np.ndarray:
         """Convert a sequence of indices back to MoleculeType enums."""
         if isinstance(indices, int):
             indices = [indices]
-        return np.array([self._entity_idx_to_type.get(i, MoleculeType.LIGAND) for i in indices])
+        return np.array(
+            [self._entity_idx_to_type.get(i, MoleculeType.LIGAND) for i in indices]
+        )

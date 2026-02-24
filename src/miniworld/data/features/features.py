@@ -10,7 +10,7 @@ from team_gm import BaseBatch, typecheck
 class SequenceFeatures(BaseBatch):
     """Sequence features."""
 
-    residue_type: Int[torch.Tensor, "B L_res"]
+    token_type: Int[torch.Tensor, "B L_res"]
 
 
 @typecheck
@@ -21,8 +21,8 @@ class StructureFeatures(BaseBatch):
     atom_pos: Float[torch.Tensor, "B L_atom 3"]
     atom_pos_mask: Float[torch.Tensor, "B L_atom"]
     atom_mask: Bool[torch.Tensor, "B L_atom"]
-    residue_bond: Int[torch.Tensor, "B n_residue_bond 3"]
-    residue_mask: Bool[torch.Tensor, "B L_res"]
+    token_bond: Int[torch.Tensor, "B n_token_bond 2"]
+    token_mask: Bool[torch.Tensor, "B L_res"]
     atom_bond: Int[torch.Tensor, "B n_atom_bond 6"]
 
 
@@ -34,8 +34,8 @@ class MultiStateStructureFeatures(BaseBatch):
     atom_pos: Float[torch.Tensor, "B N_str L_atom 3"]
     atom_pos_mask: Float[torch.Tensor, "B N_str L_atom"]
     atom_mask: Bool[torch.Tensor, "B L_atom"]
-    residue_bond: Int[torch.Tensor, "B n_residue_bond 3"]
-    residue_mask: Bool[torch.Tensor, "B L_res"]
+    token_bond: Int[torch.Tensor, "B n_token_bond 3"]
+    token_mask: Bool[torch.Tensor, "B L_res"]
     atom_bond: Int[torch.Tensor, "B n_atom_bond 6"]
 
 
@@ -56,13 +56,12 @@ class ReferenceFeatures(BaseBatch):
 class SchemeFeatures(BaseBatch):
     """Scheme features."""
 
-    crop_indices: Int[torch.Tensor, "B L_res"]
-    residue_idx: Int[torch.Tensor, "B L_res"]
-    residue_idx_mono: Int[torch.Tensor, "B L_res"]
-    residue_asym_id: Int[torch.Tensor, "B L_res"]
-    residue_entity_id: Int[torch.Tensor, "B L_res"]
-    residue_sym_id: Int[torch.Tensor, "B L_res"]
-    atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"]
+    token_residue_idx: Int[torch.Tensor, "B L_token"]
+    token_idx: Int[torch.Tensor, "B L_token"]
+    token_asym_id: Int[torch.Tensor, "B L_token"]
+    token_entity_id: Int[torch.Tensor, "B L_token"]
+    token_sym_id: Int[torch.Tensor, "B L_token"]
+    atom_to_token_idx_map: Int[torch.Tensor, "B L_atom"]
     edge_index: Int[torch.Tensor, "B E"]
 
 
@@ -121,13 +120,13 @@ class Batch(BaseBatch):
         return self.structure.atom_pos.dtype
 
     @property
-    def residue_length(self) -> int:
-        """Return the residue length."""
+    def token_length(self) -> int:
+        """Return the token length."""
         if len(self.reference.pos.shape) == 2:
-            return self.scheme.residue_idx.shape[0]
+            return self.scheme.token_idx.shape[0]
         if len(self.reference.pos.shape) == 3:
-            return self.scheme.residue_idx.shape[1]
-        msg = "Cannot infer residue length from reference positions."
+            return self.scheme.token_idx.shape[1]
+        msg = "Cannot infer token length from reference positions."
         raise ValueError(msg)
 
     @property

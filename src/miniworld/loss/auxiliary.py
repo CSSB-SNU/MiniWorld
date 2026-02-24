@@ -138,7 +138,7 @@ def cal_atom_distogram_loss(
     logit_pred: Float[torch.Tensor, "* L L D"],
     atom_pos: Float[torch.Tensor, "* L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* L_atom"],
-    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
     min_distance: float = 2.0,
     max_distance: float = 22.0,
 ) -> Float[torch.Tensor, "*"]:
@@ -151,7 +151,7 @@ def cal_atom_distogram_loss(
         residue_dists, residue_pair_mask = get_shortest_distances(
             atom_pos=atom_pos,
             atom_pos_mask=atom_pos_mask,
-            atom_to_res_idx=atom_to_res_idx,
+            atom_to_token_idx_map=atom_to_token_idx_map,
             min_distance=min_distance,
             max_distance=max_distance,
         )  # (L_max, L_max), (L_max, L_max)
@@ -159,7 +159,7 @@ def cal_atom_distogram_loss(
         residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
             atom_pos=atom_pos,
             atom_pos_mask=atom_pos_mask,
-            atom_to_res_idx=atom_to_res_idx,
+            atom_to_token_idx_map=atom_to_token_idx_map,
             min_distance=min_distance,
             max_distance=max_distance,
         )  # (..., R_max, R_max), (..., R_max, R_max)
@@ -187,7 +187,7 @@ def cal_contact_map_focal_loss(
     logit_pred: Float[torch.Tensor, "* L L 2"],
     atom_pos: Float[torch.Tensor, "* N L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
-    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
     cutoff: float = 6.0,
     min_distance: float = 2.0,
     max_distance: float = 22.0,
@@ -201,7 +201,7 @@ def cal_contact_map_focal_loss(
             Shape: (*, L, L, 2)
         atom_pos: Atomic coordinates. Shape: (B, N, L_atom, 3)
         atom_pos_mask: Atom mask. True for valid atoms. Shape: (B, N, L_atom)
-        atom_to_res_idx: Residue index per atom position. Shape: (B, L_atom)
+        atom_to_token_idx_map: Residue index per atom position. Shape: (B, L_atom)
         cutoff: Distance cutoff (Å) for defining contacts.
         min_distance: Minimum allowed distance for distance computation.
         max_distance: Maximum allowed distance for distance computation.
@@ -221,7 +221,7 @@ def cal_contact_map_focal_loss(
     contact_target, residue_pair_mask = extract_contact_map(
         atom_pos=atom_pos,
         atom_pos_mask=atom_pos_mask,
-        atom_to_res_idx=atom_to_res_idx,
+        atom_to_token_idx_map=atom_to_token_idx_map,
         cutoff=cutoff,
         min_distance=min_distance,
         max_distance=max_distance,
@@ -277,7 +277,7 @@ def cal_contact_map_weighted_bce_loss(
     logit_pred: Float[torch.Tensor, "* L L 2"],
     atom_pos: Float[torch.Tensor, "* N L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
-    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
     cutoff: float = 6.0,
     min_distance: float = 2.0,
     max_distance: float = 22.0,
@@ -293,7 +293,7 @@ def cal_contact_map_weighted_bce_loss(
             Shape: (*, L, L, 2)
         atom_pos: Atomic coordinates. Shape: (*, N, L_atom, 3)
         atom_pos_mask: Atom mask. True for valid atoms. Shape: (*, N, L_atom)
-        atom_to_res_idx: Residue index per atom position. Shape: (*, L_atom)
+        atom_to_token_idx_map: Residue index per atom position. Shape: (*, L_atom)
         cutoff: Distance cutoff (Å) for defining contacts.
         min_distance: Minimum allowed distance for distance computation.
         max_distance: Maximum allowed distance for distance computation.
@@ -315,7 +315,7 @@ def cal_contact_map_weighted_bce_loss(
     contact_target, residue_pair_mask = extract_contact_map(
         atom_pos=atom_pos,
         atom_pos_mask=atom_pos_mask,
-        atom_to_res_idx=atom_to_res_idx,
+        atom_to_token_idx_map=atom_to_token_idx_map,
         cutoff=cutoff,
         min_distance=min_distance,
         max_distance=max_distance,
@@ -373,7 +373,7 @@ def cal_contact_map_weighted_bce_loss(
 def _extract_long_range_contact_targets_and_mask(
     atom_pos: Float[torch.Tensor, "* N L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
-    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
     cutoff: float,
     min_distance: float,
     max_distance: float,
@@ -386,7 +386,7 @@ def _extract_long_range_contact_targets_and_mask(
         residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
             atom_pos=atom_pos,
             atom_pos_mask=atom_pos_mask,
-            atom_to_res_idx=atom_to_res_idx,
+            atom_to_token_idx_map=atom_to_token_idx_map,
             min_distance=min_distance,
             max_distance=max_distance,
         )  # (*, L, L), (*, L, L)
@@ -394,7 +394,7 @@ def _extract_long_range_contact_targets_and_mask(
         residue_dists, residue_pair_mask = get_shortest_distances(
             atom_pos=atom_pos,
             atom_pos_mask=atom_pos_mask,
-            atom_to_res_idx=atom_to_res_idx,
+            atom_to_token_idx_map=atom_to_token_idx_map,
             min_distance=min_distance,
             max_distance=max_distance,
         )  # (L, L), (L, L)
@@ -422,7 +422,7 @@ def cal_long_range_precision(
     logit_pred: Float[torch.Tensor, "* L L 2"],
     atom_pos: Float[torch.Tensor, "* N L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
-    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
     cutoff: float = 6.0,
     min_distance: float = 2.0,
     max_distance: float = 22.0,
@@ -438,7 +438,7 @@ def cal_long_range_precision(
     contact_target, valid_pair_mask = _extract_long_range_contact_targets_and_mask(
         atom_pos=atom_pos,
         atom_pos_mask=atom_pos_mask,
-        atom_to_res_idx=atom_to_res_idx,
+        atom_to_token_idx_map=atom_to_token_idx_map,
         cutoff=cutoff,
         min_distance=min_distance,
         max_distance=max_distance,
@@ -461,7 +461,7 @@ def cal_long_range_recall(
     logit_pred: Float[torch.Tensor, "* L L 2"],
     atom_pos: Float[torch.Tensor, "* N L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
-    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
     cutoff: float = 6.0,
     min_distance: float = 2.0,
     max_distance: float = 22.0,
@@ -477,7 +477,7 @@ def cal_long_range_recall(
     contact_target, valid_pair_mask = _extract_long_range_contact_targets_and_mask(
         atom_pos=atom_pos,
         atom_pos_mask=atom_pos_mask,
-        atom_to_res_idx=atom_to_res_idx,
+        atom_to_token_idx_map=atom_to_token_idx_map,
         cutoff=cutoff,
         min_distance=min_distance,
         max_distance=max_distance,
@@ -500,7 +500,7 @@ def cal_long_range_f1(
     logit_pred: Float[torch.Tensor, "* L L 2"],
     atom_pos: Float[torch.Tensor, "* N L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
-    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
     cutoff: float = 6.0,
     min_distance: float = 2.0,
     max_distance: float = 22.0,
@@ -511,7 +511,7 @@ def cal_long_range_f1(
         logit_pred,
         atom_pos,
         atom_pos_mask,
-        atom_to_res_idx,
+        atom_to_token_idx_map,
         cutoff,
         min_distance,
         max_distance,
@@ -521,7 +521,7 @@ def cal_long_range_f1(
         logit_pred,
         atom_pos,
         atom_pos_mask,
-        atom_to_res_idx,
+        atom_to_token_idx_map,
         cutoff,
         min_distance,
         max_distance,
@@ -537,7 +537,7 @@ def cal_long_range_auroc(
     logit_pred: Float[torch.Tensor, "* L L 2"],
     atom_pos: Float[torch.Tensor, "* N L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L_atom"],
-    atom_to_res_idx: Int[torch.Tensor, "* L_atom"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
     cutoff: float = 6.0,
     min_distance: float = 2.0,
     max_distance: float = 22.0,
@@ -553,7 +553,7 @@ def cal_long_range_auroc(
     contact_target, valid_pair_mask = _extract_long_range_contact_targets_and_mask(
         atom_pos=atom_pos,
         atom_pos_mask=atom_pos_mask,
-        atom_to_res_idx=atom_to_res_idx,
+        atom_to_token_idx_map=atom_to_token_idx_map,
         cutoff=cutoff,
         min_distance=min_distance,
         max_distance=max_distance,

@@ -126,6 +126,51 @@ def train(  # noqa: PLR0912, PLR0915
     fabric = Fabric()
     fabric.launch()
 
+    if seed is not None:
+        set_seed(seed)
+        client.logger.info("Set random seed: %d", seed)
+
+    train_data_config = BioMolData.BioMolConfig(
+        crop_config=config.data.crop,
+        msa_config=config.data.msa,
+        DB_config=config.data.train_db,
+        edge_weight_config=config.data.edge_weight,
+    )
+    valid_data_config = BioMolData.BioMolConfig(
+        crop_config=config.data.crop,
+        msa_config=config.data.msa,
+        DB_config=config.data.valid_db,
+        edge_weight_config=config.data.edge_weight,
+    )
+
+    prefetch_factor = (
+        None
+        if config.experiment.prefetch_factor == 0
+        else int(config.experiment.prefetch_factor)
+    )
+
+    # test run to check if dataloader works
+    BioMolData(train_data_config)[0]
+    client.logger.info("Data loading works correctly. Start training...")
+    train_loader = BioMolData(train_data_config).create_ddp_dataloader(
+        world_size=fabric.world_size,
+        rank=fabric.local_rank,
+        drop_last=True,
+        use_adaptive_sampler=True,
+        batch_size=config.experiment.num_batch,
+        num_workers=config.experiment.num_workers,
+        prefetch_factor=prefetch_factor,
+        shuffle=False,
+    )
+    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
+        world_size=fabric.world_size,
+        rank=fabric.local_rank,
+        drop_last=False,
+        use_adaptive_sampler=False,
+        batch_size=config.experiment.num_batch,  # or 1
+        num_workers=0,
+    )
+
     optimizer = torch.optim.AdamW(
         client.model.parameters(),
         config.experiment.max_lr,
@@ -160,48 +205,6 @@ def train(  # noqa: PLR0912, PLR0915
         wandb.config.update(config.model_dump())
     msg = f"Config:\n{json.dumps(config.model_dump(), indent=4, default=str)}"
     client.logger.info(msg)
-
-    if seed is not None:
-        set_seed(seed)
-        client.logger.info("Set random seed: %d", seed)
-
-    train_data_config = BioMolData.BioMolConfig(
-        crop_config=config.data.crop,
-        msa_config=config.data.msa,
-        DB_config=config.data.train_db,
-        edge_weight_config=config.data.edge_weight,
-    )
-    valid_data_config = BioMolData.BioMolConfig(
-        crop_config=config.data.crop,
-        msa_config=config.data.msa,
-        DB_config=config.data.valid_db,
-        edge_weight_config=config.data.edge_weight,
-    )
-
-    prefetch_factor = (
-        None
-        if config.experiment.prefetch_factor == 0
-        else int(config.experiment.prefetch_factor)
-    )
-
-    train_loader = BioMolData(train_data_config).create_ddp_dataloader(
-        world_size=fabric.world_size,
-        rank=fabric.local_rank,
-        drop_last=True,
-        use_adaptive_sampler=True,
-        batch_size=config.experiment.num_batch,
-        num_workers=config.experiment.num_workers,
-        prefetch_factor=prefetch_factor,
-        shuffle=False,
-    )
-    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
-        world_size=fabric.world_size,
-        rank=fabric.local_rank,
-        drop_last=False,
-        use_adaptive_sampler=False,
-        batch_size=config.experiment.num_batch,  # or 1
-        num_workers=0,
-    )
 
     client.logger.info("-" * 70)
     client.logger.info("")

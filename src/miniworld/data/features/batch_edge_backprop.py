@@ -18,14 +18,13 @@ from .features import (
 class SchemeFeatures(BaseBatch):
     """Scheme features."""
 
-    residue_idx: Int[torch.Tensor, "B L_res"]
-    residue_idx_mono: Int[torch.Tensor, "B L_res"]
-    residue_asym_id: Int[torch.Tensor, "B L_res"]
-    residue_entity_id: Int[torch.Tensor, "B L_res"]
-    residue_sym_id: Int[torch.Tensor, "B L_res"]
-    atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"]
+    token_residue_idx: Int[torch.Tensor, "B L_token"]
+    token_idx: Int[torch.Tensor, "B L_token"]
+    token_asym_id: Int[torch.Tensor, "B L_token"]
+    token_entity_id: Int[torch.Tensor, "B L_token"]
+    token_sym_id: Int[torch.Tensor, "B L_token"]
+    atom_to_token_idx_map: Int[torch.Tensor, "B L_atom"]
     edge_index: Int[torch.Tensor, "B E"]
-
 
 
 @dataclass(kw_only=True)
@@ -62,13 +61,13 @@ class Batch(BaseBatch):
         return self.structure.atom_pos.dtype
 
     @property
-    def residue_length(self) -> int:
-        """Return the residue length."""
+    def token_length(self) -> int:
+        """Return the token length."""
         if len(self.reference.pos.shape) == 2:
-            return self.scheme.residue_idx.shape[0]
+            return self.scheme.token_idx.shape[0]
         if len(self.reference.pos.shape) == 3:
-            return self.scheme.residue_idx.shape[1]
-        msg = "Cannot infer residue length from reference positions."
+            return self.scheme.token_idx.shape[1]
+        msg = "Cannot infer token length from reference positions."
         raise ValueError(msg)
 
     @property

@@ -7,13 +7,20 @@ import click
 import torch
 from lightning import Fabric
 from omegaconf import OmegaConf
-from team_gm.utils.script_utils import MetricsAggregator, set_seed
+from pydantic import BaseModel
+from team_gm.utils.script_utils import MetricsAggregator
 
 import wandb
 from miniworld.data.dataloader.dataloader_edge_backprop import (
     BioMolData,
+    BioMolDBConfig,
+    CropConfig,
+    EdgeWeightConfig,
+    MSAConfig,
 )
+from miniworld.data.to_cif import batch_to_cif
 from miniworld.models.miniworld import MiniWorldClient
+from miniworld.utils import get_step_decay_scheduler_with_warmup, set_seed
 
 # torch.set_float32_matmul_precision("high")  # noqa: ERA001
 # anomaly detection
@@ -37,34 +44,12 @@ def setup_logger(client: MiniWorldClient) -> None:
 
     now = datetime.datetime.now(datetime.timezone.utc)
     file_handler = logging.FileHandler(
-        f"logs/miniworld/miniworld_{now:%Y%m%d_%H%M%S}.log"
+        f"logs/miniworld/miniworld_{now:%Y%m%d_%H%M%S}.log",
     )
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)
 
 
-def get_step_decay_scheduler_with_warmup(
-    optimizer: torch.optim.Optimizer,
-    warmup_steps: int = 1e3,
-    decay_steps: int = 5e4,
-    decay_factor: float = 0.95,
-) -> torch.optim.lr_scheduler.LambdaLR:
-    """
-    Return a LambdaLR scheduler that
-    1) linearly warms up from 0 → 1 over the first `warmup_steps`
-    2) thereafter, multiplies the lr by `decay_factor` every `decay_steps`
-    The scheduler multiplies the optimizer's base_lr by the returned factor.
-    """
-
-    def lr_lambda(step: int) -> float:
-        if step < warmup_steps:
-            # warmup: 0 -> 1
-            return step / float(warmup_steps)
-        # step decay: factor ** floor((step - warmup_steps) / decay_steps)
-        num_decays = (step - warmup_steps) // decay_steps
-        return decay_factor**num_decays
-
-    return torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
 
 @click.group()
@@ -110,8 +95,6 @@ def train(  # noqa: PLR0912, PLR0915
         cfg = OmegaConf.load(config)
         cfg = MiniWorldClient.Config.model_validate(cfg)
         client = MiniWorldClient(cfg)
-    elif not config and resume_from_ckpt:
-        client = MiniWorldClient.from_checkpoint(resume_from_ckpt)
     else:
         msg = (
             "You must provide either a config file or a checkpoint file, but not both."
@@ -141,8 +124,10 @@ def train(  # noqa: PLR0912, PLR0915
     )
     setup_logger(client)
 
+
     if resume_from_ckpt is not None:
-        client.load_optimizer_state(resume_from_ckpt)
+        state_dict = torch.load(resume_from_ckpt, map_location="cpu")
+        client.load_state_dict(state_dict)
         client.logger.info(
             "Load pretrain weight: %s (%d epoch)",
             resume_from_ckpt.name,
@@ -160,16 +145,16 @@ def train(  # noqa: PLR0912, PLR0915
         client.logger.info("Set random seed: %d", seed)
 
     train_data_config = BioMolData.BioMolConfig(
-        crop_config=client.config.data.crop.model_dump(),
-        msa_config=client.config.data.msa.model_dump(),
-        DB_config=client.config.data.train_db.model_dump(),
-        edge_weight_config=client.config.data.edge_weight.model_dump(),
+        crop_config=client.config.data.crop,
+        msa_config=client.config.data.msa,
+        DB_config=client.config.data.train_db,
+        edge_weight_config=client.config.data.edge_weight,
     )
     valid_data_config = BioMolData.BioMolConfig(
-        crop_config=client.config.data.crop.model_dump(),
-        msa_config=client.config.data.msa.model_dump(),
-        DB_config=client.config.data.valid_db.model_dump(),
-        edge_weight_config=client.config.data.edge_weight.model_dump(),
+        crop_config=client.config.data.crop,
+        msa_config=client.config.data.msa,
+        DB_config=client.config.data.valid_db,
+        edge_weight_config=client.config.data.edge_weight,
     )
 
     prefetch_factor = (
@@ -214,7 +199,7 @@ def train(  # noqa: PLR0912, PLR0915
 
     for epoch in range(client.epoch, client.config.experiment.num_epoch):
         client.logger.info("Training Epoch %d", client.epoch)
-        train_loader.sampler.set_epoch(epoch)
+        train_loader.sampler.set_epoch(epoch) # pyright: ignore[reportAttributeAccessIssue]
         for n_item, result in enumerate(client.training_epoch(train_loader)):
             train_aggregator.log_step(result)
             if n_item + 1 >= train_num_item:
@@ -229,15 +214,15 @@ def train(  # noqa: PLR0912, PLR0915
             if train_loss < min_train_loss:
                 min_train_loss = train_loss
                 checkpoint_path = ckpt_dir / f"miniworld_{comment}_best.pt"
-                # client.save_checkpoint(checkpoint_path)
-                # client.logger.info(
-                #     "Save best checkpoint: %s (train loss: %.4g)",
-                #     checkpoint_path.name,
-                #     train_loss,
-                # )
+                client.save_checkpoint(checkpoint_path)
+                client.logger.info(
+                    "Save best checkpoint: %s (train loss: %.4g)",
+                    checkpoint_path.name,
+                    train_loss,
+                )
 
         if (client.epoch - 1) % client.config.experiment.eval_freq == 0:
-            valid_loader.sampler.set_epoch(epoch)
+            valid_loader.sampler.set_epoch(epoch) # pyright: ignore[reportAttributeAccessIssue]
             client.logger.info("Validation Epoch %d", client.epoch)
             for n_item, result in enumerate(client.validation_epoch(valid_loader)):
                 valid_aggregator.log_step(result, ignore_step=True)
@@ -253,49 +238,63 @@ def train(  # noqa: PLR0912, PLR0915
 
 @cli.command()
 @click.option(
+    "--config",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="config file for validation data",
+)
+@click.option(
     "--ckpt",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     help="checkpoint file",
-)
-@click.option(
-    "-w",
-    is_flag=True,
-    help="Use wandb for logging",
 )
 @click.option(
     "--seed",
     type=int,
     help="random seed",
 )
-def sample(
+def validate(
+    config: Path,
     ckpt: Path | None,
-    w: bool,
     seed: int | None,
 ):
+    class ValidateDBConfig(BaseModel):
+        """Configuration for validation data loading."""
+
+        valid_db: BioMolDBConfig
+        crop: CropConfig
+        msa: MSAConfig
+        edge_weight: EdgeWeightConfig
+
+    class ValidateExperimentConfig(BaseModel):
+        """Configuration for validation experiments."""
+
+        num_batch: int = 1
+        compile: bool = False
+        valid_item: int = 640
+
+        # Validation arguments
+        timesteps: int = 100
+        num_workers: int = 4
+        prefetch_factor: int = 8
+        use_ema: bool = True
+
+    class ValidateConfig(BaseModel):
+        """Overall configuration for validation."""
+
+        data: ValidateDBConfig
+        experiment: ValidateExperimentConfig
+
+    cfg = OmegaConf.load(config)
+    cfg = ValidateConfig.model_validate(cfg)
     if not ckpt:
         msg = "You must provide a checkpoint file."
         raise ValueError(msg)
     client = MiniWorldClient.from_checkpoint(ckpt)
+    client.model.to("cuda")
+    if cfg.experiment.compile:
+        client.model.compile()
 
-    fabric = Fabric()
-    fabric.launch()
-
-    client.setup(
-        fabric=fabric,
-        optimizer=torch.optim.AdamW(
-            client.model.parameters(),
-            client.config.experiment.max_lr,
-        ),
-        gradient_accumulation_steps=client.config.experiment.grad_accum_steps,
-        gradient_clip_norm=client.config.experiment.grad_clip_max_norm,
-    )
     setup_logger(client)
-
-    client.logger.info(
-        "Load pretrain weight: %s (%d epoch)",
-        ckpt.name,
-        client.epoch,
-    )
 
     msg = f"Config:\n{json.dumps(client.config.model_dump(), indent=4, default=str)}"
     client.logger.info(msg)
@@ -305,47 +304,68 @@ def sample(
         client.logger.info("Set random seed: %d", seed)
 
     valid_data_config = BioMolData.BioMolConfig(
-        crop_config=client.config.data.crop.model_dump(),
-        msa_config=client.config.data.msa.model_dump(),
-        DB_config=client.config.data.valid_db.model_dump(),
-        edge_weight_config=client.config.data.edge_weight.model_dump(),
+        crop_config=cfg.data.crop,
+        msa_config=cfg.data.msa,
+        DB_config=cfg.data.valid_db,
+        edge_weight_config=cfg.data.edge_weight,
     )
 
     prefetch_factor = (
         None
-        if client.config.experiment.prefetch_factor == 0
-        else int(client.config.experiment.prefetch_factor)
-    )
-    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
-        world_size=fabric.world_size,
-        rank=fabric.local_rank,
-        drop_last=False,
-        batch_size=client.config.experiment.num_batch,  # or 1
-        num_workers=client.config.experiment.num_workers,
-        prefetch_factor=prefetch_factor,
+        if cfg.experiment.prefetch_factor == 0
+        else int(cfg.experiment.prefetch_factor)
     )
 
-    client.logger.info("-" * 70)
-    client.logger.info("")
-    client.logger.info("Start training".center(70))
-    client.logger.info("")
-    client.logger.info("-" * 70)
-    valid_aggregator = MetricsAggregator(client, "valid", use_wandb=w)
+    fabric = Fabric()
+    fabric.launch()
 
     world_size = fabric.world_size
-    valid_num_item = client.config.experiment.valid_item // world_size
+    local_rank = fabric.local_rank
 
-    for epoch in range(client.epoch, client.config.experiment.num_epoch):
-        client.logger.info("Training Epoch %d", client.epoch)
-        valid_loader.sampler.set_epoch(epoch)
-        client.logger.info("Validation Epoch %d", client.epoch)
-        for n_item, result in enumerate(client.validation_epoch(valid_loader)):
-            valid_aggregator.log_step(result, ignore_step=True)
-            if n_item + 1 >= valid_num_item:
-                client.call_callbacks("on_validation_epoch_end")
-                break
+    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
+        world_size=world_size,
+        rank=local_rank,
+        drop_last=False,
+        batch_size=cfg.experiment.num_batch,  # or 1
+        num_workers=cfg.experiment.num_workers,
+        prefetch_factor=prefetch_factor,
+    )
+    client.logger.info("-" * 70)
+    client.logger.info("")
+    client.logger.info("Start Validation".center(70))
+    client.logger.info("")
+    client.logger.info("-" * 70)
 
-        valid_aggregator.log_epoch()
+    valid_num_item = cfg.experiment.valid_item // world_size
+
+    # >9000 : 147
+    # >5000 : 209
+    # >3000 : 463
+    # >2000 : 865
+    # >1000 : 1573
+    # total num: 4182
+
+
+    for ii, _batch in enumerate(valid_loader):
+        batch = fabric.to_device(_batch)
+        click.echo(f"residue length : {batch.scheme.residue_idx.shape[1]} \
+                   atom length : {batch.structure.atom_pos.shape[1]}")
+
+        batch = batch.duplicate(client.config.experiment.eval_sample_num)
+        output = client.inference(batch, timesteps=client.config.experiment.eval_timesteps)
+
+        result_dict = client.test_inference_quality(
+            batch,
+            output,
+        )
+        batch_to_cif(batch, output.atom_pos_pred, Path(f"outputs/miniworld_v1.0.0/{batch.name[0]}_pred.cif"))
+        click.echo(
+            f"result for {batch.name[0]}: " +
+            ", ".join([f"{k}: {v:.4g}" for k, v in result_dict.items()]),
+        )
+        if ii >= valid_num_item:
+            client.call_callbacks("on_validation_epoch_end")
+            break
 
 
 if __name__ == "__main__":

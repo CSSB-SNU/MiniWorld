@@ -8,7 +8,7 @@ from torch import nn
 from torch.utils.checkpoint import checkpoint
 
 from miniworld.configs import SharedConfig
-from miniworld.data.features.batch_edge_backprop import (
+from miniworld.data.features.features import (
     MSAFeatures,
     ReferenceFeatures,
     SchemeFeatures,
@@ -135,9 +135,9 @@ class InputAtomAttentionEncoder(nn.Module):
     @typecheck
     def _scatter_atom_to_token(
         self,
-        residue_idx: Int[torch.Tensor, "B L_token"],
+        token_idx: Int[torch.Tensor, "B L_token"],
         atom_mask: Bool[torch.Tensor, "B L_atom"],
-        atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"],
+        atom_to_token_idx_map: Int[torch.Tensor, "B L_atom"],
         atom_single_rep: Float[torch.Tensor, "B L_atom d_single_atom"],
     ) -> Float[torch.Tensor, "B L_token d_single_token"]:
         """Scatter atom single representation to token single representation."""
@@ -145,11 +145,11 @@ class InputAtomAttentionEncoder(nn.Module):
         to_add_single_token_rep = self.atom_single_rep_to_token_single(atom_single_rep)
 
         # Convert back to token-atom layout and aggregate to tokens
-        token_length = int(residue_idx.shape[1])
+        token_length = int(token_idx.shape[1])
 
         # A[b, a, t] = 1 if atom a maps to token t else 0
         mapping = torch.nn.functional.one_hot(
-            atom_to_residue_idx_map,
+            atom_to_token_idx_map,
             num_classes=token_length,
         ).to(to_add_single_token_rep.dtype)  # (B, L_atom, L_token)
 
@@ -193,17 +193,17 @@ class InputAtomAttentionEncoder(nn.Module):
         if self.use_checkpoint:
             token_single_rep = checkpoint(
                 self._scatter_atom_to_token,
-                scheme.residue_idx,
+                scheme.token_idx,
                 structure.atom_mask,
-                scheme.atom_to_residue_idx_map,
+                scheme.atom_to_token_idx_map,
                 atom_single_rep,
                 use_reentrant=False,
             )
         else:
             token_single_rep = self._scatter_atom_to_token(
-                scheme.residue_idx,
+                scheme.token_idx,
                 structure.atom_mask,
-                scheme.atom_to_residue_idx_map,
+                scheme.atom_to_token_idx_map,
                 atom_single_rep,
             )
 
@@ -264,28 +264,24 @@ class InputFeatureEmbedder(nn.Module):
         structure: StructureFeatures,
     ) -> Float[torch.Tensor, "B L_token L_token 2"]:
         #  -> tuple[torch.Tensor, torch.Tensor]:
-        batch_size, token_length = structure.residue_mask.shape[:2]
-        device = structure.residue_bond.device
-        residue_bond = structure.residue_bond.long()  # (batch_size, n_residue_bond, 3)
-        token_bond = torch.zeros(
+        batch_size, token_length = structure.token_mask.shape[:2]
+        device = structure.token_bond.device
+        token_bond = structure.token_bond.long()  # (batch_size, n_token_bond, 3)
+        token_bond_i, token_bond_j = (
+            token_bond[:, :, 0],
+            token_bond[:, :, 1],
+        )
+        token_bond_feature = torch.zeros(
             (batch_size, token_length, token_length),
             device=device,
         )
-        residue_bond_i, residue_bond_j, residue_bond_type = (
-            residue_bond[:, :, 0],
-            residue_bond[:, :, 1],
-            residue_bond[:, :, 2],
-        )
+        batch_idx = torch.arange(batch_size, device=device)[:, None]
 
-        # use only canonical bond where residue_bond_type == 0
-        batch_idx, ij = torch.where(residue_bond_type == 0)
-        residue_bond_i = residue_bond_i[batch_idx, ij]
-        residue_bond_j = residue_bond_j[batch_idx, ij]
-        token_bond[batch_idx, residue_bond_i, residue_bond_j] = 1
-        token_bond[batch_idx, residue_bond_j, residue_bond_i] = 1
+        token_bond_feature[batch_idx, token_bond_i, token_bond_j] = 1
+        token_bond_feature[batch_idx, token_bond_j, token_bond_i] = 1
 
         return torch.nn.functional.one_hot(
-            token_bond.long(),
+            token_bond_feature.long(),
             num_classes=2,
         )
 
@@ -304,15 +300,15 @@ class InputFeatureEmbedder(nn.Module):
         """Forward pass."""
         token_single_input = self.atom_attention_encoder(reference, scheme, structure)
 
-        residue_type = torch.nn.functional.one_hot(
-            sequence.residue_type.long(),
+        token_type = torch.nn.functional.one_hot(
+            sequence.token_type.long(),
             num_classes=self.num_res_class,
         ).to(token_single_input.device, dtype=token_single_input.dtype)
 
         token_single_input = torch.concat(
             [
                 token_single_input,
-                residue_type,
+                token_type,
                 msa.profile.to(dtype=token_single_input.dtype),
                 msa.deletion_mean.unsqueeze(-1).to(dtype=token_single_input.dtype),
             ],
@@ -328,11 +324,13 @@ class InputFeatureEmbedder(nn.Module):
         )
 
         token_pair_init = token_pair_init + self.relative_position_embedder(
-            asym_id=scheme.residue_asym_id,
-            residue_idx=scheme.residue_idx,
-            entity_id=scheme.residue_entity_id,
-            sym_id=scheme.residue_sym_id,
+            asym_id=scheme.token_asym_id,
+            token_residue_idx=scheme.token_residue_idx,
+            token_idx=scheme.token_idx,
+            entity_id=scheme.token_entity_id,
+            sym_id=scheme.token_sym_id,
         )
+
         token_pair_init = token_pair_init + self.add_token_bond(
             self._gen_bond_feature(structure).to(dtype=token_pair_init.dtype),
         )
