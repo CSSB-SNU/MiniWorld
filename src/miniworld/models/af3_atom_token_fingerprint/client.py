@@ -13,7 +13,7 @@ from team_gm.utils.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 from team_gm.utils.precision_manager import precision_manager
 from torch.utils.data import DataLoader
 
-from miniworld.data.dataloader.dataloader_edge_backprop import (
+from miniworld.data.dataloader.dataloader_atom_token import (
     AdaptiveEdgeSampler,
     BioMolDBConfig,
     CropConfig,
@@ -27,15 +27,15 @@ from miniworld.loss import metrics  # , losses
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
 )
-from miniworld.models.af3_like.model import (
-    AF3LikeInferenceOutput,
-    AF3LikeModel,
-    AF3LikeModelWrapper,
+from miniworld.models.af3_atom_token_fingerprint.model import (
+    InferenceOutput,
+    Model,
+    ModelWrapper,
 )
 
 
-class AF3LikeClient(BaseClient):
-    """Client for training and inference of AF3Like model."""
+class Client(BaseClient):
+    """Client for training and inference of model."""
 
     class DataConfig(BaseModel):
         """Configuration for data loading."""
@@ -56,7 +56,7 @@ class AF3LikeClient(BaseClient):
         """Configuration for experiments."""
 
         comment: str = "default"
-        name: str = "AF3Like-PSK-2"
+        name: str = "af3_atom_token_fingerprint"
         overfitting: bool = False
         overfitting_dir: str | None = None  # Directory for overfitting mode
         train_item: int = 25600
@@ -96,19 +96,19 @@ class AF3LikeClient(BaseClient):
         method: Literal["AF3", "EDM"] = "AF3"
 
     class Config(BaseModel):
-        """Configuration for the AF3Like client."""
+        """Configuration for the client."""
 
-        data: "AF3LikeClient.DataConfig"
-        model: AF3LikeModel.Config
-        experiment: "AF3LikeClient.ExperimentsConfig"
-        diffuser: "AF3LikeClient.DiffuserConfig"
-        loss: "AF3LikeClient.LossConfig"
+        data: "Client.DataConfig"
+        model: Model.Config
+        experiment: "Client.ExperimentsConfig"
+        diffuser: "Client.DiffuserConfig"
+        loss: "Client.LossConfig"
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self.config = config
         self.set_seed(config.experiment.seed)
-        self.register_model(AF3LikeModel(config.model))
+        self.register_model(Model(config.model))
 
         if config.experiment.use_ema:
             self.add_callback(ModelEMA(config.experiment.ema_decay))
@@ -148,6 +148,10 @@ class AF3LikeClient(BaseClient):
         x_mask: Bool[torch.Tensor, "... L"] | None = None,
     ) -> tuple[torch.Tensor, dict]:
         """Compute the loss given a noisy batch."""
+        token_length = batch.scheme.token_idx.shape[1]
+        print(
+            f"Token length: {token_length}, Atom length: {batch.structure.atom_pos.shape[1]}"
+        )
         atom_pos_update, distogram_logit = self.model.forward(
             msa=batch.msa,
             reference=batch.reference,
@@ -265,7 +269,7 @@ class AF3LikeClient(BaseClient):
     def test_inference_quality(
         self,
         batch: Batch,
-        output: AF3LikeInferenceOutput,
+        output: InferenceOutput,
     ) -> dict[str, float]:
         """Test the inference quality of the model on a batch."""
         batch = batch.to(device=self.device)
@@ -292,6 +296,10 @@ class AF3LikeClient(BaseClient):
             batch.structure.atom_pos[0],
             batch.structure.atom_mask[0],
         )
+        category_lddt = metrics.category_lddt(
+            batch,
+            output.atom_pos_pred[0],
+        )
         min_rmsd = min(min_rmsd, rmsd)
 
         return {
@@ -305,11 +313,11 @@ class AF3LikeClient(BaseClient):
         self,
         batch: Batch,
         timesteps: int = 100,
-    ) -> AF3LikeInferenceOutput:
+    ) -> InferenceOutput:
         """Inference using the diffusion solver."""
         raw_model = getattr(self.model, "module", self.model)
-        raw_model = cast("AF3LikeModel", raw_model)
-        model_wrapper = AF3LikeModelWrapper(
+        raw_model = cast("Model", raw_model)
+        model_wrapper = ModelWrapper(
             raw_model,
         )
         batch = batch.to(device=self.device)
@@ -331,7 +339,7 @@ class AF3LikeClient(BaseClient):
         inter_traj = [x.detach().cpu().numpy() for x in inter_traj]
         model_traj = [x.detach().cpu().numpy() for x in model_traj]
         distogram_logit = model_wrapper.condition["distogram_logit"]
-        return AF3LikeInferenceOutput(
+        return InferenceOutput(
             atom_pos_pred=atom_pos_pred,
             model_traj=np.stack(model_traj, axis=1),
             inter_traj=np.stack(inter_traj, axis=1),

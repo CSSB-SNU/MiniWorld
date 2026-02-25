@@ -2,7 +2,6 @@ logs/
 checkpoints/
 *.pt
 *.cif
-pixi.lock
 *.mmcif
 output/
 outputs/
@@ -14,3 +13,4 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.pkl
+.pixi/

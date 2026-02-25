@@ -251,12 +251,14 @@ class AdaptiveEdgeSampler(DistributedSampler):
             yield int(torch.searchsorted(cdf, r).item())
 
 
-def build_atom_token_maps(
-    canonical_residue_mask: np.ndarray,
-    atom_to_residue_idx_map: np.ndarray,
-) -> tuple[np.ndarray, np.ndarray]:
+def tokenize(cifmol: CIFMolAttached) -> tuple[np.ndarray, np.ndarray]:
     """Build mapping from atom indices to token indices and from token indices to residue indices."""
     # tokens are an intermediate grouping between atoms and residues
+    atom_to_residue_idx_map = cifmol.index_table.atom_to_res
+    canonical_residue_mask = np.isin(
+        cifmol.residues.chem_comp_id.value,
+        np.array(list(CANONICAL_CHEMCOMPS)),
+    )
     canonical = canonical_residue_mask.astype(bool)
     atom_res = atom_to_residue_idx_map
     n_res = canonical.shape[0]
@@ -326,42 +328,109 @@ def atom_bonds_to_token_bonds(
 
 
 def make_batch(  # noqa: PLR0915
+    cif_id: str,
     cifmol: CIFMolAttached,
     msa: MSAFeatures,
     edge_index: list[int],
-) -> tuple[
-    SequenceFeatures,
-    StructureFeatures,
-    ReferenceFeatures,
-    SchemeFeatures,
-    ChainFeatures,
-]:
+) -> Batch:
     """Convert CIFMol and MSA to batch features."""
-    # Now convert biomol to batch
-    atom_bond_type = cifmol.atoms.bond_type.value  # (n_atom_bond, )
-    atom_bond_stereo = cifmol.atoms.bond_stereo.value  # (n_atom_bond, )
-    atom_bond_aromatic = cifmol.atoms.bond_aromatic.value  # (n_atom_bond, )
-    atom_bond = np.stack(
-        [atom_bond_type, atom_bond_stereo, atom_bond_aromatic],
-        axis=1,
-    )  # (n_atom_bond, 3)
-    atom_bond = np.zeros_like(atom_bond, dtype=np.int64)  # placeholder
-
-    # idx map
     atom_to_residue_idx_map = cifmol.index_table.atom_to_res
-
     canonical_residue_mask = np.isin(
         cifmol.residues.chem_comp_id.value,
         np.array(list(CANONICAL_CHEMCOMPS)),
     )
 
-    atom_to_token_idx_map, token_residue_idx = build_atom_token_maps(
-        canonical_residue_mask,
-        atom_to_residue_idx_map,
-    )
+    atom_to_token_idx_map, token_residue_idx = tokenize(
+        cifmol,
+    )  # atom level tokenization
 
     cropped_residue_len = len(cifmol.residues)
     cropped_token_len = token_residue_idx.shape[0]
+
+    """Scheme features"""
+    chain_num = cifmol.chains.chain_id.shape[0]
+    chain_asym_id = np.arange(chain_num).astype(np.int64)
+    chain_entity_id = cifmol.chains.entity_id.value
+    same_entity = chain_entity_id[:, None] == chain_entity_id[None, :]
+    chain_sym_id = np.triu(same_entity, k=0).sum(axis=0) - 1
+
+    token_idx = np.arange(cropped_token_len, dtype=np.int64)
+    res_to_chain = cifmol.index_table.res_to_chain
+    token_to_chain = np.take(res_to_chain, token_residue_idx)
+    token_asym_id = np.take(chain_asym_id, token_to_chain)
+    token_entity_id = np.take(chain_entity_id, token_to_chain)
+    token_sym_id = np.take(chain_sym_id, token_to_chain)
+
+    scheme = SchemeFeatures.from_sample(
+        token_residue_idx=torch.from_numpy(token_residue_idx.astype(np.int64)),
+        token_idx=torch.from_numpy(token_idx.astype(np.int64)),
+        token_asym_id=torch.from_numpy(token_asym_id.astype(np.int64)),
+        token_entity_id=torch.from_numpy(token_entity_id.astype(np.int64)),
+        token_sym_id=torch.from_numpy(token_sym_id.astype(np.int64)),
+        atom_to_token_idx_map=torch.from_numpy(
+            atom_to_token_idx_map.astype(np.int64),
+        ),
+        edge_index=torch.from_numpy(np.array(edge_index, dtype=np.int64)),
+    )
+
+    """MSA & Sequence features"""
+    msa_token = MSAFeatures.from_sample(
+        aligned_sequences=msa.aligned_sequences[0, :, :, token_residue_idx],
+        has_deletion=msa.has_deletion[0, :, :, token_residue_idx],
+        deletion_value=msa.deletion_value[0, :, :, token_residue_idx],
+        profile=msa.profile[0, token_residue_idx, :],
+        deletion_mean=msa.deletion_mean[0, token_residue_idx],
+    )  # msa token mapping
+    token_type = msa_token.aligned_sequences[0, 0, 0]
+    sequence = SequenceFeatures.from_sample(
+        token_type=token_type,
+    )
+
+    """Reference features"""
+    ref_pos = cifmol.atoms.model_xyz.value
+    ref_pos = np.array(ref_pos, dtype=object)
+
+    mask = (ref_pos == "?") | (ref_pos == ".")
+    ref_pos[mask] = 0.0
+    ref_pos = ref_pos.astype(np.float32, copy=False)
+    ref_mask = ~np.isnan(ref_pos).any(axis=1)
+    ref_element = cifmol.atoms.element.value
+    ref_charge = cifmol.atoms.charge.value
+    ref_charge = np.array(
+        [float(c) if c not in {"?", "."} else 0.0 for c in ref_charge],
+    )
+    ref_space_uid = cifmol.index_table.atom_to_res
+
+    N_res = ref_space_uid.max() + 1
+    res_to_atoms = [np.where(ref_space_uid == i)[0] for i in range(N_res)]
+
+    Rs, Ts = SE3_oper(cropped_residue_len)
+    random_ref_pos = []
+    for ii, atom_indices in enumerate(res_to_atoms):
+        R, T = Rs[ii], Ts[ii]
+        _ref_pos = ref_pos[atom_indices]
+        _ref_pos = (_ref_pos - _ref_pos.mean(axis=0)) @ R + T  # random SE(3) operation
+        random_ref_pos.append(_ref_pos)
+    ref_pos = np.vstack(random_ref_pos)
+    ref_element = AtomMapping().atom_to_index(ref_element)  # convert str to int
+    reference = ReferenceFeatures.from_sample(
+        pos=torch.from_numpy(ref_pos.astype(np.float32)),
+        mask=torch.from_numpy(ref_mask.astype(np.bool)),
+        element=torch.from_numpy(ref_element.astype(np.int64)),
+        charge=torch.from_numpy(ref_charge.astype(np.float32)),
+        space_uid=torch.from_numpy(ref_space_uid.astype(np.int64)),
+    )
+
+    """Structure features"""
+    atom_pos = cifmol.atoms.xyz.value
+    atom_pos_mask = np.isfinite(atom_pos).all(axis=1)
+    atom_mask = np.ones_like(atom_pos_mask, dtype=bool)
+
+    # centering atom_pos
+    valid_pos = atom_pos[atom_pos_mask]  # (N_valid, 3)
+    mean_vector = valid_pos.mean(axis=0, keepdims=True)
+    atom_pos = atom_pos - mean_vector
+    atom_pos = np.where(atom_pos_mask.astype(bool)[:, None], atom_pos, 0.0)
 
     # generate token-level bond from residue-level bond and atom-level bond
     residue_bond = cifmol.residues.bond  # canonical bond + branch bond
@@ -384,53 +453,25 @@ def make_batch(  # noqa: PLR0915
     )
     token_bond = np.concatenate([token_canonical_bond, token_atom_bond], axis=0)
 
-    # ids
-    chain_num = cifmol.chains.chain_id.shape[0]
-    chain_asym_id = np.arange(chain_num).astype(np.int64)
-    chain_entity_id = cifmol.chains.entity_id.value
-    same_entity = chain_entity_id[:, None] == chain_entity_id[None, :]
-    chain_sym_id = np.triu(same_entity, k=0).sum(axis=0) - 1
+    atom_bond_type = cifmol.atoms.bond_type.value  # (n_atom_bond, )
+    atom_bond_stereo = cifmol.atoms.bond_stereo.value  # (n_atom_bond, )
+    atom_bond_aromatic = cifmol.atoms.bond_aromatic.value  # (n_atom_bond, )
+    atom_bond = np.stack(
+        [atom_bond_type, atom_bond_stereo, atom_bond_aromatic],
+        axis=1,
+    )  # (n_atom_bond, 3)
+    atom_bond = np.zeros_like(atom_bond, dtype=np.int64)  # placeholder
 
-    token_idx = np.arange(cropped_token_len, dtype=np.int64)
-    res_to_chain = cifmol.index_table.res_to_chain
-    token_to_chain = np.take(res_to_chain, token_residue_idx)
-    token_asym_id = np.take(chain_asym_id, token_to_chain)
-    token_entity_id = np.take(chain_entity_id, token_to_chain)
-    token_sym_id = np.take(chain_sym_id, token_to_chain)
-
-    token_type = msa.aligned_sequences[0, 0, 0]
-
-    ref_pos = cifmol.atoms.model_xyz.value
-    ref_pos = np.array(ref_pos, dtype=object)
-
-    mask = (ref_pos == "?") | (ref_pos == ".")
-    ref_pos[mask] = 0.0
-    ref_pos = ref_pos.astype(np.float32, copy=False)
-
-    ref_mask = ~np.isnan(ref_pos).any(axis=1)
-    ref_element = cifmol.atoms.element.value
-    ref_charge = cifmol.atoms.charge.value
-    ref_charge = np.array(
-        [float(c) if c not in {"?", "."} else 0.0 for c in ref_charge],
+    structure = StructureFeatures.from_sample(
+        atom_pos=torch.from_numpy(atom_pos.astype(np.float32)),
+        atom_pos_mask=torch.from_numpy(atom_pos_mask.astype(np.bool)),
+        atom_mask=torch.from_numpy(atom_mask.astype(np.bool)),
+        atom_bond=torch.from_numpy(atom_bond.astype(np.int64)),
+        token_mask=torch.ones((cropped_token_len,), dtype=torch.bool),  # all ones
+        token_bond=torch.from_numpy(token_bond.astype(np.int64)),
     )
-    ref_space_uid = cifmol.index_table.atom_to_res
 
-    N_res = ref_space_uid.max() + 1
-    res_to_atoms = [np.where(ref_space_uid == i)[0] for i in range(N_res)]
-
-    Rs, Ts = SE3_oper(cropped_residue_len)
-    random_ref_pos = []
-    for ii, atom_indices in enumerate(res_to_atoms):
-        R, T = Rs[ii], Ts[ii]
-        _ref_pos = ref_pos[atom_indices]
-        _ref_pos = (_ref_pos - _ref_pos.mean(axis=0)) @ R + T  # random SE(3) operation
-        random_ref_pos.append(_ref_pos)
-    ref_pos = np.vstack(random_ref_pos)
-
-    # convert str to int
-    ref_element = AtomMapping().atom_to_index(ref_element)
-
-    # entity type mapping
+    """Chain features"""
     entity_mapping = EntityMapping()
     seq_id_list = cifmol.chains.seq_id.value.tolist()
     entity_id_list = [seq_id[0] for seq_id in seq_id_list]
@@ -439,59 +480,27 @@ def make_batch(  # noqa: PLR0915
     src, dst = contact.src_indices, contact.dst_indices
     contact_edges = list(zip(src, dst, strict=True))
 
-    sequence = SequenceFeatures.from_sample(
-        token_type=token_type,
-    )
-    atom_pos = cifmol.atoms.xyz.value
-    atom_pos_mask = np.isfinite(atom_pos).all(axis=1)
-    atom_mask = np.ones_like(atom_pos_mask, dtype=bool)
-
-    # centering atom_pos
-    valid_pos = atom_pos[atom_pos_mask]  # (N_valid, 3)
-
-    mean_vector = valid_pos.mean(axis=0, keepdims=True)
-    atom_pos = atom_pos - mean_vector
-
-    atom_pos = np.where(atom_pos_mask.astype(bool)[:, None], atom_pos, 0.0)
-
-    structure = StructureFeatures.from_sample(
-        atom_pos=torch.from_numpy(atom_pos.astype(np.float32)),
-        atom_pos_mask=torch.from_numpy(atom_pos_mask.astype(np.bool)),
-        atom_mask=torch.from_numpy(atom_mask.astype(np.bool)),
-        atom_bond=torch.from_numpy(atom_bond.astype(np.int8)),
-        token_mask=torch.ones((cropped_token_len,), dtype=torch.bool),  # all ones
-        token_bond=torch.from_numpy(token_bond.astype(np.int8)),
-    )
-    reference = ReferenceFeatures.from_sample(
-        pos=torch.from_numpy(ref_pos.astype(np.float32)),
-        mask=torch.from_numpy(ref_mask.astype(np.bool)),
-        element=torch.from_numpy(ref_element.astype(np.int64)),
-        charge=torch.from_numpy(ref_charge.astype(np.float32)),
-        space_uid=torch.from_numpy(ref_space_uid.astype(np.int64)),
-    )
-    scheme = SchemeFeatures.from_sample(
-        token_residue_idx=torch.from_numpy(token_residue_idx.astype(np.int64)),
-        token_idx=torch.from_numpy(token_idx.astype(np.int64)),
-        token_asym_id=torch.from_numpy(token_asym_id.astype(np.int64)),
-        token_entity_id=torch.from_numpy(token_entity_id.astype(np.int64)),
-        token_sym_id=torch.from_numpy(token_sym_id.astype(np.int64)),
-        atom_to_token_idx_map=torch.from_numpy(
-            atom_to_residue_idx_map.astype(np.int64),
-        ),
-        edge_index=torch.from_numpy(np.array(edge_index, dtype=np.int64)),
-    )
-
     chain = ChainFeatures.from_sample(
         entity_type=torch.from_numpy(entity_types.astype(np.int64)),
         contact_edges=torch.from_numpy(np.array(contact_edges, dtype=np.int64)),
     )
 
-    return (
-        sequence,
-        structure,
-        reference,
-        scheme,
-        chain,
+    # ids : to make cif file from batch
+    hetero = cifmol.residues.hetero
+    atom_ids = cifmol.atoms.id
+    chem_comp_ids = cifmol.residues.chem_comp_id
+
+    return Batch(
+        name=[f"{cif_id}"],
+        heteros=[hetero],
+        atom_ids=[atom_ids],
+        chem_comp_ids=[chem_comp_ids],
+        sequence=sequence,
+        structure=structure,
+        reference=reference,
+        scheme=scheme,
+        msa=msa_token,
+        chain=chain,
     )
 
 
@@ -625,7 +634,10 @@ class BioMolData(torch.utils.data.Dataset):
                     interface_bias=interface_bias,
                     remain_invalid_tokens=remain_invalid_tokens,
                 )
-                if (
+                token_length = tokenize(cifmol.residues[crop_indices].extract())[
+                    1
+                ].shape[0]
+                if token_length <= crop_length and (
                     cifmol.residues[crop_indices].atoms.element.shape[0]
                     < self.config.crop_config.atom_crop_length
                 ):
@@ -669,28 +681,11 @@ class BioMolData(torch.utils.data.Dataset):
             max_msa_depth=self.config.msa_config.max_msa_depth,
         )
 
-        sequence, structure, reference, scheme, chain = make_batch(
+        return make_batch(
+            cif_id=cif_id,
             cifmol=cifmol,
             msa=msa,
             edge_index=edge_index,
-        )
-
-        # ids : to make cif file from batch
-        hetero = cifmol.residues.hetero
-        atom_ids = cifmol.atoms.id
-        chem_comp_ids = cifmol.residues.chem_comp_id
-
-        return Batch(
-            name=[f"{cif_id}"],
-            heteros=[hetero],
-            atom_ids=[atom_ids],
-            chem_comp_ids=[chem_comp_ids],
-            sequence=sequence,
-            structure=structure,
-            reference=reference,
-            scheme=scheme,
-            msa=msa,
-            chain=chain,
         )
 
     def create_ddp_dataloader(

@@ -13,7 +13,7 @@ from team_gm.utils.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 from team_gm.utils.precision_manager import precision_manager
 from torch.utils.data import DataLoader
 
-from miniworld.data.dataloader.dataloader_edge_backprop import (
+from miniworld.data.dataloader.dataloader_atom_token import (
     AdaptiveEdgeSampler,
     BioMolDBConfig,
     CropConfig,
@@ -148,6 +148,7 @@ class Client(BaseClient):
         x_mask: Bool[torch.Tensor, "... L"] | None = None,
     ) -> tuple[torch.Tensor, dict]:
         """Compute the loss given a noisy batch."""
+        print(f"token length : {batch.msa.aligned_sequences.shape}")
         atom_pos_update, distogram_logit = self.model.forward(
             msa=batch.msa,
             reference=batch.reference,
@@ -171,7 +172,7 @@ class Client(BaseClient):
             distogram_logit,
             batch.structure.atom_pos,
             batch.structure.atom_pos_mask,
-            batch.scheme.atom_to_residue_idx_map,
+            batch.scheme.atom_to_token_idx_map,
         )
 
         loss = (
@@ -275,7 +276,7 @@ class Client(BaseClient):
             distogram_logit,
             batch.structure.atom_pos,
             batch.structure.atom_pos_mask,
-            batch.scheme.atom_to_residue_idx_map,
+            batch.scheme.atom_to_token_idx_map,
         )
 
         max_lddt, min_rmsd = 0, float("inf")

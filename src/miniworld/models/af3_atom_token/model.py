@@ -28,7 +28,7 @@ from miniworld.modules.diffusion_module import (
 )
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
-from miniworld.modules.msa_util import init_msa
+from miniworld.modules.msa_util import init_msa, init_token_single_msa
 
 
 class Model(nn.Module):
@@ -120,19 +120,24 @@ class Model(nn.Module):
         else:
             n_recycle = self.n_recycle_max
 
+        token_single_msa = init_token_single_msa(
+            msa,
+            sequence,
+            num_res_class=self.config.shared.num_res_class,
+        )
+
         # input feature embedding
         (
             token_single_input,
             token_single_init,
             token_pair_init,
         ) = self.input_feature_embedder(
-            msa,
+            token_single_msa,
             reference,
             scheme,
-            sequence,
             structure,
         )
-        residue_mask = structure.residue_mask
+        token_mask = structure.token_mask
 
         token_pair = torch.zeros_like(token_pair_init)
         token_single = torch.zeros_like(token_single_init)
@@ -153,14 +158,14 @@ class Model(nn.Module):
                     msa_feat,
                     token_pair,
                     token_single_input,
-                    residue_mask,
+                    token_mask,
                 )
                 token_single = token_single_init + self.add_single_recycle(token_single)
 
                 token_pair, token_single = self.pairformer_blocks.forward(
                     token_pair,
                     token_single,
-                    residue_mask,
+                    token_mask,
                 )
         # reduce token_pair information to distogram
         distogram_logit = self.distogram_head(token_pair)

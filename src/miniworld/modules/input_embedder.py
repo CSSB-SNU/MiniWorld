@@ -9,10 +9,8 @@ from torch.utils.checkpoint import checkpoint
 
 from miniworld.configs import SharedConfig
 from miniworld.data.features.features import (
-    MSAFeatures,
     ReferenceFeatures,
     SchemeFeatures,
-    SequenceFeatures,
     StructureFeatures,
 )
 from miniworld.modules.embeddings import RelativePositionEmbedding
@@ -227,6 +225,7 @@ class InputFeatureEmbedder(nn.Module):
             diffusion_config=diffusion_config,
         )
         d_init = shared_config.d_single_token_input
+
         self.to_token_init = Linear(
             d_init,
             shared_config.d_single,
@@ -287,10 +286,9 @@ class InputFeatureEmbedder(nn.Module):
 
     def forward(
         self,
-        msa: MSAFeatures,
+        token_single_msa: Float[torch.Tensor, "B L_token d_single_token_init"],
         reference: ReferenceFeatures,
         scheme: SchemeFeatures,
-        sequence: SequenceFeatures,
         structure: StructureFeatures,
     ) -> tuple[
         Float[torch.Tensor, "B L_token d_single_token_input"],
@@ -300,17 +298,10 @@ class InputFeatureEmbedder(nn.Module):
         """Forward pass."""
         token_single_input = self.atom_attention_encoder(reference, scheme, structure)
 
-        token_type = torch.nn.functional.one_hot(
-            sequence.token_type.long(),
-            num_classes=self.num_res_class,
-        ).to(token_single_input.device, dtype=token_single_input.dtype)
-
         token_single_input = torch.concat(
             [
                 token_single_input,
-                token_type,
-                msa.profile.to(dtype=token_single_input.dtype),
-                msa.deletion_mean.unsqueeze(-1).to(dtype=token_single_input.dtype),
+                token_single_msa,
             ],
             dim=-1,
         )
