@@ -228,7 +228,14 @@ class ContactMapPredictionClient(BaseClient):
         """Predict contact maps for the given batch."""
         self.model.eval()
         batch = batch.to(self.device)
-        contact_map_logit = self.model.forward(batch)
+        if self.config.model.use_distogram:
+            distogram_logit = self.model.forward(batch)
+            contact_logit = torch.logsumexp(distogram_logit[..., :13], dim=-1)
+            noncontact_logit = torch.logsumexp(distogram_logit[..., 13:], dim=-1)
+            contact_map_logit = torch.stack([noncontact_logit, contact_logit], dim=-1)
+        else:
+            contact_map_logit = self.model.forward(batch)
+        
         contact_map_prob = torch.softmax(contact_map_logit, dim=-1)[..., 1]
 
         contact_target, residue_pair_mask = extract_contact_map(
@@ -240,19 +247,59 @@ class ContactMapPredictionClient(BaseClient):
         if save_dir is not None:
             # save the contact map as an image
             contact_map_prob_np = contact_map_prob[0].cpu().numpy()
-            contact_target = contact_target[0].cpu().numpy()
-            residue_pair_mask = residue_pair_mask[0].cpu().numpy()
-            contact_map_prob_np = contact_map_prob_np * residue_pair_mask
-            save_path = save_dir / f"{batch.name[0]}_contact_map.png"
+            contact_target_np = contact_target[0].cpu().numpy()
+            residue_pair_mask_np = residue_pair_mask[0].cpu().numpy()
+            contact_map_prob_np = contact_map_prob_np * residue_pair_mask_np
+            contact_target_masked_np = contact_target_np * residue_pair_mask_np
+
             if not save_dir.exists():
                 save_dir.mkdir(parents=True, exist_ok=True)
-            # 2 panels: predicted and target
-            fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-            axes[0].imshow(contact_map_prob_np, cmap="Reds", vmin=0, vmax=1)
-            axes[0].set_title("Predicted Contact Map")
-            axes[1].imshow(contact_target, cmap="Reds", vmin=0, vmax=1)
-            axes[1].set_title("Target Contact Map")
-            plt.savefig(save_path)
+            pred_only_path = save_dir / f"{batch.name[0]}_noRefpos_pred_only.png"
+            target_only_path = save_dir / f"{batch.name[0]}_noRefpos_target_only.png"
+            # save predicted-only image
+            fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+            im = ax.imshow(contact_map_prob_np, cmap="Reds", vmin=0, vmax=1)
+            ax.set_title("Predicted Contact Map")
+            fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Contact probability")
+            fig.tight_layout()
+            plt.savefig(pred_only_path)
             plt.close(fig)
+
+            # save target-only image
+            fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+            im = ax.imshow(contact_target_masked_np, cmap="Reds", vmin=0, vmax=1)
+            ax.set_title("Target Contact Map")
+            fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Contact label")
+            fig.tight_layout()
+            plt.savefig(target_only_path)
+            plt.close(fig)
+            
+            # save_path = save_dir / f"{batch.name[0]}_contact_map.png"
+            # diff_save_path = save_dir / f"{batch.name[0]}_contact_map_diff.png"
+            # if not save_dir.exists():
+            #     save_dir.mkdir(parents=True, exist_ok=True)
+            # # 2 panels: predicted and target
+            # fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+            # im0 = axes[0].imshow(contact_map_prob_np, cmap="Reds", vmin=0, vmax=1)
+            # axes[0].set_title("Predicted Contact Map")
+            # fig.colorbar(im0, ax=axes[0], fraction=0.046, pad=0.04, label="Contact probability")
+
+            # im1 = axes[1].imshow(contact_target_np, cmap="Reds", vmin=0, vmax=1)
+            # axes[1].set_title("Target Contact Map")
+            # fig.colorbar(im1, ax=axes[1], fraction=0.046, pad=0.04, label="Contact label")
+            # fig.tight_layout()
+            # plt.savefig(save_path)
+            # plt.close(fig)
+
+            # # save a separate difference image: target - prediction
+            # diff_map_np = contact_target_masked_np - contact_map_prob_np
+            # fig, ax = plt.subplots(1, 1, figsize=(6, 5))
+            # im = ax.imshow(diff_map_np, cmap="RdBu", vmin=-1, vmax=1)
+            # ax.set_title("Target - Prediction")
+            # fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Difference")
+            # fig.tight_layout()
+            # plt.savefig(diff_save_path)
+            # plt.close(fig)
+
 
         return contact_map_prob

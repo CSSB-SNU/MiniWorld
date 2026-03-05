@@ -9,6 +9,7 @@ from lightning import Fabric
 from omegaconf import OmegaConf
 from team_gm.utils.script_utils import MetricsAggregator
 from miniworld.utils import get_step_decay_scheduler_with_warmup, set_seed
+from pydantic import BaseModel
 
 import wandb
 from miniworld.data.dataloader.dataloader_edge_backprop import (
@@ -19,6 +20,8 @@ from miniworld.data.dataloader.dataloader_edge_backprop import (
     MSAConfig,
 )
 from miniworld.models.contact_map_prediction import ContactMapPredictionClient
+from miniworld.data.features.batch_edge_backprop import Batch
+from miniworld.utils.structure import get_shortest_distances
 
 # torch.set_float32_matmul_precision("high")  # noqa: ERA001
 # anomaly detection
@@ -254,13 +257,53 @@ def train(  # noqa: PLR0912, PLR0915
     default=None,
     help="directory to save predicted structures",
 )
+@click.option(
+    "--target",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="run category-targeted sampling loop"
+    )
+
 @torch.inference_mode()
 def sample(
     config: Path,
     ckpt: Path | None,
     seed: int | None,
-    save_dir: Path | None,
+    save_dir: Path,
+    target: bool,
 ):
+
+    def categorize_batch(batch):
+        PROTEIN_TYPES = {0, 1, 2}
+        NA_TYPES = {3, 4, 5}
+        chain_types = [int(x) for x in batch.chain.entity_type[0].cpu().tolist()]  # (L_chain,)
+
+        # chain -> entity_id from residue-level tensors
+        res_asym = batch.scheme.residue_asym_id[0].cpu().tolist()
+        res_ent = batch.scheme.residue_entity_id[0].cpu().tolist()
+        chain_to_ent = {}
+        for a, e in zip(res_asym, res_ent):
+            if int(a) not in chain_to_ent:
+                chain_to_ent[int(a)] = int(e)
+
+        n_chain = int(batch.chain.entity_type.shape[1])
+        chain_ent_ids = [chain_to_ent.get(i, -1) for i in range(n_chain)]
+
+        protein_idx = [i for i, t in enumerate(chain_types) if t in PROTEIN_TYPES]
+        na_idx = [i for i, t in enumerate(chain_types) if t in NA_TYPES]
+
+        if protein_idx and na_idx:
+            return "protein_nucleic_acid_complex"
+        if na_idx and not protein_idx:
+            return "nucleic_acid_entity"
+        if protein_idx and not na_idx:
+            if len(protein_idx) == 1:
+                return "monomer"
+            protein_entity_ids = {chain_ent_ids[i] for i in protein_idx}
+            return "protein_homomer" if len(protein_entity_ids) == 1 else "heteromer"
+        return None
+
     class ValidateDBConfig(BaseModel):
         """Configuration for validation data loading."""
 
@@ -278,7 +321,7 @@ def sample(
 
         # Validation arguments
         timesteps: int = 100
-        num_workers: int = 4
+        num_workers: int = 0
         prefetch_factor: int = 8
         use_ema: bool = True
 
@@ -339,44 +382,58 @@ def sample(
         prefetch_factor=prefetch_factor,
     )
     
-
+    client.model.eval()
     # P0147522 : 6LYY, 7CKO (transporter)
     # P0000373 : calmodulin sequence (multiple structures)
-    transporter_batch = dataset.get_item_by_seq_id(
-        query_id="P0147522",
-    )
-    calmodulin_batch = dataset.get_item_by_seq_id(
-        query_id="P0000373",
-    )
-    manual_batches = [transporter_batch, calmodulin_batch]
-    client.model.eval()
-    for batch in manual_batches:
-        client.predict_contact_map(
-            batch,
-            save_dir=Path(save_dir) if save_dir else None,
-        )
+    # transporter_batch = dataset.get_item_by_seq_id(
+    #     query_id="P0147522",
+    # )
+    # calmodulin_batch = dataset.get_item_by_seq_id(
+    #     query_id="P0000373",
+    # )
+    # manual_batches = [transporter_batch, calmodulin_batch]
+    # for batch in manual_batches:
+    #     client.predict_contact_map(
+    #         batch,
+    #         save_dir=Path(save_dir) if save_dir else None,
+    #     )
+    if target:
+        targets = ["monomer", "protein_homomer", "heteromer", "protein_nucleic_acid_complex", "nucleic_acid_entity"]
+        items_per_target = 30
+        done = {k: 0 for k in targets}
+        max_batches = 10000
+        
+        for i, batch in enumerate(valid_loader):
+            if i >= max_batches:
+                break
+            category = categorize_batch(batch)
+            if category not in done:
+                continue
+            if done[category] >= items_per_target:
+                continue
 
-    client.logger.info("-" * 70)
-    client.logger.info("")
-    client.logger.info("Start training".center(70))
-    client.logger.info("")
-    client.logger.info("-" * 70)
-    
-    valid_num_item = cfg.experiment.valid_item // world_size
-    client.model.eval()
-    for ii, _batch in enumerate(valid_loader):
-        batch = fabric.to_device(_batch)
-        click.echo(f"residue length : {batch.scheme.residue_idx.shape[1]} \
-                   atom length : {batch.structure.atom_pos.shape[1]}")
+            out_dir = Path(save_dir) / category if save_dir else None
+            client.predict_contact_map(batch, save_dir=out_dir)  # use existing client API
+            done[category] += 1
 
-        batch = batch.duplicate(client.config.experiment.eval_sample_num)
-        client.predict_contact_map(
-            batch,
-            save_dir=Path(save_dir) if save_dir else None,
-        )
-        if ii >= valid_num_item:
-            client.call_callbacks("on_validation_epoch_end")
-            break
+            if all(v >= items_per_target for v in done.values()):
+                break
+    else:
+        valid_num_item = cfg.experiment.valid_item // world_size
+        client.model.eval()
+        for ii, _batch in enumerate(valid_loader):
+            batch = fabric.to_device(_batch)
+            click.echo(f"residue length : {batch.scheme.residue_idx.shape[1]} \
+                    atom length : {batch.structure.atom_pos.shape[1]}")
+
+            batch = batch.duplicate(client.config.experiment.eval_sample_num)
+            client.predict_contact_map(
+                batch,
+                save_dir=Path(save_dir) / f"batch_{ii}" if save_dir else None,
+            )
+            if ii >= valid_num_item:
+                client.call_callbacks("on_validation_epoch_end")
+                break
 
 if __name__ == "__main__":
     # set mp start method
