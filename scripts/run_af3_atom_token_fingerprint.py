@@ -308,6 +308,7 @@ def validate(
         data: ValidateDBConfig
         experiment: ValidateExperimentConfig
 
+<<<<<<< HEAD
     raw_cfg = OmegaConf.load(config)
     cfg = ValidateConfig.model_validate(raw_cfg)
     if not ckpt:
@@ -324,6 +325,14 @@ def validate(
         ckpt_cfg.model.token_embedding.embedding_path = Path(override_embedding_path)
     client = Client(ckpt_cfg)
     client.load_state_dict(state_dict, model_only=True)
+=======
+    cfg = OmegaConf.load(config)
+    cfg = ValidateConfig.model_validate(cfg)
+    if not ckpt:
+        msg = "You must provide a checkpoint file."
+        raise ValueError(msg)
+    client = Client.from_checkpoint(ckpt)
+>>>>>>> 835952d (fix: minor errors like env, module import, and dimension issues)
     client.model.to("cuda")
     if cfg.experiment.compile:
         client.model.compile()
@@ -381,8 +390,12 @@ def validate(
     for ii, _batch in enumerate(valid_loader):
         batch = fabric.to_device(_batch)
         click.echo(
+<<<<<<< HEAD
             f"name : {batch.name[0]} \
             residue length : {batch.scheme.token_idx.shape[1]} \
+=======
+            f"residue length : {batch.scheme.residue_idx.shape[1]} \
+>>>>>>> 835952d (fix: minor errors like env, module import, and dimension issues)
                    atom length : {batch.structure.atom_pos.shape[1]}",
         )
 
@@ -399,7 +412,11 @@ def validate(
         batch_to_cif(
             batch,
             output.atom_pos_pred,
+<<<<<<< HEAD
             Path(f"outputs/atom_token_fingerprint_config2/{batch.name[0]}_pred.cif"),
+=======
+            Path(f"outputs/miniworld_v1.0.0/{batch.name[0]}_pred.cif"),
+>>>>>>> 835952d (fix: minor errors like env, module import, and dimension issues)
         )
         click.echo(
             f"result for {batch.name[0]}: "
