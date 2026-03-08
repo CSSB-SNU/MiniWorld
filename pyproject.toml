@@ -80,6 +80,10 @@ matplotlib = ">=3.10.7,<4"
 pandas = ">=2.3.3,<3"
 tqdm = ">=4.67.1,<5"
 click = ">=8.3.1,<9"
+pip = ">=26.0.1,<27"
+libstdcxx-ng = ">=15.2.0,<16"
+cxx-compiler = ">=1.11.0,<2"
+ncurses = ">=6.5,<7"
 
 [tool.ruff.lint.per-file-ignores]
 "scripts/*" = ["D", "ANN201", "S101", "INP001", "FBT001", "PLC0415", "C901"]

@@ -1,15 +1,15 @@
 data:
-  DB_PATH: /home/psk6950/data/
+  DB_PATH: /public_data
   train_db:
-    cif_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
-    a3m_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
-    edge_id_to_cif_ids_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/train_edges.tsv
+    cif_db_path: ${data.DB_PATH}/cif_20210930_res9.lmdb
+    a3m_db_path: ${data.DB_PATH}/slim_a3m.lmdb
+    edge_id_to_cif_ids_path: ${data.DB_PATH}/train_edges.tsv
     load_all_msa: False
     
   valid_db:
-    cif_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
-    a3m_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
-    edge_id_to_cif_ids_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/valid_edges.tsv
+    cif_db_path: ${data.DB_PATH}/cif_20210930_res9.lmdb
+    a3m_db_path: ${data.DB_PATH}/slim_a3m.lmdb
+    edge_id_to_cif_ids_path: ${data.DB_PATH}/valid_edges.tsv
     load_all_msa: False
 
   edge_weight:
@@ -43,6 +43,7 @@ model:
     d_single: 384
     d_single_atom: 128
     d_single_token_input: 449
+    # d_token_single_input: 449
     d_single_token_diffusion: 768
     d_pair: 128
     d_pair_atom: 16
@@ -85,7 +86,7 @@ model:
     msa_module: 
       n_block: 2
 
-      d_msa: 64
+      d_msa: 128
       d_pair: ${model.shared.d_pair}
       d_single_token_input: ${model.shared.d_single_token_input}
       d_hidden_msa: 32

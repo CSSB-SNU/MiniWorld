@@ -275,13 +275,16 @@ def cal_atom_interface_lddt(
 
 
 def build_atom_chain_map_and_mask(
-    atom_to_residue_idx_map: Int[torch.Tensor, "B L_atom"],
-    residue_asym_id: Int[torch.Tensor, "B L_res"],
+    atom_to_group_idx_map: Int[torch.Tensor, "B L_atom"],
+    group_asym_id: Int[torch.Tensor, "B L_group"],
 ) -> tuple[Int[torch.Tensor, "B L_atom"], Int[torch.Tensor, "L_atom L_atom"]]:
-    """Build atom to chain index mapping and chain mask."""
-    atom_to_residue_idx_map = atom_to_residue_idx_map[0]  # (L_atom,)
-    residue_asym_id = residue_asym_id[0]  # (L_res,)
-    atom_to_chain_idx_map = residue_asym_id[atom_to_residue_idx_map]  # (L_atom,)
+    """Build atom-to-chain index mapping and chain mask.
+
+    The group can be either residues or tokens, depending on batch schema.
+    """
+    atom_to_group_idx_map = atom_to_group_idx_map[0]  # (L_atom,)
+    group_asym_id = group_asym_id[0]  # (L_group,)
+    atom_to_chain_idx_map = group_asym_id[atom_to_group_idx_map]  # (L_atom,)
 
     chain_i = atom_to_chain_idx_map[:, None]  # (L_atom, 1)
     chain_j = atom_to_chain_idx_map[None, :]  # (1, L_atom)
@@ -330,9 +333,30 @@ def category_lddt(  # noqa: C901, PLR0915, PLR0912
 
     entity_type_list = batch.chain.entity_type[0].tolist()
     contact_edges = batch.chain.contact_edges[0].tolist()
+    atom_to_group_idx_map = None
+    group_asym_id = None
+    if hasattr(batch.scheme, "atom_to_token_idx_map") and hasattr(
+        batch.scheme,
+        "token_asym_id",
+    ):
+        atom_to_group_idx_map = batch.scheme.atom_to_token_idx_map
+        group_asym_id = batch.scheme.token_asym_id
+    elif hasattr(batch.scheme, "atom_to_residue_idx_map") and hasattr(
+        batch.scheme,
+        "residue_asym_id",
+    ):
+        atom_to_group_idx_map = batch.scheme.atom_to_residue_idx_map
+        group_asym_id = batch.scheme.residue_asym_id
+    if atom_to_group_idx_map is None or group_asym_id is None:
+        msg = (
+            "Unsupported scheme fields for category_lddt. Expected either "
+            "(atom_to_token_idx_map, token_asym_id) or "
+            "(atom_to_residue_idx_map, residue_asym_id)."
+        )
+        raise AttributeError(msg)
     atom_to_chain_idx_map, chain_mask = build_atom_chain_map_and_mask(
-        atom_to_residue_idx_map=batch.scheme.atom_to_residue_idx_map,
-        residue_asym_id=batch.scheme.residue_asym_id,
+        atom_to_group_idx_map=atom_to_group_idx_map,
+        group_asym_id=group_asym_id,
     )
     entity_mapping = EntityMapping()
 

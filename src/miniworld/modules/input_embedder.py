@@ -226,7 +226,6 @@ class InputFeatureEmbedder(nn.Module):
             diffusion_config=diffusion_config,
         )
         d_init = shared_config.d_single_token_input
-
         self.to_token_init = Linear(
             d_init,
             shared_config.d_single,
@@ -310,7 +309,6 @@ class InputFeatureEmbedder(nn.Module):
             ],
             dim=-1,
         )
-
         token_single_init = self.to_token_init(token_single_input)
         token_left = self.to_token_pair_left(token_single_input)
         token_right = self.to_token_pair_right(token_single_input)
