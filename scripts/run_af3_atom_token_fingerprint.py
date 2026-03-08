@@ -1,14 +1,28 @@
+<<<<<<< HEAD
 import logging
 import time
+=======
+from __future__ import annotations
+
+import datetime
+import json
+import logging
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
 from pathlib import Path
 
 import click
 import torch
+<<<<<<< HEAD
 from hydra import compose, initialize_config_dir
 from lightning import Fabric
 from omegaconf import OmegaConf
 from pydantic import BaseModel
 from team_gm.core.callbacks import Callback
+=======
+from lightning import Fabric
+from omegaconf import OmegaConf
+from pydantic import BaseModel
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
 from team_gm.utils.script_utils import MetricsAggregator
 
 import wandb
@@ -19,6 +33,7 @@ from miniworld.data.dataloader.dataloader_atom_token import (
     EdgeWeightConfig,
     MSAConfig,
 )
+<<<<<<< HEAD
 from miniworld.diffusion.configs import EDMDiffuserConfig
 from miniworld.models.af3_atom_token_fingerprint import Client, Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
@@ -62,6 +77,40 @@ class VerboseCallback(Callback):
             torch.cuda.max_memory_allocated() / 1024**3,
         )
 
+=======
+from miniworld.data.to_cif import batch_to_cif
+from miniworld.models.af3_atom_token_fingerprint import Client
+from miniworld.utils import get_step_decay_scheduler_with_warmup, set_seed
+
+# torch.set_float32_matmul_precision("high")  # noqa: ERA001
+# anomaly detection
+torch.autograd.set_detect_anomaly(False)
+
+
+def setup_logger(client: Client) -> None:
+    if not client.is_global_zero:
+        return
+
+    client.logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s][%(name)s][%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.INFO)
+    client.logger.addHandler(handler)
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    file_handler = logging.FileHandler(
+        f"logs/af3_atom_token_fingerprint/af3_atom_token_fingerprint_{now:%Y%m%d_%H%M%S}.log",
+    )
+    file_handler.setFormatter(formatter)
+    client.logger.addHandler(file_handler)
+
+
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
 @click.group()
 def cli():
     pass
@@ -69,6 +118,7 @@ def cli():
 
 @cli.command()
 @click.option(
+<<<<<<< HEAD
     "--config",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     required=True,
@@ -76,10 +126,19 @@ def cli():
 )
 @click.option(
     "--ckpt",
+=======
+    "--config_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="config file",
+)
+@click.option(
+    "--resume-from-ckpt",
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     help="checkpoint file",
 )
 @click.option(
+<<<<<<< HEAD
     "--job-name",
     type=str,
     help="Job name",
@@ -157,12 +216,126 @@ def train(  # noqa: PLR0912, PLR0915
         warmup_steps=cfg.train.warmup_steps,
         decay_steps=cfg.train.decay_steps,
         decay_factor=cfg.train.decay_factor,
+=======
+    "-w",
+    is_flag=True,
+    help="Use wandb for logging",
+)
+@click.option(
+    "--ckpt-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    default="checkpoints/",
+    help="dir for save checkpoint",
+)
+@click.option(
+    "--seed",
+    type=int,
+    help="random seed",
+)
+def train(  # noqa: PLR0912, PLR0915
+    config_path: Path | None,
+    resume_from_ckpt: Path | None,
+    w: bool,
+    ckpt_dir: Path,
+    seed: int | None,
+):
+    
+    if not config_path and not resume_from_ckpt:
+        msg = "You must provide either a config file or a checkpoint file."
+        raise ValueError(msg)
+    if resume_from_ckpt:
+        client = Client.from_checkpoint(resume_from_ckpt)
+        fabric = Fabric()
+        fabric.launch()
+        if client.config.experiment.compile:
+            client.model.compile()
+            client.logger.info("Compiled model")
+        if not config_path:
+            config = client.config
+        else:
+            config = OmegaConf.load(config_path)
+            config = Client.Config.model_validate(config)
+            msg = "Warning: Both config file and checkpoint file are provided. The config file will be used for training, but the checkpoint file will be used for loading the model and optimizer states. Make sure this is intended."
+            client.logger.warning(msg)
+    else:
+        if config_path is None:
+            msg = "config_path should not be None when resume_from_ckpt is not provided."
+            raise RuntimeError(msg)
+        cfg = OmegaConf.load(config_path)
+        cfg = Client.Config.model_validate(cfg)
+        client = Client(cfg)
+        fabric = Fabric()
+        fabric.launch()
+        
+        if cfg.experiment.compile:
+            client.model.compile()
+            client.logger.info("Compiled model")
+        config = client.config
+
+
+    if seed is not None:
+        set_seed(seed)
+        client.logger.info("Set random seed: %d", seed)
+
+    train_data_config = BioMolData.BioMolConfig(
+        crop_config=config.data.crop,
+        msa_config=config.data.msa,
+        DB_config=config.data.train_db,
+        edge_weight_config=config.data.edge_weight,
+    )
+    valid_data_config = BioMolData.BioMolConfig(
+        crop_config=config.data.crop,
+        msa_config=config.data.msa,
+        DB_config=config.data.valid_db,
+        edge_weight_config=config.data.edge_weight,
+    )
+
+    prefetch_factor = (
+        None
+        if config.experiment.prefetch_factor == 0
+        else int(config.experiment.prefetch_factor)
+    )
+
+    # test run to check if dataloader works
+    BioMolData(train_data_config)[0]
+    client.logger.info("Data loading works correctly. Start training...")
+
+    train_loader = BioMolData(train_data_config).create_ddp_dataloader(
+        world_size=fabric.world_size,
+        rank=fabric.local_rank,
+        drop_last=True,
+        use_adaptive_sampler=True,
+        batch_size=config.experiment.num_batch,
+        num_workers=config.experiment.num_workers,
+        prefetch_factor=prefetch_factor,
+        shuffle=False,
+    )
+    valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
+        world_size=fabric.world_size,
+        rank=fabric.local_rank,
+        drop_last=False,
+        use_adaptive_sampler=False,
+        batch_size=config.experiment.num_batch,  # or 1
+        num_workers=0,
+    )
+
+    optimizer = torch.optim.AdamW(
+        client.model.parameters(),
+        config.experiment.max_lr,
+    )
+    scheduler = get_step_decay_scheduler_with_warmup(
+        optimizer=optimizer,
+        warmup_steps=config.experiment.warmup_steps,
+        decay_steps=config.experiment.decay_steps,
+        decay_factor=config.experiment.decay_factor,
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
     )
 
     client.setup(
         fabric=fabric,
         optimizer=optimizer,
         scheduler=scheduler,
+<<<<<<< HEAD
         gradient_accumulation_steps=cfg.train.grad_accum_steps,
         gradient_clip_norm=cfg.train.grad_clip_max_norm,
     )
@@ -241,11 +414,60 @@ def train(  # noqa: PLR0912, PLR0915
         if client.epoch % cfg.train.save_freq == 0:
             checkpoint_path = checkpoint_dir / f"epoch={client.epoch:04d}.pt"
             client.save_checkpoint(checkpoint_path)
+=======
+        gradient_accumulation_steps=config.experiment.grad_accum_steps,
+        gradient_clip_norm=config.experiment.grad_clip_max_norm,
+    )
+    setup_logger(client)
+
+    if resume_from_ckpt is not None:
+        state_dict = torch.load(resume_from_ckpt, map_location="cpu")
+        client.load_state_dict(state_dict)
+        client.logger.info(
+            "Load pretrain weight: %s (%d epoch)",
+            resume_from_ckpt.name,
+            client.epoch,
+        )
+
+    if w and client.is_global_zero:
+        wandb.init(name=config.experiment.comment)
+        wandb.config.update(config.model_dump())
+    msg = f"Config:\n{json.dumps(config.model_dump(), indent=4, default=str)}"
+    client.logger.info(msg)
+
+    client.logger.info("-" * 70)
+    client.logger.info("")
+    client.logger.info("Start training".center(70))
+    client.logger.info("")
+    client.logger.info("-" * 70)
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    train_aggregator = MetricsAggregator(client, "train", use_wandb=w)
+    valid_aggregator = MetricsAggregator(client, "valid", use_wandb=w)
+
+    world_size = fabric.world_size
+    train_num_item = config.experiment.train_item // world_size
+    valid_num_item = config.experiment.valid_item // world_size
+    min_train_loss = float("inf")
+    comment = config.experiment.comment
+
+    for epoch in range(client.epoch, config.experiment.num_epoch):
+        client.logger.info("Training Epoch %d", client.epoch)
+        train_loader.sampler.set_epoch(epoch)  # pyright: ignore[reportAttributeAccessIssue]
+        for n_item, result in enumerate(client.training_epoch(train_loader)):
+            train_aggregator.log_step(result)
+            if n_item + 1 >= train_num_item:
+                client._epoch += 1  # noqa: SLF001
+                client.call_callbacks("on_train_epoch_end")
+                break
+
+        means = train_aggregator.log_epoch()
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
 
         if client.is_global_zero:
             train_loss = means["total_loss"]
             if train_loss < min_train_loss:
                 min_train_loss = train_loss
+<<<<<<< HEAD
                 best_checkpoint_path = checkpoint_dir / f"best.pt"
                 client.save_checkpoint(best_checkpoint_path)
                 client.logger.info(
@@ -258,6 +480,20 @@ def train(  # noqa: PLR0912, PLR0915
             valid_dataloader.sampler.set_epoch(client.epoch)  # pyright: ignore[reportAttributeAccessIssue]
             client.logger.info("Validation Epoch %d", client.epoch)
             for n_item, result in enumerate(client.validation_epoch(valid_dataloader)):
+=======
+                checkpoint_path = ckpt_dir / f"miniworld_{comment}_best.pt"
+                client.save_checkpoint(checkpoint_path)
+                client.logger.info(
+                    "Save best checkpoint: %s (train loss: %.4g)",
+                    checkpoint_path.name,
+                    train_loss,
+                )
+
+        if (client.epoch - 1) % config.experiment.eval_freq == 0:
+            valid_loader.sampler.set_epoch(epoch)  # pyright: ignore[reportAttributeAccessIssue]
+            client.logger.info("Validation Epoch %d", client.epoch)
+            for n_item, result in enumerate(client.validation_epoch(valid_loader)):
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
                 valid_aggregator.log_step(result, ignore_step=True)
                 if n_item + 1 >= valid_num_item:
                     client.call_callbacks("on_validation_epoch_end")
@@ -265,6 +501,12 @@ def train(  # noqa: PLR0912, PLR0915
 
             valid_aggregator.log_epoch()
 
+<<<<<<< HEAD
+=======
+            checkpoint_path = ckpt_dir / f"miniworld_{comment}_{epoch}.pt"
+            client.save_checkpoint(checkpoint_path)
+
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
 
 @cli.command()
 @click.option(
@@ -314,6 +556,7 @@ def validate(
         data: ValidateDBConfig
         experiment: ValidateExperimentConfig
 
+<<<<<<< HEAD
     raw_cfg = OmegaConf.load(config)
     cfg = ValidateConfig.model_validate(raw_cfg)
     if not ckpt:
@@ -332,6 +575,16 @@ def validate(
     client.load_state_dict(state_dict, model_only=True)
     client.model.to("cuda")
     if cfg.train.compile:
+=======
+    cfg = OmegaConf.load(config)
+    cfg = ValidateConfig.model_validate(cfg)
+    if not ckpt:
+        msg = "You must provide a checkpoint file."
+        raise ValueError(msg)
+    client = Client.from_checkpoint(ckpt)
+    client.model.to("cuda")
+    if cfg.experiment.compile:
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
         client.model.compile()
 
     setup_logger(client)
@@ -364,15 +617,25 @@ def validate(
 
     prefetch_factor = (
         None
+<<<<<<< HEAD
         if cfg.train.prefetch_factor == 0
         else int(cfg.train.prefetch_factor)
+=======
+        if cfg.experiment.prefetch_factor == 0
+        else int(cfg.experiment.prefetch_factor)
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
     )
     valid_loader = BioMolData(valid_data_config).create_ddp_dataloader(
         world_size=world_size,
         rank=local_rank,
         drop_last=False,
+<<<<<<< HEAD
         batch_size=cfg.train.num_batch,  # or 1
         num_workers=cfg.train.num_workers,
+=======
+        batch_size=cfg.experiment.num_batch,  # or 1
+        num_workers=cfg.experiment.num_workers,
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
         prefetch_factor=prefetch_factor,
     )
 
@@ -382,11 +645,16 @@ def validate(
     client.logger.info("")
     client.logger.info("-" * 70)
 
+<<<<<<< HEAD
     valid_num_item = cfg.train.valid_item // world_size
+=======
+    valid_num_item = cfg.experiment.valid_item // world_size
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
 
     for ii, _batch in enumerate(valid_loader):
         batch = fabric.to_device(_batch)
         click.echo(
+<<<<<<< HEAD
             f"name : {batch.name[0]} \
             residue length : {batch.scheme.token_idx.shape[1]} \
             atom length : {batch.structure.atom_pos.shape[1]}",
@@ -396,6 +664,16 @@ def validate(
         output = client.inference(
             batch,
             timesteps=client.config.train.eval_timesteps,
+=======
+            f"residue length : {batch.scheme.residue_idx.shape[1]} \
+                   atom length : {batch.structure.atom_pos.shape[1]}",
+        )
+
+        batch = batch.duplicate(client.config.experiment.eval_sample_num)
+        output = client.inference(
+            batch,
+            timesteps=client.config.experiment.eval_timesteps,
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
         )
 
         result_dict = client.test_inference_quality(
@@ -405,8 +683,12 @@ def validate(
         batch_to_cif(
             batch,
             output.atom_pos_pred,
+<<<<<<< HEAD
 
             Path(f"outputs/atom_token_fingerprint_config2/{batch.name[0]}_pred.cif"),
+=======
+            Path(f"outputs/miniworld_v1.0.0/{batch.name[0]}_pred.cif"),
+>>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
         )
         click.echo(
             f"result for {batch.name[0]}: "

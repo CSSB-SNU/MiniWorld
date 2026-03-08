@@ -1,0 +1,5 @@
+git submodule update --init --recursive
+curl -fsSL https://pixi.sh/install.sh | bash
+pixi install
+pixi add libstdcxx-ng
+pixi add cxx-compiler

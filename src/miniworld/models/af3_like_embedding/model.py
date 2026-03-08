@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 
 import torch
 from pydantic import BaseModel
-from team_gm.modules import DiffusionTransformer, MSAModule, Pairformer
+from team_gm.modules import DiffusionTransformer, Pairformer
+from miniworld.sh.msa_module import MSAModule
 from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
