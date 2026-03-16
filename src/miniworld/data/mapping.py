@@ -242,34 +242,43 @@ class BaseResidueView:
 class ProteinView(BaseResidueView):
     """Mapping view for protein amino acids."""
 
-    def _map_single(self, aa: str) -> int:
-        if aa == "-":
+    def _map_single(self, residue: str) -> int:
+        if residue == "-":
             return self.GAP_INDEX
-        return self._table.AA2NUM.get(aa, self._table.AA_UNKNOWN)
+        return self._table.AA2NUM.get(residue, self._table.AA_UNKNOWN)
 
 
 class RNAView(BaseResidueView):
     """Mapping view for RNA nucleotides."""
 
-    def _map_single(self, base: str) -> int:
-        if base == "-":
+    def _map_single(self, residue: str) -> int:
+        if residue == "-":
             return self.GAP_INDEX
-        return self._table.RNA2NUM.get(base, self._table.RNA_UNKNOWN)
+        return self._table.RNA2NUM.get(residue, self._table.RNA_UNKNOWN)
 
 
 class DNAView(BaseResidueView):
     """Mapping view for DNA nucleotides."""
 
-    def _map_single(self, base: str) -> int:
-        if base == "-":
+    def _map_single(self, residue: str) -> int:
+        if residue == "-":
             return self.GAP_INDEX
-        return self._table.DNA2NUM.get(base, self._table.DNA_UNKNOWN)
+        return self._table.DNA2NUM.get(residue, self._table.DNA_UNKNOWN)
+
+
+class NAView(BaseResidueView):
+    """Mapping view for non-specific nucleic acids (treating RNA and DNA as the same)."""
+
+    def _map_single(self, residue: str) -> int:
+        if residue == "-":
+            return self.GAP_INDEX
+        return self._table.NA2NUM.get(residue, self._table.NA_UNKNOWN)
 
 
 class LigandView(BaseResidueView):
     """Mapping view for ligands or non-polymeric residues."""
 
-    def _map_single(self, _: str) -> int:
+    def _map_single(self, residue: str) -> int:  # noqa: ARG002
         return self._table.LIGAND_INDEX
 
 
@@ -317,8 +326,29 @@ class ResidueMapping:
     RNA_UNKNOWN: ClassVar[int] = 25
 
     # --- DNA constants ---
-    DNA2NUM: ClassVar[dict[str, int]] = {"A": 26, "T": 27, "G": 28, "C": 29}
+    DNA2NUM: ClassVar[dict[str, int]] = {
+        "A": 26,
+        "T": 27,
+        "G": 28,
+        "C": 29,
+        "DA": 26,
+        "DT": 27,
+        "DG": 28,
+        "DC": 29,
+    }
     DNA_UNKNOWN: ClassVar[int] = 30
+
+    NA2NUM: ClassVar[dict[str, int]] = {
+        "A": 21,
+        "U": 22,
+        "G": 23,
+        "C": 24,
+        "DA": 26,
+        "DT": 27,
+        "DG": 28,
+        "DC": 29,
+    }
+    NA_UNKNOWN: ClassVar[int] = 20  # treat unknown nucleotides as ligand
 
     # --- Special tokens ---
     LIGAND_INDEX: ClassVar[int] = 20
@@ -330,6 +360,7 @@ class ResidueMapping:
         self.protein = ProteinView(self)
         self.rna = RNAView(self)
         self.dna = DNAView(self)
+        self.na = NAView(self)  # NA view can be used for both RNA and DNA
         self.ligand = LigandView(self)
 
     def get_view(self, polymer_type: MoleculeType) -> BaseResidueView:  # noqa: PLR0911
@@ -346,7 +377,7 @@ class ResidueMapping:
             case MoleculeType.DNA:
                 return self.dna
             case MoleculeType.NA:
-                return self.rna
+                return self.na
             case _:
                 return self.ligand
 
@@ -363,7 +394,7 @@ class EntityMapping:
         if isinstance(entities, str):
             entities = [entities]
         return np.array(
-            [self._entity_tag_to_idx.get(e, MoleculeType.LIGAND) for e in entities]
+            [self._entity_tag_to_idx.get(e, MoleculeType.LIGAND) for e in entities],
         )
 
     def idx_to_type(self, indices: Sequence[int] | np.ndarray) -> np.ndarray:
@@ -371,5 +402,5 @@ class EntityMapping:
         if isinstance(indices, int):
             indices = [indices]
         return np.array(
-            [self._entity_idx_to_type.get(i, MoleculeType.LIGAND) for i in indices]
+            [self._entity_idx_to_type.get(i, MoleculeType.LIGAND) for i in indices],
         )

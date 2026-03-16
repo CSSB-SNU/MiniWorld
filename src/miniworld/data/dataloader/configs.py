@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -16,6 +17,10 @@ class CropConfig(BaseModel):
     atom_crop_length: int = 4096
     monomer_only: bool = False
     remain_invalid_tokens: bool = False
+
+    bucket_msa_size: int = 128
+    bucket_token_size: int = 128
+    bucket_atom_size: int = 1024
 
 
 class EdgeWeightConfig(BaseModel):
@@ -43,6 +48,7 @@ class MSAConfig(BaseModel):
 
     n_samples: int = 4
     max_msa_depth: int = 512
+    missing_policy: Literal["gap", "query"] = "gap"
 
 
 class MultistateConfig(BaseModel):

@@ -1,27 +1,20 @@
+from __future__ import annotations
+
 import random
 from contextlib import ExitStack
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-import numpy as np
 import torch
-from jaxtyping import Bool, Float
 from pydantic import BaseModel
 from team_gm.modules import DiffusionTransformer, MSAModule, Pairformer
 from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
 )
-from team_gm.utils.precision_manager import PrecisionConfig
 from torch import nn
 
-from miniworld.configs import SharedConfig
-from miniworld.data.features.batch_edge_backprop import (
-    MSAFeatures,
-    ReferenceFeatures,
-    SchemeFeatures,
-    SequenceFeatures,
-    StructureFeatures,
-)
+from miniworld.configs import SharedConfig  # noqa: TC001
 from miniworld.modules.diffusion_module import (
     DiffusionConditioning,
     DiffusionModule,
@@ -29,6 +22,19 @@ from miniworld.modules.diffusion_module import (
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.msa_util import init_msa, init_token_single_msa
+from miniworld.utils.precision_manager import PrecisionConfig  # noqa: TC001
+
+if TYPE_CHECKING:
+    import numpy as np
+    from jaxtyping import Bool, Float
+
+    from miniworld.data.features.batch_edge_backprop import (
+        MSAFeatures,
+        ReferenceFeatures,
+        SchemeFeatures,
+        SequenceFeatures,
+        StructureFeatures,
+    )
 
 
 class AF3LikeModel(nn.Module):
@@ -53,8 +59,8 @@ class AF3LikeModel(nn.Module):
 
         shared: SharedConfig
         input_feat_embbeder: DiffusionTransformer.Config
-        trunk: "AF3LikeModel.TrunkConfig"
-        diffusion: "AF3LikeModel.DiffusionConfig"
+        trunk: AF3LikeModel.TrunkConfig
+        diffusion: AF3LikeModel.DiffusionConfig
         precision: PrecisionConfig
 
     def __init__(self, config: Config) -> None:
@@ -147,7 +153,7 @@ class AF3LikeModel(nn.Module):
                 if i_cycle < n_recycle - 1:
                     stack.enter_context(torch.no_grad())
                     stack.enter_context(torch.inference_mode())
-                msa_feat = init_msa(
+                msa_feat, msa_mask = init_msa(
                     msa,
                     recycle_idx=i_cycle,
                     num_res_class=self.config.shared.num_res_class,
@@ -156,6 +162,7 @@ class AF3LikeModel(nn.Module):
 
                 token_pair = token_pair + self.msa_module(
                     msa_feat,
+                    msa_mask,
                     token_pair,
                     token_single_input,
                     token_mask,

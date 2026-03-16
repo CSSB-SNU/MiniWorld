@@ -71,6 +71,7 @@ class MSAFeatures(BaseBatch):
     """MSA features."""
 
     aligned_sequences: Int[torch.Tensor, "B N_sampled N_msa L_token"]
+    msa_mask: Bool[torch.Tensor, "B N_sampled N_msa L_token"]
     has_deletion: Int[torch.Tensor, "B N_sampled N_msa L_token"]
     deletion_value: Float[torch.Tensor, "B N_sampled N_msa L_token"]
     profile: Float[torch.Tensor, "B L_token d_profile"]

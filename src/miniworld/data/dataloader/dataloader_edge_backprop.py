@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import functools
 import math
 import random
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
@@ -251,7 +253,11 @@ class AdaptiveEdgeSampler(DistributedSampler):
             yield int(torch.searchsorted(cdf, r).item())
 
 
-def make_batch(  # noqa: PLR0915
+# def extract_token_bond(cifmol: CIFMolAttached) -> np.ndarray:
+#     src, dst = cifmol.atoms.bond_type.src, cifmol.atoms.bond_type.dst
+
+
+def make_feature(  # noqa: PLR0915
     cifmol: CIFMolAttached,
     msa: MSAFeatures,
     edge_index: list[int],
@@ -394,6 +400,64 @@ def make_batch(  # noqa: PLR0915
         scheme,
         chain,
     )
+
+
+def _ceil_to_multiple(value: int, multiple: int) -> int:
+    return ((value + multiple - 1) // multiple) * multiple
+
+
+def _bucketed_collate(
+    batch_list: list[Batch],
+    bucket_msa_size: int | None = None,
+    bucket_token_multiple: int | None = None,
+    bucket_atom_multiple: int | None = None,
+) -> Batch:
+    """Collate with shape bucketing for torch.compile cache efficiency.
+
+    Collates the batch normally, then pads dimensions to bucket boundaries by
+    collating with a dummy empty batch of the bucketed size and discarding it.
+    """
+    batch = Batch.collate_fn(batch_list)
+
+    if bucket_token_multiple is None and bucket_atom_multiple is None:
+        return batch
+
+    n_msa = batch.msa_number
+    msa_depth = batch.msa_depth
+    n_tokens = batch.token_length
+    n_atoms = batch.atom_length
+
+    bucketed_msa = (
+        _ceil_to_multiple(msa_depth, bucket_msa_size) if bucket_msa_size else msa_depth
+    )
+
+    bucketed_tokens = (
+        _ceil_to_multiple(n_tokens, bucket_token_multiple)
+        if bucket_token_multiple
+        else n_tokens
+    )
+    bucketed_atoms = (
+        _ceil_to_multiple(n_atoms, bucket_atom_multiple)
+        if bucket_atom_multiple
+        else n_atoms
+    )
+
+    if (
+        bucket_msa_size
+        and bucketed_msa == n_msa
+        and bucketed_tokens == n_tokens
+        and bucketed_atoms == n_atoms
+    ):
+        return batch
+
+    dummy = Batch.empty(
+        n_msa=n_msa,
+        msa_depth=bucketed_msa,
+        n_tokens=bucketed_tokens,
+        n_atoms=bucketed_atoms,
+    )
+    padded = Batch.collate_fn([batch, dummy])
+    return padded[0 : batch.batch_size]
 
 
 class BioMolData(torch.utils.data.Dataset):
@@ -563,6 +627,7 @@ class BioMolData(torch.utils.data.Dataset):
             cifmol=cifmol,
             chain_id_to_crop_indices=chain_id_to_crop_indices,  # pyright: ignore[reportPossiblyUnboundVariable]
             env_path=self.config.DB_config.a3m_db_path,
+            missing_policy=self.config.msa_config.missing_policy,
         )
         msa = sample_msa(
             msa=complex_msa,
@@ -570,7 +635,7 @@ class BioMolData(torch.utils.data.Dataset):
             max_msa_depth=self.config.msa_config.max_msa_depth,
         )
 
-        sequence, structure, reference, scheme, chain = make_batch(
+        sequence, structure, reference, scheme, chain = make_feature(
             cifmol=cifmol,
             msa=msa,
             edge_index=edge_index,
@@ -604,6 +669,8 @@ class BioMolData(torch.utils.data.Dataset):
         drop_last: bool = False,
         num_workers: int = 0,
         use_adaptive_sampler: bool = True,  # train only
+        bucket_token_multiple: int | None = None,
+        bucket_atom_multiple: int | None = None,
         **kwargs: object,
     ) -> DataLoader:
         """Create a distributed DataLoader with AdaptiveEdgeSampler."""
@@ -643,7 +710,79 @@ class BioMolData(torch.utils.data.Dataset):
             "num_workers": num_workers,
             "pin_memory": False,
             "multiprocessing_context": ("spawn" if num_workers > 0 else None),
-            "collate_fn": Batch.collate_fn,
+            "collate_fn": functools.partial(
+                _bucketed_collate,
+                bucket_token_multiple=bucket_token_multiple,
+                bucket_atom_multiple=bucket_atom_multiple,
+            ),
         }
         params.update(kwargs)
         return DataLoader(self, **params)
+
+
+if __name__ == "__main__":
+    # test dataloader
+    config = BioMolData.BioMolConfig(
+        crop_config=CropConfig(
+            residue_crop_length=512,
+            atom_crop_length=4096,
+            contiguous_prob=0.0,
+            spatial_prob=0.0,
+            interface_prob=1.0,
+            interface_simple_prob=0.0,
+            remain_invalid_tokens=False,
+        ),
+        msa_config=MSAConfig(
+            n_samples=4,
+            max_msa_depth=256,
+            missing_policy="query",
+        ),
+        DB_config=BioMolDBConfig(
+            cif_db_path=Path(
+                "/home/psk6950/data//BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb",
+            ),
+            a3m_db_path=Path("/home/psk6950/data/BioMolDBv2_2024Oct21/slim_a3m.lmdb"),
+            edge_id_to_cif_ids_path=(
+                Path(
+                    "/home/psk6950/data/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/train_edges.tsv",
+                )
+            ),
+            load_all_msa=False,  # set True to load all MSAs into memory (faster but more RAM)
+        ),
+        edge_weight_config=EdgeWeightConfig(
+            eta=0.2,
+            decay=0.9,
+            temperature=1.0,
+            init_score=0.5,
+            init_freq=1.0,
+            use_freq=True,
+            device="cpu",
+        ),
+    )
+    dataset = BioMolData(config)
+    dataloader = dataset.create_ddp_dataloader(
+        rank=0,
+        world_size=1,
+        shuffle=True,
+        seed=42,
+        drop_last=False,
+        num_workers=0,
+        use_adaptive_sampler=True,
+        bucket_token_multiple=128,
+        bucket_atom_multiple=1024,
+    )
+
+    # wo dataloader
+    # test data 1hcu
+    cif_id = "100d_1_1_._(A_1)_(B_1)"
+    data = dataset.get_item_by_id(cif_id=cif_id)
+    breakpoint()
+
+    # for _ in range(10):
+    #     idx = random.randint(0, len(dataset) - 1)
+    #     batch = dataset[idx]
+
+    # test dataloader    for i, batch in enumerate(dataloader):
+
+    for i, batch in enumerate(dataloader):
+        pass

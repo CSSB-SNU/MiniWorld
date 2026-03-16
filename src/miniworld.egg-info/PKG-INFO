@@ -11,6 +11,5 @@ Requires-Dist: einops<0.9,>=0.8.1
 Requires-Dist: jaxtyping<0.4,>=0.3.2
 Requires-Dist: beartype<0.22,>=0.21.0
 Requires-Dist: scipy<2,>=1.15.3
-Requires-Dist: matplotlib<4,>=3.10.7
 Requires-Dist: lightning<3,>=2.5.6
 Requires-Dist: biomol>=1.0.0

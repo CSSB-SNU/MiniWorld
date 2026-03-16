@@ -1,5 +1,5 @@
 import torch
-from jaxtyping import Float
+from jaxtyping import Bool, Float
 
 from miniworld.data.features.batch_edge_backprop import MSAFeatures, SequenceFeatures
 
@@ -9,8 +9,9 @@ def init_msa(
     msa: MSAFeatures,
     recycle_idx: int,
     num_res_class: int = 32,
-) -> Float[torch.Tensor, "B N L C"]:
+) -> tuple[Float[torch.Tensor, "B N L C"], Bool[torch.Tensor, "B N L"]]:
     """Initialize MSA features for a given recycle index."""
+    msa_mask = msa.msa_mask[:, recycle_idx]
     msa_sequences = msa.aligned_sequences[:, recycle_idx]
     msa_has_deletion = msa.has_deletion[:, recycle_idx]
     msa_deletion_value = msa.deletion_value[:, recycle_idx].float()
@@ -27,7 +28,8 @@ def init_msa(
         ],
         dim=-1,
     )
-    return msa_feat.float()
+    msa_feat = msa_feat * msa_mask.unsqueeze(-1)
+    return msa_feat.float(), msa_mask.bool()
 
 
 @torch.no_grad()

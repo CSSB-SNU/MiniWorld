@@ -59,7 +59,9 @@ class PrecisionConfig(BaseModel):
 
     @field_validator("precision_map", mode="before")
     @classmethod
-    def _build_precision_map(cls, v: dict[str, dict] | dict[str, DtypeConfig] | DictConfig) -> dict[str, DtypeConfig]:
+    def _build_precision_map(
+        cls, v: dict[str, dict] | dict[str, DtypeConfig] | DictConfig
+    ) -> dict[str, DtypeConfig]:
         # 1) support OmegaConf DictConfig
         if isinstance(v, DictConfig):
             v = OmegaConf.to_container(v, resolve=True)
@@ -75,12 +77,11 @@ class PrecisionConfig(BaseModel):
                 raise TypeError(msg)
         return new_map
 
+
 def cast_data(data: Any, dtype: torch.dtype) -> Any:
     """Recursively cast data to the given dtype."""
     if isinstance(data, torch.Tensor):
-        if (
-            data.dtype not in (torch.float32, torch.bfloat16, torch.float16)
-        ):
+        if data.dtype not in (torch.float32, torch.bfloat16, torch.float16):
             return data  # keep bool or integer tensors as-is
         return data.to(dtype)
     if isinstance(data, list | tuple):
@@ -89,13 +90,19 @@ def cast_data(data: Any, dtype: torch.dtype) -> Any:
         return {k: cast_data(v, dtype) for k, v in data.items()}
     return data
 
-def _wrap_with_casts(module_cls: type[ModuleT], op_dtype: str, out_dtype: str) -> type[ModuleT]:
+
+def _wrap_with_casts(
+    module_cls: type[ModuleT], op_dtype: str, out_dtype: str
+) -> type[ModuleT]:
     """Return a subclass of module_cls that casts inputs/outputs to desired dtypes."""
+
     class Wrapped(module_cls):
-        def forward(self, *args: Any, **kwargs: Any) -> torch.Tensor | list | tuple | dict:
+        def forward(
+            self, *args: Any, **kwargs: Any
+        ) -> torch.Tensor | list | tuple | dict:
             """Forward with casts to op_dtype and out_dtype."""
             # 1) autocast ops
-            device_type = args[0].device.type
+            device_type = "cuda" if torch.cuda.is_available() else "cpu"
 
             op_dtype_torch = convert_dtype(op_dtype)
             out_dtype_torch = convert_dtype(out_dtype)
@@ -104,7 +111,9 @@ def _wrap_with_casts(module_cls: type[ModuleT], op_dtype: str, out_dtype: str) -
             kwargs = cast_data(kwargs, op_dtype_torch)
 
             if op_dtype_torch != torch.float32:
-                with autocast(device_type=device_type, enabled=True, dtype=op_dtype_torch):
+                with autocast(
+                    device_type=device_type, enabled=True, dtype=op_dtype_torch
+                ):
                     out = super().forward(*args, **kwargs)
             else:
                 out = super().forward(*args, **kwargs)
@@ -116,7 +125,9 @@ def _wrap_with_casts(module_cls: type[ModuleT], op_dtype: str, out_dtype: str) -
 
 
 @contextmanager
-def precision_manager(model: nn.Module, precision_config: PrecisionConfig) -> Generator[None, None, None]:
+def precision_manager(
+    model: nn.Module, precision_config: PrecisionConfig
+) -> Generator[None, None, None]:
     """Context manager to temporarily modify module classes for precision management."""
     # record originals
     precision_map = precision_config.precision_map
@@ -128,7 +139,9 @@ def precision_manager(model: nn.Module, precision_config: PrecisionConfig) -> Ge
                 op_dtype = precision_map[modified_name].op_dtype
                 out_dtype = precision_map[modified_name].out_dtype
                 module.__class__ = _wrap_with_casts(
-                    module.__class__, op_dtype, out_dtype,
+                    module.__class__,
+                    op_dtype,
+                    out_dtype,
                 )
     try:
         yield
@@ -136,4 +149,3 @@ def precision_manager(model: nn.Module, precision_config: PrecisionConfig) -> Ge
         # restore
         for module, orig_cls in original_classes.items():
             module.__class__ = orig_cls
-

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import torch
@@ -8,7 +8,7 @@ from biomol.cif import CIFMol
 
 from miniworld.data.features.batch_edge_backprop import MSAFeatures
 from miniworld.data.io import load_a3m
-from miniworld.data.mapping import EntityMapping
+from miniworld.data.mapping import ResidueMapping
 from miniworld.data.mols.cifmol_attached import CIFMolAttached
 from miniworld.data.msa import MSA, ComplexMSA
 
@@ -18,10 +18,35 @@ if TYPE_CHECKING:
 CIFMOL = CIFMol | CIFMolAttached
 
 
+def _get_query_sequence(
+    cifmol: CIFMOL,
+    chain_id: str,
+) -> np.ndarray:
+    rm = ResidueMapping()
+    seq_id = cifmol.chains[cifmol.chains.chain_id == chain_id].seq_id[0].value
+    cropped_seq_can = cifmol.chains[
+        cifmol.chains.chain_id == chain_id
+    ].residues.one_letter_code_can.value
+    molecule_type = seq_id[0]
+    if molecule_type in ["A", "P", "Q"]:
+        return rm.protein.map(cropped_seq_can)
+    if molecule_type == "D":
+        return rm.dna.map(cropped_seq_can)
+    if molecule_type == "R":
+        return rm.rna.map(cropped_seq_can)
+    if molecule_type == "N":
+        cropped_seq = cifmol.chains[
+            cifmol.chains.chain_id == chain_id
+        ].residues.one_letter_code.value
+        return rm.na.map(cropped_seq)
+    return rm.ligand.map(cropped_seq_can)
+
+
 def load_msa(
     cifmol: CIFMOL,
     chain_id_to_crop_indices: dict[str, np.ndarray],
     env_path: Path,
+    missing_policy: Literal["gap", "query"] = "gap",
 ) -> ComplexMSA:
     """Load and crop MSAs for each chain in the cropped cifmol."""
     msa_list: list[MSA] = []
@@ -38,14 +63,10 @@ def load_msa(
         )
         if msa is None:
             # already cropped
-            cropped_seq = cifmol.chains[
-                cifmol.chains.chain_id == chain_id
-            ].residues.one_letter_code_can.value
-            cropped_seq = "".join(cropped_seq)
+            query_seq = _get_query_sequence(cifmol, chain_id)
             msa = MSA.from_query(
-                query=cropped_seq,
+                query=query_seq,
                 seq_id=seq_id,
-                a3m_type="protein",
             )
             msa_list.append(msa)
             continue
@@ -54,6 +75,7 @@ def load_msa(
 
     return ComplexMSA(
         MSAs=msa_list,
+        missing_policy=missing_policy,
     )
 
 
@@ -79,6 +101,7 @@ def sample_msa(
         msa_sequence_sampled,
         axis=0,
     )  # (N_sample, N_seq, L)
+    msa_mask = np.ones_like(msa_sequence_sampled, dtype=bool)  # (N_sample, N_seq, L)
     msa_has_deletion_sampled = np.stack(msa_has_deletion_sampled, axis=0)
     msa_deletion_value_sampled = np.stack(
         msa_deletion_value_sampled,
@@ -87,6 +110,7 @@ def sample_msa(
 
     return MSAFeatures.from_sample(
         aligned_sequences=torch.from_numpy(msa_sequence_sampled),
+        msa_mask=torch.from_numpy(msa_mask),
         has_deletion=torch.from_numpy(msa_has_deletion_sampled).int(),
         deletion_value=torch.from_numpy(msa_deletion_value_sampled),
         profile=torch.from_numpy(msa_profile),
@@ -95,11 +119,7 @@ def sample_msa(
 
 
 def remove_terminal_oxygen(cifmol: CIFMolAttached) -> CIFMolAttached:
-    # TODO
-    atom_ids = cifmol.atoms.id
-    entity_mapping = EntityMapping()
-    seq_id_list = cifmol.chains.seq_id.value.tolist()
-    entity_id_list = [seq_id[0] for seq_id in seq_id_list]
+    """Remove terminal oxygen atoms from the cifmol based on molecule type."""
     _entity_tag_to_idx_mapping = {
         "A": "OXT",  # MoleculeType.ANTIBODY,
         "P": "OXT",  # MoleculeType.PROTEIN,

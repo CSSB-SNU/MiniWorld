@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from typing import Literal
 
 import numpy as np
 from biomol.cif import CIFMol
@@ -14,22 +15,31 @@ from miniworld.data.mols.cifmol_attached import CIFMolAttached
 CIFMOL = CIFMol | CIFMolAttached
 GAP_IDX = ResidueMapping().protein.GAP_INDEX
 
+
 class MSA:
     """Multiple Sequence Alignment (MSA) class."""
 
     def __init__(
         self,
-        seq_id: str|None,
+        seq_id: str | None,
         msa_residue_container: FeatureContainer,
         msa_chain_container: FeatureContainer,
-    )-> None:
+    ) -> None:
         self.seq_id = seq_id
-        self.query_sequence: ndarray = msa_residue_container["query_sequence"].value # (L, )
-        self.sequences: ndarray = msa_residue_container["sequences"].value.T # (L, N_seqs)
-        self.deletions: ndarray = msa_residue_container["deletions"].value.T # (L, N_seqs)
-        self.deletion_mean: ndarray = msa_residue_container["deletion_mean"].value # (L, )
-        self.profile: ndarray = msa_residue_container["profile"].value # (L, 32)
-        self.species: ndarray = msa_chain_container["species"].value # (N_seqs, )
+        self.query_sequence: ndarray = msa_residue_container[
+            "query_sequence"
+        ].value  # (L, )
+        self.sequences: ndarray = msa_residue_container[
+            "sequences"
+        ].value.T  # (L, N_seqs)
+        self.deletions: ndarray = msa_residue_container[
+            "deletions"
+        ].value.T  # (L, N_seqs)
+        self.deletion_mean: ndarray = msa_residue_container[
+            "deletion_mean"
+        ].value  # (L, )
+        self.profile: ndarray = msa_residue_container["profile"].value  # (L, 32)
+        self.species: ndarray = msa_chain_container["species"].value  # (N_seqs, )
         self.species_to_idx = {
             species: np.where(self.species == species)[0].tolist()
             for species in set(self.species)
@@ -40,7 +50,11 @@ class MSA:
         self.shape = (self.num_seqs, self.length)
 
     @classmethod
-    def from_query(cls, query: str | list[str] | np.ndarray, seq_id: str | None = None, a3m_type: str = "protein") -> MSA:
+    def from_query(
+        cls,
+        query: np.ndarray,
+        seq_id: str | None = None,
+    ) -> MSA:
         """Create an MSA instance from a single query sequence if there is no aligned sequences."""
         if len(query) == 0:
             msg = "query must be a non-empty string or list or ndarray"
@@ -48,48 +62,33 @@ class MSA:
         rm = ResidueMapping()
         max_idx = rm.MAX_INDEX
 
-        kind = a3m_type.lower()
-        if kind == "protein":
-            view = rm.protein
-        elif kind == "rna":
-            view = rm.rna
-        else:
-            msg = f"Unsupported a3m_type: {a3m_type}"
-            raise ValueError(msg)
-
-        if isinstance(query, str):
-            query_sequence = np.array(list(query))
-        elif isinstance(query, list):
-            query_sequence = np.array(query)
-        else:
-            query_sequence = query
-        query_sequence = view.map(query_sequence) # (L,)
-        sequences = query_sequence[:, np.newaxis] # (L, 1)
-        deletions = np.zeros_like(sequences, dtype=np.uint8) # (L, 1)
-        deletion_mean = np.zeros((len(query_sequence),), dtype=np.float32) # (L,)
-        profile = np.eye(max_idx + 1, dtype=np.int32)[
-            sequences
-        ]  # for now, protein only
+        sequences = query[:, np.newaxis]  # (L, 1)
+        deletions = np.zeros_like(sequences, dtype=np.uint8)  # (L, 1)
+        deletion_mean = np.zeros((len(query),), dtype=np.float32)  # (L,)
+        profile = np.eye(max_idx + 1, dtype=np.int32)[sequences]  # for now, protein only
         profile = np.mean(profile, axis=1).astype(np.float32)
 
-        query_sequence = NodeFeature(value=query_sequence)
+        query_sequence = NodeFeature(value=query)
         sequences = NodeFeature(value=sequences)
         deletions = NodeFeature(value=deletions)
         deletion_mean = NodeFeature(value=deletion_mean)
         profile = NodeFeature(value=profile)
         species = NodeFeature(value=np.array(["query"], dtype=object))  # (1,)
 
-
-        msa_residue_container = FeatureContainer({
-            "query_sequence": query_sequence,
-            "sequences": sequences,
-            "deletions": deletions,
-            "deletion_mean": deletion_mean,
-            "profile": profile,
-        })
-        msa_chain_container = FeatureContainer({
-            "species": species,
-        })
+        msa_residue_container = FeatureContainer(
+            {
+                "query_sequence": query_sequence,
+                "sequences": sequences,
+                "deletions": deletions,
+                "deletion_mean": deletion_mean,
+                "profile": profile,
+            },
+        )
+        msa_chain_container = FeatureContainer(
+            {
+                "species": species,
+            },
+        )
 
         return cls(
             seq_id=seq_id,
@@ -126,15 +125,19 @@ class MSA:
         sequences = NodeFeature(value=msa.sequences[:, crop_idx].T)
         deletions = NodeFeature(value=msa.deletions[:, crop_idx].T)
 
-        msa_residue_container = FeatureContainer({
-            "query_sequence": query_sequence,
-            "sequences": sequences,
-            "deletions": deletions,
-            "deletion_mean": deletion_mean,
-            "profile": profile,
-        })
+        msa_residue_container = FeatureContainer(
+            {
+                "query_sequence": query_sequence,
+                "sequences": sequences,
+                "deletions": deletions,
+                "deletion_mean": deletion_mean,
+                "profile": profile,
+            },
+        )
         # 2. chain-level features (unchanged)
-        msa_chain_container = FeatureContainer({"species": NodeFeature(value=msa.species.copy())})
+        msa_chain_container = FeatureContainer(
+            {"species": NodeFeature(value=msa.species.copy())},
+        )
 
         # 3. Create a new instance
         return cls(
@@ -142,7 +145,6 @@ class MSA:
             msa_residue_container=msa_residue_container,
             msa_chain_container=msa_chain_container,
         )
-
 
     def get_query_sequence(self) -> ndarray:
         """Return the query sequence."""
@@ -163,15 +165,17 @@ class ComplexMSA:
     def __init__(
         self,
         MSAs: list[MSA],
+        missing_policy: Literal["gap", "query"] = "gap",
         max_MSA_depth: int = 16384,
         max_paired_depth: int = 8192,  # including query
-    )-> None:
+    ) -> None:
         """Pair and combine multiple MSAs.
 
         Pairing is done based on:
         1. same rep_ID
         2. species_ID.
         """
+        self.missing_policy = missing_policy
         self.num_of_MSAs = len(MSAs)
         self.max_MSA_depth = max_MSA_depth
         self.max_paired_depth = max_paired_depth
@@ -203,15 +207,15 @@ class ComplexMSA:
         all_species.discard("N/A")
 
         species_to_count = Counter(
-            species
-            for s_to_idx in species_to_idx_dict.values()
-            for species in s_to_idx
+            species for s_to_idx in species_to_idx_dict.values() for species in s_to_idx
         )
         species_to_count = dict(species_to_count)
         species_to_count.pop("N/A", None)
 
         sorted_species = sorted(
-            species_to_count.items(), key=lambda x: x[1], reverse=True,
+            species_to_count.items(),
+            key=lambda x: x[1],
+            reverse=True,
         )
         sorted_species = [species for species, count in sorted_species]
 
@@ -246,7 +250,9 @@ class ComplexMSA:
                 break
 
         msa_indices = {
-            key: np.array(indices, dtype=int) if len(indices) > 0 else np.empty((0,), dtype=int)
+            key: np.array(indices, dtype=int)
+            if len(indices) > 0
+            else np.empty((0,), dtype=int)
             for key, indices in msa_indices_list.items()
         }
 
@@ -254,7 +260,10 @@ class ComplexMSA:
 
         # sort by sum of indices (row)  (-1을 큰 값으로 치환해서 뒤로 밀기)
         large = 1 << 30
-        mat = np.stack([np.where(arr == -1, large, arr) for arr in msa_indices.values()], axis=0)
+        mat = np.stack(
+            [np.where(arr == -1, large, arr) for arr in msa_indices.values()],
+            axis=0,
+        )
         sum_of_indices = np.sum(mat, axis=0)
         sorted_indices = np.argsort(sum_of_indices)
         num_of_seqs = min(len(sorted_indices), max_paired_depth)
@@ -267,8 +276,7 @@ class ComplexMSA:
 
         return msa_indices, paired_species, num_of_seqs
 
-
-    def _prepare_MSA(self, _MSAs: list[MSA]) -> None:  # noqa: PLR0915
+    def _prepare_MSA(self, _MSAs: list[MSA]) -> None:  # noqa: C901, PLR0912, PLR0915
         MSAs: dict[int, MSA] = dict(enumerate(_MSAs))
         max_msa_depth = self.max_MSA_depth
 
@@ -311,26 +319,41 @@ class ComplexMSA:
         final_has_deletion = []
         filtered_paired_num_of_seqs = paired_num_of_seqs
 
+        query_sequence = None
         for ii in range(max_msa_depth):
             seqs = []
             deletion = []
+            indices = []
             for key, values in MSAs.items():
                 idx = final_msa_indices[key][ii]
+                indices.append(idx)
                 msa = values
                 if idx == -1:
-                    seqs.append(np.full((msa.length,), GAP_IDX))
+                    if self.missing_policy == "gap":
+                        seqs.append(np.full((msa.length,), GAP_IDX))
+                    elif self.missing_policy == "query":
+                        seqs.append(msa.get_query_sequence())
+                    else:
+                        msg = f"Unsupported missing_policy: {self.missing_policy}"
+                        raise ValueError(msg)
                     deletion.append(np.zeros(msa.length))
                 else:
                     # (L, N_seqs) -> 열 인덱싱으로 1D(L,) 가져오기
                     seqs.append(msa.sequences[idx])
                     deletion.append(msa.deletions[idx])
-            # if all seqs are gaps, skip
-            if all((seq == GAP_IDX).all() for seq in seqs):
+            seqs = np.concatenate(seqs)
+            if query_sequence is None:
+                query_sequence = seqs
+            # 1. if all sequences are missing, skip this sequence (do not add to final_sequence)
+            # 2. if all sequences are identical to query sequence, skip this sequence (do not add to final_sequence)
+            elif all(idx == -1 for idx in indices) and np.array_equal(
+                seqs,
+                query_sequence,
+            ):
                 if ii < paired_num_of_seqs:
                     filtered_paired_num_of_seqs -= 1
                 continue
 
-            seqs = np.concatenate(seqs)
             deletion = np.concatenate(deletion)
             final_sequence.append(seqs)
             has_deletion = np.array(deletion > 0, dtype=np.uint8)
@@ -354,7 +377,8 @@ class ComplexMSA:
         # concat profile, deletion_mean
         profile = np.concatenate([msa.profile for msa in MSAs.values()], axis=0)
         deletion_mean = np.concatenate(
-            [msa.deletion_mean for msa in MSAs.values()], axis=0,
+            [msa.deletion_mean for msa in MSAs.values()],
+            axis=0,
         )
 
         self.msa_indices = final_msa_indices
@@ -388,7 +412,9 @@ class ComplexMSA:
 
         query = np.array([0])
         paired_sampled = np.random.choice(
-            self.num_of_paired, sampled[0] - 1, replace=False,
+            self.num_of_paired,
+            sampled[0] - 1,
+            replace=False,
         )  # -1 for query
 
         if sampled[1] > 0:
@@ -412,4 +438,3 @@ class ComplexMSA:
             sampled_has_deletion,
             sampled_deletion_value,
         )
-

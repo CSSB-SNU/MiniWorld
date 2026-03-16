@@ -1,28 +1,17 @@
+from __future__ import annotations
+
 import random
-from collections.abc import Generator
-from typing import Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 import torch
-from jaxtyping import Bool, Float
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
 from team_gm import BaseClient
 from team_gm.core.callbacks import ModelEMA
-from team_gm.utils.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
-from team_gm.utils.precision_manager import precision_manager
-from torch.utils.data import DataLoader
 
-from miniworld.data.dataloader.dataloader_edge_backprop import (
-    AdaptiveEdgeSampler,
-    BioMolDBConfig,
-    CropConfig,
-    EdgeWeightConfig,
-    MSAConfig,
-)
-from miniworld.data.features.batch_edge_backprop import (
-    Batch,
-)
+from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
+from miniworld.diffusion.configs import EDMDiffuserConfig  # noqa: TC001
 from miniworld.loss import metrics  # , losses
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
@@ -32,31 +21,31 @@ from miniworld.models.af3_like.model import (
     AF3LikeModel,
     AF3LikeModelWrapper,
 )
+from miniworld.utils.precision_manager import precision_manager
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from jaxtyping import Bool, Float
+    from torch.utils.data import DataLoader
+
+    from miniworld.data.dataloader.dataloader_edge_backprop import (
+        AdaptiveEdgeSampler,
+    )
+    from miniworld.data.features.batch_edge_backprop import (
+        Batch,
+    )
 
 
 class AF3LikeClient(BaseClient):
     """Client for training and inference of AF3Like model."""
 
-    class DataConfig(BaseModel):
-        """Configuration for data loading."""
-
-        train_db: BioMolDBConfig
-        valid_db: BioMolDBConfig
-        edge_weight: EdgeWeightConfig
-        crop: CropConfig
-        msa: MSAConfig
-
-    class LossConfig(BaseModel):
-        """Configuration for loss weights."""
-
-        diffusion_loss: float = 4.0
-        distogram_loss: float = 0.03
-
-    class ExperimentsConfig(BaseModel):
-        """Configuration for experiments."""
+    class TrainConfig(BaseModel):
+        """Configuration for trains."""
 
         comment: str = "default"
         name: str = "AF3Like-PSK-2"
+        run_dir: str = "runs/af3like"
         overfitting: bool = False
         overfitting_dir: str | None = None  # Directory for overfitting mode
         train_item: int = 25600
@@ -72,6 +61,7 @@ class AF3LikeClient(BaseClient):
         decay_factor: float = 0.95
         compile: bool = False
         num_augment: int = 8
+        save_freq: int = 5
         eval_freq: int = 10
         eval_sample_num: int = 5
         eval_timesteps: int = 100
@@ -87,31 +77,32 @@ class AF3LikeClient(BaseClient):
         long_range_min_seq_sep: int | None = None
         long_range_sigmoid_k: float | None = None
         long_range_sigmoid_amp: float = 3.0
+        verbose: bool = False
+        use_wandb: bool = False
+        wandb_project: str = "AF3Like"
 
-    class DiffuserConfig(BaseModel):
-        """Configuration for the diffuser."""
+    class LossConfig(BaseModel):
+        """Configuration for loss weights."""
 
-        seed: int = 0
-        scheduler: EDMScheduler.EDMSchedulerConfig
-        method: Literal["AF3", "EDM"] = "AF3"
+        diffusion_loss: float = 4.0
+        distogram_loss: float = 0.03
 
     class Config(BaseModel):
         """Configuration for the AF3Like client."""
 
-        data: "AF3LikeClient.DataConfig"
         model: AF3LikeModel.Config
-        experiment: "AF3LikeClient.ExperimentsConfig"
-        diffuser: "AF3LikeClient.DiffuserConfig"
-        loss: "AF3LikeClient.LossConfig"
+        diffuser: EDMDiffuserConfig
+        train: AF3LikeClient.TrainConfig
+        loss: AF3LikeClient.LossConfig
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self.config = config
-        self.set_seed(config.experiment.seed)
+        self.set_seed(config.train.seed)
         self.register_model(AF3LikeModel(config.model))
 
-        if config.experiment.use_ema:
-            self.add_callback(ModelEMA(config.experiment.ema_decay))
+        if config.train.use_ema:
+            self.add_callback(ModelEMA(config.train.ema_decay))
         diffuser_method = config.diffuser.method
         if diffuser_method == "AF3":
             self.diffusion_scheduler = EDMScheduler(config.diffuser.scheduler)
@@ -143,8 +134,8 @@ class AF3LikeClient(BaseClient):
         batch: Batch,
         x0: Float[torch.Tensor, "... L 3"],
         x_input: Float[torch.Tensor, "... L 3"],
-        t_emb: Float[torch.Tensor, "..."],
-        sigma: Float[torch.Tensor, "..."],
+        t_emb: Float[torch.Tensor, ...],
+        sigma: Float[torch.Tensor, ...],
         x_mask: Bool[torch.Tensor, "... L"] | None = None,
     ) -> tuple[torch.Tensor, dict]:
         """Compute the loss given a noisy batch."""
@@ -189,7 +180,7 @@ class AF3LikeClient(BaseClient):
     def training_step(self, batch: Batch) -> dict[str, float]:
         """Train the model on a batch."""
         with precision_manager(self.model, self.config.model.precision):
-            num_augment = self.config.experiment.num_augment
+            num_augment = self.config.train.num_augment
             x0, x_input, x_mask, t_emb, sigma = self.diffuser.sample(
                 batch.structure.atom_pos,
                 num_augment=num_augment,
@@ -217,8 +208,8 @@ class AF3LikeClient(BaseClient):
         if batch.shape[0] != 1:
             msg = "Batch size for validation must be 1."
             raise ValueError(msg)
-        batch = batch.duplicate(self.config.experiment.eval_sample_num)
-        output = self.inference(batch, timesteps=self.config.experiment.eval_timesteps)
+        batch = batch.duplicate(self.config.train.eval_sample_num)
+        output = self.inference(batch, timesteps=self.config.train.eval_timesteps)
 
         return self.test_inference_quality(
             batch,
@@ -240,8 +231,15 @@ class AF3LikeClient(BaseClient):
         fabric_iter = iter(fabric_dataloader)
         for batch_idx, _batch in enumerate(fabric_iter):
             batch = cast("Batch", _batch)
-            self.call_callbacks("on_train_step_start", batch, batch_idx)
-            loss_dict = self.training_step(batch)
+            if batch_idx % self.gradient_accumulation_steps == 0:
+                self.call_callbacks("on_train_step_start", batch, batch_idx)
+            self.call_callbacks("on_train_batch_start", batch, batch_idx)
+            is_accumulating = (batch_idx + 1) % self.gradient_accumulation_steps != 0
+            with self.fabric.no_backward_sync(
+                self.model,  # pyright: ignore[reportArgumentType]
+                enabled=is_accumulating,
+            ):
+                loss_dict = self.training_step(batch)
             loss = (
                 self.config.loss.diffusion_loss * loss_dict["diffusion_loss"]
                 + self.config.loss.distogram_loss * loss_dict["distogram_loss"]
@@ -251,7 +249,12 @@ class AF3LikeClient(BaseClient):
                 batch.scheme.edge_index,
                 torch.tensor(loss, device=batch.device),
             )
-            is_accumulating = (batch_idx + 1) % self.gradient_accumulation_steps != 0
+            self.call_callbacks(
+                "on_train_batch_end",
+                batch,
+                batch_idx,
+                loss_dict=self.training_step(batch),
+            )
             if not is_accumulating:
                 self._optimizer_step()
             self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
