@@ -69,6 +69,9 @@ class Client(BaseClient):
         long_range_min_seq_sep: int | None = None
         long_range_sigmoid_k: float | None = None
         long_range_sigmoid_amp: float = 3.0
+        verbose: bool = False
+        use_wandb: bool = False
+        wandb_project: str = "AF3Like"
 
         bucket_msa_multiple: int | None = 128
         bucket_token_multiple: int | None = 128

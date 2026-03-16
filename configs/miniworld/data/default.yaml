@@ -27,7 +27,10 @@ crop:
 msa:
   n_samples: 1
   max_msa_depth: 384
+<<<<<<< HEAD
   missing_policy: "query"
+=======
+>>>>>>> 7e28efc (many things)
 
 tokenizer:
   level: "dynamic"

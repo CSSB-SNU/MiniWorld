@@ -31,10 +31,13 @@ ema_decay: 0.999
 bce_pos_weight: 2.0
 long_range_sigmoid_amp: 3.0
 
+<<<<<<< HEAD
 bucket_msa_multiple: 128
 bucket_token_multiple: 128
 bucket_atom_multiple: 1024
 
+=======
+>>>>>>> 7e28efc (many things)
 verbose: True
 use_wandb: True
 wandb_project: "MiniWorld"
