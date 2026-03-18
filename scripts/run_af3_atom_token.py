@@ -21,7 +21,7 @@ from miniworld.data.dataloader.dataloader_atom_token import (
     MSAConfig,
 )
 from miniworld.data.to_cif import batch_to_cif
-from miniworld.models.af3_atom_token_fingerprint import Client
+from miniworld.models.af3_atom_token import Client
 from miniworld.utils import get_step_decay_scheduler_with_warmup, set_seed
 
 # torch.set_float32_matmul_precision("high")  # noqa: ERA001
@@ -46,7 +46,7 @@ def setup_logger(client: Client) -> None:
 
     now = datetime.datetime.now(datetime.timezone.utc)
     file_handler = logging.FileHandler(
-        f"logs/af3_atom_token_fingerprint/af3_atom_token_fingerprint_{now:%Y%m%d_%H%M%S}.log",
+        f"logs/af3_atom_token/af3_atom_token_{now:%Y%m%d_%H%M%S}.log",
     )
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)
@@ -91,14 +91,11 @@ def train(  # noqa: PLR0912, PLR0915
     ckpt_dir: Path,
     seed: int | None,
 ):
-    
     if not config_path and not resume_from_ckpt:
         msg = "You must provide either a config file or a checkpoint file."
         raise ValueError(msg)
     if resume_from_ckpt:
         client = Client.from_checkpoint(resume_from_ckpt)
-        fabric = Fabric()
-        fabric.launch()
         if client.config.experiment.compile:
             client.model.compile()
             client.logger.info("Compiled model")
@@ -116,14 +113,14 @@ def train(  # noqa: PLR0912, PLR0915
         cfg = OmegaConf.load(config_path)
         cfg = Client.Config.model_validate(cfg)
         client = Client(cfg)
-        fabric = Fabric()
-        fabric.launch()
-        
+
         if cfg.experiment.compile:
             client.model.compile()
             client.logger.info("Compiled model")
         config = client.config
 
+    fabric = Fabric()
+    fabric.launch()
 
     if seed is not None:
         set_seed(seed)
@@ -308,34 +305,23 @@ def validate(
         data: ValidateDBConfig
         experiment: ValidateExperimentConfig
 
-    raw_cfg = OmegaConf.load(config)
-    cfg = ValidateConfig.model_validate(raw_cfg)
+    cfg = OmegaConf.load(config)
+    cfg = ValidateConfig.model_validate(cfg)
     if not ckpt:
         msg = "You must provide a checkpoint file."
         raise ValueError(msg)
-    state_dict = torch.load(ckpt, map_location="cpu")
-    ckpt_cfg = Client.Config.model_validate(state_dict["config"])
-    # Validation can override the token embedding path from the runtime config.
-    override_embedding_path = OmegaConf.select(
-        raw_cfg,
-        "model.token_embedding.embedding_path",
-    )
-    if override_embedding_path:
-        ckpt_cfg.model.token_embedding.embedding_path = Path(override_embedding_path)
-    client = Client(ckpt_cfg)
-    client.load_state_dict(state_dict, model_only=True)
+    client = Client.from_checkpoint(ckpt)
     client.model.to("cuda")
     if cfg.experiment.compile:
         client.model.compile()
 
     setup_logger(client)
-
     fabric = Fabric()
     fabric.launch()
 
     world_size = fabric.world_size
     local_rank = fabric.local_rank
-
+    
     client.logger.info(
         "Load pretrain weight: %s (%d epoch)",
         ckpt.name,
@@ -387,24 +373,29 @@ def validate(
         )
 
         batch = batch.duplicate(client.config.experiment.eval_sample_num)
-        output = client.inference(
-            batch,
-            timesteps=client.config.experiment.eval_timesteps,
-        )
-
-        result_dict = client.test_inference_quality(
-            batch,
-            output,
-        )
         batch_to_cif(
             batch,
-            output.atom_pos_pred,
-            Path(f"outputs/atom_token_fingerprint_config2/{batch.name[0]}_pred.cif"),
+            None,
+            Path(f"outputs/ans_config2/{batch.name[0]}_ref.cif"),
         )
-        click.echo(
-            f"result for {batch.name[0]}: "
-            + ", ".join([f"{k}: {v:.4g}" for k, v in result_dict.items()]),
-        )
+        # output = client.inference(
+        #     batch,
+        #     timesteps=client.config.experiment.eval_timesteps,
+        # )
+
+        # result_dict = client.test_inference_quality(
+        #     batch,
+        #     output,
+        # )
+        # batch_to_cif(
+        #     batch,
+        #     output.atom_pos_pred,
+        #     Path(f"outputs/atom_token_config2/{batch.name[0]}_pred.cif"),
+        # )
+        # click.echo(
+        #     f"result for {batch.name[0]}: "
+        #     + ", ".join([f"{k}: {v:.4g}" for k, v in result_dict.items()]),
+        # )
         if ii >= valid_num_item:
             client.call_callbacks("on_validation_epoch_end")
             break

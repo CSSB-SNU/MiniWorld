@@ -58,11 +58,13 @@ def batch_to_cif(  # noqa: PLR0915
     xyz = xyz[0]
     mask = batch.structure.atom_pos_mask[0].bool()
     length = mask.sum().item()
-    atom_to_res = batch.scheme.atom_to_residue_idx_map[0]
-    res_to_asym = batch.scheme.residue_asym_id
-    res_to_entity = batch.scheme.residue_entity_id
-    atom_to_asym = res_to_asym[0, atom_to_res]
-    atom_to_entity = res_to_entity[0, atom_to_res]
+    atom_to_token = batch.scheme.atom_to_token_idx_map[0]
+    token_to_res = batch.scheme.token_residue_idx[0]
+    atom_to_res = token_to_res[atom_to_token]
+    res_to_asym = batch.scheme.token_asym_id
+    res_to_entity = batch.scheme.token_entity_id
+    atom_to_asym = res_to_asym[0, atom_to_token]
+    atom_to_entity = res_to_entity[0, atom_to_token]
 
     hetero = torch.tensor(batch.heteros[0].value).to(device=mask.device)
     atom_ids = batch.atom_ids[0]
@@ -78,7 +80,7 @@ def batch_to_cif(  # noqa: PLR0915
     label_alt_id_list = ["."] * length
     label_asym_id_list = atom_to_asym[mask]
     label_entity_id_list = atom_to_entity[mask]
-    label_seq_id_list = batch.scheme.residue_idx[0, atom_to_res][mask]
+    label_seq_id_list = batch.scheme.token_idx[0, atom_to_token][mask]
     auth_idx_list = label_seq_id_list  # assuming auth seq id == label seq id
     auth_seq_id_list = label_seq_id_list  # assuming auth seq id == label seq id
     ins_code_list = ["?"] * length
@@ -88,7 +90,7 @@ def batch_to_cif(  # noqa: PLR0915
     cartn_z_list = xyz[mask, 2]
     occupancy_list = [1.0] * length
     b_iso_or_equiv_list = [100.0] * length  # TODO replace with plddt.
-    pdbx_formal_charge_list = batch.reference.charge[0][atom_to_res][mask]
+    pdbx_formal_charge_list = batch.reference.charge[0][mask]
     pdbx_PDB_model_num_list = [1] * length
 
     # to mmcif format
