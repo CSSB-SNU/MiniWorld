@@ -309,6 +309,7 @@ def validate(
         experiment: ValidateExperimentConfig
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     raw_cfg = OmegaConf.load(config)
     cfg = ValidateConfig.model_validate(raw_cfg)
     if not ckpt:
@@ -333,6 +334,24 @@ def validate(
         raise ValueError(msg)
     client = Client.from_checkpoint(ckpt)
 >>>>>>> 835952d (fix: minor errors like env, module import, and dimension issues)
+=======
+    raw_cfg = OmegaConf.load(config)
+    cfg = ValidateConfig.model_validate(raw_cfg)
+    if not ckpt:
+        msg = "You must provide a checkpoint file."
+        raise ValueError(msg)
+    state_dict = torch.load(ckpt, map_location="cpu")
+    ckpt_cfg = Client.Config.model_validate(state_dict["config"])
+    # Validation can override the token embedding path from the runtime config.
+    override_embedding_path = OmegaConf.select(
+        raw_cfg,
+        "model.token_embedding.embedding_path",
+    )
+    if override_embedding_path:
+        ckpt_cfg.model.token_embedding.embedding_path = Path(override_embedding_path)
+    client = Client(ckpt_cfg)
+    client.load_state_dict(state_dict, model_only=True)
+>>>>>>> 70222d6 (fix: inference code)
     client.model.to("cuda")
     if cfg.experiment.compile:
         client.model.compile()
@@ -391,11 +410,16 @@ def validate(
         batch = fabric.to_device(_batch)
         click.echo(
 <<<<<<< HEAD
+<<<<<<< HEAD
             f"name : {batch.name[0]} \
             residue length : {batch.scheme.token_idx.shape[1]} \
 =======
             f"residue length : {batch.scheme.residue_idx.shape[1]} \
 >>>>>>> 835952d (fix: minor errors like env, module import, and dimension issues)
+=======
+            f"name : {batch.name[0]} \
+            residue length : {batch.scheme.token_idx.shape[1]} \
+>>>>>>> 70222d6 (fix: inference code)
                    atom length : {batch.structure.atom_pos.shape[1]}",
         )
 
@@ -413,10 +437,14 @@ def validate(
             batch,
             output.atom_pos_pred,
 <<<<<<< HEAD
+<<<<<<< HEAD
             Path(f"outputs/atom_token_fingerprint_config2/{batch.name[0]}_pred.cif"),
 =======
             Path(f"outputs/miniworld_v1.0.0/{batch.name[0]}_pred.cif"),
 >>>>>>> 835952d (fix: minor errors like env, module import, and dimension issues)
+=======
+            Path(f"outputs/atom_token_fingerprint_config2/{batch.name[0]}_pred.cif"),
+>>>>>>> 70222d6 (fix: inference code)
         )
         click.echo(
             f"result for {batch.name[0]}: "
