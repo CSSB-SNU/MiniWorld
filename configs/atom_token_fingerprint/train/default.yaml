@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 comment: "af3like v1.1.0 grad_accum 16 batch size 64 (16|4|3|16|3)"
 run_dir: "logs/af3like v1.1.0/"
+=======
+comment: "atom_token_fingerprint 1.1.0 batch size 1"
+run_dir: "logs/atom_token_fingerprint v1.1.0/"
+>>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
 
 # Training arguments
 num_batch: 1
@@ -20,9 +25,15 @@ save_freq: 5
 eval_freq: 20
 eval_sample_num: 1
 eval_input_num: 50
+<<<<<<< HEAD
 eval_timesteps: 100
 grad_clip_max_norm: 10.0
 grad_accum_steps: 16
+=======
+eval_timesteps: 25
+grad_clip_max_norm: 10.0
+grad_accum_steps: 1
+>>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
 num_workers: 4
 prefetch_factor: 8
 use_ema: True
@@ -30,6 +41,7 @@ ema_decay: 0.999
 bce_pos_weight: 2.0
 long_range_sigmoid_amp: 3.0
 
+<<<<<<< HEAD
 bucket_msa_multiple: 128
 bucket_token_multiple: 128
 bucket_atom_multiple: 1024
@@ -37,3 +49,8 @@ bucket_atom_multiple: 1024
 verbose: True
 use_wandb: True
 wandb_project: "MiniWorld"
+=======
+verbose: True
+use_wandb: True
+wandb_project: "af3_like_msa_bug_fix"
+>>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))

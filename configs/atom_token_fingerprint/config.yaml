@@ -1,6 +1,11 @@
 defaults:
+<<<<<<< HEAD
   - model: small
   - train: v1.2.0
+=======
+  - model: medium
+  - train: default
+>>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
   - data: default
   - diffuser: af3_like
   - loss: default

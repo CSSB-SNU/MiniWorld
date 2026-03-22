@@ -107,15 +107,18 @@ def init_token_single_msa_with_embedding(
         num_classes=num_res_class,
     ).to(device, dtype=dtype)
     
+    
     token_type = torch.einsum(
         "blc,cd->bld",
         token_type.float(),
         token_embedding.float(),
     ).to(device, dtype=dtype)  # B L embedding_dim
+    ).to(device, dtype=dtype)  # B L embedding_dim
     msa_profile = torch.einsum(
         "blc,cd->bld",
         msa.profile.float(),
         token_embedding.float(),
+    ).to(device, dtype=dtype)  # B L embedding_dim
     ).to(device, dtype=dtype)  # B L embedding_dim
 
     return torch.concat(

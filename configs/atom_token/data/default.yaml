@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 DB_PATH: /public_data/bsoohyuncd/
 train_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train.lmdb
@@ -21,10 +22,46 @@ crop:
   bucket_msa_size: 128
   bucket_token_size: 128
   bucket_atom_size: 1024
+=======
+DB_PATH: /public_data
+train_db:
+  cif_db_path: ${data.DB_PATH}/cif_20210930_res9.lmdb
+  a3m_db_path: ${data.DB_PATH}/slim_a3m.lmdb
+  edge_id_to_cif_ids_path: ${data.DB_PATH}/train_edges.tsv
+  load_all_msa: False
+  
+valid_db:
+  cif_db_path: ${data.DB_PATH}/cif_20210930_res9.lmdb
+  a3m_db_path: ${data.DB_PATH}/slim_a3m.lmdb
+  edge_id_to_cif_ids_path: ${data.DB_PATH}/valid_edges.tsv
+  load_all_msa: False
+
+edge_weight:
+  PP_edge: 1.0
+  PN_edge: 1.0
+  PL_edge: 0.666
+  NN_edge: 1.0
+  NL_edge: 0.666
+  LL_edge: 0.0
+  eta: 0.9
+  decay: 0.999
+  init_score: 1.0
+  init_freq: 0.0
+  device: "cpu"
+
+crop:
+  contiguous_prob: 0.2
+  spatial_prob: 0.4
+  interface_prob: 0.0
+  interface_simple_prob: 0.4
+  crop_length: 384
+
+>>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
 
 msa:
   n_samples: 1
   max_msa_depth: 384
+<<<<<<< HEAD
   missing_policy: "query"
 
 tokenizer:
@@ -48,3 +85,6 @@ sampler:
 
   etc_interface: 0.05 # 5741+6201+4890+197+75+17+57=17178, 0.8%, 0.05
   sole: 0.5 # 1462, 0.7%, 0
+=======
+
+>>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
