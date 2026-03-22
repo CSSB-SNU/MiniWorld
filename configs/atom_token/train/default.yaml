@@ -1,0 +1,35 @@
+comment: "atom_token 1.1.0 batch size 1"
+run_dir: "logs/atom_token v1.1.0/"
+
+# Training arguments
+num_batch: 1
+num_epoch: 1000
+# max_lr: 1.8e-3
+max_lr: 1e-3
+min_lr: 1e-4
+warmup_steps: 1000
+decay_steps: 5e4
+self_condition: False
+compile: True
+num_augment: 48
+train_item: 2560
+valid_item: 640
+
+# Validation arguments
+save_freq: 5
+eval_freq: 20
+eval_sample_num: 1
+eval_input_num: 50
+eval_timesteps: 25
+grad_clip_max_norm: 10.0
+grad_accum_steps: 1
+num_workers: 4
+prefetch_factor: 8
+use_ema: True
+ema_decay: 0.999
+bce_pos_weight: 2.0
+long_range_sigmoid_amp: 3.0
+
+verbose: True
+use_wandb: True
+wandb_project: "af3_like_msa_bug_fix"

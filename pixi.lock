@@ -2433,8 +2433,9 @@ packages:
   version: 1.0.0
   sha256: 776f30924cb21d312ad310c446e5fe9c237f1a2ac37640e4fdc0960a371887a1
   requires_dist:
-  - torch>=2.8.0,<3
-  - wandb>=0.19.8
+  - torch>=2.6.0,<3
+  - wandb>=0.19.8,<0.20
+  - hydra-core>=1.3.2,<2
   - omegaconf>=2.3.0,<3
   - numpy>=2.2.5,<3
   - einops>=0.8.1,<0.9
