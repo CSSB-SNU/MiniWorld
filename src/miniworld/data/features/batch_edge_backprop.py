@@ -108,7 +108,7 @@ class Batch(BaseBatch):
             ),
             structure=StructureFeatures(
                 atom_pos=torch.zeros((1, n_atoms, 3), dtype=torch.float),
-                atom_pos_mask=torch.zeros((1, n_atoms), dtype=torch.float),
+                atom_pos_mask=torch.zeros((1, n_atoms), dtype=torch.bool),
                 atom_mask=torch.zeros((1, n_atoms), dtype=torch.bool),
                 token_bond=torch.zeros((1, 0, 2), dtype=torch.long),
                 token_mask=torch.zeros((1, n_tokens), dtype=torch.bool),
@@ -135,7 +135,7 @@ class Batch(BaseBatch):
                     (1, n_msa, msa_depth, n_tokens),
                     dtype=torch.long,
                 ),
-                msa_mask=torch.zeros((1, n_msa, msa_depth, n_tokens), dtype=torch.bool),
+                msa_mask=torch.zeros((1, n_msa, msa_depth), dtype=torch.bool),
                 has_deletion=torch.zeros(
                     (1, n_msa, msa_depth, n_tokens),
                     dtype=torch.bool,
@@ -149,6 +149,5 @@ class Batch(BaseBatch):
             ),
             chain=ChainFeatures(
                 entity_type=torch.zeros((1, 1), dtype=torch.long),
-                contact_edges=torch.zeros((1, 1, 2), dtype=torch.long),
             ),
         )

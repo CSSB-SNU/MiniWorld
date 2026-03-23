@@ -346,10 +346,10 @@ class ComplexMSA:
                 query_sequence = seqs
             # 1. if all sequences are missing, skip this sequence (do not add to final_sequence)
             # 2. if all sequences are identical to query sequence, skip this sequence (do not add to final_sequence)
-            elif all(idx == -1 for idx in indices) and np.array_equal(
+            elif np.array_equal(
                 seqs,
                 query_sequence,
-            ):
+            ) or np.array_equal(seqs, np.full_like(seqs, GAP_IDX)):
                 if ii < paired_num_of_seqs:
                     filtered_paired_num_of_seqs -= 1
                 continue

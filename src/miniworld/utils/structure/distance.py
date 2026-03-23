@@ -119,6 +119,7 @@ def get_shortest_distances(
     atom_pos: Float[torch.Tensor, "* L 3"],
     atom_pos_mask: Bool[torch.Tensor, "* L"],
     atom_to_token_idx_map: Int[torch.Tensor, "* L"],
+    token_num: int,
     min_distance: float = 2.0,
     max_distance: float = 22.0,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -138,11 +139,8 @@ def get_shortest_distances(
     dist = dist.masked_fill(~valid_atom_mask, max_distance)
     dist = dist.clamp(min=min_distance, max=max_distance)
 
-    # 2) Build residue existence mask (B, R_max)
-    R_max = int(atom_to_token_idx_map.max().item()) + 1
-
     # A position is valid if any atom at that position is valid
-    residue_exists = torch.zeros(B, R_max, dtype=torch.bool, device=device)
+    residue_exists = torch.zeros(B, token_num, dtype=torch.bool, device=device)
 
     # Flatten and mark residues that actually appear
     batch_idx = torch.arange(B, device=device).unsqueeze(-1).expand(B, L).reshape(-1)
@@ -163,9 +161,9 @@ def get_shortest_distances(
     # Map (i, j) residue pairs to flat indices per batch
     ri = atom_to_token_idx_map.unsqueeze(2).expand(B, L, L)  # (B, L, L)
     rj = atom_to_token_idx_map.unsqueeze(1).expand(B, L, L)  # (B, L, L)
-    pair_idx = ri * R_max + rj  # (B, L, L)
+    pair_idx = ri * token_num + rj  # (B, L, L)
 
-    block_size = R_max * R_max
+    block_size = token_num * token_num
     batch_offsets = (
         torch.arange(B, device=device).view(B, 1, 1) * block_size
     )  # (B, 1, 1)
@@ -191,7 +189,7 @@ def get_shortest_distances(
         include_self=True,
     )
 
-    residue_dists = out.view(B, R_max, R_max)
+    residue_dists = out.view(B, token_num, token_num)
 
     return residue_dists, residue_mask
 

@@ -9,7 +9,7 @@ def init_msa(
     msa: MSAFeatures,
     recycle_idx: int,
     num_res_class: int = 32,
-) -> tuple[Float[torch.Tensor, "B N L C"], Bool[torch.Tensor, "B N L"]]:
+) -> tuple[Float[torch.Tensor, "B N L C"], Bool[torch.Tensor, "B N"]]:
     """Initialize MSA features for a given recycle index."""
     msa_mask = msa.msa_mask[:, recycle_idx]
     msa_sequences = msa.aligned_sequences[:, recycle_idx]
@@ -28,7 +28,7 @@ def init_msa(
         ],
         dim=-1,
     )
-    msa_feat = msa_feat * msa_mask.unsqueeze(-1)
+    msa_feat = msa_feat * msa_mask[:, :, None, None]
     return msa_feat.float(), msa_mask.bool()
 
 

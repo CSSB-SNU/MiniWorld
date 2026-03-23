@@ -1,6 +1,7 @@
 import logging
 import time
 from pathlib import Path
+from typing import cast
 
 import click
 import torch
@@ -13,6 +14,7 @@ from team_gm.utils.script_utils import MetricsAggregator
 
 import wandb
 from miniworld.data.dataloader.dataloader_edge_backprop import (
+    AdaptiveEdgeSampler,
     BioMolData,
     BioMolDBConfig,
     CropConfig,
@@ -23,7 +25,7 @@ from miniworld.diffusion.configs import EDMDiffuserConfig
 from miniworld.models.af3_like import AF3LikeClient, AF3LikeModel
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
-# torch.set_float32_matmul_precision("high")  # noqa: ERA001
+torch.set_float32_matmul_precision("medium")
 # anomaly detection
 torch.autograd.set_detect_anomaly(False)
 
@@ -53,11 +55,12 @@ class VerboseCallback(Callback):
 
     def on_train_batch_start(self, client, batch, batch_idx):  # noqa: ANN001
         client.logger.info(
-            "rank=%d batch=%d | n_tokens=%d n_atoms=%d | mem=%.2fGB",
+            "rank=%d batch=%d %s | n_tokens=%d n_atoms=%d | mem=%.2fGB",
             client.fabric.global_rank,
             batch_idx,
-            batch.token.mask.shape[-1],
-            batch.mask.shape[-1],
+            str(batch.name[0]),
+            batch.token_length,
+            batch.atom_length,
             torch.cuda.max_memory_allocated() / 1024**3,
         )
 
@@ -148,10 +151,20 @@ def train(  # noqa: PLR0912, PLR0915
                 config=config_dict,
             )
 
-    optimizer = torch.optim.AdamW(
-        client.model.parameters(),
-        cfg.train.max_lr,
-    )
+    if cfg.train.optimizer is None or cfg.train.optimizer == "AdamW":
+        optimizer = torch.optim.AdamW(
+            client.model.parameters(),
+            cfg.train.max_lr,
+        )
+    elif cfg.train.optimizer == "Adam":
+        optimizer = torch.optim.Adam(
+            client.model.parameters(),
+            cfg.train.max_lr,
+            betas=(0.9, 0.95),
+        )
+    else:
+        msg = f"Unsupported optimizer: {cfg.train.optimizer}"
+        raise ValueError(msg)
     scheduler = get_step_decay_scheduler_with_warmup(
         optimizer=optimizer,
         warmup_steps=cfg.train.warmup_steps,
@@ -188,12 +201,27 @@ def train(  # noqa: PLR0912, PLR0915
         world_size=fabric.world_size,
         rank=fabric.local_rank,
         drop_last=True,
-        use_adaptive_sampler=True,
+        # use_adaptive_sampler=True,
+        use_adaptive_sampler=False,
         batch_size=cfg.train.num_batch,
         num_workers=cfg.train.num_workers,
         prefetch_factor=cfg.train.prefetch_factor,
-        shuffle=False,
+        shuffle=True,
+        bucket_msa_multiple=cfg.train.bucket_msa_multiple,
+        bucket_token_multiple=cfg.train.bucket_token_multiple,
+        bucket_atom_multiple=cfg.train.bucket_atom_multiple,
     )
+    sampler = cast("AdaptiveEdgeSampler", train_dataloader.sampler)
+    if ckpt:
+        sampler_state_path = cfg.data.edge_weight.state_load_path
+        if sampler_state_path is None:
+            msg = f"No sampler state load path provided in config, but checkpoint {ckpt} is given. Skipping sampler state loading."
+            client.logger.warning(msg)
+        else:
+            sampler.load_sampler_state(sampler_state_path)
+            msg = f"Loaded sampler state from {sampler_state_path}"
+            client.logger.info(msg)
+
     valid_dataloader = BioMolData(valid_data_config).create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.local_rank,
@@ -218,7 +246,7 @@ def train(  # noqa: PLR0912, PLR0915
 
         for step, result in enumerate(client.training_epoch(train_dataloader)):
             train_aggregator.log_step(result)
-            if step * cfg.train.grad_accum_steps >= train_num_item:
+            if step >= train_num_item:
                 break
         train_aggregator.log_epoch()
 
@@ -227,6 +255,10 @@ def train(  # noqa: PLR0912, PLR0915
         if client.epoch % cfg.train.save_freq == 0:
             checkpoint_path = checkpoint_dir / f"epoch={client.epoch:04d}.pt"
             client.save_checkpoint(checkpoint_path, model_only=True)
+            # sampler = cast("AdaptiveEdgeSampler", train_dataloader.sampler)
+            # sampler.save_sampler_state(
+            #     checkpoint_dir / f"sampler_epoch={client.epoch:04d}.pt",
+            # )
 
         if (client.epoch - 1) % cfg.train.eval_freq == 0:
             valid_dataloader.sampler.set_epoch(client.epoch)  # pyright: ignore[reportAttributeAccessIssue]

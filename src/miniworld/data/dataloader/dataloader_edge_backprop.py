@@ -175,6 +175,27 @@ class EdgeScoreStore:
 
         return priority / total
 
+    @torch.no_grad()
+    def save(self, save_path: Path) -> None:
+        """Save the current scores and frequencies to disk."""
+        save_dict = {
+            "edges": self.edges,
+            "score": self.score.cpu(),
+            "freq": self.freq.cpu(),
+            "edge_type": self.edge_type,
+        }
+        torch.save(save_dict, save_path)
+
+    @torch.no_grad()
+    def load(self, load_path: Path) -> None:
+        """Load scores and frequencies from disk."""
+        load_dict = torch.load(load_path, map_location="cpu")
+        if load_dict["edges"] != self.edges:
+            msg = f"Edge list mismatch when loading sampler state. Expected {self.edges}, got {load_dict['edges']}."
+            raise ValueError(msg)
+        self.score.copy_(load_dict["score"].to(self.device))
+        self.freq.copy_(load_dict["freq"].to(self.device))
+
 
 class AdaptiveEdgeSampler(DistributedSampler):
     """Distributed sampler that performs weighted sampling based on per-edge scores from EdgeScoreStore."""
@@ -251,6 +272,14 @@ class AdaptiveEdgeSampler(DistributedSampler):
             cdf[-1] = 1.0  # To prevent possible numerical issues
             r = torch.rand(1, device=self.device)
             yield int(torch.searchsorted(cdf, r).item())
+
+    def save_sampler_state(self, save_path: Path) -> None:
+        """Save the current state of the sampler (mainly the EdgeScoreStore) to disk."""
+        self.stats.save(save_path)
+
+    def load_sampler_state(self, load_path: Path) -> None:
+        """Load the state of the sampler (mainly the EdgeScoreStore) from disk."""
+        self.stats.load(load_path)
 
 
 # def extract_token_bond(cifmol: CIFMolAttached) -> np.ndarray:
@@ -342,9 +371,6 @@ def make_feature(  # noqa: PLR0915
     seq_id_list = cifmol.chains.seq_id.value.tolist()
     entity_id_list = [seq_id[0] for seq_id in seq_id_list]
     entity_types = entity_mapping.tag_to_idx(entity_id_list)
-    contact = cifmol.chains.contact
-    src, dst = contact.src_indices, contact.dst_indices
-    contact_edges = list(zip(src, dst, strict=True))
 
     sequence = SequenceFeatures.from_sample(
         token_type=token_type,
@@ -390,7 +416,6 @@ def make_feature(  # noqa: PLR0915
 
     chain = ChainFeatures.from_sample(
         entity_type=torch.from_numpy(entity_types.astype(np.int64)),
-        contact_edges=torch.from_numpy(np.array(contact_edges, dtype=np.int64)),
     )
 
     return (
@@ -408,7 +433,7 @@ def _ceil_to_multiple(value: int, multiple: int) -> int:
 
 def _bucketed_collate(
     batch_list: list[Batch],
-    bucket_msa_size: int | None = None,
+    bucket_msa_multiple: int | None = None,
     bucket_token_multiple: int | None = None,
     bucket_atom_multiple: int | None = None,
 ) -> Batch:
@@ -428,7 +453,9 @@ def _bucketed_collate(
     n_atoms = batch.atom_length
 
     bucketed_msa = (
-        _ceil_to_multiple(msa_depth, bucket_msa_size) if bucket_msa_size else msa_depth
+        _ceil_to_multiple(msa_depth, bucket_msa_multiple)
+        if bucket_msa_multiple
+        else msa_depth
     )
 
     bucketed_tokens = (
@@ -443,7 +470,7 @@ def _bucketed_collate(
     )
 
     if (
-        bucket_msa_size
+        bucket_msa_multiple
         and bucketed_msa == n_msa
         and bucketed_tokens == n_tokens
         and bucketed_atoms == n_atoms
@@ -669,6 +696,7 @@ class BioMolData(torch.utils.data.Dataset):
         drop_last: bool = False,
         num_workers: int = 0,
         use_adaptive_sampler: bool = True,  # train only
+        bucket_msa_multiple: int | None = None,
         bucket_token_multiple: int | None = None,
         bucket_atom_multiple: int | None = None,
         **kwargs: object,
@@ -712,6 +740,7 @@ class BioMolData(torch.utils.data.Dataset):
             "multiprocessing_context": ("spawn" if num_workers > 0 else None),
             "collate_fn": functools.partial(
                 _bucketed_collate,
+                bucket_msa_multiple=bucket_msa_multiple,
                 bucket_token_multiple=bucket_token_multiple,
                 bucket_atom_multiple=bucket_atom_multiple,
             ),
@@ -727,15 +756,15 @@ if __name__ == "__main__":
             residue_crop_length=512,
             atom_crop_length=4096,
             contiguous_prob=0.0,
-            spatial_prob=0.0,
-            interface_prob=1.0,
+            spatial_prob=1.0,
+            interface_prob=0.0,
             interface_simple_prob=0.0,
             remain_invalid_tokens=False,
         ),
         msa_config=MSAConfig(
             n_samples=4,
             max_msa_depth=256,
-            missing_policy="query",
+            missing_policy="gap",
         ),
         DB_config=BioMolDBConfig(
             cif_db_path=Path(
@@ -774,12 +803,14 @@ if __name__ == "__main__":
 
     # wo dataloader
     # test data 1hcu
-    cif_id = "100d_1_1_._(A_1)_(B_1)"
-    data = dataset.get_item_by_id(cif_id=cif_id)
-    breakpoint()
+    # cif_id = "100d_1_1_._(A_1)_(B_1)"
+    # data = dataset.get_item_by_id(cif_id=cif_id)
 
     # for _ in range(10):
-    #     idx = random.randint(0, len(dataset) - 1)
+    #     batch = dataset[174]
+
+    # for idx in range(len(dataset)):
+    #     print(f"Testing dataset idx {idx}/{len(dataset)}")
     #     batch = dataset[idx]
 
     # test dataloader    for i, batch in enumerate(dataloader):

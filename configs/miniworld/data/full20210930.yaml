@@ -1,7 +1,7 @@
 DB_PATH: /home/psk6950/data/
 train_db:
-  cif_db_path: ${..DB_PATH}/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
-  a3m_db_path: ${..DB_PATH}/BioMolDBv2_2024Oct21/slim_a3m.lmdb
+  cif_db_path: ${..DB_PATH}/BioMolDBv2_2024Oct21/cif_attached_train.lmdb
+  a3m_db_path: ${..DB_PATH}/BioMolDBv2_2024Oct21/a3m.lmdb
   edge_id_to_cif_ids_path: ${..DB_PATH}/BioMolDBv2_2024Oct21/metadata/graph_split_20210930_res9/train_edges.tsv
   load_all_msa: False
   

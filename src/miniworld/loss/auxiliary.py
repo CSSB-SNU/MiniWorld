@@ -152,6 +152,7 @@ def cal_atom_distogram_loss(
             atom_pos=atom_pos,
             atom_pos_mask=atom_pos_mask,
             atom_to_token_idx_map=atom_to_token_idx_map,
+            token_num=L,
             min_distance=min_distance,
             max_distance=max_distance,
         )  # (L_max, L_max), (L_max, L_max)

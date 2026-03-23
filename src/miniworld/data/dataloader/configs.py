@@ -41,6 +41,7 @@ class EdgeWeightConfig(BaseModel):
     init_freq: float = 0.0
     device: str = "cpu"
     use_freq: bool = True
+    state_load_path: Path | None = None
 
 
 class MSAConfig(BaseModel):

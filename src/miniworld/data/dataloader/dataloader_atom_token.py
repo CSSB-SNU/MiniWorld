@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import math
 import random
 import re
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import torch
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from torch.utils.data import DataLoader, DistributedSampler
 
 from miniworld.data.crop import Cropper, get_chain_crop_indices
@@ -36,219 +35,7 @@ from miniworld.data.mapping import CANONICAL_CHEMCOMPS, AtomMapping, EntityMappi
 from miniworld.utils.structure import SE3_oper
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
-
     from miniworld.data.mols import CIFMolAttached
-
-
-class EdgeScoreStore:
-    """Maintains per-edge statistics such as frequency and score.
-
-    Score is updated via EMA. The sampler reads these values to compute
-    sampling weights every epoch.
-    """
-
-    def __init__(
-        self,
-        config: EdgeWeightConfig,
-        edges: list[str],
-    ) -> None:
-        self.edges = edges
-        num_edges = len(edges)
-        self.eta = config.eta
-        self.decay = config.decay
-        self.temperature = config.temperature
-        self.device = config.device
-
-        # upweight by edge type
-        edge_type_weight = [self._edge_type_weight(e_id, config) for e_id in edges]
-        self.edge_upweight = torch.tensor(
-            [w for w, _ in edge_type_weight],
-            dtype=torch.float32,
-            device=config.device,
-        )
-        self.edge_type = [t for _, t in edge_type_weight]
-
-        # EMA score for each edge
-        # score: 1 means the model performs badly on this edge
-        # score: 0 means the model performs well on this edge
-        self.score = torch.full(
-            (num_edges,),
-            float(config.init_score),
-            dtype=torch.float32,
-            device=config.device,
-        )
-
-        # Visit frequency for each edge
-        self.freq = torch.full(
-            (num_edges,),
-            float(config.init_freq),
-            dtype=torch.float32,
-            device=config.device,
-        )
-
-        self.use_freq = config.use_freq
-
-    def _map_type(self, cluster_type: str) -> str:
-        if cluster_type in {"P", "A", "Q"}:
-            return "P"
-        if cluster_type in {"D", "R", "N"}:
-            return "N"
-        if cluster_type in {"L", "B"}:
-            return "L"
-        return "L"  # treat unknown as Ligand
-
-    def _edge_type_weight(
-        self,
-        e_id: str,
-        config: EdgeWeightConfig,
-    ) -> tuple[float, str]:
-        cluster1, cluster2 = e_id.split("_")
-        c1, c2 = cluster1[1], cluster2[1]
-        c1, c2 = self._map_type(c1), self._map_type(c2)
-
-        if c1 == "P" and c2 == "P":
-            return config.PP_edge, "PP"
-        if {c1, c2} == {"P", "N"}:
-            return config.PN_edge, "PN"
-        if {c1, c2} == {"P", "L"}:
-            return config.PL_edge, "PL"
-        if c1 == "N" and c2 == "N":
-            return config.NN_edge, "NN"
-        if {c1, c2} == {"N", "L"}:
-            return config.NL_edge, "NL"
-        return config.LL_edge, "LL"
-
-    @torch.no_grad()
-    def update(self, edge_idx: torch.Tensor, loss: torch.Tensor) -> None:
-        """Update edge scores based on observed losses."""
-        if edge_idx.shape[0] == 0:
-            # for contiguous cropping, may have no edges in the crop
-            return
-        # assume batch size is 1
-        edge_idx = edge_idx.to(self.device)
-        loss = loss.to(self.device)
-        edge_idx = edge_idx.squeeze(0)
-        loss = loss.squeeze(0).repeat_interleave(edge_idx.shape[0])
-
-        # deduplicate indices
-        unique_idx, inv = torch.unique(edge_idx, return_inverse=True)
-
-        # visit_incr[i] = how many times unique_idx[i] appeared in edge_idx
-        visit_incr = torch.bincount(inv, minlength=unique_idx.numel()).float()
-        self.freq.index_add_(0, unique_idx, visit_incr)
-
-        # decay scores for not-updated edges
-        not_updated = torch.ones_like(self.score, dtype=torch.bool)
-        not_updated[unique_idx] = False
-        self.score[not_updated] = 1 - (1 - self.score[not_updated]) * self.decay
-
-        # aggregate loss per unique edge (mean)
-        loss_sum = torch.bincount(inv, weights=loss, minlength=unique_idx.numel())
-        mean_loss = loss_sum / torch.clamp_min(visit_incr, 1.0)
-
-        new = 1.0 - torch.exp(-mean_loss / self.temperature)
-        old_s = self.score[unique_idx]
-        self.score[unique_idx] = (1.0 - self.eta) * old_s + self.eta * new
-
-        # clamp only on updated + decayed entries
-        self.score.clamp_(0.0, 1.0)
-
-    @torch.no_grad()
-    def get_weights(self, min_prob: float = 0.0) -> torch.Tensor:
-        """Get sampling weights for all edges."""
-        if self.use_freq:
-            # v1: inverse freq weighting
-            priority = self.score / torch.sqrt(self.freq + 1.0)
-        else:
-            # v2: only score weighting
-            priority = self.score
-        priority = priority * self.edge_upweight
-        priority = torch.clamp(priority, min=min_prob)
-
-        total = priority.sum()
-        if total <= 0:
-            # fallback: uniform sampling
-            return torch.full_like(priority, 1.0 / priority.numel())
-
-        return priority / total
-
-
-class AdaptiveEdgeSampler(DistributedSampler):
-    """Distributed sampler that performs weighted sampling based on per-edge scores from EdgeScoreStore."""
-
-    class Config(BaseModel):
-        """Configuration for AdaptiveEdgeSampler."""
-
-        model_config = ConfigDict(arbitrary_types_allowed=True)
-
-        dataset: BioMolData
-        stats: EdgeScoreStore | None = None
-        num_replicas: int = 1
-        rank: int = 0
-        shuffle: bool = True
-        seed: int = 0
-        drop_last: bool = False
-        device: str = "cpu"
-
-        temperature: float = 1.0
-        min_prob: float = 1e-6
-
-    def __init__(self, config: Config) -> None:
-        super().__init__(
-            dataset=config.dataset,
-            num_replicas=config.num_replicas,
-            rank=config.rank,
-            shuffle=config.shuffle,
-            seed=config.seed,
-            drop_last=config.drop_last,
-        )
-        self.dataset = config.dataset
-        self.stats: EdgeScoreStore = cast("EdgeScoreStore", config.stats)
-        self.device = config.device
-        self.temperature = config.temperature
-        self.min_prob = config.min_prob
-        self.epoch = 0
-
-    def set_epoch(self, epoch: int) -> None:
-        """Set the epoch for this sampler."""
-        self.epoch = epoch
-
-    def __iter__(self) -> Generator[int, None, None]:
-        """Return a generator that yields sampled indices for this rank."""
-        # Optional per-epoch RNG for reproducibility across nodes
-
-        if self.shuffle:
-            # deterministically shuffle based on epoch and seed
-            g = torch.Generator()
-            g.manual_seed(self.seed + self.epoch)
-            indices = torch.randperm(len(self.dataset), generator=g).tolist()  # type: ignore[arg-type]
-        else:
-            indices = list(range(len(self.dataset)))  # type: ignore[arg-type]
-
-        if not self.drop_last:
-            # add extra samples to make it evenly divisible
-            padding_size = self.total_size - len(indices)
-            if padding_size <= len(indices):
-                indices += indices[:padding_size]
-            else:
-                indices += (indices * math.ceil(padding_size / len(indices)))[
-                    :padding_size
-                ]
-        else:
-            # remove tail of data to make it evenly divisible.
-            indices = indices[: self.total_size]
-        num_samples = self.num_samples  # per-rank
-        indices = indices[self.rank : self.total_size : self.num_replicas]
-        for _ in range(num_samples):
-            valid_weights = self.stats.get_weights(min_prob=self.min_prob)
-            weights = torch.zeros_like(valid_weights)
-            weights[indices] = valid_weights[indices]
-            weights = weights / weights.sum()
-            cdf = torch.cumsum(weights, dim=0)
-            cdf[-1] = 1.0  # To prevent possible numerical issues
-            r = torch.rand(1, device=self.device)
-            yield int(torch.searchsorted(cdf, r).item())
 
 
 def tokenize(cifmol: CIFMolAttached) -> tuple[np.ndarray, np.ndarray]:
@@ -556,18 +343,6 @@ class BioMolData(torch.utils.data.Dataset):
 
         self.edge_id_list = list(self.edge_id_to_cif_ids.keys())
 
-        # HACK remove 6ysf (cP0163986_cP0163986) : signal peptide only contact
-        if "cP0163986_cP0163986" in self.edge_id_list:
-            self.edge_id_list.remove("cP0163986_cP0163986")
-        if "cP0163986_cP0199171" in self.edge_id_list:
-            self.edge_id_list.remove("cP0163986_cP0199171")
-
-        # gen stats
-        self.stats = EdgeScoreStore(
-            config=self.config.edge_weight_config,
-            edges=self.edge_id_list,
-        )
-
     def __len__(self) -> int:
         """Return the number of edges in the dataset."""
         return len(self.edge_id_list)
@@ -578,7 +353,6 @@ class BioMolData(torch.utils.data.Dataset):
         cif_ids = self.edge_id_to_cif_ids[edge_id]
         cif_id = random.choice(cif_ids)
 
-        # TODO remove it
         item = self.get_item_by_id(
             cif_id=cif_id,
             chain_bias=None,
@@ -611,7 +385,6 @@ class BioMolData(torch.utils.data.Dataset):
         crop_indices: np.ndarray | None = None,
     ) -> Batch:
         """Get a data sample by cif_id."""
-        # TODO : remove this bug
         cifmol = load_cifmol(db_path=self.config.DB_config.cif_db_path, cif_id=cif_id)
         chain_id1, chain_id2 = re.findall(r"\([^)]*\)|[^_]+", cif_id)[-2:]
         chain_id1 = chain_id1.strip("()")
@@ -697,32 +470,18 @@ class BioMolData(torch.utils.data.Dataset):
         seed: int = 0,
         drop_last: bool = False,
         num_workers: int = 0,
-        use_adaptive_sampler: bool = True,  # train only
         **kwargs: object,
     ) -> DataLoader:
         """Create a distributed DataLoader with AdaptiveEdgeSampler."""
-        if use_adaptive_sampler:
-            sampler = AdaptiveEdgeSampler(
-                AdaptiveEdgeSampler.Config(
-                    dataset=self,
-                    num_replicas=world_size,
-                    stats=self.stats,
-                    rank=rank,
-                    shuffle=shuffle,
-                    seed=seed,
-                    drop_last=drop_last,
-                ),
-            )
-        else:
-            # default distributed sampler
-            sampler = DistributedSampler(
-                dataset=self,
-                num_replicas=world_size,
-                rank=rank,
-                shuffle=shuffle,
-                seed=seed,
-                drop_last=drop_last,
-            )
+        # default distributed sampler
+        sampler = DistributedSampler(
+            dataset=self,
+            num_replicas=world_size,
+            rank=rank,
+            shuffle=shuffle,
+            seed=seed,
+            drop_last=drop_last,
+        )
 
         kwargs.pop("shuffle", None)
         kwargs.pop("world_size", None)

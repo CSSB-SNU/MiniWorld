@@ -101,7 +101,8 @@ def sample_msa(
         msa_sequence_sampled,
         axis=0,
     )  # (N_sample, N_seq, L)
-    msa_mask = np.ones_like(msa_sequence_sampled, dtype=bool)  # (N_sample, N_seq, L)
+    n_sample, n_seq, _ = msa_sequence_sampled.shape
+    msa_mask = np.ones((n_sample, n_seq), dtype=np.float32)  # (N_sample, N_seq)
     msa_has_deletion_sampled = np.stack(msa_has_deletion_sampled, axis=0)
     msa_deletion_value_sampled = np.stack(
         msa_deletion_value_sampled,

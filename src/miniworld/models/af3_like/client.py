@@ -9,6 +9,7 @@ from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
 from team_gm import BaseClient
 from team_gm.core.callbacks import ModelEMA
+from team_gm.core.client import _SetEpochProtocol
 
 from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 from miniworld.diffusion.configs import EDMDiffuserConfig  # noqa: TC001
@@ -21,7 +22,6 @@ from miniworld.models.af3_like.model import (
     AF3LikeModel,
     AF3LikeModelWrapper,
 )
-from miniworld.utils.precision_manager import precision_manager
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -29,9 +29,6 @@ if TYPE_CHECKING:
     from jaxtyping import Bool, Float
     from torch.utils.data import DataLoader
 
-    from miniworld.data.dataloader.dataloader_edge_backprop import (
-        AdaptiveEdgeSampler,
-    )
     from miniworld.data.features.batch_edge_backprop import (
         Batch,
     )
@@ -52,7 +49,7 @@ class AF3LikeClient(BaseClient):
         valid_item: int = 2560
         num_batch: int = 1
         num_epoch: int = 1000
-        optimizer: Literal["AdamW", "Muon"] = "AdamW"
+        optimizer: Literal["AdamW", "Adam"] = "AdamW"
         max_lr: float = 1e-4
         min_lr: float = 1e-5
         weight_decay: float = 0.01
@@ -77,6 +74,11 @@ class AF3LikeClient(BaseClient):
         long_range_min_seq_sep: int | None = None
         long_range_sigmoid_k: float | None = None
         long_range_sigmoid_amp: float = 3.0
+
+        bucket_msa_multiple: int | None = 128
+        bucket_token_multiple: int | None = 128
+        bucket_atom_multiple: int | None = 1024
+
         verbose: bool = False
         use_wandb: bool = False
         wandb_project: str = "AF3Like"
@@ -179,25 +181,26 @@ class AF3LikeClient(BaseClient):
 
     def training_step(self, batch: Batch) -> dict[str, float]:
         """Train the model on a batch."""
-        with precision_manager(self.model, self.config.model.precision):
-            num_augment = self.config.train.num_augment
-            x0, x_input, x_mask, t_emb, sigma = self.diffuser.sample(
-                batch.structure.atom_pos,
-                num_augment=num_augment,
-                mask=batch.structure.atom_mask,
-            )
+        # with precision_manager(self.model, self.config.model.precision):
+        num_augment = self.config.train.num_augment
+        x0, x_input, x_mask, t_emb, sigma = self.diffuser.sample(
+            batch.structure.atom_pos,
+            num_augment=num_augment,
+            mask=batch.structure.atom_mask,
+        )
 
-            loss, loss_dict = self.loss_fn(
-                batch=batch,
-                x0=x0,
-                x_input=x_input,
-                t_emb=t_emb,
-                sigma=sigma,
-                x_mask=x_mask,
-            )
+        loss, loss_dict = self.loss_fn(
+            batch=batch,
+            x0=x0,
+            x_input=x_input,
+            t_emb=t_emb,
+            sigma=sigma,
+            x_mask=x_mask,
+        )
 
-            self.backward(loss)
-            return loss_dict
+        self.backward(loss)
+        del loss
+        return loss_dict
 
     def validation_step(self, batch: Batch) -> dict[str, float]:
         """Valdiate the model on a batch."""
@@ -218,51 +221,54 @@ class AF3LikeClient(BaseClient):
 
     def training_epoch(self, dataloader: DataLoader) -> Generator[Any, None, None]:
         """Yield results from training step over the dataloader for one epoch."""
-        if not isinstance(dataloader, _FabricDataLoader):
-            fabric_dataloader = self.fabric.setup_dataloaders(dataloader)
-        else:
-            fabric_dataloader = dataloader
-        sampler = dataloader.sampler
-        sampler = cast("AdaptiveEdgeSampler", sampler)
+        if not isinstance(dataloader, _FabricDataLoader) and isinstance(
+            dataloader.sampler,
+            _SetEpochProtocol,
+        ):
+            dataloader.sampler.set_epoch(self.epoch)
+        # sampler = dataloader.sampler
+        # sampler = cast("AdaptiveEdgeSampler", sampler)
 
         self.model.train()
         self.call_callbacks("on_train_epoch_start")
 
-        fabric_iter = iter(fabric_dataloader)
-        for batch_idx, _batch in enumerate(fabric_iter):
-            batch = cast("Batch", _batch)
-            if batch_idx % self.gradient_accumulation_steps == 0:
-                self.call_callbacks("on_train_step_start", batch, batch_idx)
-            self.call_callbacks("on_train_batch_start", batch, batch_idx)
-            is_accumulating = (batch_idx + 1) % self.gradient_accumulation_steps != 0
-            with self.fabric.no_backward_sync(
-                self.model,  # pyright: ignore[reportArgumentType]
-                enabled=is_accumulating,
-            ):
-                loss_dict = self.training_step(batch)
-            loss = (
-                self.config.loss.diffusion_loss * loss_dict["diffusion_loss"]
-                + self.config.loss.distogram_loss * loss_dict["distogram_loss"]
-            )
+        try:
+            for batch_idx, _batch in enumerate(dataloader):
+                batch = cast("Batch", _batch)
+                batch = batch.to(device=self.device)
+                if batch_idx % self.gradient_accumulation_steps == 0:
+                    self.call_callbacks("on_train_step_start", batch, batch_idx)
+                self.call_callbacks("on_train_batch_start", batch, batch_idx)
+                is_accumulating = (batch_idx + 1) % self.gradient_accumulation_steps != 0
+                with self.fabric.no_backward_sync(
+                    self.model,  # pyright: ignore[reportArgumentType]
+                    enabled=is_accumulating,
+                ):
+                    loss_dict = self.training_step(batch)
+                # loss = (
+                #     self.config.loss.diffusion_loss * loss_dict["diffusion_loss"]
+                #     + self.config.loss.distogram_loss * loss_dict["distogram_loss"]
+                # )
 
-            sampler.stats.update(
-                batch.scheme.edge_index,
-                torch.tensor(loss, device=batch.device),
-            )
-            self.call_callbacks(
-                "on_train_batch_end",
-                batch,
-                batch_idx,
-                loss_dict=self.training_step(batch),
-            )
-            if not is_accumulating:
-                self._optimizer_step()
-            self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
-            yield loss_dict
-        self.optimizer.zero_grad()
+                # sampler.stats.update(
+                #     batch.scheme.edge_index,
+                #     torch.tensor(loss, device=batch.device),
+                # )
+                self.call_callbacks(
+                    "on_train_batch_end",
+                    batch,
+                    batch_idx,
+                    loss_dict,
+                )
+                if not is_accumulating:
+                    self._optimizer_step()
+                self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
+                yield loss_dict
+        finally:
+            self.optimizer.zero_grad()
 
-        self._epoch += 1
-        self.call_callbacks("on_train_epoch_end")
+            self._epoch += 1
+            self.call_callbacks("on_train_epoch_end")
 
     @torch.no_grad()
     def test_inference_quality(

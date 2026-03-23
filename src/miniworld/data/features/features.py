@@ -71,7 +71,7 @@ class MSAFeatures(BaseBatch):
     """MSA features."""
 
     aligned_sequences: Int[torch.Tensor, "B N_sampled N_msa L_token"]
-    msa_mask: Bool[torch.Tensor, "B N_sampled N_msa L_token"]
+    msa_mask: Bool[torch.Tensor, "B N_sampled N_msa"]
     has_deletion: Int[torch.Tensor, "B N_sampled N_msa L_token"]
     deletion_value: Float[torch.Tensor, "B N_sampled N_msa L_token"]
     profile: Float[torch.Tensor, "B L_token d_profile"]
@@ -84,7 +84,7 @@ class ChainFeatures(BaseBatch):
     """Chain features."""
 
     entity_type: Int[torch.Tensor, "B L_chain"]
-    contact_edges: Int[torch.Tensor, "B N_contact 2"]
+    # contact_edges: Int[torch.Tensor, "B N_contact 2"]
 
 
 @dataclass(kw_only=True)
