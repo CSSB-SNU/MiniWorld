@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 
 import torch
@@ -15,77 +17,77 @@ class DiffusionScheduler(ABC):
         method: str = "EDM"
 
     @abstractmethod
-    def sample_noise(self, batch_size: int) -> Float[torch.Tensor, "..."]:
+    def sample_noise(self, batch_size: int) -> Float[torch.Tensor, ...]:
         """Noise magnitude at time t."""
 
     @abstractmethod
     def input_scale(
         self,
-        sigma: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        sigma: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """How to scale the clean input into the noisy domain."""
 
     @abstractmethod
     def output_scale(
         self,
-        sigma: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        sigma: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """How to scale the model's raw prediction back to the data domain."""
 
     @abstractmethod
     def skip_scale(
         self,
-        sigma: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        sigma: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """How to scale the noixy x to the data domain."""
 
     @abstractmethod
     def loss_weight(
         self,
-        sigma: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        sigma: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Weight to apply to loss at noise level sigma."""
 
     @abstractmethod
     def noise_condition(
         self,
-        sigma: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        sigma: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Conditioning for the noise prediction."""
 
     @abstractmethod
-    def sampling_time_steps(self, num_steps: int) -> Float[torch.Tensor, "..."]:
+    def sampling_time_steps(self, num_steps: int) -> Float[torch.Tensor, ...]:
         """Generate a schedule of time steps for sampling."""
 
     @abstractmethod
     def sampling_schedule(
         self,
-        time_steps: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        time_steps: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Generate a schedule of noise levels for sampling."""
         # t -> sigma(t)
 
     @abstractmethod
     def sampling_schedule_derivative(
         self,
-        time_steps: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        time_steps: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Generate a schedule of noise level derivatives for sampling."""
         #  t -> dsigma(t)/dt
 
     @abstractmethod
     def sampling_scale(
         self,
-        time_steps: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        time_steps: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Generate a schedule of scaling factors for sampling."""
         # t -> scale(t)
 
     @abstractmethod
     def sampling_scale_derivative(
         self,
-        time_steps: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        time_steps: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Generate a schedule of scaling factor derivatives for sampling."""
         # t -> dscale(t)/dt
 
@@ -114,7 +116,7 @@ class EDMScheduler(DiffusionScheduler):
     def __init__(self, config: EDMSchedulerConfig) -> None:
         self.config = config
 
-    def sample_noise(self, batch_size: int) -> Float[torch.Tensor, "..."]:
+    def sample_noise(self, batch_size: int) -> Float[torch.Tensor, ...]:
         """Sample noise from a exp Normal distribution."""
         if batch_size <= 0:
             msg = f"Batch size should be greater than 0, got {batch_size}"
@@ -136,43 +138,43 @@ class EDMScheduler(DiffusionScheduler):
 
     def input_scale(
         self,
-        sigma: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        sigma: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Compute the input scaling term."""
         return 1.0 / torch.sqrt(sigma**2 + self.config.sigma_data**2)
 
     def output_scale(
         self,
-        sigma: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        sigma: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Compute the output scaling term."""
         sd = self.config.sigma_data
         return (sigma * sd) / (sigma**2 + sd**2)
 
     def skip_scale(
         self,
-        sigma: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        sigma: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Compute the skip scaling term."""
         sd = self.config.sigma_data
         return sd**2 / (sigma**2 + sd**2)
 
     def loss_weight(
         self,
-        sigma: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        sigma: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Compute the loss weighting term."""
         sd = self.config.sigma_data
         return (sigma**2 + sd**2) / (sigma * sd) ** 2
 
     def noise_condition(
         self,
-        sigma: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        sigma: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Compute the noise conditioning term."""
         return sigma.log() / 4.0
 
-    def sampling_time_steps(self, num_steps: int) -> Float[torch.Tensor, "..."]:
+    def sampling_time_steps(self, num_steps: int) -> Float[torch.Tensor, ...]:
         """Generate a schedule of time steps for sampling."""
         time_steps = torch.empty(num_steps + 1)
         t = torch.linspace(0.0, 1.0, steps=num_steps)
@@ -187,32 +189,32 @@ class EDMScheduler(DiffusionScheduler):
 
     def sampling_schedule(
         self,
-        time_steps: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        time_steps: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Generate a schedule of noise levels for sampling."""
         # t -> sigma(t)
         return time_steps
 
     def sampling_schedule_derivative(
         self,
-        time_steps: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        time_steps: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Generate a schedule of noise level derivatives for sampling."""
         #  t -> dsigma(t)/dt
         return torch.ones_like(time_steps)
 
     def sampling_scale(
         self,
-        time_steps: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        time_steps: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Generate a schedule of scaling factors for sampling."""
         # t -> scale(t)
         return torch.ones_like(time_steps)
 
     def sampling_scale_derivative(
         self,
-        time_steps: Float[torch.Tensor, "..."],
-    ) -> Float[torch.Tensor, "..."]:
+        time_steps: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, ...]:
         """Generate a schedule of scaling factor derivatives for sampling."""
         # t -> dscale(t)/dt
         return torch.zeros_like(time_steps)

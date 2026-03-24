@@ -37,3 +37,5 @@ msa:
   max_msa_depth: 384
   missing_policy: "query"
 
+tokenizer:
+  level: "residue"

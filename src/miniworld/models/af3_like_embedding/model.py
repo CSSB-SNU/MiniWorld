@@ -14,14 +14,17 @@ from team_gm.modules.primitives import (
 )
 from torch import nn
 
-from miniworld.configs import SharedConfig  # noqa: TC001
+from miniworld.configs import SharedConfig, TokenEmbeddingConfig  # noqa: TC001
 from miniworld.modules.diffusion_module import (
     DiffusionConditioning,
     DiffusionModule,
 )
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
-from miniworld.modules.msa_util import init_msa, init_token_single_msa
+from miniworld.modules.msa_util import (
+    init_msa_with_embedding,
+    init_token_single_msa_with_embedding,
+)
 from miniworld.utils.precision_manager import PrecisionConfig  # noqa: TC001
 
 if TYPE_CHECKING:
@@ -62,11 +65,18 @@ class Model(nn.Module):
         trunk: Model.TrunkConfig
         diffusion: Model.DiffusionConfig
         precision: PrecisionConfig
+        token_embedding: TokenEmbeddingConfig
 
     def __init__(self, config: Config) -> None:
         super().__init__()
         self.config = config
         self.n_recycle_max = config.trunk.n_recycle_max
+
+        # Load token embedding
+        self.token_embedding = torch.load(
+            config.token_embedding.embedding_path,
+            map_location="cpu",
+        )
 
         # feature initialization
         self.input_feature_embedder = InputFeatureEmbedder(
@@ -126,9 +136,10 @@ class Model(nn.Module):
         else:
             n_recycle = self.n_recycle_max
 
-        token_single_msa = init_token_single_msa(
+        token_single_msa = init_token_single_msa_with_embedding(
             msa,
             sequence,
+            token_embedding=self.token_embedding,
             num_res_class=self.config.shared.num_res_class,
         )
 
@@ -153,10 +164,12 @@ class Model(nn.Module):
                 if i_cycle < n_recycle - 1:
                     stack.enter_context(torch.no_grad())
                     stack.enter_context(torch.inference_mode())
-                msa_feat, msa_mask = init_msa(
+
+                msa_feat, msa_mask = init_msa_with_embedding(
                     msa,
                     recycle_idx=i_cycle,
                     num_res_class=self.config.shared.num_res_class,
+                    token_embedding=self.token_embedding,
                 )
                 token_pair = token_pair_init + self.add_pair_recycle(token_pair)
 

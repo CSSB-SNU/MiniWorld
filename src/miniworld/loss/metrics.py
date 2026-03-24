@@ -5,8 +5,8 @@ import torch
 from jaxtyping import Bool, Float, Int
 from team_gm import typecheck
 
-from miniworld.data.features.batch_edge_backprop import Batch
-from miniworld.data.mapping import EntityMapping, MoleculeType
+from miniworld.data.constants import EntityMapping, MoleculeType
+from miniworld.data.features import Batch
 from miniworld.utils import to_numpy
 
 Array = np.ndarray | torch.Tensor

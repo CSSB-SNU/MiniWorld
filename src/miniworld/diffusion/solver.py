@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any
@@ -6,9 +8,7 @@ import torch
 from jaxtyping import Float
 from pydantic import BaseModel
 
-from miniworld.diffusion.scheduler import (
-    DiffusionScheduler,
-)
+from miniworld.diffusion.scheduler import DiffusionScheduler
 
 
 class DiffusionSolver(ABC):
@@ -81,7 +81,7 @@ class AF3Solver(DiffusionSolver):
         model_fn: ModelFn,
         x: Float[torch.Tensor, "... L 3"],
         t_index: int,
-        time_steps: Float[torch.Tensor, "..."],
+        time_steps: Float[torch.Tensor, ...],
     ) -> tuple[Float[torch.Tensor, "... L 3"], Float[torch.Tensor, "... L 3"]]:
         """Perform one Euler update in t-space."""
         # 1. Get t_i and t_{i+1}, as well as Δt

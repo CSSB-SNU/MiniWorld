@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -47,7 +49,7 @@ class Diffuser(ABC):
         """Sample noisy input and store preconditioning data."""
 
     @abstractmethod
-    def cal_loss(self, *args: Any, **kwargs: Any) -> Float[torch.Tensor, "1"]:
+    def cal_loss(self, *args: Any, **kwargs: Any) -> Float[torch.Tensor, 1]:
         """Compute loss between model output and ground truth."""
 
 
@@ -111,8 +113,8 @@ class EuclideanDiffuser(Diffuser, ABC):
         Float[torch.Tensor, "... L 3"],
         Float[torch.Tensor, "... L 3"],
         Bool[torch.Tensor, "... L"] | None,
-        Float[torch.Tensor, "..."],
-        Float[torch.Tensor, "..."],
+        Float[torch.Tensor, ...],
+        Float[torch.Tensor, ...],
     ]:
         """Add noise to batch.atom_pos and store preconditioning data."""
         if num_augment < 1:
@@ -165,9 +167,9 @@ class EuclideanDiffuser(Diffuser, ABC):
         x0: Float[torch.Tensor, "... L 3"],
         x_input: Float[torch.Tensor, "... L 3"],
         x_update: Float[torch.Tensor, "... L 3"],
-        sigma: Float[torch.Tensor, "..."],
+        sigma: Float[torch.Tensor, ...],
         mask: Bool[torch.Tensor, "... L"] | None = None,
-    ) -> Float[torch.Tensor, "1"]:
+    ) -> Float[torch.Tensor, 1]:
         """Compute EDM loss between model prediction and true signal."""
         if x_update.dtype != self.dtype:
             msg = "x_update must be of type float32, but got dtype: " + str(

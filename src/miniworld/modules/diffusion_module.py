@@ -12,7 +12,7 @@ from torch import nn
 from torch.utils.checkpoint import checkpoint
 
 from miniworld.configs import SharedConfig
-from miniworld.data.features.batch_edge_backprop import (
+from miniworld.data.features import (
     ReferenceFeatures,
     SchemeFeatures,
     StructureFeatures,

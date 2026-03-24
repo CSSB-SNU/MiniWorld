@@ -48,6 +48,8 @@ ignore = [
   "FBT002",
   "PLR2004",
   "NPY002",
+  "TC001",
+  "TC002",
 ]
 
 [tool.pixi.pypi-dependencies]
@@ -71,7 +73,7 @@ pip = ">=26.0.1,<27"
 "scripts/*" = ["D", "ANN201", "S101", "INP001", "FBT001", "PLC0415", "C901"]
 "src/miniworld/modules/kernels/*" = ["N806", "N803", "ANN", "ARG001", "D"]
 "src/miniworld/utils/diffusion/*" = ["RUF", "N803",]
-"src/miniworld/data/msa.py" = ["N802","N803"]
+"src/miniworld/data/pipeline/msa.py" = ["N802","N803"]
 
 
 [tool.ruff]

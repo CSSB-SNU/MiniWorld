@@ -176,7 +176,7 @@ def cifmol_attached_from_cifmol(
 ) -> CIFMolAttached:
     """Convert CIFMol to CIFMolAttached by adding cluster_id and seq_id."""
     if len(cifmol.chains) != len(cluster_id_list) or len(cifmol.chains) != len(
-        seq_id_list
+        seq_id_list,
     ):
         msg = f"Number of chains in cifmol: {len(cifmol.chains)}, length of cluster_id_list: {len(cluster_id_list)}, length of seq_id_list: {len(seq_id_list)}"
         raise ValueError(msg)
