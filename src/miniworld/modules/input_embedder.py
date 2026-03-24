@@ -185,6 +185,7 @@ class InputAtomAttentionEncoder(nn.Module):
             atom_single_rep.unsqueeze(0),
             atom_single_cond.unsqueeze(0),
             atom_pair,
+            mask=structure.atom_mask.unsqueeze(0),
         )
         atom_single_rep = atom_single_rep.squeeze(0)
 
