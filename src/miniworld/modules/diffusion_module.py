@@ -552,7 +552,11 @@ class DiffusionModule(nn.Module):
             token_single_rep,
             token_single_cond,
             token_pair_cond,
-            mask=structure.token_mask.unsqueeze(0),
+            mask=structure.token_mask.unsqueeze(0).expand(
+                token_single_rep.shape[0],
+                -1,
+                -1,
+            ),
         )
 
         token_single_rep = self.ln_token_single_rep(token_single_rep)

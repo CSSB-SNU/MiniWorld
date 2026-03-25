@@ -271,6 +271,10 @@ class InputFeatureEmbedder(nn.Module):
             token_bond[:, :, 0],
             token_bond[:, :, 1],
         )
+        # remove diagonal bonds if exist
+        mask = token_bond_i != token_bond_j
+        token_bond_i = token_bond_i[mask]
+        token_bond_j = token_bond_j[mask]
         token_bond_feature = torch.zeros(
             (batch_size, token_length, token_length),
             device=device,

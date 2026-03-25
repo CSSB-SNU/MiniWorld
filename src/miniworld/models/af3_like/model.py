@@ -14,7 +14,7 @@ from team_gm.modules.primitives import (
 )
 from torch import nn
 
-from miniworld.configs import SharedConfig  # noqa: TC001
+from miniworld.configs import SharedConfig
 from miniworld.modules.diffusion_module import (
     DiffusionConditioning,
     DiffusionModule,
@@ -22,7 +22,7 @@ from miniworld.modules.diffusion_module import (
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.msa_util import init_msa, init_token_single_msa
-from miniworld.utils.precision_manager import PrecisionConfig  # noqa: TC001
+from miniworld.utils.precision_manager import PrecisionConfig
 
 if TYPE_CHECKING:
     import numpy as np

@@ -28,7 +28,7 @@ msa:
   missing_policy: "query"
 
 tokenizer:
-  level: "atom"
+  level: "residue"
 
 sampler:
   antibody_antibody: 0.1 # 3096, 0.3%, 0.1

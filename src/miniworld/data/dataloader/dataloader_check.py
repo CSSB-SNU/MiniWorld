@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import functools
-import random
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -32,12 +30,10 @@ from miniworld.data.features import (
 )
 from miniworld.data.io import (
     load_cifmol,
-    load_msa,
 )
 from miniworld.data.pipeline import (
     Tokenizer,
     get_chain_crop_indices,
-    sample_msa,
 )
 from miniworld.data.pipeline.utils import (
     NoInterfaceError,
@@ -449,42 +445,29 @@ class BioMolData(torch.utils.data.Dataset):
         crop_indices = cast("np.ndarray", crop_indices)
         return crop_indices, chain_id_to_crop_indices  # pyright: ignore[reportPossiblyUnboundVariable]
 
-    def __getitem__(self, idx: int) -> Batch:
+    def __getitem__(self, idx: int) -> list[str]:
         """Get a data sample by index."""
         edge_id = self.edge_id_list[idx]
         biases = self.edge_id_to_bias[edge_id]
-        bias = random.choice(biases)
-        pdb_id, assembly_id, model_id, alt_id = bias.split("_")[:4]
-        bias = re.findall(r"\(([^)]+)\)", bias)
+        results = []
+        for bias in biases:
+            pdb_id, assembly_id, model_id, alt_id = bias.split("_")[:4]
+            bias = re.findall(r"\(([^)]+)\)", bias)
 
-        item = self.get_item_by_id(
-            pdb_id=pdb_id.lower(),
-            assembly_id=assembly_id,
-            model_id=model_id,
-            alt_id=alt_id,
-            bias=bias,
-        )
-
-        if item.sequence.token_type.shape[1] < 16:
-            # too small, resample
-            while True:
-                idx = random.randint(0, len(self) - 1)
-                edge_id = self.edge_id_list[idx]
-                biases = self.edge_id_to_bias[edge_id]
-                bias = random.choice(biases)
-                pdb_id, assembly_id, model_id, alt_id = bias.split("_")[:4]
-                bias = re.findall(r"\(([^)]+)\)", bias)
-                item = self.get_item_by_id(
+            try:
+                result = self.get_item_by_id(
                     pdb_id=pdb_id.lower(),
                     assembly_id=assembly_id,
                     model_id=model_id,
                     alt_id=alt_id,
                     bias=bias,
                 )
-                if item.sequence.token_type.shape[1] >= 16:
-                    break
+            except Exception as e:
+                results.append(f"Error processing {bias} in {edge_id}: {e}")
+            else:
+                results.append(result)
 
-        return item
+        return results
 
     def get_item_by_id(
         self,
@@ -494,7 +477,7 @@ class BioMolData(torch.utils.data.Dataset):
         alt_id: str | None = None,
         bias: list[str] | None = None,
         crop_indices: np.ndarray | None = None,
-    ) -> Batch:
+    ) -> str:
         """Get a data sample by cif_id."""
         cifmol = load_cifmol(
             db_path=self.config.DB_config.cif_db_path,
@@ -546,42 +529,12 @@ class BioMolData(torch.utils.data.Dataset):
             cifmol,
         )
 
-        # Load MSA
-        complex_msa = load_msa(
-            cifmol=cifmol,
-            chain_id_to_crop_indices=chain_id_to_crop_indices,  # pyright: ignore[reportPossiblyUnboundVariable]
-            env_path=self.config.DB_config.a3m_db_path,
-        )
-        msa = sample_msa(
-            msa=complex_msa,
-            n_samples=self.config.msa_config.n_samples,
-            max_msa_depth=self.config.msa_config.max_msa_depth,
-        )
-
-        sequence, structure, msa_token, reference, scheme, chain = make_feature(
-            cifmol=cifmol,
-            msa=msa,
-            atom_to_token_idx_map=atom_to_token_idx_map,
-            token_to_residue_idx_map=token_to_residue_idx_map,
-        )
-
         # ids : to make cif file from batch
         hetero = cifmol.residues.hetero
         atom_ids = cifmol.atoms.id
         chem_comp_ids = cifmol.residues.chem_comp_id
 
-        return Batch(
-            name=[f"{pdb_id}_{assembly_id}_{model_id}_{alt_id} with bias {bias}"],
-            heteros=[hetero],
-            atom_ids=[atom_ids],
-            chem_comp_ids=[chem_comp_ids],
-            sequence=sequence,
-            structure=structure,
-            msa=msa_token,
-            reference=reference,
-            scheme=scheme,
-            chain=chain,
-        )
+        return f"{pdb_id}_{assembly_id}_{model_id}_{alt_id} with bias {bias}"
 
     def create_ddp_dataloader(
         self,
@@ -592,9 +545,6 @@ class BioMolData(torch.utils.data.Dataset):
         seed: int = 0,
         drop_last: bool = False,
         num_workers: int = 0,
-        bucket_msa_multiple: int | None = None,
-        bucket_token_multiple: int | None = None,
-        bucket_atom_multiple: int | None = None,
         **kwargs: object,
     ) -> DataLoader:
         """Create a distributed DataLoader with WeightedSampler."""
@@ -621,12 +571,6 @@ class BioMolData(torch.utils.data.Dataset):
             "num_workers": num_workers,
             "pin_memory": False,
             "multiprocessing_context": ("spawn" if num_workers > 0 else None),
-            "collate_fn": functools.partial(
-                _bucketed_collate,
-                bucket_msa_multiple=bucket_msa_multiple,
-                bucket_token_multiple=bucket_token_multiple,
-                bucket_atom_multiple=bucket_atom_multiple,
-            ),
         }
         params.update(kwargs)
         return DataLoader(self, **params)
@@ -664,24 +608,26 @@ if __name__ == "__main__":
         shuffle=True,
         seed=42,
         drop_last=False,
-        num_workers=0,
-        bucket_token_multiple=128,
-        bucket_atom_multiple=1024,
+        num_workers=4,
     )
+    print(f"Testing dataset idx {1428}/{len(dataset)}")
+    results.append(dataset[1428])
 
-    # wo dataloader
-    # test data 1hcu
-    # cif_id = "100d_1_1_._(A_1)_(B_1)"
-    # data = dataset.get_item_by_id(cif_id=cif_id)
+    results = []
+    for idx in range(len(dataset)):
+        print(f"Testing dataset idx {idx}/{len(dataset)}")
+        # batch = dataset[idx]
+        results.append(dataset[idx])
 
-    # for _ in range(10):
-    #     batch = dataset[174]
-
-    # for idx in range(len(dataset)):
-    #     print(f"Testing dataset idx {idx}/{len(dataset)}")
-    #     batch = dataset[idx]
+    # find Error idx
+    error_indices = []
+    for idx, result in enumerate(results):
+        for item in result:
+            if item.startswith("Error"):
+                error_indices.append((idx, item))
+    breakpoint()
 
     # test dataloader    for i, batch in enumerate(dataloader):
 
-    for i, batch in enumerate(dataloader):
-        print(f"Batch {i}:")
+    # for i, batch in enumerate(dataloader):
+    #     print(f"Batch {i}:")

@@ -5,6 +5,7 @@ from .data import (
     CropConfig,
     EdgeWeightConfig,
     MSAConfig,
+    SamplerConfig,
     TokenEmbeddingConfig,
     TokenizerConfig,
 )
@@ -17,6 +18,7 @@ __all__ = [
     "EDMDiffuserConfig",
     "EdgeWeightConfig",
     "MSAConfig",
+    "SamplerConfig",
     "SharedConfig",
     "TokenEmbeddingConfig",
     "TokenizerConfig",

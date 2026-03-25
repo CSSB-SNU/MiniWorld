@@ -3,11 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+from scipy.spatial import KDTree
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from miniworld.data.mols.cifmol_attached import CIFMolAttached
+    from miniworld.data.mols.cifmol_attached import CIFMolAttached, CIFResidueView
 
 
 def remove_terminal_oxygen(cifmol: CIFMolAttached) -> CIFMolAttached:
@@ -97,3 +98,41 @@ def remove_signalp(
         )
         cursor += len(chain_cifmol.residues)
     return cifmol.residues[valid_residue_indices].extract()
+
+
+class NoInterfaceError(ValueError):
+    """Raised when no interface is found in the biomolstructure."""
+
+
+def find_interface_residues(
+    mol: CIFMolAttached,
+    chain_id1: str,
+    chain_id2: str,
+    cutoff: float = 6.0,
+) -> CIFResidueView:
+    """Find interface residues between two chains in a CIFMol."""
+    src_chain = mol.chains.select(chain_id=chain_id1)
+    dst_chain = mol.chains.select(chain_id=chain_id2)
+
+    selected_atoms = (src_chain + dst_chain).atoms
+    valid_indices = np.where(np.all(np.isfinite(selected_atoms.xyz), axis=-1))[0]
+    pairs = KDTree(selected_atoms.xyz[valid_indices]).query_pairs(
+        cutoff,
+        output_type="ndarray",
+    )
+    pairs = valid_indices[pairs]
+
+    atoms_chain_ids = selected_atoms.to_chains().chain_id
+    chain_1_atom_indices = np.where(atoms_chain_ids == chain_id1)[0]
+    chain_2_atom_indices = np.where(atoms_chain_ids == chain_id2)[0]
+    pairs = pairs[
+        (np.isin(pairs, chain_1_atom_indices).sum(axis=1) == 1)
+        & (np.isin(pairs, chain_2_atom_indices).sum(axis=1) == 1)
+    ]
+    interface_residues = selected_atoms[pairs.flatten()].residues.sort()
+
+    if len(interface_residues) == 0:
+        msg = f"No interface residues found in structure {mol.id}."
+        raise NoInterfaceError(msg)
+
+    return interface_residues

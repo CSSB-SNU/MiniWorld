@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 from typing import Literal
 
@@ -180,12 +179,15 @@ def load_cif(key: str, env_path: Path) -> dict[str, dict[str, CIFMol]]:
     return cifmol_dict
 
 
-def load_cifmol(db_path: Path, cif_id: str) -> CIFMolAttached:
+def load_cifmol(
+    db_path: Path,
+    pdb_id: str,
+    assembly_id: str | None = None,
+    model_id: str | None = None,
+    alt_id: str | None = None,
+) -> CIFMolAttached:
     """Load CIFMolAttached from LMDB by cif_id."""
-    pdb_id, assembly_id, model_id, alt_id, chain_id1, chain_id2 = re.findall(
-        r"\([^)]*\)|[^_]+",
-        cif_id,
-    )
+    # TODO handle assembly_id, model_id, alt_id properly
     value = load_raw_data(pdb_id, db_path)
 
     if value is None:
@@ -195,9 +197,9 @@ def load_cifmol(db_path: Path, cif_id: str) -> CIFMolAttached:
     value = load_bytes(value)
     item = value.get(f"{assembly_id}_{model_id}_{alt_id}")
     if item is None:
-        msg = f"CIFMolAttached '{cif_id}' not found in LMDB database at '{db_path}'."
+        msg = f"CIFMolAttached '{pdb_id}_{assembly_id}_{model_id}_{alt_id}' not found in LMDB database at '{db_path}'."
         raise KeyError(msg)
-    item = item["cifmol_dict"]
+    item = item["cifmol_attached_dict"]
     return CIFMolAttached.from_dict(item)
 
 
