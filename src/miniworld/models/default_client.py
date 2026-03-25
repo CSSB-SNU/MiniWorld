@@ -87,16 +87,16 @@ class Client(BaseClient):
     class Config(BaseModel):
         """Configuration for the AF3Like client."""
 
-        model: Model.Config
+        model: AF3LikeModel.Config
         diffuser: EDMDiffuserConfig
-        train: Client.TrainConfig
-        loss: Client.LossConfig
+        train: AF3LikeClient.TrainConfig
+        loss: AF3LikeClient.LossConfig
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self.config = config
         self.set_seed(config.train.seed)
-        self.register_model(Model(config.model))
+        self.register_model(AF3LikeModel(config.model))
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))

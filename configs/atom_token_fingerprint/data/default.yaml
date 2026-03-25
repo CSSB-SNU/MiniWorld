@@ -62,6 +62,7 @@ msa:
   n_samples: 1
   max_msa_depth: 384
 <<<<<<< HEAD
+<<<<<<< HEAD
   missing_policy: "query"
 
 tokenizer:
@@ -88,3 +89,6 @@ sampler:
 =======
 
 >>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
+=======
+  missing_policy: "query"
+>>>>>>> 9719ec9 (fix: follow af3like things)

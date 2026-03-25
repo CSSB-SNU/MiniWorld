@@ -70,11 +70,15 @@ trunk:
     p_drop: 0.25
     use_self_attention: False
 <<<<<<< HEAD
+<<<<<<< HEAD
     n_checkpoint_segments: 4
 
     implementation: cuequivariance
 =======
     n_checkpoint_segments: null
+=======
+    n_checkpoint_segments: 2
+>>>>>>> 9719ec9 (fix: follow af3like things)
 
     implementation: triton
 >>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
@@ -102,8 +106,12 @@ diffusion:
 >>>>>>> 7e28efc (many things)
 =======
     n_block: 4
+<<<<<<< HEAD
     n_checkpoint_segments: 4
 >>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
+=======
+    n_checkpoint_segments: 2
+>>>>>>> 9719ec9 (fix: follow af3like things)
     d_single: ${...shared.d_single_token_diffusion}
     d_cond: ${...shared.d_single}
     d_pair: ${...shared.d_pair}

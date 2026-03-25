@@ -81,6 +81,7 @@ class VerboseCallback(Callback):
     def on_train_batch_start(self, client, batch, batch_idx):  # noqa: ANN001
         client.logger.info(
             "rank=%d batch=%d %s | n_tokens=%d n_atoms=%d | mem=%.2fGB",
+<<<<<<< HEAD
             client.fabric.global_rank,
             batch_idx,
             str(batch.name[0]),
@@ -130,8 +131,11 @@ class VerboseCallback(Callback):
     def on_train_batch_start(self, client, batch, batch_idx):  # noqa: ANN001
         client.logger.info(
             "rank=%d batch=%d | n_tokens=%d n_atoms=%d | mem=%.2fGB",
+=======
+>>>>>>> 9719ec9 (fix: follow af3like things)
             client.fabric.global_rank,
             batch_idx,
+            str(batch.name[0]),
             batch.token_length,
             batch.atom_length,
             torch.cuda.max_memory_allocated() / 1024**3,
@@ -389,6 +393,7 @@ def train(  # noqa: PLR0912, PLR0915
         drop_last=True,
         # use_adaptive_sampler=True,
         use_adaptive_sampler=False,
+<<<<<<< HEAD
         batch_size=cfg.train.num_batch,
         num_workers=cfg.train.num_workers,
         prefetch_factor=cfg.train.prefetch_factor,
@@ -471,11 +476,24 @@ def train(  # noqa: PLR0912, PLR0915
         rank=fabric.local_rank,
         drop_last=True,
         use_adaptive_sampler=True,
+=======
+>>>>>>> 9719ec9 (fix: follow af3like things)
         batch_size=cfg.train.num_batch,
         num_workers=cfg.train.num_workers,
         prefetch_factor=cfg.train.prefetch_factor,
         shuffle=False,
     )
+    sampler = cast("AdaptiveEdgeSampler", train_dataloader.sampler)
+    if ckpt:
+        sampler_state_path = cfg.data.edge_weight.state_load_path
+        if sampler_state_path is None:
+            msg = f"No sampler state load path provided in config, but checkpoint {ckpt} is given. Skipping sampler state loading."
+            client.logger.warning(msg)
+        else:
+            sampler.load_sampler_state(sampler_state_path)
+            msg = f"Loaded sampler state from {sampler_state_path}"
+            client.logger.info(msg)
+
     valid_dataloader = BioMolData(valid_data_config).create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.local_rank,
@@ -502,7 +520,7 @@ def train(  # noqa: PLR0912, PLR0915
 
         for step, result in enumerate(client.training_epoch(train_dataloader)):
             train_aggregator.log_step(result)
-            if step * cfg.train.grad_accum_steps >= train_num_item:
+            if step >= train_num_item:
                 break
         means = train_aggregator.log_epoch()
 >>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
@@ -619,6 +637,9 @@ def validate(
         experiment: ValidateExperimentConfig
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9719ec9 (fix: follow af3like things)
     raw_cfg = OmegaConf.load(config)
     cfg = ValidateConfig.model_validate(raw_cfg)
     if not ckpt:
@@ -635,6 +656,7 @@ def validate(
         ckpt_cfg.model.token_embedding.embedding_path = Path(override_embedding_path)
     client = Client(ckpt_cfg)
     client.load_state_dict(state_dict, model_only=True)
+<<<<<<< HEAD
     client.model.to("cuda")
     if cfg.train.compile:
 =======
@@ -644,6 +666,8 @@ def validate(
         msg = "You must provide a checkpoint file."
         raise ValueError(msg)
     client = Client.from_checkpoint(ckpt)
+=======
+>>>>>>> 9719ec9 (fix: follow af3like things)
     client.model.to("cuda")
 <<<<<<< HEAD
     if cfg.experiment.compile:
@@ -735,6 +759,9 @@ def validate(
         batch = fabric.to_device(_batch)
         click.echo(
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9719ec9 (fix: follow af3like things)
             f"name : {batch.name[0]} \
             residue length : {batch.scheme.token_idx.shape[1]} \
             atom length : {batch.structure.atom_pos.shape[1]}",
@@ -768,11 +795,16 @@ def validate(
             batch,
             output.atom_pos_pred,
 <<<<<<< HEAD
+<<<<<<< HEAD
 
             Path(f"outputs/atom_token_fingerprint_config2/{batch.name[0]}_pred.cif"),
 =======
             Path(f"outputs/miniworld_v1.0.0/{batch.name[0]}_pred.cif"),
 >>>>>>> e791fac (fix: minor errors like env, module import, and dimension issues)
+=======
+
+            Path(f"outputs/atom_token_fingerprint_config2/{batch.name[0]}_pred.cif"),
+>>>>>>> 9719ec9 (fix: follow af3like things)
         )
         click.echo(
             f"result for {batch.name[0]}: "
