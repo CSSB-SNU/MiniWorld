@@ -19,7 +19,7 @@ from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
 )
-from miniworld.models.af3_like.model import (
+from miniworld.models.af3_like_embedding.model import (
     InferenceOutput,
     Model,
     ModelWrapper,
@@ -35,9 +35,9 @@ class Client(BaseClient):
     class TrainConfig(BaseModel):
         """Configuration for trains."""
 
-        comment: str = "default"
-        name: str = "AF3Like-PSK-2"
-        run_dir: str = "runs/af3like"
+        comment: str = "default embedding"
+        name: str = "AF3Like-PSK-2-embedding"
+        run_dir: str = "runs/af3like_embedding"
         overfitting: bool = False
         overfitting_dir: str | None = None  # Directory for overfitting mode
         train_item: int = 25600
@@ -176,6 +176,7 @@ class Client(BaseClient):
 
     def training_step(self, batch: Batch) -> dict[str, float]:
         """Train the model on a batch."""
+        # with precision_manager(self.model, self.config.model.precision):
         num_augment = self.config.train.num_augment
         x0, x_input, x_mask, t_emb, sigma = self.diffuser.sample(
             batch.structure.atom_pos,
@@ -245,7 +246,7 @@ class Client(BaseClient):
                 )
                 if not is_accumulating:
                     self._optimizer_step()
-                    self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
+                self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
                 yield loss_dict
         finally:
             self.optimizer.zero_grad()

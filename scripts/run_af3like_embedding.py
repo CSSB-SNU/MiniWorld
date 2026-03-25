@@ -24,8 +24,8 @@ from miniworld.configs import (
     TokenizerConfig,
 )
 from miniworld.data.dataloader.dataloader import BioMolData
-from miniworld.models import DefaultClient as Client
-from miniworld.models.af3_like import Model
+from miniworld.models import EmbeddingClient as Client
+from miniworld.models.af3_like_embedding import Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
 torch.set_float32_matmul_precision("medium")

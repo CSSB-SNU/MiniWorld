@@ -1,4 +1,4 @@
-comment: "af3like v1.1.0 grad_accum 16 batch size 64 (16|4|3|16|3)"
+comment: "af3like v1.1.0 debug grad_accum 1 batch size 4"
 run_dir: "logs/af3like v1.1.0/"
 
 # Training arguments
@@ -12,12 +12,12 @@ decay_steps: 5e4
 self_condition: False
 compile: True
 num_augment: 48
-train_item: 2560
-valid_item: 640
+train_item: 320
+valid_item: 32
 
 # Validation arguments
-save_freq: 5
-eval_freq: 20
+save_freq: 1
+eval_freq: 1
 eval_sample_num: 1
 eval_input_num: 50
 eval_timesteps: 100
@@ -29,10 +29,6 @@ use_ema: True
 ema_decay: 0.999
 bce_pos_weight: 2.0
 long_range_sigmoid_amp: 3.0
-
-bucket_msa_multiple: 128
-bucket_token_multiple: 128
-bucket_atom_multiple: 1024
 
 verbose: True
 use_wandb: True

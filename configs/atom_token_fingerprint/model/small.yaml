@@ -12,7 +12,7 @@ shared:
   r_max: 32
   s_max: 2
   n_distogram_bins: 64
-  num_res_class: 768
+  num_res_class: 32
   implementation: triton
   use_checkpoint: True
 
@@ -29,8 +29,8 @@ input_feat_embbeder:
 trunk:
   n_recycle_max: 1 # 4
   pairformer: 
-    n_block: 16
-    n_checkpoint_segments: 4
+    n_block: 4
+    n_checkpoint_segments: null
 
     d_single: ${...shared.d_single}
     d_pair: ${...shared.d_pair}
@@ -44,7 +44,7 @@ trunk:
     implementation: triton
 
   msa_module: 
-    n_block: 4
+    n_block: 2
 
     d_msa: 64
     d_pair: ${...shared.d_pair}
@@ -57,10 +57,11 @@ trunk:
     p_drop_msa: 0.15
     p_drop: 0.25
     use_self_attention: False
-    n_checkpoint_segments: 4
+    n_checkpoint_segments: null
+    num_res_class: 768
+
 
     implementation: triton
-    num_res_class: 768
 
 diffusion:
   atom_dit:
@@ -72,8 +73,8 @@ diffusion:
     n_head: 4
     implementation: triton
   token_dit:
-    n_block: 16
-    n_checkpoint_segments: 2
+    n_block: 4
+    n_checkpoint_segments: null
     d_single: ${...shared.d_single_token_diffusion}
     d_cond: ${...shared.d_single}
     d_pair: ${...shared.d_pair}

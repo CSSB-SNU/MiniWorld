@@ -27,8 +27,8 @@ input_feat_embbeder:
 trunk:
   n_recycle_max: 1 # 4
   pairformer: 
-    n_block: 4
-    n_checkpoint_segments: null
+    n_block: 16
+    n_checkpoint_segments: 4
 
     d_single: ${...shared.d_single}
     d_pair: ${...shared.d_pair}
@@ -42,9 +42,9 @@ trunk:
     implementation: triton
 
   msa_module: 
-    n_block: 2
-    
-    d_msa: 128
+    n_block: 4
+
+    d_msa: 64
     d_pair: ${...shared.d_pair}
     d_single_token_input: ${...shared.d_single_token_input}
     d_hidden_msa: 32
@@ -55,22 +55,26 @@ trunk:
     p_drop_msa: 0.15
     p_drop: 0.25
     use_self_attention: False
-    n_checkpoint_segments: 2
+    n_checkpoint_segments: 4
 
     implementation: triton
 
 diffusion:
   atom_dit:
     n_block: 3
-    n_checkpoint_segments: 3
+    n_checkpoint_segments: null
     d_single: ${...shared.d_single_atom}
     d_cond: ${...shared.d_single_atom}
     d_pair: ${...shared.d_pair_atom}
     n_head: 4
     implementation: triton
   token_dit:
-    n_block: 4
+    n_block: 16
+<<<<<<< HEAD
     n_checkpoint_segments: 2
+=======
+    n_checkpoint_segments: 4
+>>>>>>> 7e28efc (many things)
     d_single: ${...shared.d_single_token_diffusion}
     d_cond: ${...shared.d_single}
     d_pair: ${...shared.d_pair}

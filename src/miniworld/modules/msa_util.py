@@ -121,7 +121,7 @@ def init_token_single_msa_with_embedding(
     return torch.concat(
         [
             token_type,
-            msa.profile.to(dtype=dtype),
+            msa_profile.to(dtype=dtype),
             msa.deletion_mean.unsqueeze(-1).to(dtype=dtype),
         ],
         dim=-1,

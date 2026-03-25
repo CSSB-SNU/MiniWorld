@@ -1,6 +1,6 @@
 defaults:
-  - model: medium
-  - train: default
+  - model: small
+  - train: v1.2.0
   - data: default
   - diffuser: af3_like
   - loss: default

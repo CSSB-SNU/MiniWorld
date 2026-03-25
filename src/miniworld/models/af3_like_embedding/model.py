@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING
 
 import torch
 from pydantic import BaseModel
-from team_gm.modules import DiffusionTransformer, Pairformer
-from miniworld.sh.msa_module import MSAModule
+from team_gm.modules import DiffusionTransformer, MSAModule, Pairformer
 from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
@@ -169,7 +168,6 @@ class Model(nn.Module):
                 msa_feat, msa_mask = init_msa_with_embedding(
                     msa,
                     num_res_class=self.config.shared.num_res_class,
-                    token_embedding=self.token_embedding,
                 )
                 token_pair = token_pair_init + self.add_pair_recycle(token_pair)
 
