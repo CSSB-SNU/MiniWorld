@@ -24,7 +24,7 @@ from miniworld.models.af3_atom_token import Client, Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 from miniworld.data.to_cif import batch_to_cif
 
-# torch.set_float32_matmul_precision("high")  # noqa: ERA001
+torch.set_float32_matmul_precision("high")  # noqa: ERA001
 # anomaly detection
 torch.autograd.set_detect_anomaly(False)
 
@@ -53,9 +53,10 @@ class VerboseCallback(Callback):
 
     def on_train_batch_start(self, client, batch, batch_idx):  # noqa: ANN001
         client.logger.info(
-            "rank=%d batch=%d | n_tokens=%d n_atoms=%d | mem=%.2fGB",
+            "rank=%d batch=%d %s | n_tokens=%d n_atoms=%d | mem=%.2fGB",
             client.fabric.global_rank,
             batch_idx,
+            str(batch.name[0]),
             batch.token_length,
             batch.atom_length,
             torch.cuda.max_memory_allocated() / 1024**3,

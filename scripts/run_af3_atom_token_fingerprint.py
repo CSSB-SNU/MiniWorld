@@ -24,7 +24,7 @@ from miniworld.models.af3_atom_token_fingerprint import Client, Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 from miniworld.data.to_cif import batch_to_cif
 
-# torch.set_float32_matmul_precision("high")  # noqa: ERA001
+torch.set_float32_matmul_precision("high")  # noqa: ERA001
 # anomaly detection
 torch.autograd.set_detect_anomaly(False)
 
@@ -53,9 +53,10 @@ class VerboseCallback(Callback):
 
     def on_train_batch_start(self, client, batch, batch_idx):  # noqa: ANN001
         client.logger.info(
-            "rank=%d batch=%d | n_tokens=%d n_atoms=%d | mem=%.2fGB",
+            "rank=%d batch=%d %s | n_tokens=%d n_atoms=%d | mem=%.2fGB",
             client.fabric.global_rank,
             batch_idx,
+            str(batch.name[0]),
             batch.token_length,
             batch.atom_length,
             torch.cuda.max_memory_allocated() / 1024**3,
@@ -187,12 +188,24 @@ def train(  # noqa: PLR0912, PLR0915
         world_size=fabric.world_size,
         rank=fabric.local_rank,
         drop_last=True,
-        use_adaptive_sampler=True,
+        # use_adaptive_sampler=True,
+        use_adaptive_sampler=False,
         batch_size=cfg.train.num_batch,
         num_workers=cfg.train.num_workers,
         prefetch_factor=cfg.train.prefetch_factor,
         shuffle=False,
     )
+    sampler = cast("AdaptiveEdgeSampler", train_dataloader.sampler)
+    if ckpt:
+        sampler_state_path = cfg.data.edge_weight.state_load_path
+        if sampler_state_path is None:
+            msg = f"No sampler state load path provided in config, but checkpoint {ckpt} is given. Skipping sampler state loading."
+            client.logger.warning(msg)
+        else:
+            sampler.load_sampler_state(sampler_state_path)
+            msg = f"Loaded sampler state from {sampler_state_path}"
+            client.logger.info(msg)
+
     valid_dataloader = BioMolData(valid_data_config).create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.local_rank,
@@ -219,7 +232,7 @@ def train(  # noqa: PLR0912, PLR0915
 
         for step, result in enumerate(client.training_epoch(train_dataloader)):
             train_aggregator.log_step(result)
-            if step * cfg.train.grad_accum_steps >= train_num_item:
+            if step >= train_num_item:
                 break
         means = train_aggregator.log_epoch()
 
@@ -301,8 +314,6 @@ def validate(
         data: ValidateDBConfig
         experiment: ValidateExperimentConfig
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     raw_cfg = OmegaConf.load(config)
     cfg = ValidateConfig.model_validate(raw_cfg)
     if not ckpt:
@@ -319,32 +330,6 @@ def validate(
         ckpt_cfg.model.token_embedding.embedding_path = Path(override_embedding_path)
     client = Client(ckpt_cfg)
     client.load_state_dict(state_dict, model_only=True)
-=======
-    cfg = OmegaConf.load(config)
-    cfg = ValidateConfig.model_validate(cfg)
-    if not ckpt:
-        msg = "You must provide a checkpoint file."
-        raise ValueError(msg)
-    client = Client.from_checkpoint(ckpt)
->>>>>>> 835952d (fix: minor errors like env, module import, and dimension issues)
-=======
-    raw_cfg = OmegaConf.load(config)
-    cfg = ValidateConfig.model_validate(raw_cfg)
-    if not ckpt:
-        msg = "You must provide a checkpoint file."
-        raise ValueError(msg)
-    state_dict = torch.load(ckpt, map_location="cpu")
-    ckpt_cfg = Client.Config.model_validate(state_dict["config"])
-    # Validation can override the token embedding path from the runtime config.
-    override_embedding_path = OmegaConf.select(
-        raw_cfg,
-        "model.token_embedding.embedding_path",
-    )
-    if override_embedding_path:
-        ckpt_cfg.model.token_embedding.embedding_path = Path(override_embedding_path)
-    client = Client(ckpt_cfg)
-    client.load_state_dict(state_dict, model_only=True)
->>>>>>> 70222d6 (fix: inference code)
     client.model.to("cuda")
     if cfg.train.compile:
         client.model.compile()
@@ -402,18 +387,9 @@ def validate(
     for ii, _batch in enumerate(valid_loader):
         batch = fabric.to_device(_batch)
         click.echo(
-<<<<<<< HEAD
-<<<<<<< HEAD
             f"name : {batch.name[0]} \
             residue length : {batch.scheme.token_idx.shape[1]} \
-=======
-            f"residue length : {batch.scheme.residue_idx.shape[1]} \
->>>>>>> 835952d (fix: minor errors like env, module import, and dimension issues)
-=======
-            f"name : {batch.name[0]} \
-            residue length : {batch.scheme.token_idx.shape[1]} \
->>>>>>> 70222d6 (fix: inference code)
-                   atom length : {batch.structure.atom_pos.shape[1]}",
+            atom length : {batch.structure.atom_pos.shape[1]}",
         )
 
         batch = batch.duplicate(client.config.train.eval_sample_num)
@@ -429,15 +405,8 @@ def validate(
         batch_to_cif(
             batch,
             output.atom_pos_pred,
-<<<<<<< HEAD
-<<<<<<< HEAD
+
             Path(f"outputs/atom_token_fingerprint_config2/{batch.name[0]}_pred.cif"),
-=======
-            Path(f"outputs/miniworld_v1.0.0/{batch.name[0]}_pred.cif"),
->>>>>>> 835952d (fix: minor errors like env, module import, and dimension issues)
-=======
-            Path(f"outputs/atom_token_fingerprint_config2/{batch.name[0]}_pred.cif"),
->>>>>>> 70222d6 (fix: inference code)
         )
         click.echo(
             f"result for {batch.name[0]}: "

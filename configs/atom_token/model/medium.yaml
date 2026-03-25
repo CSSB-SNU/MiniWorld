@@ -55,7 +55,7 @@ trunk:
     p_drop_msa: 0.15
     p_drop: 0.25
     use_self_attention: False
-    n_checkpoint_segments: null
+    n_checkpoint_segments: 2
 
     implementation: triton
 
@@ -70,7 +70,7 @@ diffusion:
     implementation: triton
   token_dit:
     n_block: 4
-    n_checkpoint_segments: 4
+    n_checkpoint_segments: 2
     d_single: ${...shared.d_single_token_diffusion}
     d_cond: ${...shared.d_single}
     d_pair: ${...shared.d_pair}
