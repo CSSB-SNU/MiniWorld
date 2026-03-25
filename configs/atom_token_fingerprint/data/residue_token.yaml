@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 DB_PATH: /public_data/bsoohyuncd/
+=======
+DB_PATH: /home/psk6950/data/
+>>>>>>> 3d173e4 (fix: configs, run script and msa_util & add: embedding_client)
 train_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train.lmdb
   a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb

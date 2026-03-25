@@ -86,30 +86,15 @@ trunk:
 diffusion:
   atom_dit:
     n_block: 3
-<<<<<<< HEAD
     n_checkpoint_segments: null
-=======
-    n_checkpoint_segments: 3
->>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
     d_single: ${...shared.d_single_atom}
     d_cond: ${...shared.d_single_atom}
     d_pair: ${...shared.d_pair_atom}
     n_head: 4
     implementation: triton
   token_dit:
-<<<<<<< HEAD
     n_block: 16
 <<<<<<< HEAD
-    n_checkpoint_segments: 2
-=======
-    n_checkpoint_segments: 4
->>>>>>> 7e28efc (many things)
-=======
-    n_block: 4
-<<<<<<< HEAD
-    n_checkpoint_segments: 4
->>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
-=======
     n_checkpoint_segments: 2
 >>>>>>> 9719ec9 (fix: follow af3like things)
     d_single: ${...shared.d_single_token_diffusion}

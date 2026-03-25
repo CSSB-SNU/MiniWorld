@@ -22,7 +22,11 @@ eval_sample_num: 1
 eval_input_num: 50
 eval_timesteps: 100
 grad_clip_max_norm: 1.0
+<<<<<<< HEAD
 grad_accum_steps: 4
+=======
+grad_accum_steps: 16
+>>>>>>> 3d173e4 (fix: configs, run script and msa_util & add: embedding_client)
 optimizer: "Adam"
 
 num_workers: 4

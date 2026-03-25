@@ -3280,7 +3280,7 @@ packages:
 - pypi: ./
   name: miniworld
   version: 1.0.0
-  sha256: 733665b6c1c8700b670086d6cadf77a0b1988e43d6db944718d76f2d93a8c792
+  sha256: b25ac873b86ef00573433efc0e85fdb9168dd6ef5c2298b08f7aa9b794133a94
   requires_dist:
   - torch>=2.6.0,<3
   - wandb>=0.19.8,<0.20

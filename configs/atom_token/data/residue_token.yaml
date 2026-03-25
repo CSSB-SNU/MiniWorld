@@ -1,13 +1,25 @@
+<<<<<<< HEAD
 DB_PATH: /public_data/bsoohyuncd/
 train_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train.lmdb
   a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb
   edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/train_edge_node.tsv
+=======
+DB_PATH: /home/psk6950/data/
+train_db:
+  cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train.lmdb
+  a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb
+  edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/metadata/train_edge_node.tsv
+>>>>>>> 3d173e4 (fix: configs, run script and msa_util & add: embedding_client)
   
 valid_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_valid_2.lmdb
   a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb
+<<<<<<< HEAD
   edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/valid2_edge_node.tsv
+=======
+  edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/metadata/valid2_edge_node.tsv
+>>>>>>> 3d173e4 (fix: configs, run script and msa_util & add: embedding_client)
 
 crop:
   residue_crop_length: 384

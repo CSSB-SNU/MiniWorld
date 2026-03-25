@@ -15,6 +15,7 @@ src/miniworld/data/constants/__init__.py
 src/miniworld/data/constants/mapping.py
 src/miniworld/data/dataloader/__init__.py
 src/miniworld/data/dataloader/dataloader.py
+src/miniworld/data/dataloader/dataloader_check.py
 src/miniworld/data/dataloader/sampler.py
 <<<<<<< HEAD
 src/miniworld/data/dataloader/dataloader_explicit.py
@@ -70,6 +71,7 @@ src/miniworld/modules/msa_util_explicit.py
 src/miniworld/modules/template_module.py
 src/miniworld/modules/kernels/__init__.py
 src/miniworld/modules/kernels/layernorm.py
+src/miniworld/sh/msa_module.py
 src/miniworld/utils/MoE_utils.py
 src/miniworld/utils/__init__.py
 src/miniworld/utils/crop.py

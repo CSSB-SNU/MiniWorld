@@ -87,16 +87,16 @@ class Client(BaseClient):
     class Config(BaseModel):
         """Configuration for the AF3Like client."""
 
-        model: AF3LikeModel.Config
+        model: Model.Config
         diffuser: EDMDiffuserConfig
-        train: AF3LikeClient.TrainConfig
-        loss: AF3LikeClient.LossConfig
+        train: Client.TrainConfig
+        loss: Client.LossConfig
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self.config = config
         self.set_seed(config.train.seed)
-        self.register_model(AF3LikeModel(config.model))
+        self.register_model(Model(config.model))
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
@@ -257,7 +257,7 @@ class Client(BaseClient):
     def test_inference_quality(
         self,
         batch: Batch,
-        output: AF3LikeInferenceOutput,
+        output: InferenceOutput,
     ) -> dict[str, float]:
         """Test the inference quality of the model on a batch."""
         batch = batch.to(device=self.device)
@@ -297,11 +297,11 @@ class Client(BaseClient):
         self,
         batch: Batch,
         timesteps: int = 100,
-    ) -> AF3LikeInferenceOutput:
+    ) -> InferenceOutput:
         """Inference using the diffusion solver."""
         raw_model = getattr(self.model, "module", self.model)
-        raw_model = cast("AF3LikeModel", raw_model)
-        model_wrapper = AF3LikeModelWrapper(
+        raw_model = cast("Model", raw_model)
+        model_wrapper = ModelWrapper(
             raw_model,
         )
         batch = batch.to(device=self.device)
@@ -323,7 +323,7 @@ class Client(BaseClient):
         inter_traj = [x.detach().cpu().numpy() for x in inter_traj]
         model_traj = [x.detach().cpu().numpy() for x in model_traj]
         distogram_logit = model_wrapper.condition["distogram_logit"]
-        return AF3LikeInferenceOutput(
+        return InferenceOutput(
             atom_pos_pred=atom_pos_pred,
             model_traj=np.stack(model_traj, axis=1),
             inter_traj=np.stack(inter_traj, axis=1),
