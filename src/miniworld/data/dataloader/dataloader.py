@@ -337,6 +337,25 @@ class BioMolData(torch.utils.data.Dataset):
         """Return the number of edges in the dataset."""
         return len(self.items)
 
+    def _report_crop_stats(self) -> None:
+        if self._crop_calls == 0:
+            return
+        if self._crop_calls % self._crop_report_every != 0:
+            return
+
+        worker = get_worker_info()
+        worker_id = worker.id if worker is not None else "main"
+
+        zero_rate = self._crop_zero / self._crop_calls
+        empty_sel_rate = self._crop_empty_selected_atoms / self._crop_calls
+
+        print(
+        f"[crop-monitor][worker={worker_id}] "
+        f"calls={self._crop_calls} "
+        f"zero_crop={self._crop_zero} ({zero_rate:.6f}) "
+        f"empty_selected_atoms={self._crop_empty_selected_atoms}"# ({empty_sel_rate:.6f})"
+        )
+
     def get_crop_indices(
         self,
         cifmol: CIFMolAttached,
@@ -629,3 +648,166 @@ class BioMolData(torch.utils.data.Dataset):
         }
         params.update(kwargs)
         return DataLoader(self, **params)
+
+from collections import Counter
+from team_gm.constants import ResidueType
+
+def audit_chem_comp_vs_mapped_restype(
+    dataset: BioMolData,
+    n_samples: int = 2000,
+    seed: int = 0,
+) -> None:
+    rng = random.Random(seed)
+
+    pair_counts: Counter[tuple[str, str]] = Counter()
+    mismatch_counts: Counter[tuple[str, str]] = Counter()
+
+    total_residues = 0
+    mapped_diff_count = 0
+    failed_samples = 0
+
+    for _ in range(n_samples):
+        try:
+            idx = rng.randrange(len(dataset))
+            edge_id = dataset.edge_id_list[idx]
+            bias_str = rng.choice(dataset.edge_id_to_bias[edge_id])
+
+            pdb_id, assembly_id, model_id, alt_id = bias_str.split("_")[:4]
+            bias = re.findall(r"\(([^)]+)\)", bias_str)
+
+            cifmol = load_cifmol(
+                db_path=dataset.config.DB_config.cif_db_path,
+                pdb_id=pdb_id.lower(),
+                assembly_id=assembly_id,
+                model_id=model_id,
+                alt_id=alt_id,
+            )
+            cifmol = remove_terminal_oxygen(cifmol)
+
+            max_tokens = dataset.config.crop_config.residue_crop_length
+            max_atoms = dataset.config.crop_config.atom_crop_length
+            crop_indices = None
+
+            while True:
+                crop_indices, _ = dataset.get_crop_indices(
+                    cifmol=cifmol,
+                    crop_indices=crop_indices,
+                    bias=bias,
+                    max_tokens=max_tokens,
+                    max_atoms=max_atoms,
+                )
+                cropped = cifmol.residues[crop_indices].extract()
+                _, token_to_residue_idx_map = dataset.tokenizer.tokenize(cropped)
+
+                if token_to_residue_idx_map.shape[0] <= dataset.config.crop_config.residue_crop_length:
+                    cifmol = cropped
+                    break
+
+                max_tokens = int(max_tokens * 0.9)
+                max_atoms = int(max_atoms * 0.9)
+                crop_indices = None
+
+            chem_comp_ids = np.asarray(cifmol.residues.chem_comp_id.value, dtype=object)
+            canonical_one_letter = np.asarray(cifmol.residues.one_letter_code_can.value, dtype=object)
+            res_to_chain = np.asarray(cifmol.index_table.res_to_chain, dtype=np.int64)
+            chain_entity_types = np.asarray(cifmol.chains.entity_type.value, dtype=object)
+
+            for r in range(len(cifmol.residues)):
+                chem = str(chem_comp_ids[r])
+                entity_type = str(chain_entity_types[res_to_chain[r]])
+                can1 = str(canonical_one_letter[r])
+
+                mapped = ResidueType.resolve(
+                    chem_comp_id=chem,
+                    entity_type=entity_type,
+                    canonical_one_letter=can1,
+                ).name
+
+                pair_counts[(chem, mapped)] += 1
+                total_residues += 1
+
+                if chem != mapped:
+                    mapped_diff_count += 1
+                    mismatch_counts[(chem, mapped)] += 1
+
+        except Exception:
+            failed_samples += 1
+
+    print("\n=== chem_comp_id vs mapped canonical residue type ===")
+    print(f"samples_checked={n_samples}")
+    print(f"samples_failed={failed_samples}")
+    print(f"total_cropped_residues={total_residues}")
+    if total_residues > 0:
+        print(
+            f"mapped_different={mapped_diff_count} "
+            f"({mapped_diff_count / total_residues:.6f})"
+        )
+
+    print("\nTop 30 mismatches: chem_comp_id -> mapped_restype")
+    for (chem, mapped), cnt in mismatch_counts.most_common(30):
+        print(f"{chem:>8} -> {mapped:<12} : {cnt}")
+
+    print("\nTop 30 overall pairs: (chem_comp_id, mapped_restype)")
+    for (chem, mapped), cnt in pair_counts.most_common(30):
+        print(f"({chem:>8}, {mapped:<12}) : {cnt}")
+
+
+if __name__ == "__main__":
+    # test dataloader
+    config = BioMolData.BioMolConfig(
+        crop_config=CropConfig(
+            residue_crop_length=512,
+            atom_crop_length=4096,
+            remain_invalid_tokens=False,
+        ),
+        msa_config=MSAConfig(
+            n_samples=4,
+            max_msa_depth=256,
+            missing_policy="gap",
+        ),
+        DB_config=BioMolDBConfig(
+            cif_db_path=Path(
+                "/public_data/BioMolDB_20260224/cif_attached_train.lmdb",
+            ),
+            a3m_db_path=Path("/public_data/BioMolDB_20260224/a3m.lmdb"),
+            edge_id_to_bias_path=(
+                Path(
+                    "/public_data/BioMolDB_20260224/train_edge_node.tsv",
+                )
+            ),
+        ),
+    )
+    dataset = BioMolData(config)
+    dataloader = dataset.create_ddp_dataloader(
+        rank=0,
+        world_size=1,
+        shuffle=True,
+        seed=42,
+        drop_last=False,
+        num_workers=0,
+        bucket_token_multiple=128,
+        bucket_atom_multiple=1024,
+    )
+
+    # wo dataloader
+    # test data 1hcu
+    cif_id = "3ni0_1_1_._(A_1)_(C_1)"
+    data = dataset.get_item_by_id(pdb_id="3ni0", assembly_id="1", model_id="1", alt_id=".", bias=["A", "C"])
+    print(data.chem_comp_ids)
+    # for _ in range(10):
+    #     batch = dataset[174]
+
+    # for idx in range(len(dataset)):
+    #     print(f"Testing dataset idx {idx}/{len(dataset)}")
+    #     batch = dataset[idx]
+
+    # test dataloader    for i, batch in enumerate(dataloader):
+
+    # for i, batch in enumerate(dataloader):
+    #     print(f"Batch {i}:")
+    
+    audit_chem_comp_vs_mapped_restype(
+    dataset,
+    n_samples=500,
+    seed=0,
+    )

@@ -1,0 +1,2 @@
+diffusion_loss: 4.0
+distogram_loss: 0.03
