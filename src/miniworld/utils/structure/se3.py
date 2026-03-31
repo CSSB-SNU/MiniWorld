@@ -319,7 +319,7 @@ def se3_heat_step_delta_sigma(
     stochastic: bool = False,
     mode: str = "group",
     sigma_floor: float = 0.0,  # e.g., 1e-6
-) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     device, dtype = R_t.device, R_t.dtype
 
     def _to(x):

@@ -8,6 +8,7 @@ from miniworld.data.features import MSAFeatures, SequenceFeatures, TemplateFeatu
 def init_msa(
     msa: MSAFeatures,
     num_res_class: int = 32,
+    dtype: torch.dtype = torch.float32,
 ) -> tuple[Float[torch.Tensor, "B N L C"], Bool[torch.Tensor, "B N"]]:
     """Initialize MSA features for a given recycle index."""
     msa_mask = msa.mask
@@ -28,7 +29,7 @@ def init_msa(
         dim=-1,
     )
     msa_feat = msa_feat * msa_mask[:, :, None, None]
-    return msa_feat.float(), msa_mask.bool()
+    return msa_feat.to(dtype=dtype), msa_mask.bool()
 
 
 @torch.no_grad()
@@ -36,6 +37,7 @@ def init_msa_with_embedding(
     msa: MSAFeatures,
     token_embedding: torch.Tensor,
     num_res_class: int = 32,
+    dtype: torch.dtype = torch.float32,
 ) -> tuple[Float[torch.Tensor, "B N L C"], Bool[torch.Tensor, "B N"]]:
     """Initialize MSA features for a given recycle index."""
     msa_mask = msa.mask
@@ -61,7 +63,7 @@ def init_msa_with_embedding(
         ],
         dim=-1,
     )
-    return msa_feat.float(), msa_mask.bool()
+    return msa_feat.to(dtype=dtype), msa_mask.bool()
 
 
 @torch.no_grad()
@@ -69,10 +71,10 @@ def init_token_single_msa(
     msa: MSAFeatures,
     sequence: SequenceFeatures,
     num_res_class: int = 32,
+    dtype: torch.dtype = torch.float32,
 ) -> Float[torch.Tensor, "B L_token d_single_token_init"]:
     """Initialize token single features with token embedding."""
     device = msa.aligned_sequences.device
-    dtype = sequence.token_type.dtype
     token_type = torch.nn.functional.one_hot(
         sequence.token_type.long(),
         num_classes=num_res_class,
@@ -94,10 +96,10 @@ def init_token_single_msa_with_embedding(
     sequence: SequenceFeatures,
     token_embedding: torch.Tensor,
     num_res_class: int = 32,
+    dtype: torch.dtype = torch.float32,
 ) -> Float[torch.Tensor, "B L_token d_single_token_init"]:
     """Initialize token single features with token embedding."""
     device = msa.aligned_sequences.device
-    dtype = token_embedding.dtype
     token_embedding = token_embedding.to(msa.aligned_sequences.device)
     token_type = torch.nn.functional.one_hot(
         sequence.token_type.long(),
@@ -129,6 +131,7 @@ def init_token_single_msa_with_embedding(
 @torch.no_grad()
 def init_template_feat(
     template: TemplateFeatures,
+    dtype: torch.dtype = torch.float32,
     positive_cutoff: float = 6.0,
     negative_cutoff: float = 12.0,
 ) -> Float[torch.Tensor, "B L L 4"]:
@@ -184,4 +187,4 @@ def init_template_feat(
         num_classes=4,
     ) * (contact_feat != 4).unsqueeze(-1)
 
-    return contact_feat.float()
+    return contact_feat.to(dtype=dtype)

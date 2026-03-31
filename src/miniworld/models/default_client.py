@@ -177,7 +177,6 @@ class Client(BaseClient):
 
     def training_step(self, batch: Batch) -> dict[str, float]:
         """Train the model on a batch."""
-        # with precision_manager(self.model, self.config.model.precision):
         num_augment = self.config.train.num_augment
         x0, x_input, x_mask, t_emb, sigma = self.diffuser.sample(
             batch.structure.atom_pos,
