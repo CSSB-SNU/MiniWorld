@@ -10,7 +10,7 @@ min_lr: 1e-5
 warmup_steps: 1000
 decay_steps: 5e4
 self_condition: False
-compile: True
+compile: False
 num_augment: 48
 train_item: 2560
 valid_item: 640

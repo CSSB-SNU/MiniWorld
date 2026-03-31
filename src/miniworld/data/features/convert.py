@@ -131,7 +131,6 @@ def to_reference_features(
     rng: np.random.Generator | None = None,
 ) -> ReferenceFeatures:
     """Convert CIFMol to ReferenceFeatures."""
-    # TODO (generalized token scheme)
     cropped_residue_len = len(cifmol.residues)
     ref_pos = cifmol.atoms.model_xyz.value
     ref_pos = np.array(ref_pos, dtype=object)
@@ -241,7 +240,9 @@ def make_batch(
     sequence = SequenceFeatures(token_type=msa_token.aligned_sequences[:, 0])
     reference = to_reference_features(cifmol, rng)
     structure = to_structure_features(
-        cifmol, atom_to_token_idx_map, token_to_residue_idx_map
+        cifmol,
+        atom_to_token_idx_map,
+        token_to_residue_idx_map,
     )
     chain = to_chain_features(cifmol)
 

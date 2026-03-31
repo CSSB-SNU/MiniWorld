@@ -205,6 +205,7 @@ def train(  # noqa: PLR0912, PLR0915
     train_dataloader = BioMolData(train_data_config).create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.local_rank,
+        seed=cfg.train.seed,
         drop_last=True,
         batch_size=cfg.train.num_batch,
         num_workers=cfg.train.num_workers,
@@ -218,6 +219,7 @@ def train(  # noqa: PLR0912, PLR0915
     valid_dataloader = BioMolData(valid_data_config).create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.local_rank,
+        seed=cfg.train.seed,
         drop_last=False,
         batch_size=cfg.train.num_batch,  # or 1
         num_workers=0,
@@ -235,6 +237,7 @@ def train(  # noqa: PLR0912, PLR0915
     while client.epoch < cfg.train.num_epoch:
         client.logger.info("Training Epoch %d", client.epoch)
         train_dataloader.sampler.set_epoch(client.epoch)  # pyright: ignore[reportAttributeAccessIssue]
+        train_dataloader.dataset.set_epoch(client.epoch)
 
         for step, result in enumerate(client.training_epoch(train_dataloader)):
             train_aggregator.log_step(result)
@@ -250,6 +253,7 @@ def train(  # noqa: PLR0912, PLR0915
 
         if (client.epoch - 1) % cfg.train.eval_freq == 0:
             valid_dataloader.sampler.set_epoch(client.epoch)  # pyright: ignore[reportAttributeAccessIssue]
+            valid_dataloader.dataset.set_epoch(client.epoch)
             client.logger.info("Validation Epoch %d", client.epoch)
             for n_item, result in enumerate(client.validation_epoch(valid_dataloader)):
                 valid_aggregator.log_step(result, ignore_step=True)

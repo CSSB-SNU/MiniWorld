@@ -318,7 +318,7 @@ def load_template(
     n_residues = 0 if crop_indices is None else len(crop_indices)
     value = load_raw_data(seq_id, env_path)
     if value is None:
-        return ProteinTemplate(n_residues=n_residues)
+        return ProteinTemplate(n_residues=n_residues, ids=[template_id])
 
     template_mols = load_bytes(bytes(value))["template_mols"]
     ids = list(template_mols.keys())
@@ -375,7 +375,10 @@ def load_templates(
     template_id = 0
     for chain_id, crop_indices in chain_id_to_crop_indices.items():
         if len(crop_indices) == 0:
-            templates_list.append(ProteinTemplate(n_residues=crop_indices.shape[0]))
+            templates_list.append(
+                ProteinTemplate(n_residues=crop_indices.shape[0], ids=[template_id]),
+            )
+            template_id += 1
             continue
         seq_id = cifmol.chains[cifmol.chains.chain_id == chain_id].seq_id[0].value
         seq_id = str(seq_id)
@@ -388,6 +391,7 @@ def load_templates(
             rng=rng,
         )
         templates_list.append(templates)
+        template_id += 1
     return ProteinTemplate.concat(templates_list)
 
 
