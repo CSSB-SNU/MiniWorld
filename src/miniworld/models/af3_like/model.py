@@ -155,7 +155,6 @@ class Model(nn.Module):
                     stack.enter_context(torch.inference_mode())
                 msa_feat, msa_mask = init_msa(
                     msa,
-                    recycle_idx=i_cycle,
                     num_res_class=self.config.shared.num_res_class,
                 )
                 token_pair = token_pair_init + self.add_pair_recycle(token_pair)

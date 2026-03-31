@@ -11,7 +11,7 @@ from biomol.core.feature import NodeFeature
 from numpy import ndarray
 
 from miniworld.data.constants import ResidueMapping
-from miniworld.data.features import MSAFeatures
+from miniworld.data.features.features import MSAFeatures
 from miniworld.data.mols import CIFMolAttached
 
 CIFMOL = CIFMol | CIFMolAttached
@@ -57,7 +57,7 @@ class MSA:
         query: np.ndarray,
         seq_id: str | None = None,
     ) -> MSA:
-        """Create an MSA instance from a single query sequence if there is no aligned sequences."""
+        """Create an MSA from a single sequence if there is no aligned sequences."""
         if len(query) == 0:
             msg = "query must be a non-empty string or list or ndarray"
             raise ValueError(msg)
@@ -197,7 +197,7 @@ class ComplexMSA:
     def _pairing_MSAs(
         self,
         MSAs: dict[int, MSA],
-        max_paired_depth: int = 8191,  # 8192 - 1 (query sequence is always included in the paired sequences)
+        max_paired_depth: int = 8191,  # 8192 - 1 (query sequence is always included)
     ) -> tuple[dict[int, np.ndarray], set, int]:
         species_to_idx_dict = {ii: MSA.species_to_idx for ii, MSA in MSAs.items()}
         # gap indices per MSA (sequence entirely gaps) : (L, N) -> column-wise all-gaps
@@ -286,7 +286,7 @@ class ComplexMSA:
         query_indices = {ii: [0] for ii in MSAs}
 
         # 1. Simple pairing common species for all MSAs
-        paired_msa_indices, paired_species, paired_num_of_seqs = self._pairing_MSAs(MSAs)
+        paired_msa_indices, _, paired_num_of_seqs = self._pairing_MSAs(MSAs)
         paired_msa_indices = {
             key: np.concatenate([query_indices[key], indices])
             for key, indices in paired_msa_indices.items()
@@ -346,8 +346,8 @@ class ComplexMSA:
             seqs = np.concatenate(seqs)
             if query_sequence is None:
                 query_sequence = seqs
-            # 1. if all sequences are missing, skip this sequence (do not add to final_sequence)
-            # 2. if all sequences are identical to query sequence, skip this sequence (do not add to final_sequence)
+            # 1. if all sequences are missing, skip this sequence
+            # 2. if all sequences are identical to query sequence, skip this sequence
             elif np.array_equal(
                 seqs,
                 query_sequence,
@@ -399,8 +399,12 @@ class ComplexMSA:
         self,
         max_msa_depth: int = 256,
         ratio: tuple[float, float] = (0.5, 0.5),
+        rng: np.random.Generator | None = None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Randomly sample sequences from the complex MSA."""
+        if rng is None:
+            rng = np.random.default_rng()
+
         max_msa_depth = min(max_msa_depth, self.total_depth)
         sampled = [int(ratio[ii] * max_msa_depth) for ii in range(2)]
         if sum(sampled) != max_msa_depth:
@@ -413,7 +417,7 @@ class ComplexMSA:
         sampled[1] = min(sampled[1], to_be_sampled[1])
 
         query = np.array([0])
-        paired_sampled = np.random.choice(
+        paired_sampled = rng.choice(
             self.num_of_paired,
             sampled[0] - 1,
             replace=False,
@@ -421,7 +425,7 @@ class ComplexMSA:
 
         if sampled[1] > 0:
             unpaired_sampled = (
-                np.random.choice(self.num_of_unpaired, sampled[1], replace=False)
+                rng.choice(self.num_of_unpaired, sampled[1], replace=False)
                 + self.num_of_paired
             )
 
@@ -444,39 +448,26 @@ class ComplexMSA:
 
 def sample_msa(
     msa: ComplexMSA,
-    n_samples: int,
     max_msa_depth: int,
+    rng: np.random.Generator | None = None,
 ) -> MSAFeatures:
     """Sample and process MSA for model input."""
-    msa_profile = msa.profile
-    msa_deletion_mean = msa.deletion_mean
-    msa_sequence_sampled = []
-    msa_has_deletion_sampled = []
-    msa_deletion_value_sampled = []
-    for _ in range(n_samples):
-        _, sampled_sequence, sampled_has_deletion, sampled_deletion_value = msa.sample(
-            max_msa_depth,
-        )
-        msa_sequence_sampled.append(sampled_sequence)  # (N_seq, L)
-        msa_has_deletion_sampled.append(sampled_has_deletion)  # (N_seq, L)
-        msa_deletion_value_sampled.append(sampled_deletion_value)  # (N_seq, L)
-    msa_sequence_sampled = np.stack(
-        msa_sequence_sampled,
-        axis=0,
-    )  # (N_sample, N_seq, L)
-    n_sample, n_seq, _ = msa_sequence_sampled.shape
-    msa_mask = np.ones((n_sample, n_seq), dtype=np.float32)  # (N_sample, N_seq)
-    msa_has_deletion_sampled = np.stack(msa_has_deletion_sampled, axis=0)
-    msa_deletion_value_sampled = np.stack(
-        msa_deletion_value_sampled,
-        axis=0,
-    ).astype(np.float32)
+    if rng is None:
+        rng = np.random.default_rng()
+    profile = msa.profile
+    deletion_mean = msa.deletion_mean
+    _, aligned_sequences, has_deletion, deletion_value = msa.sample(
+        max_msa_depth,
+        rng=rng,
+    )
+    n_seq, _ = aligned_sequences.shape
+    mask = np.ones((n_seq), dtype=np.float32)
 
     return MSAFeatures.from_sample(
-        aligned_sequences=torch.from_numpy(msa_sequence_sampled),
-        msa_mask=torch.from_numpy(msa_mask),
-        has_deletion=torch.from_numpy(msa_has_deletion_sampled).int(),
-        deletion_value=torch.from_numpy(msa_deletion_value_sampled),
-        profile=torch.from_numpy(msa_profile),
-        deletion_mean=torch.from_numpy(msa_deletion_mean),
+        aligned_sequences=torch.from_numpy(aligned_sequences),
+        mask=torch.from_numpy(mask),
+        has_deletion=torch.from_numpy(has_deletion).int(),
+        deletion_value=torch.from_numpy(deletion_value),
+        profile=torch.from_numpy(profile),
+        deletion_mean=torch.from_numpy(deletion_mean),
     )

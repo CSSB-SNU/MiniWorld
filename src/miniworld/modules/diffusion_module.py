@@ -219,7 +219,7 @@ class AtomAttentionEncoder(nn.Module):
             "bal,nbac->nblc",
             mapping,
             to_add_single_token_rep,
-        )
+        ).contiguous()
         # Explanation of labels:
         # A:    (B, L_atom, L_token) -> "bal" (b=batch, a=atom, l=token)
         # to_add (A, B, L_atom, d)   -> "abac" where c=d, reuse a=atom

@@ -14,6 +14,7 @@ src/miniworld/data/constants/__init__.py
 src/miniworld/data/constants/mapping.py
 src/miniworld/data/dataloader/__init__.py
 src/miniworld/data/dataloader/dataloader.py
+src/miniworld/data/dataloader/dataloader_check.py
 src/miniworld/data/features/__init__.py
 src/miniworld/data/features/batch.py
 src/miniworld/data/features/features.py
@@ -26,6 +27,7 @@ src/miniworld/data/mols/template_mol.py
 src/miniworld/data/pipeline/__init__.py
 src/miniworld/data/pipeline/crop.py
 src/miniworld/data/pipeline/msa.py
+src/miniworld/data/pipeline/template.py
 src/miniworld/data/pipeline/tokenizer.py
 src/miniworld/data/pipeline/utils.py
 src/miniworld/diffusion/__init__.py
@@ -52,6 +54,7 @@ src/miniworld/modules/kernels/__init__.py
 src/miniworld/modules/kernels/layernorm.py
 src/miniworld/utils/MoE_utils.py
 src/miniworld/utils/__init__.py
+src/miniworld/utils/crop.py
 src/miniworld/utils/precision_manager.py
 src/miniworld/utils/utils.py
 src/miniworld/utils/analysis/todo.py

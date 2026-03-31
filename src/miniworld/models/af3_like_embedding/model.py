@@ -14,7 +14,7 @@ from team_gm.modules.primitives import (
 )
 from torch import nn
 
-from miniworld.configs import SharedConfig, TokenEmbeddingConfig  # noqa: TC001
+from miniworld.configs import SharedConfig, TokenEmbeddingConfig
 from miniworld.modules.diffusion_module import (
     DiffusionConditioning,
     DiffusionModule,
@@ -25,7 +25,7 @@ from miniworld.modules.msa_util import (
     init_msa_with_embedding,
     init_token_single_msa_with_embedding,
 )
-from miniworld.utils.precision_manager import PrecisionConfig  # noqa: TC001
+from miniworld.utils.precision_manager import PrecisionConfig
 
 if TYPE_CHECKING:
     import numpy as np
@@ -167,7 +167,6 @@ class Model(nn.Module):
 
                 msa_feat, msa_mask = init_msa_with_embedding(
                     msa,
-                    recycle_idx=i_cycle,
                     num_res_class=self.config.shared.num_res_class,
                     token_embedding=self.token_embedding,
                 )

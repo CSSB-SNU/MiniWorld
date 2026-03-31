@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
 import lmdb
 import numpy as np
@@ -9,8 +9,13 @@ from biomol.core.types import BioMolDict
 from biomol.core.utils import load_bytes
 
 from miniworld.data.constants import ResidueMapping
+from miniworld.data.mols import TemplateMol
 from miniworld.data.mols.cifmol_attached import CIFMolAttached
-from miniworld.data.pipeline import MSA, ComplexMSA
+from miniworld.data.pipeline import (
+    MSA,
+    ComplexMSA,
+    ProteinTemplate,
+)
 
 CIFMOL = CIFMol | CIFMolAttached
 
@@ -187,7 +192,6 @@ def load_cifmol(
     alt_id: str | None = None,
 ) -> CIFMolAttached:
     """Load CIFMolAttached from LMDB by cif_id."""
-    # TODO handle assembly_id, model_id, alt_id properly
     value = load_raw_data(pdb_id, db_path)
 
     if value is None:
@@ -295,6 +299,96 @@ def load_msa(
         MSAs=msa_list,
         missing_policy=missing_policy,
     )
+
+
+def load_template(
+    seq_id: str,
+    template_id: int,
+    env_path: Path,
+    crop_indices: np.ndarray | None = None,
+    n_templates: int = 4,
+    res_min: int = 4,
+    rng: np.random.Generator | None = None,
+) -> ProteinTemplate:
+    """Load dense template features from LMDB by sequence id.
+
+    Returns an empty template with the correct residue length when no usable
+    template exists.
+    """
+    n_residues = 0 if crop_indices is None else len(crop_indices)
+    value = load_raw_data(seq_id, env_path)
+    if value is None:
+        return ProteinTemplate(n_residues=n_residues)
+
+    template_mols = load_bytes(bytes(value))["template_mols"]
+    ids = list(template_mols.keys())
+    if rng is not None:
+        rng.shuffle(ids)
+
+    templates: list[TemplateMol] = []
+    for cif_key in ids:
+        item = template_mols[cif_key]
+        item = cast("BioMolDict", item)
+        template = TemplateMol.from_dict(item)
+        if crop_indices is not None:
+            template = template.residues[crop_indices].extract()
+
+        if n_residues == 0:
+            n_residues = len(template.residues)
+
+        atom_xyz = np.asarray(template.atoms.xyz.value, dtype=float).reshape(
+            len(template.residues),
+            4,
+            3,
+        )
+        # Count residues with valid backbone atoms; CB can be missing.
+        valid_residue_mask = np.asarray(
+            np.isfinite(atom_xyz[:, :3, :]).all(axis=(-1, -2)),
+            dtype=bool,
+        )
+        if int(valid_residue_mask.sum()) < res_min:
+            continue
+
+        templates.append(template)
+        if len(templates) >= n_templates:
+            break
+
+    if len(templates) == 0:
+        return ProteinTemplate(n_residues=n_residues, ids=[template_id])
+
+    return ProteinTemplate(
+        template_list=templates,
+        ids=[template_id] * len(templates),
+    )
+
+
+def load_templates(
+    cifmol: CIFMOL,
+    chain_id_to_crop_indices: dict[str, np.ndarray],
+    env_path: Path,
+    n_templates: int = 4,
+    rng: np.random.Generator | None = None,
+) -> ProteinTemplate:
+    """Load templates from LMDB by key."""
+    templates_list: list[ProteinTemplate] = []
+    # masking interchain region
+    template_id = 0
+    for chain_id, crop_indices in chain_id_to_crop_indices.items():
+        if len(crop_indices) == 0:
+            templates_list.append(ProteinTemplate(n_residues=crop_indices.shape[0]))
+            continue
+        seq_id = cifmol.chains[cifmol.chains.chain_id == chain_id].seq_id[0].value
+        seq_id = str(seq_id)
+        templates = load_template(
+            seq_id=seq_id,
+            template_id=template_id,
+            env_path=env_path,
+            crop_indices=crop_indices,
+            n_templates=n_templates,
+            rng=rng,
+        )
+        templates_list.append(templates)
+    return ProteinTemplate.concat(templates_list)
 
 
 def load_fasta(fasta_path: Path) -> dict[str, str]:

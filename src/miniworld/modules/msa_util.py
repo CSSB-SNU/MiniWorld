@@ -7,14 +7,13 @@ from miniworld.data.features import MSAFeatures, SequenceFeatures
 @torch.no_grad()
 def init_msa(
     msa: MSAFeatures,
-    recycle_idx: int,
     num_res_class: int = 32,
 ) -> tuple[Float[torch.Tensor, "B N L C"], Bool[torch.Tensor, "B N"]]:
     """Initialize MSA features for a given recycle index."""
-    msa_mask = msa.msa_mask[:, recycle_idx]
-    msa_sequences = msa.aligned_sequences[:, recycle_idx]
-    msa_has_deletion = msa.has_deletion[:, recycle_idx]
-    msa_deletion_value = msa.deletion_value[:, recycle_idx].float()
+    msa_mask = msa.mask
+    msa_sequences = msa.aligned_sequences
+    msa_has_deletion = msa.has_deletion
+    msa_deletion_value = msa.deletion_value.float()
 
     msa_sequences = torch.nn.functional.one_hot(
         msa_sequences.long(),
@@ -36,14 +35,13 @@ def init_msa(
 def init_msa_with_embedding(
     msa: MSAFeatures,
     token_embedding: torch.Tensor,
-    recycle_idx: int,
     num_res_class: int = 32,
 ) -> tuple[Float[torch.Tensor, "B N L C"], Bool[torch.Tensor, "B N"]]:
     """Initialize MSA features for a given recycle index."""
-    msa_mask = msa.msa_mask[:, recycle_idx]
-    msa_sequences = msa.aligned_sequences[:, recycle_idx]
-    msa_has_deletion = msa.has_deletion[:, recycle_idx]
-    msa_deletion_value = msa.deletion_value[:, recycle_idx].float()
+    msa_mask = msa.mask
+    msa_sequences = msa.aligned_sequences
+    msa_has_deletion = msa.has_deletion
+    msa_deletion_value = msa.deletion_value.float()
 
     token_embedding = token_embedding.to(msa.aligned_sequences.device)
     msa_sequences = torch.nn.functional.one_hot(

@@ -56,12 +56,26 @@ class ReferenceFeatures(BaseBatch):
 class MSAFeatures(BaseBatch):
     """MSA features."""
 
-    aligned_sequences: Int[torch.Tensor, "B N_sampled N_msa L_token"]
-    msa_mask: Bool[torch.Tensor, "B N_sampled N_msa"]
-    has_deletion: Int[torch.Tensor, "B N_sampled N_msa L_token"]
-    deletion_value: Float[torch.Tensor, "B N_sampled N_msa L_token"]
+    aligned_sequences: Int[torch.Tensor, "B N_msa L_token"]
+    mask: Bool[torch.Tensor, "B N_msa"]
+    has_deletion: Int[torch.Tensor, "B N_msa L_token"]
+    deletion_value: Float[torch.Tensor, "B N_msa L_token"]
     profile: Float[torch.Tensor, "B L_token d_profile"]
     deletion_mean: Float[torch.Tensor, "B L_token"]
+
+
+@typecheck
+@dataclass()
+class TemplateFeatures(BaseBatch):
+    """Template features."""
+
+    mask: Bool[torch.Tensor, "B N_temp"]
+    ids: Int[torch.Tensor, "B N_temp L_res"]
+    res_type: Int[torch.Tensor, "B N_temp L_res"]
+    cb_xyz: Float[torch.Tensor, "B N_temp L_res 3"]
+    cb_mask: Bool[torch.Tensor, "B N_temp L_res"]
+    bb_xyz: Float[torch.Tensor, "B N_temp L_res 3 3"]
+    bb_mask: Bool[torch.Tensor, "B N_temp L_res 3"]
 
 
 @typecheck

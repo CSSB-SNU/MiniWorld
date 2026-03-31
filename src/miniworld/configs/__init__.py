@@ -3,9 +3,9 @@
 from .data import (
     BioMolDBConfig,
     CropConfig,
-    EdgeWeightConfig,
     MSAConfig,
     SamplerConfig,
+    TemplateConfig,
     TokenEmbeddingConfig,
     TokenizerConfig,
 )
@@ -16,10 +16,10 @@ __all__ = [
     "BioMolDBConfig",
     "CropConfig",
     "EDMDiffuserConfig",
-    "EdgeWeightConfig",
     "MSAConfig",
     "SamplerConfig",
     "SharedConfig",
+    "TemplateConfig",
     "TokenEmbeddingConfig",
     "TokenizerConfig",
 ]

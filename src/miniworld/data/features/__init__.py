@@ -1,6 +1,7 @@
 """Data features for MiniWorld."""
 
 from .batch import Batch
+from .convert import make_batch
 from .features import (
     ChainFeatures,
     MSAFeatures,
@@ -8,6 +9,7 @@ from .features import (
     SchemeFeatures,
     SequenceFeatures,
     StructureFeatures,
+    TemplateFeatures,
 )
 
 __all__ = [
@@ -18,4 +20,6 @@ __all__ = [
     "SchemeFeatures",
     "SequenceFeatures",
     "StructureFeatures",
+    "TemplateFeatures",
+    "make_batch",
 ]

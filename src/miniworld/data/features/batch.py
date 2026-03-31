@@ -12,6 +12,7 @@ from .features import (
     SchemeFeatures,
     SequenceFeatures,
     StructureFeatures,
+    TemplateFeatures,
 )
 
 
@@ -31,6 +32,7 @@ class Batch(BaseBatch):
     reference: ReferenceFeatures
     scheme: SchemeFeatures
     msa: MSAFeatures
+    template: TemplateFeatures
     chain: ChainFeatures
 
     @property
@@ -54,9 +56,9 @@ class Batch(BaseBatch):
         return self.msa.aligned_sequences.shape[1]
 
     @property
-    def msa_number(self) -> int:
-        """Return the number of sampled MSAs."""
-        return self.msa.aligned_sequences.shape[0]
+    def template_number(self) -> int:
+        """Return the number of sampled templates."""
+        return self.template.mask.shape[1]
 
     @property
     def token_length(self) -> int:
@@ -79,7 +81,12 @@ class Batch(BaseBatch):
         raise ValueError(msg)
 
     @staticmethod
-    def empty(n_msa: int, msa_depth: int, n_tokens: int, n_atoms: int) -> Batch:
+    def empty(
+        n_temp: int,
+        msa_depth: int,
+        n_tokens: int,
+        n_atoms: int,
+    ) -> Batch:
         """Create an empty batch with the given dimensions (batch_size=1)."""
         return Batch(
             name=[""],
@@ -114,20 +121,29 @@ class Batch(BaseBatch):
             ),
             msa=MSAFeatures(
                 aligned_sequences=torch.zeros(
-                    (1, n_msa, msa_depth, n_tokens),
+                    (1, msa_depth, n_tokens),
                     dtype=torch.long,
                 ),
-                msa_mask=torch.zeros((1, n_msa, msa_depth), dtype=torch.bool),
+                mask=torch.zeros((1, msa_depth), dtype=torch.bool),
                 has_deletion=torch.zeros(
-                    (1, n_msa, msa_depth, n_tokens),
+                    (1, msa_depth, n_tokens),
                     dtype=torch.bool,
                 ),
                 deletion_value=torch.zeros(
-                    (1, n_msa, msa_depth, n_tokens),
+                    (1, msa_depth, n_tokens),
                     dtype=torch.float,
                 ),
                 profile=torch.zeros((1, n_tokens, 20), dtype=torch.float),
                 deletion_mean=torch.zeros((1, n_tokens), dtype=torch.float),
+            ),
+            template=TemplateFeatures(
+                mask=torch.zeros((1, n_temp), dtype=torch.bool),
+                ids=torch.zeros((1, n_temp, n_tokens), dtype=torch.long),
+                res_type=torch.zeros((1, n_temp, n_tokens), dtype=torch.long),
+                cb_xyz=torch.zeros((1, n_temp, n_tokens, 3), dtype=torch.float),
+                cb_mask=torch.zeros((1, n_temp, n_tokens), dtype=torch.bool),
+                bb_xyz=torch.zeros((1, n_temp, n_tokens, 3, 3), dtype=torch.float),
+                bb_mask=torch.zeros((1, n_temp, n_tokens), dtype=torch.bool),
             ),
             chain=ChainFeatures(
                 entity_type=torch.zeros((1, 1), dtype=torch.long),
