@@ -14,5 +14,9 @@ Requires-Dist: beartype<0.22,>=0.21.0
 Requires-Dist: scipy<2,>=1.15.3
 Requires-Dist: lightning<3,>=2.5.6
 Requires-Dist: biomol>=1.0.0
+<<<<<<< HEAD
 Requires-Dist: cuequivariance-ops-torch-cu12==0.9.0
 Requires-Dist: cuequivariance-torch<0.10,>=0.9.0
+=======
+Requires-Dist: cuequivariance-torch<0.10,>=0.9.0
+>>>>>>> 4034f60 (add template)

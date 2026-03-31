@@ -188,7 +188,7 @@ class BioMolData(torch.utils.data.Dataset):
         template_config: TemplateConfig = TemplateConfig()
         DB_config: BioMolDBConfig = BioMolDBConfig()
         tokenizer_config: TokenizerConfig = TokenizerConfig()
-        sampler_config: SamplerConfig = SamplerConfig()
+        sampler_config: SamplerConfig | None = SamplerConfig()
 
     def __init__(
         self,
