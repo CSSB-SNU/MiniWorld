@@ -1,5 +1,5 @@
 token_embedding:
-  embedding_path: /public_data/fp_clamp_embeddings.pt
+  embedding_path: /public_data/bsoohyuncd/fp_clamp_embeddings.pt
 shared:
   d_single: 384
   d_single_atom: 128
@@ -41,7 +41,7 @@ trunk:
     p_drop: 0.25
     use_single: True
     use_self_attention: True
-    implementation: triton
+    implementation: cuequivariance
 
   msa_module: 
     n_block: 4

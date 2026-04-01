@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 from pathlib import Path
+import warnings
 
 import click
 import torch
@@ -101,7 +103,38 @@ def train(  # noqa: PLR0912, PLR0915
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
-    fabric = Fabric()
+    
+    if torch.cuda.is_available():
+        visible_gpu_count = torch.cuda.device_count()
+        world_size_env = os.environ.get("WORLD_SIZE")
+        local_world_size_env = os.environ.get("LOCAL_WORLD_SIZE")
+
+        if world_size_env is None and local_world_size_env is None:
+            # When the script is launched directly under SLURM without torchrun/srun,
+            # all requested GPUs can be visible while Fabric still defaults to a
+            # single process. In that case, use all visible GPUs on this node.
+            world_size = visible_gpu_count
+            local_world_size = visible_gpu_count
+        else:
+            world_size = int(world_size_env or "0")
+            local_world_size = int(local_world_size_env or "0")
+            if local_world_size == 0:
+                local_world_size = visible_gpu_count
+            if world_size == 0:
+                world_size = local_world_size
+
+        # Bind the process to its rank-local device before Fabric/DDP touches CUDA.
+        local_rank = int(os.environ.get("LOCAL_RANK", "0"))
+        torch.cuda.set_device(local_rank)
+        fabric = Fabric(
+            accelerator="cuda",
+            devices=local_world_size,
+            num_nodes=max(1, world_size // local_world_size),
+            strategy="ddp" if world_size > 1 else "auto",
+        )
+    else:
+        fabric = Fabric(accelerator="cpu", devices=1)
+
     fabric.launch()
     if cfg.train.seed is not None:
         fabric.seed_everything(cfg.train.seed)
@@ -137,24 +170,6 @@ def train(  # noqa: PLR0912, PLR0915
     if cfg.train.verbose:
         client.add_callback(VerboseCallback())
 
-    if cfg.train.compile:
-        torch._dynamo.config.cache_size_limit = 128  # noqa: SLF001
-        torch._dynamo.config.accumulated_cache_size_limit = 512  # noqa: SLF001
-        client.model.compile(dynamic=False)
-        client.logger.info("Compiled model")
-
-    config_dict = cfg.model_dump(mode="json")
-    msg = f"config:\n{OmegaConf.to_yaml(OmegaConf.create(config_dict))}"
-    client.logger.debug(msg)
-    if fabric.is_global_zero:
-        OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
-        if cfg.train.use_wandb:
-            wandb.init(
-                project=cfg.train.wandb_project,
-                name=job_name,
-                config=config_dict,
-            )
-
     if cfg.train.optimizer is None or cfg.train.optimizer == "AdamW":
         optimizer = torch.optim.AdamW(
             client.model.parameters(),
@@ -169,6 +184,22 @@ def train(  # noqa: PLR0912, PLR0915
     else:
         msg = f"Unsupported optimizer: {cfg.train.optimizer}"
         raise ValueError(msg)
+    
+    if cfg.train.compile:
+        torch._dynamo.config.cache_size_limit = 128  # noqa: SLF001
+        torch._dynamo.config.accumulated_cache_size_limit = 512  # noqa: SLF001
+        # Compile the raw model before Fabric wraps it so Lightning can reapply
+        # compile safely around DDP instead of compiling the Fabric wrapper itself.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=r"`torch\.jit\.script_method` is deprecated\..*",
+                category=DeprecationWarning,
+                module=r"torch\.jit\._script",
+            )
+            client.model.compile(dynamic=False)
+        client.logger.info("Compiled model")
+
     scheduler = get_step_decay_scheduler_with_warmup(
         optimizer=optimizer,
         warmup_steps=cfg.train.warmup_steps,
@@ -183,6 +214,18 @@ def train(  # noqa: PLR0912, PLR0915
         gradient_accumulation_steps=cfg.train.grad_accum_steps,
         gradient_clip_norm=cfg.train.grad_clip_max_norm,
     )
+
+    config_dict = cfg.model_dump(mode="json")
+    msg = f"config:\n{OmegaConf.to_yaml(OmegaConf.create(config_dict))}"
+    client.logger.debug(msg)
+    if fabric.is_global_zero:
+        OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
+        if cfg.train.use_wandb:
+            wandb.init(
+                project=cfg.train.wandb_project,
+                name=job_name,
+                config=config_dict,
+            )
 
     if ckpt:
         state_dict = torch.load(ckpt, map_location="cpu")

@@ -1,4 +1,4 @@
-DB_PATH: /public_data/
+DB_PATH: /public_data/bsoohyuncd/
 train_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train.lmdb
   a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb

@@ -4,6 +4,7 @@ import logging
 import os
 import time
 from pathlib import Path
+import warnings
 
 import click
 import torch
@@ -149,24 +150,6 @@ def train(  # noqa: PLR0912, PLR0915
     if cfg.train.verbose:
         client.add_callback(VerboseCallback())
 
-    if cfg.train.compile:
-        torch._dynamo.config.cache_size_limit = 128  # noqa: SLF001
-        torch._dynamo.config.accumulated_cache_size_limit = 512  # noqa: SLF001
-        client.model.compile(dynamic=False)
-        client.logger.info("Compiled model")
-
-    config_dict = cfg.model_dump(mode="json")
-    msg = f"config:\n{OmegaConf.to_yaml(OmegaConf.create(config_dict))}"
-    client.logger.debug(msg)
-    if fabric.is_global_zero:
-        OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
-        if cfg.train.use_wandb:
-            wandb.init(
-                project=cfg.train.wandb_project,
-                name=job_name,
-                config=config_dict,
-            )
-
     if cfg.train.optimizer is None or cfg.train.optimizer == "AdamW":
         optimizer = torch.optim.AdamW(
             client.model.parameters(),
@@ -181,6 +164,22 @@ def train(  # noqa: PLR0912, PLR0915
     else:
         msg = f"Unsupported optimizer: {cfg.train.optimizer}"
         raise ValueError(msg)
+    
+    if cfg.train.compile:
+        torch._dynamo.config.cache_size_limit = 128  # noqa: SLF001
+        torch._dynamo.config.accumulated_cache_size_limit = 512  # noqa: SLF001
+        # Compile the raw model before Fabric wraps it so Lightning can reapply
+        # compile safely around DDP instead of compiling the Fabric wrapper itself.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=r"`torch\.jit\.script_method` is deprecated\..*",
+                category=DeprecationWarning,
+                module=r"torch\.jit\._script",
+            )
+            client.model.compile(dynamic=False)
+        client.logger.info("Compiled model")
+        
     scheduler = get_step_decay_scheduler_with_warmup(
         optimizer=optimizer,
         warmup_steps=cfg.train.warmup_steps,
@@ -195,6 +194,18 @@ def train(  # noqa: PLR0912, PLR0915
         gradient_accumulation_steps=cfg.train.grad_accum_steps,
         gradient_clip_norm=cfg.train.grad_clip_max_norm,
     )
+
+    config_dict = cfg.model_dump(mode="json")
+    msg = f"config:\n{OmegaConf.to_yaml(OmegaConf.create(config_dict))}"
+    client.logger.debug(msg)
+    if fabric.is_global_zero:
+        OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
+        if cfg.train.use_wandb:
+            wandb.init(
+                project=cfg.train.wandb_project,
+                name=job_name,
+                config=config_dict,
+            )
 
     if ckpt:
         state_dict = torch.load(ckpt, map_location="cpu")
