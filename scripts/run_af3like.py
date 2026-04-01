@@ -253,7 +253,7 @@ def train(  # noqa: PLR0912, PLR0915
             checkpoint_path = checkpoint_dir / f"epoch={client.epoch:04d}.pt"
             client.save_checkpoint(checkpoint_path)
 
-        if (client.epoch - 1) % cfg.train.eval_freq == 0:
+        if client.epoch % cfg.train.eval_freq == 0:
             valid_dataloader.sampler.set_epoch(client.epoch)  # pyright: ignore[reportAttributeAccessIssue]
             valid_dataset.set_epoch(client.epoch)
             client.logger.info("Validation Epoch %d", client.epoch)

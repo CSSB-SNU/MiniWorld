@@ -39,7 +39,7 @@ trunk:
     p_drop: 0.25
     use_single: True
     use_self_attention: True
-    implementation: cuequivariance
+    implementation: triton
 
   msa_module: 
     n_block: 2
@@ -57,7 +57,7 @@ trunk:
     use_self_attention: False
     n_checkpoint_segments: null
 
-    implementation: cuequivariance
+    implementation: triton
 
 diffusion:
   atom_dit:

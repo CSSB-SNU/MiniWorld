@@ -14,6 +14,7 @@ dependencies = [
   "scipy>=1.15.3,<2",
   "lightning>=2.5.6,<3",
   "biomol>=1.0.0",
+  "cuequivariance-torch>=0.9.0,<0.10",
 ]
 
 [tool.setuptools]
@@ -51,6 +52,19 @@ ignore = [
   "TC001",
   "TC002",
 ]
+
+[tool.pixi.feature.cuda12.pypi-dependencies]
+cuequivariance-ops-torch-cu12 = "*"
+
+[tool.pixi.feature.cuda13.pypi-dependencies]
+cuequivariance-ops-torch-cu13 = "*"
+
+[tool.pixi.feature.cuda13.pypi-options]
+extra-index-urls = ["https://download.pytorch.org/whl/cu130"]
+
+[tool.pixi.environments]
+default = { features = ["cuda12"] }
+cuda13 = { features = ["cuda13"] }
 
 [tool.pixi.pypi-dependencies]
 miniworld = { path = ".", editable = true }

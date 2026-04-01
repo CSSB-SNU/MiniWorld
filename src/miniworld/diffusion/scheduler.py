@@ -260,13 +260,20 @@ class DecoupledEDMScheduler(DiffusionScheduler):
 
         sigma_y_max: float = 160.0
         sigma_y_min: float = 4e-4
-        rho_y: float = 9.0
+        rho_y: float = 7.0
+        # Phase boundaries expressed as progress through the full sigma_y range
+        # in EDM-transformed space. Larger values push the boundary closer to the
+        # low-noise regime.
+        sigma_y_phase_1_progress: float = 0.5
+        sigma_y_phase_2_progress: float = 0.7
+        phase_1_fraction: float = 0.35
+        phase_2_fraction: float = 0.35
 
-        sigma_R_max: float = 3000  # noqa: N815
+        sigma_R_max: float = 32.0  # noqa: N815
         sigma_R_min: float = 4e-4  # noqa: N815
-        rho_R: float = 0.1  # noqa: N815
+        rho_R: float = 1.5  # noqa: N815
 
-        sigma_T_max: float = 15.0  # noqa: N815
+        sigma_T_max: float = 8.0  # noqa: N815
         sigma_T_min: float = 4e-4  # noqa: N815
         rho_T: float = 1.0  # noqa: N815
 
@@ -274,48 +281,143 @@ class DecoupledEDMScheduler(DiffusionScheduler):
 
     def __init__(self, config: DecoupledEDMSchedulerConfig) -> None:
         self.config = config
+        if not (0.0 < self.config.sigma_y_phase_1_progress < 1.0):
+            msg = "sigma_y_phase_1_progress must lie in (0, 1)."
+            raise ValueError(msg)
+        if not (0.0 < self.config.sigma_y_phase_2_progress < 1.0):
+            msg = "sigma_y_phase_2_progress must lie in (0, 1)."
+            raise ValueError(msg)
+        if self.config.sigma_y_phase_1_progress >= self.config.sigma_y_phase_2_progress:
+            msg = (
+                "sigma_y_phase_1_progress must be smaller than sigma_y_phase_2_progress."
+            )
+            raise ValueError(msg)
+        if not (0.0 < self.config.phase_1_fraction < 1.0):
+            msg = "phase_1_fraction must lie in (0, 1)."
+            raise ValueError(msg)
+        if not (0.0 < self.config.phase_2_fraction < 1.0):
+            msg = "phase_2_fraction must lie in (0, 1)."
+            raise ValueError(msg)
+        if self.config.phase_1_fraction + self.config.phase_2_fraction >= 1.0:
+            msg = "phase_1_fraction + phase_2_fraction must be less than 1."
+            raise ValueError(msg)
+
+    @staticmethod
+    def _interpolate_sigma(
+        progress: Float[torch.Tensor, ...],
+        sigma_start: float,
+        sigma_end: float,
+        rho: float,
+    ) -> Float[torch.Tensor, ...]:
+        """Interpolate between sigma endpoints in EDM-style transformed space."""
+        sigma_start_r = sigma_start ** (1.0 / rho)
+        sigma_end_r = sigma_end ** (1.0 / rho)
+        return (sigma_start_r + progress * (sigma_end_r - sigma_start_r)) ** rho
+
+    @staticmethod
+    def _interpolation_progress(
+        sigma: Float[torch.Tensor, ...],
+        sigma_start: float,
+        sigma_end: float,
+        rho: float,
+    ) -> Float[torch.Tensor, ...]:
+        """Invert `_interpolate_sigma` for monotone decreasing schedules."""
+        sigma_start_r = sigma_start ** (1.0 / rho)
+        sigma_end_r = sigma_end ** (1.0 / rho)
+        sigma_r = torch.clamp(sigma, min=0.0) ** (1.0 / rho)
+        return torch.clamp(
+            (sigma_r - sigma_start_r) / (sigma_end_r - sigma_start_r),
+            min=0.0,
+            max=1.0,
+        )
+
+    def _sigma_y_phase_boundaries(self) -> tuple[float, float, float, float]:
+        """Return the full sigma_y range and the two phase boundaries."""
+        sigma_y_max = self.config.sigma_y_max * self.config.sigma_data
+        sigma_y_min = self.config.sigma_y_min * self.config.sigma_data
+        sigma_y_phase_1_end = float(
+            self._interpolate_sigma(
+                torch.tensor(self.config.sigma_y_phase_1_progress),
+                sigma_y_max,
+                sigma_y_min,
+                self.config.rho_y,
+            ),
+        )
+        sigma_y_phase_2_end = float(
+            self._interpolate_sigma(
+                torch.tensor(self.config.sigma_y_phase_2_progress),
+                sigma_y_max,
+                sigma_y_min,
+                self.config.rho_y,
+            ),
+        )
+        return sigma_y_max, sigma_y_min, sigma_y_phase_1_end, sigma_y_phase_2_end
 
     def convert_to_sigma_rt(
         self,
         sigma: Float[torch.Tensor, ...],
     ) -> tuple[Float[torch.Tensor, ...], Float[torch.Tensor, ...]]:
-        """Convert the coordinate noise level into rotation and translation noise."""
+        """Convert sigma_y into a three-phase rigid-body schedule.
+
+        Phase 1:
+          - sigma_y decreases from sigma_y_max to the first progress boundary
+          - sigma_rotation / sigma_translation stay at their maxima
+        Phase 2:
+          - sigma_y traverses the middle progress band
+          - sigma_rotation / sigma_translation decay to their minima
+        Phase 3:
+          - sigma_rotation / sigma_translation stay near zero
+          - sigma_y decreases to sigma_y_min for high-resolution refinement
+        """
         eps_mask = sigma <= 1e-8
+        sigma_y_max, sigma_y_min, sigma_y_phase_1_end, sigma_y_phase_2_end = (
+            self._sigma_y_phase_boundaries()
+        )
+        sigma_y = torch.clamp(sigma, min=sigma_y_min, max=sigma_y_max)
 
-        def power(
-            sigma_min: float,
-            sigma_max: float,
-            rho: float,
-        ) -> tuple[float, float]:
-            return sigma_min ** (1.0 / rho), sigma_max ** (1.0 / rho)
+        sigma_translation_max = self.config.sigma_T_max * self.config.sigma_data
+        sigma_translation_min = self.config.sigma_T_min * self.config.sigma_data
 
-        b_y, a_y = power(
-            self.config.sigma_y_min * self.config.sigma_data,
-            self.config.sigma_y_max * self.config.sigma_data,
-            self.config.rho_y,
+        sigma_rotation = torch.full_like(sigma_y, self.config.sigma_R_min)
+        sigma_translation = torch.full_like(sigma_y, sigma_translation_min)
+
+        phase_1_mask = sigma_y >= sigma_y_phase_1_end
+        phase_2_mask = (sigma_y < sigma_y_phase_1_end) & (sigma_y >= sigma_y_phase_2_end)
+
+        sigma_rotation = torch.where(
+            phase_1_mask,
+            torch.full_like(sigma_rotation, self.config.sigma_R_max),
+            sigma_rotation,
         )
-        b_rotation, a_rotation = power(
-            self.config.sigma_R_min,
-            self.config.sigma_R_max,
-            self.config.rho_R,
-        )
-        b_translation, a_translation = power(
-            self.config.sigma_T_min * self.config.sigma_data,
-            self.config.sigma_T_max * self.config.sigma_data,
-            self.config.rho_T,
+        sigma_translation = torch.where(
+            phase_1_mask,
+            torch.full_like(sigma_translation, sigma_translation_max),
+            sigma_translation,
         )
 
-        kappa_rotation = (b_rotation - a_rotation) / (b_y - a_y)
-        kappa_translation = (b_translation - a_translation) / (b_y - a_y)
-        c_rotation = -a_y * (b_rotation - a_rotation) / (b_y - a_y) + a_rotation
-        c_translation = (
-            -a_y * (b_translation - a_translation) / (b_y - a_y) + a_translation
-        )
-        sigma_base = sigma ** (1.0 / self.config.rho_y)
-        sigma_rotation = (kappa_rotation * sigma_base + c_rotation) ** self.config.rho_R
-        sigma_translation = (
-            kappa_translation * sigma_base + c_translation
-        ) ** self.config.rho_T
+        if phase_2_mask.any():
+            phase_2_progress = self._interpolation_progress(
+                sigma_y[phase_2_mask],
+                sigma_y_phase_1_end,
+                sigma_y_phase_2_end,
+                self.config.rho_y,
+            )
+            sigma_rotation_phase_2 = self._interpolate_sigma(
+                phase_2_progress,
+                self.config.sigma_R_max,
+                self.config.sigma_R_min,
+                self.config.rho_R,
+            )
+            sigma_translation_phase_2 = self._interpolate_sigma(
+                phase_2_progress,
+                sigma_translation_max,
+                sigma_translation_min,
+                self.config.rho_T,
+            )
+            sigma_rotation = sigma_rotation.clone()
+            sigma_translation = sigma_translation.clone()
+            sigma_rotation[phase_2_mask] = sigma_rotation_phase_2
+            sigma_translation[phase_2_mask] = sigma_translation_phase_2
 
         sigma_rotation = torch.where(
             eps_mask,
@@ -408,15 +510,52 @@ class DecoupledEDMScheduler(DiffusionScheduler):
         return sigma.log() / 4.0
 
     def sampling_time_steps(self, num_steps: int) -> Float[torch.Tensor, ...]:
-        """Generate a schedule of time steps for sampling."""
+        """Generate a three-phase sigma_y schedule for sampling/training."""
         time_steps = torch.empty(num_steps + 1)
-        t = torch.linspace(0.0, 1.0, steps=num_steps)
-        sigma_max_r = self.config.sigma_y_max ** (1.0 / self.config.rho_y)
-        sigma_min_r = self.config.sigma_y_min ** (1.0 / self.config.rho_y)
-        time_steps[:-1] = (
-            self.config.sigma_data
-            * (sigma_max_r + t * (sigma_min_r - sigma_max_r)) ** self.config.rho_y
+        sigma_y_max, sigma_y_min, sigma_y_phase_1_end, sigma_y_phase_2_end = (
+            self._sigma_y_phase_boundaries()
         )
+
+        progress = torch.linspace(0.0, 1.0, steps=num_steps)
+        phase_1_end = self.config.phase_1_fraction
+        phase_2_end = self.config.phase_1_fraction + self.config.phase_2_fraction
+
+        sigma_y = torch.empty(num_steps)
+        phase_1_mask = progress <= phase_1_end
+        phase_2_mask = (progress > phase_1_end) & (progress <= phase_2_end)
+        phase_3_mask = progress > phase_2_end
+
+        phase_1_progress = progress[phase_1_mask] / phase_1_end
+        sigma_y[phase_1_mask] = self._interpolate_sigma(
+            phase_1_progress,
+            sigma_y_max,
+            sigma_y_phase_1_end,
+            self.config.rho_y,
+        )
+
+        if phase_2_mask.any():
+            phase_2_progress = (
+                progress[phase_2_mask] - phase_1_end
+            ) / self.config.phase_2_fraction
+            sigma_y[phase_2_mask] = self._interpolate_sigma(
+                phase_2_progress,
+                sigma_y_phase_1_end,
+                sigma_y_phase_2_end,
+                self.config.rho_y,
+            )
+
+        if phase_3_mask.any():
+            phase_3_progress = (progress[phase_3_mask] - phase_2_end) / (
+                1.0 - phase_2_end
+            )
+            sigma_y[phase_3_mask] = self._interpolate_sigma(
+                phase_3_progress,
+                sigma_y_phase_2_end,
+                sigma_y_min,
+                self.config.rho_y,
+            )
+
+        time_steps[:-1] = sigma_y
         time_steps[-1] = 0.0
         return time_steps
 
