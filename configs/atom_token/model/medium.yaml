@@ -44,7 +44,6 @@ trunk:
     p_drop: 0.25
     use_single: True
     use_self_attention: True
-<<<<<<< HEAD
     implementation: cuequivariance
 
   msa_module: 

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 DB_PATH: /public_data/bsoohyuncd/
-=======
-DB_PATH: /public_data/
->>>>>>> 67bfa34 (add: canonical to explicit chemical compound)
 train_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train.lmdb
   a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb

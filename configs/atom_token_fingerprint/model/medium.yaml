@@ -1,9 +1,5 @@
 token_embedding:
-<<<<<<< HEAD
   embedding_path: /public_data/bsoohyuncd/fp_clamp_embeddings.pt
-=======
-  embedding_path: /public_data/fp_clamp_embeddings.pt
->>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
 shared:
   d_single: 384
   d_single_atom: 128
@@ -16,15 +12,7 @@ shared:
   r_max: 32
   s_max: 2
   n_distogram_bins: 64
-<<<<<<< HEAD
-<<<<<<< HEAD
   num_res_class: 768
-=======
-  num_res_class: 32
->>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
-=======
-  num_res_class: 768
->>>>>>> 3d173e4 (fix: configs, run script and msa_util & add: embedding_client)
   implementation: triton
   use_checkpoint: True
 
@@ -41,18 +29,8 @@ input_feat_embbeder:
 trunk:
   n_recycle_max: 1 # 4
   pairformer: 
-<<<<<<< HEAD
-<<<<<<< HEAD
     n_block: 16
     n_checkpoint_segments: 4
-=======
-    n_block: 4
-    n_checkpoint_segments: null
->>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
-=======
-    n_block: 16
-    n_checkpoint_segments: 4
->>>>>>> 3d173e4 (fix: configs, run script and msa_util & add: embedding_client)
 
     d_single: ${...shared.d_single}
     d_pair: ${...shared.d_pair}
@@ -63,25 +41,12 @@ trunk:
     p_drop: 0.25
     use_single: True
     use_self_attention: True
-<<<<<<< HEAD
     implementation: cuequivariance
 
   msa_module: 
     n_block: 4
 
     d_msa: 64
-=======
-    implementation: triton
-
-  msa_module: 
-    n_block: 4
-
-<<<<<<< HEAD
-    d_msa: 128
->>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
-=======
-    d_msa: 64
->>>>>>> 3d173e4 (fix: configs, run script and msa_util & add: embedding_client)
     d_pair: ${...shared.d_pair}
     d_single_token_input: ${...shared.d_single_token_input}
     d_hidden_msa: 32
@@ -92,60 +57,23 @@ trunk:
     p_drop_msa: 0.15
     p_drop: 0.25
     use_self_attention: False
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     n_checkpoint_segments: 4
 
     implementation: cuequivariance
     num_res_class: 768
-=======
-    n_checkpoint_segments: null
-=======
-    n_checkpoint_segments: 2
->>>>>>> 9719ec9 (fix: follow af3like things)
-
-    implementation: triton
->>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
-=======
-    n_checkpoint_segments: 4
-
-    implementation: triton
-    num_res_class: 768
->>>>>>> 3d173e4 (fix: configs, run script and msa_util & add: embedding_client)
 
 diffusion:
   atom_dit:
     n_block: 3
-<<<<<<< HEAD
-<<<<<<< HEAD
     n_checkpoint_segments: null
-=======
-    n_checkpoint_segments: 3
->>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
-=======
-    n_checkpoint_segments: null
->>>>>>> 3d173e4 (fix: configs, run script and msa_util & add: embedding_client)
     d_single: ${...shared.d_single_atom}
     d_cond: ${...shared.d_single_atom}
     d_pair: ${...shared.d_pair_atom}
     n_head: 4
     implementation: triton
   token_dit:
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 3d173e4 (fix: configs, run script and msa_util & add: embedding_client)
     n_block: 16
     n_checkpoint_segments: 2
-=======
-    n_block: 4
-<<<<<<< HEAD
-    n_checkpoint_segments: 4
->>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
-=======
-    n_checkpoint_segments: 2
->>>>>>> 9719ec9 (fix: follow af3like things)
     d_single: ${...shared.d_single_token_diffusion}
     d_cond: ${...shared.d_single}
     d_pair: ${...shared.d_pair}
