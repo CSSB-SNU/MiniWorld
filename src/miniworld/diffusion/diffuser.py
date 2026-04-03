@@ -45,7 +45,6 @@ class Diffuser(ABC):
     ) -> None:
         self.config = config
         self.scheduler = scheduler
-        self.clear_buffer()
         self._set_seed(config.seed)
 
     def _set_seed(self, seed: int) -> None:
