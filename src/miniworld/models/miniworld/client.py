@@ -15,7 +15,11 @@ from torch.utils.data import DataLoader
 
 from miniworld.configs import EDMDiffuserConfig
 from miniworld.data.features.batch import Batch
-from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
+from miniworld.diffusion import (
+    DecoupledEDMDiffuser,
+    DecoupledEDMScheduler,
+    DecoupledEDMSolver,
+)
 from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
@@ -103,15 +107,15 @@ class Client(BaseClient):
             self.add_callback(ModelEMA(config.train.ema_decay))
         diffuser_method = config.diffuser.method
         if diffuser_method == "AF3":
-            self.diffusion_scheduler = EDMScheduler(config.diffuser.scheduler)
-            self.diffuser = EuclideanDiffuser(
-                config=EuclideanDiffuser.EuclideanConfig(
+            self.diffusion_scheduler = DecoupledEDMScheduler(config.diffuser.scheduler)
+            self.diffuser = DecoupledEDMDiffuser(
+                config=DecoupledEDMDiffuser.DecoupledEDMConfig(
                     seed=config.diffuser.seed,
                 ),
                 scheduler=self.diffusion_scheduler,
             )
-            self.solver = AF3Solver(
-                config=AF3Solver.SolverConfig(seed=config.diffuser.seed),
+            self.solver = DecoupledEDMSolver(
+                config=DecoupledEDMSolver.SolverConfig(seed=config.diffuser.seed),
                 scheduler=self.diffusion_scheduler,
             )
         else:

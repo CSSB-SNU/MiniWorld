@@ -12,7 +12,7 @@ shared:
   n_distogram_bins: 64
   num_res_class: 32
   implementation: triton
-  use_checkpoint: True
+  use_checkpoint: False
 
 
 input_feat_embbeder:
@@ -38,7 +38,7 @@ trunk:
     n_head_attention: 16
     p_drop: 0.25
     use_single: True
-    use_self_attention: True
+    use_self_attention: False
     implementation: cuequivariance
 
   msa_module: 

@@ -88,6 +88,7 @@ pip = ">=26.0.1,<27"
 "src/miniworld/modules/kernels/*" = ["N806", "N803", "ANN", "ARG001", "D"]
 "src/miniworld/utils/diffusion/*" = ["RUF", "N803",]
 "src/miniworld/data/pipeline/msa.py" = ["N802","N803"]
+"src/miniworld/utils/structure/se3.py" = ["N802","N803", "RET504","E741"]
 
 
 [tool.ruff]

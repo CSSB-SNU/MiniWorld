@@ -34,7 +34,6 @@ class Diffuser(ABC):
     ) -> None:
         self.config = config
         self.scheduler = scheduler
-        self.clear_buffer()
         self._set_seed(config.seed)
 
     def _set_seed(self, seed: int) -> None:
@@ -47,10 +46,6 @@ class Diffuser(ABC):
         torch.backends.cudnn.enabled = False
         torch.random.manual_seed(seed)
         torch.cuda.manual_seed(seed)
-
-    def clear_buffer(self) -> None:
-        """Clear all internal buffers."""
-        self._buffer = {}
 
     @torch.no_grad()
     def random_rotation_and_translation(
@@ -237,7 +232,7 @@ class DecoupledEDMDiffuser(Diffuser):
 
     scheduler: DecoupledEDMScheduler
 
-    class DecoupledConfig(BaseModel):
+    class DecoupledEDMConfig(BaseModel):
         """Configuration for the DecoupledEDMDiffuser class."""
 
         method: str = "AF3"
@@ -246,20 +241,29 @@ class DecoupledEDMDiffuser(Diffuser):
 
     def __init__(
         self,
-        config: DecoupledConfig,
+        config: DecoupledEDMConfig,
         scheduler: DecoupledEDMScheduler,
     ) -> None:
         self.config = config
         self.scheduler: DecoupledEDMScheduler = scheduler
         self._set_seed(config.seed)
         self.dtype = torch.float32  # diffuser should always use float32
-        self.clear_buffer()
+
+    # @torch.no_grad()
+    # def _randomly_combine_chains(
+    #     self,
+    #     x0: Float[torch.Tensor, "... L 3"],
+    #     mask: Bool[torch.Tensor, "... L"] | None,
+    #     atom_to_chain_idx: torch.Tensor,  # (B, L_atom)
+    #     dist_cutoff: float = 6.0,
+    #     combine_prob: float = 0.5,
+    # ) -> torch.Tensor: # (B, L_atom)
 
     def sample(
         self,
         x0: torch.Tensor,
         mask: torch.Tensor | None,
-        atom_chain_break: dict[str, tuple[int, int]] | None,
+        atom_to_chain_idx: torch.Tensor,  # [B, L_atom]
         num_augment: int = 1,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Add noise to batch.atom_pos and store preconditioning data.
@@ -269,17 +273,20 @@ class DecoupledEDMDiffuser(Diffuser):
         if num_augment < 1:
             msg = "num_augment must be at least 1"
             raise ValueError(msg)
-        if atom_chain_break is None:
-            msg = "atom_chain_break must be provided for decoupled EDM diffusion."
+        if atom_to_chain_idx is None:
+            msg = "atom_to_chain_idx must be provided for decoupled EDM diffusion."
             raise ValueError(msg)
 
         batch_size = x0.shape[0]
-        self.clear_buffer()
         device, dtype = x0.device, self.dtype
         if x0.dtype != dtype:
             x0 = x0.to(device=device, dtype=dtype)
         if len(x0.shape) == 3:  # x0 : (B, L, 3)
             x0 = x0.expand(num_augment, *x0.shape[1:])
+            atom_to_chain_idx = atom_to_chain_idx.expand(
+                num_augment,
+                *atom_to_chain_idx.shape[1:],
+            )
             if mask is not None:
                 mask = mask.expand(num_augment, *mask.shape[1:])
         elif len(x0.shape) == 4:  # x0 : (B, N_str, L, 3)
@@ -291,10 +298,10 @@ class DecoupledEDMDiffuser(Diffuser):
                 mask = mask.reshape(-1, *mask.shape[2:])
                 mask = mask.repeat(num_expand, 1)
 
+        # Assume B = 1.
         x0 = self.random_rotation_and_translation(x0)
 
         total_num = x0.shape[0]
-        chain_num = len(atom_chain_break)
         sigma_shape = (total_num,) + (1,) * (x0.ndim - 1)
 
         sigma_y, sigma_rotation, sigma_translation = self.scheduler.sample_noise(
@@ -308,14 +315,20 @@ class DecoupledEDMDiffuser(Diffuser):
         noise = torch.randn_like(x0, device=device, dtype=dtype)
         noisy_x = x0 + noise * sigma_y.view(sigma_shape)
 
-        R, T = sample_rigid(
+        chain_num = len(torch.unique(atom_to_chain_idx))
+        rotation_matrix, translation_vector = sample_rigid(
             sigma_rotation,
             sigma_translation,
             C=chain_num,
             device=device,
             dtype=dtype,
         )
-        noisy_x = apply_chain_rt(noisy_x, R, T, atom_chain_break)
+        noisy_x = apply_chain_rt(
+            noisy_x,
+            rotation_matrix,
+            translation_vector,
+            atom_to_combine,
+        )
 
         x0 = x0.view(num_augment, batch_size, *x0.shape[1:])
         sigma_y = sigma_y.view(num_augment, batch_size, *sigma_y.shape[1:])
@@ -333,39 +346,29 @@ class DecoupledEDMDiffuser(Diffuser):
         if mask is not None:
             mask = mask.view(num_augment, batch_size, *mask.shape[1:])
 
-        self._buffer.update(
-            {
-                "x0": x0,
-                "R": R,
-                "T": T,
-                "atom_chain_break": atom_chain_break,
-                "sigma_y": sigma_y,
-                "sigma_translation": sigma_translation,
-                "noisy_x": noisy_x,
-                "mask": mask,
-            },
-        )
-
         return noisy_x, sigma_y, sigma_rotation, sigma_translation
 
-    def cal_loss(self, x_update: torch.Tensor) -> torch.Tensor:
+    def cal_loss(
+        self,
+        x0: Float[torch.Tensor, "... L 3"],
+        x_input: Float[torch.Tensor, "... L 3"],
+        x_update: Float[torch.Tensor, "... L 3"],
+        sigma_y: Float[torch.Tensor, ...],
+        rotation_matrix: Float[torch.Tensor, ...],
+        translation_vector: Float[torch.Tensor, ...],
+        atom_chain_break: dict[str, tuple[int, int]],
+        mask: Bool[torch.Tensor, "... L"] | None = None,
+    ) -> Float[torch.Tensor, 1]:
         """Compute EDM loss between model prediction and true signal."""
-        if x_update.shape != self._buffer["noisy_x"].shape:
-            msg = "x_update shape must match noisy_x shape in the buffer."
-            raise ValueError(msg)
         if x_update.dtype != self.dtype:
             msg = "x_update must be of type float32, but got dtype: " + str(
                 x_update.dtype,
             )
             raise ValueError(msg)
 
-        x0 = self._buffer["x0"]
-        R, T = self._buffer["R"], self._buffer["T"]
-        atom_chain_break = self._buffer["atom_chain_break"]
-        sigma_y = self._buffer["sigma_y"]
-        sigma_translation = self._buffer["sigma_translation"]
-        noisy_x = self._buffer["noisy_x"]
-        mask = self._buffer["mask"]
+        input_scaling = self.scheduler.input_scale(sigma_y)
+        input_scaling = input_scaling.to(device=x0.device, dtype=self.dtype)
+        noisy_x = x_input / input_scaling
 
         dtype = x_update.dtype
 
@@ -373,7 +376,6 @@ class DecoupledEDMDiffuser(Diffuser):
         noisy_x = noisy_x.to(dtype=dtype).reshape(-1, *noisy_x.shape[-2:])
         x_update = x_update.reshape(-1, *x_update.shape[-2:])
         sigma_y = sigma_y.to(dtype=dtype).reshape(-1)
-        sigma_translation = sigma_translation.to(dtype=dtype).reshape(-1)
 
         c_skip = self.scheduler.skip_scale(sigma_y).to(dtype=dtype).view(-1, 1, 1)
         c_out = self.scheduler.output_scale(sigma_y).to(dtype=dtype).view(-1, 1, 1)
@@ -389,7 +391,13 @@ class DecoupledEDMDiffuser(Diffuser):
             mask = mask.reshape(-1, *mask.shape[-1:])
             weight = weight * mask.unsqueeze(-1)
 
-        noisy_x = apply_chain_rt(noisy_x, R, T, atom_chain_break, inverse=True)
+        noisy_x = apply_chain_rt(
+            noisy_x,
+            rotation_matrix,
+            translation_vector,
+            atom_chain_break,
+            inverse=True,
+        )
         noisy_x = torch.where(mask.unsqueeze(-1), noisy_x, torch.zeros_like(noisy_x))
         x0 = torch.where(mask.unsqueeze(-1), x0, torch.zeros_like(x0))
 
@@ -399,7 +407,6 @@ class DecoupledEDMDiffuser(Diffuser):
             torch.save(
                 {
                     "sigma_y": sigma_y,
-                    "sigma_translation": sigma_translation,
                     "c_skip": c_skip,
                     "c_out": c_out,
                     "x_update": x_update,

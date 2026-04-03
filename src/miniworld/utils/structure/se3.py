@@ -22,7 +22,7 @@ def hat_so3(omega: Tensor) -> Tensor:
 
 
 def rodrigues(omega: Tensor) -> Tensor:
-    """Axis–angle to rotation matrix using Rodrigues. omega: (B,3)."""
+    """Axis-angle to rotation matrix using Rodrigues. omega: (B,3)."""
     theta = omega.norm(dim=-1, keepdim=True).clamp_min(1e-12)
     k = omega / theta
     K = hat_so3(k)
@@ -39,6 +39,7 @@ def rodrigues(omega: Tensor) -> Tensor:
 
 def exp_se3(omega: Tensor, v: Tensor) -> tuple[Tensor, Tensor]:
     """Exponential map from (omega,v) in se(3) to (R,T).
+
     omega, v: (B,3). Returns R: (B,3,3), T: (B,3).
     """
     B = omega.shape[0]
@@ -67,9 +68,10 @@ def apply_chain_rt(
     x: Tensor,
     R: Tensor,
     T: Tensor,
-    atom_chain_break: dict,
+    atom_to_combine: Tensor,
     inverse: bool = False,
 ) -> Tensor:
+    """Apply chain-specific RT. x:(B,N,3), R,T:(B,C,3,3)/(B,C,3), atom_to_combine: (B, N_atom)."""
     output = []
     for cc, chain_ID in enumerate(atom_chain_break.keys()):
         atom_start, atom_end = atom_chain_break[chain_ID]
@@ -119,7 +121,7 @@ def compose(R1: Tensor, T1: Tensor, R2: Tensor, T2: Tensor) -> tuple[Tensor, Ten
 
 
 def exp_so3(omega: torch.Tensor) -> torch.Tensor:
-    """omega: (B,C,3)  ->  R: (B,C,3,3)"""
+    """Stable Rodrigues formula for exp map from so(3) to SO(3). omega: (B,C,3) axis-angle."""
     B, C = omega.shape[:2]
     omega = omega.view(-1, 3)
     theta = omega.norm(dim=-1, keepdim=True)  # (C,1)
@@ -148,34 +150,14 @@ def exp_so3(omega: torch.Tensor) -> torch.Tensor:
     return R
 
 
-# def sample_rotation_heat(
-#     sigma_R,                   # float or (B,): 'heat time' for rotation
-#     C: int,
-#     steps: int = 64,
-#     device=None,
-#     dtype=torch.float32,
-# ) -> torch.Tensor:
-#     B = sigma_R.shape[0]
-#     sigma_R = sigma_R[:,None].expand(-1,C).unsqueeze(-1)
-
-
-#     R = torch.eye(3, device=device, dtype=dtype).expand(B,C,3,3).clone()
-#     for _ in range(steps):
-#         d_omega = torch.randn(B, C, 3, device=device, dtype=dtype) * sigma_R
-#         R = R @ exp_so3(d_omega)
-#     return R  # (C,3,3)
-
-
 def sample_rotation_heat(
-    sigma_R,
+    sigma_R: torch.Tensor,
     C: int,
     steps: int = 64,
-    device=None,
-    dtype=torch.float32,
-):
-    """sigma_R: (B,) where sigma_R^2 is the 'heat time' t.
-    Returns R: (B,C,3,3)
-    """
+    device: torch.device | None = None,
+    dtype: torch.dtype = torch.float32,
+) -> Tensor:
+    """Sample from heat kernel on SO(3) with variance sigma_R^2 by simulating Brownian motion. Returns (B,C,3,3) rotation matrices."""
     B = sigma_R.shape[0]
     # per-step std = sqrt( t / steps ) = sigma_R / sqrt(steps)
     step_std = (sigma_R / math.sqrt(steps)).view(B, 1, 1)  # (B,1,1)
@@ -187,20 +169,22 @@ def sample_rotation_heat(
     return R
 
 
-def sample_translation(sigma_T, C):
+def sample_translation(sigma_T: torch.Tensor, C: int) -> torch.Tensor:
+    """Sample translation noise."""
     B = sigma_T.shape[0]
     sigma_T = sigma_T[:, None, None]  # (B,1,1)
     return torch.randn(B, C, 3, device=sigma_T.device, dtype=sigma_T.dtype) * sigma_T
 
 
 def sample_rigid(
-    sigma_R,
-    sigma_T,
+    sigma_R: torch.Tensor,
+    sigma_T: torch.Tensor,
     C: int,
     steps_R: int = 64,
-    device=None,
-    dtype=torch.float32,
-):
+    device: torch.device | None = None,
+    dtype: torch.dtype = torch.float32,
+) -> tuple[Tensor, Tensor]:
+    """Sample (R,T) from SE(3) heat kernel with rotation variance sigma_R^2 and translation variance sigma_T^2."""
     R = sample_rotation_heat(sigma_R, C, steps=steps_R, device=device, dtype=dtype)
     T = sample_translation(sigma_T, C)
     return R, T
@@ -213,72 +197,11 @@ def se3_heat_step_sigma(
     sigma_T_t: Tensor,  # (B,) or scalar
     sigma_R_s: Tensor,
     sigma_T_s: Tensor,  # target sigmas (B,) or scalar
-    stochastic: bool = False,
-    mode: str = "group",  # "group" or "algebra"
     eps: float = 1e-12,
 ) -> tuple[Tensor, Tensor]:
+    """Given (R_t,T_t) at time t with noise levels sigma_R_t, sigma_T_t, compute (R_s,T_s) at time s with noise levels sigma_R_s, sigma_T_s by applying the SE(3) heat semigroup step. Handles both increasing and decreasing noise cases."""
     B = R_t.shape[0]
     device, dtype = R_t.device, R_t.dtype
-    # # cast/broadcast
-    # def _to(x): return torch.as_tensor(x, device=device, dtype=dtype)
-    # sigma_R_t = _to(sigma_R_t).reshape(-1)
-    # sigma_T_t = _to(sigma_T_t).reshape(-1)
-    # sigma_R_s = _to(sigma_R_s).reshape(-1)
-    # sigma_T_s = _to(sigma_T_s).reshape(-1)
-
-    # # ensure shapes broadcast to batch
-    # B = R_t.shape[0]
-    # if sigma_R_t.numel() == 1: sigma_R_t = sigma_R_t.expand(B)
-    # if sigma_T_t.numel() == 1: sigma_T_t = sigma_T_t.expand(B)
-    # if sigma_R_s.numel() == 1: sigma_R_s = sigma_R_s.expand(B)
-    # if sigma_T_s.numel() == 1: sigma_T_s = sigma_T_s.expand(B)
-
-    # # ---- Rotation step ----
-    # dec_R = sigma_R_s <= sigma_R_t  # boolean mask
-    # alpha_R = torch.where(
-    #     dec_R, (sigma_R_s**2) / (sigma_R_t**2 + eps), torch.ones_like(sigma_R_t)
-    # )
-    # var_R = torch.where(
-    #     dec_R,
-    #     (sigma_R_s**2 - (sigma_R_s**4)/(sigma_R_t**2 + eps)),
-    #     (sigma_R_s**2 - sigma_R_t**2)
-    # ).clamp_min(0.0)
-    # std_R = torch.sqrt(var_R + 0.0).unsqueeze(-1)  # (B,1)
-
-    # omega_t = log_so3(R_t)                         # (B,3)
-
-    # if mode == "group":
-    #     R_mean = exp_so3(alpha_R.unsqueeze(-1) * omega_t)
-    #     if stochastic:
-    #         d_omega = std_R * torch.randn_like(omega_t)
-    #         R_s = exp_so3(d_omega) @ R_mean
-    #     else:
-    #         R_s = R_mean
-    # elif mode == "algebra":
-    #     if stochastic:
-    #         omega_s = alpha_R.unsqueeze(-1)*omega_t + std_R*torch.randn_like(omega_t)
-    #     else:
-    #         omega_s = alpha_R.unsqueeze(-1)*omega_t
-    #     R_s = exp_so3(omega_s)
-    # else:
-    #     raise ValueError("mode must be 'group' or 'algebra'.")
-
-    # # ---- Translation step (exact in ℝ^3) ----
-    # dec_T = sigma_T_s <= sigma_T_t
-    # alpha_T = torch.where(
-    #     dec_T, (sigma_T_s**2) / (sigma_T_t**2 + eps), torch.ones_like(sigma_T_t)
-    # )
-    # var_T = torch.where(
-    #     dec_T,
-    #     (sigma_T_s**2 - (sigma_T_s**4)/(sigma_T_t**2 + eps)),
-    #     (sigma_T_s**2 - sigma_T_t**2)
-    # ).clamp_min(0.0)
-    # std_T = torch.sqrt(var_T + 0.0).unsqueeze(-1)  # (B,1)
-
-    # if stochastic:
-    #     T_s = alpha_T.unsqueeze(-1)*T_t + std_T*torch.randn_like(T_t)
-    # else:
-    #     T_s = alpha_T.unsqueeze(-1)*T_t
 
     inc_R = sigma_R_s >= sigma_R_t  # forward (add variance)
     var_R = (sigma_R_s**2 - sigma_R_t**2).clamp_min(0.0)
@@ -293,8 +216,9 @@ def se3_heat_step_sigma(
         scale = ((sigma_R_s + eps) / (sigma_R_t + eps)).view(B, 1, 1)
         R_s = exp_so3(scale * omega_t)  # around identity
     else:
-        raise ValueError("Mixed inc/dec batch not supported in this helper.")
-    # ---- Translation step (ℝ^3 heat semigroup) ----
+        msg = "Mixed inc/dec batch not supported in this helper."
+        raise ValueError(msg)
+    # ---- Translation step (R^3 heat semigroup) ----
     inc_T = sigma_T_s >= sigma_T_t
     var_T = (sigma_T_s**2 - sigma_T_t**2).clamp_min(0.0)
     std_T = torch.sqrt(var_T + 0.0).view(B, 1, 1)  # (B,1,1)
@@ -304,7 +228,8 @@ def se3_heat_step_sigma(
         scale_T = ((sigma_T_s + eps) / (sigma_T_t + eps)).view(B, 1, 1)
         T_s = scale_T * T_t
     else:
-        raise ValueError("Mixed inc/dec batch not supported in this helper.")
+        msg = "Mixed inc/dec batch not supported in this helper."
+        raise ValueError(msg)
 
     return R_s, T_s
 
@@ -313,16 +238,15 @@ def se3_heat_step_delta_sigma(
     R_t: Tensor,
     T_t: Tensor,
     sigma_R_t: Tensor,
-    sigma_T_t: Tensor,  # current σ (B,) or scalar
+    sigma_T_t: Tensor,  # current sigma (B,) or scalar
     d_sigma_R: Tensor,
     d_sigma_T: Tensor,  # Δσ can be + or -
-    stochastic: bool = False,
-    mode: str = "group",
     sigma_floor: float = 0.0,  # e.g., 1e-6
 ) -> tuple[Tensor, Tensor]:
+    """Step from (R_t,T_t) with noise sigma_t to (R_s,T_s)."""
     device, dtype = R_t.device, R_t.dtype
 
-    def _to(x):
+    def _to(x: Tensor | float) -> Tensor:
         return torch.as_tensor(x, device=device, dtype=dtype).reshape(-1)
 
     sigma_R_t = _to(sigma_R_t)
@@ -350,8 +274,6 @@ def se3_heat_step_delta_sigma(
         sigma_T_t,
         sigma_R_s,
         sigma_T_s,
-        stochastic=stochastic,
-        mode=mode,
     )
     return R_s, T_s
 

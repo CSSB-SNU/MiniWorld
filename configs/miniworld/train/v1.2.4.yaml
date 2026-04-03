@@ -1,5 +1,5 @@
-comment: "af3like v1.2.0 Adam, lr 1e-4 grad clip 1.0 effective batch size 16"
-run_dir: "logs/af3like v1.2.0/"
+comment: "af3like v1.2.3 Adam, lr 1e-4 grad clip 1.0 effective batch size 16"
+run_dir: "logs/af3like v1.2.3/"
 
 # Training arguments
 num_batch: 1
@@ -16,8 +16,8 @@ train_item: 2560
 valid_item: 640
 
 # Validation arguments
-save_freq: 5
-eval_freq: 20
+save_freq: 10
+eval_freq: 200
 eval_sample_num: 1
 eval_input_num: 50
 eval_timesteps: 100

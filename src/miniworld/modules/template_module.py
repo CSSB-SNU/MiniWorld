@@ -12,6 +12,7 @@ from team_gm.modules.layers import (
     TriangleAttention,
     TriangleMultiplication,
 )
+from team_gm.modules.primitives import LayerNorm, Linear
 from torch import nn
 
 if TYPE_CHECKING:
@@ -138,19 +139,19 @@ class TemplateEmbedder(nn.Module):
         super().__init__()
         self.config = config
 
-        self.ln_pair = nn.LayerNorm(config.d_pair)
-        self.proj_pair = nn.Linear(config.d_pair, config.d_pair_template, bias=False)
+        self.ln_pair = LayerNorm(config.d_pair)
+        self.proj_pair = Linear(config.d_pair, config.d_pair_template, bias=False)
 
-        self.proj_template = nn.Linear(
+        self.proj_template = Linear(
             template_pairformer_config.d_pair_template_input,
             config.d_pair_template,
             bias=False,
         )
 
         self.template_pairformer = TemplatePairformer(template_pairformer_config)
-        self.ln_template = nn.LayerNorm(config.d_pair_template)
+        self.ln_template = LayerNorm(config.d_pair_template)
 
-        self.proj_out = nn.Linear(config.d_pair_template, config.d_pair, bias=False)
+        self.proj_out = Linear(config.d_pair_template, config.d_pair, bias=False)
 
     @typecheck
     def forward(
