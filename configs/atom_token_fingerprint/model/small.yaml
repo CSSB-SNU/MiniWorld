@@ -61,7 +61,7 @@ trunk:
     num_res_class: 768
 
 
-    implementation: triton
+    implementation: cuequivariance
 
 diffusion:
   atom_dit:

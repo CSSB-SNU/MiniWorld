@@ -60,7 +60,7 @@ trunk:
     use_self_attention: False
     n_checkpoint_segments: 4
 
-    implementation: triton
+    implementation: cuequivariance
     num_res_class: 768
 
 diffusion:

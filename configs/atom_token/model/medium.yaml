@@ -57,7 +57,7 @@ trunk:
     use_self_attention: False
     n_checkpoint_segments: 4
 
-    implementation: triton
+    implementation: cuequivariance
 
 diffusion:
   atom_dit:
