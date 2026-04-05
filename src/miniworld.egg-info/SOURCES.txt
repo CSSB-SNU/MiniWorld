@@ -9,6 +9,7 @@ src/miniworld.egg-info/top_level.txt
 src/miniworld/configs/__init__.py
 src/miniworld/configs/data.py
 src/miniworld/configs/data_explicit.py
+src/miniworld/configs/data_explicit.py
 src/miniworld/configs/diffusion.py
 src/miniworld/configs/models.py
 src/miniworld/data/constants/__init__.py
@@ -17,7 +18,6 @@ src/miniworld/data/dataloader/__init__.py
 src/miniworld/data/dataloader/dataloader.py
 src/miniworld/data/dataloader/dataloader_check.py
 src/miniworld/data/dataloader/sampler.py
-<<<<<<< HEAD
 src/miniworld/data/dataloader/dataloader_explicit.py
 src/miniworld/data/dataloader/sampler.py
 src/miniworld/data/features/__init__.py
@@ -71,7 +71,6 @@ src/miniworld/modules/msa_util_explicit.py
 src/miniworld/modules/template_module.py
 src/miniworld/modules/kernels/__init__.py
 src/miniworld/modules/kernels/layernorm.py
-src/miniworld/sh/msa_module.py
 src/miniworld/utils/MoE_utils.py
 src/miniworld/utils/__init__.py
 src/miniworld/utils/crop.py
