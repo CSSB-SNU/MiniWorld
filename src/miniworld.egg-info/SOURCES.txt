@@ -8,6 +8,7 @@ src/miniworld.egg-info/requires.txt
 src/miniworld.egg-info/top_level.txt
 src/miniworld/configs/__init__.py
 src/miniworld/configs/data.py
+src/miniworld/configs/data_explicit.py
 src/miniworld/configs/diffusion.py
 src/miniworld/configs/models.py
 src/miniworld/data/constants/__init__.py
@@ -15,6 +16,7 @@ src/miniworld/data/constants/mapping.py
 src/miniworld/data/dataloader/__init__.py
 src/miniworld/data/dataloader/dataloader.py
 src/miniworld/data/dataloader/dataloader_check.py
+src/miniworld/data/dataloader/dataloader_explicit.py
 src/miniworld/data/dataloader/sampler.py
 src/miniworld/data/features/__init__.py
 src/miniworld/data/features/batch.py
@@ -46,10 +48,14 @@ src/miniworld/loss/multistate.py
 src/miniworld/loss/smooth_lddt.py
 src/miniworld/models/__init__.py
 src/miniworld/models/default_client.py
+src/miniworld/models/embedding_client.py
+src/miniworld/models/explicit_client.py
 src/miniworld/models/af3_like/__init__.py
 src/miniworld/models/af3_like/model.py
 src/miniworld/models/af3_like_embedding/__init__.py
 src/miniworld/models/af3_like_embedding/model.py
+src/miniworld/models/af3_like_explicit/__init__.py
+src/miniworld/models/af3_like_explicit/model.py
 src/miniworld/models/miniworld/__init__.py
 src/miniworld/models/miniworld/client.py
 src/miniworld/models/miniworld/model.py
@@ -59,10 +65,10 @@ src/miniworld/modules/embeddings.py
 src/miniworld/modules/heads.py
 src/miniworld/modules/input_embedder.py
 src/miniworld/modules/msa_util.py
+src/miniworld/modules/msa_util_explicit.py
 src/miniworld/modules/template_module.py
 src/miniworld/modules/kernels/__init__.py
 src/miniworld/modules/kernels/layernorm.py
-src/miniworld/sh/msa_module.py
 src/miniworld/utils/MoE_utils.py
 src/miniworld/utils/__init__.py
 src/miniworld/utils/crop.py
