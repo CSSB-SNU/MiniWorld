@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from math import pi
 
 import numpy as np
@@ -68,23 +69,56 @@ def apply_chain_rt(
     x: Tensor,
     R: Tensor,
     T: Tensor,
-    atom_to_combine: Tensor,
+    atom_to_combine: Tensor | Mapping[object, tuple[int, int]],
     inverse: bool = False,
 ) -> Tensor:
     """Apply chain-specific RT. x:(B,N,3), R,T:(B,C,3,3)/(B,C,3), atom_to_combine: (B, N_atom)."""
-    output = []
-    for cc, chain_ID in enumerate(atom_chain_break.keys()):
-        atom_start, atom_end = atom_chain_break[chain_ID]
-        x_rt = x[:, atom_start : atom_end + 1]
-        if inverse:
-            _R = R[:, cc].mT
-            _T = torch.einsum("bij,bj->bi", R[:, cc].mT, -T[:, cc])
-            x_rt = apply_rt(_R, _T, x_rt)
-        else:
-            x_rt = apply_rt(R[:, cc], T[:, cc], x_rt)
-        output.append(x_rt)
-    output = torch.cat(output, dim=1)
-    return output
+    if isinstance(atom_to_combine, Mapping):
+        output = []
+        for cc, chain_ID in enumerate(atom_to_combine.keys()):
+            atom_start, atom_end = atom_to_combine[chain_ID]
+            x_rt = x[:, atom_start : atom_end + 1]
+            if inverse:
+                _R = R[:, cc].mT
+                _T = torch.einsum("bij,bj->bi", R[:, cc].mT, -T[:, cc])
+                x_rt = apply_rt(_R, _T, x_rt)
+            else:
+                x_rt = apply_rt(R[:, cc], T[:, cc], x_rt)
+            output.append(x_rt)
+        output = torch.cat(output, dim=1)
+        return output
+
+    # atom_to_combine: (B, N_atom) — group index per atom, values in [0, C)
+    atom_to_combine = atom_to_combine.to(device=x.device, dtype=torch.long)
+    if atom_to_combine.ndim == 1:
+        atom_to_combine = atom_to_combine.expand(x.shape[0], -1)
+    if atom_to_combine.shape != x.shape[:2]:
+        msg = (
+            f"atom_to_combine shape {atom_to_combine.shape} "
+            f"does not match x shape {x.shape[:2]}."
+        )
+        raise ValueError(msg)
+    # vectorized bounds check — stays on device, no GPU-CPU sync
+    if atom_to_combine.numel() > 0 and (
+        atom_to_combine.lt(0).any() or atom_to_combine.ge(R.shape[1]).any()
+    ):
+        msg = (
+            f"atom_to_combine values must be in [0, {R.shape[1]}), "
+            f"got min={atom_to_combine.min()}, max={atom_to_combine.max()}."
+        )
+        raise ValueError(msg)
+
+    # gather per-atom RT: R_atom/T_atom shape (B, N_atom, 3, 3)/(B, N_atom, 3)
+    batch_idx = torch.arange(x.shape[0], device=x.device).unsqueeze(1)  # (B, 1)
+    R_atom = R[batch_idx, atom_to_combine]   # (B, N_atom, 3, 3)
+    T_atom = T[batch_idx, atom_to_combine]   # (B, N_atom, 3)
+    if inverse:
+        R_atom = R_atom.transpose(-1, -2)    # R^T
+        T_atom = torch.matmul(R_atom, -T_atom.unsqueeze(-1)).squeeze(-1)  # -R^T T
+    return (
+        torch.matmul(x.unsqueeze(-2), R_atom.transpose(-1, -2)).squeeze(-2)
+        + T_atom
+    )
 
 
 def log_so3(R: Tensor) -> Tensor:

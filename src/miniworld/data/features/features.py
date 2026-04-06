@@ -97,3 +97,4 @@ class SchemeFeatures(BaseBatch):
     token_entity_id: Int[torch.Tensor, "B L_token"]
     token_sym_id: Int[torch.Tensor, "B L_token"]
     atom_to_token_idx_map: Int[torch.Tensor, "B L_atom"]
+    atom_to_chain_id: Int[torch.Tensor, "B L_atom"]

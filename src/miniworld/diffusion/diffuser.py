@@ -5,7 +5,7 @@ from typing import Any
 
 import numpy as np
 import torch
-from jaxtyping import Bool, Float
+from jaxtyping import Bool, Float, Int
 from pydantic import BaseModel
 from scipy.spatial.transform import Rotation
 
@@ -14,6 +14,17 @@ from miniworld.utils.structure.align import weighted_align
 from miniworld.utils.structure.se3 import apply_chain_rt, sample_rigid
 
 from .scheduler import DecoupledEDMScheduler
+
+
+def _expand_to_trailing_dims(
+    value: torch.Tensor,
+    target: torch.Tensor,
+) -> torch.Tensor:
+    """Broadcast per-sample scalars over coordinate dimensions."""
+    if value.ndim > target.ndim:
+        msg = f"Cannot broadcast shape {value.shape} to target shape {target.shape}."
+        raise ValueError(msg)
+    return value.reshape(*value.shape, *((1,) * (target.ndim - value.ndim)))
 
 
 class Diffuser(ABC):
@@ -157,7 +168,6 @@ class EuclideanDiffuser(Diffuser, ABC):
         input_scaling = self.scheduler.input_scale(sigma).to(device=device, dtype=dtype)
         noisy_x = x0 + noise * sigma
         x_input = noisy_x * input_scaling
-        t_emb = self.scheduler.noise_condition(sigma).to(device=device, dtype=dtype)
 
         x0 = x0.view(num_augment, batch_size, *x0.shape[1:])
         sigma = sigma.view(num_augment, batch_size, *sigma.shape[1:])
@@ -165,6 +175,7 @@ class EuclideanDiffuser(Diffuser, ABC):
         x_input = x_input.view(num_augment, batch_size, *x_input.shape[1:])
         if mask is not None:
             mask = mask.view(num_augment, batch_size, *mask.shape[1:])
+        t_emb = self.scheduler.noise_condition(sigma).to(device=device, dtype=dtype)
         t_emb = t_emb.view(num_augment, batch_size, *t_emb.shape[1:])
 
         return x0, x_input, mask, t_emb, sigma
@@ -249,23 +260,189 @@ class DecoupledEDMDiffuser(Diffuser):
         self._set_seed(config.seed)
         self.dtype = torch.float32  # diffuser should always use float32
 
-    # @torch.no_grad()
-    # def _randomly_combine_chains(
-    #     self,
-    #     x0: Float[torch.Tensor, "... L 3"],
-    #     mask: Bool[torch.Tensor, "... L"] | None,
-    #     atom_to_chain_idx: torch.Tensor,  # (B, L_atom)
-    #     dist_cutoff: float = 6.0,
-    #     combine_prob: float = 0.5,
-    # ) -> torch.Tensor: # (B, L_atom)
+    @staticmethod
+    def _build_contact_graph(
+        chain_atoms: list[torch.Tensor],
+        dist_cutoff: float,
+    ) -> torch.Tensor:
+        """Return symmetric bool adjacency (n_chains, n_chains) for chains within dist_cutoff.
 
-    def sample(
+        Fully vectorized: one cdist over all atoms, then scatter_reduce 'amin' per chain pair.
+        Empty (masked-out) chains have no contact with anyone.
+        """
+        n = len(chain_atoms)
+        nonempty = [(i, ca) for i, ca in enumerate(chain_atoms) if len(ca) > 0]
+        if len(nonempty) < 2:
+            device = chain_atoms[0].device if chain_atoms else torch.device("cpu")
+            return torch.zeros(n, n, dtype=torch.bool, device=device)
+
+        _, atoms = zip(*nonempty, strict=True)
+        all_atoms = torch.cat(atoms)  # (N_total, 3)
+        device = all_atoms.device
+        labels = torch.cat(
+            [
+                torch.full((len(ca),), idx, dtype=torch.long, device=device)
+                for idx, ca in nonempty
+            ],
+        )  # original chain indices 0..n-1
+
+        D = torch.cdist(all_atoms, all_atoms)  # (N_total, N_total)
+        pair_idx = labels.unsqueeze(1) * n + labels.unsqueeze(0)  # (N_total, N_total)
+        chain_min_dist = torch.full((n * n,), float("inf"), device=device)
+        chain_min_dist.scatter_reduce_(
+            0,
+            pair_idx.flatten(),
+            D.flatten(),
+            reduce="amin",
+            include_self=True,
+        )
+        contact = chain_min_dist.view(n, n) <= dist_cutoff
+        contact.fill_diagonal_(fill_value=False)
+        return contact
+
+    @staticmethod
+    def _find(x: int, p: list[int]) -> int:
+        while p[x] != x:
+            p[x] = p[p[x]]
+            x = p[x]
+        return x
+
+    @staticmethod
+    def _random_kruskal(
+        n: int,
+        edges: list[list[int]],
+    ) -> list[tuple[int, int]]:
+        """Random spanning forest via Kruskal with shuffled edge order."""
+        parent = list(range(n))
+        forest: list[tuple[int, int]] = []
+        for idx in torch.randperm(len(edges)).tolist():
+            i, j = edges[idx]
+            pi = DecoupledEDMDiffuser._find(i, parent)
+            pj = DecoupledEDMDiffuser._find(j, parent)
+            if pi != pj:
+                parent[pi] = pj
+                forest.append((i, j))
+        return forest
+
+    @staticmethod
+    def _compress_components(n: int, kept_edges: list[tuple[int, int]]) -> list[int]:
+        """Union-Find on kept edges; return contiguous group index per node."""
+        comp = list(range(n))
+        for i, j in kept_edges:
+            pi = DecoupledEDMDiffuser._find(i, comp)
+            pj = DecoupledEDMDiffuser._find(j, comp)
+            if pi != pj:
+                comp[pi] = pj
+        root_to_group: dict[int, int] = {}
+        return [
+            root_to_group.setdefault(
+                DecoupledEDMDiffuser._find(i, comp),
+                len(root_to_group),
+            )
+            for i in range(n)
+        ]
+
+    @staticmethod
+    def _spanning_forest_cut(contact: torch.Tensor, max_groups: int = 4) -> list[int]:
+        """Random spanning forest cut on the contact graph.
+
+        The contact graph may be disconnected — its connected components are
+        already separate rigid bodies. This method optionally splits components
+        further by randomly cutting spanning-forest edges.
+
+        The target number of groups is sampled first, then forest edges are
+        cut until the target is reached.
+        """
+        n = contact.shape[0]
+        edges = contact.triu(diagonal=1).nonzero().tolist()
+        forest = DecoupledEDMDiffuser._random_kruskal(n, edges)
+
+        k = n - len(forest)  # number of connected components
+        min_target_groups = max(2, k)  # force ≥2 groups when possible
+        max_target_groups = min(n, max_groups)
+        if max_target_groups < min_target_groups:
+            target_groups = k  # cannot merge pre-existing components
+        else:
+            target_groups = int(
+                torch.randint(
+                    min_target_groups,
+                    max_target_groups + 1,
+                    (1,),
+                ).item(),
+            )
+
+        cut_set: set[int] = set()
+        group_count = k
+        # In a forest, removing any kept edge increases the component count by 1.
+        for idx in torch.randperm(len(forest)).tolist():
+            if group_count >= target_groups:
+                break
+            cut_set.add(idx)
+            group_count += 1
+
+        kept = [e for idx, e in enumerate(forest) if idx not in cut_set]
+        return DecoupledEDMDiffuser._compress_components(n, kept)
+
+    @torch.no_grad()
+    def _randomly_split_chains(
+        self,
+        x0: Float[torch.Tensor, "B L 3"],
+        mask: Bool[torch.Tensor, "B L"] | None,
+        atom_to_chain_idx: torch.Tensor,  # (B, L_atom)
+        dist_cutoff: float = 6.0,
+        max_groups: int = 4,
+    ) -> torch.Tensor:  # (B, L_atom)
+        """Randomly split chains into target-sampled rigid body groups.
+
+        1. Build contact graph from geometry (chains within dist_cutoff are connected).
+        2. Spanning forest of the contact graph defines natural separation boundaries.
+        3. Sample the target group count, then cut random forest edges to reach it.
+
+        Returns a new atom_to_chain_idx with contiguous group indices for apply_chain_rt.
+        """
+        device = atom_to_chain_idx.device
+        result = torch.zeros_like(atom_to_chain_idx)
+
+        for b in range(atom_to_chain_idx.shape[0]):
+            chain_ids = torch.unique(atom_to_chain_idx[b])
+            n_chains = len(chain_ids)
+            if n_chains <= 1:
+                continue  # result[b] already zeros
+
+            valid = (
+                mask[b]
+                if mask is not None
+                else atom_to_chain_idx[b].new_ones(x0.shape[1], dtype=torch.bool)
+            )
+            chain_atoms = [
+                x0[b][(atom_to_chain_idx[b] == cid) & valid] for cid in chain_ids
+            ]
+
+            contact = self._build_contact_graph(chain_atoms, dist_cutoff)
+            group_map = self._spanning_forest_cut(contact, max_groups=max_groups)
+
+            lut = torch.zeros(int(chain_ids.max()) + 1, dtype=torch.long, device=device)
+            lut[chain_ids] = torch.tensor(group_map, dtype=torch.long, device=device)
+            result[b] = lut[atom_to_chain_idx[b]]
+
+        return result
+
+    def sample(  # noqa: PLR0915
         self,
         x0: torch.Tensor,
         mask: torch.Tensor | None,
         atom_to_chain_idx: torch.Tensor,  # [B, L_atom]
         num_augment: int = 1,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[
+        Float[torch.Tensor, "... L 3"],
+        Float[torch.Tensor, "... L 3"],
+        Bool[torch.Tensor, "... L"] | None,
+        Float[torch.Tensor, ...],
+        Float[torch.Tensor, ...],
+        Float[torch.Tensor, ...],
+        Float[torch.Tensor, ...],
+        Int[torch.Tensor, ...],
+    ]:
         """Add noise to batch.atom_pos and store preconditioning data.
 
         For now, this assumes a shared atom_chain_break mapping across the batch.
@@ -282,23 +459,44 @@ class DecoupledEDMDiffuser(Diffuser):
         if x0.dtype != dtype:
             x0 = x0.to(device=device, dtype=dtype)
         if len(x0.shape) == 3:  # x0 : (B, L, 3)
-            x0 = x0.expand(num_augment, *x0.shape[1:])
+            x0 = x0.unsqueeze(0).expand(num_augment, -1, -1, -1)
+            x0 = x0.reshape(num_augment * batch_size, *x0.shape[2:])
             atom_to_chain_idx = atom_to_chain_idx.expand(
-                num_augment,
+                batch_size,
                 *atom_to_chain_idx.shape[1:],
             )
+            atom_to_chain_idx = atom_to_chain_idx.unsqueeze(0).expand(
+                num_augment,
+                -1,
+                *atom_to_chain_idx.shape[1:],
+            )
+            atom_to_chain_idx = atom_to_chain_idx.reshape(
+                num_augment * batch_size,
+                *atom_to_chain_idx.shape[2:],
+            )
             if mask is not None:
-                mask = mask.expand(num_augment, *mask.shape[1:])
+                mask = mask.unsqueeze(0).expand(num_augment, -1, -1)
+                mask = mask.reshape(num_augment * batch_size, *mask.shape[2:])
         elif len(x0.shape) == 4:  # x0 : (B, N_str, L, 3)
             num_expand = num_augment // x0.shape[1]
             num_augment = num_expand * x0.shape[1]
+            atom_to_chain_idx = atom_to_chain_idx.unsqueeze(1).expand(
+                -1,
+                x0.shape[1],
+                -1,
+            )
+            atom_to_chain_idx = atom_to_chain_idx.reshape(
+                -1,
+                atom_to_chain_idx.shape[-1],
+            )
+            atom_to_chain_idx = atom_to_chain_idx.repeat(num_expand, 1)
             x0 = x0.reshape(-1, *x0.shape[2:])
             x0 = x0.repeat(num_expand, 1, 1)
             if mask is not None:
                 mask = mask.reshape(-1, *mask.shape[2:])
                 mask = mask.repeat(num_expand, 1)
 
-        # Assume B = 1.
+        # Apply global augmentation before adding decoupled coordinate/rigid noise.
         x0 = self.random_rotation_and_translation(x0)
 
         total_num = x0.shape[0]
@@ -315,11 +513,12 @@ class DecoupledEDMDiffuser(Diffuser):
         noise = torch.randn_like(x0, device=device, dtype=dtype)
         noisy_x = x0 + noise * sigma_y.view(sigma_shape)
 
-        chain_num = len(torch.unique(atom_to_chain_idx))
+        atom_to_combine = self._randomly_split_chains(x0, mask, atom_to_chain_idx)
+        group_num = int(atom_to_combine.max().item()) + 1
         rotation_matrix, translation_vector = sample_rigid(
             sigma_rotation,
             sigma_translation,
-            C=chain_num,
+            C=group_num,
             device=device,
             dtype=dtype,
         )
@@ -346,7 +545,26 @@ class DecoupledEDMDiffuser(Diffuser):
         if mask is not None:
             mask = mask.view(num_augment, batch_size, *mask.shape[1:])
 
-        return noisy_x, sigma_y, sigma_rotation, sigma_translation
+        input_scaling = self.scheduler.input_scale(sigma_y, sigma_translation).to(
+            device=device,
+            dtype=dtype,
+        )
+        input_scaling = _expand_to_trailing_dims(input_scaling, noisy_x)
+        x_input = noisy_x * input_scaling
+
+        t_emb = self.scheduler.noise_condition(sigma_y).to(device=device, dtype=dtype)
+        t_emb = t_emb.unsqueeze(-1)
+
+        return (
+            x0,
+            x_input,
+            mask,
+            t_emb,
+            sigma_y,
+            rotation_matrix,
+            translation_vector,
+            atom_to_combine,
+        )
 
     def cal_loss(
         self,
@@ -356,7 +574,7 @@ class DecoupledEDMDiffuser(Diffuser):
         sigma_y: Float[torch.Tensor, ...],
         rotation_matrix: Float[torch.Tensor, ...],
         translation_vector: Float[torch.Tensor, ...],
-        atom_chain_break: dict[str, tuple[int, int]],
+        atom_to_combine: Int[torch.Tensor, "... L"],
         mask: Bool[torch.Tensor, "... L"] | None = None,
     ) -> Float[torch.Tensor, 1]:
         """Compute EDM loss between model prediction and true signal."""
@@ -366,8 +584,10 @@ class DecoupledEDMDiffuser(Diffuser):
             )
             raise ValueError(msg)
 
-        input_scaling = self.scheduler.input_scale(sigma_y)
+        _, sigma_translation = self.scheduler.convert_to_sigma_rt(sigma_y)
+        input_scaling = self.scheduler.input_scale(sigma_y, sigma_translation)
         input_scaling = input_scaling.to(device=x0.device, dtype=self.dtype)
+        input_scaling = _expand_to_trailing_dims(input_scaling, x_input)
         noisy_x = x_input / input_scaling
 
         dtype = x_update.dtype
@@ -395,7 +615,7 @@ class DecoupledEDMDiffuser(Diffuser):
             noisy_x,
             rotation_matrix,
             translation_vector,
-            atom_chain_break,
+            atom_to_combine,
             inverse=True,
         )
         noisy_x = torch.where(mask.unsqueeze(-1), noisy_x, torch.zeros_like(noisy_x))

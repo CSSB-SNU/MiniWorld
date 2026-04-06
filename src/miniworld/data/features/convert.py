@@ -71,6 +71,8 @@ def to_scheme_features(
     token_entity_id = np.take(chain_entity_id, token_to_chain)
     token_sym_id = np.take(chain_sym_id, token_to_chain)
 
+    atom_to_chain_id = np.take(token_asym_id, atom_to_token_idx_map)
+
     return SchemeFeatures.from_sample(
         token_residue_idx=torch.from_numpy(token_residue_idx.astype(np.int64)),
         token_idx=torch.from_numpy(token_idx.astype(np.int64)),
@@ -80,6 +82,7 @@ def to_scheme_features(
         atom_to_token_idx_map=torch.from_numpy(
             atom_to_token_idx_map.astype(np.int64),
         ),
+        atom_to_chain_id=torch.from_numpy(atom_to_chain_id.astype(np.int64)),
     )
 
 

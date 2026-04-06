@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from miniworld.data.mols.cifmol_attached import CIFMolAttached, CIFResidueView
 
 
-def remove_terminal_oxygen(cifmol: CIFMolAttached) -> CIFMolAttached:
+def remove_terminal_oxygen(cifmol: CIFMolAttached) -> np.ndarray:
     """Remove terminal oxygen atoms from the cifmol based on molecule type."""
     _entity_tag_to_idx_mapping = {
         "A": "OXT",  # MoleculeType.ANTIBODY,
@@ -36,9 +36,7 @@ def remove_terminal_oxygen(cifmol: CIFMolAttached) -> CIFMolAttached:
             atom_mask.append(np.array([True] * len(temp_cifmol.atoms)))
             continue
         atom_mask.append(temp_cifmol.atoms.id != terminal_oxygen_name)
-    atom_mask = np.concatenate(atom_mask, axis=0)
-
-    return cifmol.atoms[atom_mask].extract()
+    return np.concatenate(atom_mask, axis=0)
 
 
 def remove_water(cifmol: CIFMolAttached) -> CIFMolAttached:

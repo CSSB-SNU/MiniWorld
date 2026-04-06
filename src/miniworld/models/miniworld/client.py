@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 import torch
-from jaxtyping import Bool, Float
+from jaxtyping import Bool, Float, Int
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
 from team_gm import BaseClient
@@ -13,7 +13,7 @@ from team_gm.core.callbacks import ModelEMA
 from team_gm.core.client import _SetEpochProtocol
 from torch.utils.data import DataLoader
 
-from miniworld.configs import EDMDiffuserConfig
+from miniworld.configs import DecoupledEDMDiffuserConfig
 from miniworld.data.features.batch import Batch
 from miniworld.diffusion import (
     DecoupledEDMDiffuser,
@@ -93,7 +93,7 @@ class Client(BaseClient):
         """Configuration for the AF3Like client."""
 
         model: Model.Config
-        diffuser: EDMDiffuserConfig
+        diffuser: DecoupledEDMDiffuserConfig
         train: Client.TrainConfig
         loss: Client.LossConfig
 
@@ -105,22 +105,18 @@ class Client(BaseClient):
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
-        diffuser_method = config.diffuser.method
-        if diffuser_method == "AF3":
-            self.diffusion_scheduler = DecoupledEDMScheduler(config.diffuser.scheduler)
-            self.diffuser = DecoupledEDMDiffuser(
-                config=DecoupledEDMDiffuser.DecoupledEDMConfig(
-                    seed=config.diffuser.seed,
-                ),
-                scheduler=self.diffusion_scheduler,
-            )
-            self.solver = DecoupledEDMSolver(
-                config=DecoupledEDMSolver.SolverConfig(seed=config.diffuser.seed),
-                scheduler=self.diffusion_scheduler,
-            )
-        else:
-            msg = f"Diffuser method {diffuser_method} is not implemented yet."
-            raise NotImplementedError(msg)
+        self.diffusion_scheduler = DecoupledEDMScheduler(config.diffuser.scheduler)
+        self.diffuser = DecoupledEDMDiffuser(
+            config=DecoupledEDMDiffuser.DecoupledEDMConfig(
+                seed=config.diffuser.seed,
+                translation_noise=config.diffuser.translation_noise,
+            ),
+            scheduler=self.diffusion_scheduler,
+        )
+        self.solver = DecoupledEDMSolver(
+            config=DecoupledEDMSolver.SolverConfig(seed=config.diffuser.seed),
+            scheduler=self.diffusion_scheduler,
+        )
 
     def set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
@@ -137,7 +133,10 @@ class Client(BaseClient):
         x0: Float[torch.Tensor, "... L 3"],
         x_input: Float[torch.Tensor, "... L 3"],
         t_emb: Float[torch.Tensor, ...],
-        sigma: Float[torch.Tensor, ...],
+        sigma_y: Float[torch.Tensor, ...],
+        rotation_matrix: Float[torch.Tensor, ...],
+        translation_vector: Float[torch.Tensor, ...],
+        atom_to_combine: Int[torch.Tensor, ...],
         x_mask: Bool[torch.Tensor, "... L"] | None = None,
     ) -> tuple[torch.Tensor, dict]:
         """Compute the loss given a noisy batch."""
@@ -157,7 +156,10 @@ class Client(BaseClient):
             x0=x0,
             x_input=x_input,
             x_update=atom_pos_update,
-            sigma=sigma,
+            sigma_y=sigma_y,
+            rotation_matrix=rotation_matrix,
+            translation_vector=translation_vector,
+            atom_to_combine=atom_to_combine,
             mask=x_mask,
         )
 
@@ -184,10 +186,21 @@ class Client(BaseClient):
         """Train the model on a batch."""
         # with precision_manager(self.model, self.config.model.precision):
         num_augment = self.config.train.num_augment
-        x0, x_input, x_mask, t_emb, sigma = self.diffuser.sample(
-            batch.structure.atom_pos,
-            num_augment=num_augment,
+
+        (
+            x0,
+            x_input,
+            x_mask,
+            t_emb,
+            sigma_y,
+            rotation_matrix,
+            translation_vector,
+            atom_to_combine,
+        ) = self.diffuser.sample(
+            x0=batch.structure.atom_pos,
             mask=batch.structure.atom_mask,
+            atom_to_chain_idx=batch.scheme.atom_to_chain_id,
+            num_augment=num_augment,
         )
 
         loss, loss_dict = self.loss_fn(
@@ -195,8 +208,11 @@ class Client(BaseClient):
             x0=x0,
             x_input=x_input,
             t_emb=t_emb,
-            sigma=sigma,
             x_mask=x_mask,
+            sigma_y=sigma_y,
+            rotation_matrix=rotation_matrix,
+            translation_vector=translation_vector,
+            atom_to_combine=atom_to_combine,
         )
 
         self.backward(loss)
@@ -324,6 +340,7 @@ class Client(BaseClient):
         atom_pos_pred, inter_traj, model_traj = self.solver.sample(
             model_fn=model_wrapper,
             shape=shape,
+            atom_chain_break=batch.scheme.atom_to_chain_id,
             num_steps=timesteps,
             device=self.device,
             return_intermediate=True,

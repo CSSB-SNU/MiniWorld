@@ -22,7 +22,7 @@ from miniworld.configs import (
     SamplerConfig,
     TokenizerConfig,
 )
-from miniworld.data.dataloader.dataloader import BioMolData
+from miniworld.data.dataloader.dataloader2 import BioMolData
 from miniworld.models import DefaultClient as Client
 from miniworld.models.af3_like import Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup

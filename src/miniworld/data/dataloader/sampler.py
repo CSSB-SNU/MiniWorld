@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 import torch
-from torch.utils.data import DistributedSampler
+from torch.utils.data import Dataset, DistributedSampler
 
 from miniworld.configs import (
     SamplerConfig,
@@ -13,17 +13,26 @@ from miniworld.configs import (
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from .dataloader import BioMolData
+
+
+class _HasSamplerConfig(Protocol):
+    sampler_config: SamplerConfig | None
+
+
+class _WeightedSamplerDataset(Protocol):
+    edge_id_list: list[str]
+    config: _HasSamplerConfig
 
 
 class PDBWeightedSampler(DistributedSampler):
     """Sampler that samples indices according to given weights."""
 
-    def __init__(self, dataset: BioMolData, **kwargs: Any) -> None:
+    def __init__(self, dataset: Dataset[object], **kwargs: Any) -> None:
         super().__init__(dataset, **kwargs)
-        self.edge_id_list = dataset.edge_id_list
-        self.num_samples = len(dataset.edge_id_list)
-        self._load_weights(dataset.config.sampler_config)
+        typed_dataset = cast("_WeightedSamplerDataset", dataset)
+        self.edge_id_list = typed_dataset.edge_id_list
+        self.num_samples = len(typed_dataset.edge_id_list)
+        self._load_weights(typed_dataset.config.sampler_config)
 
     def _load_weights(self, config: SamplerConfig | None) -> None:  # noqa: C901
         """Load weights from config and edge_id_list."""

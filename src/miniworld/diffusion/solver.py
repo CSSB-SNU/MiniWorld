@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import torch
@@ -57,6 +57,29 @@ ModelFn = Callable[
     [Float[torch.Tensor, "... L 3"], Float[torch.Tensor, "..."]],
     Float[torch.Tensor, "... L 3"],
 ]
+
+
+AtomChainMap = torch.Tensor | Mapping[Any, tuple[int, int]]
+
+
+def _expand_to_batch(value: torch.Tensor, batch_size: int) -> torch.Tensor:
+    """Return a 1D tensor with one value per batch item."""
+    value = value.reshape(-1)
+    if value.numel() == 1:
+        return value.expand(batch_size)
+    if value.numel() != batch_size:
+        msg = f"Expected scalar or {batch_size} values, got shape {value.shape}."
+        raise ValueError(msg)
+    return value
+
+
+def _chain_count(atom_chain_map: AtomChainMap) -> int:
+    if isinstance(atom_chain_map, torch.Tensor):
+        if atom_chain_map.numel() == 0:
+            msg = "atom_chain_map must not be empty."
+            raise ValueError(msg)
+        return int(atom_chain_map.max().item()) + 1
+    return len(atom_chain_map)
 
 
 class AF3Solver(DiffusionSolver):
@@ -196,7 +219,7 @@ class DecoupledEDMSolver(DiffusionSolver):
         translation: torch.Tensor,
         t_index: int,
         time_steps: torch.Tensor,
-        atom_chain_break: dict[Any, tuple[int, int]],
+        atom_chain_break: AtomChainMap,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Add coordinate and SE(3) noise for the current solver step."""
         t_i = time_steps[t_index]
@@ -207,12 +230,17 @@ class DecoupledEDMSolver(DiffusionSolver):
         sigma_rotation_i, sigma_translation_i = self.scheduler.convert_to_sigma_rt(
             sigma_i,
         )
+        batch_size = y.shape[0]
+        sigma_rotation_i = _expand_to_batch(sigma_rotation_i, batch_size)
+        sigma_translation_i = _expand_to_batch(sigma_translation_i, batch_size)
 
         gamma = self.gamma_0 if sigma_next > self.gamma_min else 0
         t_hat = sigma_i * (1 + gamma)
         sigma_rotation_hat, sigma_translation_hat = self.scheduler.convert_to_sigma_rt(
             t_hat,
         )
+        sigma_rotation_hat = _expand_to_batch(sigma_rotation_hat, batch_size)
+        sigma_translation_hat = _expand_to_batch(sigma_translation_hat, batch_size)
         R_hat, T_hat = se3_heat_step_sigma(
             rotation,
             translation,
@@ -238,7 +266,7 @@ class DecoupledEDMSolver(DiffusionSolver):
         translation: torch.Tensor,
         t_index: int,
         time_steps: torch.Tensor,
-        atom_chain_break: dict[Any, tuple[int, int]],
+        atom_chain_break: AtomChainMap,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Perform one Euler update on the coordinate component."""
         t_i = time_steps[t_index]
@@ -289,9 +317,14 @@ class DecoupledEDMSolver(DiffusionSolver):
         sigma_rotation_i, sigma_translation_i = self.scheduler.convert_to_sigma_rt(
             sigma_i,
         )
+        batch_size = rotation.shape[0]
+        sigma_rotation_i = _expand_to_batch(sigma_rotation_i, batch_size)
+        sigma_translation_i = _expand_to_batch(sigma_translation_i, batch_size)
         sigma_rotation_next, sigma_translation_next = (
             self.scheduler.convert_to_sigma_rt(sigma_next)
         )
+        sigma_rotation_next = _expand_to_batch(sigma_rotation_next, batch_size)
+        sigma_translation_next = _expand_to_batch(sigma_translation_next, batch_size)
         dt_rotation = sigma_rotation_next - sigma_rotation_i
         dt_translation = sigma_translation_next - sigma_translation_i
 
@@ -312,7 +345,7 @@ class DecoupledEDMSolver(DiffusionSolver):
         translation: torch.Tensor,
         t_index: int,
         time_steps: torch.Tensor,
-        atom_chain_break: dict[Any, tuple[int, int]],
+        atom_chain_break: AtomChainMap,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Perform one solver step for coordinates and rigid transforms."""
         y, x_update = self.y_step(
@@ -336,7 +369,7 @@ class DecoupledEDMSolver(DiffusionSolver):
         self,
         model_fn: ModelFn,
         shape: torch.Size,
-        atom_chain_break: dict[Any, tuple[int, int]],
+        atom_chain_break: AtomChainMap,
         num_steps: int,
         device: torch.device,
         return_intermediate: bool = False,
@@ -361,7 +394,7 @@ class DecoupledEDMSolver(DiffusionSolver):
         sigma_translation = sigma_translation.expand(batch_size)
 
         y = torch.randn(shape, device=device) * sigma_0
-        chain_num = len(atom_chain_break)
+        chain_num = _chain_count(atom_chain_break)
         R, T = sample_rigid(
             sigma_rotation,
             sigma_translation,

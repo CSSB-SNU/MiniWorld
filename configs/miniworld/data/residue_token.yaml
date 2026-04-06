@@ -3,11 +3,13 @@ train_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train.lmdb
   a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb
   edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/metadata/train_edge_node.tsv
+  template_db_path: ${..DB_PATH}/BioMolDB_20260224/template.lmdb
   
 valid_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_valid_2.lmdb
   a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb
   edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/metadata/valid2_edge_node.tsv
+  template_db_path: ${..DB_PATH}/BioMolDB_20260224/template.lmdb
 
 crop:
   max_tokens: 384

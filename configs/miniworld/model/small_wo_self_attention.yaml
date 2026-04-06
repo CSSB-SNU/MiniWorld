@@ -68,6 +68,7 @@ diffusion:
     d_pair: ${...shared.d_pair_atom}
     n_head: 4
     implementation: triton
+    kernel_type: "memory_efficient"
   token_dit:
     n_block: 4
     n_checkpoint_segments: null
@@ -76,6 +77,7 @@ diffusion:
     d_pair: ${...shared.d_pair}
     n_head: 24
     implementation: triton
+    kernel_type: "memory_efficient"
   dit_cond:
     n_expand: 2
     n_blocks: 2

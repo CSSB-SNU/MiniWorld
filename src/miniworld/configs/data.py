@@ -100,12 +100,28 @@ class BioMolDBConfig(BaseModel):
     edge_id_to_bias_path: Path = Path("edge_id_to_cif_ids.tsv")
     load_all_msa: bool = False
     fingerprint_embedding_path: Path | None = None
+    ccd_preprocessed_path: Path | None = None
+
+
+class DynamicTokenizationConfig(BaseModel):
+    """Configuration for dynamic tokenization."""
+
+    minimum_resolution_ratio: list[float] = [
+        0.2,
+        0.6,
+        0.2,
+    ]  # [atom, token(0~M), residue]
+
+    sigma_flat_prob: float = 0.3  # prob of sigma=inf (fully uniform tokenization)
+    sigma_min: float = 4.0  # Å — lower bound of LogUniform sigma
+    sigma_max: float = 8.0  # Å — upper bound; median = sqrt(4*8) ~ 6 Å
 
 
 class TokenizerConfig(BaseModel):
     """Configuration for the Tokenizer."""
 
     level: Literal["atom", "dynamic", "lte", "residue"] = "atom"
+    dynamic_config: DynamicTokenizationConfig | None = None
     seed: int = 42  # for dynamic tokenization, set seed for reproducibility
 
 

@@ -118,6 +118,7 @@ class Batch(BaseBatch):
                 token_entity_id=torch.zeros((1, n_tokens), dtype=torch.long),
                 token_sym_id=torch.zeros((1, n_tokens), dtype=torch.long),
                 atom_to_token_idx_map=torch.zeros((1, n_atoms), dtype=torch.long),
+                atom_to_chain_id=torch.zeros((1, n_atoms), dtype=torch.long),
             ),
             msa=MSAFeatures(
                 aligned_sequences=torch.zeros(
