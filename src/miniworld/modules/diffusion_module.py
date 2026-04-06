@@ -434,6 +434,7 @@ class DiffusionConditioning(nn.Module):
                 for _ in range(dit_cond_config.n_blocks)
             ],
         )
+        self.final_layernorm_token_single = LayerNorm(d_single)
 
     @typecheck
     def forward(
@@ -470,6 +471,8 @@ class DiffusionConditioning(nn.Module):
 
         for transition in self.single_transitions:
             token_single = token_single + transition(token_single)
+
+        token_single = self.final_layernorm_token_single(token_single)
 
         return token_single, token_pair
 
