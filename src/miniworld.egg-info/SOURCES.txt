@@ -74,6 +74,3 @@ src/miniworld/utils/structure/distance.py
 src/miniworld/utils/structure/eval.py
 src/miniworld/utils/structure/eval2.py
 src/miniworld/utils/structure/se3.py
-tests/test.py
-tests/test_dataloader.py
-tests/test_mask.py

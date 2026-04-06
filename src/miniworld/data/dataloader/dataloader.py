@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import functools
-import re
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
@@ -117,6 +116,26 @@ class WrongCroppingError(ValueError):
     """Raised when the cropping strategy fails to produce a valid crop."""
 
 
+class DataBias:
+    """Identifier for a cif entry, consisting of pdb_id, assembly_id, model_id, and alt_id."""
+
+    def __init__(
+        self,
+        pdb_id: str,
+        assembly_id: str,
+        model_id: str,
+        alt_id: str,
+        chain_id1: str,
+        chain_id2: str | None = None,
+    ) -> None:
+        self.pdb_id = pdb_id
+        self.assembly_id = assembly_id
+        self.model_id = model_id
+        self.alt_id = alt_id
+        self.chain_id1 = chain_id1
+        self.chain_id2 = chain_id2
+
+
 class BioMolData(torch.utils.data.Dataset):
     """Dataset for biomolecular complexes based on BioMolDB."""
 
@@ -151,15 +170,41 @@ class BioMolData(torch.utils.data.Dataset):
 
     def _load_edge_to_cif_ids(self) -> None:
         # load edge_id to cif_ids mapping
-        self.edge_id_to_bias: dict[str, list[str]] = {}
+        self.edge_id_to_bias: dict[str, list[DataBias]] = {}
         with self.config.DB_config.edge_id_to_bias_path.open("r") as f:
-            for _line in f:
+            for ii, _line in enumerate(f):
+                if ii == 0:
+                    continue  # skip header
                 line = _line.strip()
+                (
+                    cluster1,
+                    cluster2,
+                    pdb_id,
+                    assembly_id,
+                    model_id,
+                    alt_id,
+                    chain_id1,
+                    chain_id2,
+                ) = line.split("\t")
+                pdb_id = pdb_id.lower()  # to match cif_db keys
                 if line == "":
                     continue
-                key1, key2, value = line.split("\t")
-                edge_id = key1 if key2 == "None" else f"{key1}_{key2}"
-                self.edge_id_to_bias[edge_id] = value.split(",")
+                if cluster2 == "None":
+                    edge_id = cluster1
+                    value = DataBias(pdb_id, assembly_id, model_id, alt_id, chain_id1)
+                else:
+                    edge_id = f"{cluster1}_{cluster2}"
+                    value = DataBias(
+                        pdb_id,
+                        assembly_id,
+                        model_id,
+                        alt_id,
+                        chain_id1,
+                        chain_id2,
+                    )
+                if edge_id not in self.edge_id_to_bias:
+                    self.edge_id_to_bias[edge_id] = []
+                self.edge_id_to_bias[edge_id].append(value)
 
         self.edge_id_list = list(self.edge_id_to_bias.keys())
 
@@ -171,7 +216,7 @@ class BioMolData(torch.utils.data.Dataset):
         self,
         cifmol: CIFMolAttached,
         crop_indices: np.ndarray | None,
-        bias: list[str],
+        chain_ids: list[str],
         max_tokens: int,
         max_atoms: int,
         rng: np.random.Generator,
@@ -183,7 +228,7 @@ class BioMolData(torch.utils.data.Dataset):
                 crop_indices=crop_indices,
             )
             return crop_indices, chain_id_to_crop_indices
-        match bias:
+        match chain_ids:
             case [chain_id]:
                 selected_atoms = cifmol.chains.select(chain_id=chain_id).atoms
             case [chain_id1, chain_id2]:
@@ -197,13 +242,13 @@ class BioMolData(torch.utils.data.Dataset):
                     chain_id = rng.choice([chain_id1, chain_id2])
                     selected_atoms = cifmol.chains.select(chain_id=chain_id).atoms
             case _:
-                msg = f"Unexpected chain_ids: {bias}"
+                msg = f"Unexpected chain_ids: {chain_ids}"
                 raise ValueError(msg)
 
         valid = np.all(np.isfinite(selected_atoms.xyz), axis=-1)
         selected_atoms = selected_atoms[valid]
         if len(selected_atoms) == 0:
-            msg = f"No valid atoms found for bias {bias} in cifmol {cifmol.id}"
+            msg = f"No valid atoms found for chain_ids {chain_ids} in cifmol {cifmol.id}"
             raise WrongCroppingError(msg)
         center_xyz = selected_atoms.xyz[rng.integers(0, len(selected_atoms))]
 
@@ -238,19 +283,24 @@ class BioMolData(torch.utils.data.Dataset):
         seed = self._make_seed(idx)
         rng = np.random.default_rng(seed)
         edge_id = self.edge_id_list[idx]
-        biases = self.edge_id_to_bias[edge_id]
-        bias = rng.choice(biases)
-        pdb_id, assembly_id, model_id, alt_id = bias.split("_")[:4]
-        bias = re.findall(r"\(([^)]+)\)", bias)
+        biases: list[DataBias] = self.edge_id_to_bias[edge_id]
+        bias = biases[rng.integers(0, len(biases))]
+        pdb_id, assembly_id, model_id, alt_id = (
+            bias.pdb_id,
+            bias.assembly_id,
+            bias.model_id,
+            bias.alt_id,
+        )
+        chain_ids = [bias.chain_id1] + ([bias.chain_id2] if bias.chain_id2 else [])
 
         while True:
             try:
                 item = self.get_item_by_id(
-                    pdb_id=pdb_id.lower(),
+                    pdb_id=pdb_id,
                     assembly_id=assembly_id,
                     model_id=model_id,
                     alt_id=alt_id,
-                    bias=bias,
+                    chain_ids=chain_ids,
                     rng=rng,
                 )
                 break
@@ -258,9 +308,16 @@ class BioMolData(torch.utils.data.Dataset):
                 idx = int(rng.integers(0, len(self)))
                 edge_id = self.edge_id_list[idx]
                 biases = self.edge_id_to_bias[edge_id]
-                bias = rng.choice(biases)
-                pdb_id, assembly_id, model_id, alt_id = bias.split("_")[:4]
-                bias = re.findall(r"\(([^)]+)\)", bias)
+                bias = biases[rng.integers(0, len(biases))]
+                pdb_id, assembly_id, model_id, alt_id = (
+                    bias.pdb_id,
+                    bias.assembly_id,
+                    bias.model_id,
+                    bias.alt_id,
+                )
+                chain_ids = [bias.chain_id1] + (
+                    [bias.chain_id2] if bias.chain_id2 else []
+                )
 
         return item
 
@@ -270,7 +327,7 @@ class BioMolData(torch.utils.data.Dataset):
         assembly_id: str | None = None,
         model_id: str | None = None,
         alt_id: str | None = None,
-        bias: list[str] | None = None,
+        chain_ids: list[str] | None = None,
         crop_indices: np.ndarray | None = None,
         rng: np.random.Generator | None = None,
     ) -> Batch:
@@ -286,20 +343,19 @@ class BioMolData(torch.utils.data.Dataset):
         )
 
         cifmol = remove_terminal_oxygen(cifmol)
-        if bias is None:  # randoml sample chain_id
-            chain_id = rng.choice(cifmol.chains.chain_id.value)
-            bias = [chain_id]
+        if chain_ids is None:  # randoml sample chain_id
+            chain_ids = rng.choice(cifmol.chains.chain_id.value)
         if crop_indices is None:
             crop_indices, chain_id_to_crop_indices = self.get_crop_indices(
                 cifmol=cifmol,
                 crop_indices=crop_indices,
-                bias=bias,
+                chain_ids=chain_ids,  # pyright: ignore[reportArgumentType]
                 max_tokens=self.config.crop_config.max_tokens,
                 max_atoms=self.config.crop_config.max_atoms,
                 rng=rng,
             )
             if crop_indices.shape[0] == 0:
-                msg = f"Failed to crop {pdb_id}_{assembly_id}_{model_id}_{alt_id} with bias {bias}."
+                msg = f"Failed to crop {pdb_id}_{assembly_id}_{model_id}_{alt_id} with chain_ids {chain_ids}."
                 raise WrongCroppingError(msg)
         else:
             chain_id_to_crop_indices = get_chain_crop_indices(
