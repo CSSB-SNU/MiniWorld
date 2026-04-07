@@ -9,7 +9,6 @@ src/miniworld.egg-info/top_level.txt
 src/miniworld/configs/__init__.py
 src/miniworld/configs/data.py
 src/miniworld/configs/data_explicit.py
-src/miniworld/configs/data_explicit.py
 src/miniworld/configs/diffusion.py
 src/miniworld/configs/models.py
 src/miniworld/data/constants/__init__.py

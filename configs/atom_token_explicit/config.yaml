@@ -1,6 +1,6 @@
 defaults:
-  - model: small
-  - train: v1.2.0
+  - model: small_test
+  - train: v1.2.4
   - data: residue_token
   - diffuser: af3_like
   - loss: default

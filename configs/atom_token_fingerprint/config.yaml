@@ -1,16 +1,6 @@
 defaults:
-<<<<<<< HEAD
-<<<<<<< HEAD
-  - model: small
-  - train: v1.2.0
-=======
-  - model: medium
-  - train: default
->>>>>>> 601fc5e (fix: apply changes in af3like to atom_token and atom_token_fingerprint(SIP))
-=======
-  - model: small
-  - train: v1.2.0
->>>>>>> 3d173e4 (fix: configs, run script and msa_util & add: embedding_client)
+  - model: small_test
+  - train: v1.2.4
   - data: default
   - diffuser: af3_like
   - loss: default
