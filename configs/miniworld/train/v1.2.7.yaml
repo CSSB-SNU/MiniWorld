@@ -1,5 +1,5 @@
-comment: "af3like v1.2.6 Adam, lr 4e-4 grad clip 1.0 effective batch size 16"
-run_dir: "logs/af3like v1.2.6/"
+comment: "af3like v1.2.7 Adam, lr 4e-4 grad clip 1.0 effective batch size 16"
+run_dir: "logs/af3like v1.2.7/"
 
 # Training arguments
 num_batch: 1
