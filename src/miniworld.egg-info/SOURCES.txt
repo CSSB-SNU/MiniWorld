@@ -14,6 +14,7 @@ src/miniworld/data/constants/__init__.py
 src/miniworld/data/constants/mapping.py
 src/miniworld/data/dataloader/__init__.py
 src/miniworld/data/dataloader/dataloader.py
+src/miniworld/data/dataloader/dataloader2.py
 src/miniworld/data/dataloader/sampler.py
 src/miniworld/data/features/__init__.py
 src/miniworld/data/features/batch.py
@@ -23,7 +24,9 @@ src/miniworld/data/io/__init__.py
 src/miniworld/data/io/load.py
 src/miniworld/data/io/to_cif.py
 src/miniworld/data/mols/__init__.py
+src/miniworld/data/mols/ccd_mol.py
 src/miniworld/data/mols/cifmol_attached.py
+src/miniworld/data/mols/fragmented_mol.py
 src/miniworld/data/mols/template_mol.py
 src/miniworld/data/pipeline/__init__.py
 src/miniworld/data/pipeline/crop.py

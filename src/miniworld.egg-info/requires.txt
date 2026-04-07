@@ -1,5 +1,5 @@
 torch<3,>=2.6.0
-wandb<0.20,>=0.19.8
+wandb>=0.19.8
 omegaconf<3,>=2.3.0
 numpy<3,>=2.2.5
 einops<0.9,>=0.8.1

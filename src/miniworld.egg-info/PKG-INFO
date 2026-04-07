@@ -4,7 +4,7 @@ Version: 1.0.0
 Author-email: Sanggeun Park <psk6950@snu.ac.kr>
 Requires-Python: >=3.10
 Requires-Dist: torch<3,>=2.6.0
-Requires-Dist: wandb<0.20,>=0.19.8
+Requires-Dist: wandb>=0.19.8
 Requires-Dist: omegaconf<3,>=2.3.0
 Requires-Dist: numpy<3,>=2.2.5
 Requires-Dist: einops<0.9,>=0.8.1

@@ -342,7 +342,8 @@ class BioMolData(torch.utils.data.Dataset):
             alt_id=alt_id,
         )
 
-        cifmol = remove_terminal_oxygen(cifmol)
+        atom_mask = remove_terminal_oxygen(cifmol)
+        cifmol = cifmol.atoms[atom_mask].extract()
         if chain_ids is None:  # randoml sample chain_id
             chain_ids = rng.choice(cifmol.chains.chain_id.value)
         if crop_indices is None:
