@@ -247,15 +247,19 @@ class Client(BaseClient):
                 torch.ones_like(batch.chain.entity_type),
                 torch.zeros_like(batch.chain.entity_type),
             ).bool()
-            token_is_nuc = chain_is_nuc[batch.scheme.token_asym_id]
+            atom_is_nuc = torch.gather(
+                chain_is_nuc,
+                dim=1,
+                index=batch.scheme.atom_to_chain_id,
+            )
             smooth_lddt_loss = torch.stack(
                 [
                     checkpoint(
                         cal_smooth_lddt,
-                        x_pred[a],
+                        x_pred[a, None],
                         x0[a],
-                        token_is_nuc,
-                        batch.structure.atom_pos_mask[a],
+                        atom_is_nuc,
+                        batch.structure.atom_pos_mask,
                         use_reentrant=False,
                     )
                     for a in range(x_pred.shape[0])

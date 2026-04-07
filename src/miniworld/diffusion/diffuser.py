@@ -581,6 +581,7 @@ class DecoupledEDMDiffuser(Diffuser):
         mask: Bool[torch.Tensor, "... L"] | None = None,
     ) -> Float[torch.Tensor, "... L 3"]:
         """Compute the predicted x0 (x0_hat) from the model output and preconditioning data."""
+        x_shape = x0.shape
         if x_update.dtype != self.dtype:
             msg = "x_update must be of type float32, but got dtype: " + str(
                 x_update.dtype,
@@ -624,7 +625,9 @@ class DecoupledEDMDiffuser(Diffuser):
         noisy_x = torch.where(mask.unsqueeze(-1), noisy_x, torch.zeros_like(noisy_x))
         x0 = torch.where(mask.unsqueeze(-1), x0, torch.zeros_like(x0))
 
-        return c_skip * noisy_x + c_out * x_update
+        x_pred = c_skip * noisy_x + c_out * x_update
+
+        return x_pred.reshape(x_shape)
 
     def cal_loss(
         self,
@@ -635,7 +638,7 @@ class DecoupledEDMDiffuser(Diffuser):
         dtype: torch.dtype = torch.float32,
     ) -> Float[torch.Tensor, 1]:
         """Compute EDM loss between model prediction and true signal."""
-        weight = self.scheduler.loss_weight(sigma_y).to(dtype=dtype).view(-1, 1, 1)
+        weight = self.scheduler.loss_weight(sigma_y).to(dtype=dtype).view(-1, 1, 1, 1)
 
         if mask is None:
             mask = torch.ones(
@@ -644,9 +647,8 @@ class DecoupledEDMDiffuser(Diffuser):
                 dtype=torch.bool,
             )
         else:
-            mask = mask.reshape(-1, *mask.shape[-1:])
             weight = weight * mask.unsqueeze(-1)
 
-        x0 = x0.to(dtype=dtype).reshape(-1, *x0.shape[-2:])
+        x0 = x0.to(dtype=dtype)
         x0_aligned = weighted_align(x0, x_pred, weight=mask.to(dtype=dtype))
         return ((x_pred - x0_aligned).pow(2) * weight).mean()
