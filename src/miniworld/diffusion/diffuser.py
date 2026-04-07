@@ -569,7 +569,7 @@ class DecoupledEDMDiffuser(Diffuser):
             atom_to_combine,
         )
 
-    def cal_loss(
+    def get_x0_hat(
         self,
         x0: Float[torch.Tensor, "... L 3"],
         x_input: Float[torch.Tensor, "... L 3"],
@@ -579,8 +579,8 @@ class DecoupledEDMDiffuser(Diffuser):
         translation_vector: Float[torch.Tensor, ...],
         atom_to_combine: Int[torch.Tensor, "... L"],
         mask: Bool[torch.Tensor, "... L"] | None = None,
-    ) -> Float[torch.Tensor, 1]:
-        """Compute EDM loss between model prediction and true signal."""
+    ) -> Float[torch.Tensor, "... L 3"]:
+        """Compute the predicted x0 (x0_hat) from the model output and preconditioning data."""
         if x_update.dtype != self.dtype:
             msg = "x_update must be of type float32, but got dtype: " + str(
                 x_update.dtype,
@@ -624,24 +624,29 @@ class DecoupledEDMDiffuser(Diffuser):
         noisy_x = torch.where(mask.unsqueeze(-1), noisy_x, torch.zeros_like(noisy_x))
         x0 = torch.where(mask.unsqueeze(-1), x0, torch.zeros_like(x0))
 
-        x_pred = c_skip * noisy_x + c_out * x_update
-        x0_aligned = weighted_align(x0, x_pred, weight=mask.to(dtype=dtype))
-        if torch.isnan((x_pred - x0_aligned).pow(2).mean()):
-            torch.save(
-                {
-                    "sigma_y": sigma_y,
-                    "c_skip": c_skip,
-                    "c_out": c_out,
-                    "x_update": x_update,
-                    "x_pred": x_pred,
-                    "x0_aligned": x0_aligned,
-                    "x0": x0,
-                    "noisy_x": noisy_x,
-                    "mask": mask,
-                    "weight": weight,
-                },
-                "debug_nan_at_loss.pt",
+        return c_skip * noisy_x + c_out * x_update
+
+    def cal_loss(
+        self,
+        x0: Float[torch.Tensor, "... L 3"],
+        x_pred: Float[torch.Tensor, "... L 3"],
+        sigma_y: Float[torch.Tensor, ...],
+        mask: Bool[torch.Tensor, "... L"] | None = None,
+        dtype: torch.dtype = torch.float32,
+    ) -> Float[torch.Tensor, 1]:
+        """Compute EDM loss between model prediction and true signal."""
+        weight = self.scheduler.loss_weight(sigma_y).to(dtype=dtype).view(-1, 1, 1)
+
+        if mask is None:
+            mask = torch.ones(
+                x0.shape[:-1],
+                device=x0.device,
+                dtype=torch.bool,
             )
-            msg = "NaN detected in the loss calculation."
-            raise ValueError(msg)
+        else:
+            mask = mask.reshape(-1, *mask.shape[-1:])
+            weight = weight * mask.unsqueeze(-1)
+
+        x0 = x0.to(dtype=dtype).reshape(-1, *x0.shape[-2:])
+        x0_aligned = weighted_align(x0, x_pred, weight=mask.to(dtype=dtype))
         return ((x_pred - x0_aligned).pow(2) * weight).mean()

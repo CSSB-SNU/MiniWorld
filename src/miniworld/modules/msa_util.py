@@ -4,6 +4,7 @@ from jaxtyping import Bool, Float
 from miniworld.data.features import MSAFeatures, SequenceFeatures, TemplateFeatures
 
 
+@torch.compile
 @torch.no_grad()
 def init_msa(
     msa: MSAFeatures,
@@ -127,7 +128,9 @@ def init_token_single_msa_with_embedding(
     return token_single_msa.float()
 
 
-# MiniWorld-style template features@torch.no_grad()
+# MiniWorld-style template features
+@torch.compile
+@torch.no_grad()
 def init_template_feat(
     template: TemplateFeatures,
     dtype: torch.dtype = torch.float32,

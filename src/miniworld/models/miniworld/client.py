@@ -8,9 +8,10 @@ import torch
 from jaxtyping import Bool, Float, Int
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
-from team_gm import BaseClient
+from team_gm import BaseClient, typecheck
 from team_gm.core.callbacks import ModelEMA
 from team_gm.core.client import _SetEpochProtocol
+from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
 from miniworld.configs import DecoupledEDMDiffuserConfig
@@ -31,7 +32,64 @@ from miniworld.models.miniworld.model import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Sequence
+
+    from jaxtyping import Bool, Float
+
+
+@torch.compile
+@typecheck
+def cal_smooth_lddt(
+    pred_coord: Float[torch.Tensor, "... N 3"],
+    gt_coord: Float[torch.Tensor, "... N 3"],
+    is_nucleotide: Bool[torch.Tensor, "... N"],
+    mask: Bool[torch.Tensor, "... N"],
+    distance_bins: Sequence[float] = (0.5, 1.0, 2.0, 4.0),
+    nucleotide_cutoff: float = 30.0,
+    non_nucleotide_cutoff: float = 15.0,
+) -> Float[torch.Tensor, ""]:
+    """Smooth lDDT loss (AF3 Algorithm 27).
+
+    Computes sigmoid-smoothed lDDT at multiple distance thresholds. Inclusion radius is
+    per atom-i: 30A for nucleotides, 15A for others.
+
+    Parameters
+    ----------
+    pred_coord
+        Predicted atom coordinates.
+    gt_coord
+        Ground-truth atom coordinates.
+    is_nucleotide
+        Per-atom flag for nucleotide atoms (DNA/RNA), which use a wider inclusion
+        radius.
+    mask
+        Valid atom mask.
+    distance_bins
+        Distance thresholds for sigmoid scoring.
+    nucleotide_cutoff
+        Inclusion radius for nucleotide atom pairs.
+    non_nucleotide_cutoff
+        Inclusion radius for non-nucleotide atom pairs.
+
+    """
+    pred_dist = torch.cdist(pred_coord, pred_coord)
+    gt_dist = torch.cdist(gt_coord, gt_coord)
+
+    dist_diff = torch.abs(pred_dist - gt_dist)
+    score = sum(torch.sigmoid(thres - dist_diff) for thres in distance_bins)
+    score = score / len(distance_bins)
+
+    is_nuc = is_nucleotide.unsqueeze(-1)
+    cutoff_mask = (gt_dist < nucleotide_cutoff) & is_nuc
+    cutoff_mask = cutoff_mask | ((gt_dist < non_nucleotide_cutoff) & ~is_nuc)
+
+    diag_mask = ~torch.eye(mask.shape[-1], dtype=torch.bool, device=mask.device)
+    mask_2d = mask.unsqueeze(-1) & mask.unsqueeze(-2)
+    mask_2d = mask_2d & cutoff_mask & diag_mask
+
+    score = score * mask_2d
+    lddt = score.sum(dim=(-1, -2)) / mask_2d.float().sum(dim=(-1, -2)).clamp(min=1)
+    return (1 - lddt).mean()
 
 
 class Client(BaseClient):
@@ -88,6 +146,7 @@ class Client(BaseClient):
 
         diffusion_loss: float = 4.0
         distogram_loss: float = 0.03
+        smooth_lddt_loss: float = 1.0
 
     class Config(BaseModel):
         """Configuration for the AF3Like client."""
@@ -152,7 +211,7 @@ class Client(BaseClient):
             t_emb=t_emb,
         )
 
-        structure_loss = self.diffuser.cal_loss(
+        x_pred = self.diffuser.get_x0_hat(
             x0=x0,
             x_input=x_input,
             x_update=atom_pos_update,
@@ -163,6 +222,14 @@ class Client(BaseClient):
             mask=x_mask,
         )
 
+        structure_loss = self.diffuser.cal_loss(
+            x0=x0,
+            x_pred=x_pred,
+            sigma_y=sigma_y,
+            mask=x_mask,
+            dtype=atom_pos_update.dtype,
+        )
+
         distogram_loss = cal_atom_distogram_loss(
             distogram_logit,
             batch.structure.atom_pos,
@@ -170,9 +237,37 @@ class Client(BaseClient):
             batch.scheme.atom_to_token_idx_map,
         )
 
+        # Smooth lDDT (checkpointed per augment)
+        if self.config.loss.smooth_lddt_loss > 0:
+            # nuc tag : 3,4,5
+            chain_is_nuc = torch.where(
+                (batch.chain.entity_type == 3)
+                | (batch.chain.entity_type == 4)
+                | (batch.chain.entity_type == 5),
+                torch.ones_like(batch.chain.entity_type),
+                torch.zeros_like(batch.chain.entity_type),
+            ).bool()
+            token_is_nuc = chain_is_nuc[batch.scheme.token_asym_id]
+            smooth_lddt_loss = torch.stack(
+                [
+                    checkpoint(
+                        cal_smooth_lddt,
+                        x_pred[a],
+                        x0[a],
+                        token_is_nuc,
+                        batch.structure.atom_pos_mask[a],
+                        use_reentrant=False,
+                    )
+                    for a in range(x_pred.shape[0])
+                ],  # pyright: ignore[reportArgumentType]
+            ).mean()
+        else:
+            smooth_lddt_loss = torch.tensor(0.0, device=x_pred.device)
+
         loss = (
             self.config.loss.diffusion_loss * structure_loss
             + self.config.loss.distogram_loss * distogram_loss
+            + self.config.loss.smooth_lddt_loss * smooth_lddt_loss
         )
 
         return loss, {
@@ -197,7 +292,7 @@ class Client(BaseClient):
             atom_to_combine,
         ) = self.diffuser.sample(
             x0=batch.structure.atom_pos,
-            mask=batch.structure.atom_mask,
+            mask=batch.structure.atom_pos_mask,
             atom_to_chain_idx=batch.scheme.atom_to_chain_id,
             num_augment=num_augment,
         )

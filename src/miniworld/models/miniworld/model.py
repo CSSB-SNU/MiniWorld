@@ -125,8 +125,6 @@ class Model(nn.Module):
             config.diffusion.dit_cond,
         ).to(torch.float32)
 
-        self.init_msa = torch.compile(init_msa)
-        self.init_template_feat = torch.compile(init_template_feat)
         self.rng = np.random.default_rng()
 
     def set_seed(self, seed: int) -> None:
@@ -173,20 +171,21 @@ class Model(nn.Module):
         token_single_init_bf16 = token_single_init.to(torch.bfloat16)
         token_single_input_bf16 = token_single_input.to(torch.bfloat16)
         # Trunk forward with recycling
-        msa_feat, msa_mask = self.init_msa(
+        msa_feat, msa_mask = init_msa(
             msa,
             num_res_class=self.config.shared.num_res_class,
             dtype=torch.bfloat16,
         )
-        template_feat = self.init_template_feat(template, dtype=torch.bfloat16)
+        template_feat = init_template_feat(template, dtype=torch.bfloat16)
         template_feat = apply_template_dropout(
             template_feat,
             self.config.trunk.template_embedder.dropout_prob,
+            dtype=torch.bfloat16,
         )
         for i_cycle in range(n_recycle):
             with ExitStack() as stack:
                 if i_cycle < n_recycle - 1:
-                    stack.enter_context(torch.inference_mode())
+                    stack.enter_context(torch.no_grad())
                 token_pair = token_pair_init_bf16 + self.add_pair_recycle(
                     token_pair,
                 )

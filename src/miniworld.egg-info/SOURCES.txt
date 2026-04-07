@@ -43,6 +43,7 @@ src/miniworld/loss/__init__.py
 src/miniworld/loss/auxiliary.py
 src/miniworld/loss/metrics.py
 src/miniworld/loss/multistate.py
+src/miniworld/loss/smooth_lddt.py
 src/miniworld/models/__init__.py
 src/miniworld/models/default_client.py
 src/miniworld/models/af3_like/__init__.py
@@ -64,7 +65,6 @@ src/miniworld/modules/kernels/layernorm.py
 src/miniworld/utils/MoE_utils.py
 src/miniworld/utils/__init__.py
 src/miniworld/utils/crop.py
-src/miniworld/utils/precision_manager.py
 src/miniworld/utils/utils.py
 src/miniworld/utils/analysis/todo.py
 src/miniworld/utils/diffusion/__init__.py
@@ -77,3 +77,8 @@ src/miniworld/utils/structure/distance.py
 src/miniworld/utils/structure/eval.py
 src/miniworld/utils/structure/eval2.py
 src/miniworld/utils/structure/se3.py
+tests/test.py
+tests/test_dataloader.py
+tests/test_dataloader2.py
+tests/test_mask.py
+tests/test_visualize_synthetic.py
