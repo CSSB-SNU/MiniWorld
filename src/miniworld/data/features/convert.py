@@ -228,19 +228,30 @@ def to_chain_features(
 def make_batch(
     cifmol: CIFMolAttached,
     msa: MSAFeatures,
-    templates: ProteinTemplate,
+    # templates: ProteinTemplate,
     atom_to_token_idx_map: np.ndarray,
     token_to_residue_idx_map: np.ndarray,
+    token_type_override: np.ndarray | None = None,
     rng: np.random.Generator | None = None,
 ) -> Batch:
     """Make features from cifmol and MSA."""
     if rng is None:
         rng = np.random.default_rng()
     msa_token = to_msa_features(msa, token_to_residue_idx_map)
-    template_token = to_template_features(templates, token_to_residue_idx_map)
+    # template_token = to_template_features(templates, token_to_residue_idx_map)
 
+    if token_type_override is None:
+        token_type = msa_token.aligned_sequences[:, 0]
+    else:
+        token_type = torch.from_numpy(token_type_override.astype(np.int64))
+    
+    if not isinstance(token_type, torch.Tensor):
+        token_type = torch.as_tensor(token_type, dtype=torch.long)
+    else:
+        token_type = token_type.long()
+        
     scheme = to_scheme_features(cifmol, token_to_residue_idx_map, atom_to_token_idx_map)
-    sequence = SequenceFeatures(token_type=msa_token.aligned_sequences[:, 0])
+    sequence = SequenceFeatures(token_type=token_type)
     reference = to_reference_features(cifmol, rng)
     structure = to_structure_features(
         cifmol,
@@ -268,7 +279,7 @@ def make_batch(
         sequence=sequence,
         structure=structure,
         msa=msa_token,
-        template=template_token,
+        # template=template_token,
         reference=reference,
         scheme=scheme,
         chain=chain,

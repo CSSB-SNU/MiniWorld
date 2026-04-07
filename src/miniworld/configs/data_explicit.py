@@ -28,6 +28,8 @@ class SamplerConfig(BaseModel):
         Protein(L)-Protein(L),43524
         Protein(L)-Ligand,133547
 
+        sole,1462
+        
     # etc_interface:
         Antibody-Ligand,5741
         DNA-Ligand,6201
@@ -62,8 +64,8 @@ class SamplerConfig(BaseModel):
 class CropConfig(BaseModel):
     """Configuration for cropping strategy."""
 
-    residue_crop_length: int = 384
-    atom_crop_length: int = 4096
+    max_tokens: int = 384
+    max_atoms: int = 4096
     min_segment_size: int = 1
     max_segment_size: int = 41
 
@@ -75,40 +77,26 @@ class CropConfig(BaseModel):
     bucket_atom_size: int = 1024
 
 
-class EdgeWeightConfig(BaseModel):
-    """Configuration for edge weighting scheme."""
-
-    PP_edge: float = 1.0  # protein-protein edge
-    PN_edge: float = 1.0  # protein-nucleic acid edge
-    PL_edge: float = 2 / 3  # protein-ligand edge
-    NN_edge: float = 1.0  # nucleic acid-nucleic acid edge
-    NL_edge: float = 2 / 3  # nucleic acid-ligand edge
-    LL_edge: float = 0.0  # ligand-ligand edge
-
-    # params
-    eta: float = 0.9
-    decay: float = 0.999
-    temperature: float = 1.0
-    init_score: float = 1.0
-    init_freq: float = 0.0
-    device: str = "cpu"
-    use_freq: bool = True
-    state_load_path: Path | None = None
-
-
 class MSAConfig(BaseModel):
     """Configuration for MSA sampling."""
 
-    n_samples: int = 4
     max_msa_depth: int = 512
     missing_policy: Literal["gap", "query"] = "gap"
 
 
+class TemplateConfig(BaseModel):
+    """Configuration for template sampling."""
+
+    n_templates: int = 4
+    mask_interchain: bool = True
+    
+    
 class BioMolDBConfig(BaseModel):
     """Configuration for BioMolDB paths."""
 
     cif_db_path: Path = Path("cif_lmdb")
     a3m_db_path: Path = Path("a3m_lmdb")
+    template_db_path: Path = Path("template_lmdb")
     edge_id_to_bias_path: Path = Path("edge_id_to_cif_ids.tsv")
     load_all_msa: bool = False
     fingerprint_embedding_path: Path | None = None

@@ -25,7 +25,6 @@ from miniworld.modules.msa_util import (
     init_msa_with_embedding,
     init_token_single_msa_with_embedding,
 )
-from miniworld.utils.precision_manager import PrecisionConfig
 
 if TYPE_CHECKING:
     import numpy as np
@@ -64,7 +63,6 @@ class Model(nn.Module):
         input_feat_embbeder: DiffusionTransformer.Config
         trunk: Model.TrunkConfig
         diffusion: Model.DiffusionConfig
-        precision: PrecisionConfig
         token_embedding: TokenEmbeddingConfig
 
     def __init__(self, config: Config) -> None:
@@ -88,27 +86,31 @@ class Model(nn.Module):
         self.add_pair_recycle = nn.Sequential(
             LayerNorm(
                 config.shared.d_pair,
+                dtype=torch.bfloat16,
             ),
             Linear(
                 config.shared.d_pair,
                 config.shared.d_pair,
                 init="zero",
+                dtype=torch.bfloat16,
             ),
         )
         self.add_single_recycle = nn.Sequential(
             LayerNorm(
                 config.shared.d_single,
+                dtype=torch.bfloat16,
             ),
             Linear(
                 config.shared.d_single,
                 config.shared.d_single,
                 init="zero",
+                dtype=torch.bfloat16,
             ),
         )
 
         # Trunk forward
-        self.msa_module = MSAModule(config.trunk.msa_module)
-        self.pairformer_blocks = Pairformer(config.trunk.pairformer)
+        self.msa_module = MSAModule(config.trunk.msa_module).to(torch.bfloat16)
+        self.pairformer_blocks = Pairformer(config.trunk.pairformer).to(torch.bfloat16)
         self.distogram_head = DistogramHead(
             config.shared.d_pair,
             config.shared.n_distogram_bins,
@@ -120,7 +122,7 @@ class Model(nn.Module):
             config.diffusion.atom_dit,
             config.diffusion.token_dit,
             config.diffusion.dit_cond,
-        )
+        ).to(torch.float32)
 
     def condition_forward(
         self,
@@ -156,29 +158,37 @@ class Model(nn.Module):
         )
         token_mask = structure.token_mask
 
-        token_pair = torch.zeros_like(token_pair_init)
-        token_single = torch.zeros_like(token_single_init)
+        token_pair = torch.zeros_like(token_pair_init).to(torch.bfloat16)
+        token_single = torch.zeros_like(token_single_init).to(torch.bfloat16)
         # Trunk forward with recycling
         for i_cycle in range(n_recycle):
             with ExitStack() as stack:
                 if i_cycle < n_recycle - 1:
                     stack.enter_context(torch.no_grad())
                     stack.enter_context(torch.inference_mode())
-
+                stack.enter_context(
+                    torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+                )
                 msa_feat, msa_mask = init_msa_with_embedding(
                     msa,
                     num_res_class=self.config.shared.num_res_class,
+                    token_embedding=self.token_embedding,
+                    dtype=torch.bfloat16,
                 )
-                token_pair = token_pair_init + self.add_pair_recycle(token_pair)
+                token_pair = token_pair_init.to(torch.bfloat16) + self.add_pair_recycle(
+                    token_pair,
+                )
 
                 token_pair = token_pair + self.msa_module(
                     msa_feat,
                     msa_mask,
                     token_pair,
-                    token_single_input,
+                    token_single_input.to(torch.bfloat16),
                     token_mask,
                 )
-                token_single = token_single_init + self.add_single_recycle(token_single)
+                token_single = token_single_init.to(
+                    torch.bfloat16,
+                ) + self.add_single_recycle(token_single)
 
                 token_pair, token_single = self.pairformer_blocks.forward(
                     token_pair,
@@ -186,12 +196,12 @@ class Model(nn.Module):
                     token_mask,
                 )
         # reduce token_pair information to distogram
-        distogram_logit = self.distogram_head(token_pair)
+        distogram_logit = self.distogram_head(token_pair.to(torch.float32))
 
         return (
             token_single_input,
-            token_single,  # pyright: ignore[reportReturnType]
-            token_pair,
+            token_single.to(torch.float32),  # pyright: ignore[reportReturnType]
+            token_pair.to(torch.float32),
             distogram_logit,
         )
 
@@ -247,6 +257,8 @@ class Model(nn.Module):
             sequence,
             structure,
         )
+        token_single_trunk = token_single_trunk.to(torch.float32)
+        token_pair_trunk = token_pair_trunk.to(torch.float32)
         # Diffusion forward
         atom_pos_update = self.diffusion_forward(
             reference,

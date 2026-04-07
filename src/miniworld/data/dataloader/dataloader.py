@@ -92,7 +92,7 @@ def _ceil_to_multiple(value: int, multiple: int) -> int:
 def _bucketed_collate(
     batch_list: list[Batch],
     bucket_msa_multiple: int | None = None,
-    bucket_template_multiple: int | None = 1,
+    # bucket_template_multiple: int | None = 1,
     bucket_token_multiple: int | None = None,
     bucket_atom_multiple: int | None = None,
 ) -> Batch:
@@ -106,7 +106,7 @@ def _bucketed_collate(
     if bucket_token_multiple is None and bucket_atom_multiple is None:
         return batch
 
-    n_temp = batch.template_number
+    # n_temp = batch.template_number
     msa_depth = batch.msa_depth
     n_tokens = batch.token_length
     n_atoms = batch.atom_length
@@ -117,11 +117,11 @@ def _bucketed_collate(
         else msa_depth
     )
 
-    bucketed_template = (
-        _ceil_to_multiple(n_temp, bucket_template_multiple)
-        if bucket_template_multiple
-        else n_temp
-    )
+    # bucketed_template = (
+    #     _ceil_to_multiple(n_temp, bucket_template_multiple)
+    #     if bucket_template_multiple
+    #     else n_temp
+    # )
 
     bucketed_tokens = (
         _ceil_to_multiple(n_tokens, bucket_token_multiple)
@@ -137,14 +137,14 @@ def _bucketed_collate(
     if (
         bucket_msa_multiple
         and bucketed_msa == msa_depth
-        and bucketed_template == n_temp
+        # and bucketed_template == n_temp
         and bucketed_tokens == n_tokens
         and bucketed_atoms == n_atoms
     ):
         return batch
 
     dummy = Batch.empty(
-        n_temp=n_temp,
+        # n_temp=n_temp,
         msa_depth=bucketed_msa,
         n_tokens=bucketed_tokens,
         n_atoms=bucketed_atoms,
@@ -336,25 +336,6 @@ class BioMolData(torch.utils.data.Dataset):
     def __len__(self) -> int:
         """Return the number of edges in the dataset."""
         return len(self.items)
-
-    def _report_crop_stats(self) -> None:
-        if self._crop_calls == 0:
-            return
-        if self._crop_calls % self._crop_report_every != 0:
-            return
-
-        worker = get_worker_info()
-        worker_id = worker.id if worker is not None else "main"
-
-        zero_rate = self._crop_zero / self._crop_calls
-        empty_sel_rate = self._crop_empty_selected_atoms / self._crop_calls
-
-        print(
-        f"[crop-monitor][worker={worker_id}] "
-        f"calls={self._crop_calls} "
-        f"zero_crop={self._crop_zero} ({zero_rate:.6f}) "
-        f"empty_selected_atoms={self._crop_empty_selected_atoms}"# ({empty_sel_rate:.6f})"
-        )
 
     def get_crop_indices(
         self,
@@ -577,20 +558,20 @@ class BioMolData(torch.utils.data.Dataset):
             rng=rng,
         )
 
-        templates: ProteinTemplate = load_templates(
-            cifmol=cifmol,
-            chain_id_to_crop_indices=chain_id_to_crop_indices,
-            env_path=self.config.DB_config.template_db_path,
-            n_templates=self.config.template_config.n_templates,
-            rng=rng,
-        )
+        # templates: ProteinTemplate = load_templates(
+        #     cifmol=cifmol,
+        #     chain_id_to_crop_indices=chain_id_to_crop_indices,
+        #     env_path=self.config.DB_config.template_db_path,
+        #     n_templates=self.config.template_config.n_templates,
+        #     rng=rng,
+        # )
 
         return make_batch(
             cifmol=cifmol,
             msa=msa,
-            templates=templates,
-            atom_to_token_idx_map=atom_to_token_idx_map,  # pyright: ignore[reportPossiblyUnboundVariable]
-            token_to_residue_idx_map=token_to_residue_idx_map,  # pyright: ignore[reportPossiblyUnboundVariable]
+            # templates=templates,
+            atom_to_token_idx_map=atom_to_token_idx_map,
+            token_to_residue_idx_map=token_to_residue_idx_map,
             rng=rng,
         )
 

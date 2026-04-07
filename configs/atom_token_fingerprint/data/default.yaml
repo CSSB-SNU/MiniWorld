@@ -2,16 +2,16 @@ DB_PATH: /public_data/bsoohyuncd/
 train_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train.lmdb
   a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb
-  edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/train_edge_node.tsv
+  edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/metadata/train_edge_node.tsv
   
 valid_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_valid_2.lmdb
   a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb
-  edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/valid2_edge_node.tsv
+  edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/metadata/valid2_edge_node.tsv
 
 crop:
-  residue_crop_length: 384
-  atom_crop_length: 4096
+  max_tokens: 384
+  max_atoms: 4096
   min_segment_size: 1
   max_segment_size: 41
 

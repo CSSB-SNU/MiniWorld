@@ -16,8 +16,6 @@ src/miniworld/data/constants/__init__.py
 src/miniworld/data/constants/mapping.py
 src/miniworld/data/dataloader/__init__.py
 src/miniworld/data/dataloader/dataloader.py
-src/miniworld/data/dataloader/dataloader_check.py
-src/miniworld/data/dataloader/sampler.py
 src/miniworld/data/dataloader/dataloader_explicit.py
 src/miniworld/data/dataloader/sampler.py
 src/miniworld/data/features/__init__.py
@@ -86,6 +84,3 @@ src/miniworld/utils/structure/distance.py
 src/miniworld/utils/structure/eval.py
 src/miniworld/utils/structure/eval2.py
 src/miniworld/utils/structure/se3.py
-tests/test.py
-tests/test_dataloader.py
-tests/test_mask.py
