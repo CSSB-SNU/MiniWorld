@@ -248,7 +248,7 @@ class DecoupledEDMDiffuser(Diffuser):
 
         method: str = "AF3"
         seed: int = 0
-        translation_noise: float = 0.0
+        translation_noise: float = 1.0
 
     def __init__(
         self,

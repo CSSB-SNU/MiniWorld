@@ -1,8 +1,8 @@
 DB_PATH: /NHNHOME/WORKSPACE/0226010152_A/data/
 train_db:
-  cif_db_path: ${..DB_PATH}/cif_attached_train.lmdb
+  cif_db_path: ${..DB_PATH}/cif_attached_train_20260224_res9_chain_300.lmdb
   a3m_db_path: ${..DB_PATH}/a3m.lmdb
-  edge_id_to_bias_path: ${..DB_PATH}/metadata/train_edge_node.tsv
+  edge_id_to_bias_path: ${..DB_PATH}/metadata/train_20260224_edge_node.tsv
   template_db_path: ${..DB_PATH}/template.lmdb
   
 valid_db:
@@ -28,6 +28,7 @@ msa:
   n_samples: 1
   max_msa_depth: 384
   missing_policy: "query"
+
 
 tokenizer:
   level: "dynamic"

@@ -19,6 +19,5 @@ class DecoupledEDMDiffuserConfig(BaseModel):
     """Configuration for the decoupled diffuser."""
 
     seed: int = 0
-    method: Literal["AF3", "EDM"] = "AF3"
     translation_noise: float = 0.0
     scheduler: DecoupledEDMScheduler.DecoupledEDMSchedulerConfig

@@ -1,28 +1,27 @@
-comment: "miniworld 2.0.0 Adam, lr 1e-4 grad clip 1.0 effective batch size 16"
+comment: "miniworld 2.0.0 only train Adam, lr 1.8e-3 grad clip 1.0 effective batch size 256"
 run_dir: "logs/miniworld v2.0.0/"
 
 # Training arguments
 num_batch: 1
 num_epoch: 1000
-# max_lr: 1.8e-3
-max_lr: 1e-4
-min_lr: 1e-5
+max_lr: 1.8e-3
+min_lr: 1e-4
 warmup_steps: 1000
 decay_steps: 5e4
 self_condition: False
 compile: True
 num_augment: 48
-train_item: 2560
+train_item: 25600
 valid_item: 640
 
 # Validation arguments
 save_freq: 10
-eval_freq: 200
+eval_freq: 20000
 eval_sample_num: 1
 eval_input_num: 50
 eval_timesteps: 100
 grad_clip_max_norm: 1.0
-grad_accum_steps: 4
+grad_accum_steps: 16
 optimizer: "Adam"
 
 num_workers: 4
