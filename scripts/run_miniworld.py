@@ -243,7 +243,7 @@ def train(  # noqa: PLR0912, PLR0915
 
         for step, result in enumerate(client.training_epoch(train_dataloader)):
             train_aggregator.log_step(result)
-            if step >= train_num_item:
+            if step == train_num_item - 1:
                 break
         train_aggregator.log_epoch()
 
