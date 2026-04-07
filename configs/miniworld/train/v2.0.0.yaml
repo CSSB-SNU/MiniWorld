@@ -15,7 +15,7 @@ train_item: 25600
 valid_item: 640
 
 # Validation arguments
-save_freq: 10
+save_freq: 5
 eval_freq: 20000
 eval_sample_num: 1
 eval_input_num: 50
