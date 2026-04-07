@@ -12,8 +12,6 @@ from miniworld.diffusion.scheduler import DecoupledEDMScheduler, DiffusionSchedu
 from miniworld.utils.structure.se3 import (
     apply_chain_rt,
     sample_rigid,
-    se3_heat_step_delta_sigma,
-    se3_heat_step_sigma,
 )
 
 
@@ -220,19 +218,15 @@ class DecoupledEDMSolver(DiffusionSolver):
         t_index: int,
         time_steps: torch.Tensor,
         atom_chain_break: AtomChainMap,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Add coordinate and SE(3) noise for the current solver step."""
+        del translation
         t_i = time_steps[t_index]
         t_next = time_steps[t_index + 1]
 
         sigma_i = self.scheduler.sampling_schedule(t_i)
         sigma_next = self.scheduler.sampling_schedule(t_next)
-        sigma_rotation_i, sigma_translation_i = self.scheduler.convert_to_sigma_rt(
-            sigma_i,
-        )
         batch_size = y.shape[0]
-        sigma_rotation_i = _expand_to_batch(sigma_rotation_i, batch_size)
-        sigma_translation_i = _expand_to_batch(sigma_translation_i, batch_size)
 
         gamma = self.gamma_0 if sigma_next > self.gamma_min else 0
         t_hat = sigma_i * (1 + gamma)
@@ -241,14 +235,16 @@ class DecoupledEDMSolver(DiffusionSolver):
         )
         sigma_rotation_hat = _expand_to_batch(sigma_rotation_hat, batch_size)
         sigma_translation_hat = _expand_to_batch(sigma_translation_hat, batch_size)
-        R_hat, T_hat = se3_heat_step_sigma(
-            rotation,
-            translation,
-            sigma_rotation_i,
-            sigma_translation_i,
+
+        # R/T are auxiliary model-input corruptions. Sample their marginal at
+        # sigma_hat directly instead of maintaining an approximate reverse
+        # trajectory on SO(3).
+        R_hat, T_hat = sample_rigid(
             sigma_rotation_hat,
             sigma_translation_hat,
-            eps=1e-12,
+            C=rotation.shape[1],
+            device=y.device,
+            dtype=y.dtype,
         )
 
         added_noise = (
@@ -256,7 +252,7 @@ class DecoupledEDMSolver(DiffusionSolver):
         )
         y = y + added_noise
         x_with_noise = apply_chain_rt(y, R_hat, T_hat, atom_chain_break)
-        return y, x_with_noise, t_hat
+        return y, x_with_noise, t_hat, R_hat, T_hat
 
     def y_step(
         self,
@@ -267,18 +263,12 @@ class DecoupledEDMSolver(DiffusionSolver):
         t_index: int,
         time_steps: torch.Tensor,
         atom_chain_break: AtomChainMap,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Perform one Euler update on the coordinate component."""
-        t_i = time_steps[t_index]
         t_next = time_steps[t_index + 1]
-
-        sigma_i = self.scheduler.sampling_schedule(t_i)
         sigma_next = self.scheduler.sampling_schedule(t_next)
-        gamma = self.gamma_0 if sigma_next > self.gamma_min else 0
-        t_hat = sigma_i * (1 + gamma)
-        _, sigma_translation_hat = self.scheduler.convert_to_sigma_rt(t_hat)
 
-        y, x_with_noise, t_hat = self._add_noise(
+        y, x_with_noise, t_hat, rotation_hat, translation_hat = self._add_noise(
             y,
             rotation,
             translation,
@@ -286,6 +276,7 @@ class DecoupledEDMSolver(DiffusionSolver):
             time_steps,
             atom_chain_break,
         )
+        _, sigma_translation_hat = self.scheduler.convert_to_sigma_rt(t_hat)
         dt = sigma_next - t_hat
 
         t_emb = self.scheduler.noise_condition(t_hat)
@@ -299,42 +290,30 @@ class DecoupledEDMSolver(DiffusionSolver):
         v_i = (y - x_denoised) / t_hat
         y = y + self.step_scale * dt * v_i
 
-        return y, x_update
+        return y, x_update, rotation_hat, translation_hat, t_hat
 
     def rt_step(
         self,
         rotation: torch.Tensor,
         translation: torch.Tensor,
-        t_index: int,
-        time_steps: torch.Tensor,
+        sigma_current: torch.Tensor,
+        sigma_next: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Perform one SE(3) update step."""
-        t_i = time_steps[t_index]
-        t_next = time_steps[t_index + 1]
-
-        sigma_i = self.scheduler.sampling_schedule(t_i)
-        sigma_next = self.scheduler.sampling_schedule(t_next)
-        sigma_rotation_i, sigma_translation_i = self.scheduler.convert_to_sigma_rt(
-            sigma_i,
-        )
+        """Sample the next-step SE(3) auxiliary corruption marginal."""
+        del translation, sigma_current
         batch_size = rotation.shape[0]
-        sigma_rotation_i = _expand_to_batch(sigma_rotation_i, batch_size)
-        sigma_translation_i = _expand_to_batch(sigma_translation_i, batch_size)
         sigma_rotation_next, sigma_translation_next = (
             self.scheduler.convert_to_sigma_rt(sigma_next)
         )
         sigma_rotation_next = _expand_to_batch(sigma_rotation_next, batch_size)
         sigma_translation_next = _expand_to_batch(sigma_translation_next, batch_size)
-        dt_rotation = sigma_rotation_next - sigma_rotation_i
-        dt_translation = sigma_translation_next - sigma_translation_i
 
-        return se3_heat_step_delta_sigma(
-            rotation,
-            translation,
-            sigma_rotation_i,
-            sigma_translation_i,
-            dt_rotation,
-            dt_translation,
+        return sample_rigid(
+            sigma_rotation_next,
+            sigma_translation_next,
+            C=rotation.shape[1],
+            device=rotation.device,
+            dtype=rotation.dtype,
         )
 
     def step(
@@ -348,7 +327,7 @@ class DecoupledEDMSolver(DiffusionSolver):
         atom_chain_break: AtomChainMap,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Perform one solver step for coordinates and rigid transforms."""
-        y, x_update = self.y_step(
+        y, x_update, rotation_hat, translation_hat, sigma_hat = self.y_step(
             model_fn,
             y,
             rotation,
@@ -357,11 +336,13 @@ class DecoupledEDMSolver(DiffusionSolver):
             time_steps,
             atom_chain_break,
         )
+        t_next = time_steps[t_index + 1]
+        sigma_next = self.scheduler.sampling_schedule(t_next)
         rotation, translation = self.rt_step(
-            rotation,
-            translation,
-            t_index,
-            time_steps,
+            rotation_hat,
+            translation_hat,
+            sigma_hat,
+            sigma_next,
         )
         return y, x_update, rotation, translation
 

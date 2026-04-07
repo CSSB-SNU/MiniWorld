@@ -504,7 +504,6 @@ class DecoupledEDMDiffuser(Diffuser):
 
         sigma_y, sigma_rotation, sigma_translation = self.scheduler.sample_noise(
             total_num,
-            uniform=True,
         )
         sigma_y = sigma_y.to(device=device, dtype=dtype)
         sigma_rotation = sigma_rotation.to(device=device, dtype=dtype)
@@ -515,6 +514,7 @@ class DecoupledEDMDiffuser(Diffuser):
 
         atom_to_combine = self._randomly_split_chains(x0, mask, atom_to_chain_idx)
         group_num = int(atom_to_combine.max().item()) + 1
+
         rotation_matrix, translation_vector = sample_rigid(
             sigma_rotation,
             sigma_translation,
