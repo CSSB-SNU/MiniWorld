@@ -242,6 +242,7 @@ class Client(BaseClient):
             _SetEpochProtocol,
         ):
             dataloader.sampler.set_epoch(self.epoch)
+            self.model.set_seed(self.config.train.seed + self.epoch)  # pyright: ignore[reportCallIssue]
 
         self.model.train()
         self.call_callbacks("on_train_epoch_start")

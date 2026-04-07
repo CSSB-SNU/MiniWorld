@@ -127,8 +127,7 @@ def init_token_single_msa_with_embedding(
     return token_single_msa.float()
 
 
-# MiniWorld-style template features
-@torch.no_grad()
+# MiniWorld-style template features@torch.no_grad()
 def init_template_feat(
     template: TemplateFeatures,
     dtype: torch.dtype = torch.float32,
@@ -146,7 +145,7 @@ def init_template_feat(
     Unknown / masked pairs are encoded as all zeros.
     """
     template_ids = template.ids  # (B, T, L)
-    template_mask = template.mask[:, :, None, None]  # (B, T, 1, 1)
+    template_mask = template.mask[:, :, None, None].bool()  # (B, T, 1, 1)
 
     # Ignore inter-chain pairs when building per-template pair classes.
     same_chain = (
@@ -162,29 +161,90 @@ def init_template_feat(
     cb_pair_mask = cb_mask[:, :, :, None] & cb_mask[:, :, None, :]  # (B, T, L, L)
     valid_pair_mask = template_mask & same_chain & cb_pair_mask
 
-    per_template_feat = torch.full_like(cb_dist, 4, dtype=torch.long)
-    per_template_feat[valid_pair_mask & (cb_dist < positive_cutoff)] = 0
-    per_template_feat[valid_pair_mask & (cb_dist > negative_cutoff)] = 1
-    per_template_feat[
+    unknown = torch.full_like(cb_dist, 4, dtype=torch.long)
+    is_contact = valid_pair_mask & (cb_dist < positive_cutoff)
+    is_negative = valid_pair_mask & (cb_dist > negative_cutoff)
+    is_ambiguous = (
         valid_pair_mask & (cb_dist >= positive_cutoff) & (cb_dist <= negative_cutoff)
-    ] = 2
+    )
+
+    per_template_feat = torch.where(
+        is_contact,
+        torch.zeros_like(unknown),
+        unknown,
+    )
+    per_template_feat = torch.where(
+        is_negative,
+        torch.ones_like(per_template_feat),
+        per_template_feat,
+    )
+    per_template_feat = torch.where(
+        is_ambiguous,
+        torch.full_like(per_template_feat, 2),
+        per_template_feat,
+    )
 
     has_contact = (per_template_feat == 0).any(dim=1)
     has_negative = (per_template_feat == 1).any(dim=1)
     has_ambiguous = (per_template_feat == 2).any(dim=1)
     has_known = (per_template_feat != 4).any(dim=1)
 
+    both_contact_and_negative = has_contact & has_negative
+    ambiguous_only = (~both_contact_and_negative) & has_ambiguous
+    contact_only = has_contact & ~has_negative & ~has_ambiguous
+    negative_only = has_negative & ~has_contact & ~has_ambiguous
+
     contact_feat = torch.full_like(has_contact, 4, dtype=torch.long)
-    contact_feat[has_contact & has_negative] = 3
-    contact_feat[~(has_contact & has_negative) & has_ambiguous] = 2
-    contact_feat[has_contact & ~has_negative & ~has_ambiguous] = 0
-    contact_feat[has_negative & ~has_contact & ~has_ambiguous] = 1
-    contact_feat[~has_known] = 4
+    contact_feat = torch.where(
+        both_contact_and_negative,
+        torch.full_like(contact_feat, 3),
+        contact_feat,
+    )
+    contact_feat = torch.where(
+        ambiguous_only,
+        torch.full_like(contact_feat, 2),
+        contact_feat,
+    )
+    contact_feat = torch.where(
+        contact_only,
+        torch.zeros_like(contact_feat),
+        contact_feat,
+    )
+    contact_feat = torch.where(
+        negative_only,
+        torch.ones_like(contact_feat),
+        contact_feat,
+    )
+    contact_feat = torch.where(
+        has_known,
+        contact_feat,
+        torch.full_like(contact_feat, 4),
+    )
 
     # Unknown / masked pairs stay all-zero instead of using a dedicated channel.
     contact_feat = torch.nn.functional.one_hot(
         contact_feat.clamp(max=3),
         num_classes=4,
     ) * (contact_feat != 4).unsqueeze(-1)
+
+    return contact_feat.to(dtype=dtype)
+
+
+@torch.inference_mode()
+def apply_template_dropout(
+    contact_feat: Float[torch.Tensor, "B L L 4"],
+    prob: float = 0.0,
+    dtype: torch.dtype = torch.float32,
+) -> Float[torch.Tensor, "B L L 4"]:
+    """Apply template dropout to MiniWorld-style template pair classes."""
+    if prob > 0.0:
+        keep_mask = (
+            torch.rand(
+                (4,),
+                device=contact_feat.device,
+            )
+            >= prob
+        )
+        contact_feat = contact_feat * keep_mask.view(1, 1, 1, 4).to(contact_feat.dtype)
 
     return contact_feat.to(dtype=dtype)

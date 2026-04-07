@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import random
 from contextlib import ExitStack
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+import numpy as np
 import torch
 from pydantic import BaseModel
 from team_gm.modules import DiffusionTransformer, MSAModule, Pairformer
@@ -22,6 +22,7 @@ from miniworld.modules.diffusion_module import (
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.msa_util import (
+    apply_template_dropout,
     init_msa,
     init_template_feat,
     init_token_single_msa,
@@ -29,7 +30,6 @@ from miniworld.modules.msa_util import (
 from miniworld.modules.template_module import TemplateEmbedder, TemplatePairformer
 
 if TYPE_CHECKING:
-    import numpy as np
     from jaxtyping import Bool, Float
 
     from miniworld.data.features import (
@@ -125,6 +125,14 @@ class Model(nn.Module):
             config.diffusion.dit_cond,
         ).to(torch.float32)
 
+        self.init_msa = torch.compile(init_msa)
+        self.init_template_feat = torch.compile(init_template_feat)
+        self.rng = np.random.default_rng()
+
+    def set_seed(self, seed: int) -> None:
+        """Set the random seed for reproducibility."""
+        self.rng = np.random.default_rng(seed)
+
     def condition_forward(
         self,
         msa: MSAFeatures,
@@ -136,7 +144,7 @@ class Model(nn.Module):
     ) -> tuple[torch.Tensor, ...]:
         """Forward pass of the condition modules with recycling."""
         if self.training:
-            n_recycle = random.randint(1, self.n_recycle_max)
+            n_recycle = self.rng.integers(0, self.n_recycle_max + 1)
         else:
             n_recycle = self.n_recycle_max
 
@@ -161,19 +169,25 @@ class Model(nn.Module):
 
         token_pair = torch.zeros_like(token_pair_init).to(torch.bfloat16)
         token_single = torch.zeros_like(token_single_init).to(torch.bfloat16)
+        token_pair_init_bf16 = token_pair_init.to(torch.bfloat16)
+        token_single_init_bf16 = token_single_init.to(torch.bfloat16)
+        token_single_input_bf16 = token_single_input.to(torch.bfloat16)
         # Trunk forward with recycling
+        msa_feat, msa_mask = self.init_msa(
+            msa,
+            num_res_class=self.config.shared.num_res_class,
+            dtype=torch.bfloat16,
+        )
+        template_feat = self.init_template_feat(template, dtype=torch.bfloat16)
+        template_feat = apply_template_dropout(
+            template_feat,
+            self.config.trunk.template_embedder.dropout_prob,
+        )
         for i_cycle in range(n_recycle):
             with ExitStack() as stack:
                 if i_cycle < n_recycle - 1:
-                    stack.enter_context(torch.no_grad())
                     stack.enter_context(torch.inference_mode())
-                msa_feat, msa_mask = init_msa(
-                    msa,
-                    num_res_class=self.config.shared.num_res_class,
-                    dtype=torch.bfloat16,
-                )
-                template_feat = init_template_feat(template, dtype=torch.bfloat16)
-                token_pair = token_pair_init.to(torch.bfloat16) + self.add_pair_recycle(
+                token_pair = token_pair_init_bf16 + self.add_pair_recycle(
                     token_pair,
                 )
                 token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
@@ -182,12 +196,12 @@ class Model(nn.Module):
                     msa_feat,
                     msa_mask,
                     token_pair,
-                    token_single_input.to(torch.bfloat16),
+                    token_single_input_bf16,
                     token_mask,
                 )
-                token_single = token_single_init.to(
-                    torch.bfloat16,
-                ) + self.add_single_recycle(token_single)
+                token_single = token_single_init_bf16 + self.add_single_recycle(
+                    token_single,
+                )
 
                 token_pair, token_single = self.pairformer_blocks.forward(
                     token_pair,

@@ -98,6 +98,7 @@ class TemplatePairformer(nn.Module):
         use_self_attention: bool = True
         implementation: ImplementationType = ImplementationType.PYTORCH
         n_block: int = 2
+        dropout_prob: float = 0.25
 
     def __init__(self, config: Config) -> None:
         super().__init__()

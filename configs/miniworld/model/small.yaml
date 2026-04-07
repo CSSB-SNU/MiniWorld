@@ -25,7 +25,7 @@ input_feat_embbeder:
   implementation: triton
 
 trunk:
-  n_recycle_max: 1 # 4
+  n_recycle_max: 4
   pairformer: 
     n_block: 4
     n_checkpoint_segments: null

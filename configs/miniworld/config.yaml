@@ -2,6 +2,6 @@ defaults:
   - model: medium
   - train: default
   - data: default
-  - diffuser: af3_like
+  - diffuser: decoupled_edm
   - loss: default
   - _self_
