@@ -142,7 +142,7 @@ class Model(nn.Module):
     ) -> tuple[torch.Tensor, ...]:
         """Forward pass of the condition modules with recycling."""
         if self.training:
-            n_recycle = self.rng.integers(0, self.n_recycle_max + 1)
+            n_recycle = self.rng.integers(1, self.n_recycle_max + 1)
         else:
             n_recycle = self.n_recycle_max
 
