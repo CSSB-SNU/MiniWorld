@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 from pathlib import Path
 
@@ -53,6 +54,18 @@ class Config(BaseModel):
     loss: Client.LossConfig
 
 
+def _fabric_from_torchrun(**fabric_kwargs) -> Fabric:
+    """Create Fabric with node/device counts inherited from torchrun."""
+    world_size = os.environ.get("WORLD_SIZE")
+    local_world_size = os.environ.get("LOCAL_WORLD_SIZE")
+    if world_size is None or local_world_size is None:
+        return Fabric(**fabric_kwargs)
+
+    devices = int(local_world_size)
+    num_nodes = int(world_size) // devices
+    return Fabric(devices=devices, num_nodes=num_nodes, **fabric_kwargs)
+
+
 class VerboseCallback(Callback):
     """Log batch shape and memory usage per batch."""
 
@@ -101,7 +114,7 @@ def train(  # noqa: PLR0912, PLR0915
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
     # fabric = Fabric(precision="bf16-mixed", accelerator="cuda")
-    fabric = Fabric()
+    fabric = _fabric_from_torchrun()
     fabric.launch()
     if cfg.train.seed is not None:
         fabric.seed_everything(cfg.train.seed)
