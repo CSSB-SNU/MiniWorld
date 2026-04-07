@@ -195,7 +195,7 @@ def train(  # noqa: PLR0912, PLR0915
     train_dataset = BioMolData(train_data_config)
     train_dataloader = train_dataset.create_ddp_dataloader(
         world_size=fabric.world_size,
-        rank=fabric.local_rank,
+        rank=fabric.global_rank,
         seed=cfg.train.seed,
         drop_last=True,
         batch_size=cfg.train.num_batch,
