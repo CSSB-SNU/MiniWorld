@@ -184,6 +184,137 @@ def exp_so3(omega: torch.Tensor) -> torch.Tensor:
     return R
 
 
+class _IGSO3Sampler:
+    """Direct sampler for the IGSO3 distribution via precomputed inverse CDF.
+
+    Replaces the O(steps) Brownian-motion simulation with O(1) sampling
+    using a 2D lookup table over (epsilon, omega).  The table is built
+    lazily on first use and cached per device.
+    """
+
+    def __init__(
+        self,
+        n_eps: int = 512,
+        n_omega: int = 4096,
+        eps_min: float = 1e-4,
+        eps_max: float = 1100.0,
+        L_max: int = 1500,
+        small_sigma_thresh: float = 0.01,
+    ) -> None:
+        self.n_eps = n_eps
+        self.n_omega = n_omega
+        self.eps_min = eps_min
+        self.eps_max = eps_max
+        self.L_max = L_max
+        self.small_sigma_thresh = small_sigma_thresh
+        self._cdf_table: Tensor | None = None
+        self._omega_grid: Tensor | None = None
+        self._log_eps_grid: Tensor | None = None
+
+    def _precompute(self, device: torch.device) -> None:
+        """Build the 2D CDF table ``(n_eps, n_omega)`` once."""
+        omega = torch.linspace(
+            1e-6, pi, self.n_omega, dtype=torch.float64, device=device,
+        )
+        log_eps = torch.linspace(
+            math.log(self.eps_min),
+            math.log(self.eps_max),
+            self.n_eps,
+            dtype=torch.float64,
+            device=device,
+        )
+        eps = torch.exp(log_eps)
+
+        ls = torch.arange(self.L_max + 1, dtype=torch.float64, device=device)
+        # coefficients: (n_eps, L+1)
+        coeffs = (2 * ls + 1).unsqueeze(0) * torch.exp(
+            -ls * (ls + 1) * eps.unsqueeze(1) / 2,
+        )
+        # characters: (n_omega, L+1)
+        half_omega = omega.unsqueeze(1) / 2
+        sin_half = torch.sin(half_omega).clamp_min(1e-12)
+        characters = torch.sin((2 * ls + 1) * half_omega) / sin_half
+        # Haar measure factor
+        haar = (1 - torch.cos(omega)) / pi
+
+        pdf = coeffs @ characters.T * haar.unsqueeze(0)  # (n_eps, n_omega)
+        pdf = pdf.clamp_min(0)
+
+        d_omega = omega[1] - omega[0]
+        cdf = torch.cumsum(pdf * d_omega, dim=1)
+        cdf = cdf / cdf[:, -1:].clamp_min(1e-30)
+
+        self._omega_grid = omega.float()
+        self._log_eps_grid = log_eps.float()
+        self._cdf_table = cdf.float()
+
+    def _ensure_table(self, device: torch.device) -> None:
+        if self._cdf_table is None or self._cdf_table.device != device:
+            self._precompute(device)
+
+    @torch.no_grad()
+    def sample(
+        self,
+        sigma_R: Tensor,
+        C: int,
+        device: torch.device | None = None,
+        dtype: torch.dtype = torch.float32,
+    ) -> Tensor:
+        """Sample ``(B, C, 3, 3)`` rotation matrices from IGSO3(sigma_R).
+
+        * For sigma < ``small_sigma_thresh``: tangent-space Gaussian (exact
+          to first order, covers the near-identity regime cheaply).
+        * Otherwise: inverse-CDF lookup from the precomputed table.
+        """
+        if device is None:
+            device = sigma_R.device
+        B = sigma_R.shape[0]
+        R = (
+            torch.eye(3, device=device, dtype=dtype)
+            .unsqueeze(0)
+            .unsqueeze(0)
+            .expand(B, C, 3, 3)
+            .clone()
+        )
+
+        small = sigma_R < self.small_sigma_thresh
+        large = ~small
+
+        # --- Small sigma: tangent-space Gaussian (exact to first order) ---
+        if small.any():
+            n_s = int(small.sum().item())
+            std = sigma_R[small].to(dtype).view(n_s, 1, 1)
+            omega_s = torch.randn(n_s, C, 3, device=device, dtype=dtype) * std
+            R[small] = exp_so3(omega_s)
+
+        # --- Larger sigma: inverse-CDF from precomputed table ---
+        if large.any():
+            self._ensure_table(device)
+            sigma_l = sigma_R[large]
+            n_l = sigma_l.shape[0]
+
+            eps = (sigma_l**2).clamp(self.eps_min, self.eps_max)
+            log_eps = torch.log(eps).float()
+            idx = torch.searchsorted(self._log_eps_grid, log_eps).clamp(
+                0, self.n_eps - 1,
+            )
+            cdf_rows = self._cdf_table[idx]  # (n_l, n_omega)
+
+            u = torch.rand(n_l, C, device=device)
+            omega_idx = torch.searchsorted(cdf_rows, u).clamp(0, self.n_omega - 1)
+            angles = self._omega_grid[omega_idx]  # (n_l, C)
+
+            axes = torch.randn(n_l, C, 3, device=device, dtype=dtype)
+            axes = axes / axes.norm(dim=-1, keepdim=True).clamp_min(1e-8)
+            omega_vec = axes * angles.to(dtype).unsqueeze(-1)  # (n_l, C, 3)
+            R[large] = exp_so3(omega_vec)
+
+        return R
+
+
+_igso3_sampler = _IGSO3Sampler()
+
+
 def sample_rotation_heat(
     sigma_R: torch.Tensor,
     C: int,
@@ -191,16 +322,14 @@ def sample_rotation_heat(
     device: torch.device | None = None,
     dtype: torch.dtype = torch.float32,
 ) -> Tensor:
-    """Sample from heat kernel on SO(3) with variance sigma_R^2 by simulating Brownian motion. Returns (B,C,3,3) rotation matrices."""
-    B = sigma_R.shape[0]
-    # per-step std = sqrt( t / steps ) = sigma_R / sqrt(steps)
-    step_std = (sigma_R / math.sqrt(steps)).view(B, 1, 1)  # (B,1,1)
+    """Sample from IGSO3 (heat kernel on SO(3)) via precomputed inverse CDF.
 
-    R = torch.eye(3, device=device, dtype=dtype).expand(B, C, 3, 3).clone()
-    for _ in range(steps):
-        d_omega = torch.randn(B, C, 3, device=device, dtype=dtype) * step_std
-        R = R @ exp_so3(d_omega)  # right-invariant increments
-    return R
+    This replaces the previous O(steps) Brownian-motion simulation with
+    O(1) direct sampling.  The ``steps`` parameter is kept for backward
+    compatibility but is no longer used.
+    """
+    del steps  # no longer needed — kept for API compat
+    return _igso3_sampler.sample(sigma_R, C, device=device, dtype=dtype)
 
 
 def sample_translation(sigma_T: torch.Tensor, C: int) -> torch.Tensor:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import AliasChoices, BaseModel, Field
 
 
 class SamplerConfig(BaseModel):
@@ -121,7 +121,10 @@ class TokenizerConfig(BaseModel):
     """Configuration for the Tokenizer."""
 
     level: Literal["atom", "dynamic", "lte", "residue"] = "atom"
-    dynamic_config: DynamicTokenizationConfig | None = None
+    dynamic_config: DynamicTokenizationConfig | None = Field(
+        default=None,
+        validation_alias=AliasChoices("dynamic_config", "dynamic_tokenization"),
+    )
     seed: int = 42  # for dynamic tokenization, set seed for reproducibility
 
 

@@ -17,14 +17,13 @@ import wandb
 from miniworld.configs import (
     BioMolDBConfig,
     CropConfig,
-    EDMDiffuserConfig,
+    DecoupledEDMDiffuserConfig,
     MSAConfig,
     SamplerConfig,
     TokenizerConfig,
 )
 from miniworld.data.dataloader.dataloader2 import BioMolData
-from miniworld.models import DefaultClient as Client
-from miniworld.models.af3_like import Model
+from miniworld.models.miniworld import Client, Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
 torch.set_float32_matmul_precision("medium")
@@ -36,7 +35,6 @@ class DataConfig(BaseModel):
     """Configuration for data loading."""
 
     train_db: BioMolDBConfig
-    valid_db: BioMolDBConfig
     crop: CropConfig
     msa: MSAConfig
     tokenizer: TokenizerConfig
@@ -49,7 +47,7 @@ class Config(BaseModel):
     data: DataConfig
     train: Client.TrainConfig
     model: Model.Config
-    diffuser: EDMDiffuserConfig
+    diffuser: DecoupledEDMDiffuserConfig
     loss: Client.LossConfig
 
 
@@ -100,7 +98,7 @@ def train(  # noqa: PLR0912, PLR0915
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
-    fabric = Fabric(precision="bf16-mixed")
+    fabric = Fabric()
     fabric.launch()
     if cfg.train.seed is not None:
         fabric.seed_everything(cfg.train.seed)

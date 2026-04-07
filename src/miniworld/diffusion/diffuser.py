@@ -168,6 +168,7 @@ class EuclideanDiffuser(Diffuser, ABC):
         input_scaling = self.scheduler.input_scale(sigma).to(device=device, dtype=dtype)
         noisy_x = x0 + noise * sigma
         x_input = noisy_x * input_scaling
+        t_emb = self.scheduler.noise_condition(sigma).to(device=device, dtype=dtype)
 
         x0 = x0.view(num_augment, batch_size, *x0.shape[1:])
         sigma = sigma.view(num_augment, batch_size, *sigma.shape[1:])
@@ -175,7 +176,6 @@ class EuclideanDiffuser(Diffuser, ABC):
         x_input = x_input.view(num_augment, batch_size, *x_input.shape[1:])
         if mask is not None:
             mask = mask.view(num_augment, batch_size, *mask.shape[1:])
-        t_emb = self.scheduler.noise_condition(sigma).to(device=device, dtype=dtype)
         t_emb = t_emb.view(num_augment, batch_size, *t_emb.shape[1:])
 
         return x0, x_input, mask, t_emb, sigma
@@ -528,6 +528,16 @@ class DecoupledEDMDiffuser(Diffuser):
             translation_vector,
             atom_to_combine,
         )
+        sigma_y, sigma_rotation, sigma_translation = [
+            x.view(sigma_shape) for x in (sigma_y, sigma_rotation, sigma_translation)
+        ]
+        input_scaling = self.scheduler.input_scale(sigma_y, sigma_translation).to(
+            device=device,
+            dtype=dtype,
+        )
+
+        t_emb = self.scheduler.noise_condition(sigma_y).to(device=device, dtype=dtype)
+        x_input = noisy_x * input_scaling
 
         x0 = x0.view(num_augment, batch_size, *x0.shape[1:])
         sigma_y = sigma_y.view(num_augment, batch_size, *sigma_y.shape[1:])
@@ -542,18 +552,11 @@ class DecoupledEDMDiffuser(Diffuser):
             *sigma_translation.shape[1:],
         )
         noisy_x = noisy_x.view(num_augment, batch_size, *noisy_x.shape[1:])
+        x_input = x_input.view(num_augment, batch_size, *x_input.shape[1:])
         if mask is not None:
             mask = mask.view(num_augment, batch_size, *mask.shape[1:])
 
-        input_scaling = self.scheduler.input_scale(sigma_y, sigma_translation).to(
-            device=device,
-            dtype=dtype,
-        )
-        input_scaling = _expand_to_trailing_dims(input_scaling, noisy_x)
-        x_input = noisy_x * input_scaling
-
-        t_emb = self.scheduler.noise_condition(sigma_y).to(device=device, dtype=dtype)
-        t_emb = t_emb.unsqueeze(-1)
+        t_emb = t_emb.view(num_augment, batch_size, *t_emb.shape[1:])
 
         return (
             x0,

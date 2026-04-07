@@ -27,7 +27,6 @@ from miniworld.modules.msa_util import (
     init_token_single_msa,
 )
 from miniworld.modules.template_module import TemplateEmbedder, TemplatePairformer
-from miniworld.utils.precision_manager import PrecisionConfig
 
 if TYPE_CHECKING:
     import numpy as np
@@ -68,7 +67,6 @@ class Model(nn.Module):
         input_feat_embbeder: DiffusionTransformer.Config
         trunk: Model.TrunkConfig
         diffusion: Model.DiffusionConfig
-        precision: PrecisionConfig
 
     def __init__(self, config: Config) -> None:
         super().__init__()

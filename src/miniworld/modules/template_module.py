@@ -156,8 +156,8 @@ class TemplateEmbedder(nn.Module):
     @typecheck
     def forward(
         self,
-        template_feat: Float[torch.Tensor, "B L L d_pair_template_input"],
         pair: Float[torch.Tensor, "B L L d_pair"],
+        template_feat: Float[torch.Tensor, "B L L d_pair_template_input"],
         mask: Bool[torch.Tensor, "B L"] | None = None,
     ) -> Float[torch.Tensor, "B L L d_pair"]:
         """Forward pass."""

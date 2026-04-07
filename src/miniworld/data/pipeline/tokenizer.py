@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, Protocol, TypeAlias
+import logging
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 import numpy as np
 import numpy.typing as npt
 
 from miniworld.data.constants import CANONICAL_CHEMCOMPS
+
+LOGGER = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -16,14 +19,6 @@ if TYPE_CHECKING:
 
 
 IntArray: TypeAlias = npt.NDArray[np.integer]
-
-
-class TokenizeFn(Protocol):
-    """Protocol for tokenization functions."""
-
-    def __call__(self, cifmol: CIFMolAttached) -> tuple[IntArray, IntArray]:
-        """Convert cifmol into (atom_to_token_idx_map, token_residue_idx)."""
-        ...
 
 
 def atom_tokenize(cifmol: CIFMolAttached) -> tuple[np.ndarray, np.ndarray]:
@@ -75,7 +70,7 @@ def residue_tokenize(cifmol: CIFMolAttached) -> tuple[np.ndarray, np.ndarray]:
     )
 
 
-def dynamic_tokenize(
+def dynamic_tokenize(  # noqa: PLR0915
     cifmol: CIFMolAttached,
     focus: np.ndarray,  # focus point (3,)
     fragmented_ccd_mols: Mapping[str, Mapping[int, FragmentedCCDMol]],
@@ -136,7 +131,7 @@ def dynamic_tokenize(
     else:
         log_sigma = rng.uniform(np.log(config.sigma_min), np.log(config.sigma_max))
         sigma = np.exp(log_sigma)
-    print(f"min_res={min_res:.3f} sigma={sigma:.3f} focus={focus}")
+    LOGGER.debug("min_res=%.3f sigma=%.3f focus=%s", min_res, sigma, focus)
 
     # --- Exponential schedule: half-life = sigma ---
     # sigma=inf → flat at min_res everywhere (avoids inf/inf = NaN)
@@ -201,8 +196,8 @@ class Tokenizer:
     def __init__(self, config: TokenizerConfig) -> None:
         """Initialize the tokenizer with the specified tokenization level."""
         self.level = config.level
+        self.dynamic_config = config.dynamic_config
         self.rng = np.random.default_rng(config.seed)
-        self._tokenize_fn: TokenizeFn = self._resolve_tokenize_fn(self.level, self.rng)
 
     def tokenize(
         self,
@@ -210,25 +205,25 @@ class Tokenizer:
         **kwargs: Any,
     ) -> tuple[IntArray, IntArray]:
         """Tokenize the given CIFMolAttached into (atom_to_token_idx_map, token_residue_idx)."""
-        return self._tokenize_fn(cifmol, **kwargs)
-
-    @staticmethod
-    def _resolve_tokenize_fn(
-        level: Literal["atom", "dynamic", "lte", "residue"],
-        rng: np.random.Generator,
-    ) -> TokenizeFn:
-        if level == "atom":
-            return atom_tokenize
-        if level == "residue":
-            return residue_tokenize
-        if level == "dynamic":
-            return lambda cifmol, **kwargs: dynamic_tokenize(
+        if self.level == "atom":
+            return atom_tokenize(cifmol)
+        if self.level == "residue":
+            return residue_tokenize(cifmol)
+        if self.level == "dynamic":
+            dynamic_config = kwargs.pop("config", None)
+            if dynamic_config is None:
+                dynamic_config = self.dynamic_config
+            if dynamic_config is None:
+                msg = "Dynamic tokenization requires TokenizerConfig.dynamic_config."
+                raise ValueError(msg)
+            return dynamic_tokenize(
                 cifmol,
-                rng=rng,
+                rng=self.rng,
+                config=dynamic_config,
                 **kwargs,
             )
-        if level == "lte":
+        if self.level == "lte":
             msg = "LTE tokenization is not implemented yet."
             raise NotImplementedError(msg)
-        msg = f"Invalid tokenization level: {level}"
+        msg = f"Invalid tokenization level: {self.level}"
         raise ValueError(msg)

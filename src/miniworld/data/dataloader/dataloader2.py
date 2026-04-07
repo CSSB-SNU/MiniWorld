@@ -332,6 +332,10 @@ class BioMolData(torch.utils.data.Dataset):
 
         crop_indices = cast("np.ndarray", crop_indices)
 
+        if crop_indices.shape[0] == 0:
+            msg = f"Failed to crop {cifmol.id} with chain_ids {chain_ids}."
+            raise WrongCroppingError(msg)
+
         token_mask = np.isin(token_to_residue_idx_map, crop_indices)
         cropped_token_indices = np.where(token_mask)[0]
         cropped_token_to_residue_idx_map = token_to_residue_idx_map[token_mask]

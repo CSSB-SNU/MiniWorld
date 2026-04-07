@@ -13,7 +13,7 @@ class SharedConfig(BaseModel):
     d_single_token_input: int = 441  # 441 = 384 + 32 + 24 + 1
 
     d_pair: int = 128
-    d_pair_template: int = 64
+    d_pair_template: int = 128
     d_pair_atom: int = 16
 
     d_time: int = 256
