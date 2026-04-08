@@ -26,7 +26,7 @@ channels = ["conda-forge"]
 platforms = ["linux-64"]
 
 [tool.pixi.system-requirements]
-cuda = "12"
+cuda = "13"
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -53,8 +53,6 @@ ignore = [
   "TC002",
 ]
 
-[tool.pixi.feature.cuda12.pypi-dependencies]
-cuequivariance-ops-torch-cu12 = "*"
 
 [tool.pixi.feature.cuda13.pypi-dependencies]
 cuequivariance-ops-torch-cu13 = "*"
@@ -63,8 +61,7 @@ cuequivariance-ops-torch-cu13 = "*"
 extra-index-urls = ["https://download.pytorch.org/whl/cu130"]
 
 [tool.pixi.environments]
-default = { features = ["cuda12"] }
-cuda13 = { features = ["cuda13"] }
+default = { features = ["cuda13"] }
 
 [tool.pixi.pypi-dependencies]
 miniworld = { path = ".", editable = true }
