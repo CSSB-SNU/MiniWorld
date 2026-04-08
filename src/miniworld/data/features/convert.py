@@ -243,7 +243,7 @@ def make_batch(
     if token_type_override is None:
         token_type = msa_token.aligned_sequences[:, 0]
     else:
-        token_type = torch.from_numpy(token_type_override.astype(np.int64))
+        token_type = torch.from_numpy(token_type_override.astype(np.int64)).unsqueeze(0)
     
     if not isinstance(token_type, torch.Tensor):
         token_type = torch.as_tensor(token_type, dtype=torch.long)

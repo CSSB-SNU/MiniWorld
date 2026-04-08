@@ -189,7 +189,6 @@ class Model(nn.Module):
                 )
                 msa_feat, msa_mask = init_msa_explicit(
                     msa,
-                    recycle_idx=i_cycle,
                     token_embedding=self.token_embedding,
                     profile32_to_fp_index=self.profile32_to_fp_index,
                     dtype=torch.bfloat16,

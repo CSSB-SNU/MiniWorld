@@ -350,7 +350,6 @@ class BioMolData(torch.utils.data.Dataset):
         # )
         
         token_type_override = None
-        unks = set()
         if self.chemcomp_to_fp_idx is not None:
             token_chem_comp = np.take(
                 cifmol.residues.chem_comp_id.value,
@@ -361,10 +360,6 @@ class BioMolData(torch.utils.data.Dataset):
                 [self.chemcomp_to_fp_idx.get(str(x), unk) for x in token_chem_comp],
                 dtype=np.int64,
             )
-            for x in token_chem_comp:
-                chem = str(x)
-                if chem not in self.chemcomp_to_fp_idx:
-                    unks.add(chem)
 
         return make_batch(
             cifmol=cifmol,
@@ -374,7 +369,7 @@ class BioMolData(torch.utils.data.Dataset):
             token_to_residue_idx_map=token_to_residue_idx_map,
             token_type_override=token_type_override,
             rng=rng,
-        ), unks
+        )
         
     def create_ddp_dataloader(
         self,
@@ -594,10 +589,10 @@ if __name__ == "__main__":
 
     # test dataloader    for i, batch in enumerate(dataloader):
     total_unks = set()
-    for i, (batch, unks) in enumerate(dataloader):
-        print(f"Batch {i}:")
-        total_unks.update(unks)
-    print(f"Total unique UNKs across batches: {len(total_unks)}")
+    # for i, (batch, unks) in enumerate(dataloader):
+    #     print(f"Batch {i}:")
+    #     total_unks.update(unks)
+    # print(f"Total unique UNKs across batches: {len(total_unks)}")
     
     # audit_chem_comp_vs_mapped_restype(
     # dataset,
