@@ -42,23 +42,23 @@ class SamplerConfig(BaseModel):
     """
 
     # sample number, cluster prob, individual sample score (prob *1e5)
-    antibody_antibody: float = 0.1  # 3096, 0.3%, 0.1
-    antibody_nucleic_acid: float = 20.0  # 27+30=57, 1.12%, 19.7
-    antibody_protein: float = 3.0  # 5091, 15%, 2.95
+    antibody_antibody: float = 0.3
+    antibody_nucleic_acid: float = 1.0
+    antibody_protein: float = 15.0
 
-    DNA_DNA: float = 0.25  # 8045, 1.98%, 0.25
-    DNA_RNA: float = 5.0  # 462, 2.27%, 4.92
-    RNA_RNA: float = 0.5  # 3983, 1.96%, 0.49
-    NA_NA: float = 10.0  # 40+43+41=124, 1.22%, 9.84
+    DNA_DNA: float = 2.0
+    DNA_RNA: float = 2.5
+    RNA_RNA: float = 2.0
+    NA_NA: float = 1.0
 
-    protein_nucleic_acid: float = 0.5  # 27386 + 9608 + 165= 36994, 18.2%, 0.49
-    protein_protein: float = 1.0  # 43524, 42.8%, 0.98
-    protein_ligand: float = 0.1  # 133547, 13.1%, 0.1
+    protein_nucleic_acid: float = 20.0
+    protein_protein: float = 45.0
+    protein_ligand: float = 10.0
 
-    ligand_ligand: float = 0.01  # 35804, 0.35%, 0.01
+    ligand_ligand: float = 0.2
 
-    etc_interface: float = 0.05  # 5741+6201+4890+197+75+17+57=17178, 0.8%, 0.05
-    sole: float = 0.5  # 1462, 0.7%, 0.5
+    etc_interface: float = 0.5
+    sole: float = 0.5
 
 
 class CropConfig(BaseModel):
