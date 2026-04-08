@@ -367,7 +367,7 @@ class Client(BaseClient):
                 )
                 if not is_accumulating:
                     self._optimizer_step()
-                self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
+                    self.call_callbacks("on_train_step_end", batch, batch_idx, loss_dict)
                 yield loss_dict
         finally:
             self.optimizer.zero_grad()
