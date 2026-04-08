@@ -1,16 +1,3 @@
 [submodule "team-gm"]
 	path = libs/team-gm
 	url = git@github.com:CSSB-SNU/team-gm.git
-[submodule "libs/team-gm"]
-	path = libs/team-gm
-	url = git@github.com:CSSB-SNU/team-gm.git
-	branch = BioMol
-[submodule "libs/kmer_fast_align"]
-	path = libs/kmer_fast_align
-	url = git@github.com:CSSB-SNU/KmerFastAlign.git
-[submodule "libs/datacooker"]
-	path = libs/datacooker
-	url = git@github.com:CSSB-SNU/DataCooker.git
-[submodule "libs/foldbench"]
-	path = libs/foldbench
-	url = https://github.com/BEAM-Labs/FoldBench.git
