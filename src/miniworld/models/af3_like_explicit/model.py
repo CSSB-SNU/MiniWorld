@@ -1,10 +1,10 @@
 from __future__ import annotations
 import json
-import random
 from contextlib import ExitStack
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+import numpy as np
 import torch
 from pydantic import BaseModel
 from team_gm.modules import DiffusionTransformer, MSAModule, Pairformer
@@ -14,18 +14,22 @@ from team_gm.modules.primitives import (
 )
 from torch import nn
 
-from miniworld.configs.data_explicit import TokenEmbeddingConfig  # noqa: TC001
-from miniworld.configs import SharedConfig
+from miniworld.configs import SharedConfig, TokenEmbeddingConfig 
 from miniworld.modules.diffusion_module import (
     DiffusionConditioning,
     DiffusionModule,
 )
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
-from miniworld.modules.msa_util_explicit import init_msa_explicit, init_token_single_msa_explicit
+from miniworld.modules.msa_util_explicit import (
+    apply_template_dropout,
+    init_msa_explicit,
+    init_template_feat,
+    init_token_single_msa_explicit,
+)
+from miniworld.modules.template_module import TemplateEmbedder, TemplatePairformer
 
 if TYPE_CHECKING:
-    import numpy as np
     from jaxtyping import Bool, Float
 
     from miniworld.data.features import (
@@ -34,6 +38,7 @@ if TYPE_CHECKING:
         SchemeFeatures,
         SequenceFeatures,
         StructureFeatures,
+        TemplateFeatures,
     )
 
 def _build_profile32_to_fp_index(vocab: dict[str, int], unk_key: str = "UNK") -> torch.Tensor:
@@ -58,6 +63,7 @@ class Model(nn.Module):
 
         pairformer: Pairformer.Config
         msa_module: MSAModule.Config
+        template_embedder: TemplatePairformer.Config
         n_recycle_max: int = 4
 
     class DiffusionConfig(BaseModel):
@@ -128,6 +134,10 @@ class Model(nn.Module):
 
         # Trunk forward
         self.msa_module = MSAModule(config.trunk.msa_module).to(torch.bfloat16)
+        # self.temp_embedder = TemplateEmbedder(
+        #     config.shared,
+        #     config.trunk.template_embedder,
+        # ).to(torch.bfloat16)    
         self.pairformer_blocks = Pairformer(config.trunk.pairformer).to(torch.bfloat16)
         self.distogram_head = DistogramHead(
             config.shared.d_pair,
@@ -142,9 +152,16 @@ class Model(nn.Module):
             config.diffusion.dit_cond,
         ).to(torch.float32)
 
+        self.rng = np.random.default_rng()
+
+    def set_seed(self, seed: int) -> None:
+        """Set the random seed for reproducibility."""
+        self.rng = np.random.default_rng(seed)
+
     def condition_forward(
         self,
         msa: MSAFeatures,
+        # template: TemplateFeatures,
         reference: ReferenceFeatures,
         scheme: SchemeFeatures,
         sequence: SequenceFeatures,
@@ -152,7 +169,7 @@ class Model(nn.Module):
     ) -> tuple[torch.Tensor, ...]:
         """Forward pass of the condition modules with recycling."""
         if self.training:
-            n_recycle = random.randint(1, self.n_recycle_max)
+            n_recycle = self.rng.integers(1, self.n_recycle_max + 1)
         else:
             n_recycle = self.n_recycle_max
 
@@ -160,7 +177,8 @@ class Model(nn.Module):
             msa,
             sequence,
             token_embedding=self.token_embedding,
-            profile32_to_fp_index=self.profile32_to_fp_index
+            profile32_to_fp_index=self.profile32_to_fp_index,
+            dtype=torch.bfloat16,
         )
 
         # input feature embedding
@@ -178,35 +196,42 @@ class Model(nn.Module):
 
         token_pair = torch.zeros_like(token_pair_init).to(torch.bfloat16)
         token_single = torch.zeros_like(token_single_init).to(torch.bfloat16)
+        token_pair_init_bf16 = token_pair_init.to(torch.bfloat16)
+        token_single_init_bf16 = token_single_init.to(torch.bfloat16)
+        token_single_input_bf16 = token_single_input.to(torch.bfloat16)
         # Trunk forward with recycling
+        msa_feat, msa_mask = init_msa_explicit(
+            msa,
+            token_embedding=self.token_embedding,
+            profile32_to_fp_index=self.profile32_to_fp_index,
+            dtype=torch.bfloat16,
+        )
+        template_feat = init_template_feat(template, dtype=torch.bfloat16)
+        template_feat = apply_template_dropout(
+            template_feat,
+            self.config.trunk.template_embedder.dropout_prob,
+            dtype=torch.bfloat16,
+        )
         for i_cycle in range(n_recycle):
             with ExitStack() as stack:
                 if i_cycle < n_recycle - 1:
                     stack.enter_context(torch.no_grad())
                     stack.enter_context(torch.inference_mode())
-                stack.enter_context(
-                    torch.autocast(device_type="cuda", dtype=torch.bfloat16)
-                )
-                msa_feat, msa_mask = init_msa_explicit(
-                    msa,
-                    token_embedding=self.token_embedding,
-                    profile32_to_fp_index=self.profile32_to_fp_index,
-                    dtype=torch.bfloat16,
-                )
-                token_pair = token_pair_init.to(torch.bfloat16) + self.add_pair_recycle(
+                token_pair = token_pair_init_bf16 + self.add_pair_recycle(
                     token_pair,
                 )
+                # token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
 
                 token_pair = token_pair + self.msa_module(
                     msa_feat,
                     msa_mask,
                     token_pair,
-                    token_single_input.to(torch.bfloat16),
+                    token_single_input_bf16,
                     token_mask,
                 )
-                token_single = token_single_init.to(
-                    torch.bfloat16,
-                ) + self.add_single_recycle(token_single)
+                token_single = token_single_init_bf16 + self.add_single_recycle(
+                    token_single,
+                )
 
                 token_pair, token_single = self.pairformer_blocks.forward(
                     token_pair,
@@ -214,7 +239,7 @@ class Model(nn.Module):
                     token_mask,
                 )
         # reduce token_pair information to distogram
-        distogram_logit = self.distogram_head(token_pair.to(torch.float32))
+        distogram_logit = self.distogram_head(token_pair)
 
         return (
             token_single_input,
@@ -251,6 +276,7 @@ class Model(nn.Module):
     def forward(
         self,
         msa: MSAFeatures,
+        # template: TemplateFeatures,
         reference: ReferenceFeatures,
         scheme: SchemeFeatures,
         sequence: SequenceFeatures,
@@ -270,13 +296,12 @@ class Model(nn.Module):
             distogram_logit,
         ) = self.condition_forward(
             msa,
+            # template,
             reference,
             scheme,
             sequence,
             structure,
         )
-        token_single_trunk = token_single_trunk.to(torch.float32)
-        token_pair_trunk = token_pair_trunk.to(torch.float32)
         # Diffusion forward
         atom_pos_update = self.diffusion_forward(
             reference,
@@ -304,6 +329,7 @@ class ModelWrapper(nn.Module):
     def prepare_condition(
         self,
         msa: MSAFeatures,
+        # template: TemplateFeatures,
         reference: ReferenceFeatures,
         scheme: SchemeFeatures,
         sequence: SequenceFeatures,
@@ -322,6 +348,7 @@ class ModelWrapper(nn.Module):
             distogram_logit,
         ) = self.model.condition_forward(
             msa,
+            # template,
             reference,
             scheme,
             sequence,

@@ -3,6 +3,7 @@ import json
 import functools
 import random
 import re
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -12,7 +13,7 @@ import torch
 from pydantic import BaseModel
 from torch.utils.data import DataLoader
 
-from miniworld.configs.data_explicit import (
+from miniworld.configs import (
     BioMolDBConfig,
     CropConfig,
     MSAConfig,
@@ -25,13 +26,17 @@ from miniworld.data.features import (
     make_batch,
 )
 from miniworld.data.io import (
+    extract_lmdb_keys,
     load_cifmol,
     load_msa,
+    load_raw_data,
     load_templates,
 )
+from miniworld.data.mols import CCDMol, FragmentedCCDMol
 from miniworld.data.pipeline import (
     ProteinTemplate,
     Tokenizer,
+    fragment_ccdmol_all_merges,
     get_chain_crop_indices,
     sample_msa,
 )
@@ -42,13 +47,45 @@ from miniworld.data.pipeline.utils import (
 )
 from miniworld.utils.crop import crop_spatial_segment_token
 
-# from .sampler import PDBWeightedSampler
-from miniworld.data.dataloader.sampler import PDBWeightedSampler
+from .sampler import WeightedSampler
 
 if TYPE_CHECKING:
     from miniworld.data.mols import CIFMolAttached
 
 
+class FragmentedCCDMolCache(Mapping[str, dict[int, FragmentedCCDMol]]):
+    """Lazy cache for CCD fragmentations keyed by chemcomp id."""
+
+    def __init__(self, ccd_preprocessed_path: Path, keys: list[str]) -> None:
+        self.ccd_preprocessed_path = ccd_preprocessed_path
+        self._keys = set(keys)
+        self._cache: dict[str, dict[int, FragmentedCCDMol]] = {}
+
+    def __getitem__(self, key: str) -> dict[int, FragmentedCCDMol]:
+        if key in self._cache:
+            return self._cache[key]
+        if key not in self._keys:
+            raise KeyError(key)
+
+        data = load_raw_data(key, self.ccd_preprocessed_path)
+        if data is None:
+            raise KeyError(key)
+
+        ccdmol = CCDMol.from_bytes(data)
+        fragments = fragment_ccdmol_all_merges(ccdmol)
+        self._cache[key] = fragments
+        return fragments
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._keys)
+
+    def __len__(self) -> int:
+        return len(self._keys)
+
+    def __contains__(self, key: object) -> bool:
+        return isinstance(key, str) and (key in self._cache or key in self._keys)
+    
+    
 def _ceil_to_multiple(value: int, multiple: int) -> int:
     return ((value + multiple - 1) // multiple) * multiple
 
@@ -121,6 +158,26 @@ class WrongCroppingError(ValueError):
     """Raised when the cropping strategy fails to produce a valid crop."""
 
 
+class DataBias:
+    """Identifier for a cif entry, consisting of pdb_id, assembly_id, model_id, and alt_id."""
+
+    def __init__(
+        self,
+        pdb_id: str,
+        assembly_id: str,
+        model_id: str,
+        alt_id: str,
+        chain_id1: str,
+        chain_id2: str | None = None,
+    ) -> None:
+        self.pdb_id = pdb_id
+        self.assembly_id = assembly_id
+        self.model_id = model_id
+        self.alt_id = alt_id
+        self.chain_id1 = chain_id1
+        self.chain_id2 = chain_id2
+
+
 class BioMolData(torch.utils.data.Dataset):
     """Dataset for biomolecular complexes based on BioMolDB."""
 
@@ -144,7 +201,11 @@ class BioMolData(torch.utils.data.Dataset):
         self.seed: int = 0
         self.tokenizer = Tokenizer(config=config.tokenizer_config)
 
-        self._load_edge_to_cif_ids()
+        self.weights: list[float] = []
+        self.items: list[DataBias] = []
+        
+        self._load_items()
+        self._load_ccd_preprocessed()
 
         self.chemcomp_to_fp_idx: dict[str, int] | None = None
         self.fp_unk_idx: int | None = None
@@ -153,7 +214,7 @@ class BioMolData(torch.utils.data.Dataset):
         if vocab_path is not None:
             with vocab_path.open("r") as f:
                 self.chemcomp_to_fp_idx = json.load(f)
-                self.fp_unk_idx = int(self.chemcomp_to_fp_idx.get("UNK", 0))
+                self.fp_unk_idx = int(self.chemcomp_to_fp_idx["UNK"])
 
     def set_epoch(self, epoch: int) -> None:
         """Set the epoch for this dataset, which can be used to change sampling behavior."""
@@ -161,44 +222,147 @@ class BioMolData(torch.utils.data.Dataset):
 
     def _make_seed(self, idx: int) -> int:
         return (self.seed * 1000003 + self.epoch * 100003 + idx) & 0xFFFF_FFFF
-            
-    def _load_edge_to_cif_ids(self) -> None:
+
+    def _load_items(self) -> None:
         # load edge_id to cif_ids mapping
-        self.edge_id_to_bias: dict[str, list[str]] = {}
+
+        types = {
+            "antibody_antibody",
+            "antibody_nucleic_acid",
+            "antibody_protein",
+            "DNA_DNA",
+            "RNA_RNA",
+            "DNA_RNA",
+            "NA_NA",
+            "protein_nucleic_acid",
+            "protein_protein",
+            "protein_ligand",
+            "ligand_ligand",
+            "sole",
+            "etc_interface",
+        }
+
+        type_counts = dict.fromkeys(types, 0)
+
+        def _get_type(edge_id: str) -> str:  # noqa: C901, PLR0911
+            """Get type for a given edge_id based on its type."""
+            if "_" not in edge_id:
+                return "sole"
+            parse = set(re.findall(r"c([A-Z])", edge_id))
+
+            # Antibody
+            if parse == {"A"}:
+                return "antibody_antibody"
+            if parse <= {"A", "D", "R"} and "A" in parse:
+                return "antibody_nucleic_acid"
+            if parse <= {"A", "P"} and "A" in parse:
+                return "antibody_protein"
+
+            # Nucleic acid only
+            if parse == {"D"}:
+                return "DNA_DNA"
+            if parse == {"R"}:
+                return "RNA_RNA"
+            if parse == {"D", "R"}:
+                return "DNA_RNA"
+            if parse <= {"D", "R", "N"} and "N" in parse:
+                return "NA_NA"
+
+            # Protein related
+            if parse <= {"P", "D", "R", "N"} and "P" in parse and len(parse) > 1:
+                return "protein_nucleic_acid"
+            if parse == {"P"}:
+                return "protein_protein"
+            if parse <= {"P", "L"} and "P" in parse:
+                return "protein_ligand"
+
+            # Ligand
+            if parse == {"L"}:
+                return "ligand_ligand"
+
+            # fallback
+            return "etc_interface"
+
+        edge_id_to_items = {}
         with self.config.DB_config.edge_id_to_bias_path.open("r") as f:
-            for _line in f:
+            for ii, _line in enumerate(f):
+                if ii == 0:
+                    continue  # skip header
                 line = _line.strip()
+                (
+                    cluster1,
+                    cluster2,
+                    pdb_id,
+                    assembly_id,
+                    model_id,
+                    alt_id,
+                    chain_id1,
+                    chain_id2,
+                ) = line.split("\t")
+                pdb_id = pdb_id.lower()  # to match cif_db keys
                 if line == "":
                     continue
-                key1, key2, value = line.split("\t")
-                edge_id = key1 if key2 == "None" else f"{key1}_{key2}"
-                self.edge_id_to_bias[edge_id] = value.split(",")
+                if cluster2 == "None":
+                    edge_id = cluster1
+                    value = DataBias(pdb_id, assembly_id, model_id, alt_id, chain_id1)
+                else:
+                    edge_id = f"{cluster1}_{cluster2}"
+                    value = DataBias(
+                        pdb_id,
+                        assembly_id,
+                        model_id,
+                        alt_id,
+                        chain_id1,
+                        chain_id2,
+                    )
+                if edge_id not in edge_id_to_items:
+                    edge_id_to_items[edge_id] = []
+                edge_id_to_items[edge_id].append(value)
+                type_name = _get_type(edge_id)
+                type_counts[type_name] += 1
 
-        self.edge_id_list = list(self.edge_id_to_bias.keys())
+        self.items = []
+        self.weights = []
+        for edge_id, items in edge_id_to_items.items():
+            type_name = _get_type(edge_id)
+            weights = (
+                getattr(self.config.sampler_config, type_name)
+                / type_counts[type_name]
+                / len(items)
+            )
+            self.weights.extend([weights] * len(items))
+            self.items.extend(items)
 
+    def _load_ccd_preprocessed(self) -> None:
+        if self.config.DB_config.ccd_preprocessed_path is None:
+            msg = "CCD preprocessed path is not provided in the config."
+            raise ValueError(msg)
+
+        keys = extract_lmdb_keys(self.config.DB_config.ccd_preprocessed_path)
+        self.fragmented_ccd_mols: Mapping[str, dict[int, FragmentedCCDMol]] = (
+            FragmentedCCDMolCache(self.config.DB_config.ccd_preprocessed_path, keys)
+        )
+        
     def __len__(self) -> int:
         """Return the number of edges in the dataset."""
-        return len(self.edge_id_list)
+        return len(self.items)
 
     def get_crop_indices(
         self,
         cifmol: CIFMolAttached,
-        crop_indices: np.ndarray | None,
-        bias: list[str],
+        chain_ids: list[str],
         max_tokens: int,
         max_atoms: int,
         rng: np.random.Generator,
-    ) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+    ) -> tuple[
+        np.ndarray,
+        dict[str, np.ndarray],
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ]:
         """Get crop indices for a given cifmol, either by cropping or using provided indices."""
-        
-        if crop_indices is not None:
-            crop_indices = np.asarray(crop_indices, dtype=np.int64)
-            chain_id_to_crop_indices = get_chain_crop_indices(
-                cifmol=cifmol,
-                crop_indices=crop_indices,
-            )
-            return crop_indices, chain_id_to_crop_indices
-        match bias:
+        match chain_ids:
             case [chain_id]:
                 selected_atoms = cifmol.chains.select(chain_id=chain_id).atoms
             case [chain_id1, chain_id2]:
@@ -212,15 +376,15 @@ class BioMolData(torch.utils.data.Dataset):
                     chain_id = rng.choice([chain_id1, chain_id2])
                     selected_atoms = cifmol.chains.select(chain_id=chain_id).atoms
             case _:
-                msg = f"Unexpected chain_ids: {bias}"
+                msg = f"Unexpected chain_ids: {chain_ids}"
                 raise ValueError(msg)
 
         valid = np.all(np.isfinite(selected_atoms.xyz), axis=-1)
         selected_atoms = selected_atoms[valid]
         if len(selected_atoms) == 0:
-            msg = f"No valid atoms found for bias {bias} in cifmol {cifmol.id}"
+            msg = f"No valid atoms found for chain_ids {chain_ids} in cifmol {cifmol.id}"
             raise WrongCroppingError(msg)
-        center_xyz = selected_atoms.xyz[rng.integers(0, len(selected_atoms))]
+        focus = selected_atoms.xyz[rng.integers(0, len(selected_atoms))].value
 
         segment_size = int(
             rng.integers(
@@ -229,11 +393,16 @@ class BioMolData(torch.utils.data.Dataset):
             ),
         )        
 
-        _, token_to_residue_idx_map = self.tokenizer.tokenize(cifmol)
-
+        atom_to_token_idx_map, token_to_residue_idx_map = self.tokenizer.tokenize(
+            cifmol,
+            focus=focus,
+            fragmented_ccd_mols=self.fragmented_ccd_mols,
+            config=self.config.tokenizer_config.dynamic_config,
+        )
+        
         crop_indices = crop_spatial_segment_token(
             cifmol,
-            np.asarray(center_xyz),
+            focus,
             tokens_to_res=token_to_residue_idx_map,
             segment_size=segment_size,
             max_tokens=max_tokens,
@@ -245,41 +414,79 @@ class BioMolData(torch.utils.data.Dataset):
             crop_indices=crop_indices,
         )
 
-        # crop_indices = cast("np.ndarray", crop_indices)
-        crop_indices = np.asarray(
-            cast("np.ndarray", crop_indices), dtype=np.int64
-        )
-        return crop_indices, chain_id_to_crop_indices  # pyright: ignore[reportPossiblyUnboundVariable]
+        crop_indices = cast("np.ndarray", crop_indices)
 
+        if crop_indices.shape[0] == 0:
+            msg = f"Failed to crop {cifmol.id} with chain_ids {chain_ids}."
+            raise WrongCroppingError(msg)
+
+        token_mask = np.isin(token_to_residue_idx_map, crop_indices)
+        cropped_token_indices = np.where(token_mask)[0]
+        cropped_token_to_residue_idx_map = token_to_residue_idx_map[token_mask]
+
+        max_res = token_to_residue_idx_map.max() + 1
+        lookup = np.full(max_res, -1)
+        lookup[crop_indices] = np.arange(len(crop_indices))
+
+        cropped_token_to_residue_idx_map_reindexed = lookup[
+            cropped_token_to_residue_idx_map
+        ]
+
+        atom_mask = np.isin(atom_to_token_idx_map, cropped_token_indices)
+        cropped_atom_to_token_idx_map = atom_to_token_idx_map[atom_mask]
+
+        max_token = atom_to_token_idx_map.max() + 1
+        lookup_token = np.full(max_token, -1)
+        lookup_token[cropped_token_indices] = np.arange(len(cropped_token_indices))
+        cropped_atom_to_token_idx_map_reindexed = lookup_token[
+            cropped_atom_to_token_idx_map
+        ]
+
+        return (
+            crop_indices,
+            chain_id_to_crop_indices,
+            cropped_atom_to_token_idx_map_reindexed,
+            cropped_token_to_residue_idx_map_reindexed,
+            focus,
+        )  # pyright: ignore[reportPossiblyUnboundVariable]
+        
     def __getitem__(self, idx: int) -> Batch:
         """Get a data sample by index."""
         seed = self._make_seed(idx)
         rng = np.random.default_rng(seed)
-        edge_id = self.edge_id_list[idx]
-        biases = self.edge_id_to_bias[edge_id]
-        bias = rng.choice(biases)
-        pdb_id, assembly_id, model_id, alt_id = bias.split("_")[:4]
-        bias = re.findall(r"\(([^)]+)\)", bias)
-        
+        bias = self.items[idx]
+        pdb_id, assembly_id, model_id, alt_id = (
+            bias.pdb_id,
+            bias.assembly_id,
+            bias.model_id,
+            bias.alt_id,
+        )
+        chain_ids = [bias.chain_id1] + ([bias.chain_id2] if bias.chain_id2 else [])
+
         while True:
             try:
                 item = self.get_item_by_id(
-                    pdb_id=pdb_id.lower(),
+                    pdb_id=pdb_id,
                     assembly_id=assembly_id,
                     model_id=model_id,
                     alt_id=alt_id,
-                    bias=bias,
+                    chain_ids=chain_ids,
                     rng=rng,
                 )
                 break
             except WrongCroppingError:
                 idx = int(rng.integers(0, len(self)))
-                edge_id = self.edge_id_list[idx]
-                biases = self.edge_id_to_bias[edge_id]
-                bias = rng.choice(biases)
-                pdb_id, assembly_id, model_id, alt_id = bias.split("_")[:4]
-                bias = re.findall(r"\(([^)]+)\)", bias)
-
+                bias = self.items[idx]
+                pdb_id, assembly_id, model_id, alt_id = (
+                    bias.pdb_id,
+                    bias.assembly_id,
+                    bias.model_id,
+                    bias.alt_id,
+                )
+                chain_ids = [bias.chain_id1] + (
+                    [bias.chain_id2] if bias.chain_id2 else []
+                )
+                
         return item
 
     def get_item_by_id(
@@ -288,7 +495,7 @@ class BioMolData(torch.utils.data.Dataset):
         assembly_id: str | None = None,
         model_id: str | None = None,
         alt_id: str | None = None,
-        bias: list[str] | None = None,
+        chain_ids: list[str] | None = None,
         crop_indices: np.ndarray | None = None,
         rng: np.random.Generator | None = None,
     ) -> Batch:
@@ -302,32 +509,52 @@ class BioMolData(torch.utils.data.Dataset):
             model_id=model_id,
             alt_id=alt_id,
         )
-
-        cifmol = remove_terminal_oxygen(cifmol)
-        if bias is None:  # randoml sample chain_id
-            chain_id = rng.choice(cifmol.chains.chain_id.value)
-            bias = [chain_id]
+        
+        if chain_ids is None:  # randoml sample chain_id
+            chain_ids = rng.choice(cifmol.chains.chain_id.value)
         if crop_indices is None:
-            crop_indices, chain_id_to_crop_indices = self.get_crop_indices(
+            (
+                crop_indices,
+                chain_id_to_crop_indices,
+                atom_to_token_idx_map,
+                token_to_residue_idx_map,
+                focus,
+            ) = self.get_crop_indices(
                 cifmol=cifmol,
-                crop_indices=crop_indices,
-                bias=bias,
+                chain_ids=chain_ids,  # pyright: ignore[reportArgumentType]
                 max_tokens=self.config.crop_config.max_tokens,
                 max_atoms=self.config.crop_config.max_atoms,
                 rng=rng,
             )
             if crop_indices.shape[0] == 0:
-                msg = f"Failed to crop {pdb_id}_{assembly_id}_{model_id}_{alt_id} with bias {bias}."
+                msg = f"Failed to crop {pdb_id}_{assembly_id}_{model_id}_{alt_id} with chain_ids {chain_ids}."
                 raise WrongCroppingError(msg)
         else:
             chain_id_to_crop_indices = get_chain_crop_indices(
                 cifmol=cifmol,
                 crop_indices=crop_indices,
             )
+            focus = None
+
+            # No spatial focus (pre-provided crop_indices): sample a random valid atom.
+            valid_xyz = cifmol.atoms.xyz.value
+            valid_mask = np.isfinite(valid_xyz).all(axis=1)
+            focus = (
+                valid_xyz[valid_mask][rng.integers(0, valid_mask.sum())]
+                if valid_mask.any()
+                else np.zeros(3)
+            )
+
+            atom_to_token_idx_map, token_to_residue_idx_map = self.tokenizer.tokenize(
+                cifmol,
+                focus=focus,
+                fragmented_ccd_mols=self.fragmented_ccd_mols,
+                config=self.config.tokenizer_config.dynamic_config,
+            )
         cifmol: CIFMolAttached = cifmol.residues[crop_indices].extract()
-        atom_to_token_idx_map, token_to_residue_idx_map = self.tokenizer.tokenize(
-            cifmol,
-        )
+        atom_mask = remove_terminal_oxygen(cifmol)
+        cifmol = cifmol.atoms[atom_mask].extract()
+        atom_to_token_idx_map = atom_to_token_idx_map[atom_mask]
 
         # Load MSA
         complex_msa = load_msa(
@@ -389,8 +616,9 @@ class BioMolData(torch.utils.data.Dataset):
         self.seed = int(seed)
         
         # default distributed sampler
-        sampler = PDBWeightedSampler(
+        sampler = WeightedSampler(
             dataset=self,
+            weights=self.weights,
             num_replicas=world_size,
             rank=rank,
             shuffle=shuffle,

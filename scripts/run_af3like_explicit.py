@@ -16,14 +16,15 @@ from team_gm.core.callbacks import Callback
 from team_gm.utils.script_utils import MetricsAggregator
 
 import wandb
-from miniworld.configs.data_explicit import (
+from miniworld.configs import (
     BioMolDBConfig,
     CropConfig,
+    EDMDiffuserConfig,
     MSAConfig,
     SamplerConfig,
+    TemplateConfig,
     TokenizerConfig,
 )
-from miniworld.configs import EDMDiffuserConfig
 
 from miniworld.data.dataloader.dataloader_explicit import BioMolData
 from miniworld.models import ExplicitClient as Client
@@ -44,6 +45,7 @@ class DataConfig(BaseModel):
     msa: MSAConfig
     tokenizer: TokenizerConfig
     sampler: SamplerConfig
+    template: TemplateConfig
 
 
 class Config(BaseModel):
@@ -54,6 +56,18 @@ class Config(BaseModel):
     model: Model.Config
     diffuser: EDMDiffuserConfig
     loss: Client.LossConfig
+
+
+def _fabric_from_torchrun(**fabric_kwargs) -> Fabric:
+    """Create Fabric with node/device counts inherited from torchrun."""
+    world_size = os.environ.get("WORLD_SIZE")
+    local_world_size = os.environ.get("LOCAL_WORLD_SIZE")
+    if world_size is None or local_world_size is None:
+        return Fabric(**fabric_kwargs)
+
+    devices = int(local_world_size)
+    num_nodes = int(world_size) // devices
+    return Fabric(devices=devices, num_nodes=num_nodes, **fabric_kwargs)
 
 
 class VerboseCallback(Callback):
@@ -103,38 +117,7 @@ def train(  # noqa: PLR0912, PLR0915
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
-    
-    if torch.cuda.is_available():
-        visible_gpu_count = torch.cuda.device_count()
-        world_size_env = os.environ.get("WORLD_SIZE")
-        local_world_size_env = os.environ.get("LOCAL_WORLD_SIZE")
-
-        if world_size_env is None and local_world_size_env is None:
-            # When the script is launched directly under SLURM without torchrun/srun,
-            # all requested GPUs can be visible while Fabric still defaults to a
-            # single process. In that case, use all visible GPUs on this node.
-            world_size = visible_gpu_count
-            local_world_size = visible_gpu_count
-        else:
-            world_size = int(world_size_env or "0")
-            local_world_size = int(local_world_size_env or "0")
-            if local_world_size == 0:
-                local_world_size = visible_gpu_count
-            if world_size == 0:
-                world_size = local_world_size
-
-        # Bind the process to its rank-local device before Fabric/DDP touches CUDA.
-        local_rank = int(os.environ.get("LOCAL_RANK", "0"))
-        torch.cuda.set_device(local_rank)
-        fabric = Fabric(
-            accelerator="cuda",
-            devices=local_world_size,
-            num_nodes=max(1, world_size // local_world_size),
-            strategy="ddp" if world_size > 1 else "auto",
-        )
-    else:
-        fabric = Fabric(accelerator="cpu", devices=1)
-
+    fabric = _fabric_from_torchrun(precision="bf16-mixed")
     fabric.launch()
     if cfg.train.seed is not None:
         fabric.seed_everything(cfg.train.seed)
@@ -249,7 +232,7 @@ def train(  # noqa: PLR0912, PLR0915
     train_dataset = BioMolData(train_data_config)
     train_dataloader = train_dataset.create_ddp_dataloader(
         world_size=fabric.world_size,
-        rank=fabric.local_rank,
+        rank=fabric.global_rank,
         seed=cfg.train.seed,
         drop_last=True,
         batch_size=cfg.train.num_batch,
@@ -264,7 +247,7 @@ def train(  # noqa: PLR0912, PLR0915
     valid_dataset = BioMolData(valid_data_config)
     valid_dataloader = valid_dataset.create_ddp_dataloader(
         world_size=fabric.world_size,
-        rank=fabric.local_rank,
+        rank=fabric.global_rank,
         seed=cfg.train.seed,
         drop_last=False,
         batch_size=cfg.train.num_batch,  # or 1

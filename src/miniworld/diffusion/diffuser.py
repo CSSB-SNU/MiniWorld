@@ -235,7 +235,9 @@ class EuclideanDiffuser(Diffuser, ABC):
             )
             msg = "NaN detected in the loss calculation."
             raise ValueError(msg)
-        return ((x_pred - x0_aligned).pow(2) * weight).mean()
+        
+        x_shape = x0.shape
+        return ((x_pred - x0_aligned).pow(2) * weight).mean(), x_pred.reshape(x_shape)
 
 
 class DecoupledEDMDiffuser(Diffuser):

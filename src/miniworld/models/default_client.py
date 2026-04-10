@@ -5,19 +5,26 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 import torch
+from jaxtyping import Bool, Float, Int
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
-from team_gm import BaseClient
+from team_gm import BaseClient, typecheck
 from team_gm.core.callbacks import ModelEMA
 from team_gm.core.client import _SetEpochProtocol
+from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
 from miniworld.configs import EDMDiffuserConfig
 from miniworld.data.features.batch import Batch
-from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
+from miniworld.diffusion import (
+    AF3Solver,
+    EDMScheduler,
+    EuclideanDiffuser
+)
 from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
+    cal_smooth_lddt,
 )
 from miniworld.models.af3_like.model import (
     InferenceOutput,
@@ -26,8 +33,7 @@ from miniworld.models.af3_like.model import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
-
+    from collections.abc import Generator, Sequence
 
 class Client(BaseClient):
     """Client for training and inference of AF3Like model."""
@@ -69,20 +75,21 @@ class Client(BaseClient):
         long_range_min_seq_sep: int | None = None
         long_range_sigmoid_k: float | None = None
         long_range_sigmoid_amp: float = 3.0
-        verbose: bool = False
-        use_wandb: bool = False
-        wandb_project: str = "MiniWorld"
 
         bucket_msa_multiple: int | None = 128
         bucket_token_multiple: int | None = 128
         bucket_atom_multiple: int | None = 1024
 
+        verbose: bool = False
+        use_wandb: bool = False
+        wandb_project: str = "MiniWorld"
 
     class LossConfig(BaseModel):
         """Configuration for loss weights."""
 
         diffusion_loss: float = 4.0
         distogram_loss: float = 0.03
+        smooth_lddt_loss: float = 1.0
 
     class Config(BaseModel):
         """Configuration for the AF3Like client."""
@@ -138,6 +145,7 @@ class Client(BaseClient):
         """Compute the loss given a noisy batch."""
         atom_pos_update, distogram_logit = self.model.forward(
             msa=batch.msa,
+            # template=batch.template,
             reference=batch.reference,
             scheme=batch.scheme,
             sequence=batch.sequence,
@@ -147,7 +155,7 @@ class Client(BaseClient):
             t_emb=t_emb,
         )
 
-        structure_loss = self.diffuser.cal_loss(
+        structure_loss, x_pred = self.diffuser.cal_loss(
             x0=x0,
             x_input=x_input,
             x_update=atom_pos_update,
@@ -162,14 +170,47 @@ class Client(BaseClient):
             batch.scheme.atom_to_token_idx_map,
         )
 
+        # Smooth lDDT (checkpointed per augment)
+        if self.config.loss.smooth_lddt_loss > 0:
+            # nuc tag : 3,4,5
+            chain_is_nuc = torch.where(
+                (batch.chain.entity_type == 3)
+                | (batch.chain.entity_type == 4)
+                | (batch.chain.entity_type == 5),
+                torch.ones_like(batch.chain.entity_type),
+                torch.zeros_like(batch.chain.entity_type),
+            ).bool()
+            atom_is_nuc = torch.gather(
+                chain_is_nuc,
+                dim=1,
+                index=batch.scheme.atom_to_chain_id,
+            )
+            smooth_lddt_loss = torch.stack(
+                [
+                    checkpoint(
+                        cal_smooth_lddt,
+                        x_pred[a, None],
+                        x0[a],
+                        atom_is_nuc,
+                        batch.structure.atom_pos_mask,
+                        use_reentrant=False,
+                    )
+                    for a in range(x_pred.shape[0])
+                ],  # pyright: ignore[reportArgumentType]
+            ).mean()
+        else:
+            smooth_lddt_loss = torch.tensor(0.0, device=x_pred.device)
+
         loss = (
             self.config.loss.diffusion_loss * structure_loss
             + self.config.loss.distogram_loss * distogram_loss
+            + self.config.loss.smooth_lddt_loss * smooth_lddt_loss
         )
 
         return loss, {
             "diffusion_loss": structure_loss.item(),
             "distogram_loss": distogram_loss.item(),
+            "smooth_lddt_loss": smooth_lddt_loss.item(),
             "total_loss": loss.item(),
             "main_loss": loss.item(),
         }
@@ -177,10 +218,17 @@ class Client(BaseClient):
     def training_step(self, batch: Batch) -> dict[str, float]:
         """Train the model on a batch."""
         num_augment = self.config.train.num_augment
-        x0, x_input, x_mask, t_emb, sigma = self.diffuser.sample(
+        
+        (
+            x0,
+            x_input,
+            x_mask,
+            t_emb,
+            sigma,
+        ) = self.diffuser.sample(
             batch.structure.atom_pos,
             num_augment=num_augment,
-            mask=batch.structure.atom_mask,
+            mask=batch.structure.atom_pos_mask,
         )
 
         loss, loss_dict = self.loss_fn(
@@ -220,6 +268,7 @@ class Client(BaseClient):
             _SetEpochProtocol,
         ):
             dataloader.sampler.set_epoch(self.epoch)
+            self.model.set_seed(self.config.train.seed + self.epoch)  # pyright: ignore[reportCallIssue]
 
         self.model.train()
         self.call_callbacks("on_train_epoch_start")
@@ -275,14 +324,14 @@ class Client(BaseClient):
         lddt = metrics.cal_atom_lddt(
             output.atom_pos_pred[0],
             batch.structure.atom_pos[0],
-            batch.structure.atom_mask[0],
+            batch.structure.atom_pos_mask[0],
         )
         max_lddt = max(max_lddt, lddt)
 
         rmsd = metrics.cal_aligned_rmsd(
             output.atom_pos_pred[0],
             batch.structure.atom_pos[0],
-            batch.structure.atom_mask[0],
+            batch.structure.atom_pos_mask[0],
         )
         min_rmsd = min(min_rmsd, rmsd)
 
@@ -307,6 +356,7 @@ class Client(BaseClient):
         batch = batch.to(device=self.device)
         model_wrapper.prepare_condition(
             msa=batch.msa,
+            # template=batch.template,
             reference=batch.reference,
             scheme=batch.scheme,
             sequence=batch.sequence,
@@ -332,6 +382,3 @@ class Client(BaseClient):
 
     def sample(self) -> None:
         """Sample from the diffusion model using the ODE Euler solver."""
-
-
-Client.Config.model_rebuild()

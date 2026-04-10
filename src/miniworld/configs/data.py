@@ -101,6 +101,7 @@ class BioMolDBConfig(BaseModel):
     load_all_msa: bool = False
     fingerprint_embedding_path: Path | None = None
     ccd_preprocessed_path: Path | None = None
+    fingerprint_vocab_path: Path | None = None
 
 
 class DynamicTokenizationConfig(BaseModel):
@@ -132,3 +133,4 @@ class TokenEmbeddingConfig(BaseModel):
     """Configuration for token embedding."""
 
     embedding_path: Path
+    vocab_path: Path | None = None

@@ -22,6 +22,7 @@ from miniworld.configs import (
     EDMDiffuserConfig,
     MSAConfig,
     SamplerConfig,
+    TemplateConfig,
     TokenizerConfig,
 )
 from miniworld.data.dataloader.dataloader import BioMolData
@@ -43,6 +44,7 @@ class DataConfig(BaseModel):
     msa: MSAConfig
     tokenizer: TokenizerConfig
     sampler: SamplerConfig
+    template: TemplateConfig
 
 
 class Config(BaseModel):
@@ -114,7 +116,7 @@ def train(  # noqa: PLR0912, PLR0915
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
-    fabric = _fabric_from_torchrun()
+    fabric = _fabric_from_torchrun(precision="bf16-mixed")
     fabric.launch()
     if cfg.train.seed is not None:
         fabric.seed_everything(cfg.train.seed)
@@ -179,7 +181,7 @@ def train(  # noqa: PLR0912, PLR0915
             )
             client.model.compile(dynamic=False)
         client.logger.info("Compiled model")
-        
+
     scheduler = get_step_decay_scheduler_with_warmup(
         optimizer=optimizer,
         warmup_steps=cfg.train.warmup_steps,

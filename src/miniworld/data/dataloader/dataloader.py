@@ -735,6 +735,7 @@ def audit_chem_comp_vs_mapped_restype(
 
 if __name__ == "__main__":
     # test dataloader
+    from pathlib import Path
     config = BioMolData.BioMolConfig(
         crop_config=CropConfig(
             residue_crop_length=512,
@@ -753,28 +754,30 @@ if __name__ == "__main__":
             a3m_db_path=Path("/public_data/BioMolDB_20260224/a3m.lmdb"),
             edge_id_to_bias_path=(
                 Path(
-                    "/public_data/BioMolDB_20260224/train_edge_node.tsv",
+                    "/public_data/BioMolDB_20260224/metadata/train_edge_node.tsv",
                 )
             ),
+            ccd_preprocessed_path=Path("/public_data/preprocessed_CCD.lmdb"),
         ),
     )
     dataset = BioMolData(config)
-    dataloader = dataset.create_ddp_dataloader(
-        rank=0,
-        world_size=1,
-        shuffle=True,
-        seed=42,
-        drop_last=False,
-        num_workers=0,
-        bucket_token_multiple=128,
-        bucket_atom_multiple=1024,
-    )
+    # dataloader = dataset.create_ddp_dataloader(
+    #     rank=0,
+    #     world_size=1,
+    #     shuffle=True,
+    #     seed=42,
+    #     drop_last=False,
+    #     num_workers=0,
+    #     bucket_token_multiple=128,
+    #     bucket_atom_multiple=1024,
+    # )
 
     # wo dataloader
     # test data 1hcu
     cif_id = "3ni0_1_1_._(A_1)_(C_1)"
     data = dataset.get_item_by_id(pdb_id="3ni0", assembly_id="1", model_id="1", alt_id=".", bias=["A", "C"])
-    print(data.chem_comp_ids)
+    print('atom pos', data.structure.atom_pos)
+    print('atom pos mask', data.structure.atom_pos_mask)
     # for _ in range(10):
     #     batch = dataset[174]
 

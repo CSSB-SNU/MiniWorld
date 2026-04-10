@@ -35,6 +35,7 @@ def init_msa_explicit(
         ],
         dim=-1,
     )
+    msa_feat = msa_feat * msa_mask[:, :, None, None]
     return msa_feat.to(dtype=dtype), msa_mask.bool()
 
 @torch.no_grad()
@@ -47,7 +48,6 @@ def init_token_single_msa_explicit(
     dtype: torch.dtype = torch.float32,
 ) -> Float[torch.Tensor, "B L_token d_single_token_init"]:
     device = msa.aligned_sequences.device
-    dtype = sequence.token_type.dtype
     emb = token_embedding.to(device)
     idx32 = profile32_to_fp_index.to(device).long()
 
@@ -63,14 +63,14 @@ def init_token_single_msa_explicit(
         "blc,cd->bld",
         msa.profile.float(),
         fp_rows_for_32,
-    ).to(dtype=dtype)
+    ).to(device, dtype=dtype)
 
     # 3) final token single init
     return torch.cat(
         [
             token_fp,
             msa_profile,
-            msa.deletion_mean.unsqueeze(-1).to(dtype=dtype),
+            msa.deletion_mean.unsqueeze(-1).to(device, dtype=dtype),
         ],
         dim=-1,
     )
@@ -136,3 +136,128 @@ def init_template_feat(
     ) * (contact_feat != 4).unsqueeze(-1)
 
     return contact_feat.to(dtype=dtype)
+
+# MiniWorld-style template features
+@torch.compile
+@torch.no_grad()
+def init_template_feat(
+    template: TemplateFeatures,
+    dtype: torch.dtype = torch.float32,
+    positive_cutoff: float = 6.0,
+    negative_cutoff: float = 12.0,
+) -> Float[torch.Tensor, "B L L 4"]:
+    """Initialize MiniWorld-style template pair classes.
+
+    Output channels:
+        [:, :, :, 0]: definite contact
+        [:, :, :, 1]: definite negative
+        [:, :, :, 2]: ambiguous distance or mixture with ambiguous templates only
+        [:, :, :, 3]: multistate (both contact and negative observed)
+
+    Unknown / masked pairs are encoded as all zeros.
+    """
+    template_ids = template.ids  # (B, T, L)
+    template_mask = template.mask[:, :, None, None].bool()  # (B, T, 1, 1)
+
+    # Ignore inter-chain pairs when building per-template pair classes.
+    same_chain = (
+        template_ids[:, :, :, None] == template_ids[:, :, None, :]
+    )  # (B, T, L, L)
+
+    cb_xyz = template.cb_xyz  # (B, T, L, 3)
+    cb_mask = template.cb_mask.bool()  # (B, T, L)
+    cb_dist = torch.norm(
+        cb_xyz[:, :, :, None, :] - cb_xyz[:, :, None, :, :],
+        dim=-1,
+    )  # (B, T, L, L)
+    cb_pair_mask = cb_mask[:, :, :, None] & cb_mask[:, :, None, :]  # (B, T, L, L)
+    valid_pair_mask = template_mask & same_chain & cb_pair_mask
+
+    unknown = torch.full_like(cb_dist, 4, dtype=torch.long)
+    is_contact = valid_pair_mask & (cb_dist < positive_cutoff)
+    is_negative = valid_pair_mask & (cb_dist > negative_cutoff)
+    is_ambiguous = (
+        valid_pair_mask & (cb_dist >= positive_cutoff) & (cb_dist <= negative_cutoff)
+    )
+
+    per_template_feat = torch.where(
+        is_contact,
+        torch.zeros_like(unknown),
+        unknown,
+    )
+    per_template_feat = torch.where(
+        is_negative,
+        torch.ones_like(per_template_feat),
+        per_template_feat,
+    )
+    per_template_feat = torch.where(
+        is_ambiguous,
+        torch.full_like(per_template_feat, 2),
+        per_template_feat,
+    )
+
+    has_contact = (per_template_feat == 0).any(dim=1)
+    has_negative = (per_template_feat == 1).any(dim=1)
+    has_ambiguous = (per_template_feat == 2).any(dim=1)
+    has_known = (per_template_feat != 4).any(dim=1)
+
+    both_contact_and_negative = has_contact & has_negative
+    ambiguous_only = (~both_contact_and_negative) & has_ambiguous
+    contact_only = has_contact & ~has_negative & ~has_ambiguous
+    negative_only = has_negative & ~has_contact & ~has_ambiguous
+
+    contact_feat = torch.full_like(has_contact, 4, dtype=torch.long)
+    contact_feat = torch.where(
+        both_contact_and_negative,
+        torch.full_like(contact_feat, 3),
+        contact_feat,
+    )
+    contact_feat = torch.where(
+        ambiguous_only,
+        torch.full_like(contact_feat, 2),
+        contact_feat,
+    )
+    contact_feat = torch.where(
+        contact_only,
+        torch.zeros_like(contact_feat),
+        contact_feat,
+    )
+    contact_feat = torch.where(
+        negative_only,
+        torch.ones_like(contact_feat),
+        contact_feat,
+    )
+    contact_feat = torch.where(
+        has_known,
+        contact_feat,
+        torch.full_like(contact_feat, 4),
+    )
+
+    # Unknown / masked pairs stay all-zero instead of using a dedicated channel.
+    contact_feat = torch.nn.functional.one_hot(
+        contact_feat.clamp(max=3),
+        num_classes=4,
+    ) * (contact_feat != 4).unsqueeze(-1)
+
+    return contact_feat.to(dtype=dtype)
+
+
+@torch.inference_mode()
+def apply_template_dropout(
+    contact_feat: Float[torch.Tensor, "B L L 4"],
+    prob: float = 0.0,
+    dtype: torch.dtype = torch.float32,
+) -> Float[torch.Tensor, "B L L 4"]:
+    """Apply template dropout to MiniWorld-style template pair classes."""
+    if prob > 0.0:
+        keep_mask = (
+            torch.rand(
+                (4,),
+                device=contact_feat.device,
+            )
+            >= prob
+        )
+        contact_feat = contact_feat * keep_mask.view(1, 1, 1, 4).to(contact_feat.dtype)
+
+    return contact_feat.to(dtype=dtype)
+

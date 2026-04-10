@@ -22,6 +22,7 @@ from miniworld.configs import (
     EDMDiffuserConfig,
     MSAConfig,
     SamplerConfig,
+    TemplateConfig,
     TokenizerConfig,
 )
 from miniworld.data.dataloader.dataloader import BioMolData
@@ -43,6 +44,7 @@ class DataConfig(BaseModel):
     msa: MSAConfig
     tokenizer: TokenizerConfig
     sampler: SamplerConfig
+    template: TemplateConfig
 
 
 class Config(BaseModel):
@@ -114,8 +116,7 @@ def train(  # noqa: PLR0912, PLR0915
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
-    # fabric = Fabric(precision="bf16-mixed", accelerator="cuda")
-    fabric = _fabric_from_torchrun()
+    fabric = _fabric_from_torchrun(precision="bf16-mixed")
     fabric.launch()
     if cfg.train.seed is not None:
         fabric.seed_everything(cfg.train.seed)
@@ -165,7 +166,7 @@ def train(  # noqa: PLR0912, PLR0915
     else:
         msg = f"Unsupported optimizer: {cfg.train.optimizer}"
         raise ValueError(msg)
-
+    
     if cfg.train.compile:
         torch._dynamo.config.cache_size_limit = 128  # noqa: SLF001
         torch._dynamo.config.accumulated_cache_size_limit = 512  # noqa: SLF001
@@ -187,7 +188,7 @@ def train(  # noqa: PLR0912, PLR0915
         decay_steps=cfg.train.decay_steps,
         decay_factor=cfg.train.decay_factor,
     )
-    
+
     client.setup(
         fabric=fabric,
         optimizer=optimizer,
@@ -211,7 +212,7 @@ def train(  # noqa: PLR0912, PLR0915
     if ckpt:
         state_dict = torch.load(ckpt, map_location="cpu")
         client.load_state_dict(state_dict)
-        
+
     train_data_config = BioMolData.BioMolConfig(
         crop_config=cfg.data.crop,
         msa_config=cfg.data.msa,
@@ -268,7 +269,7 @@ def train(  # noqa: PLR0912, PLR0915
 
         for step, result in enumerate(client.training_epoch(train_dataloader)):
             train_aggregator.log_step(result)
-            if step == train_num_item - 1:
+            if step >= train_num_item:
                 break
         train_aggregator.log_epoch()
 

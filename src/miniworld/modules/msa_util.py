@@ -64,6 +64,7 @@ def init_msa_with_embedding(
         ],
         dim=-1,
     )
+    msa_feat = msa_feat * msa_mask[:, :, None, None]
     return msa_feat.to(dtype=dtype), msa_mask.bool()
 
 
@@ -101,7 +102,7 @@ def init_token_single_msa_with_embedding(
 ) -> Float[torch.Tensor, "B L_token d_single_token_init"]:
     """Initialize token single features with token embedding."""
     device = msa.aligned_sequences.device
-    token_embedding = token_embedding.to(msa.aligned_sequences.device)
+    token_embedding = token_embedding.to(device)
     token_type = torch.nn.functional.one_hot(
         sequence.token_type.long(),
         num_classes=num_res_class,
@@ -122,13 +123,11 @@ def init_token_single_msa_with_embedding(
     return torch.concat(
         [
             token_type,
-            msa_profile.to(dtype=dtype),
-            msa.deletion_mean.unsqueeze(-1).to(dtype=dtype),
+            msa_profile,
+            msa.deletion_mean.unsqueeze(-1).to(device, dtype=dtype),
         ],
         dim=-1,
     )
-    return token_single_msa.float()
-
 
 # MiniWorld-style template features
 @torch.compile
