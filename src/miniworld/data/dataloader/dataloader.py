@@ -442,8 +442,7 @@ class BioMolData(torch.utils.data.Dataset):
 
     def __getitem__(self, idx: int) -> Batch:
         """Get a data sample by index."""
-        seed = self._make_seed(idx)
-        rng = np.random.default_rng(seed)
+        rng = np.random.default_rng()
         bias = self.items[idx]
         pdb_id, assembly_id, model_id, alt_id = (
             bias.pdb_id,
