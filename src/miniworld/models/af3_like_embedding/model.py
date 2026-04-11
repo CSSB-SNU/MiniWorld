@@ -22,12 +22,12 @@ from miniworld.modules.diffusion_module import (
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.msa_util import (
-    apply_template_dropout,
+    # apply_template_dropout,
     init_msa_with_embedding,
-    init_template_feat,
+    # init_template_feat,
     init_token_single_msa_with_embedding,
 )
-from miniworld.modules.template_module import TemplateEmbedder, TemplatePairformer
+# from miniworld.modules.template_module import TemplateEmbedder, TemplatePairformer
 
 if TYPE_CHECKING:
     from jaxtyping import Bool, Float
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
         SchemeFeatures,
         SequenceFeatures,
         StructureFeatures,
-        TemplateFeatures,
+        # TemplateFeatures,
     )
 
 
@@ -50,7 +50,7 @@ class Model(nn.Module):
 
         pairformer: Pairformer.Config
         msa_module: MSAModule.Config
-        template_embedder: TemplatePairformer.Config
+        # template_embedder: TemplatePairformer.Config
         n_recycle_max: int = 4
 
     class DiffusionConfig(BaseModel):
@@ -114,10 +114,10 @@ class Model(nn.Module):
 
         # Trunk forward
         self.msa_module = MSAModule(config.trunk.msa_module).to(torch.bfloat16)
-        self.temp_embedder = TemplateEmbedder(
-            config.shared,
-            config.trunk.template_embedder,
-        ).to(torch.bfloat16)
+        # self.temp_embedder = TemplateEmbedder(
+        #     config.shared,
+        #     config.trunk.template_embedder,
+        # ).to(torch.bfloat16)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer).to(torch.bfloat16)
         self.distogram_head = DistogramHead(
             config.shared.d_pair,

@@ -8,7 +8,7 @@ from miniworld.utils.structure import (
     get_shortest_distances,
     get_shortest_distances_from_multistructures,
 )
-
+from collections.abc import Generator, Sequence
 
 @typecheck
 def cal_all_atom_loss(

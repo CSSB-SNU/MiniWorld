@@ -29,11 +29,11 @@ from miniworld.data.io import (
     load_raw_data,
     load_templates,
 )
-from miniworld.data.mols import CCDMol, FragmentedCCDMol
+# from miniworld.data.mols import CCDMol, FragmentedCCDMol
 from miniworld.data.pipeline import (
     ProteinTemplate,
     Tokenizer,
-    fragment_ccdmol_all_merges,
+    # fragment_ccdmol_all_merges,
     get_chain_crop_indices,
     sample_msa,
 )
@@ -52,37 +52,37 @@ if TYPE_CHECKING:
     from miniworld.data.mols import CIFMolAttached
 
 
-class FragmentedCCDMolCache(Mapping[str, dict[int, FragmentedCCDMol]]):
-    """Lazy cache for CCD fragmentations keyed by chemcomp id."""
+# class FragmentedCCDMolCache(Mapping[str, dict[int, FragmentedCCDMol]]):
+#     """Lazy cache for CCD fragmentations keyed by chemcomp id."""
 
-    def __init__(self, ccd_preprocessed_path: Path, keys: list[str]) -> None:
-        self.ccd_preprocessed_path = ccd_preprocessed_path
-        self._keys = set(keys)
-        self._cache: dict[str, dict[int, FragmentedCCDMol]] = {}
+#     def __init__(self, ccd_preprocessed_path: Path, keys: list[str]) -> None:
+#         self.ccd_preprocessed_path = ccd_preprocessed_path
+#         self._keys = set(keys)
+#         self._cache: dict[str, dict[int, FragmentedCCDMol]] = {}
 
-    def __getitem__(self, key: str) -> dict[int, FragmentedCCDMol]:
-        if key in self._cache:
-            return self._cache[key]
-        if key not in self._keys:
-            raise KeyError(key)
+#     def __getitem__(self, key: str) -> dict[int, FragmentedCCDMol]:
+#         if key in self._cache:
+#             return self._cache[key]
+#         if key not in self._keys:
+#             raise KeyError(key)
 
-        data = load_raw_data(key, self.ccd_preprocessed_path)
-        if data is None:
-            raise KeyError(key)
+#         data = load_raw_data(key, self.ccd_preprocessed_path)
+#         if data is None:
+#             raise KeyError(key)
 
-        ccdmol = CCDMol.from_bytes(data)
-        fragments = fragment_ccdmol_all_merges(ccdmol)
-        self._cache[key] = fragments
-        return fragments
+#         ccdmol = CCDMol.from_bytes(data)
+#         fragments = fragment_ccdmol_all_merges(ccdmol)
+#         self._cache[key] = fragments
+#         return fragments
 
-    def __iter__(self) -> Iterator[str]:
-        return iter(self._keys)
+#     def __iter__(self) -> Iterator[str]:
+#         return iter(self._keys)
 
-    def __len__(self) -> int:
-        return len(self._keys)
+#     def __len__(self) -> int:
+#         return len(self._keys)
 
-    def __contains__(self, key: object) -> bool:
-        return isinstance(key, str) and (key in self._cache or key in self._keys)
+#     def __contains__(self, key: object) -> bool:
+#         return isinstance(key, str) and (key in self._cache or key in self._keys)
 
 
 def _ceil_to_multiple(value: int, multiple: int) -> int:
@@ -204,7 +204,7 @@ class BioMolData(torch.utils.data.Dataset):
         self.items: list[DataBias] = []
 
         self._load_items()
-        self._load_ccd_preprocessed()
+        # self._load_ccd_preprocessed()
 
     def set_epoch(self, epoch: int) -> None:
         """Set the epoch for this dataset, which can be used to change sampling behavior."""
@@ -315,23 +315,26 @@ class BioMolData(torch.utils.data.Dataset):
         self.weights = []
         for edge_id, items in edge_id_to_items.items():
             type_name = _get_type(edge_id)
-            weights = (
-                getattr(self.config.sampler_config, type_name)
-                / type_counts[type_name]
-                / len(items)
-            )
+            if self.config.sampler_config is not None:
+                weights = (
+                    getattr(self.config.sampler_config, type_name)
+                    / type_counts[type_name]
+                    / len(items)
+                )
+            else:
+                weights = 1.0 / len(items)
             self.weights.extend([weights] * len(items))
             self.items.extend(items)
 
-    def _load_ccd_preprocessed(self) -> None:
-        if self.config.DB_config.ccd_preprocessed_path is None:
-            msg = "CCD preprocessed path is not provided in the config."
-            raise ValueError(msg)
+    # def _load_ccd_preprocessed(self) -> None:
+    #     if self.config.DB_config.ccd_preprocessed_path is None:
+    #         msg = "CCD preprocessed path is not provided in the config."
+    #         raise ValueError(msg)
 
-        keys = extract_lmdb_keys(self.config.DB_config.ccd_preprocessed_path)
-        self.fragmented_ccd_mols: Mapping[str, dict[int, FragmentedCCDMol]] = (
-            FragmentedCCDMolCache(self.config.DB_config.ccd_preprocessed_path, keys)
-        )
+    #     keys = extract_lmdb_keys(self.config.DB_config.ccd_preprocessed_path)
+    #     self.fragmented_ccd_mols: Mapping[str, dict[int, FragmentedCCDMol]] = (
+    #         FragmentedCCDMolCache(self.config.DB_config.ccd_preprocessed_path, keys)
+    #     )
 
     def __len__(self) -> int:
         """Return the number of edges in the dataset."""
@@ -385,9 +388,9 @@ class BioMolData(torch.utils.data.Dataset):
 
         atom_to_token_idx_map, token_to_residue_idx_map = self.tokenizer.tokenize(
             cifmol,
-            focus=focus,
-            fragmented_ccd_mols=self.fragmented_ccd_mols,
-            config=self.config.tokenizer_config.dynamic_config,
+            # focus=focus,
+            # fragmented_ccd_mols=self.fragmented_ccd_mols,
+            # config=self.config.tokenizer_config.dynamic_config,
         )
 
         crop_indices = crop_spatial_segment_token(
@@ -537,9 +540,9 @@ class BioMolData(torch.utils.data.Dataset):
 
             atom_to_token_idx_map, token_to_residue_idx_map = self.tokenizer.tokenize(
                 cifmol,
-                focus=focus,
-                fragmented_ccd_mols=self.fragmented_ccd_mols,
-                config=self.config.tokenizer_config.dynamic_config,
+                # focus=focus,
+                # fragmented_ccd_mols=self.fragmented_ccd_mols,
+                # config=self.config.tokenizer_config.dynamic_config,
             )
         cifmol: CIFMolAttached = cifmol.residues[crop_indices].extract()
         atom_mask = remove_terminal_oxygen(cifmol)
@@ -757,7 +760,7 @@ if __name__ == "__main__":
                     "/public_data/BioMolDB_20260224/metadata/train_edge_node.tsv",
                 )
             ),
-            ccd_preprocessed_path=Path("/public_data/preprocessed_CCD.lmdb"),
+            # ccd_preprocessed_path=Path("/public_data/preprocessed_CCD.lmdb"),
         ),
     )
     dataset = BioMolData(config)

@@ -196,7 +196,7 @@ class Tokenizer:
     def __init__(self, config: TokenizerConfig) -> None:
         """Initialize the tokenizer with the specified tokenization level."""
         self.level = config.level
-        self.dynamic_config = config.dynamic_config
+        self.dynamic_config = config.dynamic_config if config.level == "dynamic" else None
         self.rng = np.random.default_rng(config.seed)
 
     def tokenize(

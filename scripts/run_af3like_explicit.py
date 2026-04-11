@@ -5,7 +5,7 @@ import os
 import time
 from pathlib import Path
 import warnings
-
+warnings.filterwarnings("ignore", message=".*torch.jit.script_method.*", category=DeprecationWarning) 
 import click
 import torch
 from hydra import compose, initialize_config_dir
@@ -45,7 +45,7 @@ class DataConfig(BaseModel):
     msa: MSAConfig
     tokenizer: TokenizerConfig
     sampler: SamplerConfig
-    template: TemplateConfig
+    template: TemplateConfig = TemplateConfig()
 
 
 class Config(BaseModel):

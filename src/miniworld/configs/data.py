@@ -96,7 +96,7 @@ class BioMolDBConfig(BaseModel):
 
     cif_db_path: Path = Path("cif_lmdb")
     a3m_db_path: Path = Path("a3m_lmdb")
-    template_db_path: Path = Path("template_lmdb")
+    # template_db_path: Path = Path("template_lmdb")
     edge_id_to_bias_path: Path = Path("edge_id_to_cif_ids.tsv")
     load_all_msa: bool = False
     fingerprint_embedding_path: Path | None = None

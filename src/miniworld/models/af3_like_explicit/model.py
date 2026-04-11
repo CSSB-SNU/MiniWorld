@@ -22,12 +22,12 @@ from miniworld.modules.diffusion_module import (
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.msa_util_explicit import (
-    apply_template_dropout,
+    # apply_template_dropout,
     init_msa_explicit,
-    init_template_feat,
+    # init_template_feat,
     init_token_single_msa_explicit,
 )
-from miniworld.modules.template_module import TemplateEmbedder, TemplatePairformer
+# from miniworld.modules.template_module import TemplateEmbedder, TemplatePairformer
 
 if TYPE_CHECKING:
     from jaxtyping import Bool, Float
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
         SchemeFeatures,
         SequenceFeatures,
         StructureFeatures,
-        TemplateFeatures,
+        # TemplateFeatures,
     )
 
 def _build_profile32_to_fp_index(vocab: dict[str, int], unk_key: str = "UNK") -> torch.Tensor:
@@ -63,7 +63,7 @@ class Model(nn.Module):
 
         pairformer: Pairformer.Config
         msa_module: MSAModule.Config
-        template_embedder: TemplatePairformer.Config
+        # template_embedder: TemplatePairformer.Config
         n_recycle_max: int = 4
 
     class DiffusionConfig(BaseModel):
@@ -206,12 +206,12 @@ class Model(nn.Module):
             profile32_to_fp_index=self.profile32_to_fp_index,
             dtype=torch.bfloat16,
         )
-        template_feat = init_template_feat(template, dtype=torch.bfloat16)
-        template_feat = apply_template_dropout(
-            template_feat,
-            self.config.trunk.template_embedder.dropout_prob,
-            dtype=torch.bfloat16,
-        )
+        # template_feat = init_template_feat(template, dtype=torch.bfloat16)
+        # template_feat = apply_template_dropout(
+        #     template_feat,
+        #     self.config.trunk.template_embedder.dropout_prob,
+        #     dtype=torch.bfloat16,
+        # )
         for i_cycle in range(n_recycle):
             with ExitStack() as stack:
                 if i_cycle < n_recycle - 1:
