@@ -1,5 +1,3 @@
-
-
 export TRITON_CACHE_DIR=$HOME/.triton
 export TORCHINDUCTOR_CACHE_DIR=$HOME/.torchinductor
 export TMPDIR=$HOME/tmp
@@ -8,6 +6,6 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 torchrun --master_port 12600 \
   --nproc_per_node=4 scripts/run_af3like.py train \
-  --config configs/miniworld/config.yaml train=v1.2.4 model=small_wo_self_attention \
+  --config configs/miniworld/config.yaml train=v1.2.6 model=small_wo_self_attention \
   > logs/1.2.6.out 2> logs/1.2.6.err
 

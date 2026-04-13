@@ -20,5 +20,5 @@ torchrun \
   --master_addr=100.134.25.41 \
   --master_port=20004 \
   scripts/run_miniworld_only_train.py train \
-  --config configs/miniworld/config.yaml data=full_train train=v2.0.0 model=large loss=wo_smoothlddt \
+  --config configs/miniworld/config.yaml data=full_train train=v2.0.0 model=large \
   > logs/2.0.0.4gpu.node0.out 2> logs/2.0.0.4gpu.node0.err

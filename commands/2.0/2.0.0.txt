@@ -10,10 +10,10 @@ export NCCL_SOCKET_IFNAME=ibs
 
 torchrun \
   --nnodes=2 \
-  --node_rank=0 \
+  --node_rank=1 \
   --nproc_per_node=8 \
   --master_addr=100.134.25.41 \
   --master_port=20000 \
   scripts/run_miniworld_only_train.py train \
   --config configs/miniworld/config.yaml data=full_train train=v2.0.0 model=large \
-  > logs/2.0.0.node0.out 2> logs/2.0.0.node0.err
+  > logs/2.0.0.node1.out 2> logs/2.0.0.node1.err
