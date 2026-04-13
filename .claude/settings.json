@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /home/snu_hwle/psk/MiniWorld/scripts/run*.py)",
+      "Bash(python3)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(python3 test_iter.py)",
+      "Bash(python3 test_sampler.py)",
+      "Bash(python3 -c \"from scipy.spatial.transform import Rotation; import inspect; print\\(inspect.getsourcefile\\(Rotation.random\\)\\)\")"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  }
+}

@@ -11,7 +11,7 @@ decay_steps: 5e4
 self_condition: False
 compile: True
 num_augment: 48
-train_item: 25600
+train_item: 40
 valid_item: 640
 
 # Validation arguments
@@ -21,7 +21,7 @@ eval_sample_num: 1
 eval_input_num: 50
 eval_timesteps: 100
 grad_clip_max_norm: 1.0
-grad_accum_steps: 16
+grad_accum_steps: 4
 optimizer: "Adam"
 
 num_workers: 4

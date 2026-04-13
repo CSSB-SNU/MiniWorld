@@ -19,6 +19,7 @@ from miniworld.configs import (
     BioMolDBConfig,
     CropConfig,
     DecoupledEDMDiffuserConfig,
+    EDMDiffuserConfig,
     MSAConfig,
     SamplerConfig,
     TokenizerConfig,
@@ -48,7 +49,7 @@ class Config(BaseModel):
     data: DataConfig
     train: Client.TrainConfig
     model: Model.Config
-    diffuser: DecoupledEDMDiffuserConfig
+    diffuser: DecoupledEDMDiffuserConfig | EDMDiffuserConfig
     loss: Client.LossConfig
 
 

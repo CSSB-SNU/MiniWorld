@@ -1,0 +1,24 @@
+cd ~/psk/MiniWorld
+
+# 2-node smoke test: total 4 GPUs, 2 GPUs per node.
+export TRITON_CACHE_DIR=$HOME/.triton
+export TORCHINDUCTOR_CACHE_DIR=$HOME/.torchinductor
+export TMPDIR=$HOME/tmp
+export OMP_NUM_THREADS=20
+export CUDA_VISIBLE_DEVICES=0,1
+
+export NCCL_DEBUG=INFO
+export NCCL_IB_DISABLE=0
+export NCCL_SOCKET_IFNAME=ibs
+
+mkdir -p logs
+
+torchrun \
+  --nnodes=2 \
+  --node_rank=0 \
+  --nproc_per_node=2 \
+  --master_addr=100.134.25.41 \
+  --master_port=20004 \
+  scripts/run_miniworld_only_train.py train \
+  --config configs/miniworld/config.yaml data=full_train train=v2.0.0 model=large loss=wo_smoothlddt \
+  > logs/2.0.0.4gpu.node0.out 2> logs/2.0.0.4gpu.node0.err

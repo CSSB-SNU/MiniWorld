@@ -1,3 +1,4 @@
+type: DecoupledEDM
 seed : 0
 translation_noise: 1.0
 scheduler:

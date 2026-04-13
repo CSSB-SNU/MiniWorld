@@ -1,0 +1,13 @@
+
+
+export TRITON_CACHE_DIR=$HOME/.triton
+export TORCHINDUCTOR_CACHE_DIR=$HOME/.torchinductor
+export TMPDIR=$HOME/tmp
+export OMP_NUM_THREADS=20
+export CUDA_VISIBLE_DEVICES=4,5,6,7
+
+torchrun --master_port 13000 \
+  --nproc_per_node=4 scripts/run_af3like.py train \
+  --config configs/miniworld/config.yaml train=v1.2.4 model=large_wo_self_attention \
+  > logs/1.3.0.out 2> logs/1.3.0.err
+

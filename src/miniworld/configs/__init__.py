@@ -9,13 +9,14 @@ from .data import (
     TokenEmbeddingConfig,
     TokenizerConfig,
 )
-from .diffusion import DecoupledEDMDiffuserConfig, EDMDiffuserConfig
+from .diffusion import DecoupledEDMDiffuserConfig, DiffuserConfig, EDMDiffuserConfig
 from .models import SharedConfig
 
 __all__ = [
     "BioMolDBConfig",
     "CropConfig",
     "DecoupledEDMDiffuserConfig",
+    "DiffuserConfig",
     "EDMDiffuserConfig",
     "MSAConfig",
     "SamplerConfig",
