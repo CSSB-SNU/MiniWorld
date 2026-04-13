@@ -16,3 +16,4 @@ __pycache__/
 .pixi/
 **/*.egg-info/
 tests/
+commands/
