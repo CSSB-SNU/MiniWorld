@@ -1,13 +1,6 @@
 seed: 0
 translation_noise: 1.0
 
-# x-prediction params (Back to Basics, Li & He 2025)
-p_mean: -0.8        # logit-normal time sampling center
-p_std: 0.894        # logit-normal time sampling std (sqrt(0.8))
-t_eps: 0.05         # (1-t) clamp min for numerical stability
-noise_scale: 16.0   # scale of eps (match sigma_data)
-
-# Decoupled scheduler — R/T noise mapping (sigma_y -> sigma_R, sigma_T)
 scheduler:
   P_mean: -1.5
   P_std: 1.8
