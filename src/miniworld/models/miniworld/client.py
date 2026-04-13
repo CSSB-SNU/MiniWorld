@@ -14,15 +14,12 @@ from team_gm.core.client import _SetEpochProtocol
 from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
-from miniworld.configs import DecoupledEDMDiffuserConfig, EDMDiffuserConfig
+from miniworld.configs import XPredDecoupledDiffuserConfig
 from miniworld.data.features.batch import Batch
 from miniworld.diffusion import (
-    AF3Solver,
-    DecoupledEDMDiffuser,
-    DecoupledEDMScheduler,
-    DecoupledEDMSolver,
-    EDMScheduler,
-    EuclideanDiffuser,
+    DecoupledXPredScheduler,
+    XPredDecoupledDiffuser,
+    XPredDecoupledSolver,
 )
 from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
@@ -96,7 +93,7 @@ def cal_smooth_lddt(
 
 
 class Client(BaseClient):
-    """Client for training and inference of AF3Like model."""
+    """Client for training and inference of MiniWorld (VE x-prediction)."""
 
     class TrainConfig(BaseModel):
         """Configuration for trains."""
@@ -152,10 +149,10 @@ class Client(BaseClient):
         smooth_lddt_loss: float = 1.0
 
     class Config(BaseModel):
-        """Configuration for the AF3Like client."""
+        """Configuration for the MiniWorld client."""
 
         model: Model.Config
-        diffuser: DecoupledEDMDiffuserConfig | EDMDiffuserConfig
+        diffuser: XPredDecoupledDiffuserConfig
         train: Client.TrainConfig
         loss: Client.LossConfig
 
@@ -167,34 +164,18 @@ class Client(BaseClient):
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
-        if isinstance(config.diffuser, DecoupledEDMDiffuserConfig):
-            self.diffusion_scheduler = DecoupledEDMScheduler(config.diffuser.scheduler)
-            self.diffuser = DecoupledEDMDiffuser(
-                config=DecoupledEDMDiffuser.DecoupledEDMConfig(
-                    seed=config.diffuser.seed,
-                    translation_noise=config.diffuser.translation_noise,
-                ),
-                scheduler=self.diffusion_scheduler,
-            )
-            self.solver = DecoupledEDMSolver(
-                config=DecoupledEDMSolver.SolverConfig(seed=config.diffuser.seed),
-                scheduler=self.diffusion_scheduler,
-            )
-        elif isinstance(config.diffuser, EDMDiffuserConfig):
-            self.diffusion_scheduler = EDMScheduler(config.diffuser.scheduler)
-            self.diffuser = EuclideanDiffuser(
-                config=EuclideanDiffuser.EuclideanConfig(
-                    seed=config.diffuser.seed,
-                ),
-                scheduler=self.diffusion_scheduler,
-            )
-            self.solver = AF3Solver(
-                config=AF3Solver.SolverConfig(seed=config.diffuser.seed),
-                scheduler=self.diffusion_scheduler,
-            )
-        else:
-            msg = f"Unsupported diffuser config: {type(config.diffuser)}"
-            raise TypeError(msg)
+        self.diffusion_scheduler = DecoupledXPredScheduler(config.diffuser.scheduler)
+        self.diffuser = XPredDecoupledDiffuser(
+            config=XPredDecoupledDiffuser.DecoupledXPredConfig(
+                seed=config.diffuser.seed,
+                translation_noise=config.diffuser.translation_noise,
+            ),
+            scheduler=self.diffusion_scheduler,
+        )
+        self.solver = XPredDecoupledSolver(
+            config=XPredDecoupledSolver.Config(seed=config.diffuser.seed),
+            scheduler=self.diffusion_scheduler,
+        )
 
     def set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
@@ -559,23 +540,14 @@ class Client(BaseClient):
             structure=batch.structure,
         )
         shape = batch.structure.atom_pos.shape
-        if isinstance(self.solver, DecoupledEDMSolver):
-            atom_pos_pred, inter_traj, model_traj = self.solver.sample(
-                model_fn=model_wrapper,
-                shape=shape,
-                atom_chain_break=batch.scheme.atom_to_chain_id,
-                num_steps=timesteps,
-                device=self.device,
-                return_intermediate=True,
-            )
-        else:
-            atom_pos_pred, inter_traj, model_traj = self.solver.sample(  # pyright: ignore[reportAssignmentType]
-                model_fn=model_wrapper,
-                shape=shape,
-                num_steps=timesteps,
-                device=self.device,
-                return_intermediate=True,
-            )
+        atom_pos_pred, inter_traj, model_traj = self.solver.sample(
+            model_fn=model_wrapper,
+            shape=shape,
+            atom_to_combine=batch.scheme.atom_to_chain_id,
+            num_steps=timesteps,
+            device=self.device,
+            return_intermediate=True,
+        )
         inter_traj = [x.detach().cpu().numpy() for x in inter_traj]
         model_traj = [x.detach().cpu().numpy() for x in model_traj]
         distogram_logit = model_wrapper.condition["distogram_logit"]

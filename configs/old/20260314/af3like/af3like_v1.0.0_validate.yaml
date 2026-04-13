@@ -1,5 +1,5 @@
 data:
-  DB_PATH: /home/psk6950/data/
+  DB_PATH: /public_data/
 
   valid_db:
     cif_db_path: ${data.DB_PATH}/BioMolDBv2_2024Oct21/cif_20210930_res9.lmdb
@@ -12,8 +12,8 @@ data:
     spatial_prob: 0.0
     interface_prob: 0.0
     interface_simple_prob: 1.0
-    residue_crop_length: 384
-    atom_crop_length: 4608
+    residue_crop_length: 1280
+    atom_crop_length: 18000
     remain_invalid_residues: True
 
   msa:

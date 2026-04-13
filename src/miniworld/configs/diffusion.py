@@ -4,7 +4,7 @@ from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, Discriminator
 
-from miniworld.diffusion import DecoupledEDMScheduler, EDMScheduler
+from miniworld.diffusion import DecoupledXPredScheduler, EDMScheduler
 
 
 class EDMDiffuserConfig(BaseModel):
@@ -16,16 +16,23 @@ class EDMDiffuserConfig(BaseModel):
     method: Literal["AF3", "EDM"] = "AF3"
 
 
-class DecoupledEDMDiffuserConfig(BaseModel):
-    """Configuration for the decoupled diffuser."""
+# ---------------------------------------------------------------------------
+# X-prediction configs (Back to Basics, Li & He 2025)
+# ---------------------------------------------------------------------------
+
+
+class XPredEuclideanDiffuserConfig(BaseModel):
+    """Configuration for VE x-prediction Euclidean diffuser."""
 
     type: Literal["DecoupledEDM"] = "DecoupledEDM"
     seed: int = 0
-    translation_noise: float = 0.0
-    scheduler: DecoupledEDMScheduler.DecoupledEDMSchedulerConfig
+    translation_noise: float = 1.0
+    scheduler: EDMScheduler.EDMSchedulerConfig
 
 
-DiffuserConfig = Annotated[
-    Union[EDMDiffuserConfig, DecoupledEDMDiffuserConfig],
-    Discriminator("type"),
-]
+class XPredDecoupledDiffuserConfig(BaseModel):
+    """Configuration for VE x-prediction decoupled diffuser (independent scheduler)."""
+
+    seed: int = 0
+    translation_noise: float = 1.0
+    scheduler: DecoupledXPredScheduler.DecoupledXPredSchedulerConfig

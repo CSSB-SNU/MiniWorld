@@ -66,7 +66,7 @@ trunk:
     n_head_tri_attention: 4
     p_drop: 0.25
     use_self_attention: False
-    implementation: cuequivariance
+    implementation: triton
     n_block: 2
 
 
@@ -81,7 +81,7 @@ diffusion:
     implementation: triton
     kernel_type: "compute_efficient"
   token_dit:
-    n_block: 4
+    n_block: 24
     n_checkpoint_segments: null
     d_single: ${...shared.d_single_token_diffusion}
     d_cond: ${...shared.d_single}
@@ -92,20 +92,3 @@ diffusion:
   dit_cond:
     n_expand: 2
     n_blocks: 2
-
-precision:
-  input: torch.float32
-  use_scaler: False  # Use GradScaler for mixed precision training
-  default:
-    op_dtype: torch.float32  # Default operation dtype
-    out_dtype: torch.float32  # Default output dtype
-  precision_map:
-    "msa_module": 
-      op_dtype : torch.bfloat16
-      out_dtype: torch.bfloat16 
-    "pairformer_blocks": 
-      op_dtype : torch.bfloat16
-      out_dtype: torch.bfloat16  # Precision for pairformer blocks
-    "diffusion_module":
-      op_dtype : torch.float32
-      out_dtype: torch.float32  # Precision for diffusion modules
