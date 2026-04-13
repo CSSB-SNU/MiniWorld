@@ -31,7 +31,9 @@ class WeightedSampler(DistributedSampler):
             self.total_size,
             replacement=False,
             generator=g,
-        ).tolist()
+        )
+        perm = torch.randperm(all_indices.size(0), generator=g)
+        all_indices = all_indices[perm].tolist()
 
         return iter(all_indices[self.rank : self.total_size : self.num_replicas])
 
