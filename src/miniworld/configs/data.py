@@ -42,23 +42,19 @@ class SamplerConfig(BaseModel):
     """
 
     # sample number, cluster prob, individual sample score (prob *1e5)
-    antibody_antibody: float = 0.3
-    antibody_nucleic_acid: float = 1.0
-    antibody_protein: float = 15.0
-
-    DNA_DNA: float = 2.0
-    DNA_RNA: float = 2.5
-    RNA_RNA: float = 2.0
-    NA_NA: float = 1.0
-
-    protein_nucleic_acid: float = 20.0
-    protein_protein: float = 45.0
-    protein_ligand: float = 10.0
-
-    ligand_ligand: float = 0.2
-
-    etc_interface: float = 0.5
-    sole: float = 0.5
+    protein_protein: float = 25.0
+    protein_ligand: float = 25
+    protein_dna: float = 10
+    protein_rna: float = 10
+    antibody_protein: float = 15
+    dna_dna: float = 5
+    rna_rna: float = 5
+    dna_rna: float = 0.5
+    antibody_antibody: float = 0.5
+    antibody_ligand: float = 1.0
+    na_ligand: float = 1.0
+    etc_interface: float = 1.0
+    sole: float = 1.0
 
 
 class CropConfig(BaseModel):
@@ -75,6 +71,8 @@ class CropConfig(BaseModel):
     bucket_msa_size: int = 128
     bucket_token_size: int = 128
     bucket_atom_size: int = 1024
+
+    chain_crop_prob: float = 0.5
 
 
 class MSAConfig(BaseModel):

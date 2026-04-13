@@ -217,19 +217,19 @@ class BioMolData(torch.utils.data.Dataset):
         # load edge_id to cif_ids mapping
 
         types = {
-            "antibody_antibody",
-            "antibody_nucleic_acid",
-            "antibody_protein",
-            "DNA_DNA",
-            "RNA_RNA",
-            "DNA_RNA",
-            "NA_NA",
-            "protein_nucleic_acid",
             "protein_protein",
             "protein_ligand",
-            "ligand_ligand",
-            "sole",
+            "protein_dna",
+            "protein_rna",
+            "antibody_protein",
+            "dna_dna",
+            "rna_rna",
+            "dna_rna",
+            "antibody_antibody",
+            "antibody_ligand",
+            "na_ligand",
             "etc_interface",
+            "sole",
         }
 
         type_counts = dict.fromkeys(types, 0)
@@ -240,37 +240,31 @@ class BioMolData(torch.utils.data.Dataset):
                 return "sole"
             parse = set(re.findall(r"c([A-Z])", edge_id))
 
-            # Antibody
-            if parse == {"A"}:
-                return "antibody_antibody"
-            if parse <= {"A", "D", "R"} and "A" in parse:
-                return "antibody_nucleic_acid"
-            if parse <= {"A", "P"} and "A" in parse:
-                return "antibody_protein"
-
-            # Nucleic acid only
-            if parse == {"D"}:
-                return "DNA_DNA"
-            if parse == {"R"}:
-                return "RNA_RNA"
-            if parse == {"D", "R"}:
-                return "DNA_RNA"
-            if parse <= {"D", "R", "N"} and "N" in parse:
-                return "NA_NA"
-
-            # Protein related
-            if parse <= {"P", "D", "R", "N"} and "P" in parse and len(parse) > 1:
-                return "protein_nucleic_acid"
             if parse == {"P"}:
                 return "protein_protein"
-            if parse <= {"P", "L"} and "P" in parse:
+            if parse <= {"P", "L", "B"} and "P" in parse:
                 return "protein_ligand"
+            if parse == {"P", "D"}:
+                return "protein_dna"
+            if parse == {"P", "R"}:
+                return "protein_rna"
 
-            # Ligand
-            if parse == {"L"}:
-                return "ligand_ligand"
+            if parse == {"P", "A"}:
+                return "antibody_protein"
 
-            # fallback
+            if parse == {"D"}:
+                return "dna_dna"
+            if parse == {"R"}:
+                return "rna_rna"
+            if parse == {"D", "R"}:
+                return "dna_rna"
+
+            if parse == {"A"}:
+                return "antibody_antibody"
+            if parse <= {"A", "L", "B"} and "A" in parse:
+                return "antibody_ligand"
+            if parse <= {"N", "L", "B"} and "N" in parse:
+                return "na_ligand"
             return "etc_interface"
 
         edge_id_to_items = {}
@@ -356,15 +350,19 @@ class BioMolData(torch.utils.data.Dataset):
             case [chain_id]:
                 selected_atoms = cifmol.chains.select(chain_id=chain_id).atoms
             case [chain_id1, chain_id2]:
-                try:
-                    selected_atoms = find_interface_residues(
-                        cifmol,
-                        chain_id1,
-                        chain_id2,
-                    ).atoms
-                except NoInterfaceError:
+                if rng.random() < self.config.crop_config.chain_crop_prob:
                     chain_id = rng.choice([chain_id1, chain_id2])
                     selected_atoms = cifmol.chains.select(chain_id=chain_id).atoms
+                else:
+                    try:
+                        selected_atoms = find_interface_residues(
+                            cifmol,
+                            chain_id1,
+                            chain_id2,
+                        ).atoms
+                    except NoInterfaceError:
+                        chain_id = rng.choice([chain_id1, chain_id2])
+                        selected_atoms = cifmol.chains.select(chain_id=chain_id).atoms
             case _:
                 msg = f"Unexpected chain_ids: {chain_ids}"
                 raise ValueError(msg)
