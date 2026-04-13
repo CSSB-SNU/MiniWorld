@@ -14,12 +14,12 @@ from team_gm.core.client import _SetEpochProtocol
 from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
-from miniworld.configs import DecoupledEDMDiffuserConfig
+from miniworld.configs import XPredDecoupledDiffuserConfig
 from miniworld.data.features.batch import Batch
 from miniworld.diffusion import (
-    DecoupledEDMDiffuser,
-    DecoupledEDMScheduler,
-    DecoupledEDMSolver,
+    DecoupledXPredScheduler,
+    XPredDecoupledDiffuser,
+    XPredDecoupledSolver,
 )
 from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
@@ -93,7 +93,7 @@ def cal_smooth_lddt(
 
 
 class Client(BaseClient):
-    """Client for training and inference of AF3Like model."""
+    """Client for training and inference of MiniWorld (VE x-prediction)."""
 
     class TrainConfig(BaseModel):
         """Configuration for trains."""
@@ -149,10 +149,10 @@ class Client(BaseClient):
         smooth_lddt_loss: float = 1.0
 
     class Config(BaseModel):
-        """Configuration for the AF3Like client."""
+        """Configuration for the MiniWorld client."""
 
         model: Model.Config
-        diffuser: DecoupledEDMDiffuserConfig
+        diffuser: XPredDecoupledDiffuserConfig
         train: Client.TrainConfig
         loss: Client.LossConfig
 
@@ -164,16 +164,16 @@ class Client(BaseClient):
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
-        self.diffusion_scheduler = DecoupledEDMScheduler(config.diffuser.scheduler)
-        self.diffuser = DecoupledEDMDiffuser(
-            config=DecoupledEDMDiffuser.DecoupledEDMConfig(
+        self.diffusion_scheduler = DecoupledXPredScheduler(config.diffuser.scheduler)
+        self.diffuser = XPredDecoupledDiffuser(
+            config=XPredDecoupledDiffuser.DecoupledXPredConfig(
                 seed=config.diffuser.seed,
                 translation_noise=config.diffuser.translation_noise,
             ),
             scheduler=self.diffusion_scheduler,
         )
-        self.solver = DecoupledEDMSolver(
-            config=DecoupledEDMSolver.SolverConfig(seed=config.diffuser.seed),
+        self.solver = XPredDecoupledSolver(
+            config=XPredDecoupledSolver.Config(seed=config.diffuser.seed),
             scheduler=self.diffusion_scheduler,
         )
 
@@ -439,7 +439,7 @@ class Client(BaseClient):
         atom_pos_pred, inter_traj, model_traj = self.solver.sample(
             model_fn=model_wrapper,
             shape=shape,
-            atom_chain_break=batch.scheme.atom_to_chain_id,
+            atom_to_combine=batch.scheme.atom_to_chain_id,
             num_steps=timesteps,
             device=self.device,
             return_intermediate=True,

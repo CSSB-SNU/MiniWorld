@@ -1,7 +1,7 @@
 defaults:
-  - model: medium
-  - train: default
-  - data: default
+  - model: small
+  - data: inference_overfitting
   - diffuser: xpred_decoupled
   - loss: default
+  - infer: default
   - _self_

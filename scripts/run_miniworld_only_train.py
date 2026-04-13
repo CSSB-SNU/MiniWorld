@@ -1,3 +1,11 @@
+"""Training script for MiniWorld (VE x-prediction, decoupled R/T).
+
+Usage:
+    torchrun --nproc_per_node=1 scripts/run_miniworld_only_train.py train \
+        --config configs/miniworld/config.yaml \
+        data=overfitting train=overfitting model=small diffuser=xpred_decoupled
+"""
+
 from __future__ import annotations
 
 import logging
@@ -18,17 +26,16 @@ import wandb
 from miniworld.configs import (
     BioMolDBConfig,
     CropConfig,
-    DecoupledEDMDiffuserConfig,
     MSAConfig,
     SamplerConfig,
     TokenizerConfig,
+    XPredDecoupledDiffuserConfig,
 )
 from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.models.miniworld import Client, Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
 torch.set_float32_matmul_precision("medium")
-# anomaly detection
 torch.autograd.set_detect_anomaly(False)
 
 
@@ -48,7 +55,7 @@ class Config(BaseModel):
     data: DataConfig
     train: Client.TrainConfig
     model: Model.Config
-    diffuser: DecoupledEDMDiffuserConfig
+    diffuser: XPredDecoupledDiffuserConfig
     loss: Client.LossConfig
 
 
