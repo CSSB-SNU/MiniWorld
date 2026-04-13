@@ -199,6 +199,10 @@ class Tokenizer:
         self.dynamic_config = config.dynamic_config
         self.rng = np.random.default_rng(config.seed)
 
+    def set_epoch(self, epoch: int) -> None:
+        """Set the epoch for deterministic tokenization."""
+        self.rng = np.random.default_rng(epoch)
+
     def tokenize(
         self,
         cifmol: CIFMolAttached,

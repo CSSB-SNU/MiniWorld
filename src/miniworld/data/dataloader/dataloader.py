@@ -209,6 +209,7 @@ class BioMolData(torch.utils.data.Dataset):
     def set_epoch(self, epoch: int) -> None:
         """Set the epoch for this dataset, which can be used to change sampling behavior."""
         self.epoch = epoch
+        self.tokenizer.set_epoch(epoch)
 
     def _make_seed(self, idx: int) -> int:
         return (self.seed * 1000003 + self.epoch * 100003 + idx) & 0xFFFF_FFFF
