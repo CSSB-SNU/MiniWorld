@@ -186,7 +186,7 @@ class Client(BaseClient):
         np.random.seed(seed)
         random.seed(seed)
 
-    def _decoupled_loss_fn(
+    def loss_fn(
         self,
         batch: Batch,
         x0: Float[torch.Tensor, "... L 3"],
@@ -198,7 +198,7 @@ class Client(BaseClient):
         atom_to_combine: Int[torch.Tensor, ...],
         x_mask: Bool[torch.Tensor, "... L"] | None = None,
     ) -> tuple[torch.Tensor, dict]:
-        """Compute the loss for the DecoupledEDM diffuser."""
+        """Compute the loss given a noisy batch."""
         atom_pos_update, distogram_logit = self.model.forward(
             msa=batch.msa,
             template=batch.template,
@@ -281,141 +281,37 @@ class Client(BaseClient):
             "main_loss": loss.item(),
         }
 
-    def _euclidean_loss_fn(
-        self,
-        batch: Batch,
-        x0: Float[torch.Tensor, "... L 3"],
-        x_input: Float[torch.Tensor, "... L 3"],
-        t_emb: Float[torch.Tensor, ...],
-        sigma: Float[torch.Tensor, ...],
-        x_mask: Bool[torch.Tensor, "... L"] | None = None,
-    ) -> tuple[torch.Tensor, dict]:
-        """Compute the loss for the Euclidean (non-decoupled) diffuser."""
-        atom_pos_update, distogram_logit = self.model.forward(
-            msa=batch.msa,
-            template=batch.template,
-            reference=batch.reference,
-            scheme=batch.scheme,
-            sequence=batch.sequence,
-            structure=batch.structure,
-            x_t=x_input,
-            x_mask=x_mask,
-            t_emb=t_emb,
-        )
-
-        diffuser = cast("EuclideanDiffuser", self.diffuser)
-        structure_loss = diffuser.cal_loss(
-            x0=x0,
-            x_input=x_input,
-            x_update=atom_pos_update,
-            sigma=sigma,
-            mask=x_mask,
-        )
-
-        distogram_loss = cal_atom_distogram_loss(
-            distogram_logit,
-            batch.structure.atom_pos,
-            batch.structure.atom_pos_mask,
-            batch.scheme.atom_to_token_idx_map,
-        )
-
-        # Smooth lDDT (checkpointed per augment)
-        if self.config.loss.smooth_lddt_loss > 0:
-            # Recover x_pred from EDM preconditioning
-            scheduler = cast("EDMScheduler", self.diffusion_scheduler)
-            input_scaling = scheduler.input_scale(sigma)
-            noisy_x = x_input / input_scaling
-            c_skip = scheduler.skip_scale(sigma)
-            c_out = scheduler.output_scale(sigma)
-            x_pred = c_skip * noisy_x + c_out * atom_pos_update
-
-            chain_is_nuc = torch.where(
-                (batch.chain.entity_type == 3)
-                | (batch.chain.entity_type == 4)
-                | (batch.chain.entity_type == 5),
-                torch.ones_like(batch.chain.entity_type),
-                torch.zeros_like(batch.chain.entity_type),
-            ).bool()
-            atom_is_nuc = torch.gather(
-                chain_is_nuc,
-                dim=1,
-                index=batch.scheme.atom_to_chain_id,
-            )
-            smooth_lddt_loss = torch.stack(
-                [
-                    checkpoint(
-                        cal_smooth_lddt,
-                        x_pred[a, None],
-                        x0[a],
-                        atom_is_nuc,
-                        batch.structure.atom_pos_mask,
-                        use_reentrant=False,
-                    )
-                    for a in range(x_pred.shape[0])
-                ],  # pyright: ignore[reportArgumentType]
-            ).mean()
-        else:
-            smooth_lddt_loss = torch.tensor(0.0, device=x0.device)
-
-        loss = (
-            self.config.loss.diffusion_loss * structure_loss
-            + self.config.loss.distogram_loss * distogram_loss
-            + self.config.loss.smooth_lddt_loss * smooth_lddt_loss
-        )
-
-        return loss, {
-            "diffusion_loss": structure_loss.item(),
-            "distogram_loss": distogram_loss.item(),
-            "total_loss": loss.item(),
-            "main_loss": loss.item(),
-        }
-
     def training_step(self, batch: Batch) -> dict[str, float]:
         """Train the model on a batch."""
         num_augment = self.config.train.num_augment
 
-        if isinstance(self.diffuser, DecoupledEDMDiffuser):
-            (
-                x0,
-                x_input,
-                x_mask,
-                t_emb,
-                sigma_y,
-                rotation_matrix,
-                translation_vector,
-                atom_to_combine,
-            ) = self.diffuser.sample(
-                x0=batch.structure.atom_pos,
-                mask=batch.structure.atom_pos_mask,
-                atom_to_chain_idx=batch.scheme.atom_to_chain_id,
-                num_augment=num_augment,
-            )
-            loss, loss_dict = self._decoupled_loss_fn(
-                batch=batch,
-                x0=x0,
-                x_input=x_input,
-                t_emb=t_emb,
-                x_mask=x_mask,
-                sigma_y=sigma_y,
-                rotation_matrix=rotation_matrix,
-                translation_vector=translation_vector,
-                atom_to_combine=atom_to_combine,
-            )
-        else:
-            diffuser = cast("EuclideanDiffuser", self.diffuser)
-            x0, x_input, x_mask, t_emb, sigma = diffuser.sample(
-                x0=batch.structure.atom_pos,
-                mask=batch.structure.atom_pos_mask,
-                num_augment=num_augment,
-            )
-            loss, loss_dict = self._euclidean_loss_fn(
-                batch=batch,
-                x0=x0,
-                x_input=x_input,
-                t_emb=t_emb,
-                sigma=sigma,
-                x_mask=x_mask,
-            )
+        (
+            x0,
+            x_input,
+            x_mask,
+            t_emb,
+            sigma_y,
+            rotation_matrix,
+            translation_vector,
+            atom_to_combine,
+        ) = self.diffuser.sample(
+            x0=batch.structure.atom_pos,
+            mask=batch.structure.atom_pos_mask,
+            atom_to_chain_idx=batch.scheme.atom_to_chain_id,
+            num_augment=num_augment,
+        )
+
+        loss, loss_dict = self.loss_fn(
+            batch=batch,
+            x0=x0,
+            x_input=x_input,
+            t_emb=t_emb,
+            x_mask=x_mask,
+            sigma_y=sigma_y,
+            rotation_matrix=rotation_matrix,
+            translation_vector=translation_vector,
+            atom_to_combine=atom_to_combine,
+        )
 
         self.backward(loss)
         del loss
