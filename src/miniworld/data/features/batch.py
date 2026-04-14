@@ -56,9 +56,29 @@ class Batch(BaseBatch):
         return self.msa.aligned_sequences.shape[1]
 
     @property
+    def msa_count(self) -> int:
+        """Return the valid MSA depth for the first sample in the batch."""
+        if self.msa.mask.ndim == 1:
+            return int(self.msa.mask.sum().item())
+        if self.msa.mask.ndim == 2:
+            return int(self.msa.mask[0].sum().item())
+        msg = "Cannot infer valid MSA depth from mask shape."
+        raise ValueError(msg)
+
+    @property
     def template_number(self) -> int:
         """Return the number of sampled templates."""
         return self.template.mask.shape[1]
+
+    @property
+    def template_count(self) -> int:
+        """Return the valid template count for the first sample in the batch."""
+        if self.template.mask.ndim == 1:
+            return int(self.template.mask.sum().item())
+        if self.template.mask.ndim == 2:
+            return int(self.template.mask[0].sum().item())
+        msg = "Cannot infer valid template count from mask shape."
+        raise ValueError(msg)
 
     @property
     def token_length(self) -> int:
@@ -134,7 +154,7 @@ class Batch(BaseBatch):
                     (1, msa_depth, n_tokens),
                     dtype=torch.float,
                 ),
-                profile=torch.zeros((1, n_tokens, 20), dtype=torch.float),
+                profile=torch.zeros((1, n_tokens, 32), dtype=torch.float),
                 deletion_mean=torch.zeros((1, n_tokens), dtype=torch.float),
             ),
             template=TemplateFeatures(

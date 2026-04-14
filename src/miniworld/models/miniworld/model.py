@@ -126,6 +126,7 @@ class Model(nn.Module):
         ).to(torch.float32)
 
         self.rng = np.random.default_rng()
+        self._forced_n_recycle: int | None = None
 
     def set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
@@ -141,7 +142,9 @@ class Model(nn.Module):
         structure: StructureFeatures,
     ) -> tuple[torch.Tensor, ...]:
         """Forward pass of the condition modules with recycling."""
-        if self.training:
+        if self._forced_n_recycle is not None:
+            n_recycle = self._forced_n_recycle
+        elif self.training:
             n_recycle = self.rng.integers(1, self.n_recycle_max + 1)
         else:
             n_recycle = self.n_recycle_max

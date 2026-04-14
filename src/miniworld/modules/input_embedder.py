@@ -259,6 +259,7 @@ class InputFeatureEmbedder(nn.Module):
         # self.add_atom_bond = Linear(2, config.d_pair_atom, init="default") TODO
 
     @torch.no_grad()
+    @torch.compiler.disable  # we are not bucketing token_bond, so the input size can be very different across batches. disable torch.compile for now to avoid overhead of recompilation.
     def _gen_bond_feature(
         self,
         structure: StructureFeatures,

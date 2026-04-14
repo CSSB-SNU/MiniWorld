@@ -31,7 +31,7 @@ tokenizer:
   dynamic_tokenization:
     minimum_resolution_ratio: [0.2, 0.6, 0.2]
 
-    sigma_flat_prob: 0.3
+    sigma_flat_prob: 0.0
     sigma_min:  4.0
     sigma_max: 8.0
 

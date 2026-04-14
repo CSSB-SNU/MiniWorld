@@ -75,7 +75,7 @@ class TemplateFeatures(BaseBatch):
     cb_xyz: Float[torch.Tensor, "B N_temp L_res 3"]
     cb_mask: Bool[torch.Tensor, "B N_temp L_res"]
     bb_xyz: Float[torch.Tensor, "B N_temp L_res 3 3"]
-    bb_mask: Bool[torch.Tensor, "B N_temp L_res 3"]
+    bb_mask: Bool[torch.Tensor, "B N_temp L_res"]
 
 
 @typecheck

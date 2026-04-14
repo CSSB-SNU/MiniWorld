@@ -129,7 +129,6 @@ def init_token_single_msa_with_embedding(
 
 
 # MiniWorld-style template features
-@torch.compile
 @torch.no_grad()
 def init_template_feat(
     template: TemplateFeatures,

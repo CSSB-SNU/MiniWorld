@@ -358,12 +358,20 @@ def inference(  # noqa: PLR0915
         batch = raw_batch.to(device=client.device)
         name = str(batch.name[0])
         client.logger.info(
-            "rank=%d batch=%d %s | n_tokens=%d n_atoms=%d | mem=%.2fGB",
+            (
+                "rank=%d batch=%d %s | n_tokens=%d n_atoms=%d "
+                "n_msa_valid=%d n_msa_bucket=%d "
+                "n_template_valid=%d n_template_bucket=%d | mem=%.2fGB"
+            ),
             fabric.global_rank,
             batch_idx,
             name,
             batch.token_length,
             batch.atom_length,
+            batch.msa_count,
+            batch.msa_depth,
+            batch.template_count,
+            batch.template_number,
             torch.cuda.max_memory_allocated() / 1024**3,
         )
 

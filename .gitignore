@@ -15,5 +15,4 @@ __pycache__/
 *.pkl
 .pixi/
 **/*.egg-info/
-tests/
 commands/
