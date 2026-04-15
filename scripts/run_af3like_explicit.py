@@ -117,7 +117,7 @@ def train(  # noqa: PLR0912, PLR0915
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
-    fabric = _fabric_from_torchrun(precision="bf16-mixed")
+    fabric = _fabric_from_torchrun()
     fabric.launch()
     if cfg.train.seed is not None:
         fabric.seed_everything(cfg.train.seed)
@@ -249,7 +249,7 @@ def train(  # noqa: PLR0912, PLR0915
         world_size=fabric.world_size,
         rank=fabric.global_rank,
         seed=cfg.train.seed,
-        drop_last=False,
+        drop_last=True,
         batch_size=cfg.train.num_batch,  # or 1
         num_workers=0,
     )
@@ -291,6 +291,143 @@ def train(  # noqa: PLR0912, PLR0915
                     break
 
             valid_aggregator.log_epoch()
+
+
+@cli.command()
+@click.option(
+    "--config",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+    help="config file",
+)
+@click.option(
+    "--ckpt",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+    help="checkpoint file",
+)
+@click.option(
+    "--output-dir",
+    type=click.Path(path_type=Path),
+    required=True,
+    help="directory to write predicted and reference CIF files",
+)
+@click.option("--max-tokens", type=int, default=None, help="override max_tokens in crop config")
+@click.option("--max-atoms", type=int, default=None, help="override max_atoms in crop config")
+@click.option("--timesteps", type=int, default=100, help="number of diffusion timesteps")
+@click.option("--num-samples", type=int, default=5, help="number of samples per structure")
+@click.option("--num-items", type=int, default=None, help="max number of items to process")
+@click.option("--seed", type=int, default=0, help="random seed")
+@click.argument("overrides", type=str, nargs=-1)
+def infer(
+    config: Path,
+    ckpt: Path,
+    output_dir: Path,
+    max_tokens: int | None,
+    max_atoms: int | None,
+    timesteps: int,
+    num_samples: int,
+    num_items: int | None,
+    seed: int,
+    overrides: tuple[str, ...],
+):
+    from miniworld.data.io.to_cif import batch_to_cif
+
+    with initialize_config_dir(str(config.parent.absolute()), version_base=None):
+        cfg = compose(config_name=config.name, overrides=list(overrides))
+    cfg = Config.model_validate(cfg)
+
+    if max_tokens is not None:
+        cfg.data.crop.max_tokens = max_tokens
+    if max_atoms is not None:
+        cfg.data.crop.max_atoms = max_atoms
+
+    fabric = Fabric(devices=1)
+    fabric.launch()
+    fabric.seed_everything(seed)
+
+    client = Client(
+        Client.Config(
+            train=cfg.train,
+            model=cfg.model,
+            diffuser=cfg.diffuser,
+            loss=cfg.loss,
+        ),
+    )
+    client.setup(fabric=fabric)
+
+    state_dict = torch.load(ckpt, map_location="cpu")
+    client.load_state_dict(state_dict, model_only=True)
+
+    infer_data_config = BioMolData.BioMolConfig(
+        crop_config=cfg.data.crop,
+        msa_config=cfg.data.msa,
+        DB_config=cfg.data.valid_db,
+        sampler_config=None,
+        tokenizer_config=cfg.data.tokenizer,
+    )
+    infer_dataset = BioMolData(infer_data_config)
+    infer_dataloader = infer_dataset.create_ddp_dataloader(
+        world_size=1,
+        rank=0,
+        seed=seed,
+        drop_last=False,
+        batch_size=1,
+        num_workers=0,
+    )
+
+    pred_dir = output_dir / "predicted"
+    ref_dir = output_dir / "reference"
+    pred_dir.mkdir(parents=True, exist_ok=True)
+    ref_dir.mkdir(parents=True, exist_ok=True)
+
+    client.model.eval()
+    total = num_items if num_items is not None else len(infer_dataset)
+    logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s")
+    logger = logging.getLogger("infer")
+    logger.info(
+        "Starting inference: max_tokens=%s, max_atoms=%s, timesteps=%d, num_samples=%d",
+        cfg.data.crop.max_tokens, cfg.data.crop.max_atoms, timesteps, num_samples,
+    )
+
+    n_success, n_fail = 0, 0
+    for idx, _batch in enumerate(infer_dataloader):
+        if num_items is not None and idx >= num_items:
+            break
+        batch = _batch
+        batch = batch.to(device=client.device)
+        name = batch.name[0]
+        name = name.replace('[','').replace("'","").replace(']','')
+        logger.info("[%d/%d] Processing %s (tokens=%d, atoms=%d)",
+                    idx + 1, total, name, batch.token_length, batch.atom_length)
+
+        try:
+            # Run inference with num_samples duplicates
+            infer_batch = batch.duplicate(num_samples)
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                output = client.inference(infer_batch, timesteps=timesteps)
+
+            # Write reference CIF only on success
+            ref_path = ref_dir / f"{name}.cif"
+            batch_to_cif(batch, atom_pos_pred=None, save_path=ref_path)
+
+            # Write predicted CIF for each sample
+            for s in range(num_samples):
+                pred_path = pred_dir / f"{name}_sample{s}.cif"
+                atom_pos_s = output.atom_pos_pred[s : s + 1]
+                batch_to_cif(batch, atom_pos_pred=atom_pos_s, save_path=pred_path)
+            n_success += 1
+        except torch.cuda.OutOfMemoryError:
+            logger.warning("[%d] OOM on %s (tokens=%d, atoms=%d), skipping",
+                           idx + 1, name, batch.token_length, batch.atom_length)
+            torch.cuda.empty_cache()
+            n_fail += 1
+        except Exception:
+            logger.exception("[%d] Failed on %s, skipping", idx + 1, name)
+            n_fail += 1
+
+    logger.info("Inference complete: %d succeeded, %d failed. Results saved to %s",
+                n_success, n_fail, output_dir)
 
 
 if __name__ == "__main__":

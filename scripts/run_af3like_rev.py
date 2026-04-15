@@ -5,7 +5,7 @@ import os
 import time
 from pathlib import Path
 import warnings
-warnings.filterwarnings("ignore", message=".*torch.jit.script_method.*", category=DeprecationWarning) 
+warnings.filterwarnings("ignore", message=".*torch.jit.script_method.*", category=DeprecationWarning)
 import click
 import torch
 from hydra import compose, initialize_config_dir
@@ -26,8 +26,8 @@ from miniworld.configs import (
     TokenizerConfig,
 )
 from miniworld.data.dataloader.dataloader import BioMolData
-from miniworld.models.default_client import Client
-from miniworld.models.af3_like import Model
+from miniworld.models.default_client_rev import Client
+from miniworld.models.af3_like import Model_rev as Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
 torch.set_float32_matmul_precision("medium")
@@ -113,6 +113,8 @@ def train(  # noqa: PLR0912, PLR0915
     job_name: str | None,
     overrides: tuple[str, ...],
 ):
+    torch._dynamo.reset()  # clear stale compile cache (prevents bf16/fp32 mismatch on resume)
+
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
@@ -166,7 +168,7 @@ def train(  # noqa: PLR0912, PLR0915
     else:
         msg = f"Unsupported optimizer: {cfg.train.optimizer}"
         raise ValueError(msg)
-    
+
     if cfg.train.compile:
         torch._dynamo.config.cache_size_limit = 128  # noqa: SLF001
         torch._dynamo.config.accumulated_cache_size_limit = 512  # noqa: SLF001

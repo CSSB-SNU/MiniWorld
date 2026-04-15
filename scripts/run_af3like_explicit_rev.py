@@ -25,9 +25,10 @@ from miniworld.configs import (
     TemplateConfig,
     TokenizerConfig,
 )
-from miniworld.data.dataloader.dataloader import BioMolData
-from miniworld.models.default_client import Client
-from miniworld.models.af3_like import Model
+
+from miniworld.data.dataloader.dataloader_explicit import BioMolData
+from miniworld.models import ExplicitClient_rev as Client
+from miniworld.models.af3_like_explicit import Model_rev as Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
 torch.set_float32_matmul_precision("medium")
@@ -113,6 +114,8 @@ def train(  # noqa: PLR0912, PLR0915
     job_name: str | None,
     overrides: tuple[str, ...],
 ):
+    torch._dynamo.reset()  # clear stale compile cache (prevents bf16/fp32 mismatch on resume)
+
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)

@@ -26,7 +26,7 @@ from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
     cal_smooth_lddt,
 )
-from miniworld.models.af3_like_explicit.model import (
+from miniworld.models.af3_like_embedding.model_rev import (
     InferenceOutput,
     Model,
     ModelWrapper,
@@ -35,15 +35,16 @@ from miniworld.models.af3_like_explicit.model import (
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 
+
 class Client(BaseClient):
     """Client for training and inference of AF3Like model."""
 
     class TrainConfig(BaseModel):
         """Configuration for trains."""
 
-        comment: str = "default explicit"
-        name: str = "AF3Like-PSK-2-explicit"
-        run_dir: str = "runs/af3like_explicit"
+        comment: str = "default embedding"
+        name: str = "AF3Like-PSK-2-embedding"
+        run_dir: str = "runs/af3like_embedding"
         overfitting: bool = False
         overfitting_dir: str | None = None  # Directory for overfitting mode
         train_item: int = 25600
@@ -79,7 +80,7 @@ class Client(BaseClient):
         bucket_msa_multiple: int | None = 128
         bucket_token_multiple: int | None = 128
         bucket_atom_multiple: int | None = 1024
-
+        
         verbose: bool = False
         use_wandb: bool = False
         wandb_project: str = "MiniWorld"

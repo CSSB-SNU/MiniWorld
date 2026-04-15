@@ -208,6 +208,21 @@ class Client(BaseClient):
             + self.config.loss.smooth_lddt_loss * smooth_lddt_loss
         )
 
+        if not torch.isfinite(loss):
+            self.logger.warning(
+                "Non-finite loss detected | batch=%s | "
+                "diffusion=%.6g | distogram=%.6g | smooth_lddt=%.6g | "
+                "total=%.6g | sigma=%s | n_atoms=%s | n_tokens=%s",
+                batch.name,
+                structure_loss.item(),
+                distogram_loss.item(),
+                smooth_lddt_loss.item(),
+                loss.item(),
+                sigma.tolist(),
+                batch.atom_length,
+                batch.token_length,
+            )
+
         return loss, {
             "diffusion_loss": structure_loss.item(),
             "distogram_loss": distogram_loss.item(),

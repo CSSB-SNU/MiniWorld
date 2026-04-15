@@ -26,7 +26,7 @@ from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
     cal_smooth_lddt,
 )
-from miniworld.models.af3_like_explicit.model import (
+from miniworld.models.af3_like.model_rev import (
     InferenceOutput,
     Model,
     ModelWrapper,
@@ -41,9 +41,9 @@ class Client(BaseClient):
     class TrainConfig(BaseModel):
         """Configuration for trains."""
 
-        comment: str = "default explicit"
-        name: str = "AF3Like-PSK-2-explicit"
-        run_dir: str = "runs/af3like_explicit"
+        comment: str = "default"
+        name: str = "AF3Like-PSK-2"
+        run_dir: str = "runs/af3like"
         overfitting: bool = False
         overfitting_dir: str | None = None  # Directory for overfitting mode
         train_item: int = 25600

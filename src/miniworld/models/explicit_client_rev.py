@@ -26,7 +26,7 @@ from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
     cal_smooth_lddt,
 )
-from miniworld.models.af3_like_explicit.model import (
+from miniworld.models.af3_like_explicit.model_rev import (
     InferenceOutput,
     Model,
     ModelWrapper,
