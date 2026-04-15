@@ -10,7 +10,7 @@ import torch
 from pydantic import BaseModel
 from torch.utils.data import DataLoader
 
-from miniworld.configs import (
+from miniworld.configs.data import (
     BioMolDBConfig,
     CropConfig,
     MSAConfig,
@@ -20,6 +20,7 @@ from miniworld.configs import (
 )
 from miniworld.data.features import (
     Batch,
+    MSAFeatures,
     make_batch,
 )
 from miniworld.data.io import (
@@ -554,6 +555,26 @@ class BioMolData(torch.utils.data.Dataset):
             msa=complex_msa,
             max_msa_depth=self.config.msa_config.max_msa_depth,
             rng=rng,
+        )
+
+        msa_depth = 1
+        n_residues = len(cifmol.residues)
+        msa = MSAFeatures(
+            aligned_sequences=torch.zeros(
+                (1, msa_depth, n_residues),
+                dtype=torch.long,
+            ),
+            mask=torch.zeros((1, msa_depth), dtype=torch.bool),
+            has_deletion=torch.zeros(
+                (1, msa_depth, n_residues),
+                dtype=torch.bool,
+            ),
+            deletion_value=torch.zeros(
+                (1, msa_depth, n_residues),
+                dtype=torch.float,
+            ),
+            profile=torch.zeros((1, n_residues, 32), dtype=torch.float),
+            deletion_mean=torch.zeros((1, n_residues), dtype=torch.float),
         )
 
         templates: ProteinTemplate = load_templates(

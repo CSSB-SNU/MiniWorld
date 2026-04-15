@@ -9,23 +9,40 @@ from .data import (
     TokenEmbeddingConfig,
     TokenizerConfig,
 )
-from .diffusion import (
-    EDMDiffuserConfig,
-    XPredDecoupledDiffuserConfig,
-    XPredEuclideanDiffuserConfig,
-)
-from .models import SharedConfig
+try:
+    from .diffusion import (
+        EDMDiffuserConfig,
+        XPredDecoupledDiffuserConfig,
+        XPredEuclideanDiffuserConfig,
+    )
+except ModuleNotFoundError:
+    EDMDiffuserConfig = None  # type: ignore[assignment]
+    XPredDecoupledDiffuserConfig = None  # type: ignore[assignment]
+    XPredEuclideanDiffuserConfig = None  # type: ignore[assignment]
+
+try:
+    from .models import SharedConfig
+except ModuleNotFoundError:
+    SharedConfig = None  # type: ignore[assignment]
 
 __all__ = [
     "BioMolDBConfig",
     "CropConfig",
-    "EDMDiffuserConfig",
     "MSAConfig",
     "SamplerConfig",
-    "SharedConfig",
     "TemplateConfig",
     "TokenEmbeddingConfig",
     "TokenizerConfig",
-    "XPredDecoupledDiffuserConfig",
-    "XPredEuclideanDiffuserConfig",
 ]
+
+if SharedConfig is not None:
+    __all__.append("SharedConfig")
+
+if EDMDiffuserConfig is not None:
+    __all__.extend(
+        [
+            "EDMDiffuserConfig",
+            "XPredDecoupledDiffuserConfig",
+            "XPredEuclideanDiffuserConfig",
+        ],
+    )

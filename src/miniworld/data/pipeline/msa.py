@@ -6,8 +6,6 @@ from typing import Literal
 import numpy as np
 import torch
 from biomol.cif import CIFMol
-from biomol.core.container import FeatureContainer
-from biomol.core.feature import NodeFeature
 from numpy import ndarray
 
 from miniworld.data.constants import ResidueMapping
@@ -24,78 +22,62 @@ class MSA:
     def __init__(
         self,
         seq_id: str | None,
-        msa_residue_container: FeatureContainer,
-        msa_chain_container: FeatureContainer,
+        sequences: dict[str, ndarray],
+        headers: dict[str, ndarray],
     ) -> None:
         self.seq_id = seq_id
-        self.query_sequence: ndarray = msa_residue_container[
-            "query_sequence"
-        ].value  # (L, )
-        self.sequences: ndarray = msa_residue_container[
-            "sequences"
-        ].value.T  # (L, N_seqs)
-        self.deletions: ndarray = msa_residue_container[
-            "deletions"
-        ].value.T  # (L, N_seqs)
-        self.deletion_mean: ndarray = msa_residue_container[
-            "deletion_mean"
-        ].value  # (L, )
-        self.profile: ndarray = msa_residue_container["profile"].value  # (L, 32)
-        self.species: ndarray = msa_chain_container["species"].value  # (N_seqs, )
+        self.query_sequence: ndarray = sequences["query_sequence"]  # (L, )
+        self.aligned_sequences: ndarray = sequences["aligned_sequences"]  # (N_seqs, L)
+        self.deletions: ndarray = sequences["deletions"]  # (N_seqs, L)
+        self.deletion_mean: ndarray = sequences["deletion_mean"]  # (L, )
+        self.profile: ndarray = sequences["profile"]  # (L, 21) for now, protein only
+        self.species: ndarray = headers["species"]  # (N_seqs, )
         self.species_to_idx = {
             species: np.where(self.species == species)[0].tolist()
             for species in set(self.species)
         }
 
-        self.num_seqs = self.sequences.shape[0]
-        self.length = self.sequences.shape[1]
+        self.num_seqs = self.aligned_sequences.shape[0]
+        self.length = self.aligned_sequences.shape[1]
         self.shape = (self.num_seqs, self.length)
 
     @classmethod
     def from_query(
         cls,
-        query: np.ndarray,
+        query_sequence: np.ndarray,
         seq_id: str | None = None,
     ) -> MSA:
         """Create an MSA from a single sequence if there is no aligned sequences."""
-        if len(query) == 0:
-            msg = "query must be a non-empty string or list or ndarray"
+        if len(query_sequence) == 0:
+            msg = "query_sequence must be a non-empty string or list or ndarray"
             raise ValueError(msg)
         rm = ResidueMapping()
         max_idx = rm.MAX_INDEX
 
-        sequences = query[:, np.newaxis]  # (L, 1)
-        deletions = np.zeros_like(sequences, dtype=np.uint8)  # (L, 1)
-        deletion_mean = np.zeros((len(query),), dtype=np.float32)  # (L,)
-        profile = np.eye(max_idx + 1, dtype=np.int32)[sequences]  # for now, protein only
-        profile = np.mean(profile, axis=1).astype(np.float32)
+        aligned_sequences = query_sequence[np.newaxis, :]  # (1, L)
+        deletions = np.zeros_like(aligned_sequences, dtype=np.uint8)  # (1, L)
+        deletion_mean = np.zeros((len(query_sequence),), dtype=np.float32)  # (L,)
+        profile = np.eye(max_idx + 1, dtype=np.int32)[
+            aligned_sequences
+        ]  # for now, protein only
+        profile = np.mean(profile, axis=0).astype(np.float32)
 
-        query_sequence = NodeFeature(value=query)
-        sequences = NodeFeature(value=sequences)
-        deletions = NodeFeature(value=deletions)
-        deletion_mean = NodeFeature(value=deletion_mean)
-        profile = NodeFeature(value=profile)
-        species = NodeFeature(value=np.array(["query"], dtype=object))  # (1,)
+        sequences = {
+            "query_sequence": query_sequence,
+            "aligned_sequences": aligned_sequences,
+            "deletions": deletions,
+            "deletion_mean": deletion_mean,
+            "profile": profile,
+        }
 
-        msa_residue_container = FeatureContainer(
-            {
-                "query_sequence": query_sequence,
-                "sequences": sequences,
-                "deletions": deletions,
-                "deletion_mean": deletion_mean,
-                "profile": profile,
-            },
-        )
-        msa_chain_container = FeatureContainer(
-            {
-                "species": species,
-            },
-        )
+        headers = {
+            "species": np.array(["query"], dtype=object),
+        }
 
         return cls(
             seq_id=seq_id,
-            msa_residue_container=msa_residue_container,
-            msa_chain_container=msa_chain_container,
+            sequences=sequences,
+            headers=headers,
         )
 
     def __len__(self) -> int:
@@ -104,7 +86,7 @@ class MSA:
 
     def __getitem__(self, idx: int) -> ndarray:
         """Return the sequence at the given index."""
-        return self.sequences[idx]
+        return self.aligned_sequences[idx]
 
     @classmethod
     def cropped(
@@ -119,38 +101,32 @@ class MSA:
         crop_idx: 1D index array of selected residue positions.
         """
         # 1. Crop residue-level features
-        query_sequence = NodeFeature(value=msa.query_sequence[crop_idx])
-        profile = NodeFeature(value=msa.profile[crop_idx])
-        deletion_mean = NodeFeature(value=msa.deletion_mean[crop_idx])
+        query_sequence = msa.query_sequence[crop_idx]
+        profile = msa.profile[crop_idx]
+        deletion_mean = msa.deletion_mean[crop_idx]
+        aligned_sequences = msa.aligned_sequences[:, crop_idx]
+        deletions = msa.deletions[:, crop_idx]
 
-        # (N_seqs, L) → crop L dimension → still (N_seqs, L')
-        sequences = NodeFeature(value=msa.sequences[:, crop_idx].T)
-        deletions = NodeFeature(value=msa.deletions[:, crop_idx].T)
+        sequences = {
+            "query_sequence": query_sequence,
+            "aligned_sequences": aligned_sequences,
+            "deletions": deletions,
+            "deletion_mean": deletion_mean,
+            "profile": profile,
+        }
 
-        msa_residue_container = FeatureContainer(
-            {
-                "query_sequence": query_sequence,
-                "sequences": sequences,
-                "deletions": deletions,
-                "deletion_mean": deletion_mean,
-                "profile": profile,
-            },
-        )
-        # 2. chain-level features (unchanged)
-        msa_chain_container = FeatureContainer(
-            {"species": NodeFeature(value=msa.species.copy())},
-        )
+        headers = {"species": msa.species.copy()}
 
         # 3. Create a new instance
         return cls(
             seq_id=msa.seq_id,
-            msa_residue_container=msa_residue_container,
-            msa_chain_container=msa_chain_container,
+            sequences=sequences,
+            headers=headers,
         )
 
     def get_query_sequence(self) -> ndarray:
         """Return the query sequence."""
-        return self.sequences[0]
+        return self.aligned_sequences[0]
 
     def get_profile(self) -> ndarray:
         """Return the profile."""
@@ -202,7 +178,7 @@ class ComplexMSA:
         species_to_idx_dict = {ii: MSA.species_to_idx for ii, MSA in MSAs.items()}
         # gap indices per MSA (sequence entirely gaps) : (L, N) -> column-wise all-gaps
         gap_idx_dict = {
-            ii: np.where((MSA.sequences == GAP_IDX).all(axis=0))[0]
+            ii: np.where((MSA.aligned_sequences == GAP_IDX).all(axis=0))[0]
             for ii, MSA in MSAs.items()
         }
         all_species = set.union(*(set(d.keys()) for d in species_to_idx_dict.values()))
@@ -340,8 +316,7 @@ class ComplexMSA:
                         raise ValueError(msg)
                     deletion.append(np.zeros(msa.length))
                 else:
-                    # (L, N_seqs) -> 열 인덱싱으로 1D(L,) 가져오기
-                    seqs.append(msa.sequences[idx])
+                    seqs.append(msa.aligned_sequences[idx])
                     deletion.append(msa.deletions[idx])
             seqs = np.concatenate(seqs)
             if query_sequence is None:

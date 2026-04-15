@@ -4,7 +4,6 @@ from typing import Literal, cast
 import lmdb
 import numpy as np
 from biomol.cif import CIFMol
-from biomol.core.container import FeatureContainer
 from biomol.core.types import BioMolDict
 from biomol.core.utils import load_bytes
 
@@ -228,19 +227,17 @@ def load_a3m(key: str, env_path: Path) -> MSA | None:
     value = load_raw_data(key, env_path)
     if value is None:
         return None
-    msa_container = load_bytes(bytes(value))["msa_container"]
-    msa_residue_container = msa_container["residue_container"]
-    msa_chain_container = msa_container["chain_container"]
-    msa_residue_container = FeatureContainer.from_dict(msa_residue_container)
-    msa_chain_container = FeatureContainer.from_dict(msa_chain_container)
+    msa_dict = load_bytes(bytes(value))["msa_dict"]
+    sequences = msa_dict["sequences"]
+    headers = msa_dict["headers"]
     return MSA(
         seq_id=key,
-        msa_residue_container=msa_residue_container,
-        msa_chain_container=msa_chain_container,
+        sequences=sequences,
+        headers=headers,
     )
 
 
-def _get_query_sequence(
+def get_query_sequence(
     cifmol: CIFMOL,
     chain_id: str,
 ) -> np.ndarray:
@@ -285,9 +282,9 @@ def load_msa(
         )
         if msa is None:
             # already cropped
-            query_seq = _get_query_sequence(cifmol, chain_id)
+            query_seq = get_query_sequence(cifmol, chain_id)
             msa = MSA.from_query(
-                query=query_seq,
+                query_sequence=query_seq,
                 seq_id=seq_id,
             )
             msa_list.append(msa)

@@ -25,7 +25,7 @@ grad_accum_steps: 4
 optimizer: "Adam"
 
 num_workers: 4
-prefetch_factor: 8
+prefetch_factor: 2
 use_ema: True
 ema_decay: 0.999
 bce_pos_weight: 2.0

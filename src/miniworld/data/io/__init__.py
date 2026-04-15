@@ -2,6 +2,7 @@
 
 from .load import (
     extract_lmdb_keys,
+    get_query_sequence,
     load_all_raw_data,
     load_cifmol,
     load_msa,
@@ -11,6 +12,7 @@ from .load import (
 
 __all__ = [
     "extract_lmdb_keys",
+    "get_query_sequence",
     "load_all_raw_data",
     "load_cifmol",
     "load_msa",

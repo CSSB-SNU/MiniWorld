@@ -1,0 +1,7 @@
+mode,iteration,dataset_index,step,batch_size,elapsed_sec,per_sample_sec,train_seconds,wait_over_train_ratio,loader_share,sample_names
+direct_dataset,1,7748049,,1,1.316435,1.316435,0.500000,2.632871,0.724736,['1W47']_1_1_.
+direct_dataset,2,6552894,,1,0.735882,0.735882,0.500000,1.471764,0.595431,['7KJP']_1_1_.
+direct_dataset,3,4393598,,1,1.388361,1.388361,0.500000,2.776722,0.735220,['6HYZ']_1_1_B
+dataloader_wait,,,1,1,1.360034,1.360034,0.500000,2.720067,0.731188,['7BHX']_1_1_A
+dataloader_wait,,,2,1,4.657970,4.657970,0.500000,9.315940,0.903063,['6C22']_1_1_.
+dataloader_wait,,,3,1,1.271297,1.271297,0.500000,2.542593,0.717721,['3S6P']_4_1_A
