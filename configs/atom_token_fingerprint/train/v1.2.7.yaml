@@ -1,5 +1,5 @@
-comment: "af3like atom_token canonical_fp v1.2.7 Adam, lr 4e-4 grad clip 1.0 effective batch size 16"
-run_dir: "logs/af3like atom_token canonical_fp v1.2.7/"
+comment: "resume40 af3like atom_token canonical_fp v1.2.7 Adam, lr 4e-4 grad clip 1.0 effective batch size 16"
+run_dir: "logs/resume40 af3like atom_token canonical_fp v1.2.7/"
 
 # Training arguments
 num_batch: 1
@@ -17,7 +17,7 @@ valid_item: 640
 
 # Validation arguments
 save_freq: 10
-eval_freq: 200
+eval_freq: 10
 eval_sample_num: 1
 eval_input_num: 50
 eval_timesteps: 100
