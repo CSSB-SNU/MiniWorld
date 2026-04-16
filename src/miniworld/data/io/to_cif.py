@@ -118,8 +118,8 @@ def batch_to_cif(  # noqa: PLR0915
             strand_ids = ",".join(str(a) for a in sorted(entity_asym_ids[eid]))
             output += f"{eid} '{poly_type}' {strand_ids}\n"
 
-    # _entity_poly_seq — one entry per residue, using CIF residue idx as num
-    seen_res: set[tuple[int, int, int]] = set()
+    # _entity_poly_seq — one entry per unique residue per entity, using CIF residue idx as num
+    seen_res: set[tuple[int, int]] = set()
     seq_entries: list[tuple[int, str, int]] = []
     for t in range(token_cif_res.shape[0]):
         if not token_mask[t]:
@@ -127,9 +127,8 @@ def batch_to_cif(  # noqa: PLR0915
         eid = token_entity[t].item()
         if eid not in poly_entity_set:
             continue
-        asym = token_asym[t].item()
         cif_res = token_cif_res[t].item()
-        key = (eid, asym, cif_res)
+        key = (eid, cif_res)
         if key in seen_res:
             continue
         seen_res.add(key)
@@ -188,10 +187,10 @@ def batch_to_cif(  # noqa: PLR0915
     )[atom_mask.numpy()]
 
     label_alt_id_list = ["."] * length
-    label_asym_id_list = atom_asym[atom_mask]
-    label_entity_id_list = atom_entity[atom_mask]
+    label_asym_id_list = atom_asym[atom_mask].long()
+    label_entity_id_list = atom_entity[atom_mask].long()
     # Use CIF residue index — atoms of the same residue share the same seq_id
-    label_seq_id_list = atom_cif_res[atom_mask]
+    label_seq_id_list = atom_cif_res[atom_mask].long()
     auth_seq_id_list = label_seq_id_list
     ins_code_list = ["?"] * length
 
@@ -200,7 +199,7 @@ def batch_to_cif(  # noqa: PLR0915
     cartn_z_list = xyz[atom_mask, 2]
     occupancy_list = [1.0] * length
     b_iso_or_equiv_list = [100.0] * length
-    pdbx_formal_charge_list = batch.reference.charge[0][atom_mask]
+    pdbx_formal_charge_list = batch.reference.charge[0][atom_mask].long()
     pdbx_PDB_model_num_list = [1] * length
 
     # Format all columns
