@@ -334,7 +334,7 @@ class Client(BaseClient):
             batch.scheme.atom_to_token_idx_map,
         )
 
-        max_lddt, min_rmsd = 0, float("inf")
+        max_lddt, min_rmsd = 0.0, float("inf")
 
         lddt = metrics.cal_atom_lddt(
             output.atom_pos_pred[0],
@@ -351,8 +351,8 @@ class Client(BaseClient):
         min_rmsd = min(min_rmsd, rmsd)
 
         return {
-            "best_rmsd": min_rmsd,
-            "best_lddt": max_lddt,
+            "best_rmsd": float(min_rmsd),
+            "best_lddt": float(max_lddt),
             "vald_distogram_loss": distogram_loss.item(),
         }
 

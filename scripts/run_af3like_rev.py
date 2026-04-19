@@ -26,7 +26,7 @@ from miniworld.configs import (
     TokenizerConfig,
 )
 from miniworld.data.dataloader.dataloader import BioMolData
-from miniworld.models.default_client_rev import Client
+from miniworld.models import DefaultClient_rev as Client
 from miniworld.models.af3_like import Model_rev as Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
