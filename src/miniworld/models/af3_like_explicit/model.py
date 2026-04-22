@@ -14,7 +14,7 @@ from team_gm.modules.primitives import (
 )
 from torch import nn
 
-from miniworld.configs import SharedConfig, TokenEmbeddingConfig 
+from miniworld.configs import SharedConfig, TokenEmbeddingConfig
 from miniworld.modules.diffusion_module import (
     DiffusionConditioning,
     DiffusionModule,
@@ -92,7 +92,7 @@ class Model(nn.Module):
             config.token_embedding.embedding_path,
             map_location="cpu",
         )
-        
+
         self.profile32_to_fp_index = None
         if config.token_embedding.vocab_path is not None:
             with open(config.token_embedding.vocab_path, "r") as f:
@@ -137,7 +137,7 @@ class Model(nn.Module):
         # self.temp_embedder = TemplateEmbedder(
         #     config.shared,
         #     config.trunk.template_embedder,
-        # ).to(torch.bfloat16)    
+        # ).to(torch.bfloat16)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer).to(torch.bfloat16)
         self.distogram_head = DistogramHead(
             config.shared.d_pair,
@@ -222,13 +222,14 @@ class Model(nn.Module):
                 )
                 # token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
 
-                token_pair = token_pair + self.msa_module(
-                    msa_feat,
-                    msa_mask,
-                    token_pair,
-                    token_single_input_bf16,
-                    token_mask,
-                )
+                with torch.autocast(device_type='cuda', dtype=torch.bfloat16):
+                    token_pair = token_pair + self.msa_module(
+                        msa_feat,
+                        msa_mask,
+                        token_pair,
+                        token_single_input_bf16,
+                        token_mask,
+                    )
                 token_single = token_single_init_bf16 + self.add_single_recycle(
                     token_single,
                 )

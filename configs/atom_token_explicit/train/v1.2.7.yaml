@@ -1,5 +1,5 @@
-comment: "resume50 af3like atom_token explicit_fp v1.2.7 Adam, lr 4e-4 grad clip 1.0 effective batch size 16"
-run_dir: "logs/resume50 af3like atom_token explicit_fp v1.2.7/"
+comment: "resume340 af3like atom_token explicit_fp v1.2.7 Adam, lr 4e-4 grad clip 1.0 effective batch size 16"
+run_dir: "logs/resume340 af3like atom_token explicit_fp v1.2.7/"
 
 # Training arguments
 num_batch: 1

@@ -131,9 +131,9 @@ class Model(nn.Module):
             config.diffusion.token_dit,
             config.diffusion.dit_cond,
         ).to(torch.float32)
-        
+
         self.rng = np.random.default_rng()
-        
+
     def set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
         self.rng = np.random.default_rng(seed)
@@ -178,7 +178,7 @@ class Model(nn.Module):
         token_pair_init_bf16 = token_pair_init.to(torch.bfloat16)
         token_single_init_bf16 = token_single_init.to(torch.bfloat16)
         token_single_input_bf16 = token_single_input.to(torch.bfloat16)# Trunk forward with recycling
-        # Trunk forward with recycling    
+        # Trunk forward with recycling
         msa_feat, msa_mask = init_msa_with_embedding(
             msa,
             token_embedding=self.token_embedding,
@@ -201,13 +201,14 @@ class Model(nn.Module):
                 )
                 # token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
 
-                token_pair = token_pair + self.msa_module(
-                    msa_feat,
-                    msa_mask,
-                    token_pair,
-                    token_single_input_bf16,
-                    token_mask,
-                )
+                with torch.autocast(device_type='cuda', dtype=torch.bfloat16):
+                    token_pair = token_pair + self.msa_module(
+                        msa_feat,
+                        msa_mask,
+                        token_pair,
+                        token_single_input_bf16,
+                        token_mask,
+                    )
                 token_single = token_single_init_bf16 + self.add_single_recycle(
                     token_single,
                 )

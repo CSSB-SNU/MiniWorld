@@ -12,7 +12,7 @@ from hydra import compose, initialize_config_dir
 from lightning import Fabric
 from omegaconf import OmegaConf
 from pydantic import BaseModel
-from team_gm.core.callbacks import Callback
+from team_gm.core.callbacks import Callback, ModelEMA
 from team_gm.utils.script_utils import MetricsAggregator
 
 import wandb
@@ -28,7 +28,7 @@ from miniworld.configs import (
 
 from miniworld.data.dataloader.dataloader_explicit import BioMolData
 from miniworld.models import ExplicitClient as Client
-from miniworld.models.af3_like_explicit import Model
+from miniworld.models.af3_like_explicit import Model as Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
 torch.set_float32_matmul_precision("medium")
@@ -114,6 +114,8 @@ def train(  # noqa: PLR0912, PLR0915
     job_name: str | None,
     overrides: tuple[str, ...],
 ):
+    torch._dynamo.reset()  # clear stale compile cache (prevents bf16/fp32 mismatch on resume)
+
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
@@ -281,6 +283,14 @@ def train(  # noqa: PLR0912, PLR0915
             client.save_checkpoint(checkpoint_path)
 
         if client.epoch % cfg.train.eval_freq == 0:
+            # Validate on non-EMA weights; next epoch start is a no-op restore.
+            ema_cb = next(
+                (cb for cb in client._callbacks if isinstance(cb, ModelEMA)),
+                None,
+            )
+            if ema_cb is not None:
+                ema_cb._restore_original_params(client)  # noqa: SLF001
+
             valid_dataloader.sampler.set_epoch(client.epoch)  # pyright: ignore[reportAttributeAccessIssue]
             valid_dataset.set_epoch(client.epoch)
             client.logger.info("Validation Epoch %d", client.epoch)
