@@ -23,6 +23,7 @@ from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.msa_util import (
     apply_template_dropout,
+    init_contact_feat,
     init_msa,
     init_template_feat,
     init_token_single_msa,
@@ -106,6 +107,12 @@ class Model(nn.Module):
         )
 
         # Trunk forward
+        self.proj_contact = Linear(
+            config.shared.d_contact,
+            config.shared.d_pair,
+            bias=False,
+            init="zero",
+        ).to(torch.bfloat16)
         self.msa_module = MSAModule(config.trunk.msa_module).to(torch.bfloat16)
         self.temp_embedder = TemplateEmbedder(
             config.shared,
@@ -179,6 +186,7 @@ class Model(nn.Module):
             num_res_class=self.config.shared.num_res_class,
             dtype=torch.bfloat16,
         )
+        contact_feat = init_contact_feat(structure, dtype=torch.bfloat16)
         template_feat = init_template_feat(template, dtype=torch.bfloat16)
         template_feat = apply_template_dropout(
             template_feat,
@@ -192,6 +200,7 @@ class Model(nn.Module):
                 token_pair = token_pair_init_bf16 + self.add_pair_recycle(
                     token_pair,
                 )
+                token_pair = token_pair + self.proj_contact(contact_feat)
                 token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
 
                 token_pair = token_pair + self.msa_module(
@@ -258,7 +267,7 @@ class Model(nn.Module):
         t_emb: Float[torch.Tensor, "A B"],
     ) -> tuple[
         Float[torch.Tensor, "B L_atom 3"],
-        Float[torch.Tensor, "B L_token L_token"],
+        Float[torch.Tensor, "B L_token L_token n_distogram_bins"],
     ]:
         """Forward pass of the AF3Like model."""
         (
@@ -372,7 +381,7 @@ class InferenceOutput:
     atom_pos_pred: torch.Tensor  # (B, L, 3)
 
     # Distogram logits
-    distogram_logit: torch.Tensor  # (B, L, L, 2)
+    distogram_logit: torch.Tensor  # (B, L, L, n_distogram_bins)
 
     # Array of predicted atom coordinate trajectory for timesteps T.
     model_traj: np.ndarray  # (B, T, L, 3)

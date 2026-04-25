@@ -414,11 +414,18 @@ def cli():
     type=str,
     help="Job name",
 )
+@click.option(
+    "--ckpt-strict/--no-ckpt-strict",
+    default=True,
+    show_default=True,
+    help="Whether checkpoint loading requires an exact model/optimizer match.",
+)
 @click.argument("overrides", type=str, nargs=-1)
 def train(  # noqa: PLR0912, PLR0915
     config: Path,
     ckpt: Path | None,
     job_name: str | None,
+    ckpt_strict: bool,
     overrides: tuple[str, ...],
 ):
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
@@ -511,7 +518,7 @@ def train(  # noqa: PLR0912, PLR0915
 
     if ckpt:
         state_dict = torch.load(ckpt, map_location="cpu")
-        client.load_state_dict(state_dict)
+        client.load_state_dict(state_dict, strict=ckpt_strict)
 
     _warmup_bucket_shapes(client, cfg)
 

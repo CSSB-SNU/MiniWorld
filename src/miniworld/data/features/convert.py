@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import biomol
 import numpy as np
 import torch
+from jaxtyping import Int
 
 from miniworld.data.constants import AtomMapping, EntityMapping
 from miniworld.data.pipeline.template import ProteinTemplate
@@ -181,10 +182,22 @@ def to_structure_features(
     atom_pos_mask = np.isfinite(atom_pos).all(axis=1)
     atom_mask = np.ones_like(atom_pos_mask, dtype=bool)
 
+    token_contacts = to_token_contacts(
+        x0=torch.from_numpy(atom_pos.astype(np.float32, copy=False)).unsqueeze(0),
+        atom_to_token_idx_map=torch.from_numpy(
+            atom_to_token_idx_map.astype(np.int64, copy=False),
+        ).unsqueeze(0),
+        x_mask=torch.from_numpy(
+            atom_pos_mask.astype(np.bool_, copy=False),
+        ).unsqueeze(0),
+        token_length=cropped_token_len,
+    ).squeeze(0)
+
     # centering atom_pos
     valid_pos = atom_pos[atom_pos_mask]  # (N_valid, 3)
-    mean_vector = valid_pos.mean(axis=0, keepdims=True)
-    atom_pos = atom_pos - mean_vector
+    if valid_pos.shape[0] > 0:
+        mean_vector = valid_pos.mean(axis=0, keepdims=True)
+        atom_pos = atom_pos - mean_vector
     atom_pos = np.where(atom_pos_mask.astype(bool)[:, None], atom_pos, 0.0)
 
     token_bond = atom_bonds_to_token_bonds(
@@ -206,6 +219,7 @@ def to_structure_features(
         atom_pos_mask=torch.from_numpy(atom_pos_mask.astype(np.bool)),
         atom_mask=torch.from_numpy(atom_mask.astype(np.bool)),
         atom_bond=torch.from_numpy(atom_bond.astype(np.int64)),
+        token_contacts=token_contacts.to(torch.int64),
         token_mask=torch.ones((cropped_token_len,), dtype=torch.bool),  # all ones
         token_bond=torch.from_numpy(token_bond.astype(np.int64)),
     )
@@ -223,6 +237,180 @@ def to_chain_features(
     return ChainFeatures.from_sample(
         entity_type=torch.from_numpy(entity_types.astype(np.int64)),
     )
+
+
+# For steering, we give true contact/non-contact supervision from true structures.
+@torch.no_grad()
+def to_token_contacts(
+    x0: torch.Tensor,
+    atom_to_token_idx_map: torch.Tensor,
+    x_mask: torch.Tensor | None = None,
+    token_mask: torch.Tensor | None = None,
+    token_length: int | None = None,
+    positive_cutoff: float = 6.0,
+    negative_cutoff: float = 12.0,
+    lambda_n: int = 20,  # poisson lambda for sampling
+    prob: float = 1.0,
+) -> Int[torch.Tensor, "B n_token_contact 3"]:
+    """Sample sparse token-level contact supervision as ``(i, j, type)`` triples.
+
+    The input coordinates are atom-level. We first pool valid atom positions into a
+    single token coordinate by averaging only valid atoms that map to that token,
+    then sample contact / non-contact pairs on the token graph. Each output row is:
+
+        ``[i, j, 0]``: definite contact
+        ``[i, j, 1]``: definite non-contact
+
+    Unknown, masked, diagonal, and unsampled pairs are omitted entirely.
+    """
+    if x0.ndim != 3:
+        msg = f"Expected x0 to have shape (B, L_atom, 3), got {tuple(x0.shape)}."
+        raise ValueError(msg)
+
+    if atom_to_token_idx_map.ndim != 2:
+        msg = (
+            "Expected atom_to_token_idx_map to have shape (B, L_atom), "
+            f"got {tuple(atom_to_token_idx_map.shape)}."
+        )
+        raise ValueError(msg)
+
+    if atom_to_token_idx_map.shape != x0.shape[:2]:
+        msg = (
+            "Expected atom_to_token_idx_map to match x0 over (B, L_atom), "
+            f"got {tuple(atom_to_token_idx_map.shape)} vs {tuple(x0.shape[:2])}."
+        )
+        raise ValueError(msg)
+
+    B, _, _ = x0.shape
+    device = x0.device
+
+    if x_mask is None:
+        x_mask = torch.isfinite(x0).all(dim=-1)
+    else:
+        if x_mask.shape != x0.shape[:2]:
+            msg = (
+                "Expected x_mask to match x0 over (B, L_atom), "
+                f"got {tuple(x_mask.shape)} vs {tuple(x0.shape[:2])}."
+            )
+            raise ValueError(msg)
+        x_mask = x_mask.bool() & torch.isfinite(x0).all(dim=-1)
+
+    if token_mask is not None:
+        token_mask = token_mask.bool()
+        if token_mask.shape[0] != B:
+            msg = (
+                "Expected token_mask to share the batch dimension with x0, "
+                f"got {tuple(token_mask.shape)} vs batch size {B}."
+            )
+            raise ValueError(msg)
+        if token_length is None:
+            token_length = int(token_mask.shape[1])
+
+    if token_length is None:
+        token_length = int(atom_to_token_idx_map.max().item()) + 1
+
+    atom_to_token_idx_map = atom_to_token_idx_map.long().clamp(
+        min=0,
+        max=token_length - 1,
+    )
+
+    valid_x0 = torch.where(x_mask[..., None], x0, 0.0).to(torch.float32)
+    token_sum = torch.zeros(
+        (B, token_length, 3),
+        device=device,
+        dtype=valid_x0.dtype,
+    )
+    token_sum.scatter_add_(
+        1,
+        atom_to_token_idx_map[..., None].expand(-1, -1, 3),
+        valid_x0,
+    )
+
+    token_count = torch.zeros((B, token_length), device=device, dtype=valid_x0.dtype)
+    token_count.scatter_add_(1, atom_to_token_idx_map, x_mask.to(valid_x0.dtype))
+
+    token_x0 = token_sum / token_count.clamp(min=1.0)[..., None]
+    valid_token_mask = token_count > 0
+    if token_mask is not None:
+        valid_token_mask = valid_token_mask & token_mask
+    token_x0 = torch.where(valid_token_mask[..., None], token_x0, 0.0)
+
+    dist = torch.cdist(token_x0, token_x0)
+    upper = torch.triu(
+        torch.ones((token_length, token_length), dtype=torch.bool, device=device),
+        diagonal=1,
+    )
+    valid_pair = valid_token_mask[:, :, None] & valid_token_mask[:, None, :] & upper
+
+    contact = valid_pair & (dist < positive_cutoff)
+    noncontact = valid_pair & (dist > negative_cutoff)
+
+    Nc = contact.sum(dim=(1, 2)).clamp(min=1)
+    Nn = noncontact.sum(dim=(1, 2)).clamp(min=1)
+
+    pc = (lambda_n / Nc).clamp(max=1.0)
+    pn = (lambda_n / Nn).clamp(max=1.0)
+
+    use_cond = (torch.rand(B, device=device) < prob).float()
+
+    mode = torch.randint(0, 3, (B,), device=device)
+
+    use_contact = ((mode == 0) | (mode == 2)).float() * use_cond
+    use_noncontact = ((mode == 1) | (mode == 2)).float() * use_cond
+
+    # Bernoulli approximation
+    pc = pc.view(B, 1, 1)
+    pn = pn.view(B, 1, 1)
+    use_contact = use_contact.view(B, 1, 1)
+    use_noncontact = use_noncontact.view(B, 1, 1)
+
+    contact_sample = (
+        contact
+        & (torch.rand((B, token_length, token_length), device=device) < pc)
+        & (use_contact.bool())
+    )
+
+    noncontact_sample = (
+        noncontact
+        & (torch.rand((B, token_length, token_length), device=device) < pn)
+        & (use_noncontact.bool())
+    )
+
+    contact_idx = torch.nonzero(contact_sample, as_tuple=False)
+    noncontact_idx = torch.nonzero(noncontact_sample, as_tuple=False)
+
+    contact_pairs = torch.cat(
+        [
+            contact_idx,
+            torch.zeros((contact_idx.shape[0], 1), device=device, dtype=torch.long),
+        ],
+        dim=-1,
+    )
+    noncontact_pairs = torch.cat(
+        [
+            noncontact_idx,
+            torch.ones((noncontact_idx.shape[0], 1), device=device, dtype=torch.long),
+        ],
+        dim=-1,
+    )
+    all_pairs = torch.cat([contact_pairs, noncontact_pairs], dim=0)
+
+    if all_pairs.shape[0] == 0:
+        return torch.zeros((B, 0, 3), device=device, dtype=torch.long)
+
+    sort_idx = torch.argsort(all_pairs[:, 0])
+    all_pairs = all_pairs[sort_idx]
+    batch_idx = all_pairs[:, 0]
+    counts = torch.bincount(batch_idx, minlength=B)
+    max_pair_count = int(counts.max().item())
+    batch_offsets = torch.cumsum(counts, dim=0) - counts
+    local_idx = torch.arange(all_pairs.shape[0], device=device)
+    local_idx = local_idx - torch.repeat_interleave(batch_offsets, counts)
+
+    out = torch.zeros((B, max_pair_count, 3), device=device, dtype=torch.long)
+    out[batch_idx, local_idx] = all_pairs[:, 1:]
+
+    return out
 
 
 def make_batch(

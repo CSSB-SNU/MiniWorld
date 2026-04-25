@@ -22,6 +22,7 @@ class StructureFeatures(BaseBatch):
     atom_pos_mask: Float[torch.Tensor, "B L_atom"]
     atom_mask: Bool[torch.Tensor, "B L_atom"]
     token_bond: Int[torch.Tensor, "B n_token_bond 2"]
+    token_contacts: Int[torch.Tensor, "B n_token_contact 3"]
     token_mask: Bool[torch.Tensor, "B L_res"]
     atom_bond: Int[torch.Tensor, "B n_atom_bond 6"]
 
@@ -35,6 +36,7 @@ class MultiStateStructureFeatures(BaseBatch):
     atom_pos_mask: Float[torch.Tensor, "B N_str L_atom"]
     atom_mask: Bool[torch.Tensor, "B L_atom"]
     token_bond: Int[torch.Tensor, "B n_token_bond 3"]
+    token_contacts: Int[torch.Tensor, "B n_token_contact 3"]
     token_mask: Bool[torch.Tensor, "B L_res"]
     atom_bond: Int[torch.Tensor, "B n_atom_bond 6"]
 

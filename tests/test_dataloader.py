@@ -910,6 +910,7 @@ def run_item(args: ItemOptions) -> None:
         dataset,
         args,
     )
+    breakpoint()
     print_item_summary(
         batch,
         dataset=dataset,
@@ -1034,4 +1035,43 @@ def item(**kwargs: object) -> None:
 
 
 if __name__ == "__main__":
+    # 사용법 (실행 예시):
+    #
+    # 1) benchmark 서브커맨드 — 직접 dataset[idx] 호출 지연과 DataLoader wait 시간 측정
+    #    python tests/test_dataloader.py benchmark
+    #    python tests/test_dataloader.py benchmark \
+    #        --steps 32 --direct-samples 32 \
+    #        --warmup-steps 4 --warmup-direct 4 \
+    #        --train-seconds 0.5 \
+    #        --batch-size 1 --num-workers 4 --prefetch-factor 8 \
+    #        --bucket-token-multiple 128 --bucket-atom-multiple 1024 \
+    #        --output-prefix tests/artifacts/dataloader_benchmark \
+    #        --max-tokens 384 --max-atoms 4096 --max-msa-depth 384 \
+    #        --tokenizer-level dynamic --missing-policy query
+    #    결과: <output-prefix>.png (그래프), <output-prefix>.csv (raw 측정값)
+    #
+    # 2) item 서브커맨드 — 하나의 샘플만 가져와 feature shape/요약 출력
+    #    (a) dataset index 로 직접 조회:
+    #        python tests/test_dataloader.py item --index 0
+    #    (b) 샘플 이름으로 조회 ("<pdb>_<assembly>_<model>_<alt>" 형식):
+    #        python tests/test_dataloader.py item --name 3JB1_1_1_.
+    #    (c) id 필드로 조회 (+ 여러 개 매칭 시 --match 로 선택):
+    #        python tests/test_dataloader.py item \
+    #            --pdb-id 3jb1 --assembly-id 1 --model-id 1 --alt-id . --match 0
+    #    (d) chain 명시 + 특정 residue 크롭:
+    #        python tests/test_dataloader.py item \
+    #            --pdb-id 3jb1 --assembly-id 1 --model-id 1 --alt-id . \
+    #            --chain-id A --chain-id B \
+    #            --crop-indices 10,12,20:30 --seed 42 --epoch 0
+    #
+    # 공통 dataset 옵션 (두 서브커맨드 모두 지원):
+    #   --cif-db-path / --a3m-db-path / --edge-path /
+    #   --template-db-path / --ccd-db-path
+    #   --tokenizer-level [atom|dynamic|lte|residue] --tokenizer-seed
+    #   --sigma-flat-prob / --sigma-min / --sigma-max  (dynamic 토크나이저용)
+    #
+    # 도움말:
+    #   python tests/test_dataloader.py --help
+    #   python tests/test_dataloader.py benchmark --help
+    #   python tests/test_dataloader.py item --help
     cli()

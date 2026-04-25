@@ -1,7 +1,12 @@
 import torch
 from jaxtyping import Bool, Float
 
-from miniworld.data.features import MSAFeatures, SequenceFeatures, TemplateFeatures
+from miniworld.data.features import (
+    MSAFeatures,
+    SequenceFeatures,
+    StructureFeatures,
+    TemplateFeatures,
+)
 
 
 @torch.compile
@@ -229,6 +234,78 @@ def init_template_feat(
         num_classes=4,
     ) * (contact_feat != 4).unsqueeze(-1)
 
+    return contact_feat.to(dtype=dtype)
+
+
+@torch.no_grad()
+def init_contact_feat(
+    structure: StructureFeatures,
+    dtype: torch.dtype = torch.float32,
+) -> Float[torch.Tensor, "B L L 3"]:
+    """Initialize dense token contact features from sparse token contact triples.
+
+    Output channels:
+        [:, :, :, 0]: definite contact
+        [:, :, :, 1]: definite negative
+        [:, :, :, 2]: unknown / unlabeled valid token pair
+
+    Diagonal and masked token pairs are encoded as all zeros.
+    """
+    token_mask = structure.token_mask.bool()
+    batch_size, token_length = token_mask.shape
+    device = token_mask.device
+
+    if token_length == 0:
+        return torch.zeros((batch_size, 0, 0, 3), device=device, dtype=dtype)
+
+    class_map = torch.full(
+        (batch_size, token_length, token_length),
+        3,
+        device=device,
+        dtype=torch.long,
+    )
+
+    off_diag = ~torch.eye(token_length, device=device, dtype=torch.bool).unsqueeze(0)
+    valid_pair_mask = token_mask[:, :, None] & token_mask[:, None, :] & off_diag
+    class_map = torch.where(valid_pair_mask, torch.full_like(class_map, 2), class_map)
+
+    token_contacts = structure.token_contacts.long()
+    if token_contacts.shape[1] > 0:
+        token_i = token_contacts[:, :, 0]
+        token_j = token_contacts[:, :, 1]
+        token_type = token_contacts[:, :, 2]
+
+        token_i_safe = token_i.clamp(min=0, max=token_length - 1)
+        token_j_safe = token_j.clamp(min=0, max=token_length - 1)
+
+        valid_contact = (
+            (token_i >= 0)
+            & (token_i < token_length)
+            & (token_j >= 0)
+            & (token_j < token_length)
+            & (token_i != token_j)
+            & (token_type >= 0)
+            & (token_type < 2)
+        )
+        valid_contact = (
+            valid_contact
+            & token_mask.gather(1, token_i_safe)
+            & token_mask.gather(1, token_j_safe)
+        )
+
+        batch_idx = torch.arange(batch_size, device=device)[:, None].expand_as(token_i)
+        batch_idx = batch_idx[valid_contact]
+        token_i_valid = token_i_safe[valid_contact]
+        token_j_valid = token_j_safe[valid_contact]
+        token_type_valid = token_type[valid_contact]
+
+        class_map[batch_idx, token_i_valid, token_j_valid] = token_type_valid
+        class_map[batch_idx, token_j_valid, token_i_valid] = token_type_valid
+
+    contact_feat = torch.nn.functional.one_hot(
+        class_map.clamp(max=2),
+        num_classes=3,
+    ) * (class_map != 3).unsqueeze(-1)
     return contact_feat.to(dtype=dtype)
 
 

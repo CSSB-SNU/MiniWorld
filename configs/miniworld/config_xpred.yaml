@@ -1,7 +1,7 @@
 defaults:
   - model: medium
   - train: default
-  - data: full_train
+  - data: full_train_balanced
   - diffuser: xpred_decoupled
   - loss: default_xpred
   - _self_

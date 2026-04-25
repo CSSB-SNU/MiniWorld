@@ -33,6 +33,7 @@ from miniworld.models.miniworld.model import (
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
+    from pathlib import Path
 
     from jaxtyping import Bool, Float
 
@@ -185,6 +186,191 @@ class Client(BaseClient):
         torch.backends.cudnn.benchmark = False
         np.random.seed(seed)
         random.seed(seed)
+
+    @staticmethod
+    def _summarize_keys(
+        title: str,
+        keys: list[str],
+        limit: int = 20,
+    ) -> list[str]:
+        """Format checkpoint key summaries for warning logs."""
+        if not keys:
+            return [f"{title}: 0"]
+
+        lines = [f"{title}: {len(keys)}"]
+        lines.extend(f"  - {key}" for key in keys[:limit])
+        if len(keys) > limit:
+            lines.append(f"  ... and {len(keys) - limit} more")
+        return lines
+
+    def _warn_non_strict_model_load(
+        self,
+        missing_keys: list[str],
+        unexpected_keys: list[str],
+        incompatible_keys: list[tuple[str, Any, Any]],
+    ) -> None:
+        """Emit a strong warning when model checkpoint loading is non-strict."""
+        lines = [
+            "=" * 88,
+            "NON-STRICT CHECKPOINT LOAD: model architecture/state mismatch detected.",
+            (
+                "New, removed, or resized layers were not restored exactly. "
+                "Missing or incompatible parameters will keep their current "
+                "initialization."
+            ),
+            *self._summarize_keys("Missing model keys", missing_keys),
+            *self._summarize_keys("Unexpected checkpoint keys", unexpected_keys),
+            f"Shape-mismatched checkpoint keys: {len(incompatible_keys)}",
+        ]
+        if incompatible_keys:
+            limit = 20
+            lines.extend(
+                (
+                    f"  - {key} "
+                    f"(checkpoint={checkpoint_shape}, current={current_shape})"
+                )
+                for key, checkpoint_shape, current_shape in incompatible_keys[:limit]
+            )
+            if len(incompatible_keys) > limit:
+                lines.append(f"  ... and {len(incompatible_keys) - limit} more")
+        lines.append("=" * 88)
+        self.logger.warning("%s", "\n".join(lines))
+
+    def load_state_dict(
+        self,
+        state_dict: dict[str, Any],
+        *,
+        model_only: bool = False,
+        strict: bool = True,
+    ) -> None:
+        """Load model and optimizer state from a checkpoint file.
+
+        With ``strict=False``, model parameters are loaded only when both key and
+        shape match. Missing, unexpected, or resized parameters are skipped with a
+        strong warning, so newly added layers stay at their current initialization.
+        """
+        model_state_dict = state_dict["model_state_dict"]
+        if strict:
+            self.model.load_state_dict(model_state_dict)
+        else:
+            current_model_state = self.model.state_dict()
+            filtered_model_state: dict[str, Any] = {}
+            unexpected_keys: list[str] = []
+            incompatible_keys: list[tuple[str, Any, Any]] = []
+
+            for key, value in model_state_dict.items():
+                if key not in current_model_state:
+                    unexpected_keys.append(key)
+                    continue
+                current_value = current_model_state[key]
+                if (
+                    isinstance(value, torch.Tensor)
+                    and isinstance(current_value, torch.Tensor)
+                    and value.shape != current_value.shape
+                ):
+                    incompatible_keys.append(
+                        (key, tuple(value.shape), tuple(current_value.shape)),
+                    )
+                    continue
+                filtered_model_state[key] = value
+
+            missing_keys = [
+                key for key in current_model_state if key not in model_state_dict
+            ]
+
+            self.model.load_state_dict(filtered_model_state, strict=False)
+            if missing_keys or unexpected_keys or incompatible_keys:
+                self._warn_non_strict_model_load(
+                    missing_keys=missing_keys,
+                    unexpected_keys=unexpected_keys,
+                    incompatible_keys=incompatible_keys,
+                )
+
+        self._epoch = state_dict["epoch"]
+        self._global_step = state_dict["global_step"]
+
+        if not model_only:
+            optimizer_state = state_dict.get("optimizer_state_dict")
+            scheduler_state = state_dict.get("scheduler_state_dict")
+
+            if strict:
+                if optimizer_state is None:
+                    msg = "Optimizer state not found in checkpoint."
+                    raise ValueError(msg)
+                if self._optimizer is None:
+                    msg = "Optimizer is not set in the client."
+                    raise ValueError(msg)
+                if scheduler_state is not None and self.scheduler is None:
+                    msg = (
+                        "Scheduler state found in checkpoint, but no scheduler is set "
+                        "in the client."
+                    )
+                    raise ValueError(msg)
+                if scheduler_state is None and self.scheduler is not None:
+                    msg = "Scheduler state not found in checkpoint."
+                    raise ValueError(msg)
+
+            if optimizer_state is not None and self._optimizer is not None:
+                if strict:
+                    self.optimizer.load_state_dict(optimizer_state)
+                else:
+                    try:
+                        self.optimizer.load_state_dict(optimizer_state)
+                    except ValueError as exc:
+                        self.logger.warning(
+                            "%s",
+                            "\n".join(
+                                [
+                                    "=" * 88,
+                                    "NON-STRICT CHECKPOINT LOAD: optimizer state mismatch.",
+                                    "Optimizer state was skipped and current optimizer state is kept.",
+                                    f"  - {type(exc).__name__}: {exc}",
+                                    "=" * 88,
+                                ],
+                            ),
+                        )
+
+            if scheduler_state is not None and self.scheduler is not None:
+                if strict:
+                    self.scheduler.load_state_dict(scheduler_state)
+                else:
+                    try:
+                        self.scheduler.load_state_dict(scheduler_state)
+                    except (KeyError, ValueError) as exc:
+                        self.logger.warning(
+                            "%s",
+                            "\n".join(
+                                [
+                                    "=" * 88,
+                                    "NON-STRICT CHECKPOINT LOAD: scheduler state mismatch.",
+                                    "Scheduler state was skipped and current scheduler state is kept.",
+                                    f"  - {type(exc).__name__}: {exc}",
+                                    "=" * 88,
+                                ],
+                            ),
+                        )
+
+        self.call_callbacks("on_load_state_dict", state_dict)
+        self.logger.info(
+            "Loaded checkpoint (epoch=%d, step=%d)",
+            self.epoch,
+            self.global_step,
+        )
+
+    @classmethod
+    def from_checkpoint(
+        cls,
+        filepath: str | Path,
+        *,
+        strict: bool = True,
+        **extra_kwargs: Any,
+    ) -> Client:
+        """Restore model weights from a checkpoint file."""
+        state_dict = torch.load(filepath, map_location="cpu")
+        config = cls.Config.model_validate(state_dict["config"])
+        client = cls(config, **extra_kwargs)
+        client.load_state_dict(state_dict, model_only=True, strict=strict)
+        return client
 
     def loss_fn(
         self,

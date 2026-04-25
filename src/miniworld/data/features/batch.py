@@ -121,6 +121,7 @@ class Batch(BaseBatch):
                 atom_pos_mask=torch.zeros((1, n_atoms), dtype=torch.bool),
                 atom_mask=torch.zeros((1, n_atoms), dtype=torch.bool),
                 token_bond=torch.zeros((1, 0, 2), dtype=torch.long),
+                token_contacts=torch.zeros((1, 0, 3), dtype=torch.long),
                 token_mask=torch.zeros((1, n_tokens), dtype=torch.bool),
                 atom_bond=torch.zeros((1, 0, 6), dtype=torch.long),
             ),

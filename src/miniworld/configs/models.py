@@ -15,6 +15,7 @@ class SharedConfig(BaseModel):
     d_pair: int = 128
     d_pair_template: int = 128
     d_pair_atom: int = 16
+    d_contact: int = 3
 
     d_time: int = 256
 
