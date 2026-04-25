@@ -1,4 +1,4 @@
-comment: "miniworld 2.2.1 only train medium, add contact, balanced data, xpred decoupled, Adam, lr 2e-4 grad clip 1.0 effective batch size 256"
+comment: "miniworld 2.2.1 only train large, add contact, balanced data, xpred decoupled, Adam, lr 2e-4 grad clip 1.0 effective batch size 256"
 run_dir: "logs/miniworld v2.2.1/"
 
 # Training arguments
