@@ -1,0 +1,5 @@
+{"epoch": 10, "wall_time": 6829.796588178026, "best_rmsd": 17.891706466674805, "best_lddt": 0.2594757378101349, "vald_distogram_loss": 2.509998083114624, "epoch_time": 6789.96373737324}
+{"epoch": 20, "wall_time": 6650.584312111139, "best_rmsd": 16.57977867126465, "best_lddt": 0.3511073589324951, "vald_distogram_loss": 2.394310712814331, "epoch_time": 6640.106209633872}
+{"epoch": 30, "wall_time": 6693.325783971697, "best_rmsd": 15.525604248046875, "best_lddt": 0.3900751769542694, "vald_distogram_loss": 2.344125270843506, "epoch_time": 6688.567844136152}
+{"epoch": 40, "wall_time": 6850.269215696026, "best_rmsd": 15.437219619750977, "best_lddt": 0.41136738657951355, "vald_distogram_loss": 2.280906915664673, "epoch_time": 6842.703832748346}
+{"epoch": 50, "wall_time": 7024.318324385211, "best_rmsd": 15.51233196258545, "best_lddt": 0.40956392884254456, "vald_distogram_loss": 2.223947048187256, "epoch_time": 7009.402329580393}
