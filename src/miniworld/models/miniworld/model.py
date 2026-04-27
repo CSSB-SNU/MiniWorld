@@ -388,3 +388,6 @@ class InferenceOutput:
 
     # Array of interpolant predicted atom coordinate trajectory for timesteps T.
     inter_traj: np.ndarray  # (B, T, L, 3)
+
+    # Array of R/T-corrupted model input coordinates per step (pre input-scaling).
+    input_traj: np.ndarray  # (B, T, L, 3)

@@ -12,6 +12,7 @@ import logging
 import os
 import time
 from pathlib import Path
+from typing import Literal
 
 import click
 import matplotlib.pyplot as plt
@@ -107,11 +108,13 @@ def sigma_sweep_with_loss(
     client: Client,
     batch: Batch,
     n_sigmas: int = 50,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, list[torch.Tensor], list[torch.Tensor]]:
     """Single-step denoising sweep using x-prediction.
 
     Model predicts x0/sigma_data. We recover x0_hat = F * sigma_data,
     then compute loss via client.diffuser.cal_loss.
+
+    Returns sigmas, losses, and per-sigma x0_hat / x_noisy tensors (CPU).
     """
     from miniworld.models.miniworld.model import ModelWrapper
     from miniworld.utils.structure.se3 import apply_chain_rt, sample_rigid
@@ -144,6 +147,8 @@ def sigma_sweep_with_loss(
     )
 
     losses = []
+    x0_hats: list[torch.Tensor] = []
+    x_noisies: list[torch.Tensor] = []
     for sigma_y_cpu in sigmas:
         sigma_y = sigma_y_cpu.to(client.device)
         sigma_R, sigma_T = scheduler.convert_to_sigma_rt(sigma_y.unsqueeze(0))
@@ -183,8 +188,11 @@ def sigma_sweep_with_loss(
             mask=atom_mask.unsqueeze(0),
         )
         losses.append(loss.item())
+        # Normalize to (1, L, 3) for batch_to_cif: x0_hat is (1, 1, L, 3), x_noisy is (1, L, 3)
+        x0_hats.append(x0_hat.detach().reshape(1, -1, 3).cpu())
+        x_noisies.append(x_noisy.detach().reshape(1, -1, 3).cpu())
 
-    return sigmas.numpy(), np.array(losses)
+    return sigmas.numpy(), np.array(losses), x0_hats, x_noisies
 
 
 def plot_sigma_sweep_loss(
@@ -232,6 +240,9 @@ class InferConfig(BaseModel):
     num_workers: int = 0
     compile: bool = True
     no_rt: bool = False
+    combine_all: bool = False
+    update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered"
+    use_ema: bool = True
     output_dir: str = "outputs/miniworld_inference"
 
 
@@ -296,7 +307,7 @@ def inference(  # noqa: PLR0915
     run_sub_dir = date_dir / run_name
     run_sub_dir.mkdir(parents=True, exist_ok=True)
 
-    train_cfg = Client.TrainConfig(seed=cfg.infer.seed)
+    train_cfg = Client.TrainConfig(seed=cfg.infer.seed, use_ema=cfg.infer.use_ema)
     client = Client(
         Client.Config(
             train=train_cfg,
@@ -375,7 +386,13 @@ def inference(  # noqa: PLR0915
             torch.cuda.max_memory_allocated() / 1024**3,
         )
 
-        output = client.inference(batch, timesteps=cfg.infer.timesteps)
+        output = client.inference(
+            batch,
+            timesteps=cfg.infer.timesteps,
+            no_rt=cfg.infer.no_rt,
+            update_rule=cfg.infer.update_rule,
+            combine_all=cfg.infer.combine_all,
+        )
 
         quality = client.test_inference_quality(batch, output)
         client.logger.info(
@@ -391,21 +408,29 @@ def inference(  # noqa: PLR0915
         batch_to_cif(batch, output.atom_pos_pred, cif_dir / f"{name}_pred.cif")
         batch_to_cif(batch, None, cif_dir / f"{name}_gt.cif")
 
-        # Save trajectory CIFs
+        # Save trajectory CIFs: x0_hat (model prediction) and xt (noisy state) per step
         traj_dir = cif_dir / f"{name}_traj"
-        traj_dir.mkdir(parents=True, exist_ok=True)
+        traj_x0hat_dir = traj_dir / "x0hat"
+        traj_xt_dir = traj_dir / "xt"
+        traj_input_dir = traj_dir / "x_with_noise"
+        traj_x0hat_dir.mkdir(parents=True, exist_ok=True)
+        traj_xt_dir.mkdir(parents=True, exist_ok=True)
+        traj_input_dir.mkdir(parents=True, exist_ok=True)
         model_traj = output.model_traj[0]
+        inter_traj = output.inter_traj[0]
+        input_traj = output.input_traj[0]
         scheduler = client.diffusion_scheduler
         time_steps = scheduler.sampling_time_steps(cfg.infer.timesteps)
         sigmas_y = time_steps[:-1].numpy()
+        device = batch.structure.atom_pos.device
         for t in range(model_traj.shape[0]):
-            x0_hat_t = (
-                torch.from_numpy(model_traj[t])
-                .unsqueeze(0)
-                .to(batch.structure.atom_pos.device)
-            )
-            step_path = traj_dir / f"step{t:03d}_sigma{sigmas_y[t]:.4f}.cif"
-            batch_to_cif(batch, x0_hat_t, step_path)
+            tag = f"step{t:03d}_sigma{sigmas_y[t]:.4f}"
+            x0_hat_t = torch.from_numpy(model_traj[t]).unsqueeze(0).to(device)
+            xt = torch.from_numpy(inter_traj[t]).unsqueeze(0).to(device)
+            x_with_noise_t = torch.from_numpy(input_traj[t]).unsqueeze(0).to(device)
+            batch_to_cif(batch, x0_hat_t, traj_x0hat_dir / f"{tag}.cif")
+            batch_to_cif(batch, xt, traj_xt_dir / f"{tag}.cif")
+            batch_to_cif(batch, x_with_noise_t, traj_input_dir / f"{tag}.cif")
 
         # Trajectory RMSD plot
         plot_trajectory_rmsd(
@@ -417,13 +442,30 @@ def inference(  # noqa: PLR0915
         )
 
         # Sigma sweep loss plot
-        sweep_sigmas, sweep_losses = sigma_sweep_with_loss(client, batch, n_sigmas=50)
+        sweep_sigmas, sweep_losses, sweep_x0_hats, sweep_x_noisies = (
+            sigma_sweep_with_loss(client, batch, n_sigmas=50)
+        )
         plot_sigma_sweep_loss(
             sweep_sigmas,
             sweep_losses,
             scheduler,
             run_sub_dir / f"{name}_sigma_sweep_loss.png",
         )
+
+        # Save per-sigma single-step denoised structures (x0_hat) and noisy inputs
+        sweep_dir = cif_dir / f"{name}_sweep"
+        sweep_x0hat_dir = sweep_dir / "x0hat"
+        sweep_noisy_dir = sweep_dir / "noisy"
+        sweep_x0hat_dir.mkdir(parents=True, exist_ok=True)
+        sweep_noisy_dir.mkdir(parents=True, exist_ok=True)
+        for i, sigma_y_val in enumerate(sweep_sigmas):
+            tag = f"step{i:03d}_sigma{float(sigma_y_val):.4f}"
+            batch_to_cif(
+                batch, sweep_x0_hats[i].to(device), sweep_x0hat_dir / f"{tag}.cif"
+            )
+            batch_to_cif(
+                batch, sweep_x_noisies[i].to(device), sweep_noisy_dir / f"{tag}.cif"
+            )
 
         client.logger.info("Saved results for %s", name)
 

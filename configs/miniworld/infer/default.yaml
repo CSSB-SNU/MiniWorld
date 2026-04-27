@@ -4,4 +4,9 @@ timesteps: 100
 num_workers: 0
 compile: true
 output_dir: "outputs/miniworld_inference"
-no_rt: true
+no_rt: false
+combine_all: true
+# update_rule: "x0_centered"
+# update_rule: "ode"
+update_rule: "ode_aligned"
+use_ema: false

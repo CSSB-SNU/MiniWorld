@@ -605,6 +605,9 @@ class Client(BaseClient):
         self,
         batch: Batch,
         timesteps: int = 100,
+        no_rt: bool = False,
+        update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered",
+        combine_all: bool = False,
     ) -> InferenceOutput:
         """Inference using the diffusion solver."""
         raw_model = getattr(self.model, "module", self.model)
@@ -622,21 +625,27 @@ class Client(BaseClient):
             structure=batch.structure,
         )
         shape = batch.structure.atom_pos.shape
-        atom_pos_pred, inter_traj, model_traj = self.solver.sample(
+        atom_pos_pred, inter_traj, model_traj, input_traj = self.solver.sample(
             model_fn=model_wrapper,
             shape=shape,
             atom_to_combine=batch.scheme.atom_to_chain_id,
             num_steps=timesteps,
             device=self.device,
+            use_rt=not no_rt,
+            mask=batch.structure.atom_pos_mask.bool(),
+            update_rule=update_rule,
             return_intermediate=True,
+            combine_all=combine_all,
         )
         inter_traj = [x.detach().cpu().numpy() for x in inter_traj]
         model_traj = [x.detach().cpu().numpy() for x in model_traj]
+        input_traj = [x.detach().cpu().numpy() for x in input_traj]
         distogram_logit = model_wrapper.condition["distogram_logit"]
         return InferenceOutput(
             atom_pos_pred=atom_pos_pred,
             model_traj=np.stack(model_traj, axis=1),
             inter_traj=np.stack(inter_traj, axis=1),
+            input_traj=np.stack(input_traj, axis=1),
             distogram_logit=distogram_logit,
         )
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import torch
 from pydantic import BaseModel
+from typing_extensions import Literal
 
 from miniworld.diffusion.base.solver import (
     DiffusionSolver,
@@ -17,6 +18,7 @@ from miniworld.diffusion.base.solver import (
     _expand_to_batch,
 )
 from miniworld.diffusion.decoupled_xpred.scheduler import DecoupledXPredScheduler
+from miniworld.utils.structure.align import weighted_align
 from miniworld.utils.structure.se3 import apply_chain_rt, sample_rigid
 
 
@@ -70,6 +72,50 @@ class XPredDecoupledSolver(DiffusionSolver):
             dtype=dtype,
         )
 
+    def _center_to_origin(
+        self,
+        x: torch.Tensor,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Translate each structure so the valid-atom centroid is at the origin."""
+        if mask is None:
+            centroid = x.mean(dim=-2, keepdim=True)
+            return x - centroid
+
+        mask = self._prepare_weight(x, mask)
+
+        denom = mask.sum(dim=-1, keepdim=True).clamp(min=1.0)
+        centroid = (x * mask.unsqueeze(-1)).sum(dim=-2, keepdim=True) / denom.unsqueeze(-1)
+        x_centered = x - centroid
+        return x_centered * mask.unsqueeze(-1)
+
+    def _prepare_weight(
+        self,
+        x: torch.Tensor,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Expand the atom mask to match the current batch shape."""
+        if mask is None:
+            return torch.ones(x.shape[:-1], device=x.device, dtype=x.dtype)
+
+        weight = mask.to(device=x.device, dtype=x.dtype)
+        if weight.ndim == 1:
+            weight = weight.unsqueeze(0).expand(x.shape[0], -1)
+        elif weight.shape[0] == 1 and x.shape[0] > 1:
+            weight = weight.expand(x.shape[0], -1)
+        return weight
+
+    def _align_to_prediction(
+        self,
+        y: torch.Tensor,
+        x_pred: torch.Tensor,
+        mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Rigidly align the current iterate to the predicted x0 frame."""
+        weight = self._prepare_weight(y, mask)
+        y_aligned = weighted_align(y, x_pred, weight=weight)
+        return torch.where(weight.unsqueeze(-1) > 0, y_aligned, y)
+
     def step(
         self,
         model_fn: ModelFn,
@@ -77,11 +123,16 @@ class XPredDecoupledSolver(DiffusionSolver):
         t_index: int,
         time_steps: torch.Tensor,
         atom_to_combine: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+        *,
+        use_rt: bool = True,
+        mask: torch.Tensor | None = None,
+        update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered",
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """One solver step on coordinates.
 
         R/T are sampled fresh from their marginal at sigma_hat (not stateful).
-        Returns (y_next, x_pred).
+        Returns (y_next, x_pred, x_with_noise), where x_with_noise is the
+        R/T-corrupted model input at sigma_hat (pre input-scaling).
         """
         sigma_i = self.scheduler.sampling_schedule(time_steps[t_index])
         sigma_next = self.scheduler.sampling_schedule(time_steps[t_index + 1])
@@ -99,27 +150,56 @@ class XPredDecoupledSolver(DiffusionSolver):
             )
             y = y + added_noise
 
-        # Sample R/T marginal at sigma_hat for model-input corruption
-        R_hat, T_hat = self._sample_rt(
-            sigma_hat,
-            batch_size,
-            chain_num,
-            y.device,
-            y.dtype,
-        )
-        x_with_noise = apply_chain_rt(y, R_hat, T_hat, atom_to_combine)
+        # Sample R/T marginal at sigma_hat for model-input corruption unless disabled.
+        if use_rt:
+            rotation_hat, translation_hat = self._sample_rt(
+                sigma_hat,
+                batch_size,
+                chain_num,
+                y.device,
+                y.dtype,
+            )
+            x_with_noise = apply_chain_rt(
+                y,
+                rotation_hat,
+                translation_hat,
+                atom_to_combine,
+            )
+            _, sigma_t_hat = self.scheduler.convert_to_sigma_rt(sigma_hat)
+        else:
+            x_with_noise = y
+            sigma_t_hat = torch.zeros_like(sigma_hat)
 
         # Model prediction
-        _, sigma_t_hat = self.scheduler.convert_to_sigma_rt(sigma_hat)
         t_emb = self.scheduler.noise_condition(sigma_hat)
         c_in = self.scheduler.input_scale(sigma_hat, sigma_t_hat)
         x_pred = model_fn(x_with_noise * c_in, t_emb) * self.sigma_data
 
-        # EDM ODE step: dy/dsigma = (y - x_pred) / sigma
-        v = (y - x_pred) / sigma_hat
-        y_next = y + self.config.step_scale * (sigma_next - sigma_hat) * v
+        if update_rule == "ode":
+            v = (y - x_pred) / sigma_hat
+            y_next = y + self.config.step_scale * (sigma_next - sigma_hat) * v
+        elif update_rule == "ode_aligned":
+            y_aligned = self._align_to_prediction(y, x_pred, mask)
+            v = (y_aligned - x_pred) / sigma_hat
+            y_next = (
+                y_aligned
+                + self.config.step_scale * (sigma_next - sigma_hat) * v
+            )
+        elif update_rule == "x0_centered":
+            x_pred = self._center_to_origin(x_pred, mask)
+            noise_scale = (
+                (1.0 - self.config.step_scale) * sigma_hat
+                + self.config.step_scale * sigma_next
+            )
+            if torch.abs(noise_scale).item() > 0:
+                y_next = x_pred + noise_scale * torch.randn_like(y)
+            else:
+                y_next = x_pred
+        else:
+            msg = f"Unsupported update_rule: {update_rule}"
+            raise ValueError(msg)
 
-        return y_next, x_pred
+        return y_next, x_pred, x_with_noise
 
     @torch.no_grad()
     def sample(
@@ -129,29 +209,52 @@ class XPredDecoupledSolver(DiffusionSolver):
         atom_to_combine: torch.Tensor,
         num_steps: int,
         device: torch.device,
+        *,
+        use_rt: bool = True,
+        mask: torch.Tensor | None = None,
+        update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered",
         return_intermediate: bool = False,
-    ) -> tuple[torch.Tensor, list[torch.Tensor], list[torch.Tensor]] | torch.Tensor:
-        """Sample from noise using EDM ODE with x-prediction."""
+        combine_all: bool = False,
+    ) -> (
+        tuple[torch.Tensor, list[torch.Tensor], list[torch.Tensor], list[torch.Tensor]]
+        | torch.Tensor
+    ):
+        """Sample from noise using the selected x-prediction update rule.
+
+        When return_intermediate is True, returns
+        (y_final, inter_traj, hat_list, input_traj) where input_traj[i] is the
+        R/T-corrupted model input at step i (pre input-scaling).
+
+        When combine_all is True, all atoms are treated as a single group so a
+        single R/T is sampled and applied to the whole structure regardless of
+        the chain layout in atom_to_combine.
+        """
+        if combine_all:
+            atom_to_combine = torch.zeros_like(atom_to_combine)
         time_steps = self.scheduler.sampling_time_steps(num_steps).to(device)
         sigma_0 = self.scheduler.sampling_schedule(time_steps[0])
 
         y = torch.randn(shape, device=device) * sigma_0
-
         trajectory: list[torch.Tensor] = []
         hat_list: list[torch.Tensor] = []
+        input_list: list[torch.Tensor] = []
 
         for i in range(num_steps):
-            y, x_pred = self.step(
+            y, x_pred, x_with_noise = self.step(
                 model_fn,
                 y,
                 i,
                 time_steps,
                 atom_to_combine,
+                use_rt=use_rt,
+                mask=mask,
+                update_rule=update_rule,
             )
             if return_intermediate:
                 trajectory.append(y.clone())
                 hat_list.append(x_pred.clone())
+                input_list.append(x_with_noise.clone())
 
         if return_intermediate:
-            return y, trajectory, hat_list
+            return y, trajectory, hat_list, input_list
         return y
