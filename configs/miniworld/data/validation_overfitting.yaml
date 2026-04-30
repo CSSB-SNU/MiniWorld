@@ -1,7 +1,7 @@
 DB_PATH: /public_data02/
-infer_db:
+validate_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train_20260224_res9_chain300.lmdb
-  a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m_wrong.lmdb
+  a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m_16k.lmdb
   # edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/metadata/train_overfitting.tsv
   edge_id_to_bias_path: inference_test.tsv
   template_db_path: ${..DB_PATH}/BioMolDB_20260224/template.lmdb

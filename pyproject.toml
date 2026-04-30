@@ -29,9 +29,6 @@ include-package-data = true
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 
-[tool.pixi.system-requirements]
-cuda = "13"
-
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
@@ -58,14 +55,27 @@ ignore = [
 ]
 
 
+[tool.pixi.feature.cuda13.system-requirements]
+cuda = "13"
+
 [tool.pixi.feature.cuda13.pypi-dependencies]
 cuequivariance-ops-torch-cu13 = "*"
 
 [tool.pixi.feature.cuda13.pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/cu130"]
 
+[tool.pixi.feature.cuda128.system-requirements]
+cuda = "12.8"
+
+[tool.pixi.feature.cuda128.pypi-dependencies]
+cuequivariance-ops-torch-cu12 = "*"
+
+[tool.pixi.feature.cuda128.pypi-options]
+extra-index-urls = ["https://download.pytorch.org/whl/cu128"]
+
 [tool.pixi.environments]
 default = { features = ["cuda13"] }
+cu128 = { features = ["cuda128"] }
 
 [tool.pixi.pypi-dependencies]
 miniworld = { path = ".", editable = true }
@@ -80,6 +90,7 @@ matplotlib = ">=3.10.7,<4"
 pandas = ">=2.3.3,<3"
 tqdm = ">=4.67.1,<5"
 click = ">=8.3.1,<9"
+biopython = ">=1.87,<2"
 
 [tool.ruff.lint.per-file-ignores]
 "scripts/*" = ["D", "ANN201", "S101", "INP001", "FBT001", "PLC0415", "C901"]

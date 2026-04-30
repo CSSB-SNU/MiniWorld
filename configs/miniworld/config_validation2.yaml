@@ -1,6 +1,7 @@
 defaults:
   - model: small
+  - data: validation_overfitting
   - diffuser: xpred_decoupled
   - loss: default
-  - infer: default
+  - validation: default
   - _self_

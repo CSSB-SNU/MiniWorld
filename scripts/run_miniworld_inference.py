@@ -1,8 +1,8 @@
-"""Inference script for MiniWorld (VE x-prediction, decoupled R/T).
+"""Validation/inference script for MiniWorld (VE x-prediction, decoupled R/T).
 
 Usage:
-    python scripts/run_miniworld_only_inference.py inference \
-        --config configs/miniworld/config_inference.yaml \
+    python scripts/run_miniworld_inference.py validate \
+        --config configs/miniworld/config_validation.yaml \
         --ckpt path/to/checkpoint.pt
 """
 
@@ -120,7 +120,7 @@ def sigma_sweep_with_loss(
     from miniworld.utils.structure.se3 import apply_chain_rt, sample_rigid
 
     raw_model = getattr(client.model, "module", client.model)
-    model_wrapper = ModelWrapper(raw_model)
+    model_wrapper = ModelWrapper(raw_model)  # pyright: ignore[reportArgumentType]
     batch = batch.to(device=client.device)
     model_wrapper.prepare_condition(
         msa=batch.msa,
@@ -227,13 +227,13 @@ def plot_sigma_sweep_loss(
 
 
 class DataConfig(BaseModel):
-    infer_db: BioMolDBConfig
+    validate_db: BioMolDBConfig
     crop: CropConfig
     msa: MSAConfig
     tokenizer: TokenizerConfig
 
 
-class InferConfig(BaseModel):
+class ValidationConfig(BaseModel):
     seed: int = 0
     num_samples: int = 5
     timesteps: int = 100
@@ -243,12 +243,12 @@ class InferConfig(BaseModel):
     combine_all: bool = False
     update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered"
     use_ema: bool = True
-    output_dir: str = "outputs/miniworld_inference"
+    output_dir: str = "outputs/miniworld_validation"
 
 
 class Config(BaseModel):
     data: DataConfig
-    infer: InferConfig
+    validation: ValidationConfig
     model: Model.Config
     diffuser: XPredDecoupledDiffuserConfig
     loss: Client.LossConfig
@@ -287,7 +287,7 @@ def cli():
 )
 @click.option("--job-name", type=str)
 @click.argument("overrides", type=str, nargs=-1)
-def inference(  # noqa: PLR0915
+def validate(  # noqa: PLR0915
     config: Path,
     ckpt: Path,
     job_name: str | None,
@@ -298,16 +298,16 @@ def inference(  # noqa: PLR0915
     cfg = Config.model_validate(cfg)
     fabric = _fabric_from_torchrun()
     fabric.launch()
-    fabric.seed_everything(cfg.infer.seed)
+    fabric.seed_everything(cfg.validation.seed)
 
-    date_dir = Path(cfg.infer.output_dir) / time.strftime("%Y-%m-%d")
+    date_dir = Path(cfg.validation.output_dir) / time.strftime("%Y-%m-%d")
     run_name = time.strftime("%H%M%S")
     if job_name:
         run_name += f"_{job_name}"
     run_sub_dir = date_dir / run_name
     run_sub_dir.mkdir(parents=True, exist_ok=True)
 
-    train_cfg = Client.TrainConfig(seed=cfg.infer.seed, use_ema=cfg.infer.use_ema)
+    train_cfg = Client.TrainConfig(seed=cfg.validation.seed, use_ema=cfg.validation.use_ema)
     client = Client(
         Client.Config(
             train=train_cfg,
@@ -322,12 +322,12 @@ def inference(  # noqa: PLR0915
             fmt="[%(asctime)s][%(name)s][%(levelname)s] %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
-        log_path = run_sub_dir / "inference.log"
+        log_path = run_sub_dir / "validation.log"
         file_handler = logging.FileHandler(log_path)
         file_handler.setFormatter(formatter)
         client.logger.addHandler(file_handler)
 
-    if cfg.infer.compile:
+    if cfg.validation.compile:
         torch._dynamo.config.cache_size_limit = 128  # noqa: SLF001
         torch._dynamo.config.accumulated_cache_size_limit = 512  # noqa: SLF001
         client.model.compile(dynamic=False)
@@ -342,30 +342,30 @@ def inference(  # noqa: PLR0915
     state_dict = torch.load(ckpt, map_location="cpu")
     client.load_state_dict(state_dict, model_only=True)
 
-    infer_data_config = BioMolData.BioMolConfig(
+    validate_data_config = BioMolData.BioMolConfig(
         crop_config=cfg.data.crop,
         msa_config=cfg.data.msa,
-        DB_config=cfg.data.infer_db,
+        DB_config=cfg.data.validate_db,
         sampler_config=SamplerConfig(),
         tokenizer_config=cfg.data.tokenizer,
     )
-    infer_dataset = BioMolData(infer_data_config)
-    infer_dataloader = infer_dataset.create_ddp_dataloader(
+    validate_dataset = BioMolData(validate_data_config)
+    validate_dataloader = validate_dataset.create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.global_rank,
-        seed=cfg.infer.seed,
+        seed=cfg.validation.seed,
         drop_last=False,
         batch_size=1,
-        num_workers=cfg.infer.num_workers,
+        num_workers=cfg.validation.num_workers,
     )
 
     cif_dir = run_sub_dir / "structures"
     cif_dir.mkdir(parents=True, exist_ok=True)
 
-    client.logger.info("Start x-prediction inference")
+    client.logger.info("Start x-prediction validation")
     client.model.eval()
 
-    for batch_idx, raw_batch in enumerate(infer_dataloader):
+    for batch_idx, raw_batch in enumerate(validate_dataloader):
         batch = raw_batch.to(device=client.device)
         name = str(batch.name[0])
         client.logger.info(
@@ -388,10 +388,10 @@ def inference(  # noqa: PLR0915
 
         output = client.inference(
             batch,
-            timesteps=cfg.infer.timesteps,
-            no_rt=cfg.infer.no_rt,
-            update_rule=cfg.infer.update_rule,
-            combine_all=cfg.infer.combine_all,
+            timesteps=cfg.validation.timesteps,
+            no_rt=cfg.validation.no_rt,
+            update_rule=cfg.validation.update_rule,
+            combine_all=cfg.validation.combine_all,
         )
 
         quality = client.test_inference_quality(batch, output)
@@ -420,7 +420,7 @@ def inference(  # noqa: PLR0915
         inter_traj = output.inter_traj[0]
         input_traj = output.input_traj[0]
         scheduler = client.diffusion_scheduler
-        time_steps = scheduler.sampling_time_steps(cfg.infer.timesteps)
+        time_steps = scheduler.sampling_time_steps(cfg.validation.timesteps)
         sigmas_y = time_steps[:-1].numpy()
         device = batch.structure.atom_pos.device
         for t in range(model_traj.shape[0]):
@@ -461,13 +461,199 @@ def inference(  # noqa: PLR0915
         for i, sigma_y_val in enumerate(sweep_sigmas):
             tag = f"step{i:03d}_sigma{float(sigma_y_val):.4f}"
             batch_to_cif(
-                batch, sweep_x0_hats[i].to(device), sweep_x0hat_dir / f"{tag}.cif"
+                batch,
+                sweep_x0_hats[i].to(device),
+                sweep_x0hat_dir / f"{tag}.cif",
             )
             batch_to_cif(
-                batch, sweep_x_noisies[i].to(device), sweep_noisy_dir / f"{tag}.cif"
+                batch,
+                sweep_x_noisies[i].to(device),
+                sweep_noisy_dir / f"{tag}.cif",
             )
 
         client.logger.info("Saved results for %s", name)
+
+    client.logger.info("Validation complete. Results saved to %s", run_sub_dir)
+
+
+# ---------------------------------------------------------------------------
+# Inference (real inference: fasta + a3m + (optional) template + contacts JSON)
+# ---------------------------------------------------------------------------
+
+
+class InferConfig(BaseModel):
+    seed: int = 0
+    timesteps: int = 100
+    compile: bool = True
+    no_rt: bool = False
+    combine_all: bool = False
+    update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered"
+    use_ema: bool = True
+    output_dir: str = "outputs/miniworld_inference"
+    max_msa_depth: int = 256
+    missing_policy: Literal["query", "gap"] = "query"
+
+
+class InferenceConfig(BaseModel):
+    infer: InferConfig
+    model: Model.Config
+    diffuser: XPredDecoupledDiffuserConfig
+    loss: Client.LossConfig
+
+
+@cli.command()
+@click.option(
+    "--config",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
+@click.option(
+    "--ckpt",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
+@click.option(
+    "--spec",
+    "spec_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+    help="JSON spec describing fasta / a3m / template / contacts inputs.",
+)
+@click.option("--job-name", type=str)
+@click.argument("overrides", type=str, nargs=-1)
+def inference(  # noqa: PLR0915
+    config: Path,
+    ckpt: Path,
+    spec_path: Path,
+    job_name: str | None,
+    overrides: tuple[str, ...],
+) -> None:
+    from miniworld.data.inference import InferenceSpec, build_inference_batch
+
+    with initialize_config_dir(str(config.parent.absolute()), version_base=None):
+        cfg = compose(config_name=config.name, overrides=list(overrides))
+    cfg = InferenceConfig.model_validate(cfg)
+    fabric = _fabric_from_torchrun()
+    fabric.launch()
+    fabric.seed_everything(cfg.infer.seed)
+
+    spec = InferenceSpec.from_json(spec_path)
+
+    time_dir = (
+        Path(cfg.infer.output_dir)
+        / time.strftime("%Y-%m-%d")
+        / time.strftime("%H%M%S")
+    )
+    run_id = job_name if job_name else spec.name
+    run_sub_dir = time_dir / run_id
+    run_sub_dir.mkdir(parents=True, exist_ok=True)
+
+    train_cfg = Client.TrainConfig(seed=cfg.infer.seed, use_ema=cfg.infer.use_ema)
+    client = Client(
+        Client.Config(
+            train=train_cfg,
+            model=cfg.model,
+            diffuser=cfg.diffuser,
+            loss=cfg.loss,
+        ),
+    )
+
+    if fabric.is_global_zero:
+        formatter = logging.Formatter(
+            fmt="[%(asctime)s][%(name)s][%(levelname)s] %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        log_path = run_sub_dir / "inference.log"
+        file_handler = logging.FileHandler(log_path)
+        file_handler.setFormatter(formatter)
+        client.logger.addHandler(file_handler)
+
+    if cfg.infer.compile:
+        torch._dynamo.config.cache_size_limit = 128  # noqa: SLF001
+        torch._dynamo.config.accumulated_cache_size_limit = 512  # noqa: SLF001
+        client.model.compile(dynamic=False)
+        client.logger.info("Compiled model")
+
+    config_dict = cfg.model_dump(mode="json")
+    if fabric.is_global_zero:
+        OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
+        (run_sub_dir / "spec.json").write_text(spec_path.read_text())
+
+    client.setup(fabric=fabric)
+
+    state_dict = torch.load(ckpt, map_location="cpu")
+    client.load_state_dict(state_dict, model_only=True)
+
+    cif_dir = run_sub_dir / "structures"
+    cif_dir.mkdir(parents=True, exist_ok=True)
+
+    client.logger.info("Building Batch from spec %s", spec_path)
+    batch = build_inference_batch(
+        spec,
+        max_msa_depth=cfg.infer.max_msa_depth,
+        missing_policy=cfg.infer.missing_policy,
+        seed=cfg.infer.seed,
+    )
+    name = batch.name[0]
+    client.logger.info(
+        "Built batch %s | n_tokens=%d n_atoms=%d n_msa=%d",
+        name,
+        batch.token_length,
+        batch.atom_length,
+        batch.msa_count,
+    )
+
+    client.logger.info("Start x-prediction inference")
+    client.model.eval()
+
+    # ``combine_all=True`` zeroes out atom_to_combine in the solver
+    # (decoupled_xpred/solver.py:232). When set together with
+    # ``spec.combine_groups``, the explicit grouping is silently ignored —
+    # but empirically this preserves the trained model's behaviour, while
+    # forcing combine_all=False has been observed to collapse the backbone
+    # (CA–CA ≈ 3.0 Å instead of 3.8 Å). Warn the user about the conflict
+    # but do **not** auto-override here.
+    if cfg.infer.combine_all and spec.combine_groups:
+        client.logger.warning(
+            "spec.combine_groups is set but cfg.infer.combine_all=true: "
+            "the solver will zero atom_to_combine, so the explicit groups "
+            "have no effect on per-frame SE(3). Set infer.combine_all=false "
+            "to honor them, but be aware the current checkpoint may not "
+            "denoise multi-frame structures cleanly.",
+        )
+
+    output = client.inference(
+        batch,
+        timesteps=cfg.infer.timesteps,
+        no_rt=cfg.infer.no_rt,
+        update_rule=cfg.infer.update_rule,
+        combine_all=cfg.infer.combine_all,
+    )
+
+    batch_to_cif(batch, output.atom_pos_pred, cif_dir / f"{name}_pred.cif")
+
+    traj_dir = cif_dir / f"{name}_traj"
+    traj_x0hat_dir = traj_dir / "x0hat"
+    traj_xt_dir = traj_dir / "xt"
+    traj_input_dir = traj_dir / "x_with_noise"
+    traj_x0hat_dir.mkdir(parents=True, exist_ok=True)
+    traj_xt_dir.mkdir(parents=True, exist_ok=True)
+    traj_input_dir.mkdir(parents=True, exist_ok=True)
+    model_traj = output.model_traj[0]
+    inter_traj = output.inter_traj[0]
+    input_traj = output.input_traj[0]
+    scheduler = client.diffusion_scheduler
+    time_steps = scheduler.sampling_time_steps(cfg.infer.timesteps)
+    sigmas_y = time_steps[:-1].numpy()
+    device = batch.structure.atom_pos.device
+    for t in range(model_traj.shape[0]):
+        tag = f"step{t:03d}_sigma{sigmas_y[t]:.4f}"
+        x0_hat_t = torch.from_numpy(model_traj[t]).unsqueeze(0).to(device)
+        xt = torch.from_numpy(inter_traj[t]).unsqueeze(0).to(device)
+        x_with_noise_t = torch.from_numpy(input_traj[t]).unsqueeze(0).to(device)
+        batch_to_cif(batch, x0_hat_t, traj_x0hat_dir / f"{tag}.cif")
+        batch_to_cif(batch, xt, traj_xt_dir / f"{tag}.cif")
+        batch_to_cif(batch, x_with_noise_t, traj_input_dir / f"{tag}.cif")
 
     client.logger.info("Inference complete. Results saved to %s", run_sub_dir)
 

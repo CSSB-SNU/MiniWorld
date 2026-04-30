@@ -1,3 +1,6 @@
 [submodule "team-gm"]
 	path = libs/team-gm
 	url = git@github.com:CSSB-SNU/team-gm.git
+[submodule "libs/structcooker"]
+	path = libs/structcooker
+	url = git@github.com:SanggeunParrk/StructCooker.git
