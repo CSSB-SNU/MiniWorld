@@ -243,7 +243,6 @@ class ValidationConfig(BaseModel):
     combine_all: bool = False
     update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered"
     use_ema: bool = True
-    output_dir: str = "outputs/miniworld_validation"
 
 
 class Config(BaseModel):
@@ -285,11 +284,20 @@ def cli():
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     required=True,
 )
+@click.option(
+    "--output-dir",
+    type=click.Path(path_type=Path),
+    default=Path("outputs/miniworld_validation"),
+    show_default=True,
+    help="Root directory for validation outputs; results land in "
+         "<output_dir>/<YYYY-MM-DD>/<HHMMSS>[_<job_name>]/.",
+)
 @click.option("--job-name", type=str)
 @click.argument("overrides", type=str, nargs=-1)
 def validate(  # noqa: PLR0915
     config: Path,
     ckpt: Path,
+    output_dir: Path,
     job_name: str | None,
     overrides: tuple[str, ...],
 ) -> None:
@@ -300,7 +308,7 @@ def validate(  # noqa: PLR0915
     fabric.launch()
     fabric.seed_everything(cfg.validation.seed)
 
-    date_dir = Path(cfg.validation.output_dir) / time.strftime("%Y-%m-%d")
+    date_dir = output_dir / time.strftime("%Y-%m-%d")
     run_name = time.strftime("%H%M%S")
     if job_name:
         run_name += f"_{job_name}"
@@ -489,7 +497,6 @@ class InferConfig(BaseModel):
     combine_all: bool = False
     update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered"
     use_ema: bool = True
-    output_dir: str = "outputs/miniworld_inference"
     max_msa_depth: int = 256
     missing_policy: Literal["query", "gap"] = "query"
 
@@ -519,12 +526,21 @@ class InferenceConfig(BaseModel):
     required=True,
     help="JSON spec describing fasta / a3m / template / contacts inputs.",
 )
+@click.option(
+    "--output-dir",
+    type=click.Path(path_type=Path),
+    default=Path("outputs/miniworld_inference"),
+    show_default=True,
+    help="Root directory for inference outputs; results land in "
+         "<output_dir>/<YYYY-MM-DD>/<HHMMSS>/<job_name|spec.name>/.",
+)
 @click.option("--job-name", type=str)
 @click.argument("overrides", type=str, nargs=-1)
 def inference(  # noqa: PLR0915
     config: Path,
     ckpt: Path,
     spec_path: Path,
+    output_dir: Path,
     job_name: str | None,
     overrides: tuple[str, ...],
 ) -> None:
@@ -540,7 +556,7 @@ def inference(  # noqa: PLR0915
     spec = InferenceSpec.from_json(spec_path)
 
     time_dir = (
-        Path(cfg.infer.output_dir)
+        output_dir
         / time.strftime("%Y-%m-%d")
         / time.strftime("%H%M%S")
     )
@@ -587,23 +603,6 @@ def inference(  # noqa: PLR0915
     cif_dir = run_sub_dir / "structures"
     cif_dir.mkdir(parents=True, exist_ok=True)
 
-    client.logger.info("Building Batch from spec %s", spec_path)
-    batch = build_inference_batch(
-        spec,
-        max_msa_depth=cfg.infer.max_msa_depth,
-        missing_policy=cfg.infer.missing_policy,
-        seed=cfg.infer.seed,
-    )
-    name = batch.name[0]
-    client.logger.info(
-        "Built batch %s | n_tokens=%d n_atoms=%d n_msa=%d",
-        name,
-        batch.token_length,
-        batch.atom_length,
-        batch.msa_count,
-    )
-
-    client.logger.info("Start x-prediction inference")
     client.model.eval()
 
     # ``combine_all=True`` zeroes out atom_to_combine in the solver
@@ -622,38 +621,90 @@ def inference(  # noqa: PLR0915
             "denoise multi-frame structures cleanly.",
         )
 
-    output = client.inference(
-        batch,
-        timesteps=cfg.infer.timesteps,
-        no_rt=cfg.infer.no_rt,
-        update_rule=cfg.infer.update_rule,
-        combine_all=cfg.infer.combine_all,
+    n_trunk = spec.n_trunk_samples
+    n_diffusion = spec.n_diffusion_samples
+    chunk_size = min(spec.diffusion_batch_size, n_diffusion)
+    save_traj = spec.save_trajectory
+    client.logger.info(
+        "Inference scaling: n_trunk=%d n_diffusion=%d (chunk=%d) "
+        "save_trajectory=%s -> %d total structures",
+        n_trunk, n_diffusion, chunk_size, save_traj, n_trunk * n_diffusion,
     )
 
-    batch_to_cif(batch, output.atom_pos_pred, cif_dir / f"{name}_pred.cif")
-
-    traj_dir = cif_dir / f"{name}_traj"
-    traj_x0hat_dir = traj_dir / "x0hat"
-    traj_xt_dir = traj_dir / "xt"
-    traj_input_dir = traj_dir / "x_with_noise"
-    traj_x0hat_dir.mkdir(parents=True, exist_ok=True)
-    traj_xt_dir.mkdir(parents=True, exist_ok=True)
-    traj_input_dir.mkdir(parents=True, exist_ok=True)
-    model_traj = output.model_traj[0]
-    inter_traj = output.inter_traj[0]
-    input_traj = output.input_traj[0]
     scheduler = client.diffusion_scheduler
     time_steps = scheduler.sampling_time_steps(cfg.infer.timesteps)
     sigmas_y = time_steps[:-1].numpy()
-    device = batch.structure.atom_pos.device
-    for t in range(model_traj.shape[0]):
-        tag = f"step{t:03d}_sigma{sigmas_y[t]:.4f}"
-        x0_hat_t = torch.from_numpy(model_traj[t]).unsqueeze(0).to(device)
-        xt = torch.from_numpy(inter_traj[t]).unsqueeze(0).to(device)
-        x_with_noise_t = torch.from_numpy(input_traj[t]).unsqueeze(0).to(device)
-        batch_to_cif(batch, x0_hat_t, traj_x0hat_dir / f"{tag}.cif")
-        batch_to_cif(batch, xt, traj_xt_dir / f"{tag}.cif")
-        batch_to_cif(batch, x_with_noise_t, traj_input_dir / f"{tag}.cif")
+
+    for i_trunk in range(n_trunk):
+        # Each trunk index uses a fresh seed -> different MSA sample +
+        # (when ``rng`` paths consume it) a different SE(3) reference.
+        trunk_seed = cfg.infer.seed + i_trunk
+        client.logger.info(
+            "Building Batch from spec %s (trunk %d/%d, seed=%d)",
+            spec_path, i_trunk + 1, n_trunk, trunk_seed,
+        )
+        batch = build_inference_batch(
+            spec,
+            max_msa_depth=cfg.infer.max_msa_depth,
+            missing_policy=cfg.infer.missing_policy,
+            seed=trunk_seed,
+        )
+        name = batch.name[0]
+        if i_trunk == 0:
+            client.logger.info(
+                "Built batch %s | n_tokens=%d n_atoms=%d n_msa=%d",
+                name, batch.token_length, batch.atom_length, batch.msa_count,
+            )
+
+        wrapper, batch = client.prepare(batch)
+        device = batch.structure.atom_pos.device
+
+        for chunk_start in range(0, n_diffusion, chunk_size):
+            cur_chunk = min(chunk_size, n_diffusion - chunk_start)
+            # Reproducible per (trunk, chunk_start): same spec + cfg.infer.seed
+            # always reproduces the same N1*N2 structures.
+            torch.manual_seed(trunk_seed * 100003 + chunk_start * 1009)
+            output = client.sample(
+                wrapper, batch,
+                n_samples=cur_chunk,
+                timesteps=cfg.infer.timesteps,
+                no_rt=cfg.infer.no_rt,
+                update_rule=cfg.infer.update_rule,
+                combine_all=cfg.infer.combine_all,
+            )
+
+            for k in range(cur_chunk):
+                j_diff = chunk_start + k
+                tag_ij = f"t{i_trunk:02d}_d{j_diff:02d}"
+                pred_k = output.atom_pos_pred[k:k + 1]
+                batch_to_cif(batch, pred_k, cif_dir / f"{name}_{tag_ij}_pred.cif")
+
+                if not save_traj:
+                    continue
+                traj_dir = cif_dir / f"{name}_{tag_ij}_traj"
+                traj_x0hat_dir = traj_dir / "x0hat"
+                traj_xt_dir = traj_dir / "xt"
+                traj_input_dir = traj_dir / "x_with_noise"
+                traj_x0hat_dir.mkdir(parents=True, exist_ok=True)
+                traj_xt_dir.mkdir(parents=True, exist_ok=True)
+                traj_input_dir.mkdir(parents=True, exist_ok=True)
+                model_traj_k = output.model_traj[k]
+                inter_traj_k = output.inter_traj[k]
+                input_traj_k = output.input_traj[k]
+                for t in range(model_traj_k.shape[0]):
+                    tag = f"step{t:03d}_sigma{sigmas_y[t]:.4f}"
+                    x0_hat_t = torch.from_numpy(model_traj_k[t]).unsqueeze(0).to(device)
+                    xt = torch.from_numpy(inter_traj_k[t]).unsqueeze(0).to(device)
+                    x_with_noise_t = torch.from_numpy(input_traj_k[t]).unsqueeze(0).to(device)
+                    batch_to_cif(batch, x0_hat_t, traj_x0hat_dir / f"{tag}.cif")
+                    batch_to_cif(batch, xt, traj_xt_dir / f"{tag}.cif")
+                    batch_to_cif(batch, x_with_noise_t, traj_input_dir / f"{tag}.cif")
+
+            client.logger.info(
+                "Trunk %d/%d, diffusion samples %d-%d/%d done",
+                i_trunk + 1, n_trunk,
+                chunk_start + 1, chunk_start + cur_chunk, n_diffusion,
+            )
 
     client.logger.info("Inference complete. Results saved to %s", run_sub_dir)
 

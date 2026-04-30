@@ -3,7 +3,6 @@ num_samples: 5
 timesteps: 100
 num_workers: 0
 compile: true
-output_dir: "outputs/miniworld_validation"
 no_rt: false
 combine_all: true
 # update_rule: "x0_centered"

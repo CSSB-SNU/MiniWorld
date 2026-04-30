@@ -16,3 +16,5 @@ __pycache__/
 .pixi/
 **/*.egg-info/
 commands/
+tests/inference_data/
+.codex

@@ -1,7 +1,6 @@
 seed: 0
 timesteps: 100
 compile: true
-output_dir: "outputs/miniworld_inference"
 no_rt: false
 combine_all: true
 update_rule: "ode_aligned"

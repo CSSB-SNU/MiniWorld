@@ -601,20 +601,19 @@ class Client(BaseClient):
         }
 
     @torch.no_grad()
-    def inference(
-        self,
-        batch: Batch,
-        timesteps: int = 100,
-        no_rt: bool = False,
-        update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered",
-        combine_all: bool = False,
-    ) -> InferenceOutput:
-        """Inference using the diffusion solver."""
+    def prepare(self, batch: Batch) -> tuple[ModelWrapper, Batch]:
+        """Run the trunk (msa_module + pairformer + recycling) once.
+
+        Returns a ``ModelWrapper`` whose conditioning is cached, plus the
+        device-resident ``batch`` (so the caller can reuse its scheme /
+        structure tensors when invoking :meth:`sample`). The returned
+        wrapper can be fed to :meth:`sample` multiple times — each call
+        produces an independent set of diffusion samples without rerunning
+        the trunk.
+        """
         raw_model = getattr(self.model, "module", self.model)
         raw_model = cast("Model", raw_model)
-        model_wrapper = ModelWrapper(
-            raw_model,
-        )
+        model_wrapper = ModelWrapper(raw_model)
         batch = batch.to(device=self.device)
         model_wrapper.prepare_condition(
             msa=batch.msa,
@@ -624,11 +623,44 @@ class Client(BaseClient):
             sequence=batch.sequence,
             structure=batch.structure,
         )
-        shape = batch.structure.atom_pos.shape
+        return model_wrapper, batch
+
+    @torch.no_grad()
+    def sample(
+        self,
+        wrapper: ModelWrapper,
+        batch: Batch,
+        *,
+        n_samples: int = 1,
+        timesteps: int = 100,
+        no_rt: bool = False,
+        update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered",
+        combine_all: bool = False,
+    ) -> InferenceOutput:
+        """Run the diffusion solver on a prepared trunk conditioning.
+
+        ``n_samples`` is broadcast along the model's augmentation axis
+        (``x_t: A B L 3`` with ``A = n_samples``), so all samples share one
+        forward pass per step. The returned tensors carry that augmentation
+        dimension as their leading axis — ``atom_pos_pred`` is
+        ``(n_samples, L, 3)`` and each trajectory is ``(n_samples, T, L, 3)``.
+        """
+        if n_samples < 1:
+            msg = f"n_samples must be >= 1, got {n_samples}."
+            raise ValueError(msg)
+        _, n_atoms, three = batch.structure.atom_pos.shape
+        shape = torch.Size((n_samples, n_atoms, three))
+        # ``apply_chain_rt`` requires atom_to_combine.shape == x.shape[:2].
+        # batch.scheme.atom_to_chain_id is (1, N_atom); expand along the
+        # augmentation axis so it matches the (n_samples, N_atom) batch
+        # produced by the solver.
+        atom_to_combine = batch.scheme.atom_to_chain_id
+        if atom_to_combine.shape[0] == 1 and n_samples > 1:
+            atom_to_combine = atom_to_combine.expand(n_samples, -1)
         atom_pos_pred, inter_traj, model_traj, input_traj = self.solver.sample(
-            model_fn=model_wrapper,
+            model_fn=wrapper,
             shape=shape,
-            atom_to_combine=batch.scheme.atom_to_chain_id,
+            atom_to_combine=atom_to_combine,
             num_steps=timesteps,
             device=self.device,
             use_rt=not no_rt,
@@ -640,7 +672,7 @@ class Client(BaseClient):
         inter_traj = [x.detach().cpu().numpy() for x in inter_traj]
         model_traj = [x.detach().cpu().numpy() for x in model_traj]
         input_traj = [x.detach().cpu().numpy() for x in input_traj]
-        distogram_logit = model_wrapper.condition["distogram_logit"]
+        distogram_logit = wrapper.condition["distogram_logit"]
         return InferenceOutput(
             atom_pos_pred=atom_pos_pred,
             model_traj=np.stack(model_traj, axis=1),
@@ -649,5 +681,31 @@ class Client(BaseClient):
             distogram_logit=distogram_logit,
         )
 
-    def sample(self) -> None:
-        """Sample from the diffusion model using the ODE Euler solver."""
+    @torch.no_grad()
+    def inference(
+        self,
+        batch: Batch,
+        timesteps: int = 100,
+        no_rt: bool = False,
+        update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered",
+        combine_all: bool = False,
+    ) -> InferenceOutput:
+        """Single-shot inference: prepare trunk, then sample once.
+
+        Convenience wrapper around :meth:`prepare` + :meth:`sample`. Uses
+        ``batch.structure.atom_pos.shape[0]`` as the augmentation count to
+        preserve historical behaviour (B=1 -> 1 sample). For best-of-N
+        scaling, drive :meth:`prepare` and :meth:`sample` directly so the
+        trunk is reused across diffusion samples.
+        """
+        wrapper, batch = self.prepare(batch)
+        n_samples = int(batch.structure.atom_pos.shape[0])
+        return self.sample(
+            wrapper,
+            batch,
+            n_samples=n_samples,
+            timesteps=timesteps,
+            no_rt=no_rt,
+            update_rule=update_rule,
+            combine_all=combine_all,
+        )

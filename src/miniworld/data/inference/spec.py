@@ -132,6 +132,24 @@ class InferenceSpec(BaseModel):
       tokenization: optional path to a per-residue resolution JSON file. See
           ``miniworld.data.inference.tokenization`` for the format. ``None``
           (default) means residue-level for every residue.
+      n_trunk_samples: best-of-N axis 1 — number of fresh MSA samples; for
+          each, the trunk (msa_module + pairformer + n_recycle) is rerun to
+          produce a distinct conditioning. Default 1.
+      n_diffusion_samples: best-of-N axis 2 — number of diffusion seeds per
+          trunk conditioning. These are processed along the model's
+          augmentation axis (``x_t: A B L 3`` with A>=1), not the batch
+          axis. Default 1. Total output structures = ``n_trunk_samples *
+          n_diffusion_samples``.
+      diffusion_batch_size: chunk size along the augmentation axis (how many
+          diffusion samples to run in one forward). Used to bound peak GPU
+          memory when ``n_diffusion_samples`` is large; the script splits
+          the N samples into ``ceil(N / diffusion_batch_size)`` chunks and
+          concatenates the results. Clamped to ``n_diffusion_samples`` if
+          larger. Default 1.
+      save_trajectory: when True (default), write per-step trajectory CIFs
+          (``x0hat`` / ``xt`` / ``x_with_noise``) for every produced
+          structure. Set to False to skip trajectory I/O when only the
+          final predicted structure is needed.
     """
 
     name: str | None = None
@@ -147,6 +165,10 @@ class InferenceSpec(BaseModel):
     combine_groups: list[list[int]] = Field(default_factory=list)
     contacts: ContactsSpec = Field(default_factory=ContactsSpec)
     tokenization: Path | None = None  # per-residue resolution JSON; None -> all residue-level
+    n_trunk_samples: int = Field(default=1, ge=1)
+    n_diffusion_samples: int = Field(default=1, ge=1)
+    diffusion_batch_size: int = Field(default=1, ge=1)
+    save_trajectory: bool = True
 
     @field_validator("chain_letters", mode="before")
     @classmethod

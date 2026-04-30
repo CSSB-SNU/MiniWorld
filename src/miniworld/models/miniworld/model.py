@@ -358,19 +358,26 @@ class ModelWrapper(nn.Module):
             raise ValueError(msg)
 
         n_str = x_t.shape[0]
-        x_mask = self.condition["structure"].atom_mask.repeat(n_str, 1).unsqueeze(0)
+        # The model expects (A, B, L, 3) where A is the augmentation axis
+        # (= n_diffusion_samples) and B is the actual batch (always 1 here).
+        # Inject B=1 between A and L_atom — putting n_str in the B slot would
+        # make ``num_aug, batch_size = x_t.shape[:2]`` read it as batch size,
+        # which then overflows ``token_single_cond`` (shape (B=1, L_token, d))
+        # via fancy indexing.
+        atom_mask = self.condition["structure"].atom_mask  # (B=1, L_atom)
+        x_mask = atom_mask.unsqueeze(0).expand(n_str, -1, -1)  # (A, B=1, L_atom)
         x_update = self.model.diffusion_forward(
             reference=self.condition["reference"],
             scheme=self.condition["scheme"],
             structure=self.condition["structure"],
-            x_t=x_t.unsqueeze(0),  # (B, L, 3) -> (1, B, L, 3)
+            x_t=x_t.unsqueeze(1),  # (N_str, L, 3) -> (A=N_str, B=1, L, 3)
             x_mask=x_mask,
-            t_emb=t_emb[None, None, None, None],  # (,) -> (1, 1, 1, 1)
+            t_emb=t_emb[None, None, None, None],  # (,) -> (1, 1, 1, 1), broadcasts over A,B
             token_single_input=self.condition["token_single_input"],
             token_single_trunk=self.condition["token_single_trunk"],
             token_pair_trunk=self.condition["token_pair_trunk"],
         )
-        return x_update.squeeze(0)  # (1, B, L, 3) -> (B, L, 3)
+        return x_update.squeeze(1)  # (A=N_str, B=1, L, 3) -> (N_str, L, 3)
 
 
 @dataclass
