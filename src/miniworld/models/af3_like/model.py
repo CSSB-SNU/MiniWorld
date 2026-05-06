@@ -131,7 +131,7 @@ class Model(nn.Module):
     def set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
         self.rng = np.random.default_rng(seed)
-    
+
     def condition_forward(
         self,
         msa: MSAFeatures,
@@ -193,13 +193,14 @@ class Model(nn.Module):
                 )
                 # token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
 
-                token_pair = token_pair + self.msa_module(
-                    msa_feat,
-                    msa_mask,
-                    token_pair,
-                    token_single_input_bf16,
-                    token_mask,
-                )
+                with torch.autocast(device_type='cuda', dtype=torch.bfloat16):
+                    token_pair = token_pair + self.msa_module(
+                        msa_feat,
+                        msa_mask,
+                        token_pair,
+                        token_single_input_bf16,
+                        token_mask,
+                    )
                 token_single = token_single_init_bf16 + self.add_single_recycle(
                     token_single,
                 )
@@ -371,7 +372,7 @@ class InferenceOutput:
     atom_pos_pred: torch.Tensor  # (B, L, 3)
 
     # Distogram logits
-    distogram_logit: torch.Tensor  # (B, L, L, 2)
+    distogram_logit: torch.Tensor  # (B, L, 3)
 
     # Array of predicted atom coordinate trajectory for timesteps T.
     model_traj: np.ndarray  # (B, T, L, 3)

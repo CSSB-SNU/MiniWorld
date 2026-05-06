@@ -5,14 +5,14 @@ import os
 import time
 from pathlib import Path
 import warnings
-warnings.filterwarnings("ignore", message=".*torch.jit.script_method.*", category=DeprecationWarning) 
+warnings.filterwarnings("ignore", message=".*torch.jit.script_method.*", category=DeprecationWarning)
 import click
 import torch
 from hydra import compose, initialize_config_dir
 from lightning import Fabric
 from omegaconf import OmegaConf
 from pydantic import BaseModel
-from team_gm.core.callbacks import Callback
+from team_gm.core.callbacks import Callback, ModelEMA
 from team_gm.utils.script_utils import MetricsAggregator
 
 import wandb
@@ -26,8 +26,8 @@ from miniworld.configs import (
     TokenizerConfig,
 )
 from miniworld.data.dataloader.dataloader import BioMolData
-from miniworld.models.default_client import Client
-from miniworld.models.af3_like import Model
+from miniworld.models import DefaultClient as Client
+from miniworld.models.af3_like import Model as Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
 torch.set_float32_matmul_precision("medium")
@@ -113,6 +113,8 @@ def train(  # noqa: PLR0912, PLR0915
     job_name: str | None,
     overrides: tuple[str, ...],
 ):
+    torch._dynamo.reset()  # clear stale compile cache (prevents bf16/fp32 mismatch on resume)
+
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
@@ -166,7 +168,7 @@ def train(  # noqa: PLR0912, PLR0915
     else:
         msg = f"Unsupported optimizer: {cfg.train.optimizer}"
         raise ValueError(msg)
-    
+
     if cfg.train.compile:
         torch._dynamo.config.cache_size_limit = 128  # noqa: SLF001
         torch._dynamo.config.accumulated_cache_size_limit = 512  # noqa: SLF001
@@ -280,6 +282,14 @@ def train(  # noqa: PLR0912, PLR0915
             client.save_checkpoint(checkpoint_path)
 
         if client.epoch % cfg.train.eval_freq == 0:
+            # Validate on non-EMA weights; next epoch start is a no-op restore.
+            ema_cb = next(
+                (cb for cb in client._callbacks if isinstance(cb, ModelEMA)),
+                None,
+            )
+            if ema_cb is not None:
+                ema_cb._restore_original_params(client)  # noqa: SLF001
+
             valid_dataloader.sampler.set_epoch(client.epoch)  # pyright: ignore[reportAttributeAccessIssue]
             valid_dataset.set_epoch(client.epoch)
             client.logger.info("Validation Epoch %d", client.epoch)
