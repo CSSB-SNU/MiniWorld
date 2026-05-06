@@ -1,0 +1,41 @@
+comment: "af3like v1.1.1 Adam, lr 4e-4 grad clip 1.0"
+run_dir: "logs/af3like v1.1.1/"
+
+# Training arguments
+num_batch: 1
+num_epoch: 1000
+# max_lr: 1.8e-3
+max_lr: 4e-4
+min_lr: 1e-4
+warmup_steps: 1000
+decay_steps: 5e4
+self_condition: False
+compile: True
+num_augment: 48
+train_item: 2560
+valid_item: 640
+
+# Validation arguments
+save_freq: 5
+eval_freq: 20
+eval_sample_num: 1
+eval_input_num: 50
+eval_timesteps: 100
+grad_clip_max_norm: 1.0
+grad_accum_steps: 16
+optimizer: "Adam"
+
+num_workers: 4
+prefetch_factor: 8
+use_ema: True
+ema_decay: 0.999
+bce_pos_weight: 2.0
+long_range_sigmoid_amp: 3.0
+
+bucket_msa_multiple: 128
+bucket_token_multiple: 128
+bucket_atom_multiple: 1024
+
+verbose: True
+use_wandb: True
+wandb_project: "MiniWorld"

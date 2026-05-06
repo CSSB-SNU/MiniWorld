@@ -1,0 +1,7 @@
+defaults:
+  - model: small_wo_self_attention
+  - train: v1.2.7
+  - data: default
+  - diffuser: af3_like
+  - loss: default
+  - _self_
