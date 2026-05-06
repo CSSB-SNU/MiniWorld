@@ -12,7 +12,6 @@ decay_steps: 5e4
 self_condition: False
 compile: True
 num_augment: 48
-train_item: 2560
 valid_item: 640
 
 # Validation arguments
