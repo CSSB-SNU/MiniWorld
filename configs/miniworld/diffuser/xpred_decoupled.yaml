@@ -1,5 +1,6 @@
 seed: 0
 translation_noise: 1.0
+max_loss_weight: 1000.0 
 
 scheduler:
   P_mean: -1.5
