@@ -283,6 +283,9 @@ def _align_template_to_query(
     return out_bb, out_letters
 
 
+_LENGTH_MATCH_IDENTITY_THRESHOLD = 0.9
+
+
 def _query_to_template_index_map(
     template_one_letter: list[str],
     query_one_letter: list[str],
@@ -293,18 +296,25 @@ def _query_to_template_index_map(
 
     Fast paths (no external tool):
 
-    * Lengths already match -> identity (modified residues etc. pass).
-    * Template contains the query as a contiguous substring -> shift by offset.
+    * Lengths already match **and** char-by-char identity ≥ 0.9 → accept
+      the 1:1 mapping. Tolerates a handful of modified-residue
+      substitutions (or 'X' placeholders) without re-aligning. Length
+      coincidences with shifted internal residues fail this guard and
+      drop through to kalign.
+    * Template contains the query as a contiguous substring → shift by
+      offset.
 
     Fallback: kalign-driven pairwise alignment. Query-only columns get
     ``-1``; template-only columns are dropped (don't consume a query slot).
     """
     n_q = len(query_one_letter)
     n_t = len(template_one_letter)
-    if n_t == n_q:
-        return np.arange(n_q, dtype=np.int64)
     template_seq = "".join(template_one_letter)
     query_seq = "".join(query_one_letter)
+    if n_t == n_q:
+        matches = sum(1 for q, t in zip(query_seq, template_seq) if q == t)
+        if matches / max(n_q, 1) >= _LENGTH_MATCH_IDENTITY_THRESHOLD:
+            return np.arange(n_q, dtype=np.int64)
     idx = template_seq.find(query_seq)
     if idx >= 0:
         return np.arange(idx, idx + n_q, dtype=np.int64)
