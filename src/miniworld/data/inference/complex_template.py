@@ -209,42 +209,65 @@ def _align_template_to_query(
 ) -> tuple[np.ndarray, list[str]]:
     """Lay template residues onto the query coordinate columns.
 
+    Convenience wrapper around :func:`_query_to_template_index_map`: applies
+    the resulting index map to ``template_bb`` and returns the
+    query-shaped arrays the existing template-model path expects. Use
+    :func:`_query_to_template_index_map` directly if you need the mapping
+    for richer per-atom lookups (contact derivation).
+    """
+    q_to_t = _query_to_template_index_map(
+        template_one_letter, query_one_letter, where=where,
+    )
+    n_q = len(query_one_letter)
+    out_bb = np.full((n_q, *template_bb.shape[1:]), np.nan, dtype=template_bb.dtype)
+    out_letters = ["-"] * n_q
+    for qi, ti in enumerate(q_to_t):
+        if ti < 0:
+            continue
+        out_bb[qi] = template_bb[ti]
+        out_letters[qi] = template_one_letter[ti]
+    return out_bb, out_letters
+
+
+def _query_to_template_index_map(
+    template_one_letter: list[str],
+    query_one_letter: list[str],
+    *,
+    where: str = "",
+) -> np.ndarray:
+    """Return an ``(n_q,)`` array mapping query index -> template index (or -1).
+
     Fast paths (no external tool):
 
-    * Lengths already match -> accept without checking sequence identity
-      (handles modified residues, etc.).
-    * Template contains the query as a contiguous substring -> trim to that.
+    * Lengths already match -> identity (modified residues etc. pass).
+    * Template contains the query as a contiguous substring -> shift by offset.
 
-    Fallback: pairwise-align template and query with ``kalign`` and project
-    template residues onto query columns. Query-only columns become gaps
-    (NaN coords -> bb_mask/cb_mask False downstream); template-only columns
-    are dropped (no query residue to place them on).
+    Fallback: kalign-driven pairwise alignment. Query-only columns get
+    ``-1``; template-only columns are dropped (don't consume a query slot).
     """
     n_q = len(query_one_letter)
     n_t = len(template_one_letter)
     if n_t == n_q:
-        return template_bb, list(template_one_letter)
+        return np.arange(n_q, dtype=np.int64)
     template_seq = "".join(template_one_letter)
     query_seq = "".join(query_one_letter)
     idx = template_seq.find(query_seq)
     if idx >= 0:
-        return (
-            template_bb[idx: idx + n_q],
-            list(template_one_letter[idx: idx + n_q]),
-        )
-    return _kalign_template_to_query(
-        template_bb, template_one_letter, query_one_letter, where=where,
-    )
+        return np.arange(idx, idx + n_q, dtype=np.int64)
+    return _kalign_index_map(template_one_letter, query_one_letter, where=where)
 
 
-def _kalign_template_to_query(
-    template_bb: np.ndarray,
+def _kalign_index_map(
     template_one_letter: list[str],
     query_one_letter: list[str],
     *,
     where: str,
-) -> tuple[np.ndarray, list[str]]:
-    """kalign-driven pairwise alignment of template to query."""
+) -> np.ndarray:
+    """Run kalign and return an ``(n_q,)`` query-index -> template-index map.
+
+    Query columns without a template match get ``-1``. Template-only
+    columns are silently dropped (no query slot to consume).
+    """
     if shutil.which("kalign") is None:
         msg = (
             f"{where}: template length {len(template_one_letter)} != query "
@@ -284,17 +307,14 @@ def _kalign_template_to_query(
         raise RuntimeError(msg)
 
     n_q = len(query_one_letter)
-    out_bb = np.full((n_q, *template_bb.shape[1:]), np.nan, dtype=template_bb.dtype)
-    out_letters: list[str] = ["-"] * n_q
-
+    q_to_t = np.full(n_q, -1, dtype=np.int64)
     qi = 0
     ti = 0
     for q_char, t_char in zip(q_aln, t_aln):
         q_is_res = q_char != "-"
         t_is_res = t_char != "-"
         if q_is_res and t_is_res:
-            out_bb[qi] = template_bb[ti]
-            out_letters[qi] = template_one_letter[ti]
+            q_to_t[qi] = ti
             qi += 1
             ti += 1
         elif q_is_res:
@@ -309,7 +329,7 @@ def _kalign_template_to_query(
             "expected to consume all query positions"
         )
         raise RuntimeError(msg)
-    return out_bb, out_letters
+    return q_to_t
 
 
 def _read_fasta(path: Path) -> dict[str, str]:
@@ -533,9 +553,199 @@ def _load_complex_chain_centroid(
     )
 
 
+# ---------------------------------------------------------------------------
+# Per-residue heavy-atom dict (for token-aware contact derivation)
+# ---------------------------------------------------------------------------
+
+
+def _load_chain_atoms_from_cif(
+    cif_path: Path,
+    template_chain_id: str,
+) -> tuple[list[dict[str, np.ndarray]], list[str]]:
+    """Per-residue ``{atom_name: xyz}`` (heavy atoms only) + 1-letter codes."""
+    from Bio.PDB.MMCIFParser import MMCIFParser
+
+    parser = MMCIFParser(QUIET=True, auth_chains=False)
+    parse_path, tmp_path = _open_cif(cif_path)
+    try:
+        structure = parser.get_structure("complex", parse_path)
+    finally:
+        if tmp_path is not None:
+            tmp_path.unlink(missing_ok=True)
+    model = next(iter(structure))
+    label_id = template_chain_id.split("_")[0]
+    target_chain = None
+    for chain in model:
+        if chain.id == label_id:
+            target_chain = chain
+            break
+    if target_chain is None:
+        msg = (
+            f"Chain {template_chain_id!r} (label_asym_id {label_id!r}) "
+            f"not found in {cif_path}. Available chains: {[c.id for c in model]}"
+        )
+        raise KeyError(msg)
+
+    residues = [r for r in target_chain if r.id[0] == " "]
+    if not residues:
+        msg = f"Chain {template_chain_id!r} in {cif_path} has no standard residues."
+        raise ValueError(msg)
+
+    per_residue: list[dict[str, np.ndarray]] = []
+    one_letter: list[str] = []
+    for res in residues:
+        atom_dict: dict[str, np.ndarray] = {}
+        for atom in res:
+            name = atom.get_name()
+            if name.startswith("H"):
+                continue
+            atom_dict[name] = np.asarray(atom.get_coord(), dtype=np.float32)
+        per_residue.append(atom_dict)
+        one_letter.append(_three_to_one(res.resname))
+    return per_residue, one_letter
+
+
+def _load_chain_atoms_from_lmdb(
+    cif_db_path: Path,
+    cif_id: str,
+    template_chain_id: str,
+) -> tuple[list[dict[str, np.ndarray]], list[str]]:
+    """Per-residue heavy-atom dict from a BioMolDB lookup."""
+    parts = cif_id.split("_")
+    if len(parts) != 4:
+        msg = (
+            f"cif_id {cif_id!r} must be of the form "
+            f"'<pdb_id>_<assembly_id>_<model_id>_<alt_id>'."
+        )
+        raise ValueError(msg)
+    pdb_id, assembly_id, model_id, alt_id = parts
+    cifmol = load_cifmol(cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id)
+    chain_view = cifmol.chains[cifmol.chains.chain_id == template_chain_id]
+    if len(chain_view) == 0:
+        available = [str(c) for c in np.asarray(cifmol.chains.chain_id.value)]
+        msg = (
+            f"Chain {template_chain_id!r} not found in cif {cif_id!r}. "
+            f"Available chain ids: {available}"
+        )
+        raise KeyError(msg)
+    chain_cifmol = chain_view.extract()
+    n_res = len(chain_cifmol.residues)
+    per_residue: list[dict[str, np.ndarray]] = []
+    for ri in range(n_res):
+        residue = chain_cifmol.residues[ri]
+        atom_ids = np.asarray(residue.atoms.id.value)
+        xyz = np.asarray(residue.atoms.xyz.value, dtype=np.float32)
+        atom_dict: dict[str, np.ndarray] = {}
+        for a_name, a_xyz in zip(atom_ids, xyz):
+            name = str(a_name)
+            if name.startswith("H"):
+                continue
+            atom_dict[name] = a_xyz
+        per_residue.append(atom_dict)
+    one_letter_arr = np.asarray(chain_cifmol.residues.one_letter_code_can.value)
+    return per_residue, [str(c) for c in one_letter_arr]
+
+
+def _load_complex_chain_atoms(
+    complex_spec: "ComplexTemplateSpec",
+    template_chain_id: str,
+    cif_db: Path | None,
+) -> tuple[list[dict[str, np.ndarray]], list[str]]:
+    """Dispatch CIF vs LMDB loaders for the per-residue atom-dict representation."""
+    if complex_spec.cif is not None:
+        return _load_chain_atoms_from_cif(complex_spec.cif, template_chain_id)
+    if cif_db is None:
+        msg = (
+            "complex_templates entry uses cif_id but spec.cif_db is not set. "
+            "Either provide a cif file path or set spec.cif_db."
+        )
+        raise ValueError(msg)
+    if complex_spec.cif_id is None:  # pragma: no cover — guarded by pydantic
+        msg = "ComplexTemplateSpec missing both cif and cif_id."
+        raise ValueError(msg)
+    return _load_chain_atoms_from_lmdb(
+        cif_db, complex_spec.cif_id, template_chain_id,
+    )
+
+
+def _build_derivation_expansions(spec: "InferenceSpec") -> list:
+    """Rebuild expansions for standalone contact derivation (skips MSA loading).
+
+    Mirrors the per-chain expansion section of :func:`build_inference_batch`
+    but leaves ``msa=None`` since contact derivation never reads it. Used
+    when callers don't already have built expansions (e.g. the preview
+    CLI). ``build_inference_batch`` itself passes its own expansions in.
+    """
+    import dataclasses
+
+    from .build import (
+        _TERMINAL_ATOM_BY_ENTITY,
+        _ChainExpansion,
+        _strip_terminal_atoms,
+        _tokenize_chain,
+    )
+    from .ccd import CCDLookup
+    from .fasta import parse_fasta_file
+    from .tokenization import TokenizationPolicy
+
+    chain_indices = spec.chain_indices()
+    ccd_lookup = CCDLookup(spec.ccd_db)
+    policy = (
+        TokenizationPolicy.from_file(spec.tokenization)
+        if spec.tokenization is not None
+        else TokenizationPolicy()
+    )
+    final_chain_letter = {ci: spec.chain_letters[str(ci)] for ci in chain_indices}
+    parsed_per_letter: dict[str, object] = {}
+    chain_specs: dict[int, object] = {}
+    for ci in chain_indices:
+        letter = final_chain_letter[ci]
+        if letter not in parsed_per_letter:
+            parsed_per_letter[letter] = parse_fasta_file(
+                spec.fasta[letter], chain_index=ci,
+            )
+        base = parsed_per_letter[letter]
+        chain_specs[ci] = dataclasses.replace(
+            base, chain_index=ci, chain_letter=letter,
+        )
+
+    expansions: list = []
+    atom_offset = 0
+    token_offset = 0
+    for ci in chain_indices:
+        cs = chain_specs[ci]
+        residues_full = [ccd_lookup[ccd] for ccd in cs.chemcomp_ids]
+        strip_atom = _TERMINAL_ATOM_BY_ENTITY.get(cs.entity_type)
+        residues, keep_masks = _strip_terminal_atoms(residues_full, strip_atom)
+        n_atoms = sum(r.n_atoms for r in residues)
+        atom_to_token_local, token_to_residue_local, residue_token_offsets = (
+            _tokenize_chain(cs, residues, residues_full, keep_masks, ccd_lookup, policy)
+        )
+        n_tokens_chain = int(residue_token_offsets[-1])
+        expansions.append(
+            _ChainExpansion(
+                spec=cs,
+                residues=residues,
+                n_residues=len(residues),
+                n_atoms=n_atoms,
+                n_tokens=n_tokens_chain,
+                atom_offset=atom_offset,
+                token_offset=token_offset,
+                msa=None,  # type: ignore[arg-type]  # contact derivation doesn't read msa
+                atom_to_token_local=atom_to_token_local,
+                token_to_residue_local=token_to_residue_local,
+                residue_token_offsets=residue_token_offsets,
+            ),
+        )
+        atom_offset += n_atoms
+        token_offset += n_tokens_chain
+    return expansions
+
+
 def derive_contacts_from_complex_templates(
     spec: "InferenceSpec",
     *,
+    expansions: list | None = None,
     positive_cutoff: float = 6.0,
     negative_cutoff: float = 12.0,
     mode: str = "inter",
@@ -544,29 +754,33 @@ def derive_contacts_from_complex_templates(
     """Derive ``(positive, negative)`` contact strings from aligned templates.
 
     Mirrors the training-time supervision in
-    :func:`miniworld.data.features.convert.to_token_contacts`:
+    :func:`miniworld.data.features.convert.to_token_contacts` with proper
+    tokenization awareness:
 
-    - Per-residue reference coordinate is the **mean of the residue's
-      heavy atoms** (read straight from the user-provided cif / cifmol —
-      this is independent of MiniWorld's template-model representation,
-      which only keeps N/CA/C/CB). This matches training's "average of
-      valid atoms in the token" when tokens are residue-level.
+    - For every **query token** (residue-level when ``policy.resolution=1``,
+      fragment-level for intermediate, atom-level for 0), the reference
+      coordinate is the mean of template atoms whose names match the
+      atoms the fragment is composed of. Atoms missing from the template
+      (e.g. mutation makes the query-side atom unavailable) are skipped;
+      tokens with no matching template atom at all are dropped.
     - Pairs with distance ``< positive_cutoff`` (default 6 Å) become
       positive contacts; pairs with ``> negative_cutoff`` (default 12 Å)
       become negative contacts. The gap is intentionally unsupervised.
-    - Contacts are emitted at **residue level**
-      (``"<chain_letter>:<res_1based>-<chain_letter>:<res_1based>"``).
-      :func:`_build_token_contacts` anchors each one at the residue's
-      first token, so atomized residues still fold into the token graph.
+    - Contact strings carry the per-residue local token index after ``#``:
+      ``"<chain_letter>:<res_1based>#<tok_local>-...#..."``.
+      :func:`_build_token_contacts` reads the ``#`` and resolves to the
+      right global token id.
 
     Modes:
         - ``inter``: only cross-chain pairs (typical use).
         - ``all``: also includes intra-chain pairs with ``|i - j| >= seqsep``.
 
+    ``expansions`` lets in-batch callers (``build_inference_batch``) reuse
+    their already-built per-chain info. When ``None``, the function
+    rebuilds a minimal expansion (no MSA) via :func:`_build_derivation_expansions`.
+
     Returns ``([], [])`` when ``spec.complex_templates`` is empty.
     """
-    from .fasta import parse_fasta_file
-
     if not spec.complex_templates:
         return [], []
     if mode not in ("inter", "all"):
@@ -579,19 +793,15 @@ def derive_contacts_from_complex_templates(
         )
         raise ValueError(msg)
 
-    # Per-letter query 1-letter sequences (parsed once across this call).
-    letter_to_one_letter: dict[str, list[str]] = {}
-    for letter, fasta_path in spec.fasta.items():
-        chain_spec = parse_fasta_file(Path(fasta_path), 0)
-        letter_to_one_letter[letter] = chain_spec.one_letter_seq
+    if expansions is None:
+        expansions = _build_derivation_expansions(spec)
+    n_chains = len(expansions)
 
-    positive_set: set[tuple[str, int, str, int]] = set()
-    negative_set: set[tuple[str, int, str, int]] = set()
+    positive_set: set[tuple[str, int, int, str, int, int]] = set()
+    negative_set: set[tuple[str, int, int, str, int, int]] = set()
 
     for ki, complex_spec in enumerate(spec.complex_templates):
-        centroid_blocks: list[np.ndarray] = []
-        chain_letter_per_res: list[str] = []
-        local_res_per_pos: list[int] = []
+        per_token: list[tuple[str, int, int, np.ndarray]] = []
 
         for chain_idx_str, t_chain_id in complex_spec.chain_map.items():
             try:
@@ -602,37 +812,67 @@ def derive_contacts_from_complex_templates(
                     f"is not a chain index. Use numeric keys (e.g. \"0\", \"1\")."
                 )
                 raise ValueError(msg) from e
+            if not (0 <= ci < n_chains):
+                msg = (
+                    f"Complex template[{ki}] references chain index {ci}, "
+                    f"but only chains 0..{n_chains - 1} exist."
+                )
+                raise IndexError(msg)
             letter = spec.chain_letters.get(str(ci))
             if letter is None:
                 continue
-            q_one_letter = letter_to_one_letter.get(letter)
-            if q_one_letter is None:
-                continue
-            t_centroid, t_letters = _load_complex_chain_centroid(
+            exp = expansions[ci]
+            q_one_letter = exp.spec.one_letter_seq
+
+            t_atoms_per_res, t_letters = _load_complex_chain_atoms(
                 complex_spec, t_chain_id, spec.cif_db,
-            )  # (n_t, 1, 3), one_letter
-            aligned_centroid, _aligned_letters = _align_template_to_query(
-                t_centroid, t_letters, q_one_letter,
+            )
+            q_to_t = _query_to_template_index_map(
+                t_letters, q_one_letter,
                 where=f"complex_templates[{ki}].chain_map['{chain_idx_str}']",
             )
-            n_q = len(q_one_letter)
-            centroid_blocks.append(aligned_centroid[:, 0, :])  # (n_q, 3)
-            chain_letter_per_res.extend([letter] * n_q)
-            local_res_per_pos.extend(range(1, n_q + 1))
 
-        if not centroid_blocks:
+            atom_cursor = 0
+            for r_idx in range(exp.n_residues):
+                residue = exp.residues[r_idx]
+                n_atoms_res = residue.n_atoms
+                tok_start = int(exp.residue_token_offsets[r_idx])
+                tok_end = int(exp.residue_token_offsets[r_idx + 1])
+                n_tok_in_res = tok_end - tok_start
+                atom_to_frag = (
+                    exp.atom_to_token_local[atom_cursor: atom_cursor + n_atoms_res]
+                    - tok_start
+                )
+                atom_cursor += n_atoms_res
+
+                t_idx = int(q_to_t[r_idx])
+                if t_idx < 0:
+                    continue  # query residue uncovered by template
+                template_atoms = t_atoms_per_res[t_idx]
+                if not template_atoms:
+                    continue
+
+                for tok_local in range(n_tok_in_res):
+                    atom_pos = np.where(atom_to_frag == tok_local)[0]
+                    if atom_pos.size == 0:
+                        continue
+                    atom_names = [str(residue.atom_ids[i]) for i in atom_pos]
+                    xyz = [
+                        template_atoms[name] for name in atom_names
+                        if name in template_atoms
+                    ]
+                    if not xyz:
+                        continue
+                    token_xyz = np.mean(np.asarray(xyz, dtype=np.float32), axis=0)
+                    per_token.append((letter, r_idx + 1, tok_local, token_xyz))
+
+        if len(per_token) < 2:
             continue
 
-        all_c = np.concatenate(centroid_blocks, axis=0)
-        chain_arr = np.array(chain_letter_per_res, dtype=object)
-        res_arr = np.asarray(local_res_per_pos, dtype=np.int32)
-        valid_idx = np.where(np.isfinite(all_c).all(axis=-1))[0]
-        if len(valid_idx) < 2:
-            continue
-        c_valid = all_c[valid_idx]
-        diff = c_valid[:, None, :] - c_valid[None, :, :]
+        coords = np.stack([t[3] for t in per_token], axis=0)
+        diff = coords[:, None, :] - coords[None, :, :]
         dist = np.sqrt((diff * diff).sum(axis=-1))
-        iu, ju = np.triu_indices(len(valid_idx), k=1)
+        iu, ju = np.triu_indices(len(per_token), k=1)
         d = dist[iu, ju]
         pos_mask = d < positive_cutoff
         neg_mask = d > negative_cutoff
@@ -640,22 +880,27 @@ def derive_contacts_from_complex_templates(
         def _accumulate(mask: np.ndarray, target: set) -> None:
             for k in np.where(mask)[0]:
                 i, j = int(iu[k]), int(ju[k])
-                gi, gj = int(valid_idx[i]), int(valid_idx[j])
-                ci, cj = chain_arr[gi], chain_arr[gj]
-                ri, rj = int(res_arr[gi]), int(res_arr[gj])
-                if mode == "inter" and ci == cj:
+                ci_l, ri, ti_tok, _ = per_token[i]
+                cj_l, rj, tj_tok, _ = per_token[j]
+                if mode == "inter" and ci_l == cj_l:
                     continue
-                if mode == "all" and ci == cj and abs(ri - rj) < seqsep:
+                if mode == "all" and ci_l == cj_l and abs(ri - rj) < seqsep:
                     continue
-                if (ci, ri) > (cj, rj):
-                    ci, cj, ri, rj = cj, ci, rj, ri
-                target.add((ci, ri, cj, rj))
+                if (ci_l, ri, ti_tok) > (cj_l, rj, tj_tok):
+                    ci_l, cj_l = cj_l, ci_l
+                    ri, rj = rj, ri
+                    ti_tok, tj_tok = tj_tok, ti_tok
+                target.add((ci_l, ri, ti_tok, cj_l, rj, tj_tok))
 
         _accumulate(pos_mask, positive_set)
         _accumulate(neg_mask, negative_set)
 
-    pos_list = [f"{ci}:{ri}-{cj}:{rj}" for (ci, ri, cj, rj) in sorted(positive_set)]
-    neg_list = [f"{ci}:{ri}-{cj}:{rj}" for (ci, ri, cj, rj) in sorted(negative_set)]
+    def _fmt(k: tuple) -> str:
+        ci_l, ri, ti, cj_l, rj, tj = k
+        return f"{ci_l}:{ri}#{ti}-{cj_l}:{rj}#{tj}"
+
+    pos_list = [_fmt(k) for k in sorted(positive_set)]
+    neg_list = [_fmt(k) for k in sorted(negative_set)]
     return pos_list, neg_list
 
 

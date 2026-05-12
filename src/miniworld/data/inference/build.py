@@ -266,7 +266,9 @@ def build_inference_batch(
         from .complex_template import derive_contacts_from_complex_templates
         from .spec import ContactsSpec
 
-        extra_pos, extra_neg = derive_contacts_from_complex_templates(spec)
+        extra_pos, extra_neg = derive_contacts_from_complex_templates(
+            spec, expansions=expansions,
+        )
         if extra_pos or extra_neg:
             # Dedupe while preserving the user's explicit contacts first.
             merged_pos = list(dict.fromkeys([*contacts.positive, *extra_pos]))
@@ -777,7 +779,7 @@ def _build_token_contacts(
     for kind, pairs in (("positive", contacts.positive), ("negative", contacts.negative)):
         type_id = 0 if kind == "positive" else 1
         for s in pairs:
-            chain_a, res_a, chain_b, res_b = contacts.parse_pair(s)
+            chain_a, res_a, tok_a, chain_b, res_b, tok_b = contacts.parse_pair(s)
             chains_a = _resolve_chain_refs(
                 chain_a, letter_to_chains, n_chains, where=f"contact {s!r}",
             )
@@ -785,9 +787,15 @@ def _build_token_contacts(
                 chain_b, letter_to_chains, n_chains, where=f"contact {s!r}",
             )
             for ci_a in chains_a:
-                ti = _resolve_global_token(ci_a, res_a, expansions, n_residues_per_chain, s)
+                ti = _resolve_global_token(
+                    ci_a, res_a, expansions, n_residues_per_chain, s,
+                    local_tok=tok_a,
+                )
                 for ci_b in chains_b:
-                    tj = _resolve_global_token(ci_b, res_b, expansions, n_residues_per_chain, s)
+                    tj = _resolve_global_token(
+                        ci_b, res_b, expansions, n_residues_per_chain, s,
+                        local_tok=tok_b,
+                    )
                     if ti == tj:
                         # Skip rather than raise — Cartesian expansion may
                         # legitimately hit the same token (e.g. chain ref
@@ -809,11 +817,15 @@ def _resolve_global_token(
     expansions: list[_ChainExpansion],
     n_residues_per_chain: list[int],
     raw: str,
+    *,
+    local_tok: int | None = None,
 ) -> int:
-    """Map ``(chain_local_idx, 1-based residue idx)`` to the global token id.
+    """Map ``(chain_local, res_1based[, local_tok])`` to a global token id.
 
     ``chain_local`` is already a numeric chain index (letter-to-chain
-    resolution happens in the caller).
+    resolution happens in the caller). ``local_tok`` is the 0-based token
+    index inside the residue; ``None`` means "first token", which is the
+    only token for residue-level tokens.
     """
     if not (1 <= res_1based <= n_residues_per_chain[chain_local]):
         msg = (
@@ -822,5 +834,18 @@ def _resolve_global_token(
         )
         raise ValueError(msg)
     exp = expansions[chain_local]
-    # Anchor the contact at the residue's first token.
-    return exp.token_offset + int(exp.residue_token_offsets[res_1based - 1])
+    res_start = int(exp.residue_token_offsets[res_1based - 1])
+    res_end = int(exp.residue_token_offsets[res_1based])
+    if local_tok is None:
+        offset_in_residue = 0
+    else:
+        n_tokens_in_residue = res_end - res_start
+        if not (0 <= local_tok < n_tokens_in_residue):
+            msg = (
+                f"Contact {raw!r}: local token index {local_tok} out of range for "
+                f"chain {chain_local} residue {res_1based} "
+                f"({n_tokens_in_residue} token(s))."
+            )
+            raise ValueError(msg)
+        offset_in_residue = local_tok
+    return exp.token_offset + res_start + offset_in_residue

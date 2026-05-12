@@ -9,30 +9,51 @@ import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
-_CONTACT_RE = re.compile(r"^([A-Za-z0-9]+):(\d+)-([A-Za-z0-9]+):(\d+)$")
+_CONTACT_RE = re.compile(
+    r"^([A-Za-z0-9]+):(\d+)(?:#(\d+))?-([A-Za-z0-9]+):(\d+)(?:#(\d+))?$",
+)
 
 
 class ContactsSpec(BaseModel):
     """User-provided positive / negative contact pairs.
 
-    Each entry is a string ``"<chain_a>:<res_a>-<chain_b>:<res_b>"`` where
-    ``chain_a`` / ``chain_b`` are the chain letters declared via ``Chain:<X>``
-    in the fasta headers, and ``res_a`` / ``res_b`` are 1-based residue
-    indices within those chains (matching the position in the fasta sequence).
+    Each entry is a string of the form
+    ``"<chain_a>:<res_a>[#<tok_a>]-<chain_b>:<res_b>[#<tok_b>]"`` where
+    ``chain_*`` are the chain letters declared via ``Chain:<X>`` in the
+    fasta headers and ``res_*`` are 1-based residue indices within those
+    chains (matching the position in the fasta sequence).
+
+    The optional ``#<tok>`` suffix is the 0-based local token index inside
+    that residue, used when the residue tokenizes to more than one token
+    (atomized / fragmented). Omitting it (the common case) means "first
+    token of the residue" — the default anchor for residue-level tokens.
     """
 
     positive: list[str] = Field(default_factory=list)
     negative: list[str] = Field(default_factory=list)
 
     @staticmethod
-    def parse_pair(s: str) -> tuple[str, int, str, int]:
-        """Parse ``"A:5-B:12"`` into ``("A", 5, "B", 12)`` (1-based residue idx)."""
+    def parse_pair(s: str) -> tuple[str, int, int | None, str, int, int | None]:
+        """Parse a contact string into ``(chain_a, res_a, tok_a, chain_b, res_b, tok_b)``.
+
+        ``tok_*`` is ``None`` when the ``#<tok>`` suffix is absent.
+        """
         m = _CONTACT_RE.match(s.strip())
         if m is None:
-            msg = f"Invalid contact pair {s!r}; expected '<chain>:<res>-<chain>:<res>'."
+            msg = (
+                f"Invalid contact pair {s!r}; expected "
+                "'<chain>:<res>[#<tok>]-<chain>:<res>[#<tok>]'."
+            )
             raise ValueError(msg)
-        chain_a, res_a, chain_b, res_b = m.groups()
-        return chain_a, int(res_a), chain_b, int(res_b)
+        chain_a, res_a, tok_a, chain_b, res_b, tok_b = m.groups()
+        return (
+            chain_a,
+            int(res_a),
+            int(tok_a) if tok_a is not None else None,
+            chain_b,
+            int(res_b),
+            int(tok_b) if tok_b is not None else None,
+        )
 
 
 class ComplexTemplateSpec(BaseModel):
