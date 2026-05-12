@@ -1,12 +1,12 @@
-"""Roundtrip test: reverse a dataloader Batch into fasta/a3m/contacts/spec.json.
+"""Roundtrip test: reverse a dataloader Batch into fasta/a3m/contacts/spec.yaml.
 
 The dataloader builds a ``Batch`` from LMDB-backed CIF + a3m + template +
-contacts. This script reverses that Batch into the JSON spec consumed by the
+contacts. This script reverses that Batch into the YAML spec consumed by the
 new inference path (``miniworld.data.inference``), so the same sample can be
 fed back through ``build_inference_batch`` for end-to-end equivalence checks.
 
 Two subcommands:
-  * ``dump`` — write fasta + a3m + spec.json for one dataset item.
+  * ``dump`` — write fasta + a3m + spec.yaml for one dataset item.
   * ``roundtrip`` — ``dump`` plus ``build_inference_batch`` and per-tensor
     diff against the original Batch.
 
@@ -20,7 +20,6 @@ Example:
 from __future__ import annotations
 
 import dataclasses
-import json
 import math
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,6 +28,7 @@ from typing import Any, cast
 import click
 import numpy as np
 import torch
+import yaml
 
 from miniworld.data.constants import ResidueMapping
 from miniworld.data.features import Batch
@@ -513,7 +513,7 @@ def dump_inference_spec(
     contacts_override: ContactsSpec | None = None,
     spec_name_override: str | None = None,
 ) -> tuple[InferenceSpec, list[ChainSlice]]:
-    """Write fasta + a3m files and a spec.json into ``out_dir``.
+    """Write fasta + a3m files and a spec.yaml into ``out_dir``.
 
     ``cif_db_path`` + ``a3m_db_path`` are optional but recommended: when both
     are set, this loads the **raw** MSA from the a3m LMDB (preserving species
@@ -593,7 +593,7 @@ def dump_inference_spec(
         spec_dict["template_db"] = str(template_db_path)
         spec_dict["template"] = template_map
         spec_dict["template_n"] = template_n
-    (out_dir / "spec.json").write_text(json.dumps(spec_dict, indent=2))
+    (out_dir / "spec.yaml").write_text(yaml.safe_dump(spec_dict, sort_keys=False))
     return spec, chains
 
 
@@ -765,12 +765,12 @@ def _common_item_options(func):
     "--out-dir",
     type=click.Path(path_type=Path),
     required=True,
-    help="Directory to write fasta/a3m/spec.json into.",
+    help="Directory to write fasta/a3m/spec.yaml into.",
 )
 @_common_item_options
 @dataset_options
 def dump(**kwargs: object) -> None:
-    """Reverse a dataloader Batch into fasta + a3m + spec.json."""
+    """Reverse a dataloader Batch into fasta + a3m + spec.yaml."""
     out_dir = cast("Path", kwargs.pop("out_dir"))
     args = _disable_cropping(ItemOptions(**cast("dict[str, Any]", kwargs)))
     ensure_paths_exist(
@@ -793,7 +793,7 @@ def dump(**kwargs: object) -> None:
         a3m_db_path=args.a3m_db_path,
         template_db_path=args.template_db_path,
     )
-    click.echo(f"Wrote spec to {out_dir / 'spec.json'}")
+    click.echo(f"Wrote spec to {out_dir / 'spec.yaml'}")
     for c in chains:
         click.echo(
             f"  chain {c.chain_idx} Chain:{c.chain_letter} "
@@ -806,7 +806,7 @@ def dump(**kwargs: object) -> None:
     "--out-dir",
     type=click.Path(path_type=Path),
     required=True,
-    help="Directory to write fasta/a3m/spec.json into.",
+    help="Directory to write fasta/a3m/spec.yaml into.",
 )
 @_common_item_options
 @dataset_options
@@ -870,7 +870,7 @@ def roundtrip(**kwargs: object) -> None:
     "--out-dir",
     type=click.Path(path_type=Path),
     required=True,
-    help="Directory to write fasta/a3m/spec.json into.",
+    help="Directory to write fasta/a3m/spec.yaml into.",
 )
 @click.option(
     "--positive-cutoff",
@@ -950,7 +950,7 @@ def dense_contacts(**kwargs: object) -> None:
         contacts_override=contacts,
         spec_name_override=f"dense_{sample_name}",
     )
-    click.echo(f"Wrote spec to {out_dir / 'spec.json'}")
+    click.echo(f"Wrote spec to {out_dir / 'spec.yaml'}")
     for c in chains:
         click.echo(
             f"  chain {c.chain_idx} Chain:{c.chain_letter} "
@@ -1023,7 +1023,7 @@ def _read_multi_fasta(path: Path) -> list[tuple[str, str]]:
     "--out-dir",
     type=click.Path(path_type=Path),
     required=True,
-    help="Directory to write fasta/a3m/spec.json into.",
+    help="Directory to write fasta/a3m/spec.yaml into.",
 )
 @click.option("--name", type=str, default=None, help="Optional spec name (default: query stem).")
 def from_fasta(
@@ -1036,7 +1036,7 @@ def from_fasta(
     out_dir: Path,
     name: str | None,
 ) -> None:
-    """Convert a free-form multi-record fasta (+ optional a3m dir) into our spec.json layout.
+    """Convert a free-form multi-record fasta (+ optional a3m dir) into our spec.yaml layout.
 
     Chain letters are auto-assigned in order: 0->'a', 1->'b', ..., 25->'z',
     26->'aa', etc. Entity types are auto-detected from the residue letters
@@ -1106,14 +1106,14 @@ def from_fasta(
         spec_dict["template"] = template_map
         spec_dict["template_n"] = 4
 
-    (out_dir / "spec.json").write_text(json.dumps(spec_dict, indent=2))
+    (out_dir / "spec.yaml").write_text(yaml.safe_dump(spec_dict, sort_keys=False))
     for ci, letter, ev, n in summary:
         click.echo(
             f"  chain {ci} Chain:{letter} entity={ev} n_res={n}"
             + (" + a3m" if letter in a3m_paths else " (no a3m)")
             + (f" + tmpl[{template_map[str(ci)]}]" if str(ci) in template_map else ""),
         )
-    click.echo(f"Wrote spec to {out_dir / 'spec.json'}")
+    click.echo(f"Wrote spec to {out_dir / 'spec.yaml'}")
 
 
 if __name__ == "__main__":

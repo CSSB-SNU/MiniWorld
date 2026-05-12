@@ -1,11 +1,11 @@
-"""Pydantic schema for the inference-time JSON spec."""
+"""Pydantic schema for the inference-time YAML spec."""
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 
+import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
@@ -83,7 +83,7 @@ class ComplexTemplateSpec(BaseModel):
 
 
 class InferenceSpec(BaseModel):
-    """JSON schema for inference inputs.
+    """YAML schema for inference inputs.
 
     Fields:
       name: optional run identifier (used for output filenames). Defaults to the spec stem.
@@ -210,9 +210,9 @@ class InferenceSpec(BaseModel):
         return self
 
     @classmethod
-    def from_json(cls, path: Path) -> "InferenceSpec":
+    def from_yaml(cls, path: Path) -> "InferenceSpec":
         with Path(path).open("r") as f:
-            data = json.load(f)
+            data = yaml.safe_load(f)
         spec = cls.model_validate(data)
         if spec.name is None:
             spec.name = Path(path).stem
@@ -224,7 +224,7 @@ class InferenceSpec(BaseModel):
 
 
 def _coerce_int_keys(v: object) -> object:
-    """Accept JSON-style string-int keys ('0', '1') or already-int keys."""
+    """Accept string-int keys ('0', '1') or already-int keys."""
     if not isinstance(v, dict):
         return v
     out: dict[str, object] = {}

@@ -586,7 +586,7 @@ class InferenceConfig(BaseModel):
     "spec_path",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     required=True,
-    help="JSON spec describing fasta / a3m / template / contacts inputs.",
+    help="YAML spec describing fasta / a3m / template / contacts inputs.",
 )
 @click.option(
     "--output-dir",
@@ -623,7 +623,7 @@ def inference(  # noqa: PLR0915
     fabric.launch()
     fabric.seed_everything(cfg.infer.seed)
 
-    spec = InferenceSpec.from_json(spec_path)
+    spec = InferenceSpec.from_yaml(spec_path)
 
     date_dir = output_dir / time.strftime("%Y-%m-%d")
     if subdir:
@@ -662,7 +662,7 @@ def inference(  # noqa: PLR0915
     config_dict = cfg.model_dump(mode="json")
     if fabric.is_global_zero:
         OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
-        (run_sub_dir / "spec.json").write_text(spec_path.read_text())
+        (run_sub_dir / "spec.yaml").write_text(spec_path.read_text())
 
     client.setup(fabric=fabric)
 
