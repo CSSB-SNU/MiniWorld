@@ -1,13 +1,11 @@
 """Per-residue tokenization policy for the inference path.
 
-The user-facing JSON file format is::
+The user-facing YAML file format is::
 
-    {
-      "default": 1.0,
-      "A:1": 1.0,
-      "A:2": 0.5,
-      "B:3": 0.0
-    }
+    default: 1.0
+    "A:1": 1.0
+    "A:2": 0.5
+    "B:3": 0.0
 
 - Keys are either ``"default"`` (applied to any residue not explicitly listed)
   or ``"<chain_letter>:<residue_1based>"`` matching the contacts notation.
@@ -21,10 +19,11 @@ If no file is supplied, the default policy is residue-level for every residue.
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+
+import yaml
 
 
 _KEY_RE = re.compile(r"^([A-Za-z0-9]+):(\d+)$")
@@ -47,9 +46,12 @@ class TokenizationPolicy:
 
     @classmethod
     def from_file(cls, path: Path) -> "TokenizationPolicy":
-        data = json.loads(Path(path).read_text())
+        with Path(path).open("r") as f:
+            data = yaml.safe_load(f)
+        if data is None:
+            data = {}
         if not isinstance(data, dict):
-            msg = f"tokenization file {path} must be a JSON object."
+            msg = f"tokenization file {path} must be a YAML mapping."
             raise ValueError(msg)
         default = float(data.get("default", 1.0))
         per_residue: dict[tuple[str, int], float] = {}

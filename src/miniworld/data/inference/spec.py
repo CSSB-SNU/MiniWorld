@@ -128,7 +128,10 @@ class InferenceSpec(BaseModel):
           singleton group. Only the solver's per-chain RT step is
           affected; chain-aware model embeddings and the output CIF still
           use the underlying per-chain ids.
-      contacts: optional positive / negative contact pairs.
+      contacts: optional positive / negative contact pairs. May be given as
+          a path to a YAML file (``{positive: [...], negative: [...]}``) or
+          inline as the same mapping. Missing / None resolves to empty
+          (no constraints).
       tokenization: optional path to a per-residue resolution JSON file. See
           ``miniworld.data.inference.tokenization`` for the format. ``None``
           (default) means residue-level for every residue.
@@ -164,6 +167,17 @@ class InferenceSpec(BaseModel):
     complex_templates: list[ComplexTemplateSpec] = Field(default_factory=list)
     combine_groups: list[list[int]] = Field(default_factory=list)
     contacts: ContactsSpec = Field(default_factory=ContactsSpec)
+
+    @field_validator("contacts", mode="before")
+    @classmethod
+    def _load_contacts(cls, v: object) -> object:
+        """Allow ``contacts`` to be given as a path to a YAML file."""
+        if v is None:
+            return {}
+        if isinstance(v, (str, Path)):
+            with Path(v).open("r") as f:
+                return yaml.safe_load(f) or {}
+        return v
     tokenization: Path | None = None  # per-residue resolution JSON; None -> all residue-level
     n_trunk_samples: int = Field(default=1, ge=1)
     n_diffusion_samples: int = Field(default=1, ge=1)
