@@ -412,32 +412,50 @@ def _load_complex_chain(
 def derive_contacts_from_complex_templates(
     spec: "InferenceSpec",
     *,
-    threshold: float = 8.0,
+    positive_cutoff: float = 6.0,
+    negative_cutoff: float = 12.0,
     mode: str = "inter",
     seqsep: int = 4,
-) -> list[str]:
-    """Derive ``positive`` contact strings from CB-CB distances in aligned templates.
+) -> tuple[list[str], list[str]]:
+    """Derive ``(positive, negative)`` contact strings from aligned templates.
 
-    For each entry in ``spec.complex_templates``, parse the chains listed
-    in ``chain_map``, align each one to its query chain (kalign-backed),
-    and collect CB-CB pairs whose distance is below ``threshold``.
+    Mirrors the training-time supervision in
+    :func:`miniworld.data.features.convert.to_token_contacts`:
 
-    Contacts are emitted in the same format ``ContactsSpec`` expects::
-
-        "<chain_letter>:<res_1based>-<chain_letter>:<res_1based>"
+    - Per-residue reference coordinate is the **mean of available backbone
+      atoms (N/CA/C/CB)** — the template doesn't ship sidechain atoms, so
+      this is the closest analogue of training's "average over valid atoms
+      in the token" available to us. Residues whose backbone is fully
+      uncovered after kalign alignment are skipped.
+    - Pairs with distance ``< positive_cutoff`` (default 6 Å) become
+      positive contacts; pairs with ``> negative_cutoff`` (default 12 Å)
+      become negative contacts. The gap is intentionally unsupervised,
+      matching training.
+    - Contacts are emitted at **residue level**
+      (``"<chain_letter>:<res_1based>-<chain_letter>:<res_1based>"``).
+      Downstream :func:`_build_token_contacts` anchors each one at the
+      residue's first token, so atomized residues fold cleanly into the
+      token graph without us needing finer-grained distances (which we
+      couldn't compute from backbone-only template atoms anyway).
 
     Modes:
-        - ``inter``: only cross-chain pairs (the typical use case).
-        - ``all``: includes intra-chain pairs with ``|i - j| >= seqsep``.
+        - ``inter``: only cross-chain pairs (typical use).
+        - ``all``: also includes intra-chain pairs with ``|i - j| >= seqsep``.
 
-    Returns an empty list when ``spec.complex_templates`` is empty.
+    Returns ``([], [])`` when ``spec.complex_templates`` is empty.
     """
     from .fasta import parse_fasta_file
 
     if not spec.complex_templates:
-        return []
+        return [], []
     if mode not in ("inter", "all"):
         msg = f"mode must be 'inter' or 'all', got {mode!r}"
+        raise ValueError(msg)
+    if positive_cutoff >= negative_cutoff:
+        msg = (
+            f"positive_cutoff ({positive_cutoff}) must be < "
+            f"negative_cutoff ({negative_cutoff})"
+        )
         raise ValueError(msg)
 
     # Per-letter query 1-letter sequences (parsed once across this call).
@@ -446,10 +464,11 @@ def derive_contacts_from_complex_templates(
         chain_spec = parse_fasta_file(Path(fasta_path), 0)
         letter_to_one_letter[letter] = chain_spec.one_letter_seq
 
-    contacts_set: set[tuple[str, int, str, int]] = set()
+    positive_set: set[tuple[str, int, str, int]] = set()
+    negative_set: set[tuple[str, int, str, int]] = set()
 
     for ki, complex_spec in enumerate(spec.complex_templates):
-        cb_blocks: list[np.ndarray] = []
+        centroid_blocks: list[np.ndarray] = []
         chain_letter_per_res: list[str] = []
         local_res_per_pos: list[int] = []
 
@@ -475,39 +494,52 @@ def derive_contacts_from_complex_templates(
                 t_bb, t_letters, q_one_letter,
                 where=f"complex_templates[{ki}].chain_map['{chain_idx_str}']",
             )
+            # Residue centroid: nanmean over the 4 backbone atoms.
+            # All-NaN rows (fully uncovered) produce NaN -> filtered below.
+            with np.errstate(invalid="ignore"):
+                centroid = np.nanmean(aligned_bb, axis=1)  # (n_q, 3)
             n_q = len(q_one_letter)
-            cb_blocks.append(aligned_bb[:, 3, :])  # (n_q, 3): CB column
+            centroid_blocks.append(centroid)
             chain_letter_per_res.extend([letter] * n_q)
             local_res_per_pos.extend(range(1, n_q + 1))
 
-        if not cb_blocks:
+        if not centroid_blocks:
             continue
 
-        all_cb = np.concatenate(cb_blocks, axis=0)
+        all_c = np.concatenate(centroid_blocks, axis=0)
         chain_arr = np.array(chain_letter_per_res, dtype=object)
         res_arr = np.asarray(local_res_per_pos, dtype=np.int32)
-        valid_idx = np.where(np.isfinite(all_cb).all(axis=-1))[0]
+        valid_idx = np.where(np.isfinite(all_c).all(axis=-1))[0]
         if len(valid_idx) < 2:
             continue
-        cb_valid = all_cb[valid_idx]
-        diff = cb_valid[:, None, :] - cb_valid[None, :, :]
+        c_valid = all_c[valid_idx]
+        diff = c_valid[:, None, :] - c_valid[None, :, :]
         dist = np.sqrt((diff * diff).sum(axis=-1))
         iu, ju = np.triu_indices(len(valid_idx), k=1)
-        keep = dist[iu, ju] < threshold
-        iu, ju = iu[keep], ju[keep]
-        for i, j in zip(iu, ju):
-            gi, gj = int(valid_idx[i]), int(valid_idx[j])
-            ci, cj = chain_arr[gi], chain_arr[gj]
-            ri, rj = int(res_arr[gi]), int(res_arr[gj])
-            if mode == "inter" and ci == cj:
-                continue
-            if mode == "all" and ci == cj and abs(ri - rj) < seqsep:
-                continue
-            if (ci, ri) > (cj, rj):
-                ci, cj, ri, rj = cj, ci, rj, ri
-            contacts_set.add((ci, ri, cj, rj))
+        d = dist[iu, ju]
+        pos_mask = d < positive_cutoff
+        neg_mask = d > negative_cutoff
 
-    return [f"{ci}:{ri}-{cj}:{rj}" for (ci, ri, cj, rj) in sorted(contacts_set)]
+        def _accumulate(mask: np.ndarray, target: set) -> None:
+            for k in np.where(mask)[0]:
+                i, j = int(iu[k]), int(ju[k])
+                gi, gj = int(valid_idx[i]), int(valid_idx[j])
+                ci, cj = chain_arr[gi], chain_arr[gj]
+                ri, rj = int(res_arr[gi]), int(res_arr[gj])
+                if mode == "inter" and ci == cj:
+                    continue
+                if mode == "all" and ci == cj and abs(ri - rj) < seqsep:
+                    continue
+                if (ci, ri) > (cj, rj):
+                    ci, cj, ri, rj = cj, ci, rj, ri
+                target.add((ci, ri, cj, rj))
+
+        _accumulate(pos_mask, positive_set)
+        _accumulate(neg_mask, negative_set)
+
+    pos_list = [f"{ci}:{ri}-{cj}:{rj}" for (ci, ri, cj, rj) in sorted(positive_set)]
+    neg_list = [f"{ci}:{ri}-{cj}:{rj}" for (ci, ri, cj, rj) in sorted(negative_set)]
+    return pos_list, neg_list
 
 
 def load_complex_template_layers(

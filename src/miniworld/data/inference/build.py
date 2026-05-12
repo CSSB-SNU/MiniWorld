@@ -266,11 +266,12 @@ def build_inference_batch(
         from .complex_template import derive_contacts_from_complex_templates
         from .spec import ContactsSpec
 
-        extra_positive = derive_contacts_from_complex_templates(spec)
-        if extra_positive:
+        extra_pos, extra_neg = derive_contacts_from_complex_templates(spec)
+        if extra_pos or extra_neg:
             # Dedupe while preserving the user's explicit contacts first.
-            merged = list(dict.fromkeys([*contacts.positive, *extra_positive]))
-            contacts = ContactsSpec(positive=merged, negative=contacts.negative)
+            merged_pos = list(dict.fromkeys([*contacts.positive, *extra_pos]))
+            merged_neg = list(dict.fromkeys([*contacts.negative, *extra_neg]))
+            contacts = ContactsSpec(positive=merged_pos, negative=merged_neg)
     token_contacts = _build_token_contacts(contacts, letter_to_chains, expansions)
     # ``atom_pos_mask`` marks atoms whose positions should be denoised by the
     # diffusion solver and emitted to the CIF output. For inference we want
