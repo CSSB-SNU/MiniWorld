@@ -409,6 +409,107 @@ def _load_complex_chain(
     )
 
 
+def derive_contacts_from_complex_templates(
+    spec: "InferenceSpec",
+    *,
+    threshold: float = 8.0,
+    mode: str = "inter",
+    seqsep: int = 4,
+) -> list[str]:
+    """Derive ``positive`` contact strings from CB-CB distances in aligned templates.
+
+    For each entry in ``spec.complex_templates``, parse the chains listed
+    in ``chain_map``, align each one to its query chain (kalign-backed),
+    and collect CB-CB pairs whose distance is below ``threshold``.
+
+    Contacts are emitted in the same format ``ContactsSpec`` expects::
+
+        "<chain_letter>:<res_1based>-<chain_letter>:<res_1based>"
+
+    Modes:
+        - ``inter``: only cross-chain pairs (the typical use case).
+        - ``all``: includes intra-chain pairs with ``|i - j| >= seqsep``.
+
+    Returns an empty list when ``spec.complex_templates`` is empty.
+    """
+    from .fasta import parse_fasta_file
+
+    if not spec.complex_templates:
+        return []
+    if mode not in ("inter", "all"):
+        msg = f"mode must be 'inter' or 'all', got {mode!r}"
+        raise ValueError(msg)
+
+    # Per-letter query 1-letter sequences (parsed once across this call).
+    letter_to_one_letter: dict[str, list[str]] = {}
+    for letter, fasta_path in spec.fasta.items():
+        chain_spec = parse_fasta_file(Path(fasta_path), 0)
+        letter_to_one_letter[letter] = chain_spec.one_letter_seq
+
+    contacts_set: set[tuple[str, int, str, int]] = set()
+
+    for ki, complex_spec in enumerate(spec.complex_templates):
+        cb_blocks: list[np.ndarray] = []
+        chain_letter_per_res: list[str] = []
+        local_res_per_pos: list[int] = []
+
+        for chain_idx_str, t_chain_id in complex_spec.chain_map.items():
+            try:
+                ci = int(chain_idx_str)
+            except ValueError as e:
+                msg = (
+                    f"Complex template[{ki}] chain_map key {chain_idx_str!r} "
+                    f"is not a chain index. Use numeric keys (e.g. \"0\", \"1\")."
+                )
+                raise ValueError(msg) from e
+            letter = spec.chain_letters.get(str(ci))
+            if letter is None:
+                continue
+            q_one_letter = letter_to_one_letter.get(letter)
+            if q_one_letter is None:
+                continue
+            t_bb, t_letters = _load_complex_chain(
+                complex_spec, t_chain_id, spec.cif_db,
+            )
+            aligned_bb, _aligned_letters = _align_template_to_query(
+                t_bb, t_letters, q_one_letter,
+                where=f"complex_templates[{ki}].chain_map['{chain_idx_str}']",
+            )
+            n_q = len(q_one_letter)
+            cb_blocks.append(aligned_bb[:, 3, :])  # (n_q, 3): CB column
+            chain_letter_per_res.extend([letter] * n_q)
+            local_res_per_pos.extend(range(1, n_q + 1))
+
+        if not cb_blocks:
+            continue
+
+        all_cb = np.concatenate(cb_blocks, axis=0)
+        chain_arr = np.array(chain_letter_per_res, dtype=object)
+        res_arr = np.asarray(local_res_per_pos, dtype=np.int32)
+        valid_idx = np.where(np.isfinite(all_cb).all(axis=-1))[0]
+        if len(valid_idx) < 2:
+            continue
+        cb_valid = all_cb[valid_idx]
+        diff = cb_valid[:, None, :] - cb_valid[None, :, :]
+        dist = np.sqrt((diff * diff).sum(axis=-1))
+        iu, ju = np.triu_indices(len(valid_idx), k=1)
+        keep = dist[iu, ju] < threshold
+        iu, ju = iu[keep], ju[keep]
+        for i, j in zip(iu, ju):
+            gi, gj = int(valid_idx[i]), int(valid_idx[j])
+            ci, cj = chain_arr[gi], chain_arr[gj]
+            ri, rj = int(res_arr[gi]), int(res_arr[gj])
+            if mode == "inter" and ci == cj:
+                continue
+            if mode == "all" and ci == cj and abs(ri - rj) < seqsep:
+                continue
+            if (ci, ri) > (cj, rj):
+                ci, cj, ri, rj = cj, ci, rj, ri
+            contacts_set.add((ci, ri, cj, rj))
+
+    return [f"{ci}:{ri}-{cj}:{rj}" for (ci, ri, cj, rj) in sorted(contacts_set)]
+
+
 def load_complex_template_layers(
     spec: "InferenceSpec",
     expansions: list["_ChainExpansion"],

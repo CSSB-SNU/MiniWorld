@@ -132,6 +132,11 @@ class InferenceSpec(BaseModel):
           a path to a YAML file (``{positive: [...], negative: [...]}``) or
           inline as the same mapping. Missing / None resolves to empty
           (no constraints).
+      template_as_contact: when True, derive inter-chain contacts from
+          ``complex_templates`` (CB-CB < 8 Å) and merge them into the
+          ``positive`` set used by the model. Useful when you want the
+          template's interface geometry to act as a soft constraint
+          without writing the contact pairs by hand.
       tokenization: optional path to a per-residue resolution JSON file. See
           ``miniworld.data.inference.tokenization`` for the format. ``None``
           (default) means residue-level for every residue.
@@ -167,6 +172,7 @@ class InferenceSpec(BaseModel):
     complex_templates: list[ComplexTemplateSpec] = Field(default_factory=list)
     combine_groups: list[list[int]] = Field(default_factory=list)
     contacts: ContactsSpec = Field(default_factory=ContactsSpec)
+    template_as_contact: bool = False
 
     @field_validator("contacts", mode="before")
     @classmethod

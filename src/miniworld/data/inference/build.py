@@ -261,7 +261,17 @@ def build_inference_batch(
 
     # --- Structure ---
     token_bond = _build_token_bonds(expansions)
-    token_contacts = _build_token_contacts(spec.contacts, letter_to_chains, expansions)
+    contacts = spec.contacts
+    if spec.template_as_contact and spec.complex_templates:
+        from .complex_template import derive_contacts_from_complex_templates
+        from .spec import ContactsSpec
+
+        extra_positive = derive_contacts_from_complex_templates(spec)
+        if extra_positive:
+            # Dedupe while preserving the user's explicit contacts first.
+            merged = list(dict.fromkeys([*contacts.positive, *extra_positive]))
+            contacts = ContactsSpec(positive=merged, negative=contacts.negative)
+    token_contacts = _build_token_contacts(contacts, letter_to_chains, expansions)
     # ``atom_pos_mask`` marks atoms whose positions should be denoised by the
     # diffusion solver and emitted to the CIF output. For inference we want
     # every atom predicted, so set it to all-True (no GT, but all valid).
