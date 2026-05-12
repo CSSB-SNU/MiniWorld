@@ -30,8 +30,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from biomol.cif import CIFMol
+from biomol.core.types import BioMolDict
+
 from miniworld.data.constants import ResidueMapping
 from miniworld.data.io import load_cifmol
+from miniworld.data.io.load import load_bytes, load_raw_data
 from miniworld.data.pipeline import ProteinTemplate
 
 if TYPE_CHECKING:
@@ -40,6 +44,56 @@ if TYPE_CHECKING:
 
 
 _BACKBONE_ATOMS = ("N", "CA", "C", "CB")
+
+
+def _load_assembly_cifmol(
+    db_path: Path,
+    pdb_id: str,
+    assembly_id: str,
+    model_id: str,
+    alt_id: str,
+):
+    """Load one ``(assembly, model, alt)`` cifmol from BioMolDB LMDB.
+
+    Auto-detects the two on-disk layouts:
+
+    * **cif.lmdb** (raw structures): outer dict is
+      ``{"assembly_dict": {<combo>: ...}, "metadata_dict": ...}``. Returns
+      a ``CIFMol`` built via ``CIFMol.from_dict``.
+    * **cif_attached_*.lmdb** (training-attached): outer dict has
+      ``<combo>`` keys directly, each holding ``"cifmol_attached_dict"``.
+      Delegates to :func:`miniworld.data.io.load_cifmol` -> ``CIFMolAttached``.
+
+    Either return type exposes the same ``.chains`` / ``.residues`` /
+    ``.atoms`` interface our backbone/centroid/atoms loaders use.
+    """
+    raw = load_raw_data(pdb_id, db_path)
+    if raw is None:
+        msg = f"Key '{pdb_id}' not found in LMDB database at '{db_path}'."
+        raise KeyError(msg)
+    value = load_bytes(raw)
+    combo = f"{assembly_id}_{model_id}_{alt_id}"
+
+    if "assembly_dict" in value:
+        ad = value["assembly_dict"]
+        item = ad.get(combo)
+        if item is None:
+            available = sorted(ad.keys())
+            msg = (
+                f"Assembly/model/alt {combo!r} not found for {pdb_id!r}. "
+                f"Available: {available}"
+            )
+            raise KeyError(msg)
+        item = BioMolDict(item)
+        md = dict(value.get("metadata_dict", {}))
+        md["assembly_id"] = assembly_id
+        md["model_id"] = model_id
+        md["alt_id"] = alt_id
+        item["metadata"] = md
+        return CIFMol.from_dict(item)
+
+    # cif_attached_*.lmdb path — defer to the canonical loader.
+    return load_cifmol(db_path, pdb_id, assembly_id, model_id, alt_id)
 
 
 # Reuse the same 3-letter <-> 1-letter table as the fasta parser.
@@ -166,7 +220,7 @@ def _load_chain_backbone_from_lmdb(
         )
         raise ValueError(msg)
     pdb_id, assembly_id, model_id, alt_id = parts
-    cifmol = load_cifmol(cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id)
+    cifmol = _load_assembly_cifmol(cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id)
     chain_view = cifmol.chains[cifmol.chains.chain_id == template_chain_id]
     if len(chain_view) == 0:
         available = [str(c) for c in np.asarray(cifmol.chains.chain_id.value)]
@@ -505,7 +559,7 @@ def _load_chain_centroid_from_lmdb(
         )
         raise ValueError(msg)
     pdb_id, assembly_id, model_id, alt_id = parts
-    cifmol = load_cifmol(cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id)
+    cifmol = _load_assembly_cifmol(cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id)
     chain_view = cifmol.chains[cifmol.chains.chain_id == template_chain_id]
     if len(chain_view) == 0:
         available = [str(c) for c in np.asarray(cifmol.chains.chain_id.value)]
@@ -619,7 +673,7 @@ def _load_chain_atoms_from_lmdb(
         )
         raise ValueError(msg)
     pdb_id, assembly_id, model_id, alt_id = parts
-    cifmol = load_cifmol(cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id)
+    cifmol = _load_assembly_cifmol(cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id)
     chain_view = cifmol.chains[cifmol.chains.chain_id == template_chain_id]
     if len(chain_view) == 0:
         available = [str(c) for c in np.asarray(cifmol.chains.chain_id.value)]
