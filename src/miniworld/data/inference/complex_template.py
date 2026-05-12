@@ -22,6 +22,8 @@ stays consistent across the batch.
 from __future__ import annotations
 
 import gzip
+import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -205,13 +207,18 @@ def _align_template_to_query(
     *,
     where: str = "",
 ) -> tuple[np.ndarray, list[str]]:
-    """Trim a template chain so its residues match the query chain length.
+    """Lay template residues onto the query coordinate columns.
 
-    Strict path: if the lengths already match, accept without checking
-    sequence identity (handles modified residues etc.). Otherwise, fall back
-    to a contiguous-substring search on the 1-letter sequences — covers the
-    common case where the template chain is the full PDB chain and the query
-    is a (prefix / suffix / interior) subsequence.
+    Fast paths (no external tool):
+
+    * Lengths already match -> accept without checking sequence identity
+      (handles modified residues, etc.).
+    * Template contains the query as a contiguous substring -> trim to that.
+
+    Fallback: pairwise-align template and query with ``kalign`` and project
+    template residues onto query columns. Query-only columns become gaps
+    (NaN coords -> bb_mask/cb_mask False downstream); template-only columns
+    are dropped (no query residue to place them on).
     """
     n_q = len(query_one_letter)
     n_t = len(template_one_letter)
@@ -225,13 +232,102 @@ def _align_template_to_query(
             template_bb[idx: idx + n_q],
             list(template_one_letter[idx: idx + n_q]),
         )
-    msg = (
-        f"{where}: cannot align template chain of length {n_t} to query "
-        f"chain of length {n_q}. Sequence identity / substring match failed.\n"
-        f"  query head:    {query_seq[:60]}...\n"
-        f"  template head: {template_seq[:60]}..."
+    return _kalign_template_to_query(
+        template_bb, template_one_letter, query_one_letter, where=where,
     )
-    raise ValueError(msg)
+
+
+def _kalign_template_to_query(
+    template_bb: np.ndarray,
+    template_one_letter: list[str],
+    query_one_letter: list[str],
+    *,
+    where: str,
+) -> tuple[np.ndarray, list[str]]:
+    """kalign-driven pairwise alignment of template to query."""
+    if shutil.which("kalign") is None:
+        msg = (
+            f"{where}: template length {len(template_one_letter)} != query "
+            f"length {len(query_one_letter)} and no substring match. "
+            "kalign is required for the fallback alignment but is not on PATH."
+        )
+        raise RuntimeError(msg)
+
+    query_seq = "".join(query_one_letter)
+    template_seq = "".join(template_one_letter)
+
+    with tempfile.TemporaryDirectory() as td:
+        in_path = Path(td) / "in.fa"
+        out_path = Path(td) / "out.fa"
+        in_path.write_text(f">query\n{query_seq}\n>template\n{template_seq}\n")
+        try:
+            subprocess.run(
+                ["kalign", "-i", str(in_path), "-o", str(out_path), "-f", "fasta"],
+                check=True, capture_output=True, text=True,
+            )
+        except subprocess.CalledProcessError as e:
+            msg = (
+                f"{where}: kalign failed (rc={e.returncode}). "
+                f"stderr: {e.stderr.strip()[:500]}"
+            )
+            raise RuntimeError(msg) from e
+        aligned = _read_fasta(out_path)
+
+    if "query" not in aligned or "template" not in aligned:
+        msg = f"{where}: kalign output missing query/template records: {list(aligned)}"
+        raise RuntimeError(msg)
+
+    q_aln = aligned["query"]
+    t_aln = aligned["template"]
+    if len(q_aln) != len(t_aln):
+        msg = f"{where}: kalign alignment rows have unequal length"
+        raise RuntimeError(msg)
+
+    n_q = len(query_one_letter)
+    out_bb = np.full((n_q, *template_bb.shape[1:]), np.nan, dtype=template_bb.dtype)
+    out_letters: list[str] = ["-"] * n_q
+
+    qi = 0
+    ti = 0
+    for q_char, t_char in zip(q_aln, t_aln):
+        q_is_res = q_char != "-"
+        t_is_res = t_char != "-"
+        if q_is_res and t_is_res:
+            out_bb[qi] = template_bb[ti]
+            out_letters[qi] = template_one_letter[ti]
+            qi += 1
+            ti += 1
+        elif q_is_res:
+            qi += 1
+        elif t_is_res:
+            ti += 1
+        # else: both gaps -> skip
+
+    if qi != n_q:
+        msg = (
+            f"{where}: kalign alignment recovered {qi}/{n_q} query residues; "
+            "expected to consume all query positions"
+        )
+        raise RuntimeError(msg)
+    return out_bb, out_letters
+
+
+def _read_fasta(path: Path) -> dict[str, str]:
+    """Tiny fasta reader returning {name: sequence} (newlines stripped)."""
+    out: dict[str, str] = {}
+    name: str | None = None
+    chunks: list[str] = []
+    for line in path.read_text().splitlines():
+        if line.startswith(">"):
+            if name is not None:
+                out[name] = "".join(chunks)
+            name = line[1:].split()[0]
+            chunks = []
+            continue
+        chunks.append(line.strip())
+    if name is not None:
+        out[name] = "".join(chunks)
+    return out
 
 
 def _make_complex_slot_for_chain(
