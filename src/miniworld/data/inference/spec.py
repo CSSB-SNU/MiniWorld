@@ -210,9 +210,25 @@ class InferenceSpec(BaseModel):
         return self
 
     @classmethod
-    def from_yaml(cls, path: Path) -> "InferenceSpec":
+    def from_yaml(
+        cls,
+        path: Path,
+        sampling_path: Path | None = None,
+    ) -> "InferenceSpec":
+        """Load the spec from a data YAML, optionally overlaying a sampling YAML.
+
+        The data YAML holds target-bound fields (chain_letters, fasta, a3m,
+        ccd_db, contacts, combine_groups, tokenization, templates, ...). The
+        optional sampling YAML holds per-attempt sampling knobs
+        (n_trunk_samples, n_diffusion_samples, diffusion_batch_size,
+        save_trajectory). Keys in the sampling YAML overwrite the data YAML.
+        """
         with Path(path).open("r") as f:
-            data = yaml.safe_load(f)
+            data = yaml.safe_load(f) or {}
+        if sampling_path is not None:
+            with Path(sampling_path).open("r") as f:
+                sampling = yaml.safe_load(f) or {}
+            data.update(sampling)
         spec = cls.model_validate(data)
         if spec.name is None:
             spec.name = Path(path).stem

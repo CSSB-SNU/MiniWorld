@@ -582,11 +582,21 @@ class InferenceConfig(BaseModel):
     required=True,
 )
 @click.option(
-    "--spec",
-    "spec_path",
+    "--data",
+    "data_path",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     required=True,
-    help="YAML spec describing fasta / a3m / template / contacts inputs.",
+    help="YAML describing target-bound input data (fasta / a3m / template / "
+         "contacts / combine_groups / ...).",
+)
+@click.option(
+    "--sampling",
+    "sampling_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=None,
+    help="Optional YAML with per-attempt sampling knobs "
+         "(n_trunk_samples, n_diffusion_samples, diffusion_batch_size, "
+         "save_trajectory). Overlays the data YAML.",
 )
 @click.option(
     "--output-dir",
@@ -608,7 +618,8 @@ class InferenceConfig(BaseModel):
 def inference(  # noqa: PLR0915
     config: Path,
     ckpt: Path,
-    spec_path: Path,
+    data_path: Path,
+    sampling_path: Path | None,
     output_dir: Path,
     subdir: str | None,
     job_name: str | None,
@@ -623,7 +634,7 @@ def inference(  # noqa: PLR0915
     fabric.launch()
     fabric.seed_everything(cfg.infer.seed)
 
-    spec = InferenceSpec.from_yaml(spec_path)
+    spec = InferenceSpec.from_yaml(data_path, sampling_path)
 
     date_dir = output_dir / time.strftime("%Y-%m-%d")
     if subdir:
@@ -662,7 +673,9 @@ def inference(  # noqa: PLR0915
     config_dict = cfg.model_dump(mode="json")
     if fabric.is_global_zero:
         OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
-        (run_sub_dir / "spec.yaml").write_text(spec_path.read_text())
+        (run_sub_dir / "data.yaml").write_text(data_path.read_text())
+        if sampling_path is not None:
+            (run_sub_dir / "sampling.yaml").write_text(sampling_path.read_text())
 
     client.setup(fabric=fabric)
 
@@ -710,7 +723,7 @@ def inference(  # noqa: PLR0915
         trunk_seed = cfg.infer.seed + i_trunk
         client.logger.info(
             "Building Batch from spec %s (trunk %d/%d, seed=%d)",
-            spec_path, i_trunk + 1, n_trunk, trunk_seed,
+            data_path, i_trunk + 1, n_trunk, trunk_seed,
         )
         batch = build_inference_batch(
             spec,
