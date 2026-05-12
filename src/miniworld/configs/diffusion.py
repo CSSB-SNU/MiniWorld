@@ -2,9 +2,13 @@ from __future__ import annotations
 
 from typing import Annotated, Literal, Union
 
-from pydantic import BaseModel, Discriminator
+from pydantic import BaseModel, Discriminator, Field
 
-from miniworld.diffusion import DecoupledXPredScheduler, EDMScheduler
+from miniworld.diffusion import (
+    DecoupledXPredScheduler,
+    EDMScheduler,
+    XPredDecoupledSolver,
+)
 
 
 class EDMDiffuserConfig(BaseModel):
@@ -36,3 +40,6 @@ class XPredDecoupledDiffuserConfig(BaseModel):
     seed: int = 0
     translation_noise: float = 1.0
     scheduler: DecoupledXPredScheduler.DecoupledXPredSchedulerConfig
+    solver: XPredDecoupledSolver.Config = Field(
+        default_factory=XPredDecoupledSolver.Config,
+    )

@@ -3,13 +3,13 @@ validate_db:
   cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train_20260224_res9_chain300.lmdb
   a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m_16k.lmdb
   # edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/metadata/train_overfitting.tsv
-  edge_id_to_bias_path: inference_test.tsv
+  edge_id_to_bias_path: inference_simple.tsv
   template_db_path: ${..DB_PATH}/BioMolDB_20260224/template.lmdb
   ccd_preprocessed_path: ${..DB_PATH}/CCD/preprocessed_CCD.lmdb
 
 crop:
-  max_tokens: 384
-  max_atoms: 4096
+  max_tokens: 1024
+  max_atoms: 10240
   min_segment_size: 1
   max_segment_size: 41
 

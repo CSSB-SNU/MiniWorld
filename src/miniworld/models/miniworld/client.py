@@ -174,7 +174,9 @@ class Client(BaseClient):
             scheduler=self.diffusion_scheduler,
         )
         self.solver = XPredDecoupledSolver(
-            config=XPredDecoupledSolver.Config(seed=config.diffuser.seed),
+            config=config.diffuser.solver.model_copy(
+                update={"seed": config.diffuser.seed},
+            ),
             scheduler=self.diffusion_scheduler,
         )
 

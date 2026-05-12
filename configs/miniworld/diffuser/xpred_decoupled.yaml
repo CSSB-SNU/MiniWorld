@@ -2,6 +2,12 @@ seed: 0
 translation_noise: 1.0
 max_loss_weight: 1000.0 
 
+solver:
+  gamma_0: 0.8
+  gamma_min: 1.0
+  noise_lambda: 1.003
+  step_scale: 1.5
+
 scheduler:
   P_mean: -1.5
   P_std: 1.8

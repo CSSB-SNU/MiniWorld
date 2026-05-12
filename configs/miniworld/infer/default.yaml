@@ -3,7 +3,7 @@ timesteps: 100
 compile: true
 no_rt: false
 combine_all: true
-update_rule: "ode_aligned"
-use_ema: false
+update_rule: "x0_centered"
+use_ema: true
 max_msa_depth: 384
-missing_policy: "query"
+missing_policy: "gap"

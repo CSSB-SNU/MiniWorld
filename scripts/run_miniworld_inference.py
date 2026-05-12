@@ -77,7 +77,11 @@ def plot_trajectory_rmsd(
     save_path: Path,
 ) -> None:
     x0 = batch.structure.atom_pos[0].cpu()
-    atom_mask = batch.structure.atom_mask[0].cpu()
+    # Use atom_pos_mask (valid coords only) to match sigma_sweep RMSD;
+    # atom_mask includes positions with x0 forced to 0 (convert.py:201),
+    # which biases Kabsch alignment and inflates RMSD with a sigma-dependent
+    # |T| term per missing atom.
+    atom_mask = batch.structure.atom_pos_mask[0].bool().cpu()
     model_traj = output.model_traj[0]
     n_steps = model_traj.shape[0]
     rmsds = [
@@ -108,13 +112,19 @@ def sigma_sweep_with_loss(
     client: Client,
     batch: Batch,
     n_sigmas: int = 50,
-) -> tuple[np.ndarray, np.ndarray, list[torch.Tensor], list[torch.Tensor]]:
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    list[torch.Tensor],
+    list[torch.Tensor],
+]:
     """Single-step denoising sweep using x-prediction.
 
     Model predicts x0/sigma_data. We recover x0_hat = F * sigma_data,
-    then compute loss via client.diffuser.cal_loss.
+    then compute loss via client.diffuser.cal_loss and aligned RMSD vs x0.
 
-    Returns sigmas, losses, and per-sigma x0_hat / x_noisy tensors (CPU).
+    Returns sigmas, losses, rmsds, and per-sigma x0_hat / x_noisy tensors (CPU).
     """
     from miniworld.models.miniworld.model import ModelWrapper
     from miniworld.utils.structure.se3 import apply_chain_rt, sample_rigid
@@ -147,8 +157,14 @@ def sigma_sweep_with_loss(
     )
 
     losses = []
+    rmsds: list[float] = []
     x0_hats: list[torch.Tensor] = []
     x_noisies: list[torch.Tensor] = []
+    # cal_aligned_rmsd expects 1D mask (L,) and (L, 3) positions; drop the
+    # batch axis so np.where broadcasts on the atom dimension (otherwise
+    # non_gap_idx collapses to all-zero row indices and RMSD becomes ~0).
+    x0_cpu = x0.detach().reshape(-1, 3).cpu()
+    atom_mask_cpu = atom_mask.detach().reshape(-1).cpu()
     for sigma_y_cpu in sigmas:
         sigma_y = sigma_y_cpu.to(client.device)
         sigma_R, sigma_T = scheduler.convert_to_sigma_rt(sigma_y.unsqueeze(0))
@@ -189,10 +205,20 @@ def sigma_sweep_with_loss(
         )
         losses.append(loss.item())
         # Normalize to (1, L, 3) for batch_to_cif: x0_hat is (1, 1, L, 3), x_noisy is (1, L, 3)
-        x0_hats.append(x0_hat.detach().reshape(1, -1, 3).cpu())
+        x0_hat_cpu = x0_hat.detach().reshape(1, -1, 3).cpu()
+        x0_hats.append(x0_hat_cpu)
         x_noisies.append(x_noisy.detach().reshape(1, -1, 3).cpu())
+        rmsds.append(
+            float(
+                metrics.cal_aligned_rmsd(
+                    x0_hat_cpu.reshape(-1, 3),
+                    x0_cpu,
+                    atom_mask_cpu,
+                ),
+            ),
+        )
 
-    return sigmas.numpy(), np.array(losses), x0_hats, x_noisies
+    return sigmas.numpy(), np.array(losses), np.array(rmsds), x0_hats, x_noisies
 
 
 def plot_sigma_sweep_loss(
@@ -207,6 +233,32 @@ def plot_sigma_sweep_loss(
     ax.set_xlabel("sigma_y")
     ax.set_ylabel("Diffusion loss")
     ax.set_title("Single-step denoising loss vs sigma_y (x-prediction)")
+    ax.legend(loc="upper left")
+    ax.grid(visible=True, alpha=0.3)
+    ax2 = ax.twinx()
+    bc, h = _training_sigma_y_hist(scheduler, (sigmas.min(), sigmas.max()))
+    ax2.fill_between(bc, 0, h, alpha=0.15, color="gray", label="train p(sigma_y)")
+    ax2.plot(bc, h, color="gray", alpha=0.4, linewidth=0.8)
+    ax2.set_ylabel("sigma_y density", color="gray")
+    ax2.tick_params(axis="y", labelcolor="gray")
+    ax2.legend(loc="upper right", fontsize=8)
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=150)
+    plt.close(fig)
+
+
+def plot_sigma_sweep_rmsd(
+    sigmas: np.ndarray,
+    rmsds: np.ndarray,
+    scheduler: DecoupledXPredScheduler,
+    save_path: Path,
+) -> None:
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(sigmas, rmsds, marker="o", markersize=3, label="aligned RMSD (x-pred)")
+    ax.set_xscale("log")
+    ax.set_xlabel("sigma_y")
+    ax.set_ylabel("RMSD (x0_hat vs x0) [Å]")
+    ax.set_title("Single-step denoising RMSD vs sigma_y (x-prediction)")
     ax.legend(loc="upper left")
     ax.grid(visible=True, alpha=0.3)
     ax2 = ax.twinx()
@@ -449,15 +501,25 @@ def validate(  # noqa: PLR0915
             run_sub_dir / f"{name}_trajectory_rmsd.png",
         )
 
-        # Sigma sweep loss plot
-        sweep_sigmas, sweep_losses, sweep_x0_hats, sweep_x_noisies = (
-            sigma_sweep_with_loss(client, batch, n_sigmas=50)
-        )
+        # Sigma sweep loss / RMSD plots
+        (
+            sweep_sigmas,
+            sweep_losses,
+            sweep_rmsds,
+            sweep_x0_hats,
+            sweep_x_noisies,
+        ) = sigma_sweep_with_loss(client, batch, n_sigmas=50)
         plot_sigma_sweep_loss(
             sweep_sigmas,
             sweep_losses,
             scheduler,
             run_sub_dir / f"{name}_sigma_sweep_loss.png",
+        )
+        plot_sigma_sweep_rmsd(
+            sweep_sigmas,
+            sweep_rmsds,
+            scheduler,
+            run_sub_dir / f"{name}_sigma_sweep_rmsd.png",
         )
 
         # Save per-sigma single-step denoised structures (x0_hat) and noisy inputs
@@ -532,7 +594,14 @@ class InferenceConfig(BaseModel):
     default=Path("outputs/miniworld_inference"),
     show_default=True,
     help="Root directory for inference outputs; results land in "
-         "<output_dir>/<YYYY-MM-DD>/<HHMMSS>/<job_name|spec.name>/.",
+         "<output_dir>/<YYYY-MM-DD>/[<subdir>/]<HHMMSS>/<job_name|spec.name>/.",
+)
+@click.option(
+    "--subdir",
+    type=str,
+    default=None,
+    help="Optional grouping sub-directory inserted between <date> and <time>. "
+         "Useful to bucket related runs (e.g. --subdir 2oxs).",
 )
 @click.option("--job-name", type=str)
 @click.argument("overrides", type=str, nargs=-1)
@@ -541,6 +610,7 @@ def inference(  # noqa: PLR0915
     ckpt: Path,
     spec_path: Path,
     output_dir: Path,
+    subdir: str | None,
     job_name: str | None,
     overrides: tuple[str, ...],
 ) -> None:
@@ -555,11 +625,10 @@ def inference(  # noqa: PLR0915
 
     spec = InferenceSpec.from_json(spec_path)
 
-    time_dir = (
-        output_dir
-        / time.strftime("%Y-%m-%d")
-        / time.strftime("%H%M%S")
-    )
+    date_dir = output_dir / time.strftime("%Y-%m-%d")
+    if subdir:
+        date_dir = date_dir / subdir
+    time_dir = date_dir / time.strftime("%H%M%S")
     run_id = job_name if job_name else spec.name
     run_sub_dir = time_dir / run_id
     run_sub_dir.mkdir(parents=True, exist_ok=True)

@@ -142,6 +142,9 @@ class XPredDecoupledSolver(DiffusionSolver):
         # Stochastic noise injection (EDM Euler)
         gamma = self.config.gamma_0 if sigma_next > self.config.gamma_min else 0
         sigma_hat = sigma_i * (1 + gamma)
+        # AF3 Algorithm 18 uses the pre-injection iterate (x_l) for the ODE
+        # delta; keep a handle before overwriting y with x_noisy.
+        y_pre_inject = y
         if gamma > 0:
             added_noise = (
                 self.config.noise_lambda
@@ -176,7 +179,7 @@ class XPredDecoupledSolver(DiffusionSolver):
         x_pred = model_fn(x_with_noise * c_in, t_emb) * self.sigma_data
 
         if update_rule == "ode":
-            v = (y - x_pred) / sigma_hat
+            v = (y_pre_inject - x_pred) / sigma_hat
             y_next = y + self.config.step_scale * (sigma_next - sigma_hat) * v
         elif update_rule == "ode_aligned":
             y_aligned = self._align_to_prediction(y, x_pred, mask)
@@ -187,14 +190,15 @@ class XPredDecoupledSolver(DiffusionSolver):
             )
         elif update_rule == "x0_centered":
             x_pred = self._center_to_origin(x_pred, mask)
-            noise_scale = (
-                (1.0 - self.config.step_scale) * sigma_hat
-                + self.config.step_scale * sigma_next
-            )
-            if torch.abs(noise_scale).item() > 0:
-                y_next = x_pred + noise_scale * torch.randn_like(y)
-            else:
+            is_last_step = t_index + 1 == time_steps.shape[0] - 1
+            if is_last_step:
                 y_next = x_pred
+            else:
+                noise_scale = (
+                    (1.0 - self.config.step_scale) * sigma_hat
+                    + self.config.step_scale * sigma_next
+                )
+                y_next = x_pred + noise_scale * torch.randn_like(y)
         else:
             msg = f"Unsupported update_rule: {update_rule}"
             raise ValueError(msg)
