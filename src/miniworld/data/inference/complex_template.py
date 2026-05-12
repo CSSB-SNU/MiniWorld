@@ -409,6 +409,130 @@ def _load_complex_chain(
     )
 
 
+def _residue_heavy_atom_centroid_biopy(residue) -> np.ndarray:  # noqa: ANN001
+    """Mean of heavy-atom xyz for one BioPython residue.
+
+    Hydrogens are dropped via the ``name.startswith("H")`` heuristic, which
+    is exact for standard amino acids (only H-prefixed atoms there are
+    hydrogens). Returns NaN[3] if the residue has no heavy atoms.
+    """
+    xyz = [
+        atom.get_coord() for atom in residue
+        if not atom.get_name().startswith("H")
+    ]
+    if not xyz:
+        return np.full(3, np.nan, dtype=np.float32)
+    return np.asarray(xyz, dtype=np.float32).mean(axis=0)
+
+
+def _load_chain_centroid_from_cif(
+    cif_path: Path,
+    template_chain_id: str,
+) -> tuple[np.ndarray, list[str]]:
+    """Per-residue heavy-atom centroid + 1-letter codes from a CIF file.
+
+    Shape ``(n_res, 1, 3)`` so the result plugs into the same
+    :func:`_align_template_to_query` machinery used by the backbone path.
+    """
+    from Bio.PDB.MMCIFParser import MMCIFParser
+
+    parser = MMCIFParser(QUIET=True, auth_chains=False)
+    parse_path, tmp_path = _open_cif(cif_path)
+    try:
+        structure = parser.get_structure("complex", parse_path)
+    finally:
+        if tmp_path is not None:
+            tmp_path.unlink(missing_ok=True)
+    model = next(iter(structure))
+    label_id = template_chain_id.split("_")[0]
+    target_chain = None
+    for chain in model:
+        if chain.id == label_id:
+            target_chain = chain
+            break
+    if target_chain is None:
+        msg = (
+            f"Chain {template_chain_id!r} (label_asym_id {label_id!r}) "
+            f"not found in {cif_path}. Available chains: {[c.id for c in model]}"
+        )
+        raise KeyError(msg)
+
+    residues = [r for r in target_chain if r.id[0] == " "]
+    n_res = len(residues)
+    if n_res == 0:
+        msg = f"Chain {template_chain_id!r} in {cif_path} has no standard residues."
+        raise ValueError(msg)
+
+    centroid = np.full((n_res, 1, 3), np.nan, dtype=np.float32)
+    one_letter: list[str] = []
+    for ri, res in enumerate(residues):
+        centroid[ri, 0] = _residue_heavy_atom_centroid_biopy(res)
+        one_letter.append(_three_to_one(res.resname))
+    return centroid, one_letter
+
+
+def _load_chain_centroid_from_lmdb(
+    cif_db_path: Path,
+    cif_id: str,
+    template_chain_id: str,
+) -> tuple[np.ndarray, list[str]]:
+    """Heavy-atom centroid per residue from a BioMolDB lookup."""
+    parts = cif_id.split("_")
+    if len(parts) != 4:
+        msg = (
+            f"cif_id {cif_id!r} must be of the form "
+            f"'<pdb_id>_<assembly_id>_<model_id>_<alt_id>'."
+        )
+        raise ValueError(msg)
+    pdb_id, assembly_id, model_id, alt_id = parts
+    cifmol = load_cifmol(cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id)
+    chain_view = cifmol.chains[cifmol.chains.chain_id == template_chain_id]
+    if len(chain_view) == 0:
+        available = [str(c) for c in np.asarray(cifmol.chains.chain_id.value)]
+        msg = (
+            f"Chain {template_chain_id!r} not found in cif {cif_id!r}. "
+            f"Available chain ids: {available}"
+        )
+        raise KeyError(msg)
+    chain_cifmol = chain_view.extract()
+
+    n_res = len(chain_cifmol.residues)
+    centroid = np.full((n_res, 1, 3), np.nan, dtype=np.float32)
+    for ri in range(n_res):
+        residue = chain_cifmol.residues[ri]
+        atom_ids = np.asarray(residue.atoms.id.value)
+        xyz = np.asarray(residue.atoms.xyz.value, dtype=np.float32)
+        heavy = np.array(
+            [not str(a).startswith("H") for a in atom_ids], dtype=bool,
+        )
+        if heavy.any():
+            centroid[ri, 0] = xyz[heavy].mean(axis=0)
+    one_letter_arr = np.asarray(chain_cifmol.residues.one_letter_code_can.value)
+    return centroid, [str(c) for c in one_letter_arr]
+
+
+def _load_complex_chain_centroid(
+    complex_spec: "ComplexTemplateSpec",
+    template_chain_id: str,
+    cif_db: Path | None,
+) -> tuple[np.ndarray, list[str]]:
+    """Dispatch CIF vs LMDB loaders for the heavy-atom centroid representation."""
+    if complex_spec.cif is not None:
+        return _load_chain_centroid_from_cif(complex_spec.cif, template_chain_id)
+    if cif_db is None:
+        msg = (
+            "complex_templates entry uses cif_id but spec.cif_db is not set. "
+            "Either provide a cif file path or set spec.cif_db."
+        )
+        raise ValueError(msg)
+    if complex_spec.cif_id is None:  # pragma: no cover — guarded by pydantic
+        msg = "ComplexTemplateSpec missing both cif and cif_id."
+        raise ValueError(msg)
+    return _load_chain_centroid_from_lmdb(
+        cif_db, complex_spec.cif_id, template_chain_id,
+    )
+
+
 def derive_contacts_from_complex_templates(
     spec: "InferenceSpec",
     *,
@@ -422,21 +546,18 @@ def derive_contacts_from_complex_templates(
     Mirrors the training-time supervision in
     :func:`miniworld.data.features.convert.to_token_contacts`:
 
-    - Per-residue reference coordinate is the **mean of available backbone
-      atoms (N/CA/C/CB)** — the template doesn't ship sidechain atoms, so
-      this is the closest analogue of training's "average over valid atoms
-      in the token" available to us. Residues whose backbone is fully
-      uncovered after kalign alignment are skipped.
+    - Per-residue reference coordinate is the **mean of the residue's
+      heavy atoms** (read straight from the user-provided cif / cifmol —
+      this is independent of MiniWorld's template-model representation,
+      which only keeps N/CA/C/CB). This matches training's "average of
+      valid atoms in the token" when tokens are residue-level.
     - Pairs with distance ``< positive_cutoff`` (default 6 Å) become
       positive contacts; pairs with ``> negative_cutoff`` (default 12 Å)
-      become negative contacts. The gap is intentionally unsupervised,
-      matching training.
+      become negative contacts. The gap is intentionally unsupervised.
     - Contacts are emitted at **residue level**
       (``"<chain_letter>:<res_1based>-<chain_letter>:<res_1based>"``).
-      Downstream :func:`_build_token_contacts` anchors each one at the
-      residue's first token, so atomized residues fold cleanly into the
-      token graph without us needing finer-grained distances (which we
-      couldn't compute from backbone-only template atoms anyway).
+      :func:`_build_token_contacts` anchors each one at the residue's
+      first token, so atomized residues still fold into the token graph.
 
     Modes:
         - ``inter``: only cross-chain pairs (typical use).
@@ -487,19 +608,15 @@ def derive_contacts_from_complex_templates(
             q_one_letter = letter_to_one_letter.get(letter)
             if q_one_letter is None:
                 continue
-            t_bb, t_letters = _load_complex_chain(
+            t_centroid, t_letters = _load_complex_chain_centroid(
                 complex_spec, t_chain_id, spec.cif_db,
-            )
-            aligned_bb, _aligned_letters = _align_template_to_query(
-                t_bb, t_letters, q_one_letter,
+            )  # (n_t, 1, 3), one_letter
+            aligned_centroid, _aligned_letters = _align_template_to_query(
+                t_centroid, t_letters, q_one_letter,
                 where=f"complex_templates[{ki}].chain_map['{chain_idx_str}']",
             )
-            # Residue centroid: nanmean over the 4 backbone atoms.
-            # All-NaN rows (fully uncovered) produce NaN -> filtered below.
-            with np.errstate(invalid="ignore"):
-                centroid = np.nanmean(aligned_bb, axis=1)  # (n_q, 3)
             n_q = len(q_one_letter)
-            centroid_blocks.append(centroid)
+            centroid_blocks.append(aligned_centroid[:, 0, :])  # (n_q, 3)
             chain_letter_per_res.extend([letter] * n_q)
             local_res_per_pos.extend(range(1, n_q + 1))
 
