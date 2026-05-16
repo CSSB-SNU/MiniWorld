@@ -170,6 +170,7 @@ class Client(BaseClient):
             config=XPredDecoupledDiffuser.DecoupledXPredConfig(
                 seed=config.diffuser.seed,
                 translation_noise=config.diffuser.translation_noise,
+                max_loss_weight=config.diffuser.max_loss_weight,
             ),
             scheduler=self.diffusion_scheduler,
         )

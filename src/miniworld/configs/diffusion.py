@@ -39,6 +39,7 @@ class XPredDecoupledDiffuserConfig(BaseModel):
 
     seed: int = 0
     translation_noise: float = 1.0
+    max_loss_weight: float = 100.0
     scheduler: DecoupledXPredScheduler.DecoupledXPredSchedulerConfig
     solver: XPredDecoupledSolver.Config = Field(
         default_factory=XPredDecoupledSolver.Config,

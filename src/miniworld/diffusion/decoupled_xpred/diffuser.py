@@ -25,6 +25,7 @@ class XPredDecoupledDiffuser(Diffuser):
         method: str = "AF3"
         seed: int = 0
         translation_noise: float = 1.0
+        max_loss_weight: float = 100.0
 
     def __init__(
         self,
@@ -41,12 +42,10 @@ class XPredDecoupledDiffuser(Diffuser):
         """Data standard deviation from scheduler config."""
         return self.scheduler.config.sigma_data
 
-    max_loss_weight: float = 100.0
-
     def loss_weight(self, sigma: Float[torch.Tensor, ...]) -> Float[torch.Tensor, ...]:
         """v-loss weight in sigma space: clamp((sigma + sigma_data)^2 / sigma^2, max)."""
         w = (sigma + self.sigma_data) ** 2 / sigma**2
-        return w.clamp(max=self.max_loss_weight)
+        return w.clamp(max=self.config.max_loss_weight)
 
     # ── chain-splitting ─────────────────────────────────────────────────────
 
