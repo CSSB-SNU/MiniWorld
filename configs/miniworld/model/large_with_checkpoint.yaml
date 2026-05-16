@@ -28,7 +28,7 @@ trunk:
   n_recycle_max: 4
   pairformer: 
     n_block: 48
-    n_checkpoint_segments: null
+    n_checkpoint_segments: 8
 
     d_single: ${...shared.d_single}
     d_pair: ${...shared.d_pair}
@@ -79,16 +79,16 @@ diffusion:
     d_pair: ${...shared.d_pair_atom}
     n_head: 4
     implementation: triton
-    kernel_type: "compute_efficient"
+    kernel_type: "memory_efficient"
   token_dit:
     n_block: 24
-    n_checkpoint_segments: null
+    n_checkpoint_segments: 6
     d_single: ${...shared.d_single_token_diffusion}
     d_cond: ${...shared.d_single}
     d_pair: ${...shared.d_pair}
     n_head: 24
     implementation: triton
-    kernel_type: "compute_efficient"
+    kernel_type: "memory_efficient"
   dit_cond:
     n_expand: 2
     n_blocks: 2
