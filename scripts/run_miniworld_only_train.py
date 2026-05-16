@@ -290,8 +290,9 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
         cfg.train.bucket_atom_multiple,
     )
     n_templates = TemplateConfig().n_templates
+    warmup_n_recycle = 2
     total_bucket_shapes = len(msa_buckets) * len(token_buckets) * len(atom_buckets)
-    total_variants = total_bucket_shapes * raw_model.n_recycle_max
+    total_variants = total_bucket_shapes
 
     client.fabric.barrier()
     if client.device.type == "cuda":
@@ -300,11 +301,11 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
     if client.is_global_zero:
         client.logger.info(
             (
-                "Starting synthetic bucket warmup: %d shapes x %d recycle counts "
+                "Starting synthetic bucket warmup: %d shapes x n_recycle=%d "
                 "= %d forward/backward passes"
             ),
             total_bucket_shapes,
-            raw_model.n_recycle_max,
+            warmup_n_recycle,
             total_variants,
         )
 
@@ -314,9 +315,9 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
 
         warmup_idx = 0
         for msa_depth, n_tokens, n_atoms in product(
-            msa_buckets,
-            token_buckets,
-            atom_buckets,
+            reversed(msa_buckets),
+            reversed(token_buckets),
+            reversed(atom_buckets),
         ):
             batch = _build_precompile_batch(
                 device=client.device,
@@ -326,33 +327,32 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
                 n_templates=n_templates,
                 num_res_class=cfg.model.shared.num_res_class,
             )
-            for n_recycle in range(1, raw_model.n_recycle_max + 1):
-                raw_model._forced_n_recycle = n_recycle
-                with client.fabric.no_backward_sync(
-                    client.model,  # pyright: ignore[reportArgumentType]
-                    enabled=False,
-                ):
-                    client.training_step(batch)
-                client.optimizer.zero_grad(set_to_none=True)
+            raw_model._forced_n_recycle = warmup_n_recycle
+            with client.fabric.no_backward_sync(
+                client.model,  # pyright: ignore[reportArgumentType]
+                enabled=False,
+            ):
+                client.training_step(batch)
+            client.optimizer.zero_grad(set_to_none=True)
 
-                warmup_idx += 1
-                if client.is_global_zero and (
-                    warmup_idx == 1
-                    or warmup_idx == total_variants
-                    or warmup_idx % raw_model.n_recycle_max == 0
-                ):
-                    client.logger.info(
-                        (
-                            "Bucket warmup %d/%d: msa=%d tokens=%d atoms=%d "
-                            "recycle=%d"
-                        ),
-                        warmup_idx,
-                        total_variants,
-                        msa_depth,
-                        n_tokens,
-                        n_atoms,
-                        n_recycle,
-                    )
+            warmup_idx += 1
+            if client.is_global_zero and (
+                warmup_idx == 1
+                or warmup_idx == total_variants
+                or warmup_idx % 4 == 0
+            ):
+                client.logger.info(
+                    (
+                        "Bucket warmup %d/%d: msa=%d tokens=%d atoms=%d "
+                        "recycle=%d"
+                    ),
+                    warmup_idx,
+                    total_variants,
+                    msa_depth,
+                    n_tokens,
+                    n_atoms,
+                    warmup_n_recycle,
+                )
     finally:
         raw_model._forced_n_recycle = None
         client.optimizer.zero_grad(set_to_none=True)
