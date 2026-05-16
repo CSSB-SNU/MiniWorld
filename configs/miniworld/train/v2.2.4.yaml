@@ -3,7 +3,7 @@ run_dir: "logs/miniworld v2.2.4/"
 
 # Training arguments
 num_batch: 1
-num_epoch: 1000
+num_epoch: 1500
 max_lr: 1.8e-3
 min_lr: 1e-4
 warmup_steps: 1000
