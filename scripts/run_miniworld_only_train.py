@@ -276,6 +276,10 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
     raw_model = _find_recycle_model(client.model)
     rng_state = _capture_rng_state(raw_model)
     was_training = client.model.training
+    param_snapshot = {
+        name: p.detach().to("cpu", copy=True)
+        for name, p in raw_model.named_parameters()
+    }
 
     msa_buckets = _bucket_values(
         cfg.data.msa.max_msa_depth,
@@ -333,6 +337,8 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
                 enabled=False,
             ):
                 client.training_step(batch)
+            if warmup_idx == 0:
+                client.optimizer.step()
             client.optimizer.zero_grad(set_to_none=True)
 
             warmup_idx += 1
@@ -356,6 +362,13 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
     finally:
         raw_model._forced_n_recycle = None
         client.optimizer.zero_grad(set_to_none=True)
+        with torch.no_grad():
+            for name, p in raw_model.named_parameters():
+                p.copy_(param_snapshot[name].to(p.device, non_blocking=True))
+        for opt_state in client.optimizer.state.values():
+            for v in opt_state.values():
+                if isinstance(v, torch.Tensor):
+                    v.zero_()
         _restore_rng_state(raw_model, rng_state)
         client.model.train(was_training)
 
