@@ -1,0 +1,34 @@
+comment: "distogram-only v0.1: large model, 8xH100, eff. batch 256"
+run_dir: "logs/distogram_only v0.1/"
+
+# Training arguments
+num_batch: 1
+num_epoch: 1000
+max_lr: 1.8e-3
+min_lr: 1e-4
+warmup_steps: 1000
+decay_steps: 5e4
+compile: True
+train_item: 25600
+valid_item: 640
+
+# Effective batch size = num_batch * grad_accum_steps * world_size
+#                     = 1 * 32 * 8 = 256
+grad_accum_steps: 32
+save_freq: 5
+eval_freq: 20000
+grad_clip_max_norm: 1.0
+optimizer: "Adam"
+
+num_workers: 4
+prefetch_factor: 4
+use_ema: True
+ema_decay: 0.999
+
+bucket_msa_multiple: 128
+bucket_token_multiple: 128
+bucket_atom_multiple: 1024
+
+verbose: False
+use_wandb: True
+wandb_project: "MiniWorld"

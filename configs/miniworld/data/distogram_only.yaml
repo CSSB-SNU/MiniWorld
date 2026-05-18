@@ -1,0 +1,49 @@
+DB_PATH: /home/psk6950/data/
+train_db:
+  cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train_20260224_res9_chain300.lmdb
+  a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m_16k.lmdb
+  edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/metadata/train_20260224_edge_node.tsv
+  template_db_path: ${..DB_PATH}/BioMolDB_20260224/template.lmdb
+  ccd_preprocessed_path: ${..DB_PATH}/CCD/preprocessed_CCD.lmdb
+
+crop:
+  max_tokens: 384
+  max_atoms: 4096
+  min_segment_size: 1
+  max_segment_size: 41
+
+  monomer_only: false
+  remain_invalid_tokens: false
+
+  bucket_msa_size: 128
+  bucket_token_size: 128
+  bucket_atom_size: 1024
+
+msa:
+  n_samples: 1
+  max_msa_depth: 384
+  missing_policy: "gap"
+
+# AF3-style hybrid tokenization: canonical residues → 1 token per residue,
+# non-canonical / modified residues / ligands → 1 token per atom.
+tokenizer:
+  level: "atom"
+
+sampler:
+  antibody_antibody: 0.1
+  antibody_nucleic_acid: 20.0
+  antibody_protein: 3.0
+
+  DNA_DNA: 0.25
+  DNA_RNA: 5.0
+  RNA_RNA: 0.5
+  NA_NA: 10.0
+
+  protein_nucleic_acid: 0.5
+  protein_protein: 1.0
+  protein_ligand: 0.1
+
+  ligand_ligand: 0.01
+
+  etc_interface: 0.05
+  sole: 0.5
