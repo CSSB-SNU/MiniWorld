@@ -639,6 +639,8 @@ class Client(BaseClient):
         no_rt: bool = False,
         update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered",
         combine_all: bool = False,
+        init_x0: torch.Tensor | None = None,
+        start_sigma_y: float | None = None,
     ) -> InferenceOutput:
         """Run the diffusion solver on a prepared trunk conditioning.
 
@@ -647,6 +649,9 @@ class Client(BaseClient):
         forward pass per step. The returned tensors carry that augmentation
         dimension as their leading axis — ``atom_pos_pred`` is
         ``(n_samples, L, 3)`` and each trajectory is ``(n_samples, T, L, 3)``.
+
+        ``init_x0`` / ``start_sigma_y``: flexible-docking warm start; see
+        :meth:`miniworld.diffusion.decoupled_xpred.solver.XPredDecoupledSolver.sample`.
         """
         if n_samples < 1:
             msg = f"n_samples must be >= 1, got {n_samples}."
@@ -671,6 +676,8 @@ class Client(BaseClient):
             update_rule=update_rule,
             return_intermediate=True,
             combine_all=combine_all,
+            init_x0=init_x0,
+            start_sigma_y=start_sigma_y,
         )
         inter_traj = [x.detach().cpu().numpy() for x in inter_traj]
         model_traj = [x.detach().cpu().numpy() for x in model_traj]

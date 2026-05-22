@@ -243,6 +243,8 @@ def build_inference_batch(
     complex_msa = ComplexMSA(
         MSAs=[exp.msa for exp in expansions],
         missing_policy=missing_policy,
+        pairing_mode=spec.msa_pairing_mode,
+        msa_groups=spec.msa_groups,
     )
     msa_residue = sample_msa(complex_msa, max_msa_depth=max_msa_depth, rng=rng)
     msa_features = MSAFeatures(
@@ -262,12 +264,21 @@ def build_inference_batch(
     # --- Structure ---
     token_bond = _build_token_bonds(expansions)
     contacts = spec.contacts
-    if spec.template_as_contact and spec.complex_templates:
+    # Run derive_contacts when at least one complex template's effective
+    # ``as_contact`` is True. Per-entry override means we can no longer gate
+    # on the single ``spec.template_as_contact`` flag alone.
+    contact_template_count = sum(
+        1 for ct in spec.complex_templates
+        if ct.resolves_as_contact(spec.template_as_contact)
+    )
+    if contact_template_count and spec.complex_templates:
         from .complex_template import derive_contacts_from_complex_templates
         from .spec import ContactsSpec
 
         extra_pos, extra_neg = derive_contacts_from_complex_templates(
             spec, expansions=expansions,
+            min_seqid=spec.template_as_contact_min_seqid,
+            mode="all",
         )
         if extra_pos or extra_neg:
             # Dedupe while preserving the user's explicit contacts first.

@@ -83,6 +83,11 @@ class ComplexTemplateSpec(BaseModel):
     cif: Path | None = None
     cif_id: str | None = None
     chain_map: dict[str, str]  # query_chain_INDEX (str of int) -> template cif chain id
+    # Per-entry override for spec.template_as_contact. None = inherit the
+    # spec-level flag (legacy behavior). True/False = force on/off for this
+    # entry, letting one template act as a contact source while another
+    # template on the same spec stays frame-only.
+    as_contact: bool | None = None
 
     @field_validator("chain_map", mode="before")
     @classmethod
@@ -99,6 +104,117 @@ class ComplexTemplateSpec(BaseModel):
             raise ValueError(msg)
         if not self.chain_map:
             msg = "ComplexTemplateSpec.chain_map must list at least one chain."
+            raise ValueError(msg)
+        return self
+
+    def resolves_as_contact(self, spec_default: bool) -> bool:
+        """Return whether ``derive_contacts`` should consume this entry.
+
+        Per-entry ``as_contact`` overrides; ``None`` inherits ``spec_default``
+        (i.e. :attr:`InferenceSpec.template_as_contact`).
+        """
+        return self.as_contact if self.as_contact is not None else spec_default
+
+
+class FlexibleDockingGroupSpec(BaseModel):
+    """One combine-group's known sub-structure for the flexible-docking warm start.
+
+    ``cif`` is a path to an mmCIF holding the known atom coordinates for the
+    chains in this group. ``chain_map`` keys are **query chain indices** (the
+    numeric keys from :attr:`InferenceSpec.chain_letters`, written as
+    strings) and values are the CIF chain id (``label_asym_id``, as parsed
+    with biopython's ``auth_chains=False`` — e.g. ``"A"``, ``"B"``).
+    Coordinates are matched per-residue by position (CIF chain length must
+    equal query chain length) and per-atom by atom name; the loader hard-
+    errors on any missing residue or atom.
+    """
+
+    cif: Path
+    chain_map: dict[str, str]  # query_chain_INDEX (str of int) -> CIF chain id
+
+    @field_validator("chain_map", mode="before")
+    @classmethod
+    def _coerce_int_keys_chain_map(cls, v: object) -> object:
+        return _coerce_int_keys(v)
+
+    @model_validator(mode="after")
+    def _check_chain_map(self) -> "FlexibleDockingGroupSpec":
+        if not self.chain_map:
+            msg = "FlexibleDockingGroupSpec.chain_map must list at least one chain."
+            raise ValueError(msg)
+        return self
+
+
+class FlexibleDockingSpec(BaseModel):
+    """Warm-start the diffusion solver with known per-group sub-structures.
+
+    The solver starts at ``start_sigma_y`` (default: the scheduler's phase-1
+    boundary, where ``sigma_R`` / ``sigma_T`` are at their max while
+    coordinate noise is still small) instead of full noise. Each
+    :class:`combine_groups <InferenceSpec.combine_groups>` entry must have a
+    matching :class:`FlexibleDockingGroupSpec` here, in the same order, that
+    fills in the group's known internal coords. The first solver step then
+    randomly rotates and translates each group via the usual per-step
+    ``apply_chain_rt`` — i.e. internal coords are kept, only the relative
+    pose between groups is unknown.
+
+    Hard rules (validated here + in the loader):
+      * :attr:`InferenceSpec.combine_groups` must be set.
+      * ``len(groups) == len(combine_groups)`` and group i's ``chain_map``
+        keys must equal the chain indices in ``combine_groups[i]``.
+      * Every chain in :meth:`InferenceSpec.chain_indices` must appear in
+        some combine-group (no implicit singleton groups).
+      * No missing residues or atoms in any per-group CIF.
+    """
+
+    groups: list[FlexibleDockingGroupSpec]
+    start_sigma_y: float | None = None  # None -> scheduler.phase_1_boundary
+    center_groups: bool = True
+
+
+class RefinementSpec(BaseModel):
+    """Refine a rough full-structure input via low-sigma denoising.
+
+    Companion mode to :class:`FlexibleDockingSpec`: rather than warm-starting
+    from per-combine-group sub-structures with max ``sigma_R`` / ``sigma_T``,
+    the solver starts from a **single CIF covering every query chain** at a
+    small ``start_sigma_y`` (deep phase 2 by default). The per-step R/T
+    noise stays small, so the input pose is preserved with only a light
+    perturbation, and the model denoises whatever sloppiness the rough
+    structure carried.
+
+    ``cif`` holds the full-structure coords. ``chain_map`` keys are query
+    chain indices (numeric, as strings — same convention as
+    :class:`FlexibleDockingGroupSpec` and :class:`ComplexTemplateSpec`) and
+    values are CIF ``label_asym_id``s. Every query chain must be mapped.
+
+    ``combine_groups`` on :class:`InferenceSpec` are honored as-is by the
+    solver (used for per-step ``apply_chain_rt``) but are not constrained
+    by this spec — pick whatever rigid partitioning suits the refinement.
+
+    ``center_groups`` defaults to ``False`` here (versus ``True`` for
+    flexible-docking) because refinement wants to keep the input's
+    inter-chain geometry; centering would scatter the chains apart at
+    step 0 before the small R/T noise even fires.
+    """
+
+    cif: Path
+    chain_map: dict[str, str]
+    start_sigma_y: float = 1.0
+    center_groups: bool = False
+
+    @field_validator("chain_map", mode="before")
+    @classmethod
+    def _coerce_int_keys_chain_map(cls, v: object) -> object:
+        return _coerce_int_keys(v)
+
+    @model_validator(mode="after")
+    def _check_chain_map(self) -> "RefinementSpec":
+        if not self.chain_map:
+            msg = "RefinementSpec.chain_map must list at least one chain."
+            raise ValueError(msg)
+        if self.start_sigma_y <= 0.0:
+            msg = f"RefinementSpec.start_sigma_y must be positive, got {self.start_sigma_y}."
             raise ValueError(msg)
         return self
 
@@ -149,15 +265,52 @@ class InferenceSpec(BaseModel):
           singleton group. Only the solver's per-chain RT step is
           affected; chain-aware model embeddings and the output CIF still
           use the underlying per-chain ids.
+      flexible_docking: optional warm-start spec for the diffusion solver.
+          When set, requires :attr:`combine_groups`; each entry provides
+          the known internal coordinates for one group via a CIF, and the
+          solver starts at ``start_sigma_y`` (phase-1 boundary by default)
+          so the first step samples max R/T per group while keeping the
+          intra-group structure intact. See
+          :class:`FlexibleDockingSpec`. ``None`` (default) -> standard
+          full-noise sampling. Mutually exclusive with :attr:`refinement`.
+      refinement: optional warm-start spec for refining a single rough
+          full-structure input. Takes one CIF that covers every chain,
+          plus a small ``start_sigma_y`` (default 1.0 — deep phase 2);
+          the solver perturbs the input lightly and denoises. See
+          :class:`RefinementSpec`. ``None`` (default) -> standard
+          full-noise sampling. Mutually exclusive with
+          :attr:`flexible_docking`.
       contacts: optional positive / negative contact pairs. May be given as
           a path to a YAML file (``{positive: [...], negative: [...]}``) or
           inline as the same mapping. Missing / None resolves to empty
           (no constraints).
-      template_as_contact: when True, derive inter-chain contacts from
+      template_as_contact: spec-wide default for the per-entry
+          ``ComplexTemplateSpec.as_contact`` flag. Entries that leave
+          ``as_contact=None`` inherit this value; entries with an explicit
+          True/False override it. The original behavior (single global
+          switch) is recovered by leaving every entry's ``as_contact`` as
+          None. When True, derive inter-chain contacts from
           ``complex_templates`` (CB-CB < 8 Å) and merge them into the
           ``positive`` set used by the model. Useful when you want the
           template's interface geometry to act as a soft constraint
           without writing the contact pairs by hand.
+      template_as_contact_min_seqid: per-chain sequence-identity cutoff
+          applied during contact derivation only. Any template chain whose
+          aligned identity to the query (matches / aligned positions) is
+          *strictly below* this value contributes no contacts, but the
+          template itself is still consumed by the template module. ``None``
+          (default) disables the filter — contacts come from every chain
+          regardless of identity. 0.95 is a reasonable default if you want
+          to exclude distant homologues from biasing the contact map.
+      paired_msa_only: when True, the complex MSA drops every unpaired
+          homolog — only rows where all chains have a species-matched
+          sequence survive (plus the query). Mutually exclusive with
+          ``no_pairing_msa``.
+      no_pairing_msa: when True, the complex MSA skips species pairing
+          entirely — every non-query row is a positional concat of each
+          chain's r-th homolog (chains with no r-th homolog become
+          gap/query for that row). Mutually exclusive with
+          ``paired_msa_only``.
       tokenization: optional path to a per-residue resolution JSON file. See
           ``miniworld.data.inference.tokenization`` for the format. ``None``
           (default) means residue-level for every residue.
@@ -192,8 +345,63 @@ class InferenceSpec(BaseModel):
     cif_db: Path | None = None
     complex_templates: list[ComplexTemplateSpec] = Field(default_factory=list)
     combine_groups: list[list[int]] = Field(default_factory=list)
+    flexible_docking: FlexibleDockingSpec | None = None
+    refinement: RefinementSpec | None = None
     contacts: ContactsSpec = Field(default_factory=ContactsSpec)
     template_as_contact: bool = False
+    template_as_contact_min_seqid: float | None = Field(default=None, ge=0.0, le=1.0)
+    paired_msa_only: bool = False
+    no_pairing_msa: bool = False
+    msa_groups: list[list[int]] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _check_msa_pairing_flags(self) -> "InferenceSpec":
+        if self.paired_msa_only and self.no_pairing_msa:
+            msg = (
+                "paired_msa_only and no_pairing_msa are mutually exclusive — "
+                "pick at most one."
+            )
+            raise ValueError(msg)
+        if self.msa_groups:
+            if self.no_pairing_msa:
+                msg = (
+                    "msa_groups is only meaningful when species pairing runs; "
+                    "drop msa_groups or no_pairing_msa."
+                )
+                raise ValueError(msg)
+            chain_indices = {int(k) for k in self.chain_letters}
+            seen: set[int] = set()
+            for gi, group in enumerate(self.msa_groups):
+                for ci in group:
+                    if ci not in chain_indices:
+                        msg = (
+                            f"msa_groups[{gi}] references chain index {ci}, "
+                            f"but chain_letters has {sorted(chain_indices)}."
+                        )
+                        raise ValueError(msg)
+                    if ci in seen:
+                        msg = (
+                            f"msa_groups: chain index {ci} appears in more "
+                            "than one group; each chain belongs to at most one."
+                        )
+                        raise ValueError(msg)
+                    seen.add(ci)
+        return self
+
+    @property
+    def msa_pairing_mode(self) -> str:
+        """Resolved pairing mode for :class:`ComplexMSA`: ``mixed`` / ``paired_only`` / ``no_pairing``.
+
+        ``msa_groups`` is orthogonal — it's a constraint applied on top of
+        ``mixed`` / ``paired_only`` to confine species-pairing to within
+        each group. The mode string here only reports the row-source
+        policy.
+        """
+        if self.paired_msa_only:
+            return "paired_only"
+        if self.no_pairing_msa:
+            return "no_pairing"
+        return "mixed"
 
     @field_validator("contacts", mode="before")
     @classmethod
@@ -220,6 +428,69 @@ class InferenceSpec(BaseModel):
     @classmethod
     def _coerce_int_keys_template(cls, v: object) -> object:
         return _coerce_int_keys(v)
+
+    @model_validator(mode="after")
+    def _check_warmstart_mode(self) -> "InferenceSpec":
+        if self.flexible_docking is not None and self.refinement is not None:
+            msg = (
+                "flexible_docking and refinement are mutually exclusive — "
+                "pick one warm-start mode."
+            )
+            raise ValueError(msg)
+        rs = self.refinement
+        if rs is not None:
+            all_chains = set(self.chain_indices())
+            mapped = {int(k) for k in rs.chain_map}
+            missing = all_chains - mapped
+            extra = mapped - all_chains
+            if missing or extra:
+                msg = (
+                    f"refinement.chain_map must cover every chain in "
+                    f"chain_letters exactly once; missing={sorted(missing)} "
+                    f"extra={sorted(extra)}."
+                )
+                raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _check_flexible_docking(self) -> "InferenceSpec":
+        fd = self.flexible_docking
+        if fd is None:
+            return self
+        if not self.combine_groups:
+            msg = (
+                "flexible_docking requires combine_groups to be set "
+                "(each group's known sub-structure binds to one combine_group)."
+            )
+            raise ValueError(msg)
+        if len(fd.groups) != len(self.combine_groups):
+            msg = (
+                f"flexible_docking.groups has {len(fd.groups)} entries but "
+                f"combine_groups has {len(self.combine_groups)}; they must "
+                "match 1:1 in order."
+            )
+            raise ValueError(msg)
+        all_chains = set(self.chain_indices())
+        covered: set[int] = set()
+        for gi, group_chains in enumerate(self.combine_groups):
+            covered.update(group_chains)
+            mapped = {int(k) for k in fd.groups[gi].chain_map}
+            expected = set(group_chains)
+            if mapped != expected:
+                msg = (
+                    f"flexible_docking.groups[{gi}].chain_map keys "
+                    f"{sorted(mapped)} do not match combine_groups[{gi}] "
+                    f"{sorted(expected)}."
+                )
+                raise ValueError(msg)
+        uncovered = all_chains - covered
+        if uncovered:
+            msg = (
+                f"flexible_docking requires every chain to be in some "
+                f"combine_group; chains {sorted(uncovered)} are not covered."
+            )
+            raise ValueError(msg)
+        return self
 
     @model_validator(mode="after")
     def _check_letter_keyed_inputs(self) -> "InferenceSpec":

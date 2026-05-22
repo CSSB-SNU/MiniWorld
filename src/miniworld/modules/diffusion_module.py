@@ -1,3 +1,5 @@
+import os
+
 import torch
 from jaxtyping import Bool, Float, Int
 from pydantic import BaseModel
@@ -178,6 +180,83 @@ class AtomAttentionEncoder(nn.Module):
         atom_pair = atom_pair + self.mlp_atom_pair(atom_pair)
         return atom_single_rep, atom_single_cond, atom_pair
 
+    # Inference-time chunking constant. Splits the first L_atom axis of
+    # atom_pair so the token->atom gather and the pair MLP each materialise
+    # only [B, _ATOM_CHUNK, L_atom, d] temporaries instead of the full
+    # [B, L_atom, L_atom, d] (which OOMs once L_atom is in the 10k+ range).
+    _ATOM_CHUNK: int = 1024
+
+    @typecheck
+    def _before_atom_transformer_chunked(
+        self,
+        x_t: Float[torch.Tensor, "A B L_atom 3"],
+        x_mask: Bool[torch.Tensor, "A B L_atom"],
+        atom_single_init: Float[torch.Tensor, "B L_atom d_single_atom_init"],
+        atom_pair_init: Float[torch.Tensor, "B L_atom L_atom d_pair_atom_init"],
+        atom_to_token_idx_map: Int[torch.Tensor, "B L_atom"],
+        token_single_cond: Float[torch.Tensor, "B L_token d_single"],
+        token_pair_cond: Float[torch.Tensor, "B L_token L_token d_pair"],
+    ) -> tuple[
+        Float[torch.Tensor, "A B L_atom d_single_atom_rep"],
+        Float[torch.Tensor, "A B L_atom d_single_atom_cond"],
+        Float[torch.Tensor, "B L_atom L_atom d_pair_atom_cond"],
+    ]:
+        atom_single_cond = self.to_atom_single_cond(atom_single_init)
+        atom_pair = self.to_atom_pair(atom_pair_init)
+
+        device = x_t.device
+        num_aug, batch_size, atom_length = x_t.shape[:3]
+
+        _to_add_single = self.token_single_to_atom_single_cond(token_single_cond)
+        _to_add_pair = self.token_pair_to_atom_pair(token_pair_cond)
+
+        batch_1d_idx = torch.arange(batch_size, device=device)
+        batch_1d_idx = batch_1d_idx.view(batch_size, 1).expand(-1, atom_length)
+        atom_single_cond = (
+            atom_single_cond + _to_add_single[batch_1d_idx, atom_to_token_idx_map]
+        )
+
+        _left = self.atom_single_to_pair_left(atom_single_cond)
+        _right = self.atom_single_to_pair_right(atom_single_cond)
+
+        # Reproduce the canonical gather pattern exactly. The canonical path
+        # writes
+        #     atom_pair += _to_add_pair[batch_2d_idx, A, A]
+        # where ``batch_2d_idx`` is [B, L_atom, L_atom] and ``A`` is
+        # [B, L_atom] passed twice. PyTorch broadcasts the index tensors
+        # together; both ``A`` references end up tracking the same broadcast
+        # position, so they collapse to the *column* atom's token id:
+        #     canonical[b, i, j] = _to_add_pair[b, A[b, j], A[b, j]]
+        # That's a per-(b, j) value — independent of i. Gather it once as a
+        # [B, L_atom, d] tensor and broadcast over the row dim; no
+        # [B, L_atom, L_atom, d] temporary anywhere.
+        b_arange = torch.arange(batch_size, device=device)
+        diag_gather = _to_add_pair[
+            b_arange.unsqueeze(1),
+            atom_to_token_idx_map,
+            atom_to_token_idx_map,
+        ]  # [B, L_atom, d_pair_atom]
+
+        chunk = self._ATOM_CHUNK
+        for s in range(0, atom_length, chunk):
+            e = min(s + chunk, atom_length)
+            pair_slice = atom_pair[:, s:e]
+            pair_slice.add_(diag_gather.unsqueeze(1))
+            pair_slice.add_(_left[:, s:e].unsqueeze(2))
+            pair_slice.add_(_right.unsqueeze(1))
+
+        atom_single_rep = atom_single_cond.unsqueeze(0)
+        to_add = self.noisy_to_atom_single_rep(x_t.to(torch.float32))
+        to_add = to_add * x_mask.unsqueeze(-1)
+        atom_single_rep = atom_single_rep + to_add
+        atom_single_cond = atom_single_cond.unsqueeze(0).expand(num_aug, -1, -1, -1)
+
+        for s in range(0, atom_length, chunk):
+            e = min(s + chunk, atom_length)
+            atom_pair[:, s:e].add_(self.mlp_atom_pair(atom_pair[:, s:e]))
+
+        return atom_single_rep, atom_single_cond, atom_pair
+
     @typecheck
     def _scatter_atom_to_token(
         self,
@@ -247,7 +326,32 @@ class AtomAttentionEncoder(nn.Module):
         atom_single_init, atom_pair_init = init_atom_features(reference)
         atom_to_token_idx_map = scheme.atom_to_token_idx_map
 
-        if self.use_checkpoint:
+        # Inference chunking is opt-in via env var. The chunked path is now
+        # bit-exact with the canonical _before_atom_transformer — see
+        # tests/test_atom_attention_chunked.py — so it's safe to enable when
+        # the canonical path's [B, L_atom, L_atom, d] temporaries OOM (e.g.
+        # ~13k atoms). Kept opt-in so the default is the long-validated
+        # canonical path; set MINIWORLD_INFERENCE_CHUNK_ATTN=1 to switch.
+        use_chunked_inference = (
+            not self.training
+            and os.environ.get("MINIWORLD_INFERENCE_CHUNK_ATTN", "0") == "1"
+        )
+        if use_chunked_inference:
+            atom_single_rep, atom_single_cond, atom_pair = (
+                self._before_atom_transformer_chunked(
+                    x_t,
+                    x_mask,
+                    atom_single_init,
+                    atom_pair_init,
+                    atom_to_token_idx_map,
+                    token_single_cond,
+                    token_pair_cond,
+                )
+            )
+            # Drop the [B, L_atom, L_atom, 5] init tensor (~3.8 GiB at L_atom=13k)
+            # now that to_atom_pair has already consumed it.
+            del atom_single_init, atom_pair_init
+        elif self.use_checkpoint and self.training:
             atom_single_rep, atom_single_cond, atom_pair = checkpoint(
                 self._before_atom_transformer,
                 x_t,

@@ -98,6 +98,17 @@ class DecoupledXPredScheduler(DiffusionScheduler):
         progress = torch.clamp(progress, min=0.0, max=1.0)
         return progress * progress * (3.0 - 2.0 * progress)
 
+    @property
+    def phase_1_boundary(self) -> float:
+        """sigma_y above which sigma_R / sigma_T stay at their maxima.
+
+        Default warm-start ``start_sigma_y`` for flexible-docking: at this
+        sigma the schedule is still in phase 1 (max rigid-body noise) yet
+        coordinate noise is finite, so the first solver step samples max
+        R/T per combine-group while ``init_x0`` is preserved as signal.
+        """
+        return float(self.config.sigma_y_phase_1_boundary)
+
     def _sigma_y_phase_boundaries(self) -> tuple[float, float, float, float]:
         """Return the full sigma_y range and the two phase boundaries."""
         sigma_y_max = self.config.sigma_y_max * self.config.sigma_data
@@ -264,19 +275,39 @@ class DecoupledXPredScheduler(DiffusionScheduler):
         """Compute the noise conditioning term."""
         return sigma.log() / 4.0
 
-    def sampling_time_steps(self, num_steps: int) -> Float[torch.Tensor, ...]:
+    def sampling_time_steps(
+        self,
+        num_steps: int,
+        start_sigma_y: float | None = None,
+    ) -> Float[torch.Tensor, ...]:
         """Generate the EDM sigma_y schedule.
 
         Decoupled EDM keeps EDM's coordinate noise schedule/distribution and
         applies the three-phase policy only when converting sigma_y to
         sigma_rotation/sigma_translation.
+
+        ``start_sigma_y``: when set, the schedule starts at this sigma_y
+        instead of the default ``sigma_y_max * sigma_data`` (used by the
+        flexible-docking warm start to skip the high-noise prefix).
         """
         time_steps = torch.empty(num_steps + 1)
         t = torch.linspace(0.0, 1.0, steps=num_steps)
-        sigma_y_max_r = self.config.sigma_y_max ** (1.0 / self.config.rho_y)
         sigma_y_min_r = self.config.sigma_y_min ** (1.0 / self.config.rho_y)
+        if start_sigma_y is None:
+            sigma_y_max_r = self.config.sigma_y_max ** (1.0 / self.config.rho_y)
+            scale = self.config.sigma_data
+        else:
+            if start_sigma_y <= 0.0:
+                msg = f"start_sigma_y must be positive, got {start_sigma_y}."
+                raise ValueError(msg)
+            # ``start_sigma_y`` is already in scaled sigma_y units (the same
+            # units the scheduler uses everywhere, e.g. for phase boundaries).
+            sigma_y_max_r = (start_sigma_y / self.config.sigma_data) ** (
+                1.0 / self.config.rho_y
+            )
+            scale = self.config.sigma_data
         time_steps[:-1] = (
-            self.config.sigma_data
+            scale
             * (sigma_y_max_r + t * (sigma_y_min_r - sigma_y_max_r)) ** self.config.rho_y
         )
         time_steps[-1] = 0.0

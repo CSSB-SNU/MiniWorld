@@ -219,6 +219,8 @@ class XPredDecoupledSolver(DiffusionSolver):
         update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered",
         return_intermediate: bool = False,
         combine_all: bool = False,
+        init_x0: torch.Tensor | None = None,
+        start_sigma_y: float | None = None,
     ) -> (
         tuple[torch.Tensor, list[torch.Tensor], list[torch.Tensor], list[torch.Tensor]]
         | torch.Tensor
@@ -232,13 +234,60 @@ class XPredDecoupledSolver(DiffusionSolver):
         When combine_all is True, all atoms are treated as a single group so a
         single R/T is sampled and applied to the whole structure regardless of
         the chain layout in atom_to_combine.
+
+        Flexible-docking warm start: pass ``init_x0`` (``(N_atom, 3)`` or
+        ``(B, N_atom, 3)``, broadcastable to ``shape``) of known coords with
+        each combine-group already centered at its centroid, plus
+        ``start_sigma_y`` (default :attr:`scheduler.phase_1_boundary`). The
+        time-step schedule is rebuilt from ``start_sigma_y`` instead of
+        ``sigma_y_max``, and ``y0 = init_x0 + sigma_0 * randn`` replaces the
+        usual full-noise init. The first step's ``apply_chain_rt`` then
+        samples R/T from the marginal at ``sigma_hat ~ start_sigma_y``
+        (phase-1 = max ``sigma_R`` / ``sigma_T``), so each group lands at a
+        random pose while its internal coords are preserved.
         """
         if combine_all:
+            if init_x0 is not None:
+                msg = (
+                    "init_x0 (flexible-docking warm start) is incompatible "
+                    "with combine_all=True: combine_all zeroes the per-atom "
+                    "group ids so all atoms move as one rigid body, which "
+                    "defeats the per-group warm start."
+                )
+                raise ValueError(msg)
             atom_to_combine = torch.zeros_like(atom_to_combine)
-        time_steps = self.scheduler.sampling_time_steps(num_steps).to(device)
+
+        if init_x0 is None and start_sigma_y is not None:
+            msg = (
+                "start_sigma_y is only meaningful together with init_x0 — "
+                "the standard solver always starts at sigma_y_max."
+            )
+            raise ValueError(msg)
+
+        if init_x0 is not None:
+            if start_sigma_y is None:
+                start_sigma_y = self.scheduler.phase_1_boundary
+            time_steps = self.scheduler.sampling_time_steps(
+                num_steps, start_sigma_y=start_sigma_y,
+            ).to(device)
+        else:
+            time_steps = self.scheduler.sampling_time_steps(num_steps).to(device)
         sigma_0 = self.scheduler.sampling_schedule(time_steps[0])
 
-        y = torch.randn(shape, device=device) * sigma_0
+        if init_x0 is not None:
+            init_x0 = init_x0.to(device=device, dtype=torch.float32)
+            if init_x0.ndim == 2:
+                init_x0 = init_x0.unsqueeze(0)
+            if init_x0.shape[-2:] != shape[-2:]:
+                msg = (
+                    f"init_x0 shape {tuple(init_x0.shape)} does not match "
+                    f"solver shape {tuple(shape)}; last two dims must agree."
+                )
+                raise ValueError(msg)
+            init_x0 = init_x0.expand(shape)
+            y = init_x0 + sigma_0 * torch.randn(shape, device=device)
+        else:
+            y = torch.randn(shape, device=device) * sigma_0
         trajectory: list[torch.Tensor] = []
         hat_list: list[torch.Tensor] = []
         input_list: list[torch.Tensor] = []

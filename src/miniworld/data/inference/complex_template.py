@@ -22,6 +22,7 @@ stays consistent across the batch.
 from __future__ import annotations
 
 import gzip
+import logging
 import shutil
 import subprocess
 import tempfile
@@ -37,6 +38,8 @@ from miniworld.data.constants import ResidueMapping
 from miniworld.data.io import load_cifmol
 from miniworld.data.io.load import load_bytes, load_raw_data
 from miniworld.data.pipeline import ProteinTemplate
+
+LOGGER = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from .build import _ChainExpansion
@@ -791,8 +794,9 @@ def derive_contacts_from_complex_templates(
     expansions: list | None = None,
     positive_cutoff: float = 6.0,
     negative_cutoff: float = 12.0,
-    mode: str = "inter",
+    mode: str = "all",
     seqsep: int = 4,
+    min_seqid: float | None = None,
 ) -> tuple[list[str], list[str]]:
     """Derive ``(positive, negative)`` contact strings from aligned templates.
 
@@ -810,17 +814,34 @@ def derive_contacts_from_complex_templates(
       positive contacts; pairs with ``> negative_cutoff`` (default 12 Å)
       become negative contacts. The gap is intentionally unsupervised.
     - Contact strings carry the per-residue local token index after ``#``:
-      ``"<chain_letter>:<res_1based>#<tok_local>-...#..."``.
+      ``"<chain_index>:<res_1based>#<tok_local>-...#..."``.
       :func:`_build_token_contacts` reads the ``#`` and resolves to the
-      right global token id.
+      right global token id. Chain indices (not letters) are used so
+      homomeric letters with multiple copies (e.g., ``A2`` mapping
+      chains 0 and 3 to letter ``a``) don't collapse distinct
+      intra-chain / inter-chain distances into the same key.
 
     Modes:
-        - ``inter``: only cross-chain pairs (typical use).
-        - ``all``: also includes intra-chain pairs with ``|i - j| >= seqsep``.
+        - ``all`` (default): inter-chain pairs plus intra-chain pairs with
+          ``|i - j| >= seqsep``. Picks up the template's intra-chain geometry
+          too (e.g. a self-prediction supplied as a monomer template), not
+          only the cross-chain interface.
+        - ``inter``: only cross-chain pairs — useful when the template's
+          intra-chain geometry is untrustworthy and you only want to fix
+          the interface.
 
     ``expansions`` lets in-batch callers (``build_inference_batch``) reuse
     their already-built per-chain info. When ``None``, the function
     rebuilds a minimal expansion (no MSA) via :func:`_build_derivation_expansions`.
+
+    ``min_seqid`` (0..1) filters chains whose per-chain identity to the
+    query (matches / aligned positions) is **strictly less** than the
+    cutoff: contacts from those chains are skipped, but the template
+    itself stays in the spec for the template module to consume. ``None``
+    (default) disables the filter; in that case every chain contributes
+    contacts regardless of identity, but a warning is still emitted for
+    any chain below 100% so the user knows. When the filter is active,
+    chains that pass but are below 100% also get the warning.
 
     Returns ``([], [])`` when ``spec.complex_templates`` is empty.
     """
@@ -836,15 +857,35 @@ def derive_contacts_from_complex_templates(
         )
         raise ValueError(msg)
 
+    # Per-entry opt-in: an entry contributes contacts only when its
+    # effective ``as_contact`` is True (per-entry value, or spec-wide
+    # default when the entry leaves it None). Entries that opt out stay
+    # in the spec — the template module still consumes them as frame
+    # templates — they just don't seed contact constraints here.
+    contact_entries = [
+        (ki, ct) for ki, ct in enumerate(spec.complex_templates)
+        if ct.resolves_as_contact(spec.template_as_contact)
+    ]
+    if not contact_entries:
+        return [], []
+
     if expansions is None:
         expansions = _build_derivation_expansions(spec)
     n_chains = len(expansions)
 
-    positive_set: set[tuple[str, int, int, str, int, int]] = set()
-    negative_set: set[tuple[str, int, int, str, int, int]] = set()
+    # Keys are (chain_idx_i, res_i, tok_i, chain_idx_j, res_j, tok_j). Using
+    # chain INDEX (not letter) avoids collapsing distinct intra-chain /
+    # inter-chain distances onto the same key when homomeric letters span
+    # multiple chains (see docstring).
+    positive_set: set[tuple[int, int, int, int, int, int]] = set()
+    negative_set: set[tuple[int, int, int, int, int, int]] = set()
 
-    for ki, complex_spec in enumerate(spec.complex_templates):
-        per_token: list[tuple[str, int, int, np.ndarray]] = []
+    for ki, complex_spec in contact_entries:
+        # (chain_idx, res_1based, tok_local, xyz). chain_idx identifies the
+        # query chain — distinct entries for distinct chain indices even when
+        # they share a letter (homomer copies), so the contact derivation
+        # doesn't conflate intra-chain and inter-chain distances.
+        per_token: list[tuple[int, int, int, np.ndarray]] = []
 
         for chain_idx_str, t_chain_id in complex_spec.chain_map.items():
             try:
@@ -874,6 +915,41 @@ def derive_contacts_from_complex_templates(
                 t_letters, q_one_letter,
                 where=f"complex_templates[{ki}].chain_map['{chain_idx_str}']",
             )
+
+            # Per-chain identity to the query (matches / aligned positions).
+            # Same convention casp17/template_plot.py uses for the coverage
+            # heatmap so the two stay consistent.
+            n_aligned = 0
+            n_match = 0
+            for qi, ti_idx in enumerate(q_to_t):
+                ti_idx_int = int(ti_idx)
+                if ti_idx_int < 0:
+                    continue
+                n_aligned += 1
+                if t_letters[ti_idx_int] == q_one_letter[qi]:
+                    n_match += 1
+            seq_id = (n_match / n_aligned) if n_aligned > 0 else 0.0
+            src = complex_spec.cif_id or str(complex_spec.cif)
+            tag = (
+                f"complex_templates[{ki}] ({src})  query chain {ci} ({letter}) "
+                f"<- template chain {t_chain_id}"
+            )
+            if min_seqid is not None and seq_id < min_seqid:
+                LOGGER.warning(
+                    "%s: seq_id=%.3f < min_seqid=%.3f -> skipping for contact "
+                    "derivation (template module still consumes it)",
+                    tag, seq_id, min_seqid,
+                )
+                continue
+            if seq_id < 1.0:
+                LOGGER.warning(
+                    "%s: seq_id=%.3f < 1.0 -> deriving contacts from a "
+                    "non-identical template; set "
+                    "spec.template_as_contact_min_seqid to filter such chains",
+                    tag, seq_id,
+                )
+            else:
+                LOGGER.info("%s: seq_id=1.000", tag)
 
             atom_cursor = 0
             for r_idx in range(exp.n_residues):
@@ -907,7 +983,7 @@ def derive_contacts_from_complex_templates(
                     if not xyz:
                         continue
                     token_xyz = np.mean(np.asarray(xyz, dtype=np.float32), axis=0)
-                    per_token.append((letter, r_idx + 1, tok_local, token_xyz))
+                    per_token.append((ci, r_idx + 1, tok_local, token_xyz))
 
         if len(per_token) < 2:
             continue
@@ -923,24 +999,30 @@ def derive_contacts_from_complex_templates(
         def _accumulate(mask: np.ndarray, target: set) -> None:
             for k in np.where(mask)[0]:
                 i, j = int(iu[k]), int(ju[k])
-                ci_l, ri, ti_tok, _ = per_token[i]
-                cj_l, rj, tj_tok, _ = per_token[j]
-                if mode == "inter" and ci_l == cj_l:
+                ci_a, ri, ti_tok, _ = per_token[i]
+                ci_b, rj, tj_tok, _ = per_token[j]
+                # Same-chain filter is now by chain INDEX, so homomer copies
+                # (distinct chain indices sharing a letter) are correctly
+                # treated as inter-chain.
+                if mode == "inter" and ci_a == ci_b:
                     continue
-                if mode == "all" and ci_l == cj_l and abs(ri - rj) < seqsep:
+                if mode == "all" and ci_a == ci_b and abs(ri - rj) < seqsep:
                     continue
-                if (ci_l, ri, ti_tok) > (cj_l, rj, tj_tok):
-                    ci_l, cj_l = cj_l, ci_l
+                if (ci_a, ri, ti_tok) > (ci_b, rj, tj_tok):
+                    ci_a, ci_b = ci_b, ci_a
                     ri, rj = rj, ri
                     ti_tok, tj_tok = tj_tok, ti_tok
-                target.add((ci_l, ri, ti_tok, cj_l, rj, tj_tok))
+                target.add((ci_a, ri, ti_tok, ci_b, rj, tj_tok))
 
         _accumulate(pos_mask, positive_set)
         _accumulate(neg_mask, negative_set)
 
     def _fmt(k: tuple) -> str:
-        ci_l, ri, ti, cj_l, rj, tj = k
-        return f"{ci_l}:{ri}#{ti}-{cj_l}:{rj}#{tj}"
+        ci_a, ri, ti, ci_b, rj, tj = k
+        # Numeric chain indices; _build_token_contacts resolves these without
+        # the letter->[chain_indices] Cartesian expansion that previously
+        # broadcast intra-chain contacts onto inter-chain homomer pairs.
+        return f"{ci_a}:{ri}#{ti}-{ci_b}:{rj}#{tj}"
 
     pos_list = [_fmt(k) for k in sorted(positive_set)]
     neg_list = [_fmt(k) for k in sorted(negative_set)]

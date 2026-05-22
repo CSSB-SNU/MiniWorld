@@ -146,17 +146,42 @@ class ComplexMSA:
         missing_policy: Literal["gap", "query"] = "gap",
         max_MSA_depth: int = 16384,
         max_paired_depth: int = 8192,  # including query
+        pairing_mode: Literal["mixed", "paired_only", "no_pairing"] = "mixed",
+        msa_groups: list[list[int]] | None = None,
     ) -> None:
         """Pair and combine multiple MSAs.
+
+        Pairing modes:
+            - ``mixed`` (default): species-paired rows first, then per-chain
+              unpaired rows fill the remaining slots. Matches the original
+              training-time behaviour.
+            - ``paired_only``: keep only species-paired rows; unpaired
+              homologs are dropped entirely (the remaining slots up to
+              ``max_msa_depth`` stay as gap/query rows).
+            - ``no_pairing``: drop species pairing — row r past the query
+              is a positional concat of each chain's r-th homolog
+              (``row_r = chain_0[r] ++ chain_1[r] ++ ...``). Chains that
+              run out of homologs hold gap/query for that row.
 
         Pairing is done based on:
         1. same rep_ID
         2. species_ID.
+
+        Optional ``msa_groups``: a partition of chain indices that confines
+        species pairing to within each group. Cross-group rows become gaps.
+        Useful when two parts of the complex have no biological
+        co-evolution (e.g. an antibody Fab and its non-cognate antigen),
+        where species pairing across the boundary just yields spurious
+        co-occurrences. Chains not listed in any group are treated as their
+        own singleton group (no pairing partner). Ignored under
+        ``no_pairing`` mode.
         """
         self.missing_policy = missing_policy
         self.num_of_MSAs = len(MSAs)
         self.max_MSA_depth = max_MSA_depth
         self.max_paired_depth = max_paired_depth
+        self.pairing_mode = pairing_mode
+        self.msa_groups = [list(g) for g in (msa_groups or [])]
         self._prepare_MSA(MSAs)
 
     def _test_uniqueness(self, input_dict: dict[int, ndarray]) -> None:
@@ -261,35 +286,152 @@ class ComplexMSA:
         # 0. Query sequence
         query_indices = {ii: [0] for ii in MSAs}
 
-        # 1. Simple pairing common species for all MSAs
-        paired_msa_indices, _, paired_num_of_seqs = self._pairing_MSAs(MSAs)
-        paired_msa_indices = {
-            key: np.concatenate([query_indices[key], indices])
-            for key, indices in paired_msa_indices.items()
-        }
-        paired_num_of_seqs += 1
+        # 1. Pairing — three modes:
+        #    - mixed (default): species-paired rows + per-chain unpaired
+        #      tail (positionally stacked).
+        #    - paired_only: only species-paired rows survive; rest -> -1.
+        #    - no_pairing: AF-Multimer/AF3-style block-diagonal — row 0 is
+        #      the all-chain query, then each chain's homologs occupy
+        #      their own row block while the other chains hold -1 (gap).
+        if self.pairing_mode == "no_pairing":
+            # Skip species pairing entirely: each chain's own a3m is the
+            # only source. "paired" set = query row only, then the
+            # extra-MSA fill stacks each chain's r-th homolog positionally
+            # (row r = chain_0[r] ++ chain_1[r] ++ ... with chains that
+            # ran out of homologs holding gap/query for that row).
+            paired_msa_indices = {
+                ii: np.asarray(query_indices[ii], dtype=int) for ii in MSAs
+            }
+            paired_num_of_seqs = 1
+        elif self.msa_groups:
+            # Per-group pairing: chains within a group go through species
+            # pairing among themselves; chains in other groups hold -1
+            # (gap) for those rows. Chains absent from every group become
+            # their own singleton group (no pairing partner, so their
+            # pairing run yields zero rows). The concatenated index
+            # vectors per chain remain row-aligned, so the existing
+            # downstream layout (one column-block per chain) just works.
+            covered = {ii for g in self.msa_groups for ii in g}
+            groups_with_singletons = [
+                list(g) for g in self.msa_groups
+            ] + [[ii] for ii in MSAs if ii not in covered]
+            per_chain_indices: dict[int, list[int]] = {ii: [] for ii in MSAs}
+            paired_num_of_seqs = 0
+            for group in groups_with_singletons:
+                budget = max(0, self.max_paired_depth - 1 - paired_num_of_seqs)
+                if budget <= 0:
+                    break
+                group_msas = {ii: MSAs[ii] for ii in group if ii in MSAs}
+                if len(group_msas) < 2:
+                    # Singleton group: no species pairing possible.
+                    continue
+                grp_indices, _grp_species, grp_n = self._pairing_MSAs(
+                    group_msas, max_paired_depth=budget,
+                )
+                if grp_n <= 0:
+                    continue
+                for ii in MSAs:
+                    if ii in grp_indices:
+                        per_chain_indices[ii].extend(grp_indices[ii].tolist())
+                    else:
+                        per_chain_indices[ii].extend([-1] * grp_n)
+                paired_num_of_seqs += grp_n
+            paired_msa_indices = {
+                key: np.concatenate([
+                    np.asarray(query_indices[key], dtype=int),
+                    np.asarray(indices, dtype=int)
+                    if indices else np.empty((0,), dtype=int),
+                ])
+                for key, indices in per_chain_indices.items()
+            }
+            paired_num_of_seqs += 1
+        else:
+            paired_msa_indices, _, paired_num_of_seqs = self._pairing_MSAs(MSAs)
+            paired_msa_indices = {
+                key: np.concatenate([query_indices[key], indices])
+                for key, indices in paired_msa_indices.items()
+            }
+            paired_num_of_seqs += 1
         self._test_uniqueness(paired_msa_indices)
 
-        # 3. Add extra MSAs
-        final_msa_indices = {}
-        for key, values in MSAs.items():
-            msa_depth = len(values)
-            full_indices = list(range(msa_depth))
-            paired_indices = paired_msa_indices[key]
+        # 3. Add extra MSAs (skipped when paired_only — keeps the model from
+        # ever seeing an unpaired row).
+        if self.msa_groups and self.pairing_mode != "paired_only":
+            # Group-aware unpaired tail: within a group, the chain's r-th
+            # unpaired homolog gets stacked positionally at row r (same as
+            # the default 'mixed' behavior). Chains in *other* groups hold
+            # -1 (gap) at that row, so the cross-group co-occurrence the
+            # group-aware paired block already eliminated isn't reintroduced
+            # by the tail. Groups fill in order; row indices grow until the
+            # max_msa_depth budget is exhausted.
+            covered = {ii for g in self.msa_groups for ii in g}
+            groups_with_singletons = [
+                list(g) for g in self.msa_groups
+            ] + [[ii] for ii in MSAs if ii not in covered]
+            tail_indices: dict[int, list[int]] = {ii: [] for ii in MSAs}
+            total_budget = max(0, max_msa_depth - paired_num_of_seqs)
+            # Fair-share the unpaired tail across groups so no single group
+            # (e.g. a heavily-templated antibody Fab) crowds out the others.
+            # Per-group budget = floor(total/n) with the remainder spread
+            # over the first few groups; unused budget rolls over to the
+            # next group so we still fill ``max_msa_depth`` rows whenever a
+            # later group has the homologs to use them.
+            n_groups = len(groups_with_singletons)
+            base = total_budget // n_groups if n_groups else 0
+            extra = total_budget - base * n_groups
+            rollover = 0
+            for gi, group in enumerate(groups_with_singletons):
+                budget = base + (1 if gi < extra else 0) + rollover
+                if budget <= 0:
+                    continue
+                group_msas = {ii: MSAs[ii] for ii in group if ii in MSAs}
+                if not group_msas:
+                    rollover = budget
+                    continue
+                pool: dict[int, list[int]] = {}
+                for ii in group_msas:
+                    used = set(paired_msa_indices[ii].tolist())
+                    full = list(range(len(MSAs[ii])))
+                    pool[ii] = [r for r in full if r not in used]
+                group_rows = min(budget, max(len(p) for p in pool.values()))
+                for r in range(group_rows):
+                    for ii in MSAs:
+                        if ii in pool and r < len(pool[ii]):
+                            tail_indices[ii].append(pool[ii][r])
+                        else:
+                            tail_indices[ii].append(-1)
+                rollover = budget - group_rows
+            final_msa_indices = {
+                key: np.concatenate([
+                    paired_msa_indices[key],
+                    np.asarray(tail_indices[key], dtype=int),
+                ]).astype(np.int32)
+                for key in MSAs
+            }
+        else:
+            final_msa_indices = {}
+            for key, values in MSAs.items():
+                msa_depth = len(values)
+                full_indices = list(range(msa_depth))
+                paired_indices = paired_msa_indices[key]
 
-            # add missing indices at the end
-            missing_indices = set(full_indices) - set(paired_indices)
-            missing_indices = sorted(missing_indices)
+                if self.pairing_mode == "paired_only":
+                    # No extra rows — pad with -1 only.
+                    missing_indices = [-1] * max(0, max_msa_depth - paired_num_of_seqs)
+                else:
+                    # add missing indices at the end
+                    missing_indices = set(full_indices) - set(paired_indices)
+                    missing_indices = sorted(missing_indices)
 
-            # if msa_depth < max_msa_depth, add -1 to the end
-            if msa_depth < max_msa_depth:
-                missing_indices += [-1] * (max_msa_depth - msa_depth)
-            else:
-                missing_indices = missing_indices[: max_msa_depth - paired_num_of_seqs]
-            missing_indices = np.array(missing_indices)
-            final_msa_indices[key] = np.concatenate(
-                [paired_msa_indices[key], missing_indices],
-            ).astype(np.int32)
+                    # if msa_depth < max_msa_depth, add -1 to the end
+                    if msa_depth < max_msa_depth:
+                        missing_indices += [-1] * (max_msa_depth - msa_depth)
+                    else:
+                        missing_indices = missing_indices[: max_msa_depth - paired_num_of_seqs]
+                missing_indices = np.array(missing_indices)
+                final_msa_indices[key] = np.concatenate(
+                    [paired_msa_indices[key], missing_indices],
+                ).astype(np.int32)
         self._test_uniqueness(final_msa_indices)
 
         final_sequence = []
@@ -376,27 +518,60 @@ class ComplexMSA:
         ratio: tuple[float, float] = (0.5, 0.5),
         rng: np.random.Generator | None = None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """Randomly sample sequences from the complex MSA."""
+        """Randomly sample sequences from the complex MSA.
+
+        ``no_pairing`` mode skips the random draw and takes the first
+        ``max_msa_depth`` rows of :attr:`sequence` straight off the top —
+        i.e. each chain's top-N a3m hits, lined up positionally. No
+        species pairing, no shuffling.
+        """
         if rng is None:
             rng = np.random.default_rng()
+
+        if getattr(self, "pairing_mode", "mixed") == "no_pairing":
+            n = min(max_msa_depth, self.sequence.shape[0])
+            idx = np.arange(n, dtype=int)
+            return (
+                idx,
+                self.sequence[idx],
+                self.has_deletion[idx],
+                self.deletion_value[idx],
+            )
 
         max_msa_depth = min(max_msa_depth, self.total_depth)
         sampled = [int(ratio[ii] * max_msa_depth) for ii in range(2)]
         if sum(sampled) != max_msa_depth:
             sampled[0] += 1  # make sure the sum is equal to max_msa_depth
 
+        # Donate leftover slots in both directions so we always fill
+        # ``max_msa_depth`` rows when ``total_depth`` allows. Without the
+        # second branch, an MSA whose rows are all paired (monomer, or a
+        # homo-mer with shared per-chain a3m where species pairing is
+        # trivially full) wastes the unpaired half of the split and only
+        # ~total_depth/2 rows survive.
         to_be_sampled = (self.num_of_paired, self.num_of_unpaired)
         if to_be_sampled[0] < sampled[0]:
             sampled[1] += sampled[0] - to_be_sampled[0]
             sampled[0] = to_be_sampled[0]
+        if to_be_sampled[1] < sampled[1]:
+            sampled[0] += sampled[1] - to_be_sampled[1]
+            sampled[1] = to_be_sampled[1]
+        sampled[0] = min(sampled[0], to_be_sampled[0])
         sampled[1] = min(sampled[1], to_be_sampled[1])
 
+        # Query lives at row 0 of ``self.sequence`` and is always prepended
+        # below — sample the rest of the paired slots from [1, num_of_paired)
+        # so we never draw the query row twice.
         query = np.array([0])
-        paired_sampled = rng.choice(
-            self.num_of_paired,
-            sampled[0] - 1,
-            replace=False,
-        )  # -1 for query
+        n_extra_paired = max(0, sampled[0] - 1)
+        if n_extra_paired > 0:
+            paired_sampled = rng.choice(
+                np.arange(1, self.num_of_paired),
+                n_extra_paired,
+                replace=False,
+            )
+        else:
+            paired_sampled = np.empty(0, dtype=int)
 
         if sampled[1] > 0:
             unpaired_sampled = (
