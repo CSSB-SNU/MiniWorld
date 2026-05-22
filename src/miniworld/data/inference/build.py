@@ -276,9 +276,7 @@ def build_inference_batch(
         from .spec import ContactsSpec
 
         extra_pos, extra_neg = derive_contacts_from_complex_templates(
-            spec, expansions=expansions,
-            min_seqid=spec.template_as_contact_min_seqid,
-            mode="all",
+            spec, expansions=expansions, mode="all",
         )
         if extra_pos or extra_neg:
             # Dedupe while preserving the user's explicit contacts first.

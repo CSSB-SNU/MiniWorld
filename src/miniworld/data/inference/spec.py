@@ -293,15 +293,10 @@ class InferenceSpec(BaseModel):
           ``complex_templates`` (CB-CB < 8 Å) and merge them into the
           ``positive`` set used by the model. Useful when you want the
           template's interface geometry to act as a soft constraint
-          without writing the contact pairs by hand.
-      template_as_contact_min_seqid: per-chain sequence-identity cutoff
-          applied during contact derivation only. Any template chain whose
-          aligned identity to the query (matches / aligned positions) is
-          *strictly below* this value contributes no contacts, but the
-          template itself is still consumed by the template module. ``None``
-          (default) disables the filter — contacts come from every chain
-          regardless of identity. 0.95 is a reasonable default if you want
-          to exclude distant homologues from biasing the contact map.
+          without writing the contact pairs by hand. The ``as_contact``
+          flag is the only gate — per-chain sequence identity is logged
+          but no longer filters contacts (use ``as_contact=false`` on the
+          entry to opt out instead).
       paired_msa_only: when True, the complex MSA drops every unpaired
           homolog — only rows where all chains have a species-matched
           sequence survive (plus the query). Mutually exclusive with
@@ -349,7 +344,6 @@ class InferenceSpec(BaseModel):
     refinement: RefinementSpec | None = None
     contacts: ContactsSpec = Field(default_factory=ContactsSpec)
     template_as_contact: bool = False
-    template_as_contact_min_seqid: float | None = Field(default=None, ge=0.0, le=1.0)
     paired_msa_only: bool = False
     no_pairing_msa: bool = False
     msa_groups: list[list[int]] = Field(default_factory=list)

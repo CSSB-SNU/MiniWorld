@@ -796,7 +796,6 @@ def derive_contacts_from_complex_templates(
     negative_cutoff: float = 12.0,
     mode: str = "all",
     seqsep: int = 4,
-    min_seqid: float | None = None,
 ) -> tuple[list[str], list[str]]:
     """Derive ``(positive, negative)`` contact strings from aligned templates.
 
@@ -834,14 +833,10 @@ def derive_contacts_from_complex_templates(
     their already-built per-chain info. When ``None``, the function
     rebuilds a minimal expansion (no MSA) via :func:`_build_derivation_expansions`.
 
-    ``min_seqid`` (0..1) filters chains whose per-chain identity to the
-    query (matches / aligned positions) is **strictly less** than the
-    cutoff: contacts from those chains are skipped, but the template
-    itself stays in the spec for the template module to consume. ``None``
-    (default) disables the filter; in that case every chain contributes
-    contacts regardless of identity, but a warning is still emitted for
-    any chain below 100% so the user knows. When the filter is active,
-    chains that pass but are below 100% also get the warning.
+    Per-chain sequence identity to the query is logged (warning for
+    ``< 1.0``, info for exactly 1.0) but never used to gate which chains
+    contribute contacts — the per-entry / spec-wide ``as_contact`` flag
+    is the only gate. The contact derivation trusts the caller's opt-in.
 
     Returns ``([], [])`` when ``spec.complex_templates`` is empty.
     """
@@ -934,18 +929,11 @@ def derive_contacts_from_complex_templates(
                 f"complex_templates[{ki}] ({src})  query chain {ci} ({letter}) "
                 f"<- template chain {t_chain_id}"
             )
-            if min_seqid is not None and seq_id < min_seqid:
-                LOGGER.warning(
-                    "%s: seq_id=%.3f < min_seqid=%.3f -> skipping for contact "
-                    "derivation (template module still consumes it)",
-                    tag, seq_id, min_seqid,
-                )
-                continue
             if seq_id < 1.0:
                 LOGGER.warning(
                     "%s: seq_id=%.3f < 1.0 -> deriving contacts from a "
-                    "non-identical template; set "
-                    "spec.template_as_contact_min_seqid to filter such chains",
+                    "non-identical template (as_contact opt-in trusts the "
+                    "caller; gate the entry with as_contact=false if undesired)",
                     tag, seq_id,
                 )
             else:
