@@ -281,6 +281,18 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
         for name, p in raw_model.named_parameters()
     }
 
+    def _to_cpu_copy(obj):
+        if isinstance(obj, torch.Tensor):
+            return obj.detach().to("cpu", copy=True)
+        if isinstance(obj, dict):
+            return {k: _to_cpu_copy(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return type(obj)(_to_cpu_copy(v) for v in obj)
+        return copy.deepcopy(obj)
+
+    # Snapshot so the warmup's synthetic optimizer.step() doesn't pollute resumed Adam moments.
+    optimizer_state_snapshot = _to_cpu_copy(client.optimizer.state_dict())
+
     msa_buckets = _bucket_values(
         cfg.data.msa.max_msa_depth,
         cfg.train.bucket_msa_multiple,
@@ -365,10 +377,7 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
         with torch.no_grad():
             for name, p in raw_model.named_parameters():
                 p.copy_(param_snapshot[name].to(p.device, non_blocking=True))
-        for opt_state in client.optimizer.state.values():
-            for v in opt_state.values():
-                if isinstance(v, torch.Tensor):
-                    v.zero_()
+        client.optimizer.load_state_dict(optimizer_state_snapshot)
         _restore_rng_state(raw_model, rng_state)
         client.model.train(was_training)
 
