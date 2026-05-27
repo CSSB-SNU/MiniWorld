@@ -12,7 +12,7 @@ torchrun \
   --nnodes=2 \
   --node_rank=0 \
   --nproc_per_node=8 \
-  --master_addr=100.134.25.41 \
+  --master_addr=100.134.25.43 \
   --master_port=22301 \
   scripts/run_miniworld_only_train.py train \
   --ckpt "/NHNHOME/WORKSPACE/0226010152_A/checkpoints/miniworld/2.2.4/epoch=1095.pt" \
