@@ -88,11 +88,26 @@ class ComplexTemplateSpec(BaseModel):
     # entry, letting one template act as a contact source while another
     # template on the same spec stays frame-only.
     as_contact: bool | None = None
+    # Optional precomputed query<->template alignment, keyed by the same
+    # query chain INDEX strings as ``chain_map``. Each value is a 2-string
+    # dict ``{"query": "...", "template": "..."}`` of equal length: the two
+    # rows of a pairwise alignment (uppercase or '-' gap). When set,
+    # ``complex_template._query_to_template_index_map`` uses this directly
+    # instead of running its kalign pairwise fallback — the right move for
+    # distant homologs where kalign on a 19-28% seq-id pair gives garbage
+    # (T1331 vs 7zrn case). Populate from HMM-based hmmalign at search
+    # time (see ``scripts/search_template.py --alignment-source hmm``).
+    alignment: dict[str, dict[str, str]] | None = None
 
     @field_validator("chain_map", mode="before")
     @classmethod
     def _coerce_int_keys_chain_map(cls, v: object) -> object:
         return _coerce_int_keys(v)
+
+    @field_validator("alignment", mode="before")
+    @classmethod
+    def _coerce_int_keys_alignment(cls, v: object) -> object:
+        return _coerce_int_keys(v) if v is not None else v
 
     @model_validator(mode="after")
     def _check_source(self) -> "ComplexTemplateSpec":
@@ -151,7 +166,7 @@ class FlexibleDockingSpec(BaseModel):
     The solver starts at ``start_sigma_y`` (default: the scheduler's phase-1
     boundary, where ``sigma_R`` / ``sigma_T`` are at their max while
     coordinate noise is still small) instead of full noise. Each
-    :class:`combine_groups <InferenceSpec.combine_groups>` entry must have a
+    :class:`diffusion_groups <InferenceSpec.diffusion_groups>` entry must have a
     matching :class:`FlexibleDockingGroupSpec` here, in the same order, that
     fills in the group's known internal coords. The first solver step then
     randomly rotates and translates each group via the usual per-step
@@ -159,9 +174,9 @@ class FlexibleDockingSpec(BaseModel):
     pose between groups is unknown.
 
     Hard rules (validated here + in the loader):
-      * :attr:`InferenceSpec.combine_groups` must be set.
-      * ``len(groups) == len(combine_groups)`` and group i's ``chain_map``
-        keys must equal the chain indices in ``combine_groups[i]``.
+      * :attr:`InferenceSpec.diffusion_groups` must be set.
+      * ``len(groups) == len(diffusion_groups)`` and group i's ``chain_map``
+        keys must equal the chain indices in ``diffusion_groups[i]``.
       * Every chain in :meth:`InferenceSpec.chain_indices` must appear in
         some combine-group (no implicit singleton groups).
       * No missing residues or atoms in any per-group CIF.
@@ -188,7 +203,7 @@ class RefinementSpec(BaseModel):
     :class:`FlexibleDockingGroupSpec` and :class:`ComplexTemplateSpec`) and
     values are CIF ``label_asym_id``s. Every query chain must be mapped.
 
-    ``combine_groups`` on :class:`InferenceSpec` are honored as-is by the
+    ``diffusion_groups`` on :class:`InferenceSpec` are honored as-is by the
     solver (used for per-step ``apply_chain_rt``) but are not constrained
     by this spec — pick whatever rigid partitioning suits the refinement.
 
@@ -230,7 +245,7 @@ class InferenceSpec(BaseModel):
           are human-readable labels and **may repeat** (e.g.
           ``{"0": "a", "1": "a", "2": "b"}`` for a homo-dimer + monomer);
           chains sharing a letter share the same fasta / a3m entry.
-          Used by :attr:`contacts` and :attr:`combine_groups`.
+          Used by :attr:`contacts` and :attr:`diffusion_groups`.
       fasta: ``{chain_letter: fasta_path}``. One chain per file. Keys are
           chain **letters** (matching values of :attr:`chain_letters`), so
           homo-mer copies share a single fasta entry. Every distinct letter
@@ -258,7 +273,7 @@ class InferenceSpec(BaseModel):
           template slot across the chains listed in ``chain_map``, preserving
           their relative coordinates as a single rigid frame. ``chain_map``
           keys are query **chain indices** (numeric, unique).
-      combine_groups: optional list of **numeric chain-index** groups that
+      diffusion_groups: optional list of **numeric chain-index** groups that
           share an SE(3) frame in the diffusion solver. Example:
           ``[[0, 1], [2, 3, 4]]`` makes chains 0+1 move as one rigid body
           and 2+3+4 as another. Chains not listed each get their own
@@ -266,7 +281,7 @@ class InferenceSpec(BaseModel):
           affected; chain-aware model embeddings and the output CIF still
           use the underlying per-chain ids.
       flexible_docking: optional warm-start spec for the diffusion solver.
-          When set, requires :attr:`combine_groups`; each entry provides
+          When set, requires :attr:`diffusion_groups`; each entry provides
           the known internal coordinates for one group via a CIF, and the
           solver starts at ``start_sigma_y`` (phase-1 boundary by default)
           so the first step samples max R/T per group while keeping the
@@ -327,6 +342,24 @@ class InferenceSpec(BaseModel):
           (``x0hat`` / ``xt`` / ``x_with_noise``) for every produced
           structure. Set to False to skip trajectory I/O when only the
           final predicted structure is needed.
+      residue_indices: ``{chain_index_str: [r_1, r_2, ...]}`` per-chain
+          override for the **original** residue positions (1-based) of
+          the residues present in the chain's fasta. Set this when the
+          fasta is a *spatial crop* of a longer sequence — e.g. you
+          sliced antigen residues near the nanobody interface and are
+          now folding only that subset plus the nanobody. The values
+          populate :attr:`SchemeFeatures.token_residue_idx`, which feeds
+          the model's relative-position embedding; non-contiguous gaps
+          are then correctly clamped to the "long range" bin by the
+          relpos head (r_max=32). Without this override, residues are
+          numbered 0..n-1 contiguously per chain, which is wrong for
+          spatial crops (residues that were originally 50 apart would
+          get treated as adjacent). Key is the **chain index** (numeric,
+          same convention as ``template`` / ``complex_templates``), value
+          is a list of strictly-increasing positive ints whose length
+          equals the chain's (cropped) fasta length. The user is
+          responsible for also cropping the chain's a3m and any
+          complex-template alignment to match.
     """
 
     name: str | None = None
@@ -339,14 +372,15 @@ class InferenceSpec(BaseModel):
     template_n: int = 4
     cif_db: Path | None = None
     complex_templates: list[ComplexTemplateSpec] = Field(default_factory=list)
-    combine_groups: list[list[int]] = Field(default_factory=list)
+    diffusion_groups: list[list[int]] = Field(default_factory=list)
     flexible_docking: FlexibleDockingSpec | None = None
     refinement: RefinementSpec | None = None
     contacts: ContactsSpec = Field(default_factory=ContactsSpec)
     template_as_contact: bool = False
     paired_msa_only: bool = False
     no_pairing_msa: bool = False
-    msa_groups: list[list[int]] = Field(default_factory=list)
+    condition_groups: list[list[int]] = Field(default_factory=list)
+    residue_indices: dict[str, list[int]] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _check_msa_pairing_flags(self) -> "InferenceSpec":
@@ -356,26 +390,27 @@ class InferenceSpec(BaseModel):
                 "pick at most one."
             )
             raise ValueError(msg)
-        if self.msa_groups:
+        if self.condition_groups:
             if self.no_pairing_msa:
                 msg = (
-                    "msa_groups is only meaningful when species pairing runs; "
-                    "drop msa_groups or no_pairing_msa."
+                    "condition_groups gates species pairing; drop "
+                    "condition_groups or no_pairing_msa (mutually exclusive "
+                    "since no_pairing_msa already skips species pairing)."
                 )
                 raise ValueError(msg)
             chain_indices = {int(k) for k in self.chain_letters}
             seen: set[int] = set()
-            for gi, group in enumerate(self.msa_groups):
+            for gi, group in enumerate(self.condition_groups):
                 for ci in group:
                     if ci not in chain_indices:
                         msg = (
-                            f"msa_groups[{gi}] references chain index {ci}, "
+                            f"condition_groups[{gi}] references chain index {ci}, "
                             f"but chain_letters has {sorted(chain_indices)}."
                         )
                         raise ValueError(msg)
                     if ci in seen:
                         msg = (
-                            f"msa_groups: chain index {ci} appears in more "
+                            f"condition_groups: chain index {ci} appears in more "
                             "than one group; each chain belongs to at most one."
                         )
                         raise ValueError(msg)
@@ -386,10 +421,10 @@ class InferenceSpec(BaseModel):
     def msa_pairing_mode(self) -> str:
         """Resolved pairing mode for :class:`ComplexMSA`: ``mixed`` / ``paired_only`` / ``no_pairing``.
 
-        ``msa_groups`` is orthogonal — it's a constraint applied on top of
-        ``mixed`` / ``paired_only`` to confine species-pairing to within
-        each group. The mode string here only reports the row-source
-        policy.
+        ``condition_groups`` is orthogonal — it's a constraint applied on
+        top of ``mixed`` / ``paired_only`` to confine species-pairing AND
+        template-derived geometry to within each group. The mode string
+        here only reports the MSA row-source policy.
         """
         if self.paired_msa_only:
             return "paired_only"
@@ -423,6 +458,48 @@ class InferenceSpec(BaseModel):
     def _coerce_int_keys_template(cls, v: object) -> object:
         return _coerce_int_keys(v)
 
+    @field_validator("residue_indices", mode="before")
+    @classmethod
+    def _coerce_int_keys_residue_indices(cls, v: object) -> object:
+        return _coerce_int_keys(v)
+
+    @model_validator(mode="after")
+    def _check_residue_indices(self) -> "InferenceSpec":
+        if not self.residue_indices:
+            return self
+        chain_indices = {int(k) for k in self.chain_letters}
+        for k, vals in self.residue_indices.items():
+            ci = int(k)
+            if ci not in chain_indices:
+                msg = (
+                    f"residue_indices key {k!r} (chain index {ci}) is not in "
+                    f"chain_letters {sorted(chain_indices)}."
+                )
+                raise ValueError(msg)
+            if not vals:
+                msg = (
+                    f"residue_indices[{k!r}] is empty — drop the key to keep "
+                    "the chain at its default contiguous numbering."
+                )
+                raise ValueError(msg)
+            prev = 0
+            for r in vals:
+                if not isinstance(r, int) or r <= 0:
+                    msg = (
+                        f"residue_indices[{k!r}] entries must be positive "
+                        f"integers (1-based), got {r!r}."
+                    )
+                    raise ValueError(msg)
+                if r <= prev:
+                    msg = (
+                        f"residue_indices[{k!r}] must be strictly increasing "
+                        f"(got ..., {prev}, {r}). Sort the crop indices and "
+                        "deduplicate before passing them in."
+                    )
+                    raise ValueError(msg)
+                prev = r
+        return self
+
     @model_validator(mode="after")
     def _check_warmstart_mode(self) -> "InferenceSpec":
         if self.flexible_docking is not None and self.refinement is not None:
@@ -451,29 +528,29 @@ class InferenceSpec(BaseModel):
         fd = self.flexible_docking
         if fd is None:
             return self
-        if not self.combine_groups:
+        if not self.diffusion_groups:
             msg = (
-                "flexible_docking requires combine_groups to be set "
-                "(each group's known sub-structure binds to one combine_group)."
+                "flexible_docking requires diffusion_groups to be set "
+                "(each group's known sub-structure binds to one diffusion_group)."
             )
             raise ValueError(msg)
-        if len(fd.groups) != len(self.combine_groups):
+        if len(fd.groups) != len(self.diffusion_groups):
             msg = (
                 f"flexible_docking.groups has {len(fd.groups)} entries but "
-                f"combine_groups has {len(self.combine_groups)}; they must "
+                f"diffusion_groups has {len(self.diffusion_groups)}; they must "
                 "match 1:1 in order."
             )
             raise ValueError(msg)
         all_chains = set(self.chain_indices())
         covered: set[int] = set()
-        for gi, group_chains in enumerate(self.combine_groups):
+        for gi, group_chains in enumerate(self.diffusion_groups):
             covered.update(group_chains)
             mapped = {int(k) for k in fd.groups[gi].chain_map}
             expected = set(group_chains)
             if mapped != expected:
                 msg = (
                     f"flexible_docking.groups[{gi}].chain_map keys "
-                    f"{sorted(mapped)} do not match combine_groups[{gi}] "
+                    f"{sorted(mapped)} do not match diffusion_groups[{gi}] "
                     f"{sorted(expected)}."
                 )
                 raise ValueError(msg)
@@ -481,7 +558,7 @@ class InferenceSpec(BaseModel):
         if uncovered:
             msg = (
                 f"flexible_docking requires every chain to be in some "
-                f"combine_group; chains {sorted(uncovered)} are not covered."
+                f"diffusion_group; chains {sorted(uncovered)} are not covered."
             )
             raise ValueError(msg)
         return self
@@ -524,7 +601,7 @@ class InferenceSpec(BaseModel):
         """Load the spec from a data YAML, optionally overlaying a sampling YAML.
 
         The data YAML holds target-bound fields (chain_letters, fasta, a3m,
-        ccd_db, contacts, combine_groups, tokenization, templates, ...). The
+        ccd_db, contacts, diffusion_groups, tokenization, templates, ...). The
         optional sampling YAML holds per-attempt sampling knobs
         (n_trunk_samples, n_diffusion_samples, diffusion_batch_size,
         save_trajectory). Keys in the sampling YAML overwrite the data YAML.

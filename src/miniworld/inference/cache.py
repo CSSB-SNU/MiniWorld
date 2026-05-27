@@ -20,6 +20,7 @@ mutation a loud bug.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -184,8 +185,102 @@ def build_inference_cache(
     ]
     _left = enc.atom_single_to_pair_left(atom_single_cond)
     _right = enc.atom_single_to_pair_right(atom_single_cond)
-    atom_pair = atom_pair + diag_gather.unsqueeze(1) + _left.unsqueeze(2) + _right.unsqueeze(1)
-    atom_pair = atom_pair + enc.mlp_atom_pair(atom_pair)
+
+    # Inference chunking: same env gate as the other _before_atom_transformer
+    # paths. Without chunking, the broadcast add + mlp materialise
+    # [B, L_atom, L_atom, d] temporaries (~13 GiB at L_atom=14k for H1335),
+    # which OOMs cache prep before inference even starts. Bit-exact since
+    # both ops are point-wise.
+    use_chunked_inference = (
+        os.environ.get("MINIWORLD_INFERENCE_CHUNK_ATTN", "0") == "1"
+    )
+    # Atom-pair build-up instrumentation — opt-in dump of per-stage L2 norm
+    # pooled to token-pair. The diffusion_module.py helpers handle the env
+    # var check, counter cap, and NPZ write. Inference (this cache builder)
+    # is the ONLY caller during normal runs — the in-place
+    # _before_atom_transformer{,_chunked} methods on AtomAttentionEncoder
+    # are bypassed by the cached diffusion step. So the dump must go here.
+    from miniworld.modules.diffusion_module import (
+        _next_call_idx, _pool_atom_pair_to_token, _should_dump, _dump_dir,
+    )
+    dump = _should_dump("cache_build")
+    snap_pools: dict[str, "torch.Tensor"] = {}
+    L_token_for_pool = int(scheme.token_idx.shape[1])
+    if dump:
+        snap_pools["0_init"] = _pool_atom_pair_to_token(
+            atom_pair, atom_to_token_idx_map, L_token_for_pool,
+        )
+
+    # Dump path mirrors the exact ``add_`` sequence on atom_pair so each
+    # captured stage is the cumulative state after one specific addition:
+    #   0_init        : atom_pair = to_atom_pair(atom_pair_init)
+    #   1_token_cond  : + diag_gather  (token_pair_cond gathered to atom pos)
+    #   2_left        : + _left.unsqueeze(2)   (row-broadcast atom-single)
+    #   3_right       : + _right.unsqueeze(1)  (col-broadcast atom-single)
+    #   4_mlp         : + mlp_atom_pair(atom_pair)  (residual)
+    # No stages are merged — every distinct ``add_`` gets its own row.
+    if use_chunked_inference:
+        _ATOM_CHUNK = 1024
+        if dump:
+            for s in range(0, atom_length, _ATOM_CHUNK):
+                e = min(s + _ATOM_CHUNK, atom_length)
+                atom_pair[:, s:e].add_(diag_gather.unsqueeze(1))
+            snap_pools["1_token_cond"] = _pool_atom_pair_to_token(
+                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+            )
+            for s in range(0, atom_length, _ATOM_CHUNK):
+                e = min(s + _ATOM_CHUNK, atom_length)
+                atom_pair[:, s:e].add_(_left[:, s:e].unsqueeze(2))
+            snap_pools["2_left"] = _pool_atom_pair_to_token(
+                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+            )
+            for s in range(0, atom_length, _ATOM_CHUNK):
+                e = min(s + _ATOM_CHUNK, atom_length)
+                atom_pair[:, s:e].add_(_right.unsqueeze(1))
+            snap_pools["3_right"] = _pool_atom_pair_to_token(
+                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+            )
+        else:
+            for s in range(0, atom_length, _ATOM_CHUNK):
+                e = min(s + _ATOM_CHUNK, atom_length)
+                pair_slice = atom_pair[:, s:e]
+                pair_slice.add_(diag_gather.unsqueeze(1))
+                pair_slice.add_(_left[:, s:e].unsqueeze(2))
+                pair_slice.add_(_right.unsqueeze(1))
+        for s in range(0, atom_length, _ATOM_CHUNK):
+            e = min(s + _ATOM_CHUNK, atom_length)
+            atom_pair[:, s:e].add_(enc.mlp_atom_pair(atom_pair[:, s:e]))
+    else:
+        if dump:
+            atom_pair = atom_pair + diag_gather.unsqueeze(1)
+            snap_pools["1_token_cond"] = _pool_atom_pair_to_token(
+                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+            )
+            atom_pair = atom_pair + _left.unsqueeze(2)
+            snap_pools["2_left"] = _pool_atom_pair_to_token(
+                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+            )
+            atom_pair = atom_pair + _right.unsqueeze(1)
+            snap_pools["3_right"] = _pool_atom_pair_to_token(
+                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+            )
+        else:
+            atom_pair = atom_pair + diag_gather.unsqueeze(1) + _left.unsqueeze(2) + _right.unsqueeze(1)
+        atom_pair = atom_pair + enc.mlp_atom_pair(atom_pair)
+
+    if dump:
+        snap_pools["4_mlp"] = _pool_atom_pair_to_token(
+            atom_pair, atom_to_token_idx_map, L_token_for_pool,
+        )
+        out_dir = _dump_dir()
+        assert out_dir is not None
+        call_idx = _next_call_idx("cache_build")
+        import numpy as np
+        np.savez(
+            out_dir / f"atom_pair_cache_build_call{call_idx:04d}.npz",
+            **{k: v.numpy() for k, v in snap_pools.items()},
+            atom_to_token_idx_map=atom_to_token_idx_map[0].cpu().numpy(),
+        )
 
     # --- Scatter scaffolding ---
     token_length = int(scheme.token_idx.shape[1])

@@ -1,5 +1,7 @@
 import os
+from pathlib import Path
 
+import numpy as np
 import torch
 from jaxtyping import Bool, Float, Int
 from pydantic import BaseModel
@@ -20,6 +22,113 @@ from miniworld.data.features import (
     StructureFeatures,
 )
 from miniworld.modules.embeddings import RelativePositionEmbedding, fourier_embedding
+
+
+# ---------------------------------------------------------------------------
+# Atom-pair instrumentation — opt-in via ``MINIWORLD_DUMP_ATOM_PAIR=<dir>``.
+#
+# When the env var points at a directory, every call to
+# ``_before_atom_transformer{,_chunked}`` writes one NPZ snapshot of the
+# atom_pair build-up: the per-stage cumulative state, reduced to a
+# (L_token, L_token) L2-norm-then-mean-pool image. Default off → zero
+# runtime cost. Visualised by ``casp17/scripts/plot_atom_pair_components.py``.
+# ---------------------------------------------------------------------------
+_DUMP_CALL_COUNTER: dict[str, int] = {}
+
+
+def _dump_dir() -> Path | None:
+    """Return the dump dir when this call should be captured, else None.
+
+    Honours ``MINIWORLD_DUMP_ATOM_PAIR_MAX`` (default 1) so a single run
+    typically writes one NPZ per per code path — the diffusion sampler
+    can call the module 50+ times per inference and we usually only want
+    the first call's snapshot.
+    """
+    raw = os.environ.get("MINIWORLD_DUMP_ATOM_PAIR")
+    if not raw:
+        return None
+    out = Path(raw)
+    out.mkdir(parents=True, exist_ok=True)
+    return out
+
+
+def _should_dump(tag: str) -> bool:
+    if _dump_dir() is None:
+        return False
+    cap_raw = os.environ.get("MINIWORLD_DUMP_ATOM_PAIR_MAX", "1")
+    try:
+        cap = int(cap_raw)
+    except ValueError:
+        cap = 1
+    return _DUMP_CALL_COUNTER.get(tag, 0) < cap
+
+
+def _next_call_idx(tag: str) -> int:
+    idx = _DUMP_CALL_COUNTER.get(tag, 0)
+    _DUMP_CALL_COUNTER[tag] = idx + 1
+    return idx
+
+
+@torch.no_grad()
+def _pool_atom_pair_to_token(
+    atom_pair: torch.Tensor,
+    atom_to_token_idx_map: torch.Tensor,
+    L_token: int,
+    chunk: int = 1024,
+) -> torch.Tensor:
+    """Reduce (B=1, L_atom, L_atom, d) -> (L_token, L_token, d) by atom-mean
+    of the *signed* per-channel value within each (token_row, token_col)
+    block. ``d`` (= ``d_pair_atom``, the learned channel axis) is
+    preserved so callers can render one heatmap per channel and see what
+    each component of ``atom_pair`` contributes.
+
+    Done in row chunks to keep peak memory at O(chunk * L_atom * d)
+    instead of materialising the full (L_atom, L_atom, d) tensor on
+    device.
+    """
+    assert atom_pair.dim() == 4 and atom_pair.shape[0] == 1, atom_pair.shape
+    L_atom = atom_pair.shape[1]
+    d = atom_pair.shape[3]
+    device = atom_pair.device
+    tokens = atom_to_token_idx_map[0].to(torch.long)  # (L_atom,)
+
+    sums = torch.zeros(L_token, L_token, d, device=device, dtype=torch.float32)
+    counts = torch.zeros(L_token, L_token, device=device, dtype=torch.float32)
+    col_tok = tokens
+
+    for s in range(0, L_atom, chunk):
+        e = min(s + chunk, L_atom)
+        chunk_vals = atom_pair[0, s:e].to(torch.float32)  # (e-s, L_atom, d)
+        row_tok = tokens[s:e]
+        flat_idx = row_tok.unsqueeze(1) * L_token + col_tok.unsqueeze(0)  # (e-s, L_atom)
+        flat_idx_d = flat_idx.unsqueeze(-1).expand(-1, -1, d)
+        sums.view(-1, d).scatter_add_(
+            0, flat_idx_d.reshape(-1, d), chunk_vals.reshape(-1, d),
+        )
+        ones = torch.ones(flat_idx.shape, device=device, dtype=torch.float32)
+        counts.view(-1).scatter_add_(0, flat_idx.reshape(-1), ones.reshape(-1))
+
+    return (sums / counts.clamp(min=1.0).unsqueeze(-1)).cpu()
+
+
+@torch.no_grad()
+def _dump_atom_pair_snapshot(
+    tag: str,
+    stages: dict[str, torch.Tensor],
+    atom_to_token_idx_map: torch.Tensor,
+    L_token: int,
+) -> None:
+    """Pool each cumulative atom_pair stage and save one NPZ per call."""
+    out_dir = _dump_dir()
+    if out_dir is None:
+        return
+    call_idx = _next_call_idx(tag)
+    pooled = {
+        name: _pool_atom_pair_to_token(t, atom_to_token_idx_map, L_token).numpy()
+        for name, t in stages.items()
+    }
+    pooled["atom_to_token_idx_map"] = atom_to_token_idx_map[0].cpu().numpy()
+    np.savez(out_dir / f"atom_pair_{tag}_call{call_idx:04d}.npz", **pooled)
 
 
 @typecheck
@@ -139,6 +248,10 @@ class AtomAttentionEncoder(nn.Module):
     ]:
         atom_single_cond = self.to_atom_single_cond(atom_single_init)
         atom_pair = self.to_atom_pair(atom_pair_init)
+        # Snapshot stage 1 — pure geometric init projection (no token / single
+        # / MLP contribution yet). Captured before any "+= ..." so it's the
+        # baseline against which subsequent stages compose.
+        snap_init = atom_pair.detach() if _should_dump("diffusion_canonical") else None
 
         device = x_t.device
         num_aug, batch_size, atom_length = x_t.shape[:3]
@@ -165,6 +278,7 @@ class AtomAttentionEncoder(nn.Module):
                 atom_to_token_idx_map,
             ]
         )
+        snap_token_cond = atom_pair.detach() if snap_init is not None else None
         # augmentation
         atom_single_rep = atom_single_cond.unsqueeze(0)
         to_add = self.noisy_to_atom_single_rep(
@@ -177,7 +291,21 @@ class AtomAttentionEncoder(nn.Module):
         atom_single_cond = atom_single_cond.unsqueeze(0).expand(num_aug, -1, -1, -1)
 
         atom_pair = atom_pair + _left[..., None, :] + _right[..., None, :, :]
+        snap_singles = atom_pair.detach() if snap_init is not None else None
         atom_pair = atom_pair + self.mlp_atom_pair(atom_pair)
+        if snap_init is not None:
+            L_token = token_pair_cond.shape[1]
+            _dump_atom_pair_snapshot(
+                tag="diffusion_canonical",
+                stages={
+                    "1_geom_init": snap_init,
+                    "2_after_token_cond": snap_token_cond,
+                    "3_after_singles": snap_singles,
+                    "4_after_mlp": atom_pair.detach(),
+                },
+                atom_to_token_idx_map=atom_to_token_idx_map,
+                L_token=L_token,
+            )
         return atom_single_rep, atom_single_cond, atom_pair
 
     # Inference-time chunking constant. Splits the first L_atom axis of
@@ -203,6 +331,15 @@ class AtomAttentionEncoder(nn.Module):
     ]:
         atom_single_cond = self.to_atom_single_cond(atom_single_init)
         atom_pair = self.to_atom_pair(atom_pair_init)
+        dump = _should_dump("diffusion_chunked")
+        L_token = token_pair_cond.shape[1]
+        # Snapshot pooled stages eagerly — atom_pair is mutated in-place
+        # below, so each stage must pool *before* the next ``add_()`` writes.
+        snap_pools: dict[str, torch.Tensor] = {}
+        if dump:
+            snap_pools["1_geom_init"] = _pool_atom_pair_to_token(
+                atom_pair, atom_to_token_idx_map, L_token,
+            )
 
         device = x_t.device
         num_aug, batch_size, atom_length = x_t.shape[:3]
@@ -238,12 +375,31 @@ class AtomAttentionEncoder(nn.Module):
         ]  # [B, L_atom, d_pair_atom]
 
         chunk = self._ATOM_CHUNK
-        for s in range(0, atom_length, chunk):
-            e = min(s + chunk, atom_length)
-            pair_slice = atom_pair[:, s:e]
-            pair_slice.add_(diag_gather.unsqueeze(1))
-            pair_slice.add_(_left[:, s:e].unsqueeze(2))
-            pair_slice.add_(_right.unsqueeze(1))
+        # First split steps 2 + 3 across two chunk loops *only when dumping*
+        # so we can pool the after-token-cond and after-singles states
+        # independently. Default path (no env var) keeps the original
+        # single-loop schedule for max throughput.
+        if dump:
+            for s in range(0, atom_length, chunk):
+                e = min(s + chunk, atom_length)
+                atom_pair[:, s:e].add_(diag_gather.unsqueeze(1))
+            snap_pools["2_after_token_cond"] = _pool_atom_pair_to_token(
+                atom_pair, atom_to_token_idx_map, L_token,
+            )
+            for s in range(0, atom_length, chunk):
+                e = min(s + chunk, atom_length)
+                atom_pair[:, s:e].add_(_left[:, s:e].unsqueeze(2))
+                atom_pair[:, s:e].add_(_right.unsqueeze(1))
+            snap_pools["3_after_singles"] = _pool_atom_pair_to_token(
+                atom_pair, atom_to_token_idx_map, L_token,
+            )
+        else:
+            for s in range(0, atom_length, chunk):
+                e = min(s + chunk, atom_length)
+                pair_slice = atom_pair[:, s:e]
+                pair_slice.add_(diag_gather.unsqueeze(1))
+                pair_slice.add_(_left[:, s:e].unsqueeze(2))
+                pair_slice.add_(_right.unsqueeze(1))
 
         atom_single_rep = atom_single_cond.unsqueeze(0)
         to_add = self.noisy_to_atom_single_rep(x_t.to(torch.float32))
@@ -254,6 +410,19 @@ class AtomAttentionEncoder(nn.Module):
         for s in range(0, atom_length, chunk):
             e = min(s + chunk, atom_length)
             atom_pair[:, s:e].add_(self.mlp_atom_pair(atom_pair[:, s:e]))
+
+        if dump:
+            snap_pools["4_after_mlp"] = _pool_atom_pair_to_token(
+                atom_pair, atom_to_token_idx_map, L_token,
+            )
+            out_dir = _dump_dir()
+            assert out_dir is not None
+            call_idx = _next_call_idx("diffusion_chunked")
+            np.savez(
+                out_dir / f"atom_pair_diffusion_chunked_call{call_idx:04d}.npz",
+                **{k: v.numpy() for k, v in snap_pools.items()},
+                atom_to_token_idx_map=atom_to_token_idx_map[0].cpu().numpy(),
+            )
 
         return atom_single_rep, atom_single_cond, atom_pair
 

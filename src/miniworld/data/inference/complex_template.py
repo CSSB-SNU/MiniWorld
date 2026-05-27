@@ -263,6 +263,7 @@ def _align_template_to_query(
     query_one_letter: list[str],
     *,
     where: str = "",
+    precomputed: tuple[str, str] | None = None,
 ) -> tuple[np.ndarray, list[str]]:
     """Lay template residues onto the query coordinate columns.
 
@@ -271,9 +272,13 @@ def _align_template_to_query(
     query-shaped arrays the existing template-model path expects. Use
     :func:`_query_to_template_index_map` directly if you need the mapping
     for richer per-atom lookups (contact derivation).
+
+    Pass ``precomputed=(query_aln, template_aln)`` to bypass kalign and
+    use an HMM-derived alignment (per ``ComplexTemplateSpec.alignment``).
     """
     q_to_t = _query_to_template_index_map(
-        template_one_letter, query_one_letter, where=where,
+        template_one_letter, query_one_letter,
+        where=where, precomputed=precomputed,
     )
     n_q = len(query_one_letter)
     out_bb = np.full((n_q, *template_bb.shape[1:]), np.nan, dtype=template_bb.dtype)
@@ -291,16 +296,78 @@ def _query_to_template_index_map(
     query_one_letter: list[str],
     *,
     where: str = "",
+    precomputed: tuple[str, str] | None = None,
 ) -> np.ndarray:
     """Return an ``(n_q,)`` array mapping query index -> template index (or -1).
 
-    Always runs kalign — the previous length-match and substring fast
-    paths could silently misalign when sequences happened to share length
-    (or matched as a substring) but had internal indels. kalign on a
-    single chain pair is well under a second, so we just pay it always.
-    Query-only columns get ``-1``; template-only columns are dropped.
+    By default (``precomputed=None``) runs kalign pairwise on the query
+    and template one-letter sequences. The pairwise path is robust for
+    near-identical templates (seq_id ≳ 0.5) but produces garbage
+    alignments at twilight-zone identity (≲ 0.3) — see T1331/7zrn
+    where kalign matched 84% of residues but only 16% identically,
+    putting derive_contacts on the wrong residue pairs entirely.
+
+    Pass ``precomputed=(query_aln, template_aln)`` (two equal-length
+    strings with '-' for gaps) to use an HMM-derived alignment instead
+    (``scripts/search_template.py --alignment-source hmm`` emits these
+    and stores them on :attr:`ComplexTemplateSpec.alignment`).
     """
+    if precomputed is not None:
+        return _index_map_from_aligned_strings(
+            *precomputed,
+            n_q=len(query_one_letter),
+            n_t=len(template_one_letter),
+            where=where,
+        )
     return _kalign_index_map(template_one_letter, query_one_letter, where=where)
+
+
+def _index_map_from_aligned_strings(
+    query_aln: str,
+    template_aln: str,
+    *,
+    n_q: int,
+    n_t: int,
+    where: str,
+) -> np.ndarray:
+    """Build ``q_to_t`` from two aligned-residue strings of equal length.
+
+    Both strings use uppercase letters for residues and '-' for gaps;
+    the two rows must have identical length. Lowercase characters (HMMER
+    insertion-state residues) are tolerated on the template row — they
+    contribute to the template residue index but not to query alignment.
+    """
+    if len(query_aln) != len(template_aln):
+        msg = (
+            f"{where}: precomputed alignment rows have unequal length "
+            f"({len(query_aln)} vs {len(template_aln)})"
+        )
+        raise RuntimeError(msg)
+    q_to_t = np.full(n_q, -1, dtype=np.int64)
+    qi = 0
+    ti = 0
+    for q_char, t_char in zip(query_aln, template_aln):
+        q_is_match = q_char.isalpha() and q_char.isupper()
+        t_is_res = t_char.isalpha()
+        if q_is_match and t_is_res:
+            if qi < n_q and ti < n_t:
+                q_to_t[qi] = ti
+            qi += 1
+            ti += 1
+        elif q_is_match:
+            # Query has a match column but template aligns nothing here.
+            qi += 1
+        elif t_is_res:
+            # Template residue not aligned to a query match column
+            # (HMMER insert state, lowercase, or query gap).
+            ti += 1
+    if qi != n_q:
+        msg = (
+            f"{where}: precomputed alignment ended at query position {qi} "
+            f"but query has {n_q} residues — alignment is incomplete."
+        )
+        raise RuntimeError(msg)
+    return q_to_t
 
 
 def _kalign_index_map(
@@ -906,9 +973,14 @@ def derive_contacts_from_complex_templates(
             t_atoms_per_res, t_letters = _load_complex_chain_atoms(
                 complex_spec, t_chain_id, spec.cif_db,
             )
+            precomputed = None
+            if complex_spec.alignment and chain_idx_str in complex_spec.alignment:
+                a = complex_spec.alignment[chain_idx_str]
+                precomputed = (a["query"], a["template"])
             q_to_t = _query_to_template_index_map(
                 t_letters, q_one_letter,
                 where=f"complex_templates[{ki}].chain_map['{chain_idx_str}']",
+                precomputed=precomputed,
             )
 
             # Per-chain identity to the query (matches / aligned positions).
@@ -1023,22 +1095,51 @@ def load_complex_template_layers(
     template_id_offset: int = 1000,
 ) -> list[ProteinTemplate]:
     """Return one ``ProteinTemplate`` per chain whose slot count equals
-    ``len(spec.complex_templates)``.
+    the total number of (template × covered-condition-group) emissions.
 
-    For each complex template entry, every chain contributes exactly one slot:
-    real (mask=True) for chains listed in ``chain_map``, padded empty
-    (mask=False) for the rest. This makes slot counts uniform across chains
-    so the downstream ``ProteinTemplate.concat`` can stitch residues without
-    further padding.
+    For each complex template entry, *every condition-group it covers
+    emits one independent slot*: real (mask=True) for chains listed in
+    ``chain_map`` AND belonging to that group, padded empty (mask=False)
+    for the rest. This is the template-side counterpart of the MSA
+    pairing's group-aware row blocks — a single multi-chain template that
+    straddles the antibody / antigen boundary (e.g. a 4-chain Ab-Ag co-
+    crystal `7lbg`) gets split into "intra-Ab geometry" and "intra-Ag
+    geometry" slots, so the diffusion is free to choose the inter-group
+    relative pose without template-imposed conditioning.
+
+    When ``spec.condition_groups`` is empty, the behaviour collapses to
+    the pre-split scheme: one slot per template entry, real for covered
+    chains, empty for the rest. With groups declared, chains absent from
+    every declared group become their own singleton group (so a template
+    covering only that chain still emits exactly one slot, geometry intact).
     """
     n_chains = len(expansions)
     if not spec.complex_templates:
         return [ProteinTemplate.empty(exp.n_residues) for exp in expansions]
 
+    # Resolve chain → group_id. Empty ``condition_groups`` means *no
+    # grouping*: assign every chain to a single shared group so each
+    # template emits one combined slot (legacy behaviour). When groups
+    # are declared, chains outside any group become their own singleton
+    # (group_id < 0 namespace).
+    chain_to_group: dict[int, int] = {}
+    if spec.condition_groups:
+        for gi, group in enumerate(spec.condition_groups):
+            for ci in group:
+                chain_to_group[int(ci)] = gi
+        next_singleton = -1
+        for ci in range(n_chains):
+            if ci not in chain_to_group:
+                chain_to_group[ci] = next_singleton
+                next_singleton -= 1
+    else:
+        for ci in range(n_chains):
+            chain_to_group[ci] = 0
+
     per_chain_layers: list[list[ProteinTemplate]] = [[] for _ in range(n_chains)]
+    slot_counter = template_id_offset
 
     for ki, complex_spec in enumerate(spec.complex_templates):
-        template_id = template_id_offset + ki
         loaded: dict[int, tuple[np.ndarray, list[str]]] = {}
         for chain_idx_str, tmpl_chain in complex_spec.chain_map.items():
             try:
@@ -1057,7 +1158,12 @@ def load_complex_template_layers(
                 raise IndexError(msg)
             bb, one_letter = _load_complex_chain(complex_spec, tmpl_chain, spec.cif_db)
             # Align template chain to query — handles "template is full PDB
-            # chain, query is a contiguous subsequence" gracefully.
+            # chain, query is a contiguous subsequence" gracefully. HMM-
+            # derived alignment (if stored on the spec) bypasses kalign.
+            precomputed = None
+            if complex_spec.alignment and chain_idx_str in complex_spec.alignment:
+                a = complex_spec.alignment[chain_idx_str]
+                precomputed = (a["query"], a["template"])
             bb, one_letter = _align_template_to_query(
                 bb,
                 one_letter,
@@ -1066,18 +1172,35 @@ def load_complex_template_layers(
                     f"Complex template[{ki}] chain index {ci} "
                     f"(template chain {tmpl_chain!r})"
                 ),
+                precomputed=precomputed,
             )
             loaded[ci] = (bb, one_letter)
 
-        for ci in range(n_chains):
-            if ci in loaded:
-                bb, one_letter = loaded[ci]
-                per_chain_layers[ci].append(
-                    _make_complex_slot_for_chain(bb, one_letter, template_id),
-                )
-            else:
-                per_chain_layers[ci].append(
-                    ProteinTemplate.empty(expansions[ci].n_residues),
-                )
+        # Group the loaded chains by their condition_group id. Preserve
+        # encounter order so the slot index is deterministic.
+        groups_in_template: list[int] = []
+        chains_per_group: dict[int, list[int]] = {}
+        for ci in loaded:
+            gid = chain_to_group[ci]
+            if gid not in chains_per_group:
+                groups_in_template.append(gid)
+                chains_per_group[gid] = []
+            chains_per_group[gid].append(ci)
+
+        # Emit one slot per condition-group that the template covers.
+        for gid in groups_in_template:
+            slot_id = slot_counter
+            slot_counter += 1
+            keep = set(chains_per_group[gid])
+            for ci in range(n_chains):
+                if ci in keep:
+                    bb, one_letter = loaded[ci]
+                    per_chain_layers[ci].append(
+                        _make_complex_slot_for_chain(bb, one_letter, slot_id),
+                    )
+                else:
+                    per_chain_layers[ci].append(
+                        ProteinTemplate.empty(expansions[ci].n_residues),
+                    )
 
     return [stack_slots(layers) for layers in per_chain_layers]

@@ -147,7 +147,7 @@ class ComplexMSA:
         max_MSA_depth: int = 16384,
         max_paired_depth: int = 8192,  # including query
         pairing_mode: Literal["mixed", "paired_only", "no_pairing"] = "mixed",
-        msa_groups: list[list[int]] | None = None,
+        condition_groups: list[list[int]] | None = None,
     ) -> None:
         """Pair and combine multiple MSAs.
 
@@ -167,21 +167,23 @@ class ComplexMSA:
         1. same rep_ID
         2. species_ID.
 
-        Optional ``msa_groups``: a partition of chain indices that confines
-        species pairing to within each group. Cross-group rows become gaps.
-        Useful when two parts of the complex have no biological
-        co-evolution (e.g. an antibody Fab and its non-cognate antigen),
-        where species pairing across the boundary just yields spurious
-        co-occurrences. Chains not listed in any group are treated as their
-        own singleton group (no pairing partner). Ignored under
-        ``no_pairing`` mode.
+        Optional ``condition_groups``: a partition of chain indices that
+        confines species pairing to within each group. Cross-group rows
+        become gaps. Useful when two parts of the complex have no
+        biological co-evolution (e.g. an antibody Fab and its non-cognate
+        antigen), where species pairing across the boundary just yields
+        spurious co-occurrences. Chains not listed in any group are
+        treated as their own singleton group (no pairing partner). Ignored
+        under ``no_pairing`` mode. The same partition is also used to gate
+        template-derived geometry — see
+        ``data/inference/complex_template.py``.
         """
         self.missing_policy = missing_policy
         self.num_of_MSAs = len(MSAs)
         self.max_MSA_depth = max_MSA_depth
         self.max_paired_depth = max_paired_depth
         self.pairing_mode = pairing_mode
-        self.msa_groups = [list(g) for g in (msa_groups or [])]
+        self.condition_groups = [list(g) for g in (condition_groups or [])]
         self._prepare_MSA(MSAs)
 
     def _test_uniqueness(self, input_dict: dict[int, ndarray]) -> None:
@@ -303,7 +305,7 @@ class ComplexMSA:
                 ii: np.asarray(query_indices[ii], dtype=int) for ii in MSAs
             }
             paired_num_of_seqs = 1
-        elif self.msa_groups:
+        elif self.condition_groups:
             # Per-group pairing: chains within a group go through species
             # pairing among themselves; chains in other groups hold -1
             # (gap) for those rows. Chains absent from every group become
@@ -311,9 +313,9 @@ class ComplexMSA:
             # pairing run yields zero rows). The concatenated index
             # vectors per chain remain row-aligned, so the existing
             # downstream layout (one column-block per chain) just works.
-            covered = {ii for g in self.msa_groups for ii in g}
+            covered = {ii for g in self.condition_groups for ii in g}
             groups_with_singletons = [
-                list(g) for g in self.msa_groups
+                list(g) for g in self.condition_groups
             ] + [[ii] for ii in MSAs if ii not in covered]
             per_chain_indices: dict[int, list[int]] = {ii: [] for ii in MSAs}
             paired_num_of_seqs = 0
@@ -356,7 +358,7 @@ class ComplexMSA:
 
         # 3. Add extra MSAs (skipped when paired_only — keeps the model from
         # ever seeing an unpaired row).
-        if self.msa_groups and self.pairing_mode != "paired_only":
+        if self.condition_groups and self.pairing_mode != "paired_only":
             # Group-aware unpaired tail: within a group, the chain's r-th
             # unpaired homolog gets stacked positionally at row r (same as
             # the default 'mixed' behavior). Chains in *other* groups hold
@@ -364,9 +366,9 @@ class ComplexMSA:
             # group-aware paired block already eliminated isn't reintroduced
             # by the tail. Groups fill in order; row indices grow until the
             # max_msa_depth budget is exhausted.
-            covered = {ii for g in self.msa_groups for ii in g}
+            covered = {ii for g in self.condition_groups for ii in g}
             groups_with_singletons = [
-                list(g) for g in self.msa_groups
+                list(g) for g in self.condition_groups
             ] + [[ii] for ii in MSAs if ii not in covered]
             tail_indices: dict[int, list[int]] = {ii: [] for ii in MSAs}
             total_budget = max(0, max_msa_depth - paired_num_of_seqs)
@@ -401,13 +403,23 @@ class ComplexMSA:
                         else:
                             tail_indices[ii].append(-1)
                 rollover = budget - group_rows
-            final_msa_indices = {
-                key: np.concatenate([
+            # Pad each chain's index vector out to ``max_msa_depth`` with
+            # -1 (gap). Without this, the consumer loop below
+            # (``for ii in range(max_msa_depth)``) over-runs whenever the
+            # group-aware paired+tail block produces fewer rows than
+            # ``max_msa_depth`` — e.g. when paired-a3m sources (colab
+            # merge) cap total depth below the budget. The non-grouped
+            # branch already pads in the same way (see below).
+            final_msa_indices = {}
+            for key in MSAs:
+                combined = np.concatenate([
                     paired_msa_indices[key],
                     np.asarray(tail_indices[key], dtype=int),
-                ]).astype(np.int32)
-                for key in MSAs
-            }
+                ])
+                if combined.shape[0] < max_msa_depth:
+                    pad = np.full(max_msa_depth - combined.shape[0], -1, dtype=int)
+                    combined = np.concatenate([combined, pad])
+                final_msa_indices[key] = combined.astype(np.int32)
         else:
             final_msa_indices = {}
             for key, values in MSAs.items():

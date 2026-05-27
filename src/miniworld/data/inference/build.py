@@ -85,6 +85,12 @@ class _ChainExpansion:
     atom_to_token_local: np.ndarray        # (n_atoms,) local atom -> local token [0..n_tokens-1]
     token_to_residue_local: np.ndarray     # (n_tokens,) local token -> local residue [0..n_residues-1]
     residue_token_offsets: np.ndarray      # (n_residues+1,) cum token count per residue (within chain)
+    # Per-residue "original" residue index used by the relpos head (mirrors
+    # the dataloader's ``cifmol.residues.cif_idx`` after spatial cropping).
+    # Defaults to 0..n_residues-1 (contiguous within the chain); the user's
+    # ``InferenceSpec.residue_indices`` override replaces it with the
+    # original positions for a spatially-cropped chain.
+    residue_idx_for_relpos: np.ndarray     # (n_residues,) int64
 
 
 def build_inference_batch(
@@ -129,6 +135,7 @@ def build_inference_batch(
     expansions: list[_ChainExpansion] = []
     atom_offset = 0
     token_offset = 0
+    residue_offset = 0
     for ci in chain_indices:
         cs = chain_specs[ci]
         residues_full = [ccd_lookup[ccd] for ccd in cs.chemcomp_ids]
@@ -148,6 +155,10 @@ def build_inference_batch(
             _tokenize_chain(cs, residues, residues_full, keep_masks, ccd_lookup, policy)
         )
         n_tokens_chain = int(residue_token_offsets[-1])
+        residue_idx_relpos = _resolve_residue_idx_for_relpos(
+            spec=spec, chain_index=ci, n_res=n_res,
+            chain_res_offset=residue_offset,
+        )
         expansions.append(
             _ChainExpansion(
                 spec=cs,
@@ -161,10 +172,12 @@ def build_inference_batch(
                 atom_to_token_local=atom_to_token_local,
                 token_to_residue_local=token_to_residue_local,
                 residue_token_offsets=residue_token_offsets,
+                residue_idx_for_relpos=residue_idx_relpos,
             ),
         )
         atom_offset += n_atoms
         token_offset += n_tokens_chain
+        residue_offset += n_res
 
     total_tokens = token_offset
     total_atoms = atom_offset
@@ -180,6 +193,12 @@ def build_inference_batch(
     chain_sym_id = _compute_sym_ids(chain_entity_id)
     token_idx = np.arange(total_tokens, dtype=np.int64)
     token_to_residue_idx_map = np.empty(total_tokens, dtype=np.int64)
+    # ``token_residue_idx`` (relpos input) is computed separately so a chain
+    # with a ``residue_indices`` override can carry its original (possibly
+    # non-contiguous) per-residue positions instead of the contiguous lookup
+    # used by ``token_to_residue_idx_map``. Mirrors the dataloader's
+    # ``cifmol.residues.cif_idx[token_to_residue_idx_map]`` path.
+    token_residue_idx_arr = np.empty(total_tokens, dtype=np.int64)
 
     token_asym_id = np.empty(total_tokens, dtype=np.int64)
     token_entity_id_arr = np.empty(total_tokens, dtype=np.int64)
@@ -198,6 +217,9 @@ def build_inference_batch(
         token_to_residue_idx_map[token_lo:token_hi] = (
             exp.token_to_residue_local + chain_res_offset
         )
+        token_residue_idx_arr[token_lo:token_hi] = exp.residue_idx_for_relpos[
+            exp.token_to_residue_local
+        ]
 
         atom_lo = exp.atom_offset
         atom_hi = atom_lo + exp.n_atoms
@@ -211,16 +233,16 @@ def build_inference_batch(
             atom_cursor += res.n_atoms
 
     # ``atom_to_chain_id`` doubles as the solver's ``atom_to_combine`` argument
-    # (per-chain SE(3) frame). When the user wires up ``combine_groups``, remap
+    # (per-chain SE(3) frame). When the user wires up ``diffusion_groups``, remap
     # chain ids to group ids so multiple chains share one rigid frame; the
     # per-chain ``token_asym_id`` is left untouched, so chain-aware model
     # embeddings and the to_cif chain assignment are unaffected.
-    if spec.combine_groups:
-        chain_to_group = _build_chain_to_group(spec.combine_groups, n_chains)
+    if spec.diffusion_groups:
+        chain_to_group = _build_chain_to_group(spec.diffusion_groups, n_chains)
         atom_to_chain_id = chain_to_group[atom_to_chain_id]
 
     scheme = SchemeFeatures.from_sample(
-        token_residue_idx=torch.from_numpy(token_to_residue_idx_map),
+        token_residue_idx=torch.from_numpy(token_residue_idx_arr),
         token_idx=torch.from_numpy(token_idx),
         token_asym_id=torch.from_numpy(token_asym_id),
         token_entity_id=torch.from_numpy(token_entity_id_arr),
@@ -244,7 +266,7 @@ def build_inference_batch(
         MSAs=[exp.msa for exp in expansions],
         missing_policy=missing_policy,
         pairing_mode=spec.msa_pairing_mode,
-        msa_groups=spec.msa_groups,
+        condition_groups=spec.condition_groups,
     )
     msa_residue = sample_msa(complex_msa, max_msa_depth=max_msa_depth, rng=rng)
     msa_features = MSAFeatures(
@@ -392,33 +414,33 @@ def _resolve_chain_refs(
 
 
 def _build_chain_to_group(
-    combine_groups: list[list[int]],
+    diffusion_groups: list[list[int]],
     n_chains: int,
 ) -> np.ndarray:
     """Map per-chain index to a combine-group id.
 
-    Each entry in ``combine_groups`` is a list of **numeric chain indices**
+    Each entry in ``diffusion_groups`` is a list of **numeric chain indices**
     (0-based). Explicit groups become ids 0..K-1 in order; chains not
     listed each get their own singleton group with ids K, K+1, ... in
     chain-local order.
     """
     chain_to_group = np.full(n_chains, -1, dtype=np.int64)
-    for group_idx, indices in enumerate(combine_groups):
+    for group_idx, indices in enumerate(diffusion_groups):
         for ci in indices:
             if not (0 <= ci < n_chains):
                 msg = (
-                    f"combine_groups[{group_idx}]: chain index {ci} out of "
+                    f"diffusion_groups[{group_idx}]: chain index {ci} out of "
                     f"range [0, {n_chains})."
                 )
                 raise IndexError(msg)
             if chain_to_group[ci] != -1:
                 msg = (
-                    f"chain index {ci} appears in multiple combine_groups "
+                    f"chain index {ci} appears in multiple diffusion_groups "
                     f"(in group {int(chain_to_group[ci])} and {group_idx})."
                 )
                 raise ValueError(msg)
             chain_to_group[ci] = group_idx
-    next_id = len(combine_groups)
+    next_id = len(diffusion_groups)
     for ci in range(n_chains):
         if chain_to_group[ci] == -1:
             chain_to_group[ci] = next_id
@@ -440,6 +462,46 @@ def _build_letter_to_chains(
         letter = final_chain_letter[ci]
         letter_to_chains.setdefault(letter, []).append(local_idx)
     return letter_to_chains
+
+
+def _resolve_residue_idx_for_relpos(
+    spec: "InferenceSpec",
+    chain_index: int,
+    n_res: int,
+    chain_res_offset: int,
+) -> np.ndarray:
+    """Per-chain residue indices used by ``RelativePositionEmbedding``.
+
+    Defaults to ``np.arange(chain_res_offset, chain_res_offset + n_res)``
+    — the same cumulative-across-chains numbering that
+    ``token_to_residue_idx_map`` uses — so a chain without override
+    keeps the *exact* label_seq_id values the to_cif writer emitted
+    before this knob existed. Downstream scripts that index relaxed
+    PDBs by 0-indexed-cumulative resi (see CLAUDE.md "PDB chain id vs
+    query letter") thus see no change.
+
+    When ``spec.residue_indices`` declares an override for this chain
+    (spatial-crop mode), validate length-equals-n_res and return the
+    user's values verbatim. The relpos head only consumes *within-chain
+    differences* (cross-chain bins are gated by ``b_same_chain``), so
+    losing the global offset on a single chain is harmless even when
+    its values collide with another chain's range — and the
+    user-supplied positions then propagate to the output mmCIF
+    ``label_seq_id`` for the cropped chain, which is what makes the
+    crop reviewable.
+    """
+    override = spec.residue_indices.get(str(chain_index))
+    if override is None:
+        return np.arange(chain_res_offset, chain_res_offset + n_res, dtype=np.int64)
+    if len(override) != n_res:
+        msg = (
+            f"residue_indices[{chain_index!r}] has length {len(override)} "
+            f"but chain {chain_index} has {n_res} residues in its fasta. "
+            "Lengths must match — pass the original residue position for "
+            "every residue in the cropped fasta."
+        )
+        raise ValueError(msg)
+    return np.asarray(override, dtype=np.int64)
 
 
 def _load_or_build_chain_msa(
