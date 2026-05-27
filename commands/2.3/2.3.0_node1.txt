@@ -1,4 +1,4 @@
-Bug A retrain from 2.2.4 epoch=1095 + crop 384|4096 + freeze everything outside the atom_attention_encoder
+Bug A retrain from 2.2.4 epoch=1095 + crop 384|4096 + train full diffusion_module, freeze trunk
 
 unset NCCL_DEBUG
 export TRITON_CACHE_DIR=$HOME/.triton
