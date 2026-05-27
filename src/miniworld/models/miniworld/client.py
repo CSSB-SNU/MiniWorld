@@ -15,6 +15,7 @@ from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
 from miniworld.configs import XPredDecoupledDiffuserConfig
+from miniworld.training import ParamPolicyConfig
 from miniworld.data.features.batch import Batch
 from miniworld.diffusion import (
     DecoupledXPredScheduler,
@@ -142,6 +143,11 @@ class Client(BaseClient):
         use_wandb: bool = False
         wandb_project: str = "MiniWorld"
 
+        # Selective freeze / re-init / load-existing policy. Disabled by
+        # default — the standard load_state_dict path is unchanged. See
+        # miniworld.training.param_policy for the schema.
+        param_policy: ParamPolicyConfig = ParamPolicyConfig()
+
     class LossConfig(BaseModel):
         """Configuration for loss weights."""
 
@@ -238,6 +244,49 @@ class Client(BaseClient):
                 lines.append(f"  ... and {len(incompatible_keys) - limit} more")
         lines.append("=" * 88)
         self.logger.warning("%s", "\n".join(lines))
+
+    def maybe_apply_param_policy(
+        self,
+        state_dict: dict[str, Any] | None,
+    ) -> dict[str, list[str]] | None:
+        """Apply ``self.config.train.param_policy`` to the model in-place.
+
+        If the policy is disabled, returns ``None`` and the caller should fall
+        back to the standard ``load_state_dict`` path. Otherwise:
+
+          * ``load_existing`` / ``freeze`` params receive their checkpoint
+            values (missing or shape-mismatched entries fall back to reinit
+            with a warning),
+          * ``reinit`` params are re-initialized via the project's init,
+          * frozen params get ``requires_grad = False``,
+          * ``epoch`` / ``global_step`` are restored from ``state_dict`` so
+            logical training position continues; optimizer state is NOT
+            touched (it's incompatible with the new trainable subset).
+
+        Caller MUST build the optimizer over
+        :func:`miniworld.training.trainable_parameters` after this so frozen
+        params are excluded from optimizer state.
+        """
+        policy = self.config.train.param_policy
+        if not policy.enabled:
+            return None
+
+        # Imported lazily to keep param_policy optional at import time.
+        from miniworld.training import apply_param_policy, format_summary
+
+        ckpt_model_sd = (
+            state_dict.get("model_state_dict") if state_dict is not None else None
+        )
+        summary = apply_param_policy(
+            self.model, ckpt_model_sd, policy, log=self.logger,
+        )
+        self.logger.info("Param policy applied:\n%s", format_summary(summary))
+
+        if state_dict is not None:
+            self._epoch = state_dict.get("epoch", 0)
+            self._global_step = state_dict.get("global_step", 0)
+
+        return summary
 
     def load_state_dict(
         self,

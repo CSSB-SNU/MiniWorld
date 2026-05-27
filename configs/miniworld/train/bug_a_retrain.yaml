@@ -1,0 +1,69 @@
+comment: "miniworld bug A retrain - reinit pair-cond gather path, fine-tune rest"
+run_dir: "logs/miniworld bug-a-retrain/"
+
+# Training arguments — mirrors v2.2.4 with a smaller LR for fine-tuning.
+num_batch: 1
+num_epoch: 300
+max_lr: 3e-4
+min_lr: 1e-5
+warmup_steps: 200
+decay_steps: 1e4
+self_condition: False
+compile: True
+num_augment: 32
+train_item: 25600
+valid_item: 640
+
+save_freq: 5
+eval_freq: 20000
+eval_sample_num: 1
+eval_input_num: 50
+eval_timesteps: 100
+grad_clip_max_norm: 1.0
+grad_accum_steps: 16
+optimizer: "Adam"
+
+num_workers: 4
+prefetch_factor: 2
+use_ema: True
+ema_decay: 0.999
+bce_pos_weight: 2.0
+long_range_sigmoid_amp: 3.0
+
+bucket_msa_multiple: 128
+bucket_token_multiple: 128
+bucket_atom_multiple: 1024
+
+verbose: False
+use_wandb: True
+wandb_project: "MiniWorld"
+
+# ---------------------------------------------------------------------------
+# Param policy: reinit the layers whose semantics changed with the Bug A fix
+# (pair-cond gather is now genuinely 2D, not collapsed), and keep the rest
+# of the model warm-started from the pre-fix checkpoint.
+#
+# Patterns are prefix-glob: a pattern matches a parameter name iff
+#   name == pattern  OR  name.startswith(pattern + ".").
+# Naming a module covers every parameter beneath it.
+#
+# Conflicts (one param matched by patterns in two different categories)
+# raise at startup. Pattern that matches zero parameters also raises
+# (catches typos before training burns compute).
+# ---------------------------------------------------------------------------
+param_policy:
+  enabled: True
+  default: load_existing
+
+  # The pair-cond projection ``token_pair_to_atom_pair`` is the layer
+  # immediately upstream of the (formerly buggy) gather. Its outputs were
+  # consumed in a collapsed way during the original training, so the
+  # weight statistics don't reflect the new pair-wise gather semantics.
+  reinit:
+    - diffusion_module.atom_attention_encoder.token_pair_to_atom_pair
+
+  # Example: keep the trunk frozen during the early phase of the retrain
+  # so only the diffusion path adapts. Uncomment as needed.
+  # freeze:
+  #   - pairformer_blocks
+  #   - msa_module

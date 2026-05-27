@@ -39,6 +39,7 @@ from miniworld.configs import (
 from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.data.features.batch import Batch
 from miniworld.models.miniworld import Client, Model
+from miniworld.training import trainable_parameters
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
 torch.set_float32_matmul_precision("medium")
@@ -509,14 +510,27 @@ def train(  # noqa: PLR0912, PLR0915
                 config=config_dict,
             )
 
+    # Load the checkpoint (if any) BEFORE building the optimizer so that
+    # param_policy can selectively reinit / freeze layers and the optimizer
+    # only ever sees the trainable subset. When the policy is disabled this
+    # collapses to the original flow (load_state_dict after setup()).
+    state_dict = torch.load(ckpt, map_location="cpu") if ckpt else None
+    policy_summary = client.maybe_apply_param_policy(state_dict)
+
+    optim_params = (
+        trainable_parameters(client.model)
+        if policy_summary is not None
+        else client.model.parameters()
+    )
+
     if cfg.train.optimizer is None or cfg.train.optimizer == "AdamW":
         optimizer = torch.optim.AdamW(
-            client.model.parameters(),
+            optim_params,
             cfg.train.max_lr,
         )
     elif cfg.train.optimizer == "Adam":
         optimizer = torch.optim.Adam(
-            client.model.parameters(),
+            optim_params,
             cfg.train.max_lr,
             betas=(0.9, 0.95),
         )
@@ -538,8 +552,7 @@ def train(  # noqa: PLR0912, PLR0915
         gradient_clip_norm=cfg.train.grad_clip_max_norm,
     )
 
-    if ckpt:
-        state_dict = torch.load(ckpt, map_location="cpu")
+    if state_dict is not None and policy_summary is None:
         client.load_state_dict(state_dict, strict=ckpt_strict)
 
     _warmup_bucket_shapes(client, cfg)
