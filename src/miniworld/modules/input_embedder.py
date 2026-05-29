@@ -1,3 +1,5 @@
+import os
+
 import torch
 from einops import rearrange
 from jaxtyping import Bool, Float, Int
@@ -130,6 +132,44 @@ class InputAtomAttentionEncoder(nn.Module):
         atom_pair = atom_pair + self.mlp_atom_pair(atom_pair)
         return atom_single_rep, atom_single_cond, atom_pair
 
+    # Inference-time chunking constant. Splits the first L_atom axis so the
+    # broadcast add and the pair MLP each materialise only
+    # [B, _ATOM_CHUNK, L_atom, d] temporaries instead of the full
+    # [B, L_atom, L_atom, d] (which OOMs once L_atom is in the 14k+ range —
+    # H1340 hit this at L_atom=15819 trying to allocate 14.92 GiB).
+    _ATOM_CHUNK: int = 1024
+
+    @typecheck
+    def _before_atom_transformer_chunked(
+        self,
+        atom_single_init: Float[torch.Tensor, "B L_atom d_single_atom_init"],
+        atom_pair_init: Float[torch.Tensor, "B L_atom L_atom d_pair_atom_init"],
+    ) -> tuple[
+        Float[torch.Tensor, "B L_atom d_single_atom_rep"],
+        Float[torch.Tensor, "B L_atom d_single_atom_cond"],
+        Float[torch.Tensor, "B L_atom L_atom d_pair_atom"],
+    ]:
+        atom_single_cond = self.to_atom_single_cond(atom_single_init)
+        atom_single_rep = atom_single_cond
+        atom_pair = self.to_atom_pair(atom_pair_init)
+
+        left = self.atom_single_to_pair_left(atom_single_cond)
+        right = self.atom_single_to_pair_right(atom_single_cond)
+
+        atom_length = atom_pair.shape[1]
+        chunk = self._ATOM_CHUNK
+        for s in range(0, atom_length, chunk):
+            e = min(s + chunk, atom_length)
+            pair_slice = atom_pair[:, s:e]
+            pair_slice.add_(left[:, s:e].unsqueeze(2))
+            pair_slice.add_(right.unsqueeze(1))
+
+        for s in range(0, atom_length, chunk):
+            e = min(s + chunk, atom_length)
+            atom_pair[:, s:e].add_(self.mlp_atom_pair(atom_pair[:, s:e]))
+
+        return atom_single_rep, atom_single_cond, atom_pair
+
     @typecheck
     def _scatter_atom_to_token(
         self,
@@ -169,7 +209,23 @@ class InputAtomAttentionEncoder(nn.Module):
     ) -> Float[torch.Tensor, "B L_token d_single_token"]:
         """Forward pass."""
         atom_single_init, atom_pair_init = init_atom_features(reference)
-        if self.use_checkpoint:
+        # Inference chunking is opt-in via env var, mirroring diffusion_module.
+        # Same parity guarantee — the chunked path is bit-exact with the
+        # canonical (see tests/test_input_embedder_chunked.py). Enabled when
+        # the canonical's [B, L_atom, L_atom, d] broadcast OOMs (~14k+ atoms).
+        use_chunked_inference = (
+            not self.training
+            and os.environ.get("MINIWORLD_INFERENCE_CHUNK_ATTN", "0") == "1"
+        )
+        if use_chunked_inference:
+            atom_single_rep, atom_single_cond, atom_pair = (
+                self._before_atom_transformer_chunked(
+                    atom_single_init,
+                    atom_pair_init,
+                )
+            )
+            del atom_single_init, atom_pair_init
+        elif self.use_checkpoint:
             atom_single_rep, atom_single_cond, atom_pair = checkpoint(
                 self._before_atom_transformer,
                 atom_single_init,

@@ -587,7 +587,7 @@ class InferenceConfig(BaseModel):
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     required=True,
     help="YAML describing target-bound input data (fasta / a3m / template / "
-         "contacts / combine_groups / ...).",
+         "contacts / diffusion_groups / ...).",
 )
 @click.option(
     "--sampling",
@@ -689,14 +689,14 @@ def inference(  # noqa: PLR0915
 
     # ``combine_all=True`` zeroes out atom_to_combine in the solver
     # (decoupled_xpred/solver.py:232). When set together with
-    # ``spec.combine_groups``, the explicit grouping is silently ignored —
+    # ``spec.diffusion_groups``, the explicit grouping is silently ignored —
     # but empirically this preserves the trained model's behaviour, while
     # forcing combine_all=False has been observed to collapse the backbone
     # (CA–CA ≈ 3.0 Å instead of 3.8 Å). Warn the user about the conflict
     # but do **not** auto-override here.
-    if cfg.infer.combine_all and spec.combine_groups:
+    if cfg.infer.combine_all and spec.diffusion_groups:
         client.logger.warning(
-            "spec.combine_groups is set but cfg.infer.combine_all=true: "
+            "spec.diffusion_groups is set but cfg.infer.combine_all=true: "
             "the solver will zero atom_to_combine, so the explicit groups "
             "have no effect on per-frame SE(3). Set infer.combine_all=false "
             "to honor them, but be aware the current checkpoint may not "
