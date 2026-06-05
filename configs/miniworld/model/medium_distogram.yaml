@@ -31,8 +31,6 @@ trunk:
 
     d_single: ${...shared.d_single}
     d_pair: ${...shared.d_pair}
-    d_hidden_tri_multi: 128
-    d_hidden_tri_attention: 32
     n_head_tri_attention: 4
     n_head_attention: 16
     p_drop: 0.25

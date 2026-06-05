@@ -20,7 +20,6 @@ crop:
   bucket_atom_size: 1024
 
 msa:
-  n_samples: 1
   max_msa_depth: 384
   missing_policy: "gap"
 
@@ -30,20 +29,16 @@ tokenizer:
   level: "atom"
 
 sampler:
-  antibody_antibody: 0.1
-  antibody_nucleic_acid: 20.0
-  antibody_protein: 3.0
-
-  DNA_DNA: 0.25
-  DNA_RNA: 5.0
-  RNA_RNA: 0.5
-  NA_NA: 10.0
-
-  protein_nucleic_acid: 0.5
-  protein_protein: 1.0
-  protein_ligand: 0.1
-
-  ligand_ligand: 0.01
-
-  etc_interface: 0.05
-  sole: 0.5
+  protein_protein: 25.0
+  protein_ligand: 25
+  protein_dna: 10
+  protein_rna: 10
+  antibody_protein: 15
+  dna_dna: 5
+  rna_rna: 5
+  dna_rna: 0.5
+  antibody_antibody: 0.5
+  antibody_ligand: 1.0
+  na_ligand: 1.0
+  etc_interface: 1.0
+  sole: 1.0
