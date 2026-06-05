@@ -272,23 +272,27 @@ class InputFeatureEmbedder(nn.Module):
         self,
         shared_config: SharedConfig,
         diffusion_config: DiffusionTransformer.Config,
+        *,
+        produce_single_init: bool = True,
     ) -> None:
         super().__init__()
         self.num_res_class = shared_config.num_res_class
         self.use_checkpoint = shared_config.use_checkpoint
         self.d_pair = shared_config.d_pair
+        self.produce_single_init = produce_single_init
         self.atom_attention_encoder = InputAtomAttentionEncoder(
             shared_config=shared_config,
             diffusion_config=diffusion_config,
         )
         d_init = shared_config.d_single_token_input
 
-        self.to_token_init = Linear(
-            d_init,
-            shared_config.d_single,
-            init="default",
-            bias=False,
-        )
+        if produce_single_init:
+            self.to_token_init = Linear(
+                d_init,
+                shared_config.d_single,
+                init="default",
+                bias=False,
+            )
         self.to_token_pair_left = Linear(
             d_init,
             shared_config.d_pair,
@@ -361,7 +365,7 @@ class InputFeatureEmbedder(nn.Module):
         structure: StructureFeatures,
     ) -> tuple[
         Float[torch.Tensor, "B L_token d_single_token_input"],
-        Float[torch.Tensor, "B L_token d_single_token_init"],
+        Float[torch.Tensor, "B L_token d_single_token_init"] | None,
         Float[torch.Tensor, "B L_token L_token d_pair"],
     ]:
         """Forward pass."""
@@ -375,7 +379,9 @@ class InputFeatureEmbedder(nn.Module):
             dim=-1,
         )
 
-        token_single_init = self.to_token_init(token_single_input)
+        token_single_init = (
+            self.to_token_init(token_single_input) if self.produce_single_init else None
+        )
         token_left = self.to_token_pair_left(token_single_input)
         token_right = self.to_token_pair_right(token_single_input)
         token_pair_init = rearrange(token_left, "b l d -> b l 1 d") + rearrange(

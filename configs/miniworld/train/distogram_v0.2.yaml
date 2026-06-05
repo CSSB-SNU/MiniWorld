@@ -1,0 +1,42 @@
+comment: "distogram-only v0.2: large model, 16 GPU (2 node), eff. batch 256"
+run_dir: "logs/distogram_only v0.2/"
+
+# Retrain of the distogram-only trunk from scratch on 16 GPUs (2 nodes x 8).
+# Effective batch is held at 256 (same as v0.1) so the lr/schedule carry over
+# unchanged; only the GPU count and grad accumulation change:
+#   v0.1:  1 x 32 x  8 = 256   (8 GPU)
+#   v0.2:  1 x 16 x 16 = 256   (16 GPU)  <- this config
+# Halving grad_accum (32 -> 16) keeps the same effective batch while using the
+# extra node for ~2x throughput per optimizer step.
+
+# Training arguments
+num_batch: 1
+num_epoch: 1000
+max_lr: 1.8e-3
+min_lr: 1e-4
+warmup_steps: 1000
+decay_steps: 5e4
+compile: True
+train_item: 25600
+valid_item: 640
+
+# Effective batch size = num_batch * grad_accum_steps * world_size
+#                     = 1 * 16 * 16 = 256
+grad_accum_steps: 16
+save_freq: 5
+eval_freq: 20000
+grad_clip_max_norm: 1.0
+optimizer: "Adam"
+
+num_workers: 4
+prefetch_factor: 4
+use_ema: True
+ema_decay: 0.999
+
+bucket_msa_multiple: 128
+bucket_token_multiple: 128
+bucket_atom_multiple: 1024
+
+verbose: False
+use_wandb: True
+wandb_project: "MiniWorld"

@@ -1,0 +1,20 @@
+distogram-only v0.2 retrain from scratch — large model, 16 GPU (2 node x 8), eff. batch 256 (grad_accum 16). NODE 1 (rank 1).
+
+unset NCCL_DEBUG
+export TRITON_CACHE_DIR=$HOME/.triton
+export TORCHINDUCTOR_CACHE_DIR=$HOME/.torchinductor
+export TMPDIR=$HOME/tmp
+export OMP_NUM_THREADS=2
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
+# --master_addr / --master_port MUST match node0.txt exactly.
+torchrun \
+  --nnodes=2 \
+  --node_rank=1 \
+  --nproc_per_node=8 \
+  --master_addr=100.134.25.43 \
+  --master_port=22351 \
+  scripts/run_miniworld_distogram_train.py train \
+  --config configs/miniworld/config_distogram.yaml train=distogram_v0.2 model=large_distogram \
+  > logs/distogram_v0.2_node1.out 2> logs/distogram_v0.2_node1.err
