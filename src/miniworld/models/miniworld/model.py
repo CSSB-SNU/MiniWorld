@@ -53,6 +53,11 @@ class Model(nn.Module):
         msa_module: MSAModule.Config
         template_embedder: TemplatePairformer.Config
         n_recycle_max: int = 4
+        # Trunk pair-feature toggles. Default on (backward compatible). Set
+        # both False for an MSA-only trunk (e.g. when fine-tuning on a
+        # distogram trunk that was trained without template/contact).
+        use_template: bool = True
+        use_contact: bool = True
 
     class DiffusionConfig(BaseModel):
         """Configuration for diffusion module."""
@@ -107,17 +112,21 @@ class Model(nn.Module):
         )
 
         # Trunk forward
-        self.proj_contact = Linear(
-            config.shared.d_contact,
-            config.shared.d_pair,
-            bias=False,
-            init="zero",
-        ).to(torch.bfloat16)
+        self.use_contact = config.trunk.use_contact
+        self.use_template = config.trunk.use_template
+        if self.use_contact:
+            self.proj_contact = Linear(
+                config.shared.d_contact,
+                config.shared.d_pair,
+                bias=False,
+                init="zero",
+            ).to(torch.bfloat16)
         self.msa_module = MSAModule(config.trunk.msa_module).to(torch.bfloat16)
-        self.temp_embedder = TemplateEmbedder(
-            config.shared,
-            config.trunk.template_embedder,
-        ).to(torch.bfloat16)
+        if self.use_template:
+            self.temp_embedder = TemplateEmbedder(
+                config.shared,
+                config.trunk.template_embedder,
+            ).to(torch.bfloat16)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer).to(torch.bfloat16)
         self.distogram_head = DistogramHead(
             config.shared.d_pair,
@@ -186,13 +195,15 @@ class Model(nn.Module):
             num_res_class=self.config.shared.num_res_class,
             dtype=torch.bfloat16,
         )
-        contact_feat = init_contact_feat(structure, dtype=torch.bfloat16)
-        template_feat = init_template_feat(template, dtype=torch.bfloat16)
-        template_feat = apply_template_dropout(
-            template_feat,
-            self.config.trunk.template_embedder.dropout_prob,
-            dtype=torch.bfloat16,
-        )
+        if self.use_contact:
+            contact_feat = init_contact_feat(structure, dtype=torch.bfloat16)
+        if self.use_template:
+            template_feat = init_template_feat(template, dtype=torch.bfloat16)
+            template_feat = apply_template_dropout(
+                template_feat,
+                self.config.trunk.template_embedder.dropout_prob,
+                dtype=torch.bfloat16,
+            )
         for i_cycle in range(n_recycle):
             with ExitStack() as stack:
                 if i_cycle < n_recycle - 1:
@@ -200,8 +211,10 @@ class Model(nn.Module):
                 token_pair = token_pair_init_bf16 + self.add_pair_recycle(
                     token_pair,
                 )
-                token_pair = token_pair + self.proj_contact(contact_feat)
-                token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
+                if self.use_contact:
+                    token_pair = token_pair + self.proj_contact(contact_feat)
+                if self.use_template:
+                    token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
 
                 token_pair = token_pair + self.msa_module(
                     msa_feat,
