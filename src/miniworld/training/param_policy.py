@@ -19,6 +19,15 @@ matching pattern fall back to ``default`` (``load_existing`` by default).
 Parameters in ``load_existing`` whose checkpoint entry is missing or
 shape-mismatched fall back to ``reinit`` and emit a warning.
 
+The ``default`` may also be set to ``freeze_loaded``: every parameter that
+is present in the checkpoint (with a matching shape) is loaded and
+**frozen**, while every parameter missing from the checkpoint is
+re-initialized and left **trainable**. This is the natural policy when
+attaching a new head/module to a frozen pre-trained trunk — the loaded
+trunk weights freeze, the brand-new parameters train — without having to
+enumerate module names. Explicit ``freeze``/``reinit``/``load_existing``
+patterns still take precedence over the ``freeze_loaded`` default.
+
 Apply the policy between model construction and optimizer construction,
 then build the optimizer over :func:`trainable_parameters` so frozen
 weights are excluded from the optimizer state entirely.
@@ -37,6 +46,9 @@ from torch import nn
 logger = logging.getLogger(__name__)
 
 ActionKey = Literal["freeze", "reinit", "load_existing"]
+# The ``default`` may additionally request ``freeze_loaded`` (resolved
+# per-parameter against the checkpoint inside :func:`apply_param_policy`).
+DefaultKey = Literal["freeze", "reinit", "load_existing", "freeze_loaded"]
 
 
 class ParamPolicyConfig(BaseModel):
@@ -50,7 +62,7 @@ class ParamPolicyConfig(BaseModel):
     freeze: list[str] = Field(default_factory=list)
     reinit: list[str] = Field(default_factory=list)
     load_existing: list[str] = Field(default_factory=list)
-    default: ActionKey = "load_existing"
+    default: DefaultKey = "load_existing"
 
 
 class ParamPolicyConfigError(ValueError):
@@ -69,7 +81,7 @@ def _matches(name: str, pattern: str) -> bool:
     return name == pattern or name.startswith(pattern + ".")
 
 
-def _classify_one(name: str, policy: ParamPolicyConfig) -> ActionKey:
+def _classify_one(name: str, policy: ParamPolicyConfig) -> DefaultKey:
     matched: list[ActionKey] = []
     if any(_matches(name, p) for p in policy.freeze):
         matched.append("freeze")
@@ -93,8 +105,14 @@ def _classify_one(name: str, policy: ParamPolicyConfig) -> ActionKey:
 def classify_params(
     model: nn.Module,
     policy: ParamPolicyConfig,
-) -> dict[str, ActionKey]:
-    """Return ``{param_name: action}`` for every parameter in ``model``."""
+) -> dict[str, DefaultKey]:
+    """Return ``{param_name: action}`` for every parameter in ``model``.
+
+    The action is an explicit ``freeze``/``reinit``/``load_existing`` when a
+    pattern matches, otherwise ``policy.default`` (which may be the
+    checkpoint-dependent ``freeze_loaded`` — resolved in
+    :func:`apply_param_policy`).
+    """
     return {name: _classify_one(name, policy) for name, _ in model.named_parameters()}
 
 
@@ -214,12 +232,37 @@ def apply_param_policy(
     summary: dict[str, list[str]] = {"loaded": [], "reinit": [], "frozen": []}
     reinit_targets: list[str] = []
     to_load: dict[str, torch.Tensor] = {}
+    # Params that must end up frozen (filled as we resolve actions below).
+    freeze_targets: set[str] = set()
+
+    def _ckpt_loadable(name: str, param: torch.Tensor) -> bool:
+        ckpt_value = ckpt.get(name)
+        return ckpt_value is not None and ckpt_value.shape == param.shape
 
     for name, action in classifications.items():
         param = named_params[name]
         ckpt_value = ckpt.get(name)
 
+        # ``freeze_loaded`` resolves per-parameter against the checkpoint:
+        # present (loadable) -> behave as ``freeze``; missing/mismatched ->
+        # reinit and keep trainable. This differs from a plain ``freeze``
+        # miss (which reinits *and freezes*).
+        if action == "freeze_loaded":
+            if _ckpt_loadable(name, param):
+                action = "freeze"
+            else:
+                log.info(
+                    "param %r (freeze_loaded) absent/mismatched in checkpoint; "
+                    "re-initializing and leaving trainable",
+                    name,
+                )
+                reinit_targets.append(name)
+                summary["reinit"].append(name)
+                continue
+
         if action in ("load_existing", "freeze"):
+            if action == "freeze":
+                freeze_targets.add(name)
             if ckpt_value is None:
                 log.warning(
                     "param %r assigned %s but missing from checkpoint; "
@@ -254,8 +297,7 @@ def apply_param_policy(
 
     # Apply requires_grad LAST so freezes survive any earlier in-place writes
     for name, p in model.named_parameters():
-        action = classifications[name]
-        if action == "freeze":
+        if name in freeze_targets:
             p.requires_grad_(False)
             summary["frozen"].append(name)
         else:

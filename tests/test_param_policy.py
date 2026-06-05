@@ -279,6 +279,69 @@ class TestApply:
 
 
 # ---------------------------------------------------------------------------
+# freeze_loaded default: freeze what is in the checkpoint, train what is new
+# ---------------------------------------------------------------------------
+
+
+class TestFreezeLoaded:
+    def test_present_frozen_missing_trained(self) -> None:
+        model = _make_test_model()
+        # Checkpoint contains every param EXCEPT the head — emulating a new
+        # head attached to a pre-trained trunk.
+        ckpt = {
+            n: torch.full_like(p, 42.0)
+            for n, p in model.named_parameters()
+            if not n.startswith("head.")
+        }
+        policy = ParamPolicyConfig(enabled=True, default="freeze_loaded")
+        summary = apply_param_policy(model, ckpt, policy)
+
+        # Present trunk params: loaded (==42) AND frozen.
+        assert not model.encoder.ln.weight.requires_grad
+        assert torch.allclose(
+            model.encoder.ln.weight, torch.full_like(model.encoder.ln.weight, 42.0),
+        )
+        # Missing head params: reinit'd (!=42) AND trainable.
+        assert model.head.linear.weight.requires_grad
+        assert not torch.allclose(
+            model.head.linear.weight, torch.full_like(model.head.linear.weight, 42.0),
+        )
+
+        n_trunk = sum(
+            1 for n, _ in model.named_parameters() if not n.startswith("head.")
+        )
+        n_head = sum(1 for n, _ in model.named_parameters() if n.startswith("head."))
+        assert len(summary["frozen"]) == n_trunk
+        # Every head param is re-initialized (and none is frozen).
+        assert all(n.startswith("head.") or n in summary["frozen"] for n in summary["reinit"])
+        assert not any(n.startswith("head.") for n in summary["frozen"])
+
+    def test_missing_freeze_loaded_is_trainable_unlike_plain_freeze(self) -> None:
+        # A plain ``freeze`` miss reinits AND freezes; ``freeze_loaded`` miss
+        # reinits and stays trainable. Guard the distinction.
+        model = _make_test_model()
+        policy = ParamPolicyConfig(enabled=True, default="freeze_loaded")
+        apply_param_policy(model, {}, policy)  # empty ckpt → everything missing
+        assert all(p.requires_grad for p in model.parameters())
+
+    def test_explicit_pattern_overrides_freeze_loaded_default(self) -> None:
+        model = _make_test_model()
+        ckpt = {n: torch.full_like(p, 42.0) for n, p in model.named_parameters()}
+        # Even though head is present in ckpt (freeze_loaded would freeze it),
+        # an explicit reinit pattern wins → reinit'd and trainable.
+        policy = ParamPolicyConfig(
+            enabled=True, default="freeze_loaded", reinit=["head.linear"],
+        )
+        apply_param_policy(model, ckpt, policy)
+        assert model.head.linear.weight.requires_grad
+        assert not torch.allclose(
+            model.head.linear.weight, torch.full_like(model.head.linear.weight, 42.0),
+        )
+        # A non-overridden present param is still frozen.
+        assert not model.encoder.ln.weight.requires_grad
+
+
+# ---------------------------------------------------------------------------
 # trainable_parameters
 # ---------------------------------------------------------------------------
 
