@@ -309,7 +309,12 @@ def init_contact_feat(
     return contact_feat.to(dtype=dtype)
 
 
-@torch.inference_mode()
+# NOTE: ``no_grad`` (not ``inference_mode``) — the returned feature is consumed
+# by the trainable template embedder, which must be able to save it for
+# backward. ``inference_mode`` tensors cannot be saved for autograd, which
+# breaks training whenever the template embedder is unfrozen. Mirrors
+# ``init_template_feat`` above.
+@torch.no_grad()
 def apply_template_dropout(
     contact_feat: Float[torch.Tensor, "B L L 4"],
     prob: float = 0.0,
