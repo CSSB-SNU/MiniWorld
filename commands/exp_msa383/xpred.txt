@@ -15,7 +15,7 @@ torchrun \
   --nproc_per_node=8 \
   --master_port=22311 \
   scripts/run_miniworld_only_train.py train \
-  --ckpt "epoch=0430.pt" \
+  --ckpt "/NHNHOME/WORKSPACE/0226010152_A/checkpoints/miniworld/exp/distogram_only/epoch=0430.pt" \
   --no-ckpt-strict \
   --config configs/miniworld/config_exp_msa383_xpred.yaml \
   --job-name exp-msa383-xpred \
