@@ -1,0 +1,22 @@
+exp msa383 — AF3-like EDM diffusion on the frozen distogram trunk (epoch=0430), MSA-only, 3/8/3 diffusion module, freeze trunk
+Independent single-node job (run xpred variant on the other node; NOT 2-node DDP).
+
+unset NCCL_DEBUG
+export TRITON_CACHE_DIR=$HOME/.triton
+export TORCHINDUCTOR_CACHE_DIR=$HOME/.torchinductor
+export TMPDIR=$HOME/tmp
+export OMP_NUM_THREADS=2
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
+# --ckpt: distogram-only trunk. Point at the cluster copy when running there.
+torchrun \
+  --nnodes=1 \
+  --nproc_per_node=8 \
+  --master_port=22312 \
+  scripts/run_miniworld_edm_only_train.py train \
+  --ckpt "epoch=0430.pt" \
+  --no-ckpt-strict \
+  --config configs/miniworld/config_exp_msa383_edm.yaml \
+  --job-name exp-msa383-edm \
+  > logs/exp_msa383_edm.out 2> logs/exp_msa383_edm.err
