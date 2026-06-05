@@ -1,0 +1,57 @@
+comment: "exp: only-msa, diff 3/8/3, freeze trunk (epoch=0430)"
+run_dir: "logs/exp/msa383/"
+
+# Experiment: attach a fresh 3/8/3 diffusion module on top of the FROZEN
+# distogram-only trunk (epoch=0430.pt, MSA-only, no template/contact) and
+# train it. Two variants share this config and differ only by the diffuser
+# (xpred-decoupled vs EDM) — see config_exp_msa383_{xpred,edm}.yaml.
+#
+# param_policy.default=freeze_loaded: every parameter present in the
+# checkpoint (the validated trunk) is loaded + FROZEN; every missing one
+# (to_token_init, pairformer single-track, add_single_recycle, diffusion
+# module) is re-initialized + TRAINED. The diffusion module is from-scratch,
+# so the LR schedule warms up fresh (param_policy does NOT load optimizer/
+# scheduler state). epoch/global_step resume from the checkpoint (430/43000)
+# for logging continuity; num_epoch is an absolute counter (set above 430).
+#
+# Effective batch = num_batch(1) x 8 GPU x grad_accum(32) = 256.
+
+num_batch: 1
+num_epoch: 1400
+max_lr: 1.8e-3
+min_lr: 1e-4
+warmup_steps: 1000
+decay_steps: 5e4
+self_condition: False
+compile: True
+num_augment: 48
+train_item: 25600
+valid_item: 640
+
+save_freq: 5
+eval_freq: 20000
+eval_sample_num: 1
+eval_input_num: 50
+eval_timesteps: 100
+grad_clip_max_norm: 1.0
+grad_accum_steps: 32
+optimizer: "Adam"
+
+num_workers: 4
+prefetch_factor: 2
+use_ema: True
+ema_decay: 0.999
+bce_pos_weight: 2.0
+long_range_sigmoid_amp: 3.0
+
+bucket_msa_multiple: 128
+bucket_token_multiple: 128
+bucket_atom_multiple: 1024
+
+verbose: False
+use_wandb: True
+wandb_project: "MiniWorld"
+
+param_policy:
+  enabled: True
+  default: freeze_loaded

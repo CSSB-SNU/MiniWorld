@@ -174,23 +174,19 @@ def build_inference_cache(
         atom_single_cond + _to_add_single[batch_1d_idx, atom_to_token_idx_map]
     )
 
-    # Canonical pair gather collapses to the per-(b, j) column-atom token id
-    # (see the long comment in diffusion_module._before_atom_transformer_chunked
-    # for why) — gather as [B, L_atom, d_pair_atom] and broadcast over rows.
-    b_arange = torch.arange(batch_size, device=device)
-    diag_gather = _to_add_pair[
-        b_arange.unsqueeze(1),
-        atom_to_token_idx_map,
-        atom_to_token_idx_map,
-    ]
+    # Pair-cond gather: out[b, i, j] = _to_add_pair[b, A[b, i], A[b, j]].
+    # Row/col indices orthogonalized via unsqueeze so they broadcast onto
+    # distinct axes. Materialized lazily — the chunked branch below gathers
+    # one row-chunk at a time so the temporary is [B, chunk, L_atom, d].
+    b_arange = torch.arange(batch_size, device=device).view(batch_size, 1, 1)
+    col_tokens = atom_to_token_idx_map.unsqueeze(-2)  # [B, 1, L_atom]
     _left = enc.atom_single_to_pair_left(atom_single_cond)
     _right = enc.atom_single_to_pair_right(atom_single_cond)
 
     # Inference chunking: same env gate as the other _before_atom_transformer
-    # paths. Without chunking, the broadcast add + mlp materialise
-    # [B, L_atom, L_atom, d] temporaries (~13 GiB at L_atom=14k for H1335),
-    # which OOMs cache prep before inference even starts. Bit-exact since
-    # both ops are point-wise.
+    # paths. Without chunking, the pair gather + broadcast adds + mlp
+    # materialise [B, L_atom, L_atom, d] temporaries (~13 GiB at L_atom=14k
+    # for H1335), which OOMs cache prep before inference even starts.
     use_chunked_inference = (
         os.environ.get("MINIWORLD_INFERENCE_CHUNK_ATTN", "0") == "1"
     )
@@ -214,7 +210,7 @@ def build_inference_cache(
     # Dump path mirrors the exact ``add_`` sequence on atom_pair so each
     # captured stage is the cumulative state after one specific addition:
     #   0_init        : atom_pair = to_atom_pair(atom_pair_init)
-    #   1_token_cond  : + diag_gather  (token_pair_cond gathered to atom pos)
+    #   1_token_cond  : + _to_add_pair[b, A[b,i], A[b,j]]  (pair-cond gather)
     #   2_left        : + _left.unsqueeze(2)   (row-broadcast atom-single)
     #   3_right       : + _right.unsqueeze(1)  (col-broadcast atom-single)
     #   4_mlp         : + mlp_atom_pair(atom_pair)  (residual)
@@ -224,7 +220,10 @@ def build_inference_cache(
         if dump:
             for s in range(0, atom_length, _ATOM_CHUNK):
                 e = min(s + _ATOM_CHUNK, atom_length)
-                atom_pair[:, s:e].add_(diag_gather.unsqueeze(1))
+                row_tokens = atom_to_token_idx_map[:, s:e].unsqueeze(-1)
+                atom_pair[:, s:e].add_(
+                    _to_add_pair[b_arange, row_tokens, col_tokens]
+                )
             snap_pools["1_token_cond"] = _pool_atom_pair_to_token(
                 atom_pair, atom_to_token_idx_map, L_token_for_pool,
             )
@@ -243,16 +242,25 @@ def build_inference_cache(
         else:
             for s in range(0, atom_length, _ATOM_CHUNK):
                 e = min(s + _ATOM_CHUNK, atom_length)
+                row_tokens = atom_to_token_idx_map[:, s:e].unsqueeze(-1)
                 pair_slice = atom_pair[:, s:e]
-                pair_slice.add_(diag_gather.unsqueeze(1))
+                pair_slice.add_(
+                    _to_add_pair[b_arange, row_tokens, col_tokens]
+                )
                 pair_slice.add_(_left[:, s:e].unsqueeze(2))
                 pair_slice.add_(_right.unsqueeze(1))
         for s in range(0, atom_length, _ATOM_CHUNK):
             e = min(s + _ATOM_CHUNK, atom_length)
             atom_pair[:, s:e].add_(enc.mlp_atom_pair(atom_pair[:, s:e]))
     else:
+        # Non-chunked: full pair gather is [B, L_atom, L_atom, d] — same
+        # size as ``atom_pair`` itself, so peak doubles momentarily. Only
+        # safe for small L_atom; set MINIWORLD_INFERENCE_CHUNK_ATTN=1 for
+        # production-scale inputs.
+        row_tokens_full = atom_to_token_idx_map.unsqueeze(-1)  # [B, L_atom, 1]
+        pair_cond = _to_add_pair[b_arange, row_tokens_full, col_tokens]
         if dump:
-            atom_pair = atom_pair + diag_gather.unsqueeze(1)
+            atom_pair = atom_pair + pair_cond
             snap_pools["1_token_cond"] = _pool_atom_pair_to_token(
                 atom_pair, atom_to_token_idx_map, L_token_for_pool,
             )
@@ -265,7 +273,7 @@ def build_inference_cache(
                 atom_pair, atom_to_token_idx_map, L_token_for_pool,
             )
         else:
-            atom_pair = atom_pair + diag_gather.unsqueeze(1) + _left.unsqueeze(2) + _right.unsqueeze(1)
+            atom_pair = atom_pair + pair_cond + _left.unsqueeze(2) + _right.unsqueeze(1)
         atom_pair = atom_pair + enc.mlp_atom_pair(atom_pair)
 
     if dump:

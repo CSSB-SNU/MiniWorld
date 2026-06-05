@@ -1,9 +1,13 @@
-"""Training script for MiniWorld (VE x-prediction, decoupled R/T).
+"""Training script for MiniWorld (plain AF3-like EDM diffusion).
+
+Same harness as ``run_miniworld_only_train.py`` (param-policy, bucket warmup),
+but drives the ``miniworld_edm`` client + ``EuclideanDiffuser`` / ``AF3Solver``
+instead of the decoupled VE x-prediction diffuser.
 
 Usage:
-    torchrun --nproc_per_node=1 scripts/run_miniworld_only_train.py train \
-        --config configs/miniworld/config.yaml \
-        data=overfitting train=overfitting model=small diffuser=xpred_decoupled
+    torchrun --nproc_per_node=1 scripts/run_miniworld_edm_only_train.py train \
+        --config configs/miniworld/config_edm.yaml \
+        data=overfitting train=overfitting model=small diffuser=edm
 """
 
 from __future__ import annotations
@@ -34,11 +38,11 @@ from miniworld.configs import (
     SamplerConfig,
     TemplateConfig,
     TokenizerConfig,
-    XPredDecoupledDiffuserConfig,
+    EDMDiffuserConfig,
 )
 from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.data.features.batch import Batch
-from miniworld.models.miniworld import Client, Model
+from miniworld.models.miniworld_edm import Client, Model
 from miniworld.training import trainable_parameters
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
@@ -62,7 +66,7 @@ class Config(BaseModel):
     data: DataConfig
     train: Client.TrainConfig
     model: Model.Config
-    diffuser: XPredDecoupledDiffuserConfig
+    diffuser: EDMDiffuserConfig
     loss: Client.LossConfig
 
 

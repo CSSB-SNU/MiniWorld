@@ -330,13 +330,20 @@ class InputFeatureEmbedder(nn.Module):
         )
         # remove diagonal bonds if exist
         mask = token_bond_i != token_bond_j
+        # Expand batch_idx to (B, n_bond) BEFORE masking so the per-bond batch
+        # identity survives the flatten. Without this, batch_idx stays (B, 1)
+        # and broadcasts every surviving bond into every batch row.
+        batch_idx = (
+            torch.arange(batch_size, device=device)[:, None]
+            .expand_as(token_bond_i)
+        )
+        batch_idx = batch_idx[mask]
         token_bond_i = token_bond_i[mask]
         token_bond_j = token_bond_j[mask]
         token_bond_feature = torch.zeros(
             (batch_size, token_length, token_length),
             device=device,
         )
-        batch_idx = torch.arange(batch_size, device=device)[:, None]
 
         token_bond_feature[batch_idx, token_bond_i, token_bond_j] = 1
         token_bond_feature[batch_idx, token_bond_j, token_bond_i] = 1

@@ -264,18 +264,18 @@ class AtomAttentionEncoder(nn.Module):
         atom_single_cond = (
             atom_single_cond + _to_add_single[batch_1d_idx, atom_to_token_idx_map]
         )
-        batch_2d_idx = torch.arange(batch_size, device=device)
-        batch_2d_idx = batch_2d_idx.view(batch_size, 1, 1).expand(
-            -1,
-            atom_length,
-            atom_length,
-        )
+        # Pair-cond gather: out[b, i, j] = _to_add_pair[b, A[b, i], A[b, j]].
+        # Row/col index tensors must broadcast on orthogonal axes — passing
+        # the same [B, L_atom] tensor in both slots collapses to the column
+        # token's diagonal, so unsqueeze row to [B, L_atom, 1] and col to
+        # [B, 1, L_atom].
+        batch_2d_idx = torch.arange(batch_size, device=device).view(batch_size, 1, 1)
         atom_pair = (
             atom_pair
             + _to_add_pair[
                 batch_2d_idx,
-                atom_to_token_idx_map,
-                atom_to_token_idx_map,
+                atom_to_token_idx_map.unsqueeze(-1),
+                atom_to_token_idx_map.unsqueeze(-2),
             ]
         )
         snap_token_cond = atom_pair.detach() if snap_init is not None else None
@@ -356,33 +356,26 @@ class AtomAttentionEncoder(nn.Module):
         _left = self.atom_single_to_pair_left(atom_single_cond)
         _right = self.atom_single_to_pair_right(atom_single_cond)
 
-        # Reproduce the canonical gather pattern exactly. The canonical path
-        # writes
-        #     atom_pair += _to_add_pair[batch_2d_idx, A, A]
-        # where ``batch_2d_idx`` is [B, L_atom, L_atom] and ``A`` is
-        # [B, L_atom] passed twice. PyTorch broadcasts the index tensors
-        # together; both ``A`` references end up tracking the same broadcast
-        # position, so they collapse to the *column* atom's token id:
-        #     canonical[b, i, j] = _to_add_pair[b, A[b, j], A[b, j]]
-        # That's a per-(b, j) value — independent of i. Gather it once as a
-        # [B, L_atom, d] tensor and broadcast over the row dim; no
-        # [B, L_atom, L_atom, d] temporary anywhere.
-        b_arange = torch.arange(batch_size, device=device)
-        diag_gather = _to_add_pair[
-            b_arange.unsqueeze(1),
-            atom_to_token_idx_map,
-            atom_to_token_idx_map,
-        ]  # [B, L_atom, d_pair_atom]
+        # Pair-cond gather, per row-chunk to cap the temporary at
+        # [B, chunk, L_atom, d_pair_atom] instead of [B, L_atom, L_atom, d].
+        # Bit-exact with the canonical _before_atom_transformer pair gather:
+        # out[b, i, j] = _to_add_pair[b, A[b, i], A[b, j]] with row/col
+        # indices orthogonalized via unsqueeze(-1) / unsqueeze(-2).
+        b_arange = torch.arange(batch_size, device=device).view(batch_size, 1, 1)
+        col_tokens = atom_to_token_idx_map.unsqueeze(-2)  # [B, 1, L_atom]
 
         chunk = self._ATOM_CHUNK
         # First split steps 2 + 3 across two chunk loops *only when dumping*
         # so we can pool the after-token-cond and after-singles states
-        # independently. Default path (no env var) keeps the original
-        # single-loop schedule for max throughput.
+        # independently. Default path (no env var) keeps the single-loop
+        # schedule for max throughput.
         if dump:
             for s in range(0, atom_length, chunk):
                 e = min(s + chunk, atom_length)
-                atom_pair[:, s:e].add_(diag_gather.unsqueeze(1))
+                row_tokens = atom_to_token_idx_map[:, s:e].unsqueeze(-1)
+                atom_pair[:, s:e].add_(
+                    _to_add_pair[b_arange, row_tokens, col_tokens]
+                )
             snap_pools["2_after_token_cond"] = _pool_atom_pair_to_token(
                 atom_pair, atom_to_token_idx_map, L_token,
             )
@@ -396,8 +389,11 @@ class AtomAttentionEncoder(nn.Module):
         else:
             for s in range(0, atom_length, chunk):
                 e = min(s + chunk, atom_length)
+                row_tokens = atom_to_token_idx_map[:, s:e].unsqueeze(-1)
                 pair_slice = atom_pair[:, s:e]
-                pair_slice.add_(diag_gather.unsqueeze(1))
+                pair_slice.add_(
+                    _to_add_pair[b_arange, row_tokens, col_tokens]
+                )
                 pair_slice.add_(_left[:, s:e].unsqueeze(2))
                 pair_slice.add_(_right.unsqueeze(1))
 

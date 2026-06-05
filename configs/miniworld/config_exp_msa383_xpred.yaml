@@ -1,0 +1,17 @@
+# Experiment msa383 — x0-pred decoupled diffuser.
+# Run: scripts/run_miniworld_only_train.py
+#   torchrun --nnodes=1 --nproc_per_node=8 scripts/run_miniworld_only_train.py train \
+#     --ckpt epoch=0430.pt --no-ckpt-strict \
+#     --config configs/miniworld/config_exp_msa383_xpred.yaml \
+#     --job-name exp-msa383-xpred
+defaults:
+  - model: large_msa383
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384
+  - diffuser: xpred_decoupled
+  - loss: wo_smoothlddt
+  - _self_
+
+train:
+  comment: "exp msa383: only-msa, diff 3/8/3, freeze trunk, xpred-decoupled"
+  run_dir: "logs/exp/msa383-xpred/"

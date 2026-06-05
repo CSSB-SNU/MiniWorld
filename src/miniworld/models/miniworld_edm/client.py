@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 import torch
-from jaxtyping import Bool, Float, Int
+from jaxtyping import Bool, Float
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
 from team_gm import BaseClient, typecheck
@@ -14,19 +14,19 @@ from team_gm.core.client import _SetEpochProtocol
 from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
-from miniworld.configs import XPredDecoupledDiffuserConfig
+from miniworld.configs import EDMDiffuserConfig
 from miniworld.training import ParamPolicyConfig
 from miniworld.data.features.batch import Batch
 from miniworld.diffusion import (
-    DecoupledXPredScheduler,
-    XPredDecoupledDiffuser,
-    XPredDecoupledSolver,
+    AF3Solver,
+    EDMScheduler,
+    EuclideanDiffuser,
 )
 from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
 )
-from miniworld.models.miniworld.model import (
+from miniworld.models.miniworld_edm.model import (
     InferenceOutput,
     Model,
     ModelWrapper,
@@ -95,7 +95,14 @@ def cal_smooth_lddt(
 
 
 class Client(BaseClient):
-    """Client for training and inference of MiniWorld (VE x-prediction)."""
+    """Client for training and inference of MiniWorld (EDM / AF3-like diffusion).
+
+    Same trunk + diffusion-module backbone as
+    :class:`miniworld.models.miniworld.Client`, but with the plain AF3-style
+    EDM Euclidean diffuser (``EuclideanDiffuser`` + ``AF3Solver``) instead of
+    the decoupled VE x-prediction diffuser. This lets the two diffusion
+    formulations be compared on an identical model.
+    """
 
     class TrainConfig(BaseModel):
         """Configuration for trains."""
@@ -156,10 +163,10 @@ class Client(BaseClient):
         smooth_lddt_loss: float = 1.0
 
     class Config(BaseModel):
-        """Configuration for the MiniWorld client."""
+        """Configuration for the MiniWorld (EDM) client."""
 
         model: Model.Config
-        diffuser: XPredDecoupledDiffuserConfig
+        diffuser: EDMDiffuserConfig
         train: Client.TrainConfig
         loss: Client.LossConfig
 
@@ -171,19 +178,20 @@ class Client(BaseClient):
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
-        self.diffusion_scheduler = DecoupledXPredScheduler(config.diffuser.scheduler)
-        self.diffuser = XPredDecoupledDiffuser(
-            config=XPredDecoupledDiffuser.DecoupledXPredConfig(
+
+        diffuser_method = config.diffuser.method
+        if diffuser_method != "AF3":
+            msg = f"Diffuser method {diffuser_method} is not implemented yet."
+            raise NotImplementedError(msg)
+        self.diffusion_scheduler = EDMScheduler(config.diffuser.scheduler)
+        self.diffuser = EuclideanDiffuser(
+            config=EuclideanDiffuser.EuclideanConfig(
                 seed=config.diffuser.seed,
-                translation_noise=config.diffuser.translation_noise,
-                max_loss_weight=config.diffuser.max_loss_weight,
             ),
             scheduler=self.diffusion_scheduler,
         )
-        self.solver = XPredDecoupledSolver(
-            config=config.diffuser.solver.model_copy(
-                update={"seed": config.diffuser.seed},
-            ),
+        self.solver = AF3Solver(
+            config=AF3Solver.SolverConfig(seed=config.diffuser.seed),
             scheduler=self.diffusion_scheduler,
         )
 
@@ -424,16 +432,33 @@ class Client(BaseClient):
         client.load_state_dict(state_dict, model_only=True, strict=strict)
         return client
 
+    def _edm_x0_hat(
+        self,
+        x_input: Float[torch.Tensor, "... L 3"],
+        x_update: Float[torch.Tensor, "... L 3"],
+        sigma: Float[torch.Tensor, ...],
+    ) -> Float[torch.Tensor, "... L 3"]:
+        """EDM preconditioned x0 estimate: ``c_skip * noisy_x + c_out * x_update``.
+
+        Mirrors the internal computation of ``EuclideanDiffuser.cal_loss`` so
+        the smooth-lDDT term can be evaluated on the model's denoised
+        prediction (distance-based, so no alignment is required here).
+        """
+        dtype = x_update.dtype
+        scheduler = self.diffuser.scheduler
+        input_scaling = scheduler.input_scale(sigma).to(device=x_update.device, dtype=dtype)
+        noisy_x = x_input.to(dtype=dtype) / input_scaling
+        c_skip = scheduler.skip_scale(sigma).to(dtype=dtype)
+        c_out = scheduler.output_scale(sigma).to(dtype=dtype)
+        return c_skip * noisy_x + c_out * x_update
+
     def loss_fn(
         self,
         batch: Batch,
         x0: Float[torch.Tensor, "... L 3"],
         x_input: Float[torch.Tensor, "... L 3"],
         t_emb: Float[torch.Tensor, ...],
-        sigma_y: Float[torch.Tensor, ...],
-        rotation_matrix: Float[torch.Tensor, ...],
-        translation_vector: Float[torch.Tensor, ...],
-        atom_to_combine: Int[torch.Tensor, ...],
+        sigma: Float[torch.Tensor, ...],
         x_mask: Bool[torch.Tensor, "... L"] | None = None,
     ) -> tuple[torch.Tensor, dict]:
         """Compute the loss given a noisy batch."""
@@ -449,23 +474,12 @@ class Client(BaseClient):
             t_emb=t_emb,
         )
 
-        x_pred = self.diffuser.get_x0_hat(
+        structure_loss = self.diffuser.cal_loss(
             x0=x0,
             x_input=x_input,
             x_update=atom_pos_update,
-            sigma_y=sigma_y,
-            rotation_matrix=rotation_matrix,
-            translation_vector=translation_vector,
-            atom_to_combine=atom_to_combine,
+            sigma=sigma,
             mask=x_mask,
-        )
-
-        structure_loss = self.diffuser.cal_loss(
-            x0=x0,
-            x_pred=x_pred,
-            sigma_y=sigma_y,
-            mask=x_mask,
-            dtype=atom_pos_update.dtype,
         )
 
         distogram_loss = cal_atom_distogram_loss(
@@ -475,8 +489,10 @@ class Client(BaseClient):
             batch.scheme.atom_to_token_idx_map,
         )
 
-        # Smooth lDDT (checkpointed per augment)
+        # Smooth lDDT (checkpointed per augment). Evaluated on the EDM
+        # preconditioned x0 estimate (distance-based metric).
         if self.config.loss.smooth_lddt_loss > 0:
+            x_pred = self._edm_x0_hat(x_input, atom_pos_update, sigma)
             # nuc tag : 3,4,5
             chain_is_nuc = torch.where(
                 (batch.chain.entity_type == 3)
@@ -504,7 +520,7 @@ class Client(BaseClient):
                 ],  # pyright: ignore[reportArgumentType]
             ).mean()
         else:
-            smooth_lddt_loss = torch.tensor(0.0, device=x_pred.device)
+            smooth_lddt_loss = torch.tensor(0.0, device=x0.device)
 
         loss = (
             self.config.loss.diffusion_loss * structure_loss
@@ -523,19 +539,9 @@ class Client(BaseClient):
         """Train the model on a batch."""
         num_augment = self.config.train.num_augment
 
-        (
-            x0,
-            x_input,
-            x_mask,
-            t_emb,
-            sigma_y,
-            rotation_matrix,
-            translation_vector,
-            atom_to_combine,
-        ) = self.diffuser.sample(
+        x0, x_input, x_mask, t_emb, sigma = self.diffuser.sample(
             x0=batch.structure.atom_pos,
             mask=batch.structure.atom_pos_mask,
-            atom_to_chain_idx=batch.scheme.atom_to_chain_id,
             num_augment=num_augment,
         )
 
@@ -544,11 +550,8 @@ class Client(BaseClient):
             x0=x0,
             x_input=x_input,
             t_emb=t_emb,
+            sigma=sigma,
             x_mask=x_mask,
-            sigma_y=sigma_y,
-            rotation_matrix=rotation_matrix,
-            translation_vector=translation_vector,
-            atom_to_combine=atom_to_combine,
         )
 
         self.backward(loss)
@@ -685,58 +688,38 @@ class Client(BaseClient):
         *,
         n_samples: int = 1,
         timesteps: int = 100,
-        no_rt: bool = False,
-        update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered",
-        combine_all: bool = False,
-        init_x0: torch.Tensor | None = None,
-        start_sigma_y: float | None = None,
     ) -> InferenceOutput:
-        """Run the diffusion solver on a prepared trunk conditioning.
+        """Run the EDM ODE solver on a prepared trunk conditioning.
 
         ``n_samples`` is broadcast along the model's augmentation axis
-        (``x_t: A B L 3`` with ``A = n_samples``), so all samples share one
+        (``x_t: A L 3`` with ``A = n_samples``), so all samples share one
         forward pass per step. The returned tensors carry that augmentation
         dimension as their leading axis — ``atom_pos_pred`` is
         ``(n_samples, L, 3)`` and each trajectory is ``(n_samples, T, L, 3)``.
-
-        ``init_x0`` / ``start_sigma_y``: flexible-docking warm start; see
-        :meth:`miniworld.diffusion.decoupled_xpred.solver.XPredDecoupledSolver.sample`.
         """
         if n_samples < 1:
             msg = f"n_samples must be >= 1, got {n_samples}."
             raise ValueError(msg)
         _, n_atoms, three = batch.structure.atom_pos.shape
         shape = torch.Size((n_samples, n_atoms, three))
-        # ``apply_chain_rt`` requires atom_to_combine.shape == x.shape[:2].
-        # batch.scheme.atom_to_chain_id is (1, N_atom); expand along the
-        # augmentation axis so it matches the (n_samples, N_atom) batch
-        # produced by the solver.
-        atom_to_combine = batch.scheme.atom_to_chain_id
-        if atom_to_combine.shape[0] == 1 and n_samples > 1:
-            atom_to_combine = atom_to_combine.expand(n_samples, -1)
-        atom_pos_pred, inter_traj, model_traj, input_traj = self.solver.sample(
+        atom_pos_pred, inter_traj, model_traj = self.solver.sample(
             model_fn=wrapper,
             shape=shape,
-            atom_to_combine=atom_to_combine,
             num_steps=timesteps,
             device=self.device,
-            use_rt=not no_rt,
-            mask=batch.structure.atom_pos_mask.bool(),
-            update_rule=update_rule,
             return_intermediate=True,
-            combine_all=combine_all,
-            init_x0=init_x0,
-            start_sigma_y=start_sigma_y,
         )
         inter_traj = [x.detach().cpu().numpy() for x in inter_traj]
         model_traj = [x.detach().cpu().numpy() for x in model_traj]
-        input_traj = [x.detach().cpu().numpy() for x in input_traj]
         distogram_logit = wrapper.condition["distogram_logit"]
+        inter_stack = np.stack(inter_traj, axis=1)
         return InferenceOutput(
             atom_pos_pred=atom_pos_pred,
             model_traj=np.stack(model_traj, axis=1),
-            inter_traj=np.stack(inter_traj, axis=1),
-            input_traj=np.stack(input_traj, axis=1),
+            inter_traj=inter_stack,
+            # EDM has no separate R/T-corrupted input trajectory; mirror the
+            # interpolant trajectory so the dataclass field stays populated.
+            input_traj=inter_stack,
             distogram_logit=distogram_logit,
         )
 
@@ -745,9 +728,6 @@ class Client(BaseClient):
         self,
         batch: Batch,
         timesteps: int = 100,
-        no_rt: bool = False,
-        update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered",
-        combine_all: bool = False,
     ) -> InferenceOutput:
         """Single-shot inference: prepare trunk, then sample once.
 
@@ -764,7 +744,4 @@ class Client(BaseClient):
             batch,
             n_samples=n_samples,
             timesteps=timesteps,
-            no_rt=no_rt,
-            update_rule=update_rule,
-            combine_all=combine_all,
         )
