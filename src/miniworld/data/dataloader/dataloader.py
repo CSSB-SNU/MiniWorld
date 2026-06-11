@@ -300,11 +300,15 @@ class BioMolData(torch.utils.data.Dataset):
                         chain_id1,
                         chain_id2,
                     )
+                type_name = _get_type(edge_id)
                 if edge_id not in edge_id_to_items:
                     edge_id_to_items[edge_id] = []
+                    # count unique clusters (edge_ids), not rows: the per-item
+                    # weight already divides by len(items), so normalizing by the
+                    # row count here would deflate each type's mass by its average
+                    # rows-per-cluster and break P(type) ∝ sampler weight.
+                    type_counts[type_name] += 1
                 edge_id_to_items[edge_id].append(value)
-                type_name = _get_type(edge_id)
-                type_counts[type_name] += 1
 
         self.items = []
         self.weights = []
