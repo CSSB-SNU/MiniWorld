@@ -1,0 +1,19 @@
+# Experiment msa3_24_3 — plain AF3-like EDM diffuser.
+# Identical to config_exp_msa383_edm.yaml except model = large_msa3_24_3
+# (token_dit.n_block = 24 instead of 8, i.e. a 3/24/3 diffusion module).
+# Run: scripts/run_miniworld_edm_only_train.py
+#   torchrun --nnodes=1 --nproc_per_node=8 scripts/run_miniworld_edm_only_train.py train \
+#     --ckpt epoch=0430.pt --no-ckpt-strict \
+#     --config configs/miniworld/config_exp_msa3_24_3_edm.yaml \
+#     --job-name exp-msa3_24_3-edm
+defaults:
+  - model: large_msa3_24_3
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384
+  - diffuser: edm
+  - loss: wo_smoothlddt
+  - _self_
+
+train:
+  comment: "exp msa3_24_3: only-msa, diff 3/24/3, freeze trunk, edm-af3like"
+  run_dir: "logs/exp/msa3_24_3-edm/"
