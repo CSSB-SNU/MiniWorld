@@ -61,6 +61,15 @@ cuda = "13"
 
 [tool.pixi.feature.cuda13.pypi-dependencies]
 cuequivariance-ops-torch-cu13 = "*"
+# Optional: FlashAttention-4 (Hopper/Blackwell, sm_100/B200) for the `flash`
+# backend of the opt-in SWA atom attention (configs/.../*_swa.yaml). FA4 is a
+# CuTeDSL pure-Python wheel that JIT-compiles CUTLASS kernels, so it is not
+# pinned to the torch ABI. It is a prerelease and not enabled by default to
+# avoid forcing it on the training env; install it explicitly when running the
+# SWA experiment:
+#   uv pip install --python .pixi/envs/default/bin/python3.10 \
+#       --prerelease=allow "flash-attn-4[cu13]"
+# The SWA attention falls back to the native FlexAttention backend if absent.
 
 [tool.pixi.feature.cuda13.pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/cu130"]

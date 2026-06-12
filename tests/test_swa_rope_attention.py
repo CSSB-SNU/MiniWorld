@@ -5,10 +5,12 @@ Runs on CPU with the ``sdpa`` backend so it needs no GPU / flash-attn.
 
 from __future__ import annotations
 
+import pytest
 import torch
 
 from miniworld.configs.models import AtomSWAConfig, SharedConfig
 from miniworld.modules.swa_rope_attention import (
+    _FLASH_AVAILABLE,
     SWA3DRoPEAttention,
     SWAAtomTransformer,
     build_3d_rope,
@@ -89,6 +91,37 @@ def test_transformer_forward_backward_and_padding_grad() -> None:
     assert out.shape == (B, L, d)
     out.sum().backward()
     assert torch.isfinite(q.grad).all()
+
+
+@pytest.mark.skipif(
+    not (torch.cuda.is_available() and _FLASH_AVAILABLE),
+    reason="needs CUDA + flash-attn-4 (FA4, Hopper/Blackwell)",
+)
+def test_flash_matches_sdpa_on_gpu() -> None:
+    """FA4 flash backend == sdpa banded backend (same window + per-molecule)."""
+    dev = "cuda"
+    torch.manual_seed(0)
+    B, L, d, nh = 2, 300, 128, 4
+    ref = torch.randn(B, L, 3, device=dev)
+    uid = torch.zeros(B, L, dtype=torch.long, device=dev)
+    uid[:, 128:] = 1
+    uid[:, 200:] = 2
+    mask = torch.ones(B, L, dtype=torch.bool, device=dev)
+    mask[0, 290:] = False
+    ap = build_attention_params(
+        ref, uid, mask, d // nh,
+        n_spatial_per_axis=2, n_uid_pairs=10,
+        spatial_base_freq=20.0, uid_base_freq=10000.0,
+    )
+    flash = SWAAtomTransformer(d_atom=d, n_blocks=2, n_heads=nh, swa_window_size=64, backend="flash").to(dev)
+    sdpa = SWAAtomTransformer(d_atom=d, n_blocks=2, n_heads=nh, swa_window_size=64, backend="sdpa").to(dev)
+    sdpa.load_state_dict(flash.state_dict())
+    q = torch.randn(B, L, d, device=dev)
+    c = torch.randn(B, L, d, device=dev)
+    with torch.no_grad():
+        of = flash(q, c, ap)
+        os = sdpa(q, c, ap)
+    assert (of.float() - os.float()).abs().max().item() < 1e-2
 
 
 def test_disabled_config_is_default() -> None:

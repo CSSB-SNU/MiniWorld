@@ -22,9 +22,10 @@ The local-attention backend is selectable (``flex`` | ``sdpa`` | ``flash``):
     dense mask.
   * ``sdpa``  -- dense banded ``scaled_dot_product_attention`` mask. Simplest
     and always correct, but materialises an O(L^2) mask (only for small L).
-  * ``flash`` -- ``flash_attn_varlen_func`` with ``window_size`` (per-molecule
-    packing via cu_seqlens). Requires a built ``flash_attn``; falls back to
-    ``flex`` if unavailable.
+  * ``flash`` -- FlashAttention-4 (``flash_attn.cute.flash_attn_varlen_func``)
+    with ``window_size`` and per-molecule packing via cu_seqlens. FA4 is the
+    Hopper/Blackwell line (supports sm_100 / B200); install ``flash-attn-4``.
+    Falls back to ``flex`` if unavailable.
 """
 
 from __future__ import annotations
@@ -49,8 +50,10 @@ except Exception:  # pragma: no cover - older torch
     _FLEX_AVAILABLE = False
 
 try:
-    from flash_attn import flash_attn_varlen_func  # type: ignore
-    from flash_attn.bert_padding import index_first_axis, pad_input  # type: ignore
+    # FlashAttention-4 (CuTeDSL) — the Hopper/Blackwell line. Pure-Python
+    # wheel (`flash-attn-4`), JIT-compiles CUTLASS kernels, so it is not
+    # pinned to the torch ABI and supports sm_100 (B200). Returns (out, lse).
+    from flash_attn.cute import flash_attn_varlen_func  # type: ignore
 
     _FLASH_AVAILABLE = True
 except Exception:
@@ -324,26 +327,50 @@ class SWA3DRoPEAttention(nn.Module):
     def _flash_forward(
         self, q: Tensor, k: Tensor, v: Tensor, p: dict, B: int, N: int,
     ) -> Tensor:
-        valid = p["valid"]
-        seqlens = valid.sum(dim=-1, dtype=torch.int32)
-        indices = torch.nonzero(valid.flatten(), as_tuple=False).flatten()
-        max_seqlen = int(seqlens.max().item())
-        cu_seqlens = F.pad(torch.cumsum(seqlens, dim=0, dtype=torch.int32), (1, 0))
-        q_un = index_first_axis(q.reshape(-1, self.n_heads, self.head_dim), indices)
-        k_un = index_first_axis(k.reshape(-1, self.n_heads, self.head_dim), indices)
-        v_un = index_first_axis(v.reshape(-1, self.n_heads, self.head_dim), indices)
-        out_un = flash_attn_varlen_func(
-            q_un,
-            k_un,
-            v_un,
-            cu_seqlens,
-            cu_seqlens,
-            max_seqlen,
-            max_seqlen,
+        """FlashAttention-4 varlen with per-molecule packing + sliding window.
+
+        Valid atoms are packed into contiguous segments, one per
+        (sample, space_uid), so the window never crosses a molecule
+        boundary — matching the flex / sdpa backends. q/k/v arrive as
+        [B, N, H, D].
+        """
+        valid, doc = p["valid"], p["doc"]
+        device = q.device
+        H, D = self.n_heads, self.head_dim
+
+        # Segment id unique per (row, doc); pack valid atoms grouped by segment,
+        # preserving within-segment order via a stable sort (robust to any
+        # atom ordering / interleaved space_uids).
+        n_doc = int(doc.max().item()) + 1
+        row = torch.arange(B, device=device).view(B, 1).expand(B, N)
+        seg = (row * n_doc + doc).reshape(-1)  # [B*N]
+        flat_valid = valid.reshape(-1)
+        sel = flat_valid.nonzero(as_tuple=False).flatten()  # [n_valid]
+        order = torch.argsort(seg[sel], stable=True)
+        packed_idx = sel[order]  # [n_valid] indices into [B*N], grouped by seg
+        seg_sorted = seg[packed_idx]
+        _, counts = torch.unique_consecutive(seg_sorted, return_counts=True)
+        cu = F.pad(counts.cumsum(0), (1, 0)).to(torch.int32)
+        max_seqlen = int(counts.max().item())
+
+        qf = q.reshape(B * N, H, D)
+        kf = k.reshape(B * N, H, D)
+        vf = v.reshape(B * N, H, D)
+        out_packed, _ = flash_attn_varlen_func(
+            qf[packed_idx],
+            kf[packed_idx],
+            vf[packed_idx],
+            cu_seqlens_q=cu,
+            cu_seqlens_k=cu,
+            max_seqlen_q=max_seqlen,
+            max_seqlen_k=max_seqlen,
             softmax_scale=self.scale,
+            causal=False,
             window_size=(self.half_window, self.half_window),
         )
-        return pad_input(out_un, indices, B, N)
+        out = q.new_zeros(B * N, H, D)
+        out[packed_idx] = out_packed.to(out.dtype)
+        return out.reshape(B, N, H, D)
 
 
 # ===========================================================================

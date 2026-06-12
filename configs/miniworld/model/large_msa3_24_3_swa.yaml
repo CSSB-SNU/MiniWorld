@@ -107,7 +107,7 @@ diffusion:
   atom_swa:
     enabled: True
     swa_window_size: 128
-    backend: flex            # flex (native block-sparse) | sdpa | flash
+    backend: flash           # FlashAttention-4 (B200/sm_100). flex | sdpa | flash
     expansion_ratio: 2
     n_spatial_rope_pairs_per_axis: 2
     n_uid_rope_pairs: 10
