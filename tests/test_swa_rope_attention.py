@@ -1,4 +1,4 @@
-"""Tests for ESMFold2-style SWA + 3D RoPE + QK-norm atom attention.
+"""Tests for sliding-window + 3D RoPE + QK-norm atom attention.
 
 Runs on CPU with the ``sdpa`` backend so it needs no GPU / flash-attn.
 """
@@ -11,64 +11,66 @@ import torch
 from miniworld.configs.models import AtomSWAConfig, SharedConfig
 from miniworld.modules.swa_rope_attention import (
     _FLASH_AVAILABLE,
-    SWA3DRoPEAttention,
+    SlidingWindowAttention,
     SWAAtomTransformer,
     build_3d_rope,
     build_attention_params,
-    qk_norm,
 )
+
+ROPE = {
+    "n_spatial_per_axis": 2,
+    "n_uid_pairs": 10,
+    "spatial_base_freq": 20.0,
+    "uid_base_freq": 10000.0,
+}
 
 
 def test_qk_norm_is_unit_rms() -> None:
-    x = torch.randn(2, 5, 4, 8) * 3.0
-    y = qk_norm(x)
+    attn = SlidingWindowAttention(d_single=128, n_head=4, half_window=8, backend="sdpa")
+    x = torch.randn(2, 5, 4, 32) * 3.0  # [B, L, H, D]
+    y = attn.norm_query(x)
     rms = y.float().pow(2).mean(dim=-1).sqrt()
     assert torch.allclose(rms, torch.ones_like(rms), atol=1e-3)
 
 
 def test_3d_rope_shapes_and_padding() -> None:
-    B, L, head_dim = 2, 7, 32
+    B, L, d_hidden = 2, 7, 32
     cos, sin = build_3d_rope(
-        torch.randn(B, L, 3),
-        torch.zeros(B, L, dtype=torch.long),
-        head_dim,
-        n_spatial_per_axis=2,
-        n_uid_pairs=10,
+        torch.randn(B, L, 3), torch.zeros(B, L, dtype=torch.long), d_hidden, **ROPE,
     )
-    assert cos.shape == (B, L, head_dim // 2)
-    # 3*2 + 10 = 16 = head_dim/2 -> no padding columns, all active.
-    assert sin.shape == (B, L, head_dim // 2)
+    # 3*2 spatial + 10 uid = 16 = d_hidden / 2 -> exactly filled, no padding.
+    assert cos.shape == (B, L, d_hidden // 2)
+    assert sin.shape == (B, L, d_hidden // 2)
 
 
 def test_sliding_window_masks_out_of_window() -> None:
-    """Atoms farther apart than the window must not attend (sdpa backend)."""
+    """A query well outside the window must be unaffected by a far-away spike."""
     torch.manual_seed(0)
     B, L, d, nh = 1, 64, 32, 4
     half_window = 4
-    attn = SWA3DRoPEAttention(d, nh, half_window=half_window, backend="sdpa").eval()
+    attn = SlidingWindowAttention(d, nh, half_window=half_window, backend="sdpa").eval()
+    # to_out is zero-init by convention; make it non-trivial so the attention
+    # output (and thus the windowing) is observable.
+    torch.nn.init.normal_(attn.to_out.weight)
     ref = torch.randn(B, L, 3)
     uid = torch.zeros(B, L, dtype=torch.long)
     mask = torch.ones(B, L, dtype=torch.bool)
-    # head_dim = 32/4 = 8 -> half_dim = 4, so keep active freqs <= 4.
+    # head_dim = 8 -> d_hidden/2 = 4, so keep active freqs <= 4.
     ap = build_attention_params(
         ref, uid, mask, d // nh,
         n_spatial_per_axis=1, n_uid_pairs=1,
         spatial_base_freq=20.0, uid_base_freq=10000.0,
     )
     x = torch.zeros(B, L, d)
-    x[0, 0] = 1.0  # spike at position 0
+    x[0, 0] = 1.0
     with torch.no_grad():
         out = attn(x, ap)
-    # A query far outside the window of position 0 must be unaffected by the
-    # spike relative to an identical run without it.
     x2 = x.clone()
     x2[0, 0] = 5.0
     with torch.no_grad():
         out2 = attn(x2, ap)
-    far = 40  # |40 - 0| = 40 >> half_window
-    assert torch.allclose(out[0, far], out2[0, far], atol=1e-5)
-    near = 2  # within window of 0
-    assert not torch.allclose(out[0, near], out2[0, near], atol=1e-3)
+    assert torch.allclose(out[0, 40], out2[0, 40], atol=1e-5)  # far: unaffected
+    assert not torch.allclose(out[0, 2], out2[0, 2], atol=1e-3)  # near: affected
 
 
 def test_transformer_forward_backward_and_padding_grad() -> None:
@@ -79,11 +81,7 @@ def test_transformer_forward_backward_and_padding_grad() -> None:
     uid[:, 24:] = 1
     mask = torch.ones(B, L, dtype=torch.bool)
     mask[0, 44:] = False
-    ap = build_attention_params(
-        ref, uid, mask, d // nh,
-        n_spatial_per_axis=2, n_uid_pairs=10,
-        spatial_base_freq=20.0, uid_base_freq=10000.0,
-    )
+    ap = build_attention_params(ref, uid, mask, d // nh, **ROPE)
     tr = SWAAtomTransformer(d_atom=d, n_blocks=2, n_heads=nh, swa_window_size=8, backend="sdpa")
     q = torch.randn(B, L, d, requires_grad=True)
     c = torch.randn(B, L, d)
@@ -98,7 +96,7 @@ def test_transformer_forward_backward_and_padding_grad() -> None:
     reason="needs CUDA + flash-attn-4 (FA4, Hopper/Blackwell)",
 )
 def test_flash_matches_sdpa_on_gpu() -> None:
-    """FA4 flash backend == sdpa banded backend (same window + per-molecule)."""
+    """FA4 flash backend == sdpa banded backend (same window + per-space)."""
     dev = "cuda"
     torch.manual_seed(0)
     B, L, d, nh = 2, 300, 128, 4
@@ -108,11 +106,7 @@ def test_flash_matches_sdpa_on_gpu() -> None:
     uid[:, 200:] = 2
     mask = torch.ones(B, L, dtype=torch.bool, device=dev)
     mask[0, 290:] = False
-    ap = build_attention_params(
-        ref, uid, mask, d // nh,
-        n_spatial_per_axis=2, n_uid_pairs=10,
-        spatial_base_freq=20.0, uid_base_freq=10000.0,
-    )
+    ap = build_attention_params(ref, uid, mask, d // nh, **ROPE)
     flash = SWAAtomTransformer(d_atom=d, n_blocks=2, n_heads=nh, swa_window_size=64, backend="flash").to(dev)
     sdpa = SWAAtomTransformer(d_atom=d, n_blocks=2, n_heads=nh, swa_window_size=64, backend="sdpa").to(dev)
     sdpa.load_state_dict(flash.state_dict())
@@ -126,9 +120,8 @@ def test_flash_matches_sdpa_on_gpu() -> None:
 
 def test_disabled_config_is_default() -> None:
     assert AtomSWAConfig().enabled is False
-    # head_dim sanity for the shipped exp config (d_single_atom=128, n_head=4).
     shared = SharedConfig()
-    head_dim = shared.d_single_atom // 4
+    d_hidden = shared.d_single_atom // 4
     cfg = AtomSWAConfig()
     active = 3 * cfg.n_spatial_rope_pairs_per_axis + cfg.n_uid_rope_pairs
-    assert active <= head_dim // 2
+    assert active <= d_hidden // 2

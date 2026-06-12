@@ -963,7 +963,7 @@ class DiffusionModule(nn.Module):
                 ref_pos=reference.pos,
                 ref_space_uid=reference.space_uid,
                 atom_mask=structure.atom_mask,
-                head_dim=self._atom_head_dim,
+                d_hidden=self._atom_head_dim,
                 n_spatial_per_axis=self.atom_swa_config.n_spatial_rope_pairs_per_axis,
                 n_uid_pairs=self.atom_swa_config.n_uid_rope_pairs,
                 spatial_base_freq=self.atom_swa_config.spatial_rope_base_frequency,
