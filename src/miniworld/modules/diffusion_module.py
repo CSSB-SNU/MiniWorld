@@ -16,13 +16,17 @@ from torch import nn
 from torch.utils.checkpoint import checkpoint
 
 from miniworld.configs import SharedConfig
+from miniworld.configs.models import AtomSWAConfig
 from miniworld.data.features import (
     ReferenceFeatures,
     SchemeFeatures,
     StructureFeatures,
 )
 from miniworld.modules.embeddings import RelativePositionEmbedding, fourier_embedding
-
+from miniworld.modules.swa_rope_attention import (
+    SWAAtomTransformer,
+    build_attention_params,
+)
 
 # ---------------------------------------------------------------------------
 # Atom-pair instrumentation — opt-in via ``MINIWORLD_DUMP_ATOM_PAIR=<dir>``.
@@ -163,6 +167,22 @@ def init_atom_features(
     return atom_single_init, atom_pair_init
 
 
+def init_atom_single_features(
+    reference: ReferenceFeatures,
+) -> Float[torch.Tensor, "B L_atom d_single_atom_init"]:
+    """Single-only atom features (no O(L^2) pair init) for SWA atom attention."""
+    atom_single_init = torch.cat(
+        [
+            reference.pos,
+            reference.mask.unsqueeze(-1),
+            reference.element.unsqueeze(-1),
+            torch.arcsinh(reference.charge).unsqueeze(-1),
+        ],
+        dim=-1,
+    )
+    return atom_single_init * reference.mask.unsqueeze(-1)
+
+
 class AtomAttentionEncoder(nn.Module):
     """Atom attention encoder."""
 
@@ -170,6 +190,7 @@ class AtomAttentionEncoder(nn.Module):
         self,
         shared_config: SharedConfig,
         diffusion_config: DiffusionTransformer.Config,
+        atom_swa_config: AtomSWAConfig | None = None,
     ) -> None:
         super().__init__()
         self.shared_config = shared_config
@@ -180,10 +201,10 @@ class AtomAttentionEncoder(nn.Module):
         d_pair = shared_config.d_pair
 
         self.use_checkpoint = shared_config.use_checkpoint
+        self.atom_swa_config = atom_swa_config
+        self.use_swa = atom_swa_config is not None and atom_swa_config.enabled
 
         self.to_atom_single_cond = Linear(6, shared_config.d_single_atom, bias=False)
-
-        self.to_atom_pair = Linear(5, shared_config.d_pair_atom, bias=False)
 
         self.token_single_to_atom_single_cond = nn.Sequential(
             LayerNorm(
@@ -196,35 +217,47 @@ class AtomAttentionEncoder(nn.Module):
                 init="zero",
             ),
         )
-        self.token_pair_to_atom_pair = nn.Sequential(
-            LayerNorm(d_pair),
-            Linear(d_pair, d_pair_atom, bias=False, init="zero"),
-        )
         self.noisy_to_atom_single_rep = Linear(
             3,
             d_single_atom,
             bias=True,
         )  # bias set to true for missing atoms
 
-        self.atom_single_to_pair_left = nn.Sequential(
-            nn.ReLU(),
-            Linear(d_single_atom, d_pair_atom, bias=False),
-        )
+        # Pair-bias-only submodules. Skipped entirely under SWA (no pair bias).
+        if not self.use_swa:
+            self.to_atom_pair = Linear(5, shared_config.d_pair_atom, bias=False)
+            self.token_pair_to_atom_pair = nn.Sequential(
+                LayerNorm(d_pair),
+                Linear(d_pair, d_pair_atom, bias=False, init="zero"),
+            )
+            self.atom_single_to_pair_left = nn.Sequential(
+                nn.ReLU(),
+                Linear(d_single_atom, d_pair_atom, bias=False),
+            )
+            self.atom_single_to_pair_right = nn.Sequential(
+                nn.ReLU(),
+                Linear(d_single_atom, d_pair_atom, bias=False),
+            )
+            self.mlp_atom_pair = nn.Sequential(
+                Linear(d_pair_atom, d_pair_atom, init="relu", bias=False),
+                nn.ReLU(),
+                Linear(d_pair_atom, d_pair_atom, init="relu", bias=False),
+                nn.ReLU(),
+                Linear(d_pair_atom, d_pair_atom, init="zero", bias=False),
+            )
 
-        self.atom_single_to_pair_right = nn.Sequential(
-            nn.ReLU(),
-            Linear(d_single_atom, d_pair_atom, bias=False),
-        )
-
-        self.mlp_atom_pair = nn.Sequential(
-            Linear(d_pair_atom, d_pair_atom, init="relu", bias=False),
-            nn.ReLU(),
-            Linear(d_pair_atom, d_pair_atom, init="relu", bias=False),
-            nn.ReLU(),
-            Linear(d_pair_atom, d_pair_atom, init="zero", bias=False),
-        )
-
-        self.atom_transformer = DiffusionTransformer(config=diffusion_config)
+        if self.use_swa:
+            assert atom_swa_config is not None
+            self.atom_transformer = SWAAtomTransformer(
+                d_atom=d_single_atom,
+                n_blocks=diffusion_config.n_block,
+                n_heads=diffusion_config.n_head,
+                swa_window_size=atom_swa_config.swa_window_size,
+                expansion_ratio=atom_swa_config.expansion_ratio,
+                backend=atom_swa_config.backend,
+            )
+        else:
+            self.atom_transformer = DiffusionTransformer(config=diffusion_config)
 
         self.atom_single_rep_to_token_single = nn.Sequential(
             Linear(d_single_atom, self.d_single_token, bias=False),
@@ -308,6 +341,53 @@ class AtomAttentionEncoder(nn.Module):
             )
         return atom_single_rep, atom_single_cond, atom_pair
 
+    @typecheck
+    def _before_atom_transformer_swa(
+        self,
+        x_t: Float[torch.Tensor, "A B L_atom 3"],
+        x_mask: Bool[torch.Tensor, "A B L_atom"],
+        atom_single_init: Float[torch.Tensor, "B L_atom d_single_atom_init"],
+        atom_to_token_idx_map: Int[torch.Tensor, "B L_atom"],
+        token_single_cond: Float[torch.Tensor, "B L_token d_single"],
+    ) -> tuple[
+        Float[torch.Tensor, "A B L_atom d_single_atom_rep"],
+        Float[torch.Tensor, "A B L_atom d_single_atom_cond"],
+    ]:
+        """Single-only conditioning for SWA atom attention (no pair bias)."""
+        device = x_t.device
+        num_aug, batch_size, atom_length = x_t.shape[:3]
+
+        atom_single_cond = self.to_atom_single_cond(atom_single_init)
+        _to_add_single = self.token_single_to_atom_single_cond(token_single_cond)
+        batch_1d_idx = (
+            torch.arange(batch_size, device=device)
+            .view(batch_size, 1)
+            .expand(-1, atom_length)
+        )
+        atom_single_cond = (
+            atom_single_cond + _to_add_single[batch_1d_idx, atom_to_token_idx_map]
+        )
+
+        atom_single_rep = atom_single_cond.unsqueeze(0)
+        to_add = self.noisy_to_atom_single_rep(x_t.to(torch.float32))
+        to_add = to_add * x_mask.unsqueeze(-1)
+        atom_single_rep = atom_single_rep + to_add
+        atom_single_cond = atom_single_cond.unsqueeze(0).expand(num_aug, -1, -1, -1)
+        return atom_single_rep, atom_single_cond
+
+    def _run_swa_transformer(
+        self,
+        atom_single_rep: Float[torch.Tensor, "A B L_atom d"],
+        atom_single_cond: Float[torch.Tensor, "A B L_atom d"],
+        attention_params: dict,
+    ) -> Float[torch.Tensor, "A B L_atom d"]:
+        """Flatten the augmentation axis, run SWA transformer, unflatten."""
+        num_aug, batch_size, atom_length = atom_single_rep.shape[:3]
+        q = atom_single_rep.reshape(num_aug * batch_size, atom_length, -1)
+        c = atom_single_cond.reshape(num_aug * batch_size, atom_length, -1)
+        out = self.atom_transformer(q, c, attention_params)
+        return out.reshape(num_aug, batch_size, atom_length, -1)
+
     # Inference-time chunking constant. Splits the first L_atom axis of
     # atom_pair so the token->atom gather and the pair MLP each materialise
     # only [B, _ATOM_CHUNK, L_atom, d] temporaries instead of the full
@@ -374,7 +454,7 @@ class AtomAttentionEncoder(nn.Module):
                 e = min(s + chunk, atom_length)
                 row_tokens = atom_to_token_idx_map[:, s:e].unsqueeze(-1)
                 atom_pair[:, s:e].add_(
-                    _to_add_pair[b_arange, row_tokens, col_tokens]
+                    _to_add_pair[b_arange, row_tokens, col_tokens],
                 )
             snap_pools["2_after_token_cond"] = _pool_atom_pair_to_token(
                 atom_pair, atom_to_token_idx_map, L_token,
@@ -392,7 +472,7 @@ class AtomAttentionEncoder(nn.Module):
                 row_tokens = atom_to_token_idx_map[:, s:e].unsqueeze(-1)
                 pair_slice = atom_pair[:, s:e]
                 pair_slice.add_(
-                    _to_add_pair[b_arange, row_tokens, col_tokens]
+                    _to_add_pair[b_arange, row_tokens, col_tokens],
                 )
                 pair_slice.add_(_left[:, s:e].unsqueeze(2))
                 pair_slice.add_(_right.unsqueeze(1))
@@ -481,6 +561,7 @@ class AtomAttentionEncoder(nn.Module):
         x_mask: Bool[torch.Tensor, "A B L_atom"],
         token_single_cond: Float[torch.Tensor, "B L_token d_single"],
         token_pair_cond: Float[torch.Tensor, "B L_token L_token d_pair"],
+        attention_params: dict | None = None,
     ) -> tuple[
         Float[torch.Tensor, "B L_token d_single_token_rep"],
         Float[torch.Tensor, "A B L_atom d_single_atom_rep"],
@@ -488,8 +569,45 @@ class AtomAttentionEncoder(nn.Module):
         Float[torch.Tensor, "A B L_atom L_atom d_pair_atom"],
     ]:
         """Forward pass."""
-        atom_single_init, atom_pair_init = init_atom_features(reference)
         atom_to_token_idx_map = scheme.atom_to_token_idx_map
+
+        if self.use_swa:
+            assert attention_params is not None, "SWA atom attention needs RoPE params"
+            atom_single_init = init_atom_single_features(reference)
+            if self.use_checkpoint and self.training:
+                atom_single_rep, atom_single_cond = checkpoint(
+                    self._before_atom_transformer_swa,
+                    x_t,
+                    x_mask,
+                    atom_single_init,
+                    atom_to_token_idx_map,
+                    token_single_cond,
+                    use_reentrant=False,
+                )
+            else:
+                atom_single_rep, atom_single_cond = self._before_atom_transformer_swa(
+                    x_t,
+                    x_mask,
+                    atom_single_init,
+                    atom_to_token_idx_map,
+                    token_single_cond,
+                )
+            atom_single_rep = self._run_swa_transformer(
+                atom_single_rep, atom_single_cond, attention_params,
+            )
+            a_dim, b_dim, l_dim = atom_single_rep.shape[:3]
+            # No pair tensor under SWA; return a 0-width placeholder (no memory)
+            # so the encoder->decoder contract is preserved.
+            atom_pair = atom_single_rep.new_zeros((a_dim, b_dim, l_dim, l_dim, 0))
+            token_single_rep = self._scatter_atom_to_token(
+                scheme.token_idx,
+                structure.atom_mask,
+                atom_to_token_idx_map,
+                atom_single_rep,
+            )
+            return token_single_rep, atom_single_rep, atom_single_cond, atom_pair
+
+        atom_single_init, atom_pair_init = init_atom_features(reference)
 
         # Inference chunking is opt-in via env var. The chunked path is now
         # bit-exact with the canonical _before_atom_transformer — see
@@ -571,16 +689,30 @@ class AtomAttentionDecoder(nn.Module):
         self,
         shared_config: SharedConfig,
         diffusion_config: DiffusionTransformer.Config,
+        atom_swa_config: AtomSWAConfig | None = None,
     ) -> None:
         super().__init__()
         self.shared_config = shared_config
         self.diffusion_config = diffusion_config
+        self.atom_swa_config = atom_swa_config
+        self.use_swa = atom_swa_config is not None and atom_swa_config.enabled
         d_single_atom = shared_config.d_single_atom
         d_single_token = shared_config.d_single_token
 
         self.add_token_info = Linear(d_single_token, d_single_atom, bias=False)
 
-        self.atom_transformer = DiffusionTransformer(config=diffusion_config)
+        if self.use_swa:
+            assert atom_swa_config is not None
+            self.atom_transformer = SWAAtomTransformer(
+                d_atom=d_single_atom,
+                n_blocks=diffusion_config.n_block,
+                n_heads=diffusion_config.n_head,
+                swa_window_size=atom_swa_config.swa_window_size,
+                expansion_ratio=atom_swa_config.expansion_ratio,
+                backend=atom_swa_config.backend,
+            )
+        else:
+            self.atom_transformer = DiffusionTransformer(config=diffusion_config)
 
         self.final_denoising = nn.Sequential(
             LayerNorm(d_single_atom),
@@ -601,6 +733,7 @@ class AtomAttentionDecoder(nn.Module):
         atom_single_rep: Float[torch.Tensor, "A B L_atom d_single_atom_rep"],
         atom_single_cond: Float[torch.Tensor, "A B L_atom d_single_atom_cond"],
         atom_pair: Float[torch.Tensor, "A B L_atom L_atom d_pair_atom"],
+        attention_params: dict | None = None,
     ) -> Float[torch.Tensor, "A B L_atom 3"]:
         """Forward pass."""
         num_augment, batch_size, atom_length = atom_single_rep.shape[:3]
@@ -630,12 +763,19 @@ class AtomAttentionDecoder(nn.Module):
             + _to_add_single[aug_1d_idx, batch_1d_idx, atom_to_token_idx_map]
         )
 
-        atom_single_rep = self.atom_transformer(
-            atom_single_rep,
-            atom_single_cond,
-            atom_pair,
-            mask=structure.atom_mask,
-        )
+        if self.use_swa:
+            assert attention_params is not None, "SWA atom attention needs RoPE params"
+            q = atom_single_rep.reshape(num_augment * batch_size, atom_length, -1)
+            c = atom_single_cond.reshape(num_augment * batch_size, atom_length, -1)
+            out = self.atom_transformer(q, c, attention_params)
+            atom_single_rep = out.reshape(num_augment, batch_size, atom_length, -1)
+        else:
+            atom_single_rep = self.atom_transformer(
+                atom_single_rep,
+                atom_single_cond,
+                atom_pair,
+                mask=structure.atom_mask,
+            )
         return self.final_denoising(atom_single_rep)
 
 
@@ -755,8 +895,13 @@ class DiffusionModule(nn.Module):
         atom_dit_config: DiffusionTransformer.Config,
         token_dit_config: DiffusionTransformer.Config,
         dit_cond_config: DiffusionConditioning.Config,
+        atom_swa_config: AtomSWAConfig | None = None,
     ) -> None:
         super().__init__()
+        self.atom_swa_config = atom_swa_config
+        self.use_swa = atom_swa_config is not None and atom_swa_config.enabled
+        # Atom attention head dim (used to size the 3D RoPE cos/sin).
+        self._atom_head_dim = shared_config.d_single_atom // atom_dit_config.n_head
         self.diffusion_conditioning = DiffusionConditioning(
             shared_config=shared_config,
             dit_cond_config=dit_cond_config,
@@ -764,6 +909,7 @@ class DiffusionModule(nn.Module):
         self.atom_attention_encoder = AtomAttentionEncoder(
             shared_config=shared_config,
             diffusion_config=atom_dit_config,
+            atom_swa_config=atom_swa_config,
         )
         self.add_single_token_cond = nn.Sequential(
             LayerNorm(
@@ -783,6 +929,7 @@ class DiffusionModule(nn.Module):
         self.atom_attention_decoder = AtomAttentionDecoder(
             shared_config=shared_config,
             diffusion_config=atom_dit_config,
+            atom_swa_config=atom_swa_config,
         )
 
     @typecheck
@@ -806,6 +953,23 @@ class DiffusionModule(nn.Module):
             token_single_trunk,
             token_pair_trunk,
         )
+        # Build 3D-RoPE attention params once (reference geometry is step- and
+        # augmentation-invariant) and share across atom encoder + decoder.
+        attention_params: dict | None = None
+        if self.use_swa:
+            assert self.atom_swa_config is not None
+            num_aug = x_t.shape[0]
+            attention_params = build_attention_params(
+                ref_pos=reference.pos,
+                ref_space_uid=reference.space_uid,
+                atom_mask=structure.atom_mask,
+                head_dim=self._atom_head_dim,
+                n_spatial_per_axis=self.atom_swa_config.n_spatial_rope_pairs_per_axis,
+                n_uid_pairs=self.atom_swa_config.n_uid_rope_pairs,
+                spatial_base_freq=self.atom_swa_config.spatial_rope_base_frequency,
+                uid_base_freq=self.atom_swa_config.uid_rope_base_frequency,
+                n_repeat=num_aug,
+            )
         token_single_rep, atom_single_rep, atom_single_cond, atom_pair = (
             self.atom_attention_encoder(
                 reference,
@@ -815,6 +979,7 @@ class DiffusionModule(nn.Module):
                 x_mask,
                 token_single_trunk,
                 token_pair_cond,
+                attention_params=attention_params,
             )
         )
         token_single_rep = token_single_rep + self.add_single_token_cond(
@@ -839,4 +1004,5 @@ class DiffusionModule(nn.Module):
             atom_single_rep,
             atom_single_cond,
             atom_pair,
+            attention_params=attention_params,
         )

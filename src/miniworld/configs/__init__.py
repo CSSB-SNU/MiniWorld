@@ -21,9 +21,10 @@ except ModuleNotFoundError:
     XPredEuclideanDiffuserConfig = None  # type: ignore[assignment]
 
 try:
-    from .models import SharedConfig
+    from .models import AtomSWAConfig, SharedConfig
 except ModuleNotFoundError:
     SharedConfig = None  # type: ignore[assignment]
+    AtomSWAConfig = None  # type: ignore[assignment]
 
 __all__ = [
     "BioMolDBConfig",
@@ -37,6 +38,9 @@ __all__ = [
 
 if SharedConfig is not None:
     __all__.append("SharedConfig")
+
+if AtomSWAConfig is not None:
+    __all__.append("AtomSWAConfig")
 
 if EDMDiffuserConfig is not None:
     __all__.extend(

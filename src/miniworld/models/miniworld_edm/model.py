@@ -15,6 +15,7 @@ from team_gm.modules.primitives import (
 from torch import nn
 
 from miniworld.configs import SharedConfig
+from miniworld.configs.models import AtomSWAConfig
 from miniworld.modules.diffusion_module import (
     DiffusionConditioning,
     DiffusionModule,
@@ -65,6 +66,10 @@ class Model(nn.Module):
         atom_dit: DiffusionTransformer.Config
         token_dit: DiffusionTransformer.Config
         dit_cond: DiffusionConditioning.Config
+        # Opt-in ESMFold2-style atom attention (sliding-window + 3D RoPE +
+        # QK-norm, no pair bias). Defaults to disabled -> existing pair-bias
+        # path, so existing configs are byte-for-byte unaffected.
+        atom_swa: AtomSWAConfig = AtomSWAConfig()
 
     class Config(BaseModel):
         """Configuration for the AF3Like model."""
@@ -139,6 +144,7 @@ class Model(nn.Module):
             config.diffusion.atom_dit,
             config.diffusion.token_dit,
             config.diffusion.dit_cond,
+            atom_swa_config=config.diffusion.atom_swa,
         ).to(torch.float32)
 
         self.rng = np.random.default_rng()
