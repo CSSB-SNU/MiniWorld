@@ -1,0 +1,16 @@
+# Experiment msa3_24_3 NO-SINGLE — AF3-like EDM, trunk carries no token_single.
+# Uses the miniworld_no_single_at_trunk model: pair-only Pairformer + diffusion
+# conditioning from token_single_input alone. Frozen distogram trunk, fresh
+# 3/24/3 diffusion module. Same train/data/diffuser/loss as the 3/24/3 EDM run.
+# Run with scripts/run_miniworld_no_single_edm_train.py.
+defaults:
+  - model: large_msa3_24_3_no_single
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384
+  - diffuser: edm
+  - loss: wo_smoothlddt
+  - _self_
+
+train:
+  comment: "exp msa3_24_3 no-single: pair-only trunk, diff 3/24/3, freeze trunk, edm-af3like"
+  run_dir: "logs/exp/msa3_24_3-no-single-edm/"
