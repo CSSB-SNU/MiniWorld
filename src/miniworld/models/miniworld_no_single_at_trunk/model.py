@@ -243,10 +243,14 @@ class Model(nn.Module):
         self.config = config
         self.n_recycle_max = config.trunk.n_recycle_max
 
-        # feature initialization
+        # feature initialization. produce_single_init=False: this variant never
+        # uses token_single_init (no trunk single track), so we avoid creating
+        # the unused ``to_token_init`` param (which would otherwise be a
+        # trainable parameter that receives no gradient and trips DDP).
         self.input_feature_embedder = InputFeatureEmbedder(
             config.shared,
             config.input_feat_embbeder,
+            produce_single_init=False,
         )
 
         # Recycle layer (pair only — no single recycle in this variant).
