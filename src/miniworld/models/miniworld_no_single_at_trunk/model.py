@@ -229,6 +229,11 @@ class Model(nn.Module):
         atom_dit: DiffusionTransformer.Config
         token_dit: DiffusionTransformer.Config
         dit_cond: DiffusionConditioning.Config
+        # Run the diffusion module forward under bf16 autocast (params stay
+        # fp32 -> fp32 master weights / optimizer state for stable training).
+        # The output is cast back to fp32 (EuclideanDiffuser.cal_loss requires
+        # float32). Trunk is unaffected (it is manually bf16 and frozen).
+        autocast_bf16: bool = False
 
     class Config(BaseModel):
         """Configuration for the AF3Like model."""
@@ -289,13 +294,15 @@ class Model(nn.Module):
             config.shared.n_distogram_bins,
         )
 
-        # Diffusion module (no-single variant)
+        # Diffusion module (no-single variant). Params stay fp32; bf16 is opt-in
+        # via autocast at forward time (config.diffusion.autocast_bf16).
         self.diffusion_module = DiffusionModuleNoSingle(
             config.shared,
             config.diffusion.atom_dit,
             config.diffusion.token_dit,
             config.diffusion.dit_cond,
         ).to(torch.float32)
+        self.autocast_bf16 = config.diffusion.autocast_bf16
 
         self.rng = np.random.default_rng()
         self._forced_n_recycle: int | None = None
@@ -405,6 +412,20 @@ class Model(nn.Module):
         token_pair_trunk: Float[torch.Tensor, "B L_token L_token d_pair"],
     ) -> Float[torch.Tensor, "B L_atom 3"]:
         """Forward pass of the diffusion module."""
+        if self.autocast_bf16:
+            with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+                out = self.diffusion_module(
+                    reference,
+                    scheme,
+                    structure,
+                    x_t,
+                    x_mask,
+                    t_emb,
+                    token_single_input,
+                    token_pair_trunk,
+                )
+            # EuclideanDiffuser.cal_loss requires float32 x_update.
+            return out.float()
         return self.diffusion_module(
             reference,
             scheme,

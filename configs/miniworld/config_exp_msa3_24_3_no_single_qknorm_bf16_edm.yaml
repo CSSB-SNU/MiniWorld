@@ -1,0 +1,18 @@
+# Experiment msa3_24_3 NO-SINGLE + QK-norm + bf16, AF3-like EDM.
+# Combines three fixes over the diverged no-single run:
+#   - data: atom tokenization + missing_policy=gap (trunk in-distribution)
+#   - model: QK-norm on diffusion atom_dit + token_dit (bound attention logits)
+#   - model: diffusion forward in bf16 autocast (fp32 master weights)
+# Frozen distogram trunk (revisit_epoch420), 3/24/3 diffusion module.
+# Run with scripts/run_miniworld_no_single_edm_train.py.
+defaults:
+  - model: large_msa3_24_3_no_single_qknorm
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384_atom_gap
+  - diffuser: edm
+  - loss: wo_smoothlddt
+  - _self_
+
+train:
+  comment: "exp msa3_24_3 no-single + qknorm + bf16: atom-tok/gap, freeze trunk, edm-af3like"
+  run_dir: "logs/exp/msa3_24_3-no-single-qknorm-bf16-edm/"

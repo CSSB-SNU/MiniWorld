@@ -1,0 +1,52 @@
+# Same as full_train_balanced_v3_crop384 but aligned with the distogram-only
+# pretraining pipeline so the FROZEN trunk sees in-distribution inputs:
+#   - tokenizer.level: atom        (was "dynamic")
+#   - msa.missing_policy: "gap"     (was "query")
+# Crop/buckets/sampler are unchanged (already 384 / 4096). This restores the
+# trunk's distogram quality (~1.0 vs ~1.6 under dynamic+query) and therefore
+# the quality of the token_pair conditioning fed to the diffusion module.
+# See docs/edm_token_single_rank_collapse.md / data-config mismatch analysis.
+DB_PATH: /NHNHOME/WORKSPACE/0226010152_A/data/
+train_db:
+  cif_db_path: /NHNHOME/WORKSPACE/0226010152_A/data/v2/cif_attached_train_20260224_res9_chain300.lmdb
+  a3m_db_path: ${..DB_PATH}/a3m_16k.lmdb
+  edge_id_to_bias_path: /NHNHOME/WORKSPACE/0226010152_A/data/v2/metadata/train_20260224_edge_node.tsv
+  template_db_path: ${..DB_PATH}/template.lmdb
+  ccd_preprocessed_path: ${..DB_PATH}/CCD/preprocessed_CCD.lmdb
+
+crop:
+  max_tokens: 384
+  max_atoms: 4096
+  min_segment_size: 1
+  max_segment_size: 41
+
+  monomer_only: false
+  remain_invalid_tokens: false
+
+  bucket_msa_size: 128
+  bucket_token_size: 128
+  bucket_atom_size: 1024
+  chain_crop_prob: 0.5
+
+msa:
+  n_samples: 1
+  max_msa_depth: 384
+  missing_policy: "gap"
+
+tokenizer:
+  level: "atom"
+
+sampler:
+  protein_protein: 25.0
+  protein_ligand: 25
+  protein_dna: 10
+  protein_rna: 10
+  antibody_protein: 15
+  dna_dna: 5
+  rna_rna: 5
+  dna_rna: 0.5
+  antibody_antibody: 0.5
+  antibody_ligand: 1.0
+  na_ligand: 1.0
+  etc_interface: 1.0
+  sole: 1.0
