@@ -1,0 +1,26 @@
+exp msa3_24_3 NO-SINGLE + QK-norm + bf16 — AF3-like EDM on frozen distogram trunk (revisit_epoch420).
+atom tokenization + missing=gap (trunk in-distribution), QK-norm on diffusion atom_dit+token_dit,
+diffusion forward in bf16 autocast (fp32 master weights). 16 GPU (2 node x 8) 2-node DDP. NODE 0 (rank 0).
+Set --master_addr to node 0's reachable IP (same on both nodes).
+NOTE: 16 GPU x num_batch(1) x grad_accum(32) => eff. batch 512. For 256 append: train.grad_accum_steps=16
+
+unset NCCL_DEBUG
+export TRITON_CACHE_DIR=$HOME/.triton
+export TORCHINDUCTOR_CACHE_DIR=$HOME/.torchinductor
+export TMPDIR=$HOME/tmp
+export OMP_NUM_THREADS=2
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
+torchrun \
+  --nnodes=2 \
+  --node_rank=0 \
+  --nproc_per_node=8 \
+  --master_addr=100.134.25.43 \
+  --master_port=22319 \
+  scripts/run_miniworld_no_single_edm_train.py train \
+  --ckpt "/NHNHOME/WORKSPACE/0226010152_A/checkpoints/miniworld/exp/distogram_only/revisit_epoch420.pt" \
+  --no-ckpt-strict \
+  --config configs/miniworld/config_exp_msa3_24_3_no_single_qknorm_bf16_edm.yaml \
+  --job-name exp-msa3_24_3-no-single-qknorm-bf16-edm-revisit420 \
+  > logs/exp_msa3_24_3_no_single_qknorm_bf16_edm_revisit420_node0.out 2> logs/exp_msa3_24_3_no_single_qknorm_bf16_edm_revisit420_node0.err
