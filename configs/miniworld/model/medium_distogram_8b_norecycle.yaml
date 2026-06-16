@@ -1,0 +1,59 @@
+shared:
+  d_single: 384
+  d_single_atom: 128
+  d_single_token_input: 449
+  d_pair: 128
+  d_pair_atom: 16
+
+  d_time: 256
+  r_max: 32
+  s_max: 2
+  n_distogram_bins: 64
+  num_res_class: 32
+  implementation: triton
+  use_checkpoint: False
+
+
+input_feat_embbeder:
+  n_block: 3
+  n_checkpoint_segments: null
+  d_single: ${..shared.d_single_atom}
+  d_cond: ${..shared.d_single_atom}
+  d_pair: ${..shared.d_pair_atom}
+  n_head: 4
+  implementation: triton
+
+trunk:
+  # no recycle: trunk runs a single pass
+  n_recycle_max: 1
+  pairformer:
+    # 8-block distogram-only pairformer, no single, no self-attention
+    n_block: 8
+    n_checkpoint_segments: null
+
+    d_single: ${...shared.d_single}
+    d_pair: ${...shared.d_pair}
+    n_head_tri_attention: 4
+    n_head_attention: 16
+    p_drop: 0.25
+    use_single: False
+    use_self_attention: False
+    implementation: cuequivariance
+
+  msa_module:
+    n_block: 4
+
+    d_msa: 64
+    d_pair: ${...shared.d_pair}
+    d_single_token_input: ${...shared.d_single_token_input}
+    d_hidden_msa: 32
+    d_hidden_tri_multi: 128
+    d_hidden_tri_attention: 32
+    n_head_tri_attention: 4
+    n_head_attention: 16
+    p_drop_msa: 0.15
+    p_drop: 0.25
+    use_self_attention: False
+    n_checkpoint_segments: null
+
+    implementation: cuequivariance
