@@ -279,6 +279,19 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
         for name, p in raw_model.named_parameters()
     }
 
+    def _to_cpu_copy(obj):  # noqa: ANN001, ANN202
+        if isinstance(obj, torch.Tensor):
+            return obj.detach().to("cpu", copy=True)
+        if isinstance(obj, dict):
+            return {k: _to_cpu_copy(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return type(obj)(_to_cpu_copy(v) for v in obj)
+        return copy.deepcopy(obj)
+
+    # Snapshot so the warmup's synthetic optimizer.step() doesn't pollute resumed
+    # Adam moments (otherwise resume shows a loss spike on the first steps).
+    optimizer_state_snapshot = _to_cpu_copy(client.optimizer.state_dict())
+
     msa_buckets = _bucket_values(
         cfg.data.msa.max_msa_depth,
         cfg.train.bucket_msa_multiple,
@@ -362,10 +375,7 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
         with torch.no_grad():
             for name, p in raw_model.named_parameters():
                 p.copy_(param_snapshot[name].to(p.device, non_blocking=True))
-        for opt_state in client.optimizer.state.values():
-            for v in opt_state.values():
-                if isinstance(v, torch.Tensor):
-                    v.zero_()
+        client.optimizer.load_state_dict(optimizer_state_snapshot)
         _restore_rng_state(raw_model, rng_state)
         client.model.train(was_training)
 
@@ -547,6 +557,12 @@ def train(  # noqa: PLR0912, PLR0915
         batch_size=cfg.train.num_batch,
         num_workers=cfg.train.num_workers,
         prefetch_factor=cfg.train.prefetch_factor,
+        # Keep workers alive across epochs: with spawn context + many workers,
+        # respawning every epoch costs ~13 min of cold pipeline fill. Safe here
+        # because per-sample crop RNG is unseeded (epoch-independent) and the
+        # atom-level tokenizer is deterministic, so frozen worker epoch state
+        # does not change data generation.
+        persistent_workers=cfg.train.num_workers > 0,
         shuffle=True,
         bucket_msa_multiple=cfg.train.bucket_msa_multiple,
         bucket_token_multiple=cfg.train.bucket_token_multiple,
