@@ -83,6 +83,14 @@ def cli():
     default=Path("outputs/miniworld_edm_sample"),
     show_default=True,
 )
+@click.option(
+    "--run-dir",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Write directly into this dir (no date/time subdir). Lets multiple "
+         "invocations share one output folder; structures are named per target "
+         "so they don't collide.",
+)
 @click.option("--num-targets", type=int, default=4, show_default=True,
               help="Number of targets to sample from the DB.")
 @click.option("--n-samples", type=int, default=2, show_default=True,
@@ -98,6 +106,7 @@ def sample(  # noqa: PLR0915
     config: Path,
     ckpt: Path,
     output_dir: Path,
+    run_dir: Path | None,
     num_targets: int,
     n_samples: int,
     timesteps: int,
@@ -116,11 +125,16 @@ def sample(  # noqa: PLR0915
     fabric.launch()
     fabric.seed_everything(seed)
 
-    date_dir = output_dir / time.strftime("%Y-%m-%d")
-    run_name = time.strftime("%H%M%S")
-    if job_name:
-        run_name += f"_{job_name}"
-    run_sub_dir = date_dir / run_name
+    if run_dir is not None:
+        # Explicit shared folder: no date/time subdir, so several invocations
+        # (e.g. one per interface type) land in the same output directory.
+        run_sub_dir = run_dir
+    else:
+        date_dir = output_dir / time.strftime("%Y-%m-%d")
+        run_name = time.strftime("%H%M%S")
+        if job_name:
+            run_name += f"_{job_name}"
+        run_sub_dir = date_dir / run_name
     run_sub_dir.mkdir(parents=True, exist_ok=True)
     cif_dir = run_sub_dir / "structures"
     cif_dir.mkdir(parents=True, exist_ok=True)
@@ -157,7 +171,7 @@ def sample(  # noqa: PLR0915
         OmegaConf.create({"data": OmegaConf.to_container(cfg.data, resolve=True),
                           "model": client_config.model.model_dump(mode="json"),
                           "diffuser": client_config.diffuser.model_dump(mode="json")}),
-        run_sub_dir / "config.yaml",
+        run_sub_dir / (f"config_{job_name}.yaml" if job_name else "config.yaml"),
     )
 
     client.setup(fabric=fabric)
