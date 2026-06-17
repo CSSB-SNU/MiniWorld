@@ -105,6 +105,13 @@ def cli():
 @click.option("--compile/--no-compile", "do_compile", default=False, show_default=True)
 @click.option("--ema/--no-ema", "use_ema", default=True, show_default=True,
               help="Use EMA weights (default) or the raw trained weights.")
+@click.option("--fp32/--no-fp32", "force_fp32", default=False, show_default=True,
+              help="Run the diffusion module in fp32 (disable bf16 autocast).")
+@click.option("--save-traj/--no-save-traj", "save_traj", default=False, show_default=True,
+              help="Dump per-step sampling trajectory (npy + per-step lDDT/RMSD + frame CIFs).")
+@click.option("--attn-bf16/--no-attn-bf16", "attn_bf16", default=False, show_default=True,
+              help="With --fp32: keep only the attention kernel (q,k,v,bias) in bf16, "
+                   "rest of the diffusion forward in fp32. Requires --fp32.")
 @click.option("--job-name", type=str, default=None)
 @click.argument("overrides", type=str, nargs=-1)
 def sample(  # noqa: PLR0915
@@ -118,6 +125,9 @@ def sample(  # noqa: PLR0915
     seed: int,
     do_compile: bool,
     use_ema: bool,
+    force_fp32: bool,
+    save_traj: bool,
+    attn_bf16: bool,
     job_name: str | None,
     overrides: tuple[str, ...],
 ) -> None:
@@ -184,6 +194,69 @@ def sample(  # noqa: PLR0915
     client.load_state_dict(state_dict, model_only=True)
     client.model.eval()
 
+    if force_fp32:
+        # Disable bf16 autocast in the diffusion forward. The frozen trunk still
+        # emits bf16 conditioning, so cast those two tensors to fp32 before the
+        # diffusion module (fp32 params) to avoid dtype-mismatch errors.
+        fwd = client.model._forward_module  # noqa: SLF001
+        fwd.autocast_bf16 = False
+        _orig = fwd.diffusion_forward
+
+        def _fp32_diffusion_forward(*a, **kw):
+            a = list(a)
+            # diffusion_forward(reference, scheme, structure, x_t, x_mask,
+            #                   t_emb, token_single_input, token_pair_trunk)
+            for i, x in enumerate(a):
+                if torch.is_tensor(x) and x.dtype == torch.bfloat16:
+                    a[i] = x.float()
+            for k, x in kw.items():
+                if torch.is_tensor(x) and x.dtype == torch.bfloat16:
+                    kw[k] = x.float()
+            return _orig(*a, **kw)
+
+        fwd.diffusion_forward = _fp32_diffusion_forward
+        client.logger.info("FP32 diffusion forward enabled (autocast_bf16=False)")
+
+    if attn_bf16:
+        if not force_fp32:
+            msg = "--attn-bf16 requires --fp32 (otherwise everything is already bf16)."
+            raise click.UsageError(msg)
+        # fp32 everywhere EXCEPT the attention kernel: cast q,k,v,bias to bf16 right
+        # before the kernel and cast its output back to fp32. Config can't express
+        # this (autocast_bf16 is all-or-nothing), so we patch the class forward.
+        from einops import rearrange, repeat
+        from team_gm.modules.layers.augmented_attention import AugmentedAttentionPairBias
+        from team_gm.modules.layers.ops import sigmoid_gate
+
+        def _attn_bf16_forward(self, single, cond, pair, mask=None):
+            single = self.ada_ln_in(single, cond)
+            pair = self.ln_pair(pair)
+            bias = self.to_bias(pair)
+            query = self.to_query(single)
+            key = self.to_key(single)
+            value = self.to_value(single)
+            gate = self.to_gate(single)
+            num_aug, batch, len_res = query.shape[:3]
+            n_head, hidden = self.n_head, query.shape[-1] // self.n_head
+            query, key, value = [x.view(num_aug, batch, len_res, n_head, hidden)
+                                 for x in (query, key, value)]
+            if mask is not None and mask.ndim == 2:  # noqa: PLR2004
+                mask = repeat(mask, "B L -> A B L", A=single.shape[0])
+            if self.use_qk_norm:
+                query = self.norm_query(query)
+                key = self.norm_key(key)
+            # attention core in bf16, everything else fp32
+            out = self._kernel_attention_pair_bias(
+                query.bfloat16(), key.bfloat16(), value.bfloat16(),
+                bias.bfloat16(), mask).float()
+            out = rearrange(out, "A B L H D -> A B L (H D)")
+            out = sigmoid_gate(gate, out)
+            out = self.to_out(out)
+            return sigmoid_gate(self.to_scale(cond), out)
+
+        AugmentedAttentionPairBias.forward = _attn_bf16_forward
+        client.logger.info("attn-bf16: attention kernel (q,k,v,bias) in bf16, rest fp32")
+
     # --- dataloader over the training DB -------------------------------------
     bio_cfg = BioMolData.BioMolConfig(
         crop_config=data_cfg.crop,
@@ -243,6 +316,32 @@ def sample(  # noqa: PLR0915
             "target %s DONE | best(sample=%d) rmsd=%.3f lddt=%.4f",
             name, best_k, best_rmsd, best_lddt,
         )
+
+        if save_traj:
+            import numpy as np
+            traj_dir = run_sub_dir / "traj"
+            traj_dir.mkdir(parents=True, exist_ok=True)
+            # output.{model_traj,inter_traj}: (n_samples, T, L, 3)
+            #   model_traj = model's x0-hat at each step; inter_traj = x_t path.
+            np.save(traj_dir / f"{name}_model_traj.npy", output.model_traj)
+            np.save(traj_dir / f"{name}_inter_traj.npy", output.inter_traj)
+            mtraj = output.model_traj[best_k]  # (T, L, 3) x0-hat for best sample
+            n_steps = mtraj.shape[0]
+            # per-step lDDT/RMSD of the x0-hat vs GT
+            curve = traj_dir / f"{name}_curve.tsv"
+            with curve.open("w") as fh:
+                fh.write("step\tlddt\trmsd\n")
+                for ti in range(n_steps):
+                    p = torch.from_numpy(mtraj[ti]).to(gt_pos)
+                    ld = float(metrics.cal_atom_lddt(p, gt_pos, gt_mask))
+                    rm = float(metrics.cal_aligned_rmsd(p, gt_pos, gt_mask))
+                    fh.write(f"{ti}\t{ld:.4f}\t{rm:.3f}\n")
+            client.logger.info("  saved per-step curve -> %s", curve)
+            # subsampled frame CIFs (x0-hat) for visual inspection
+            stride = max(1, n_steps // 20)
+            for ti in list(range(0, n_steps, stride)) + [n_steps - 1]:
+                p = torch.from_numpy(mtraj[ti:ti + 1]).to(gt_pos)
+                batch_to_cif(batch, p, traj_dir / f"{name}_x0hat_step{ti:03d}.cif")
         done += 1
 
     client.logger.info("Sampling complete. %d targets -> %s", done, run_sub_dir)

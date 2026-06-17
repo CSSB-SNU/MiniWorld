@@ -17,4 +17,4 @@ __pycache__/
 **/*.egg-info/
 commands/
 tests/inference_data/
-.codex
+.codex.cache/

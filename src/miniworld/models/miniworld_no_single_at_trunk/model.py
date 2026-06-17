@@ -426,15 +426,18 @@ class Model(nn.Module):
                 )
             # EuclideanDiffuser.cal_loss requires float32 x_update.
             return out.float()
+        # fp32 diffusion forward: the frozen trunk emits bf16 conditioning, so
+        # cast it (and x_t/t_emb) to fp32 here. The attention core still runs in
+        # bf16 inside the Triton kernel (see AugmentedAttentionPairBias).
         return self.diffusion_module(
             reference,
             scheme,
             structure,
-            x_t,
+            x_t.float(),
             x_mask,
-            t_emb,
-            token_single_input,
-            token_pair_trunk,
+            t_emb.float(),
+            token_single_input.float(),
+            token_pair_trunk.float(),
         )
 
     def forward(
