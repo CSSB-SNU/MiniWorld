@@ -1,0 +1,29 @@
+# Experiment msa3_24_3 NO-SINGLE + QK-norm + bf16 + PAIR-BIAS RMSNorm — AF3-like EDM.
+# IDENTICAL to config_exp_msa3_24_3_no_single_qknorm_bf16_edm.yaml EXCEPT:
+#   - add affine RMSNorm over the n_head axis of the attention pair bias
+#     (use_bias_norm=True) on the diffusion DiTs (atom_dit = atom enc/dec,
+#     token_dit). Bounds the additive attention-logit bias whose unbounded
+#     growth (to_bias 15x, ln_pair.gamma 3.3x, logit spread 46->365) drove the
+#     epoch~505-510 attention-logit-growth divergence. Mirrors qk-norm.
+# Everything else (data / LR / trunk freeze / start ckpt / bf16 autocast) unchanged.
+# Run with scripts/run_miniworld_no_single_edm_train.py.
+defaults:
+  - model: large_msa3_24_3_no_single_qknorm
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384_atom_gap
+  - diffuser: edm
+  - loss: wo_smoothlddt
+  - _self_
+
+model:
+  diffusion:
+    atom_dit:
+      use_bias_norm: True    # atom encoder + decoder attention
+    token_dit:
+      use_bias_norm: True    # diffusion_transformer (token DiT)
+
+train:
+  comment: "exp msa3_24_3 no-single + qknorm + bf16 + pair-bias RMSNorm: atom-tok/gap, freeze trunk, edm"
+  run_dir: "logs/exp/msa3_24_3-no-single-qknorm-bf16-biasnorm-edm/"
+  # 16 GPU (2 node x 8) x num_batch(1) x grad_accum(16) => eff. batch 256.
+  grad_accum_steps: 16
