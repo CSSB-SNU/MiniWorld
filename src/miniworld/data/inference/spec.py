@@ -377,6 +377,14 @@ class InferenceSpec(BaseModel):
     refinement: RefinementSpec | None = None
     contacts: ContactsSpec = Field(default_factory=ContactsSpec)
     template_as_contact: bool = False
+    # Distance cutoffs (Å) for deriving contacts from as_contact templates.
+    # Defaults match training supervision (to_token_contacts): positive < 6 Å,
+    # negative > 12 Å, with the gap left unsupervised. Raising the positive
+    # cutoff densifies positives but biases the model to pull more-distant
+    # pairs to contact distance (over-compression risk) — see
+    # casp17/docs/rna_caveats.md §2.
+    template_contact_positive_cutoff: float = 6.0
+    template_contact_negative_cutoff: float = 12.0
     paired_msa_only: bool = False
     no_pairing_msa: bool = False
     condition_groups: list[list[int]] = Field(default_factory=list)

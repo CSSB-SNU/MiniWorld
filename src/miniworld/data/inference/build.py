@@ -299,6 +299,8 @@ def build_inference_batch(
 
         extra_pos, extra_neg = derive_contacts_from_complex_templates(
             spec, expansions=expansions, mode="all",
+            positive_cutoff=spec.template_contact_positive_cutoff,
+            negative_cutoff=spec.template_contact_negative_cutoff,
         )
         if extra_pos or extra_neg:
             # Dedupe while preserving the user's explicit contacts first.

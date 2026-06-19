@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -134,10 +134,36 @@ class Model(nn.Module):
 
         self.rng = np.random.default_rng()
         self._forced_n_recycle: int | None = None
+        self._force_inference_trunk_dropout = False
 
     def set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
         self.rng = np.random.default_rng(seed)
+
+    def set_inference_trunk_dropout(self, enabled: bool) -> None:
+        """Enable dropout in trunk modules during eval-time conditioning."""
+        self._force_inference_trunk_dropout = enabled
+
+    @contextmanager
+    def _trunk_dropout_scope(self) -> None:
+        """Temporarily set trunk modules to train mode while keeping the model in eval."""
+        if not self._force_inference_trunk_dropout or self.training:
+            yield
+            return
+
+        modules = (
+            self.msa_module,
+            self.temp_embedder,
+            self.pairformer_blocks,
+        )
+        prev_modes = [module.training for module in modules]
+        try:
+            for module in modules:
+                module.train()
+            yield
+        finally:
+            for module, was_training in zip(modules, prev_modes, strict=True):
+                module.train(was_training)
 
     def condition_forward(
         self,
@@ -155,6 +181,7 @@ class Model(nn.Module):
             n_recycle = self.rng.integers(1, self.n_recycle_max + 1)
         else:
             n_recycle = self.n_recycle_max
+        use_trunk_dropout = self.training or self._force_inference_trunk_dropout
 
         token_single_msa = init_token_single_msa(
             msa,
@@ -190,35 +217,36 @@ class Model(nn.Module):
         template_feat = init_template_feat(template, dtype=torch.bfloat16)
         template_feat = apply_template_dropout(
             template_feat,
-            self.config.trunk.template_embedder.dropout_prob,
+            self.config.trunk.template_embedder.dropout_prob if use_trunk_dropout else 0.0,
             dtype=torch.bfloat16,
         )
-        for i_cycle in range(n_recycle):
-            with ExitStack() as stack:
-                if i_cycle < n_recycle - 1:
-                    stack.enter_context(torch.no_grad())
-                token_pair = token_pair_init_bf16 + self.add_pair_recycle(
-                    token_pair,
-                )
-                token_pair = token_pair + self.proj_contact(contact_feat)
-                token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
+        with self._trunk_dropout_scope():
+            for i_cycle in range(n_recycle):
+                with ExitStack() as stack:
+                    if i_cycle < n_recycle - 1:
+                        stack.enter_context(torch.no_grad())
+                    token_pair = token_pair_init_bf16 + self.add_pair_recycle(
+                        token_pair,
+                    )
+                    token_pair = token_pair + self.proj_contact(contact_feat)
+                    token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
 
-                token_pair = token_pair + self.msa_module(
-                    msa_feat,
-                    msa_mask,
-                    token_pair,
-                    token_single_input_bf16,
-                    token_mask,
-                )
-                token_single = token_single_init_bf16 + self.add_single_recycle(
-                    token_single,
-                )
+                    token_pair = token_pair + self.msa_module(
+                        msa_feat,
+                        msa_mask,
+                        token_pair,
+                        token_single_input_bf16,
+                        token_mask,
+                    )
+                    token_single = token_single_init_bf16 + self.add_single_recycle(
+                        token_single,
+                    )
 
-                token_pair, token_single = self.pairformer_blocks.forward(
-                    token_pair,
-                    token_single,
-                    token_mask,
-                )
+                    token_pair, token_single = self.pairformer_blocks.forward(
+                        token_pair,
+                        token_single,
+                        token_mask,
+                    )
         # reduce token_pair information to distogram
         distogram_logit = self.distogram_head(token_pair)
 

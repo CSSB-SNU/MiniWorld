@@ -825,12 +825,14 @@ def _build_derivation_expansions(spec: "InferenceSpec") -> list:
     expansions: list = []
     atom_offset = 0
     token_offset = 0
+    residue_offset = 0
     for ci in chain_indices:
         cs = chain_specs[ci]
         residues_full = [ccd_lookup[ccd] for ccd in cs.chemcomp_ids]
         strip_atom = _TERMINAL_ATOM_BY_ENTITY.get(cs.entity_type)
         residues, keep_masks = _strip_terminal_atoms(residues_full, strip_atom)
         n_atoms = sum(r.n_atoms for r in residues)
+        n_res = len(residues)
         atom_to_token_local, token_to_residue_local, residue_token_offsets = (
             _tokenize_chain(cs, residues, residues_full, keep_masks, ccd_lookup, policy)
         )
@@ -839,7 +841,7 @@ def _build_derivation_expansions(spec: "InferenceSpec") -> list:
             _ChainExpansion(
                 spec=cs,
                 residues=residues,
-                n_residues=len(residues),
+                n_residues=n_res,
                 n_atoms=n_atoms,
                 n_tokens=n_tokens_chain,
                 atom_offset=atom_offset,
@@ -848,10 +850,18 @@ def _build_derivation_expansions(spec: "InferenceSpec") -> list:
                 atom_to_token_local=atom_to_token_local,
                 token_to_residue_local=token_to_residue_local,
                 residue_token_offsets=residue_token_offsets,
+                # Defaulted (cumulative-across-chains arange) — contact
+                # derivation never reads this; only the relpos head does. Kept
+                # in sync with build._resolve_residue_idx_for_relpos's default
+                # so the dataclass constructs.
+                residue_idx_for_relpos=np.arange(
+                    residue_offset, residue_offset + n_res, dtype=np.int64,
+                ),
             ),
         )
         atom_offset += n_atoms
         token_offset += n_tokens_chain
+        residue_offset += n_res
     return expansions
 
 

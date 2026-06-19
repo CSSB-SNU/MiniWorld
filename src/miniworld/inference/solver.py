@@ -24,6 +24,7 @@ import torch
 
 from miniworld.diffusion.base.solver import _chain_count, _expand_to_batch
 from miniworld.inference.diffusion import diffusion_step
+from miniworld.inference.ligand_potential import LigandRestraint, apply_ligand_restraint
 from miniworld.utils.structure.align import weighted_align
 from miniworld.utils.structure.se3 import apply_chain_rt, sample_rigid
 
@@ -97,6 +98,11 @@ def sample_trajectory(
     update_rule: Literal["ode", "ode_aligned", "x0_centered"] = "x0_centered",
     init_x0: torch.Tensor | None = None,
     return_intermediate: bool = True,
+    ligand_restraint: "LigandRestraint | None" = None,
+    ligand_sigma_threshold: float | None = None,
+    ligand_steps: int = 20,
+    ligand_lr: float = 0.05,
+    ligand_w_tether: float = 0.1,
 ) -> tuple[
     torch.Tensor,
     list[torch.Tensor],
@@ -141,6 +147,12 @@ def sample_trajectory(
     sigma_data = scheduler.config.sigma_data
     noise_lambda = solver_cfg.noise_lambda
     step_scale = solver_cfg.step_scale
+
+    # Ligand steering only fires in the low-noise regime where x0_hat is a
+    # trustworthy clean-structure estimate (and where geometry crystallises /
+    # bonds break). Default threshold = sigma_data. See ligand_potential.py.
+    if ligand_sigma_threshold is None:
+        ligand_sigma_threshold = float(sigma_data)
 
     inter_traj: list[torch.Tensor] = []
     hat_list: list[torch.Tensor] = []
@@ -187,6 +199,19 @@ def sample_trajectory(
         x_pred = diffusion_step(
             model, cache, schedule, x_input, t_index,
         ) * sigma_data
+
+        # Ligand geometry steering: project the clean-structure estimate toward
+        # valid bond/angle geometry (torsions + pose left free). Applied to
+        # x_pred so it flows into whichever update rule follows; gated to the
+        # low-noise regime. No-op when no ligand restraint was built.
+        if ligand_restraint is not None and float(sigma_hat) < ligand_sigma_threshold:
+            x_pred = apply_ligand_restraint(
+                x_pred,
+                ligand_restraint,
+                n_steps=ligand_steps,
+                lr=ligand_lr,
+                w_tether=ligand_w_tether,
+            )
 
         if update_rule == "ode":
             v = (y_pre_inject - x_pred) / sigma_hat

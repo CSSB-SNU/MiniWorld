@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from miniworld.data.features.batch import Batch
     from miniworld.diffusion.decoupled_xpred.scheduler import DecoupledXPredScheduler
     from miniworld.diffusion.decoupled_xpred.solver import XPredDecoupledSolver
+    from miniworld.inference.ligand_potential import LigandRestraint
     from miniworld.models.miniworld.client import Client
     from miniworld.models.miniworld.model import Model
 
@@ -152,6 +153,11 @@ class Predictor:
         init_x0: torch.Tensor | None = None,
         start_sigma_y: float | None = None,
         return_intermediate: bool = True,
+        ligand_restraint: "LigandRestraint | None" = None,
+        ligand_sigma_threshold: float | None = None,
+        ligand_steps: int = 20,
+        ligand_lr: float = 0.05,
+        ligand_w_tether: float = 0.1,
     ) -> PredictorOutput:
         """Run the diffusion sampler against a prepared cache.
 
@@ -201,6 +207,11 @@ class Predictor:
             update_rule=update_rule,
             init_x0=init_x0,
             return_intermediate=return_intermediate,
+            ligand_restraint=ligand_restraint,
+            ligand_sigma_threshold=ligand_sigma_threshold,
+            ligand_steps=ligand_steps,
+            ligand_lr=ligand_lr,
+            ligand_w_tether=ligand_w_tether,
         )
 
         inter_np = [t.detach().cpu().numpy() for t in inter_traj]
