@@ -1,0 +1,46 @@
+# distogram_only data config, repointed to the BioAI cluster data layout.
+# (distogram_only.yaml -> NHN cluster; distogram_only_local.yaml -> /home/psk6950/data)
+DB_PATH: /data/psk6950/BioMolDB_20260224
+train_db:
+  cif_db_path: ${..DB_PATH}/cif_attached_train_20260224_res9_chain300.lmdb
+  a3m_db_path: ${..DB_PATH}/a3m_16k.lmdb
+  edge_id_to_bias_path: ${..DB_PATH}/metadata/train_20260224_edge_node.tsv
+  template_db_path: ${..DB_PATH}/template.lmdb
+  ccd_preprocessed_path: /data/psk6950/CCD/biomol_CCD_202602.lmdb
+
+crop:
+  max_tokens: 384
+  max_atoms: 4096
+  min_segment_size: 1
+  max_segment_size: 41
+
+  monomer_only: false
+  remain_invalid_tokens: false
+
+  bucket_msa_size: 128
+  bucket_token_size: 128
+  bucket_atom_size: 1024
+
+msa:
+  max_msa_depth: 384
+  missing_policy: "gap"
+
+# AF3-style hybrid tokenization: canonical residues → 1 token per residue,
+# non-canonical / modified residues / ligands → 1 token per atom.
+tokenizer:
+  level: "atom"
+
+sampler:
+  protein_protein: 25.0
+  protein_ligand: 25
+  protein_dna: 10
+  protein_rna: 10
+  antibody_protein: 15
+  dna_dna: 5
+  rna_rna: 5
+  dna_rna: 0.5
+  antibody_antibody: 0.5
+  antibody_ligand: 1.0
+  na_ligand: 1.0
+  etc_interface: 1.0
+  sole: 1.0
