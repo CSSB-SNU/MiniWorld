@@ -44,7 +44,10 @@ from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.data.features.batch import Batch
 from miniworld.models.miniworld_no_single_at_trunk import Client, Model
 from miniworld.training import trainable_parameters
-from miniworld.utils import get_step_decay_scheduler_with_warmup
+from miniworld.utils import (
+    get_inverse_sqrt_scheduler_with_warmup,
+    get_step_decay_scheduler_with_warmup,
+)
 
 torch.set_float32_matmul_precision("medium")
 torch.autograd.set_detect_anomaly(False)
@@ -419,6 +422,146 @@ class VerboseCallback(Callback):
         )
 
 
+class WeightDynamicsMonitor(Callback):
+    """Track per-layer weight magnitude and effective learning rate over training.
+
+    Diagnoses the EDM2 (Karras et al., 2023, arXiv:2312.02696) failure mode where
+    sample quality slowly degrades and never recovers even though the training loss
+    looks fine. Two signatures to watch for in the logged curves:
+
+    (a) per-layer ``||w||`` grows monotonically with no sign of tapering off
+        (paper §2.2 / Fig. 3 "grow without bound"), and
+    (b) the *effective learning rate* ``||Δw|| / ||w||`` decays toward zero
+        **unequally across layers** (§2.3), so layers that have already drifted lose
+        the ability to self-correct -> the "no recovery" behaviour.
+
+    The effective LR is the relative size of the optimizer's update to the weights.
+    Note ``update_rms / w_rms == ||Δw|| / ||w||`` (the 1/sqrt(numel) factors cancel),
+    so we report the norm ratio directly. Watch ``wdyn/eff_lr_spread`` (max/min across
+    layers): if it climbs over training, the per-layer effective LR is diverging =
+    exactly the EDM2 imbalance.
+
+    Only weight matrices (ndim >= 2 -> conv / linear) are tracked, matching the
+    layers EDM2 analyzes. Runs on the global-zero rank only (DDP replicates params;
+    this is NOT valid under FSDP parameter sharding). Snapshots are taken to CPU and
+    only on logging steps, so the cost is paid once every ``log_every`` steps.
+
+    Enable via env var ``WDYN_MONITOR=1`` (period via ``WDYN_EVERY``, default 50).
+    """
+
+    def __init__(
+        self,
+        log_every: int = 50,
+        eff_lr_dead_threshold: float = 1e-4,
+        top_k: int = 12,
+        *,
+        use_wandb: bool = False,
+    ) -> None:
+        self.log_every = max(1, log_every)
+        self.dead_threshold = eff_lr_dead_threshold
+        self.top_k = top_k
+        self.use_wandb = use_wandb
+        self._snapshot: dict[str, torch.Tensor] | None = None
+        self._tracked: list[str] | None = None
+
+    @staticmethod
+    def _short(name: str) -> str:
+        return name.replace("_orig_mod.", "").replace("module.", "")
+
+    def _weight_params(self, client):  # noqa: ANN001, ANN202
+        # Weight matrices only: the conv / linear weights whose magnitude and
+        # effective LR EDM2 tracks. Skips norms, biases, scalars (ndim < 2).
+        return [
+            (n, p)
+            for n, p in client.model.named_parameters()
+            if p.requires_grad and p.ndim >= 2
+        ]
+
+    def _will_optimizer_step(self, client, batch_idx: int) -> bool:  # noqa: ANN001
+        accum = max(1, client.gradient_accumulation_steps)
+        return (batch_idx + 1) % accum == 0
+
+    def on_train_batch_end(self, client, batch, batch_idx, results):  # noqa: ANN001, ARG002
+        # Snapshot weights *before* the imminent optimizer step so the next
+        # on_train_step_end can form Δw = w_after - w_before.
+        if not client.is_global_zero:
+            return
+        if not self._will_optimizer_step(client, batch_idx):
+            return
+        # global_step is bumped inside the optimizer step we are about to take,
+        # so that step will be numbered global_step + 1.
+        if (client.global_step + 1) % self.log_every != 0:
+            return
+        with torch.no_grad():
+            self._snapshot = {
+                n: p.detach().to("cpu", dtype=torch.float32, copy=True)
+                for n, p in self._weight_params(client)
+            }
+
+    def on_train_step_end(self, client, batch, batch_idx, results):  # noqa: ANN001, ARG002
+        if self._snapshot is None:
+            return
+        names: list[str] = []
+        wnorms: list[float] = []
+        efflrs: list[float] = []
+        with torch.no_grad():
+            for n, p in self._weight_params(client):
+                w_before = self._snapshot.get(n)
+                if w_before is None:
+                    continue
+                w_after = p.detach().to("cpu", dtype=torch.float32)
+                w_norm = torch.linalg.vector_norm(w_after).item()
+                upd_norm = torch.linalg.vector_norm(w_after - w_before).item()
+                names.append(n)
+                wnorms.append(w_norm)
+                efflrs.append(upd_norm / (w_norm + 1e-12))
+        self._snapshot = None
+        if not names:
+            return
+
+        # Fixed subset spread across depth order, so per-layer series are stable
+        # across the whole run (lets you see early vs late layers diverge).
+        if self._tracked is None:
+            k = min(self.top_k, len(names))
+            denom = max(1, k - 1)
+            idx = sorted({round(i * (len(names) - 1) / denom) for i in range(k)})
+            self._tracked = [names[i] for i in idx]
+
+        eff_min = min(efflrs)
+        eff_max = max(efflrs)
+        dead_frac = sum(e < self.dead_threshold for e in efflrs) / len(efflrs)
+        metrics = {
+            "wdyn/eff_lr_min": eff_min,
+            "wdyn/eff_lr_max": eff_max,
+            "wdyn/eff_lr_mean": sum(efflrs) / len(efflrs),
+            # max/min ratio: rises when per-layer effective LR diverges (EDM2 §2.3).
+            "wdyn/eff_lr_spread": (eff_max + 1e-12) / (eff_min + 1e-12),
+            "wdyn/eff_lr_dead_frac": dead_frac,
+            "wdyn/wnorm_max": max(wnorms),
+            "wdyn/wnorm_mean": sum(wnorms) / len(wnorms),
+        }
+        lut = dict(zip(names, zip(wnorms, efflrs, strict=True)))
+        for n in self._tracked:
+            if n in lut:
+                short = self._short(n)
+                metrics[f"wdyn/wnorm/{short}"] = lut[n][0]
+                metrics[f"wdyn/eff_lr/{short}"] = lut[n][1]
+
+        client.logger.info(
+            "wdyn step=%d | wnorm[mean=%.4g max=%.4g] "
+            "eff_lr[min=%.3e max=%.3e spread=%.1f dead=%.0f%%]",
+            client.global_step,
+            metrics["wdyn/wnorm_mean"],
+            metrics["wdyn/wnorm_max"],
+            eff_min,
+            eff_max,
+            metrics["wdyn/eff_lr_spread"],
+            100.0 * dead_frac,
+        )
+        if self.use_wandb and client.is_global_zero:
+            wandb.log(metrics, step=client.global_step)
+
+
 @click.group()
 def cli():
     pass
@@ -496,6 +639,19 @@ def train(  # noqa: PLR0912, PLR0915
     if cfg.train.verbose:
         client.add_callback(VerboseCallback())
 
+    if os.environ.get("WDYN_MONITOR") == "1":
+        wdyn_every = int(os.environ.get("WDYN_EVERY", "50"))
+        client.add_callback(
+            WeightDynamicsMonitor(
+                log_every=wdyn_every,
+                use_wandb=cfg.train.use_wandb,
+            ),
+        )
+        client.logger.info(
+            "WeightDynamicsMonitor enabled (every %d optimizer steps)",
+            wdyn_every,
+        )
+
     if cfg.train.compile:
         torch._dynamo.config.cache_size_limit = 128  # noqa: SLF001
         torch._dynamo.config.accumulated_cache_size_limit = 512  # noqa: SLF001
@@ -541,12 +697,24 @@ def train(  # noqa: PLR0912, PLR0915
     else:
         msg = f"Unsupported optimizer: {cfg.train.optimizer}"
         raise ValueError(msg)
-    scheduler = get_step_decay_scheduler_with_warmup(
-        optimizer=optimizer,
-        warmup_steps=cfg.train.warmup_steps,
-        decay_steps=cfg.train.decay_steps,
-        decay_factor=cfg.train.decay_factor,
-    )
+    # EDM2 forced weight normalization pins ||w||, so the effective LR no longer
+    # self-decays via weight growth -> pair it with explicit inverse-sqrt decay
+    # (EDM2 Eq. 67). Opt in with EDM2_INV_SQRT_LR=1; t_ref via EDM2_LR_TREF.
+    if os.environ.get("EDM2_INV_SQRT_LR") == "1":
+        t_ref = int(os.environ.get("EDM2_LR_TREF", str(cfg.train.decay_steps)))
+        scheduler = get_inverse_sqrt_scheduler_with_warmup(
+            optimizer=optimizer,
+            warmup_steps=cfg.train.warmup_steps,
+            decay_ref_steps=t_ref,
+        )
+        client.logger.info("Using inverse-sqrt LR schedule (t_ref=%d)", t_ref)
+    else:
+        scheduler = get_step_decay_scheduler_with_warmup(
+            optimizer=optimizer,
+            warmup_steps=cfg.train.warmup_steps,
+            decay_steps=cfg.train.decay_steps,
+            decay_factor=cfg.train.decay_factor,
+        )
 
     client.setup(
         fabric=fabric,
