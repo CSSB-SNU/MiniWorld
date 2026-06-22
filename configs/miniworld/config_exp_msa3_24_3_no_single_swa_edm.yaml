@@ -1,0 +1,48 @@
+# [SWA-ATOM] msa3_24_3 NO-SINGLE — ESMFold2-style atom attention.
+#
+# Single-variable A/B against the mpfull baseline
+# (config_exp_msa3_24_3_no_single_qknorm_biasnorm_mpfull_edm.yaml): the ONLY
+# change is the atom-level attention. The AF3 block-local atom attention + the
+# O(L_atom^2) atom-pair bias tensor are replaced by the ESMFold2 SWAAtomTransformer
+# (Algorithm 6/7/8):
+#   - sliding-window attention (FlashAttention, window=128), no atom-pair tensor;
+#   - inter-atom geometry injected via 3D + per-residue-UID RoPE on q/k
+#     (from reference.pos / reference.space_uid);
+#   - DiT adaLN-Zero blocks (qk-norm for stability) — NOT the AF3 sigmoid-scale
+#     AdaLN. The token-level DiffusionTransformer is unchanged (still AF3).
+#
+# Setting ``diffusion.swa_atom`` switches the atom encoder/decoder to the SWA
+# stack; ``diffusion.atom_dit`` is then unused for the atom path. mp_full still
+# applies to the token DiT, but the SWA atom modules are excluded from MP (they
+# rely on qk-norm + zero-init gates, not forced weight norm).
+#
+# Run with scripts/run_miniworld_no_single_edm_train.py.
+defaults:
+  - model: large_msa3_24_3_no_single_qknorm
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384_atom_gap
+  - diffuser: edm
+  - loss: wo_smoothlddt
+  - _self_
+
+model:
+  diffusion:
+    mp_full: True                  # token DiT MP; SWA atom path auto-excluded
+    token_dit:
+      use_bias_norm: True
+      use_rotation: True           # AdaLN shift -> rotation modulation (token side)
+    # ESMFold2 SWA atom transformer (replaces AF3 atom attention + atom pair).
+    swa_atom:
+      n_block: 3
+      n_head: 4                    # head_dim = d_single_atom(128) / 4 = 32
+      swa_window_size: 128
+      expansion_ratio: 2
+      n_spatial_rope_pairs_per_axis: 2   # 3 axes * 2 = 6 spatial rope freqs
+      spatial_rope_base_frequency: 20.0
+      n_uid_rope_pairs: 10               # 6 + 10 = 16 = head_dim/2 (exact fill)
+      uid_rope_base_frequency: 10000.0
+
+train:
+  comment: "SWA-atom msa3_24_3 no-single (ESMFold2 atom attn, 3D RoPE, no atom pair)"
+  run_dir: "logs/exp/msa3_24_3-no-single-swa-edm/"
+  grad_accum_steps: 16

@@ -24,13 +24,21 @@ from contextlib import ExitStack
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+import logging
+
 import numpy as np
 import torch
 from pydantic import BaseModel
-from team_gm.modules import DiffusionTransformer, MSAModule, Pairformer
+from team_gm.modules import (
+    DiffusionTransformer,
+    MSAModule,
+    Pairformer,
+    SWAAtomTransformer,
+)
 from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
+    convert_linears_to_mp,
 )
 from torch import nn
 
@@ -137,12 +145,14 @@ class DiffusionModuleNoSingle(DiffusionModule):
         atom_dit_config: DiffusionTransformer.Config,
         token_dit_config: DiffusionTransformer.Config,
         dit_cond_config: DiffusionConditioning.Config,
+        swa_atom_config: SWAAtomTransformer.Config | None = None,
     ) -> None:
         super().__init__(
             shared_config,
             atom_dit_config,
             token_dit_config,
             dit_cond_config,
+            swa_atom_config=swa_atom_config,
         )
         self.diffusion_conditioning = DiffusionConditioningNoSingle(
             shared_config=shared_config,
@@ -175,16 +185,14 @@ class DiffusionModuleNoSingle(DiffusionModule):
         enc_token_single = self.diffusion_conditioning.linear_token_single(
             token_single_input,
         )
-        token_single_rep, atom_single_rep, atom_single_cond, atom_pair = (
-            self.atom_attention_encoder(
-                reference,
-                scheme,
-                structure,
-                x_t,
-                x_mask,
-                enc_token_single,
-                token_pair_cond,
-            )
+        token_single_rep, atom_single_rep, atom_single_cond, carry = self._encode_atoms(
+            reference,
+            scheme,
+            structure,
+            x_t,
+            x_mask,
+            enc_token_single,
+            token_pair_cond,
         )
         token_single_rep = token_single_rep + self.add_single_token_cond(
             token_single_cond,
@@ -200,13 +208,13 @@ class DiffusionModuleNoSingle(DiffusionModule):
             ),
         )
         token_single_rep = self.ln_token_single_rep(token_single_rep)
-        return self.atom_attention_decoder(
+        return self._decode_atoms(
             scheme,
             structure,
             token_single_rep,
             atom_single_rep,
             atom_single_cond,
-            atom_pair,
+            carry,
         )
 
 
@@ -229,6 +237,18 @@ class Model(nn.Module):
         atom_dit: DiffusionTransformer.Config
         token_dit: DiffusionTransformer.Config
         dit_cond: DiffusionConditioning.Config
+        # ESMFold2-style atom attention: when set, the atom encoder/decoder use a
+        # sliding-window 3D-RoPE transformer with NO atom-pair tensor (atom_dit is
+        # then unused for the atom path). Leave None for the default AF3 atom
+        # attention. Incompatible with mp_full on the atom path (SWA relies on
+        # qk-norm + zero-init gates, not forced weight norm), so mp_full is only
+        # propagated to the token DiT when this is set.
+        swa_atom: SWAAtomTransformer.Config | None = None
+        # EDM2 full magnitude preservation: MP every linear in the diffusion
+        # module EXCEPT the final denoising (R3 output) projection. Propagates
+        # mp_full to the atom/token DiTs and recursively swaps the remaining
+        # diffusion linears (conditioning, projections) to MPLinear. Default off.
+        mp_full: bool = False
         # Run the diffusion module forward under bf16 autocast (params stay
         # fp32 -> fp32 master weights / optimizer state for stable training).
         # The output is cast back to fp32 (EuclideanDiffuser.cal_loss requires
@@ -296,12 +316,38 @@ class Model(nn.Module):
 
         # Diffusion module (no-single variant). Params stay fp32; bf16 is opt-in
         # via autocast at forward time (config.diffusion.autocast_bf16).
+        # Full-MP: propagate mp_full into the atom/token DiTs so their blocks use
+        # MP linears + mp_sum + MP-SwiGLU (+ rotation if enabled).
+        use_swa_atom = config.diffusion.swa_atom is not None
+        if config.diffusion.mp_full:
+            config.diffusion.token_dit.mp_full = True
+            # The SWA atom path is MP-incompatible (zero-init gates / out_proj);
+            # only the AF3 atom DiT gets mp_full.
+            if not use_swa_atom:
+                config.diffusion.atom_dit.mp_full = True
         self.diffusion_module = DiffusionModuleNoSingle(
             config.shared,
             config.diffusion.atom_dit,
             config.diffusion.token_dit,
             config.diffusion.dit_cond,
+            swa_atom_config=config.diffusion.swa_atom,
         ).to(torch.float32)
+        # Full-MP: swap the remaining (non-DiT-block) diffusion linears
+        # (conditioning, atom enc/dec projections) to MPLinear too, EXCLUDING the
+        # final denoising R3 projection (its scale is handled by c_out/sigma_data).
+        # Already-MP block linears are skipped; Transition modules are forced to
+        # the PyTorch path inside the helper.
+        if config.diffusion.mp_full:
+            mp_exclude = ("final_denoising",)
+            if use_swa_atom:
+                # Keep the SWA atom transformer's zero-init gates / qk-norm intact.
+                mp_exclude = (*mp_exclude, "atom_attention_encoder", "atom_attention_decoder")
+            n_mp = convert_linears_to_mp(
+                self.diffusion_module, exclude_substrings=mp_exclude
+            )
+            logging.getLogger(__name__).info(
+                "mp_full: converted %d additional diffusion linears to MPLinear", n_mp
+            )
         self.autocast_bf16 = config.diffusion.autocast_bf16
 
         self.rng = np.random.default_rng()
