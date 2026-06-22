@@ -13,9 +13,12 @@
 #     (from reference.pos / reference.space_uid);
 #   - DiT adaLN-Zero blocks with qk-norm.
 #
-# The token-level DiffusionTransformer is UNCHANGED (AF3 pair-bias). It keeps
-# qk-norm (base model) + pair-bias RMSNorm (use_bias_norm) — these are plain-EDM
-# stabilization for the token-side attention-logit growth, independent of EDM2.
+# The token-level DiffusionTransformer is UNCHANGED (AF3 pair-bias) and uses the
+# base model's qk-norm only. To match ESMFold2's token attention (which uses
+# NEITHER qk-norm NOR a pair-bias RMSNorm), use_bias_norm is left off here.
+# NOTE: pair-bias RMSNorm was MiniWorld's fix for the ep~505 attention-logit
+# growth divergence on the token DiT — dropping it risks reintroducing that.
+# Watch the token-side attention-logit spread early in training.
 #
 # Run with scripts/run_miniworld_no_single_edm_train.py.
 defaults:
@@ -28,10 +31,8 @@ defaults:
 
 model:
   diffusion:
-    # NO mp_full / NO rotation (those are EDM2). token_dit keeps the pair-bias
-    # RMSNorm divergence fix only.
-    token_dit:
-      use_bias_norm: True
+    # NO mp_full / NO rotation / NO bias_norm (EDM2 + token-side extras). Token
+    # DiT = base (qk-norm only), matching ESMFold2's plain pair-bias attention.
     # ESMFold2 SWA atom transformer (replaces AF3 atom attention + atom pair).
     swa_atom:
       n_block: 3
