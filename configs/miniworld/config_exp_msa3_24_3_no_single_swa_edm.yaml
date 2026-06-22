@@ -33,6 +33,12 @@ model:
   diffusion:
     # NO mp_full / NO rotation / NO bias_norm (EDM2 + token-side extras). Token
     # DiT = base (qk-norm only), matching ESMFold2's plain pair-bias attention.
+    # bf16 ONLY inside the attention cores, fp32 everywhere else: disable the
+    # whole-module bf16 autocast (base sets it True). The attention compute still
+    # runs in bf16 because the token-DiT triton kernel and the SWA flash kernel
+    # cast q/k/v internally and restore fp32 on output; QKV projections / norms /
+    # FFN / conditioning / EDM preconditioning all stay fp32.
+    autocast_bf16: False
     # ESMFold2 SWA atom transformer (replaces AF3 atom attention + atom pair).
     swa_atom:
       n_block: 3
