@@ -1,20 +1,21 @@
-# [SWA-ATOM] msa3_24_3 NO-SINGLE — ESMFold2-style atom attention.
+# [SWA-ATOM] msa3_24_3 NO-SINGLE — ESMFold2-style atom attention on PLAIN EDM.
 #
-# Single-variable A/B against the mpfull baseline
-# (config_exp_msa3_24_3_no_single_qknorm_biasnorm_mpfull_edm.yaml): the ONLY
-# change is the atom-level attention. The AF3 block-local atom attention + the
-# O(L_atom^2) atom-pair bias tensor are replaced by the ESMFold2 SWAAtomTransformer
-# (Algorithm 6/7/8):
+# This is plain EDM (Karras 2022) — NOT EDM2. No magnitude preservation
+# (mp_full), no rotation modulation, no inverse-sqrt LR schedule. ESMFold2's
+# diffusion is standard EDM preconditioning + DiT adaLN-Zero + qk-norm.
+#
+# Single-variable A/B vs config_exp_msa3_24_3_no_single_qknorm_biasnorm_edm.yaml
+# (the plain-EDM qknorm+biasnorm baseline): the ONLY change is the atom-level
+# attention. The AF3 block-local atom attention + the O(L_atom^2) atom-pair bias
+# tensor are replaced by the ESMFold2 SWAAtomTransformer (Algorithm 6/7/8):
 #   - sliding-window attention (FlashAttention, window=128), no atom-pair tensor;
-#   - inter-atom geometry injected via 3D + per-residue-UID RoPE on q/k
+#   - inter-atom geometry via 3D + per-residue-UID RoPE on q/k
 #     (from reference.pos / reference.space_uid);
-#   - DiT adaLN-Zero blocks (qk-norm for stability) — NOT the AF3 sigmoid-scale
-#     AdaLN. The token-level DiffusionTransformer is unchanged (still AF3).
+#   - DiT adaLN-Zero blocks with qk-norm.
 #
-# Setting ``diffusion.swa_atom`` switches the atom encoder/decoder to the SWA
-# stack; ``diffusion.atom_dit`` is then unused for the atom path. mp_full still
-# applies to the token DiT, but the SWA atom modules are excluded from MP (they
-# rely on qk-norm + zero-init gates, not forced weight norm).
+# The token-level DiffusionTransformer is UNCHANGED (AF3 pair-bias). It keeps
+# qk-norm (base model) + pair-bias RMSNorm (use_bias_norm) — these are plain-EDM
+# stabilization for the token-side attention-logit growth, independent of EDM2.
 #
 # Run with scripts/run_miniworld_no_single_edm_train.py.
 defaults:
@@ -27,10 +28,10 @@ defaults:
 
 model:
   diffusion:
-    mp_full: True                  # token DiT MP; SWA atom path auto-excluded
+    # NO mp_full / NO rotation (those are EDM2). token_dit keeps the pair-bias
+    # RMSNorm divergence fix only.
     token_dit:
       use_bias_norm: True
-      use_rotation: True           # AdaLN shift -> rotation modulation (token side)
     # ESMFold2 SWA atom transformer (replaces AF3 atom attention + atom pair).
     swa_atom:
       n_block: 3
@@ -43,6 +44,6 @@ model:
       uid_rope_base_frequency: 10000.0
 
 train:
-  comment: "SWA-atom msa3_24_3 no-single (ESMFold2 atom attn, 3D RoPE, no atom pair)"
+  comment: "SWA-atom msa3_24_3 no-single (ESMFold2 atom attn, plain EDM, qknorm+biasnorm)"
   run_dir: "logs/exp/msa3_24_3-no-single-swa-edm/"
   grad_accum_steps: 16
