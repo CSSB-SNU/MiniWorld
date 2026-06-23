@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import torch
 from jaxtyping import Float
 
@@ -22,6 +24,13 @@ class AF3Solver(DiffusionSolver):
         self.gamma_min = 1.0
         self._lambda = 1.003
         self.step_scale = 1.5
+        # AF3 SampleDiffusion (Alg. 18) re-centers the coordinates to zero
+        # center-of-mass at the start of every denoising step. The global
+        # translation is an unconstrained mode (the rigid-aligned training
+        # loss gives it no gradient), so without per-step centering the COM
+        # can run away at the low-noise end where (x - x_denoised)/t_hat
+        # amplifies any residual mean error. Opt-in via env for A/B testing.
+        self.center_per_step = os.environ.get("EDM_CENTER_PER_STEP", "0") == "1"
 
     def _set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
@@ -40,6 +49,11 @@ class AF3Solver(DiffusionSolver):
         time_steps: Float[torch.Tensor, ...],
     ) -> tuple[Float[torch.Tensor, "... L 3"], Float[torch.Tensor, "... L 3"]]:
         """Perform one Euler update in t-space."""
+        # 0. AF3-style per-step re-centering: wipe any accumulated global
+        #    translation before the denoiser sees the iterate.
+        if self.center_per_step:
+            x = x - x.mean(dim=-2, keepdim=True)
+
         # 1. Get t_i and t_{i+1}, as well as Δt
         t_i = time_steps[t_index]
         t_next = time_steps[t_index + 1]

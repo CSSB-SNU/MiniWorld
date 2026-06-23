@@ -97,7 +97,11 @@ def cli():
          "so they don't collide.",
 )
 @click.option("--num-targets", type=int, default=4, show_default=True,
-              help="Number of targets to sample from the DB.")
+              help="Number of (kept) targets to sample from the DB.")
+@click.option("--max-token", type=int, default=0, show_default=True,
+              help="If >0, skip targets whose token_length >= this value "
+                   "(i.e. cropped / too-large structures), so only small "
+                   "fully-contained structures are evaluated.")
 @click.option("--n-samples", type=int, default=2, show_default=True,
               help="Diffusion samples per target (augmentation axis).")
 @click.option("--timesteps", type=int, default=100, show_default=True)
@@ -120,6 +124,7 @@ def sample(  # noqa: PLR0915
     output_dir: Path,
     run_dir: Path | None,
     num_targets: int,
+    max_token: int,
     n_samples: int,
     timesteps: int,
     seed: int,
@@ -284,6 +289,12 @@ def sample(  # noqa: PLR0915
             break
         batch = raw_batch.to(device=client.device)
         name = str(batch.name[0])
+        if max_token and int(batch.token_length) >= max_token:
+            client.logger.info(
+                "skip %s | n_tokens=%d >= max_token=%d (cropped/too large)",
+                name, int(batch.token_length), max_token,
+            )
+            continue
         client.logger.info(
             "target %d/%d %s | n_tokens=%d n_atoms=%d n_msa=%d",
             done + 1, num_targets, name,

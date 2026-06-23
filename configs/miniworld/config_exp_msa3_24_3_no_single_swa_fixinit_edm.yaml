@@ -1,0 +1,47 @@
+# [SWA-ATOM, FIXED INIT] msa3_24_3 NO-SINGLE — ESMFold2-style atom attention, PLAIN EDM.
+#
+# Re-run of config_exp_msa3_24_3_no_single_swa_edm.yaml after fixing the SWA
+# atom-attention parameter init to match the ESMFold2 reference code
+# (Biohub/transformers modeling_esmfold2_common.py). The architecture is
+# unchanged; only two init bugs in SWA3DRoPEAttention were corrected:
+#   - out_proj: was init="zero" -> now default init (ESMFold2 uses default).
+#   - gate_proj: was init="gating" with bias=False, which silently dropped the
+#     bias=1 and left the sigmoid output gate pinned at 0.5 (halving attention
+#     at init) -> now default init (ESMFold2 uses default). qk RMSNorm + the
+#     sigmoid output gate are both genuine ESMFold2 components and are kept.
+# Fresh run_dir so this is a clean A/B against the broken-init SWA run.
+#
+# Everything else identical: plain EDM (not EDM2), no mp_full/rotation/inv-sqrt LR.
+# Single-variable A/B vs the qknorm+biasnorm plain-EDM baseline; ONLY the
+# atom-level attention differs (ESMFold2 SWAAtomTransformer, no atom-pair tensor).
+#
+# Run with scripts/run_miniworld_no_single_edm_train.py.
+defaults:
+  - model: large_msa3_24_3_no_single_qknorm
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384_atom_gap
+  - diffuser: edm
+  - loss: wo_smoothlddt
+  - _self_
+
+model:
+  diffusion:
+    # NO mp_full / NO rotation / NO bias_norm. Token DiT = base (qk-norm only),
+    # matching ESMFold2's plain pair-bias attention.
+    # bf16 ONLY inside the attention cores, fp32 everywhere else.
+    autocast_bf16: False
+    # ESMFold2 SWA atom transformer (replaces AF3 atom attention + atom pair).
+    swa_atom:
+      n_block: 3
+      n_head: 4                    # head_dim = d_single_atom(128) / 4 = 32
+      swa_window_size: 128
+      expansion_ratio: 2
+      n_spatial_rope_pairs_per_axis: 2   # 3 axes * 2 = 6 spatial rope freqs
+      spatial_rope_base_frequency: 20.0
+      n_uid_rope_pairs: 10               # 6 + 10 = 16 = head_dim/2 (exact fill)
+      uid_rope_base_frequency: 10000.0
+
+train:
+  comment: "SWA-atom msa3_24_3 no-single (ESMFold2 atom attn, FIXED init, plain EDM, qknorm+biasnorm)"
+  run_dir: "logs/exp/msa3_24_3-no-single-swa-fixinit-edm/"
+  grad_accum_steps: 16
