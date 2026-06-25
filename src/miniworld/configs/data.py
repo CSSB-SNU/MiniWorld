@@ -80,6 +80,7 @@ class MSAConfig(BaseModel):
 
     max_msa_depth: int = 512
     missing_policy: Literal["gap", "query"] = "gap"
+    pairing_mode: Literal["mixed", "paired_only", "no_pairing"] = "mixed"
 
 
 class TemplateConfig(BaseModel):

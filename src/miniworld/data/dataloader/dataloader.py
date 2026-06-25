@@ -553,6 +553,8 @@ class BioMolData(torch.utils.data.Dataset):
             cifmol=cifmol,
             chain_id_to_crop_indices=chain_id_to_crop_indices,  # pyright: ignore[reportPossiblyUnboundVariable]
             env_path=self.config.DB_config.a3m_db_path,
+            missing_policy=self.config.msa_config.missing_policy,
+            pairing_mode=self.config.msa_config.pairing_mode,
         )
         msa = sample_msa(
             msa=complex_msa,

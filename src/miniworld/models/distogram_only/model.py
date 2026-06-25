@@ -161,6 +161,7 @@ class Model(nn.Module):
                     token_pair,
                     token_single_input_bf16,
                     token_mask,
+                    scheme.token_asym_id,
                 )
 
                 token_pair, _ = self.pairformer_blocks.forward(

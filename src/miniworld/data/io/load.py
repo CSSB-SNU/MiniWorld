@@ -266,6 +266,7 @@ def load_msa(
     chain_id_to_crop_indices: dict[str, np.ndarray],
     env_path: Path,
     missing_policy: Literal["gap", "query"] = "gap",
+    pairing_mode: Literal["mixed", "paired_only", "no_pairing"] = "mixed",
 ) -> ComplexMSA:
     """Load and crop MSAs for each chain in the cropped cifmol."""
     msa_list: list[MSA] = []
@@ -295,6 +296,7 @@ def load_msa(
     return ComplexMSA(
         MSAs=msa_list,
         missing_policy=missing_policy,
+        pairing_mode=pairing_mode,
     )
 
 
