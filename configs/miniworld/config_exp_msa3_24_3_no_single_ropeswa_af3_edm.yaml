@@ -1,0 +1,43 @@
+# [ROPE-SWA / AF3 BLOCK] msa3_24_3 NO-SINGLE — AF3 atom block, attention core = 3D RoPE + SWA.
+#
+# Variant "2": the atom transformer keeps MiniWorld's AF3 block intact
+# (AdaptiveLayerNorm input modulation, AF3 sigmoid value-gate + to_out, the
+# AF3 to_scale output gate (bias=-2), and the AF3 ConditionedTransition FFN) and
+# changes ONLY the attention core: AF3 block-local QK + O(L^2) atom-pair bias ->
+# sliding-window attention with 3D RoPE on q/k, NO atom-pair tensor.
+# Implemented by RoPESWAAF3Transformer (block_style: af3), reusing the SWA atom
+# encoder/decoder no-pair + RoPE/varlen plumbing.
+#
+# Contrast:
+#   - swa_fixinit (block_style esmfold2) = ESMFold2 block (adaLN-Zero + SwiGLU).
+#   - THIS (block_style af3)             = AF3 block, only attention core swapped.
+# Plain EDM (not EDM2). Single change vs the qknorm+biasnorm plain-EDM baseline
+# is the atom-level attention.
+#
+# Run with scripts/run_miniworld_no_single_edm_train.py.
+defaults:
+  - model: large_msa3_24_3_no_single_qknorm
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384_atom_gap
+  - diffuser: edm
+  - loss: wo_smoothlddt
+  - _self_
+
+model:
+  diffusion:
+    autocast_bf16: False
+    swa_atom:
+      block_style: af3            # AF3 atom block; attention core only -> 3D RoPE + SWA
+      n_block: 3
+      n_head: 4                    # head_dim = d_single_atom(128) / 4 = 32
+      swa_window_size: 128
+      expansion_ratio: 2          # AF3 ConditionedTransition expansion n
+      n_spatial_rope_pairs_per_axis: 2   # 3 axes * 2 = 6 spatial rope freqs
+      spatial_rope_base_frequency: 20.0
+      n_uid_rope_pairs: 10               # 6 + 10 = 16 = head_dim/2 (exact fill)
+      uid_rope_base_frequency: 10000.0
+
+train:
+  comment: "RoPE-SWA AF3-block msa3_24_3 no-single (AF3 atom block, attn core only, plain EDM)"
+  run_dir: "logs/exp/msa3_24_3-no-single-ropeswa-af3-edm/"
+  grad_accum_steps: 16

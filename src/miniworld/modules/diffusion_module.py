@@ -7,6 +7,7 @@ from jaxtyping import Bool, Float, Int
 from pydantic import BaseModel
 from team_gm import typecheck
 from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
+from team_gm.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Transformer
 from team_gm.modules.layers import Transition
 from team_gm.modules.layers.swa_atom_attention import build_attention_params
 from team_gm.modules.primitives import (
@@ -23,6 +24,15 @@ from miniworld.data.features import (
     StructureFeatures,
 )
 from miniworld.modules.embeddings import RelativePositionEmbedding, fourier_embedding
+
+
+def _make_atom_transformer(
+    resolved: "SWAAtomTransformer.Config",
+) -> nn.Module:
+    """Pick the SWA atom transformer flavor by ``block_style``."""
+    if getattr(resolved, "block_style", "esmfold2") == "af3":
+        return RoPESWAAF3Transformer(resolved)
+    return SWAAtomTransformer(resolved)
 
 
 # ---------------------------------------------------------------------------
@@ -712,7 +722,7 @@ class SWAAtomAttentionEncoder(nn.Module):
         resolved = swa_config.model_copy(
             update={"d_atom": d_single_atom, "d_cond": d_single_atom}
         )
-        self.atom_transformer = SWAAtomTransformer(resolved)
+        self.atom_transformer = _make_atom_transformer(resolved)
 
         self.atom_single_rep_to_token_single = nn.Sequential(
             Linear(d_single_atom, self.d_single_token, bias=False),
@@ -794,7 +804,7 @@ class SWAAtomAttentionDecoder(nn.Module):
         resolved = swa_config.model_copy(
             update={"d_atom": d_single_atom, "d_cond": d_single_atom}
         )
-        self.atom_transformer = SWAAtomTransformer(resolved)
+        self.atom_transformer = _make_atom_transformer(resolved)
         self.final_denoising = nn.Sequential(
             LayerNorm(d_single_atom),
             Linear(d_single_atom, 3, bias=False, init="zero"),
