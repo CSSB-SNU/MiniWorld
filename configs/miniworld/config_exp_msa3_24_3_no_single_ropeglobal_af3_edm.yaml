@@ -1,0 +1,41 @@
+# [ROPE-GLOBAL / AF3 BLOCK] msa3_24_3 NO-SINGLE — AF3 atom block, attention core = GLOBAL self-attn + 3D RoPE.
+#
+# Variant "3": identical to variant 2 (config_..._ropeswa_af3) except the atom
+# attention is GLOBAL (every atom attends to every atom) instead of the sliding
+# window. AF3 atom block kept intact (AdaptiveLayerNorm + sigmoid gate + to_scale
+# + ConditionedTransition); 3D RoPE on q/k kept; NO atom-pair tensor.
+# This isolates the effect of the sliding window: variant2 (RoPE+SWA) vs
+# variant3 (RoPE+global), everything else equal.
+#
+# NOTE: global atom attention is O(L_atom^2) — fine at training crop (max_atoms
+# 4096) but NOT for large-complex inference. Implemented via global_attn: true
+# on RoPESWAAF3Transformer (half_window=-1 -> FA4 window_size=(-1,-1)).
+#
+# Plain EDM (not EDM2). Run with scripts/run_miniworld_no_single_edm_train.py.
+defaults:
+  - model: large_msa3_24_3_no_single_qknorm
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384_atom_gap
+  - diffuser: edm
+  - loss: wo_smoothlddt
+  - _self_
+
+model:
+  diffusion:
+    autocast_bf16: False
+    swa_atom:
+      block_style: af3            # AF3 atom block; attention core only
+      global_attn: true           # GLOBAL self-attention (no sliding window)
+      n_block: 3
+      n_head: 4                    # head_dim = d_single_atom(128) / 4 = 32
+      swa_window_size: 128         # ignored when global_attn: true
+      expansion_ratio: 2          # AF3 ConditionedTransition expansion n
+      n_spatial_rope_pairs_per_axis: 2
+      spatial_rope_base_frequency: 20.0
+      n_uid_rope_pairs: 10
+      uid_rope_base_frequency: 10000.0
+
+train:
+  comment: "RoPE-global AF3-block msa3_24_3 no-single (AF3 atom block, global attn, plain EDM)"
+  run_dir: "logs/exp/msa3_24_3-no-single-ropeglobal-af3-edm/"
+  grad_accum_steps: 16
