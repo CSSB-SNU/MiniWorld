@@ -103,7 +103,12 @@ def cli():
                    "(i.e. cropped / too-large structures), so only small "
                    "fully-contained structures are evaluated.")
 @click.option("--n-samples", type=int, default=2, show_default=True,
-              help="Diffusion samples per target (augmentation axis).")
+              help="Backward-compatible diffusion samples per target. Used as "
+                   "--n-diffusion-samples when that option is omitted.")
+@click.option("--n-trunk-samples", type=int, default=1, show_default=True,
+              help="Number of trunk/conditioning samples per target.")
+@click.option("--n-diffusion-samples", type=int, default=None,
+              help="Diffusion samples per trunk sample. Defaults to --n-samples.")
 @click.option("--timesteps", type=int, default=100, show_default=True)
 @click.option("--seed", type=int, default=0, show_default=True)
 @click.option("--compile/--no-compile", "do_compile", default=False, show_default=True)
@@ -111,6 +116,10 @@ def cli():
               help="Use EMA weights (default) or the raw trained weights.")
 @click.option("--fp32/--no-fp32", "force_fp32", default=False, show_default=True,
               help="Run the diffusion module in fp32 (disable bf16 autocast).")
+@click.option("--transition-pytorch/--no-transition-pytorch", default=False,
+              show_default=True,
+              help="Force Transition/ConditionedTransition modules to use the "
+                   "PyTorch path instead of the Triton transition kernel.")
 @click.option("--save-traj/--no-save-traj", "save_traj", default=False, show_default=True,
               help="Dump per-step sampling trajectory (npy + per-step lDDT/RMSD + frame CIFs).")
 @click.option("--attn-bf16/--no-attn-bf16", "attn_bf16", default=False, show_default=True,
@@ -126,16 +135,27 @@ def sample(  # noqa: PLR0915
     num_targets: int,
     max_token: int,
     n_samples: int,
+    n_trunk_samples: int,
+    n_diffusion_samples: int | None,
     timesteps: int,
     seed: int,
     do_compile: bool,
     use_ema: bool,
     force_fp32: bool,
+    transition_pytorch: bool,
     save_traj: bool,
     attn_bf16: bool,
     job_name: str | None,
     overrides: tuple[str, ...],
 ) -> None:
+    if n_trunk_samples < 1:
+        raise click.UsageError("--n-trunk-samples must be >= 1")
+    if n_diffusion_samples is None:
+        n_diffusion_samples = n_samples
+    if n_diffusion_samples < 1:
+        raise click.UsageError("--n-diffusion-samples must be >= 1")
+    total_samples = n_trunk_samples * n_diffusion_samples
+
     # --- compose data config -------------------------------------------------
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
@@ -176,9 +196,12 @@ def sample(  # noqa: PLR0915
     fh.setFormatter(formatter)
     client.logger.addHandler(fh)
     client.logger.info(
-        "ckpt=%s epoch=%s step=%s | num_targets=%d n_samples=%d timesteps=%d ema=%s",
+        "ckpt=%s epoch=%s step=%s | num_targets=%d "
+        "n_trunk_samples=%d n_diffusion_samples=%d total_samples=%d "
+        "timesteps=%d ema=%s",
         ckpt, state_dict.get("epoch"), state_dict.get("global_step"),
-        num_targets, n_samples, timesteps, use_ema,
+        num_targets, n_trunk_samples, n_diffusion_samples, total_samples,
+        timesteps, use_ema,
     )
 
     if do_compile:
@@ -198,6 +221,21 @@ def sample(  # noqa: PLR0915
     # Applies EMA shadow to the trained (diffusion) params via ModelEMA callback.
     client.load_state_dict(state_dict, model_only=True)
     client.model.eval()
+
+    if transition_pytorch:
+        from team_gm.modules.exceptions import ImplementationType
+        from team_gm.modules.layers.conditioned_transition import ConditionedTransition
+        from team_gm.modules.layers.transition import Transition
+
+        n_forced = 0
+        for module in client.model.modules():
+            if isinstance(module, (Transition, ConditionedTransition)):
+                module.implementation = ImplementationType.PYTORCH
+                n_forced += 1
+        client.logger.info(
+            "transition-pytorch: forced %d transition modules to PyTorch",
+            n_forced,
+        )
 
     if force_fp32:
         # Disable bf16 autocast in the diffusion forward. The frozen trunk still
@@ -287,7 +325,8 @@ def sample(  # noqa: PLR0915
     for raw_batch in dataloader:
         if done >= num_targets:
             break
-        batch = raw_batch.to(device=client.device)
+        base_batch = raw_batch.to(device=client.device)
+        batch = base_batch
         name = str(batch.name[0])
         if max_token and int(batch.token_length) >= max_token:
             client.logger.info(
@@ -301,42 +340,64 @@ def sample(  # noqa: PLR0915
             batch.token_length, batch.atom_length, batch.msa_count,
         )
 
-        # Run trunk once, then sample n_samples diffusion trajectories.
-        wrapper, batch = client.prepare(batch)
-        torch.manual_seed(seed * 100003 + done * 1009)
-        output = client.sample(
-            wrapper, batch, n_samples=n_samples, timesteps=timesteps,
-        )
-
-        # Ground truth once.
-        batch_to_cif(batch, None, cif_dir / f"{name}_gt.cif")
-
         gt_pos = batch.structure.atom_pos[0]
         gt_mask = batch.structure.atom_mask[0]
-        best_rmsd, best_lddt, best_k = float("inf"), 0.0, 0
-        for k in range(n_samples):
-            pred_k = output.atom_pos_pred[k:k + 1]
-            batch_to_cif(batch, pred_k, cif_dir / f"{name}_pred_{k}.cif")
-            rmsd = float(metrics.cal_aligned_rmsd(output.atom_pos_pred[k], gt_pos, gt_mask))
-            lddt = float(metrics.cal_atom_lddt(output.atom_pos_pred[k], gt_pos, gt_mask))
-            client.logger.info("  sample %d: rmsd=%.3f lddt=%.4f", k, rmsd, lddt)
-            if rmsd < best_rmsd:
-                best_rmsd, best_lddt, best_k = rmsd, lddt, k
+        gt_written = False
+        best_rmsd, best_lddt = float("inf"), 0.0
+        best_idx, best_tag = 0, "t00_d00"
+        best_model_traj = None
+        best_inter_traj = None
+
+        for i_trunk in range(n_trunk_samples):
+            trunk_seed = seed + done * 1009 + i_trunk
+            torch.manual_seed(trunk_seed)
+            batch = base_batch
+            wrapper, batch = client.prepare(batch)
+
+            if not gt_written:
+                batch_to_cif(batch, None, cif_dir / f"{name}_gt.cif")
+                gt_pos = batch.structure.atom_pos[0]
+                gt_mask = batch.structure.atom_mask[0]
+                gt_written = True
+
+            torch.manual_seed(trunk_seed * 100003)
+            output = client.sample(
+                wrapper, batch, n_samples=n_diffusion_samples,
+                timesteps=timesteps,
+            )
+
+            for j_diff in range(n_diffusion_samples):
+                sample_idx = i_trunk * n_diffusion_samples + j_diff
+                tag = f"t{i_trunk:02d}_d{j_diff:02d}"
+                pred_k = output.atom_pos_pred[j_diff:j_diff + 1]
+                batch_to_cif(batch, pred_k, cif_dir / f"{name}_pred_{tag}.cif")
+                rmsd = float(metrics.cal_aligned_rmsd(
+                    output.atom_pos_pred[j_diff], gt_pos, gt_mask))
+                lddt = float(metrics.cal_atom_lddt(
+                    output.atom_pos_pred[j_diff], gt_pos, gt_mask))
+                client.logger.info(
+                    "  sample %d [%s]: rmsd=%.3f lddt=%.4f",
+                    sample_idx, tag, rmsd, lddt,
+                )
+                if rmsd < best_rmsd:
+                    best_rmsd, best_lddt = rmsd, lddt
+                    best_idx, best_tag = sample_idx, tag
+                    if save_traj:
+                        best_model_traj = output.model_traj[j_diff]
+                        best_inter_traj = output.inter_traj[j_diff]
 
         client.logger.info(
-            "target %s DONE | best(sample=%d) rmsd=%.3f lddt=%.4f",
-            name, best_k, best_rmsd, best_lddt,
+            "target %s DONE | best(sample=%d) rmsd=%.3f lddt=%.4f tag=%s",
+            name, best_idx, best_rmsd, best_lddt, best_tag,
         )
 
         if save_traj:
             import numpy as np
             traj_dir = run_sub_dir / "traj"
             traj_dir.mkdir(parents=True, exist_ok=True)
-            # output.{model_traj,inter_traj}: (n_samples, T, L, 3)
-            #   model_traj = model's x0-hat at each step; inter_traj = x_t path.
-            np.save(traj_dir / f"{name}_model_traj.npy", output.model_traj)
-            np.save(traj_dir / f"{name}_inter_traj.npy", output.inter_traj)
-            mtraj = output.model_traj[best_k]  # (T, L, 3) x0-hat for best sample
+            np.save(traj_dir / f"{name}_best_model_traj.npy", best_model_traj)
+            np.save(traj_dir / f"{name}_best_inter_traj.npy", best_inter_traj)
+            mtraj = best_model_traj  # (T, L, 3) x0-hat for best sample
             n_steps = mtraj.shape[0]
             # per-step lDDT/RMSD of the x0-hat vs GT
             curve = traj_dir / f"{name}_curve.tsv"

@@ -117,12 +117,18 @@ class Client(BaseClient):
         num_batch: int = 1
         num_epoch: int = 1000
         optimizer: Literal["AdamW", "Adam"] = "AdamW"
+        adam_beta1: float = 0.9
+        adam_beta2: float = 0.95
         max_lr: float = 1e-4
         min_lr: float = 1e-5
         weight_decay: float = 0.01
         warmup_steps: int = int(5e3)
         decay_steps: int = int(5e6)
         decay_factor: float = 0.95
+        # "env" preserves the legacy EDM2_INV_SQRT_LR switch. Set explicitly to
+        # "inverse_sqrt" or "step" in configs for reproducible scheduler choice.
+        lr_schedule: Literal["env", "step", "inverse_sqrt"] = "env"
+        lr_decay_ref_steps: int | None = None
         compile: bool = False
         num_augment: int = 8
         save_freq: int = 5

@@ -105,6 +105,7 @@ class DiffusionConditioningNoSingle(DiffusionConditioning):
     ) -> tuple[
         Float[torch.Tensor, "B L_token d_single"],
         Float[torch.Tensor, "B L_token L_token d_pair"],
+        Float[torch.Tensor, "B L_token d_single"],
     ]:
         """Forward pass; token single conditioning uses token_single_input only."""
         rel_emb = self.relative_position_embedder(
@@ -119,16 +120,16 @@ class DiffusionConditioningNoSingle(DiffusionConditioning):
         for transition in self.pair_transitions:
             token_pair = token_pair + transition(token_pair)
 
-        token_single = self.linear_token_single(token_single_input)
+        token_single_input_proj = self.linear_token_single(token_single_input)
         time_embedding = fourier_embedding(t_emb)
         time_embedding = time_embedding.squeeze(-2)
-        token_single = token_single + self.add_time_embedding(time_embedding)
+        token_single = token_single_input_proj + self.add_time_embedding(time_embedding)
 
         for transition in self.single_transitions:
             token_single = token_single + transition(token_single)
 
         token_single = self.final_layernorm_token_single(token_single)
-        return token_single, token_pair
+        return token_single, token_pair, token_single_input_proj
 
 
 class DiffusionModuleNoSingle(DiffusionModule):
@@ -171,20 +172,19 @@ class DiffusionModuleNoSingle(DiffusionModule):
         token_pair_trunk: Float[torch.Tensor, "B L_token L_token d_pair"],
     ) -> Float[torch.Tensor, "B L_atom 3"]:
         """Forward pass of the diffusion module (no trunk single)."""
-        token_single_cond, token_pair_cond = self.diffusion_conditioning(
+        (
+            token_single_cond,
+            token_pair_cond,
+            enc_token_single,
+        ) = self.diffusion_conditioning(
             scheme,
             t_emb,
             token_single_input,
             token_pair_trunk,
         )
         # The atom encoder expects a BATCH-level (B, L, d_single) per-token
-        # single (the original used token_single_trunk, which had no augment
-        # axis). With no trunk single, seed it with token_single_input projected
-        # to d_single via the conditioning's input projection (no time / no
-        # augment axis), so the only token-single info is input-derived.
-        enc_token_single = self.diffusion_conditioning.linear_token_single(
-            token_single_input,
-        )
+        # single. Reuse the pre-time token-single projection from conditioning
+        # so MPLinear forced normalization is applied once per graph.
         token_single_rep, atom_single_rep, atom_single_cond, carry = self._encode_atoms(
             reference,
             scheme,
@@ -237,12 +237,11 @@ class Model(nn.Module):
         atom_dit: DiffusionTransformer.Config
         token_dit: DiffusionTransformer.Config
         dit_cond: DiffusionConditioning.Config
-        # ESMFold2-style atom attention: when set, the atom encoder/decoder use a
-        # sliding-window 3D-RoPE transformer with NO atom-pair tensor (atom_dit is
-        # then unused for the atom path). Leave None for the default AF3 atom
-        # attention. Incompatible with mp_full on the atom path (SWA relies on
-        # qk-norm + zero-init gates, not forced weight norm), so mp_full is only
-        # propagated to the token DiT when this is set.
+        # ESMFold2/RoPE-SWA atom attention: when set, the atom encoder/decoder
+        # use a sliding-window 3D-RoPE transformer with NO atom-pair tensor
+        # (atom_dit is then unused for the atom path). Leave None for the
+        # default AF3 atom attention. Under mp_full this path is converted too;
+        # only final_denoising stays a raw zero-init Linear.
         swa_atom: SWAAtomTransformer.Config | None = None
         # EDM2 full magnitude preservation: MP every linear in the diffusion
         # module EXCEPT the final denoising (R3 output) projection. Propagates
@@ -316,14 +315,24 @@ class Model(nn.Module):
 
         # Diffusion module (no-single variant). Params stay fp32; bf16 is opt-in
         # via autocast at forward time (config.diffusion.autocast_bf16).
-        # Full-MP: propagate mp_full into the atom/token DiTs so their blocks use
-        # MP linears + mp_sum + MP-SwiGLU (+ rotation if enabled).
+        # Full-MP: propagate mp_full into every diffusion transformer path so
+        # blocks use MP linears + mp_sum + MP-SwiGLU (+ rotation if enabled).
         use_swa_atom = config.diffusion.swa_atom is not None
         if config.diffusion.mp_full:
             config.diffusion.token_dit.mp_full = True
-            # The SWA atom path is MP-incompatible (zero-init gates / out_proj);
-            # only the AF3 atom DiT gets mp_full.
-            if not use_swa_atom:
+            if use_swa_atom:
+                config.diffusion.swa_atom.mp_full = True
+                config.diffusion.swa_atom.magnitude_preserving = True
+                config.diffusion.swa_atom.use_rotation = (
+                    config.diffusion.token_dit.use_rotation
+                    or config.diffusion.atom_dit.use_rotation
+                )
+                config.diffusion.swa_atom.mp_residual = (
+                    config.diffusion.token_dit.mp_residual
+                    or config.diffusion.atom_dit.mp_residual
+                )
+                config.diffusion.swa_atom.residual_t = config.diffusion.token_dit.residual_t
+            else:
                 config.diffusion.atom_dit.mp_full = True
         self.diffusion_module = DiffusionModuleNoSingle(
             config.shared,
@@ -339,9 +348,6 @@ class Model(nn.Module):
         # the PyTorch path inside the helper.
         if config.diffusion.mp_full:
             mp_exclude = ("final_denoising",)
-            if use_swa_atom:
-                # Keep the SWA atom transformer's zero-init gates / qk-norm intact.
-                mp_exclude = (*mp_exclude, "atom_attention_encoder", "atom_attention_decoder")
             n_mp = convert_linears_to_mp(
                 self.diffusion_module, exclude_substrings=mp_exclude
             )

@@ -18,3 +18,4 @@ __pycache__/
 commands/
 tests/inference_data/
 .codex.cache/
+inference/

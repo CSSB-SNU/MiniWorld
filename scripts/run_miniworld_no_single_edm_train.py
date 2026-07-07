@@ -692,29 +692,40 @@ def train(  # noqa: PLR0912, PLR0915
         optimizer = torch.optim.Adam(
             optim_params,
             cfg.train.max_lr,
-            betas=(0.9, 0.95),
+            betas=(cfg.train.adam_beta1, cfg.train.adam_beta2),
         )
     else:
         msg = f"Unsupported optimizer: {cfg.train.optimizer}"
         raise ValueError(msg)
     # EDM2 forced weight normalization pins ||w||, so the effective LR no longer
     # self-decays via weight growth -> pair it with explicit inverse-sqrt decay
-    # (EDM2 Eq. 67). Opt in with EDM2_INV_SQRT_LR=1; t_ref via EDM2_LR_TREF.
-    if os.environ.get("EDM2_INV_SQRT_LR") == "1":
-        t_ref = int(os.environ.get("EDM2_LR_TREF", str(cfg.train.decay_steps)))
+    # (EDM2 Eq. 67). Prefer config; lr_schedule="env" preserves the legacy
+    # EDM2_INV_SQRT_LR / EDM2_LR_TREF launch switches.
+    lr_schedule = cfg.train.lr_schedule
+    if lr_schedule == "env":
+        lr_schedule = (
+            "inverse_sqrt" if os.environ.get("EDM2_INV_SQRT_LR") == "1" else "step"
+        )
+    if lr_schedule == "inverse_sqrt":
+        t_ref = cfg.train.lr_decay_ref_steps
+        if t_ref is None:
+            t_ref = int(os.environ.get("EDM2_LR_TREF", str(cfg.train.decay_steps)))
         scheduler = get_inverse_sqrt_scheduler_with_warmup(
             optimizer=optimizer,
             warmup_steps=cfg.train.warmup_steps,
             decay_ref_steps=t_ref,
         )
         client.logger.info("Using inverse-sqrt LR schedule (t_ref=%d)", t_ref)
-    else:
+    elif lr_schedule == "step":
         scheduler = get_step_decay_scheduler_with_warmup(
             optimizer=optimizer,
             warmup_steps=cfg.train.warmup_steps,
             decay_steps=cfg.train.decay_steps,
             decay_factor=cfg.train.decay_factor,
         )
+    else:
+        msg = f"Unsupported lr_schedule: {cfg.train.lr_schedule}"
+        raise ValueError(msg)
 
     client.setup(
         fabric=fabric,
@@ -723,7 +734,6 @@ def train(  # noqa: PLR0912, PLR0915
         gradient_accumulation_steps=cfg.train.grad_accum_steps,
         gradient_clip_norm=cfg.train.grad_clip_max_norm,
     )
-
     if state_dict is not None and policy_summary is None:
         client.load_state_dict(state_dict, strict=ckpt_strict)
 

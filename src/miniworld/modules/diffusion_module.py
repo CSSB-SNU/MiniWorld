@@ -9,7 +9,10 @@ from team_gm import typecheck
 from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
 from team_gm.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Transformer
 from team_gm.modules.layers import Transition
-from team_gm.modules.layers.swa_atom_attention import build_attention_params
+from team_gm.modules.layers.swa_atom_attention import (
+    build_attention_params,
+    build_local_structure_neighbor_indices,
+)
 from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
@@ -722,6 +725,12 @@ class SWAAtomAttentionEncoder(nn.Module):
         resolved = swa_config.model_copy(
             update={"d_atom": d_single_atom, "d_cond": d_single_atom}
         )
+        if (
+            getattr(resolved, "local_structure_attn", False)
+            and getattr(resolved, "block_style", "esmfold2") != "af3"
+        ):
+            raise ValueError("local_structure_attn is currently supported only with block_style='af3'.")
+        self.swa_config = resolved
         self.atom_transformer = _make_atom_transformer(resolved)
 
         self.atom_single_rep_to_token_single = nn.Sequential(
@@ -771,6 +780,21 @@ class SWAAtomAttentionEncoder(nn.Module):
             .reshape(num_aug * batch_size, atom_length)
         )
         attn_params = build_attention_params(cos, sin, valid, num_aug)
+        if getattr(self.swa_config, "local_structure_attn", False):
+            x_t_flat = x_t.reshape(num_aug * batch_size, atom_length, 3)
+            neighbor_idx, neighbor_mask = build_local_structure_neighbor_indices(
+                x_t_flat,
+                valid,
+                seq_neighbors=self.swa_config.seq_neighbors,
+                structure_neighbors=self.swa_config.structure_neighbors,
+                query_chunk_size=self.swa_config.structure_query_chunk_size,
+            )
+            attn_params = (
+                *attn_params,
+                neighbor_idx,
+                neighbor_mask,
+                self.swa_config.sparse_attention_query_chunk_size,
+            )
 
         d = atom_single_rep.shape[-1]
         q = atom_single_rep.reshape(num_aug * batch_size, atom_length, d)
