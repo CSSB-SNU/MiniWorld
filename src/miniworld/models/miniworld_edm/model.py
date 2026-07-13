@@ -22,6 +22,9 @@ from miniworld.modules.diffusion_module import (
 )
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
+from miniworld.modules.input_feature_embedder_esmfold2_style import (
+    InputFeatureEmbedderESMFold2Style,
+)
 from miniworld.modules.msa_util import (
     apply_template_dropout,
     init_contact_feat,
@@ -85,10 +88,17 @@ class Model(nn.Module):
         self.n_recycle_max = config.trunk.n_recycle_max
 
         # feature initialization
-        self.input_feature_embedder = InputFeatureEmbedder(
-            config.shared,
-            config.input_feat_embbeder,
-        )
+        if config.diffusion.atom_swa.enabled:
+            self.input_feature_embedder = InputFeatureEmbedderESMFold2Style(
+                config.shared,
+                config.input_feat_embbeder,
+                atom_swa_config=config.diffusion.atom_swa,
+            )
+        else:
+            self.input_feature_embedder = InputFeatureEmbedder(
+                config.shared,
+                config.input_feat_embbeder,
+            )
 
         # Recycle layers
         self.add_pair_recycle = nn.Sequential(
