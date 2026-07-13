@@ -86,14 +86,17 @@ cu128 = { features = ["cuda128"] }
 [tool.pixi.pypi-dependencies]
 miniworld = { path = ".", editable = true }
 team_gm = { path = "libs/team-gm", editable = true }
+miniworld-kernels = { path = "libs/team-gm/third_party/miniworld-kernels", editable = true }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"
 python = "~=3.10.16"
 ruff = ">=0.11.6,<0.12"
+pyright = ">=1.1.406,<1.2"
 ipykernel = ">=7.1.0,<8"
 matplotlib = ">=3.10.7,<4"
 pandas = ">=2.3.3,<3"
+pyarrow = ">=18,<19"
 tqdm = ">=4.67.1,<5"
 click = ">=8.3.1,<9"
 biopython = ">=1.87,<2"
@@ -112,6 +115,8 @@ target-version = "py310"
 
 
 [tool.pyright]
+include = ["src/miniworld"]
+exclude = ["libs", "scratchpad_logs", "docs", "tests/artifacts"]
 enableReachabilityAnalysis = false
 
 [tool.hatch.build.targets.wheel]
