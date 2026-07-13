@@ -2,8 +2,10 @@
 
 from .client import Client
 from .model import Model
+from .model_mini import MiniModel
 
 __all__ = [
     "Client",
+    "MiniModel",
     "Model",
 ]
