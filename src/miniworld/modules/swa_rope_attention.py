@@ -281,22 +281,40 @@ class SlidingWindowAttention(nn.Module):
         out = rearrange(out, "B H L D -> B L H D")
         return out * valid[..., None, None]
 
-    def _attend_flash(self, query: Tensor, key: Tensor, value: Tensor, p: dict) -> Tensor:
-        # FA4 varlen: pack valid atoms into contiguous segments, one per
-        # (sample, space_uid), so the window never crosses a space boundary.
-        valid, space_uid = p["valid"], p["space_uid"]
+    def _swa_flash_packing(self, valid: Tensor, space_uid: Tensor) -> tuple:
+        """Host-side varlen packing for FA4 — segment atoms by (sample, space_uid), sort,
+        and build ``(packed indices, cu_seqlens, max_seqlen)``. This is a pure function of
+        the fixed ``(valid, space_uid)`` features, but it uses device->host syncs
+        (``.item()``) and data-dependent shapes (``nonzero``/``unique_consecutive``) that
+        are ILLEGAL inside a CUDA-graph capture. It is memoised on identity so it runs once
+        (eagerly, in warm-up) and every later call — including a graph replay — reuses the
+        cached static tensors; the captured region then holds only gather + FA4 + scatter.
+        ``n_space``/``max_seqlen`` use ``length`` (atoms-per-sample) as a safe static upper
+        bound so the one build is sync-light and the values are replay-stable."""
+        cache = getattr(self, "_swa_pack_cache", None)
+        if cache is not None and cache[0] is valid and cache[1] is space_uid:
+            return cache[2], cache[3], cache[4]
         batch, length = valid.shape
-        device = query.device
-        n_space = int(space_uid.max().item()) + 1
+        device = valid.device
+        n_space = length  # static upper bound (space_uid < length) -> collision-free segments
         row = rearrange(torch.arange(batch, device=device), "B -> B 1").expand(batch, length)
         segment = (row * n_space + space_uid).reshape(-1)
-
         selected = valid.reshape(-1).nonzero(as_tuple=False).flatten()
         order = torch.argsort(segment[selected], stable=True)
         packed = selected[order]  # indices into [B*L], grouped by segment
         _, counts = torch.unique_consecutive(segment[packed], return_counts=True)
         cu_seqlens = F.pad(counts.cumsum(0), (1, 0)).to(torch.int32)
-        max_seqlen = int(counts.max().item())
+        max_seqlen = length  # static bound: a segment can't exceed one sample's atoms
+        self._swa_pack_cache = (valid, space_uid, packed, cu_seqlens, max_seqlen)
+        return packed, cu_seqlens, max_seqlen
+
+    def _attend_flash(self, query: Tensor, key: Tensor, value: Tensor, p: dict) -> Tensor:
+        # FA4 varlen: pack valid atoms into contiguous segments, one per
+        # (sample, space_uid), so the window never crosses a space boundary. The packing
+        # (syncs + dynamic shapes) is hoisted/memoised so this stays CUDA-graph capturable.
+        valid, space_uid = p["valid"], p["space_uid"]
+        batch, length = valid.shape
+        packed, cu_seqlens, max_seqlen = self._swa_flash_packing(valid, space_uid)
 
         flat = lambda t: rearrange(t, "B L H D -> (B L) H D")[packed]
         out_packed, _ = flash_attn_varlen_func(

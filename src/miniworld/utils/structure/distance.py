@@ -9,6 +9,14 @@ from team_gm import typecheck
 
 from miniworld.data.mols import CIFMolAttached
 
+# Single-slot memo for the distogram-loss target. get_shortest_distances is a pure
+# function of the (fixed-per-input) atom_pos/mask/token-map, but builds `residue_exists`
+# via boolean-mask indexing (device->host sync) — illegal inside a CUDA-graph capture.
+# Memoising on tensor identity lets the sync run once (eagerly) and a graph replay reuse
+# the cached target. Single slot => no leak across a real (varying-batch) training run,
+# where the eager forward before each capture/replay refreshes it.
+_SHORTEST_DIST_CACHE: dict = {}
+
 
 @typecheck
 def get_shortest_distances_from_multistructures(
@@ -124,6 +132,10 @@ def get_shortest_distances(
     max_distance: float = 22.0,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Compute residue-level shortest distances from atom positions."""
+    _key = (id(atom_pos), id(atom_pos_mask), id(atom_to_token_idx_map),
+            int(token_num), float(min_distance), float(max_distance))
+    if _SHORTEST_DIST_CACHE.get("k") == _key and _SHORTEST_DIST_CACHE.get("ap") is atom_pos:
+        return _SHORTEST_DIST_CACHE["v"]
     device = atom_pos.device
     B, L, _ = atom_pos.shape
 
@@ -191,6 +203,7 @@ def get_shortest_distances(
 
     residue_dists = out.view(B, token_num, token_num)
 
+    _SHORTEST_DIST_CACHE.update(k=_key, ap=atom_pos, v=(residue_dists, residue_mask))
     return residue_dists, residue_mask
 
 

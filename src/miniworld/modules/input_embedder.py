@@ -325,6 +325,15 @@ class InputFeatureEmbedder(nn.Module):
         structure: StructureFeatures,
     ) -> Float[torch.Tensor, "B L_token L_token 2"]:
         #  -> tuple[torch.Tensor, torch.Tensor]:
+        # The bond feature is a pure function of the (fixed-per-input) token_bond and has a
+        # STATIC output shape (B, L, L, 2) even though token_bond is variable-length. Its
+        # construction uses boolean-mask indexing (device->host sync) + variable shapes that
+        # are illegal inside a CUDA-graph capture, so memoise on token_bond identity: it runs
+        # once (eagerly, warm-up) and a graph replay reuses the cached static tensor.
+        _tb = structure.token_bond
+        _c = getattr(self, "_bond_feat_cache", None)
+        if _c is not None and _c[0] is _tb:
+            return _c[1]
         batch_size, token_length = structure.token_mask.shape[:2]
         device = structure.token_bond.device
         token_bond = structure.token_bond.long()  # (batch_size, n_token_bond, 3)
@@ -352,10 +361,12 @@ class InputFeatureEmbedder(nn.Module):
         token_bond_feature[batch_idx, token_bond_i, token_bond_j] = 1
         token_bond_feature[batch_idx, token_bond_j, token_bond_i] = 1
 
-        return torch.nn.functional.one_hot(
+        _out = torch.nn.functional.one_hot(
             token_bond_feature.long(),
             num_classes=2,
         )
+        self._bond_feat_cache = (_tb, _out)
+        return _out
 
     def forward(
         self,
