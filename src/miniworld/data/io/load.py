@@ -66,13 +66,15 @@ def load_seq_id_to_seq(seq_id_to_seq_path: Path) -> dict[str, str]:
     return seq_dict
 
 
-def extract_lmdb_keys(env_path: Path) -> list[str]:
-    """Extract all keys from the LMDB database."""
+def extract_lmdb_keys(env_path: Path, max_keys: int | None = None) -> list[str]:
+    """Extract keys from the LMDB database, optionally stopping early."""
     env = lmdb.open(str(env_path), readonly=True, lock=False)
+    key_list: list[str] = []
     with env.begin() as txn:
-        key_list = [
-            key.decode() for key in txn.cursor().iternext(keys=True, values=False)
-        ]
+        for key in txn.cursor().iternext(keys=True, values=False):
+            key_list.append(key.decode())
+            if max_keys is not None and len(key_list) >= max_keys:
+                break
     env.close()
     return key_list
 
@@ -241,6 +243,7 @@ def get_query_sequence(
     cifmol: CIFMOL,
     chain_id: str,
 ) -> np.ndarray:
+    """Return the encoded query sequence for one chain."""
     rm = ResidueMapping()
     seq_id = cifmol.chains[cifmol.chains.chain_id == chain_id].seq_id[0].value
     cropped_seq_can = cifmol.chains[

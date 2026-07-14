@@ -16,10 +16,13 @@ class WeightedSampler(DistributedSampler):
         self,
         dataset: Dataset[object],
         weights: list[float],
+        *,
+        replacement: bool = False,
         **kwargs: Any,
     ) -> None:
         super().__init__(dataset, **kwargs)
         self.num_samples = len(weights)
+        self.replacement = replacement
         self.weights = torch.tensor(weights, dtype=torch.float32)
 
     def __iter__(self) -> Iterator[int]:
@@ -29,7 +32,7 @@ class WeightedSampler(DistributedSampler):
         all_indices = torch.multinomial(
             self.weights,
             self.total_size,
-            replacement=False,
+            replacement=self.replacement,
             generator=g,
         )
         perm = torch.randperm(all_indices.size(0), generator=g)
