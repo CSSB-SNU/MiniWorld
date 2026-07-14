@@ -125,9 +125,3 @@ class TokenizerConfig(BaseModel):
         validation_alias=AliasChoices("dynamic_config", "dynamic_tokenization"),
     )
     seed: int = 42  # for dynamic tokenization, set seed for reproducibility
-
-
-class TokenEmbeddingConfig(BaseModel):
-    """Configuration for token embedding."""
-
-    embedding_path: Path
