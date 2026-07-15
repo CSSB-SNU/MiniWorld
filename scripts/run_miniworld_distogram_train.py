@@ -36,6 +36,7 @@ from miniworld.configs import (
     TokenizerConfig,
 )
 from miniworld.data.dataloader.dataloader import BioMolData
+from miniworld.data.dataloader.dataloader_v2 import BioMolDataV2, BioMolDBV2Config
 from miniworld.data.features.batch import Batch
 from miniworld.models.distogram_only import Client, Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
@@ -47,9 +48,10 @@ torch.autograd.set_detect_anomaly(False)
 class DataConfig(BaseModel):
     """Configuration for data loading."""
 
-    train_db: BioMolDBConfig
+    train_db: BioMolDBV2Config | BioMolDBConfig
     crop: CropConfig
     msa: MSAConfig
+    template: TemplateConfig = TemplateConfig()
     tokenizer: TokenizerConfig
     sampler: SamplerConfig
 
@@ -132,7 +134,7 @@ def _restore_rng_state(model: Model, state: dict[str, object]) -> None:
         torch.cuda.set_rng_state_all(state["cuda"])  # pyright: ignore[reportArgumentType]
     np.random.set_state(state["numpy"])  # pyright: ignore[reportArgumentType]
     random.setstate(state["python"])  # pyright: ignore[reportArgumentType]
-    model.rng.bit_generator.state = copy.deepcopy(state["model_rng"])
+    model.rng.bit_generator.state = copy.deepcopy(state["model_rng"])  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def _build_precompile_batch(  # noqa: PLR0915
@@ -541,14 +543,25 @@ def train(  # noqa: PLR0912, PLR0915
 
     _warmup_bucket_shapes(client, cfg)
 
-    train_data_config = BioMolData.BioMolConfig(
-        crop_config=cfg.data.crop,
-        msa_config=cfg.data.msa,
-        DB_config=cfg.data.train_db,
-        sampler_config=cfg.data.sampler,
-        tokenizer_config=cfg.data.tokenizer,
-    )
-    train_dataset = BioMolData(train_data_config)
+    if isinstance(cfg.data.train_db, BioMolDBV2Config):
+        train_data_config = BioMolDataV2.BioMolConfig(
+            crop_config=cfg.data.crop,
+            msa_config=cfg.data.msa,
+            template_config=cfg.data.template,
+            DB_config=cfg.data.train_db,
+            sampler_config=cfg.data.sampler,
+            tokenizer_config=cfg.data.tokenizer,
+        )
+        train_dataset = BioMolDataV2(train_data_config)  # pyright: ignore[reportArgumentType]
+    else:
+        train_data_config = BioMolData.BioMolConfig(
+            crop_config=cfg.data.crop,
+            msa_config=cfg.data.msa,
+            DB_config=cfg.data.train_db,
+            sampler_config=cfg.data.sampler,
+            tokenizer_config=cfg.data.tokenizer,
+        )
+        train_dataset = BioMolData(train_data_config)
     train_dataloader = train_dataset.create_ddp_dataloader(
         world_size=fabric.world_size,
         rank=fabric.global_rank,

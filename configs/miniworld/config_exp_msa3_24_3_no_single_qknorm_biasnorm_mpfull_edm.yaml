@@ -1,0 +1,42 @@
+# [S3 / FULL EDM2-DiT] msa3_24_3 NO-SINGLE + full magnitude preservation.
+#
+# Extends the S1 forced-WN config to the FULL DiT-MP recipe (arXiv:2505.19122 =
+# EDM2 applied to DiT):
+#   - mp_full: EVERY linear in the diffusion module becomes MPLinear (forced
+#     weight norm) EXCEPT the final denoising R3 projection. Implies
+#     mp_residual (mp_sum) + MP-SwiGLU in the DiT blocks, and recursively swaps
+#     the non-block diffusion linears (conditioning, atom enc/dec projections).
+#   - use_rotation: AdaLN additive shift -> norm-preserving rotation modulation.
+#
+# Rationale: full MP gives uniform effective-LR control, which is what makes a
+# large LR safe everywhere (EDM2/DiT-MP raised LR ~50-100x WITH full MP). Pair
+# with EDM2_INV_SQRT_LR + a raised max_lr at launch.
+#
+# NOTE: this abandons the zero-init identity-start (DiT-MP convention: blocks are
+# active at init, magnitude held by MP + mp_sum). From-scratch only (the DiT is
+# reinitialized by param_policy anyway) -> no warm-start concern for the DiT.
+# Final R3 output stays a plain zero-init Linear (scale handled by c_out/sigma_data).
+#
+# Run with scripts/run_miniworld_no_single_edm_train.py.
+defaults:
+  - model: large_msa3_24_3_no_single_qknorm
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384_atom_gap
+  - diffuser: edm
+  - loss: wo_smoothlddt
+  - _self_
+
+model:
+  diffusion:
+    mp_full: True                  # MP every diffusion linear except final_denoising
+    atom_dit:
+      use_bias_norm: True
+      use_rotation: True           # AdaLN shift -> rotation modulation
+    token_dit:
+      use_bias_norm: True
+      use_rotation: True
+
+train:
+  comment: "S3 msa3_24_3 no-single full-MP (EDM2-DiT) + rotation"
+  run_dir: "logs/exp/msa3_24_3-no-single-qknorm-bf16-biasnorm-mpfull-edm/"
+  grad_accum_steps: 16

@@ -1,0 +1,51 @@
+# [LOCAL+STRUCT / AF3 BLOCK / B200 8GPU] msa3_24_3 NO-SINGLE — AF3 atom block, attention core = seq-local + x_t-structure sparse attention.
+#
+# Variant "4": the atom transformer keeps MiniWorld's AF3 block intact
+# (AdaptiveLayerNorm input modulation, AF3 sigmoid value-gate + to_out, the
+# AF3 to_scale output gate (bias=-2), and the AF3 ConditionedTransition FFN) and
+# changes ONLY the attention neighborhood: each atom attends to 128 nearest atoms
+# in sequence order (self included) plus 128 nearest atoms by current noisy x_t,
+# excluding sequence-neighborhood atoms, NO atom-pair tensor.
+# Implemented by RoPESWAAF3Transformer (block_style: af3) with the gather-based
+# local_structure_attn path.
+#
+# Contrast:
+#   - swa_fixinit (block_style esmfold2) = ESMFold2 block (adaLN-Zero + SwiGLU).
+#   - ropeswa_af3 (block_style af3)      = AF3 block + fixed sliding window.
+#   - THIS                               = AF3 block + seq-local + x_t kNN.
+# Plain EDM (not EDM2). Single change vs ropeswa_af3 is the attention
+# neighborhood construction.
+#
+# Single-node B200 8GPU run with scripts/run_miniworld_no_single_edm_train.py.
+# Effective batch = num_batch(1) x 8 GPU x grad_accum(32) = 256.
+defaults:
+  - model: large_msa3_24_3_no_single_qknorm
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384_atom_gap
+  - diffuser: edm
+  - loss: wo_smoothlddt
+  - _self_
+
+model:
+  diffusion:
+    autocast_bf16: False
+    swa_atom:
+      block_style: af3            # AF3 atom block; attention core only
+      local_structure_attn: true  # 128 sequence neighbors + 128 x_t structural neighbors
+      seq_neighbors: 128
+      structure_neighbors: 128
+      structure_query_chunk_size: 128
+      sparse_attention_query_chunk_size: 64
+      n_block: 3
+      n_head: 4                    # head_dim = d_single_atom(128) / 4 = 32
+      swa_window_size: 128
+      expansion_ratio: 2          # AF3 ConditionedTransition expansion n
+      n_spatial_rope_pairs_per_axis: 2   # 3 axes * 2 = 6 spatial rope freqs
+      spatial_rope_base_frequency: 20.0
+      n_uid_rope_pairs: 10               # 6 + 10 = 16 = head_dim/2 (exact fill)
+      uid_rope_base_frequency: 10000.0
+
+train:
+  comment: "B200 8GPU local+structure AF3-block msa3_24_3 no-single (128 seq + 128 x_t neighbors, plain EDM)"
+  run_dir: "logs/exp/msa3_24_3-no-single-localstruct-af3-b200-8gpu-edm/"
+  grad_accum_steps: 32

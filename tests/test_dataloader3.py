@@ -9,7 +9,7 @@ from miniworld.configs import (
     TokenizerConfig,
 )
 from miniworld.configs.data import DynamicTokenizationConfig
-from miniworld.data.dataloader.dataloader2 import BioMolData
+from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.data.features import Batch
 
 
@@ -101,17 +101,19 @@ if __name__ == "__main__":
         ),
         DB_config=BioMolDBConfig(
             cif_db_path=Path(
-                "/home/psk6950/data//BioMolDB_20260224/cif_attached_train.lmdb",
+                "/NHNHOME/WORKSPACE/0226010152_A/data/cif_attached_train.lmdb",
             ),
-            a3m_db_path=Path("/home/psk6950/data/BioMolDB_20260224/a3m.lmdb"),
+            a3m_db_path=Path(
+                "/NHNHOME/WORKSPACE/0226010152_A/data/a3m.lmdb",
+            ),
             edge_id_to_bias_path=Path(
-                "/home/psk6950/data/BioMolDB_20260224/metadata/train_edge_node.tsv",
+                "/NHNHOME/WORKSPACE/0226010152_A/data/metadata/train_edge_node.tsv",
             ),
             template_db_path=Path(
-                "/home/psk6950/data/BioMolDB_20260224/template.lmdb",
+                "/NHNHOME/WORKSPACE/0226010152_A/data/template.lmdb",
             ),
             ccd_preprocessed_path=Path(
-                "/home/psk6950/data/CCD/preprocessed_CCD.lmdb",
+                "/NHNHOME/WORKSPACE/0226010152_A/data/CCD/preprocessed_CCD.lmdb",
             ),
         ),
         tokenizer_config=TokenizerConfig(

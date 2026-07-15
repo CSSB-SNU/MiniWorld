@@ -1,0 +1,101 @@
+# Smoke config for BioMolDataV2 with PDB + distillation sources.
+# Uses small max_items per distillation source so the compatibility key loader
+# does not scan the full long distillation LMDB during a quick train check.
+DB_PATH: /NHNHOME/WORKSPACE/0226010152_A/data/
+DISTILLATION_DB_PATH: /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb
+
+train_db:
+  ccd_preprocessed_path: /NHNHOME/WORKSPACE/0226010152_A/data/CCD/preprocessed_CCD.lmdb
+  source_weights:
+    pdb: 0.5
+    dist_short: 0.2
+    dist_rna: 0.15
+    dist_long: 0.15
+  sample_with_replacement: true
+  pdb:
+    cif_db_path: /NHNHOME/WORKSPACE/0226010152_A/data/v2/cif_attached_train_20260224_res9_chain300.lmdb
+    a3m_db_path: /NHNHOME/WORKSPACE/0226010152_A/data/a3m_16k.lmdb
+    edge_id_to_bias_path: /NHNHOME/WORKSPACE/0226010152_A/data/v2/metadata/train_20260224_edge_node.tsv
+    template_db_path: /NHNHOME/WORKSPACE/0226010152_A/data/template.lmdb
+    ccd_preprocessed_path: /NHNHOME/WORKSPACE/0226010152_A/data/CCD/preprocessed_CCD.lmdb
+  distillation_sources:
+    - name: dist_short
+      cif_db_path: /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/cif_short_attached.lmdb
+      a3m_db_paths:
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_short_d5k.lmdb
+      template_db_path: /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/template_topn_short.lmdb
+      weight: 0.2
+      max_items: 16
+      chain_ids: ["1"]
+    - name: dist_rna
+      cif_db_path: /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/cif_rna_attached.lmdb
+      a3m_db_paths:
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_rna_d5k.lmdb
+      template_db_path: null
+      weight: 0.15
+      max_items: 16
+      chain_ids: ["1"]
+    - name: dist_long
+      cif_db_path: /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/cif_long_attached.lmdb
+      a3m_db_paths:
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard0.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard1.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard2.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard3.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard4.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard5.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard6.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard7.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard8.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard9.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard10.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard11.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard12.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard13.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard14.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard15.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard16.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard17.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard18.lmdb
+        - /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/msa_long_d5k_shard19.lmdb
+      template_db_path: /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/template_topn_long.lmdb
+      weight: 0.15
+      max_items: 16
+      chain_ids: ["1"]
+
+crop:
+  max_tokens: 384
+  max_atoms: 4096
+  min_segment_size: 1
+  max_segment_size: 41
+  monomer_only: false
+  remain_invalid_tokens: false
+  bucket_msa_size: 128
+  bucket_token_size: 128
+  bucket_atom_size: 1024
+
+msa:
+  max_msa_depth: 384
+  missing_policy: "gap"
+  pairing_mode: "no_pairing"
+
+template:
+  n_templates: 4
+
+tokenizer:
+  level: "atom"
+
+sampler:
+  protein_protein: 25.0
+  protein_ligand: 25
+  protein_dna: 10
+  protein_rna: 10
+  antibody_protein: 15
+  dna_dna: 5
+  rna_rna: 5
+  dna_rna: 0.5
+  antibody_antibody: 0.5
+  antibody_ligand: 1.0
+  na_ligand: 1.0
+  etc_interface: 1.0
+  sole: 1.0

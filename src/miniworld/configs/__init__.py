@@ -6,9 +6,9 @@ from .data import (
     MSAConfig,
     SamplerConfig,
     TemplateConfig,
-    TokenEmbeddingConfig,
     TokenizerConfig,
 )
+
 try:
     from .diffusion import (
         EDMDiffuserConfig,
@@ -31,18 +31,15 @@ __all__ = [
     "MSAConfig",
     "SamplerConfig",
     "TemplateConfig",
-    "TokenEmbeddingConfig",
     "TokenizerConfig",
 ]
 
 if SharedConfig is not None:
-    __all__.append("SharedConfig")
+    __all__ += ["SharedConfig"]
 
 if EDMDiffuserConfig is not None:
-    __all__.extend(
-        [
-            "EDMDiffuserConfig",
-            "XPredDecoupledDiffuserConfig",
-            "XPredEuclideanDiffuserConfig",
-        ],
-    )
+    __all__ += [
+        "EDMDiffuserConfig",
+        "XPredDecoupledDiffuserConfig",
+        "XPredEuclideanDiffuserConfig",
+    ]

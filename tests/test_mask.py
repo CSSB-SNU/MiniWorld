@@ -21,7 +21,6 @@ from miniworld.models.af3_like.model import Model
 from miniworld.modules.diffusion_module import DiffusionConditioning, DiffusionModule
 from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.msa_util import init_msa, init_token_single_msa
-from miniworld.utils.precision_manager import DtypeConfig, PrecisionConfig
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -30,7 +29,7 @@ if TYPE_CHECKING:
 def _build_shared_config() -> SharedConfig:
     num_res_class = 8
     d_single = 16
-    d_profile = 20
+    d_profile = 32
     return SharedConfig(
         d_single=d_single,
         d_single_atom=8,
@@ -45,18 +44,6 @@ def _build_shared_config() -> SharedConfig:
         n_distogram_bins=7,
         implementation=ImplementationType.PYTORCH,
         use_checkpoint=False,
-    )
-
-
-def _build_precision_config() -> PrecisionConfig:
-    return PrecisionConfig(
-        input="torch.float32",
-        use_scaler=False,
-        default=DtypeConfig(
-            op_dtype="torch.float32",
-            out_dtype="torch.float32",
-        ),
-        precision_map={},
     )
 
 
@@ -122,7 +109,6 @@ def _build_model_config() -> Model.Config:
                 n_blocks=1,
             ),
         ),
-        precision=_build_precision_config(),
     )
 
 
@@ -130,7 +116,7 @@ def _build_batch() -> Batch:
     torch.manual_seed(0)
     shared = _build_shared_config()
     batch = Batch.empty(
-        n_msa=1,
+        n_temp=1,
         msa_depth=3,
         n_tokens=7,
         n_atoms=11,
@@ -149,19 +135,19 @@ def _build_batch() -> Batch:
         (valid_tokens,),
     )
 
-    batch.msa.msa_mask[0, 0, :2] = True
-    batch.msa.aligned_sequences[0, 0, :2, :valid_tokens] = torch.randint(
+    batch.msa.mask[0, :2] = True
+    batch.msa.aligned_sequences[0, :2, :valid_tokens] = torch.randint(
         0,
         shared.num_res_class,
         (2, valid_tokens),
     )
-    batch.msa.has_deletion[0, 0, :2, :valid_tokens] = torch.randint(
+    batch.msa.has_deletion[0, :2, :valid_tokens] = torch.randint(
         0,
         2,
         (2, valid_tokens),
     )
-    batch.msa.deletion_value[0, 0, :2, :valid_tokens] = torch.randn(2, valid_tokens)
-    batch.msa.profile[0, :valid_tokens] = torch.randn(valid_tokens, 20)
+    batch.msa.deletion_value[0, :2, :valid_tokens] = torch.randn(2, valid_tokens)
+    batch.msa.profile[0, :valid_tokens] = torch.randn(valid_tokens, 32)
     batch.msa.deletion_mean[0, :valid_tokens] = torch.randn(valid_tokens)
 
     batch.reference.pos[0, :valid_atoms] = torch.randn(valid_atoms, 3)
@@ -265,7 +251,7 @@ def _perturb_masked_batch(batch: Batch) -> Batch:
 
     token_mask = perturbed.structure.token_mask[0]
     atom_mask = perturbed.structure.atom_mask[0]
-    msa_mask = perturbed.msa.msa_mask[0, 0]
+    msa_mask = perturbed.msa.mask[0]
     masked_tokens = ~token_mask
     masked_atoms = ~atom_mask
     masked_msa = ~msa_mask
@@ -274,11 +260,11 @@ def _perturb_masked_batch(batch: Batch) -> Batch:
         num_masked_tokens = int(masked_tokens.sum().item())
         idx = torch.arange(num_masked_tokens, dtype=torch.long)
         perturbed.sequence.token_type[0, masked_tokens] = shared.num_res_class - 1
-        perturbed.msa.aligned_sequences[0, 0, :, masked_tokens] = (
+        perturbed.msa.aligned_sequences[0, :, masked_tokens] = (
             shared.num_res_class - 1
         )
-        perturbed.msa.has_deletion[0, 0, :, masked_tokens] = 1
-        perturbed.msa.deletion_value[0, 0, :, masked_tokens] = 1e3
+        perturbed.msa.has_deletion[0, :, masked_tokens] = 1
+        perturbed.msa.deletion_value[0, :, masked_tokens] = 1e3
         perturbed.msa.profile[0, masked_tokens] = -1e3
         perturbed.msa.deletion_mean[0, masked_tokens] = 1e3
         perturbed.scheme.token_idx[0, masked_tokens] = 100 + idx
@@ -288,9 +274,9 @@ def _perturb_masked_batch(batch: Batch) -> Batch:
         perturbed.scheme.token_sym_id[0, masked_tokens] = 2
 
     if masked_msa.any():
-        perturbed.msa.aligned_sequences[0, 0, masked_msa, :] = shared.num_res_class - 1
-        perturbed.msa.has_deletion[0, 0, masked_msa, :] = 1
-        perturbed.msa.deletion_value[0, 0, masked_msa, :] = -1e3
+        perturbed.msa.aligned_sequences[0, masked_msa, :] = shared.num_res_class - 1
+        perturbed.msa.has_deletion[0, masked_msa, :] = 1
+        perturbed.msa.deletion_value[0, masked_msa, :] = -1e3
 
     if masked_atoms.any():
         perturbed.reference.pos[0, masked_atoms] = 1e3
@@ -420,7 +406,6 @@ def test_mask_msa_module() -> None:
 
     msa_feat, msa_mask = init_msa(
         batch.msa,
-        recycle_idx=0,
         num_res_class=shared.num_res_class,
     )
     pair = torch.randn(1, batch.token_length, batch.token_length, shared.d_pair)
