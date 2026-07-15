@@ -22,9 +22,10 @@ import torch
 from hydra import compose, initialize_config_dir
 from lightning import Fabric
 from omegaconf import OmegaConf
-from pydantic import BaseModel
+from pydantic import BaseModel, Discriminator, Tag
 from team_gm.core.callbacks import Callback
 from team_gm.utils.script_utils import MetricsAggregator
+from typing import Annotated, Union
 
 import wandb
 from miniworld.configs import (
@@ -35,10 +36,46 @@ from miniworld.configs import (
     TemplateConfig,
     TokenizerConfig,
 )
+from miniworld.data.dataloader import BioMolDBV2Config
 from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.data.features.batch import Batch
-from miniworld.models.distogram_only import Client, Model
+from miniworld.models.distogram_only import Client, MiniSWAModel, Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
+
+
+_ModelType = Union[Model, MiniSWAModel]
+
+
+_V2_DB_KEYS = frozenset(
+    {"pdb", "distillation_sources", "items_path", "resources_path", "source_weights"},
+)
+
+
+def _db_config_variant(value: object) -> str:
+    """Discriminate legacy BioMolDBConfig vs multi-source BioMolDBV2Config."""
+    if isinstance(value, BioMolDBV2Config):
+        return "v2"
+    if isinstance(value, BioMolDBConfig):
+        return "v1"
+    # Duck-typing: dict / OmegaConf DictConfig both support ``key in value``.
+    try:
+        keys = set(value.keys())  # type: ignore[attr-defined]
+    except (TypeError, AttributeError):
+        return "v1"
+    return "v2" if _V2_DB_KEYS & keys else "v1"
+
+
+def _model_config_variant(value: object) -> str:
+    """Discriminate plain distogram Model vs MiniSWAModel by presence of atom_swa."""
+    if isinstance(value, MiniSWAModel.Config):
+        return "mini_swa"
+    if isinstance(value, Model.Config):
+        return "model"
+    try:
+        has_atom_swa = "atom_swa" in value  # type: ignore[operator]
+    except (TypeError, AttributeError):
+        has_atom_swa = False
+    return "mini_swa" if has_atom_swa else "model"
 
 torch.set_float32_matmul_precision("medium")
 torch.autograd.set_detect_anomaly(False)
@@ -47,7 +84,13 @@ torch.autograd.set_detect_anomaly(False)
 class DataConfig(BaseModel):
     """Configuration for data loading."""
 
-    train_db: BioMolDBConfig
+    train_db: Annotated[
+        Union[
+            Annotated[BioMolDBConfig, Tag("v1")],
+            Annotated[BioMolDBV2Config, Tag("v2")],
+        ],
+        Discriminator(_db_config_variant),
+    ]
     crop: CropConfig
     msa: MSAConfig
     tokenizer: TokenizerConfig
@@ -59,20 +102,26 @@ class Config(BaseModel):
 
     data: DataConfig
     train: Client.TrainConfig
-    model: Model.Config
+    model: Annotated[
+        Union[
+            Annotated[Model.Config, Tag("model")],
+            Annotated[MiniSWAModel.Config, Tag("mini_swa")],
+        ],
+        Discriminator(_model_config_variant),
+    ]
     loss: Client.LossConfig
 
 
-def _fabric_from_torchrun() -> Fabric:
+def _fabric_from_torchrun(**fabric_kwargs) -> Fabric:
     """Create Fabric with node/device counts inherited from torchrun."""
     world_size = os.environ.get("WORLD_SIZE")
     local_world_size = os.environ.get("LOCAL_WORLD_SIZE")
     if world_size is None or local_world_size is None:
-        return Fabric()
+        return Fabric(**fabric_kwargs)
 
     devices = int(local_world_size)
     num_nodes = int(world_size) // devices
-    return Fabric(devices=devices, num_nodes=num_nodes)
+    return Fabric(devices=devices, num_nodes=num_nodes, **fabric_kwargs)
 
 
 def _ceil_to_multiple(value: int, multiple: int | None) -> int:
@@ -90,14 +139,19 @@ def _bucket_values(max_value: int, multiple: int | None) -> list[int]:
     return list(range(multiple, bucket_max + 1, multiple))
 
 
-def _find_recycle_model(module: torch.nn.Module) -> Model:
-    """Unwrap Fabric/compile wrappers to reach the raw distogram model."""
+def _find_recycle_model(module: torch.nn.Module) -> _ModelType:
+    """Unwrap Fabric/compile wrappers to reach the raw distogram model.
+
+    Returns either the plain ``Model`` (pair-only trimul distogram) or
+    ``MiniSWAModel`` (ESMFold2 SWA/3D-RoPE variant) — both expose ``rng`` and
+    ``_forced_n_recycle`` for the recycle-loop hooks used downstream.
+    """
     current: object = module
     visited: set[int] = set()
 
     while isinstance(current, torch.nn.Module):
         visited.add(id(current))
-        if isinstance(current, Model):
+        if isinstance(current, (Model, MiniSWAModel)):
             return current
 
         for attr in ("module", "_forward_module", "_orig_mod", "model"):
@@ -112,7 +166,7 @@ def _find_recycle_model(module: torch.nn.Module) -> Model:
     raise RuntimeError(msg)
 
 
-def _capture_rng_state(model: Model) -> dict[str, object]:
+def _capture_rng_state(model: _ModelType) -> dict[str, object]:
     """Capture RNG state so warmup does not perturb the real training run."""
     state: dict[str, object] = {
         "torch": torch.random.get_rng_state(),
@@ -125,7 +179,7 @@ def _capture_rng_state(model: Model) -> dict[str, object]:
     return state
 
 
-def _restore_rng_state(model: Model, state: dict[str, object]) -> None:
+def _restore_rng_state(model: _ModelType, state: dict[str, object]) -> None:
     """Restore RNG state after the synthetic warmup pass."""
     torch.random.set_rng_state(state["torch"])  # pyright: ignore[reportArgumentType]
     if "cuda" in state:

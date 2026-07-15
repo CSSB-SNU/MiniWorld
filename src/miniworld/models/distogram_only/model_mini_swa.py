@@ -42,7 +42,8 @@ class MiniSWAModel(nn.Module):
     Same pair-only shape as ``distogram_only.MiniModel`` (no single track, no
     template, distogram loss through ``token_pair``), but the atom-level input
     feature embedder uses the sliding-window (or global) 3D-RoPE + QK-norm
-    attention (``InputFeatureEmbedderESMFold2Style``, FlashAttention-4 on B200)
+    attention (``InputFeatureEmbedderESMFold2Style``, FlashAttention-4 on
+    Hopper H100 / Blackwell B200 via ``flash_attn.cute``; falls back to flex)
     instead of the pair-bias ``DiffusionTransformer`` atom encoder. The trunk is
     the reduced ``MiniMSAModule`` (OuterProductMean + bidir trimul + transition)
     + ``MiniPairformer`` (bidir trimul + transition), which route to the cute

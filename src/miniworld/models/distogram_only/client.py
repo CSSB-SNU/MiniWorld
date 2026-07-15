@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Annotated, Any, Literal, Union, cast
 
 import numpy as np
 import torch
 from lightning.fabric.wrappers import _FabricDataLoader
-from pydantic import BaseModel
+from pydantic import BaseModel, Discriminator, Tag
 from team_gm import BaseClient
 from team_gm.core.callbacks import ModelEMA
 from team_gm.core.client import _SetEpochProtocol
@@ -17,6 +17,24 @@ from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
 )
 from miniworld.models.distogram_only.model import Model
+from miniworld.models.distogram_only.model_mini_swa import MiniSWAModel
+
+
+def _model_variant_discriminator(value: object) -> str:
+    """Route Client.Config.model to Model vs MiniSWAModel by presence of atom_swa.
+
+    Duck-typed membership check works for plain ``dict`` and OmegaConf's
+    ``DictConfig`` (which pydantic hands us when the config comes from hydra).
+    """
+    if isinstance(value, MiniSWAModel.Config):
+        return "mini_swa"
+    if isinstance(value, Model.Config):
+        return "model"
+    try:
+        has_atom_swa = "atom_swa" in value  # type: ignore[operator]
+    except (TypeError, AttributeError):
+        has_atom_swa = False
+    return "mini_swa" if has_atom_swa else "model"
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -70,9 +88,20 @@ class Client(BaseClient):
         distogram_loss: float = 1.0
 
     class Config(BaseModel):
-        """Configuration for the distogram-only client."""
+        """Configuration for the distogram-only client.
 
-        model: Model.Config
+        ``model`` is a discriminated union: MiniSWAModel.Config is picked when
+        the payload has an ``atom_swa`` key (ESMFold2-style SWA/3D-RoPE atom
+        embedder variant); otherwise falls back to the plain Model.Config.
+        """
+
+        model: Annotated[
+            Union[
+                Annotated[Model.Config, Tag("model")],
+                Annotated[MiniSWAModel.Config, Tag("mini_swa")],
+            ],
+            Discriminator(_model_variant_discriminator),
+        ]
         train: Client.TrainConfig
         loss: Client.LossConfig
 
@@ -80,7 +109,10 @@ class Client(BaseClient):
         super().__init__(config)
         self.config = config
         self.set_seed(config.train.seed)
-        self.register_model(Model(config.model))
+        if isinstance(config.model, MiniSWAModel.Config):
+            self.register_model(MiniSWAModel(config.model))
+        else:
+            self.register_model(Model(config.model))
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))

@@ -21,8 +21,11 @@ The local-attention backend is selectable (see ``AtomSWAConfig.backend``):
 * ``sdpa``  -- dense banded ``scaled_dot_product_attention`` (materialises an
   L x L mask; only sensible for small L / as a reference).
 * ``flash`` -- FlashAttention-4 (``flash_attn.cute``) varlen with a window;
-  packs valid atoms per space-uid. Supports sm_100 (B200). Falls back to
-  ``flex`` when the wheel is absent.
+  packs valid atoms per space-uid. FA4 is CuTeDSL-based and supports both
+  Hopper (H100, sm_90) and Blackwell (B200, sm_100 / sm_110). **Required**
+  when this backend is selected — import fails at model construction time if
+  the wheel is not installed (install via ``uv pip install --prerelease=allow
+  "flash-attn-4[cu13]"``).
 
 The 3D-RoPE construction is adapted from the ESMFold2 atom encoder; the rest
 follows the conventions of ``team_gm.modules.layers`` attention modules.
@@ -54,14 +57,10 @@ try:
 except Exception:  # noqa: BLE001 - older torch without flex_attention
     _FLEX_AVAILABLE = False
 
-try:
-    # FlashAttention-4 (CuTeDSL): a pure-Python wheel that JIT-compiles CUTLASS
-    # kernels (not pinned to the torch ABI) and supports Hopper/Blackwell.
-    from flash_attn.cute import flash_attn_varlen_func
-
-    _FLASH_AVAILABLE = True
-except Exception:  # noqa: BLE001 - flash-attn-4 not installed
-    _FLASH_AVAILABLE = False
+# FlashAttention-4 is imported lazily inside SWARoPEAttention when
+# ``backend == "flash"`` — configs that pick another backend keep working
+# without the wheel installed. When ``backend == "flash"`` and the wheel is
+# absent, model construction raises ImportError with the install hint.
 
 
 # ===========================================================================
@@ -196,6 +195,16 @@ class SlidingWindowAttention(nn.Module):
         self.scale = self.d_hidden**-0.5
         self.half_window = half_window
         self.backend = backend
+        if backend == "flash":
+            # Hard-fail at construction if the FA4 wheel is missing — no silent
+            # fallback (which would break the graph-capture memoization path).
+            from flash_attn.cute import flash_attn_varlen_func  # noqa: F401
+        elif backend == "flex" and not _FLEX_AVAILABLE:
+            msg = (
+                "AtomSWA backend='flex' requires torch.nn.attention.flex_attention; "
+                "install a newer torch or switch to backend='sdpa' or 'flash'."
+            )
+            raise ImportError(msg)
 
         self.to_query = Linear(d_single, d_single, bias=False, init="glorot")
         self.to_key = Linear(d_single, d_single, bias=False, init="glorot")
@@ -204,13 +213,6 @@ class SlidingWindowAttention(nn.Module):
         self.norm_key = nn.RMSNorm(self.d_hidden, elementwise_affine=False)
         self.to_gate = Linear(d_single, d_single, bias=False, init="gating")
         self.to_out = Linear(d_single, d_single, bias=False, init="zero")
-
-    def _resolve_backend(self) -> str:
-        if self.backend == "flash" and not _FLASH_AVAILABLE:
-            return "flex" if _FLEX_AVAILABLE else "sdpa"
-        if self.backend == "flex" and not _FLEX_AVAILABLE:
-            return "sdpa"
-        return self.backend
 
     @typecheck
     def forward(
@@ -229,10 +231,9 @@ class SlidingWindowAttention(nn.Module):
         query, key = apply_rotary_3d(query, cos, sin), apply_rotary_3d(key, cos, sin)
         query, key, value = query.bfloat16(), key.bfloat16(), value.bfloat16()
 
-        backend = self._resolve_backend()
-        if backend == "flash":
+        if self.backend == "flash":
             out = self._attend_flash(query, key, value, attention_params)
-        elif backend == "flex":
+        elif self.backend == "flex":
             out = self._attend_flex(query, key, value, attention_params)
         else:
             out = self._attend_sdpa(query, key, value, attention_params)
@@ -312,6 +313,10 @@ class SlidingWindowAttention(nn.Module):
         # FA4 varlen: pack valid atoms into contiguous segments, one per
         # (sample, space_uid), so the window never crosses a space boundary. The packing
         # (syncs + dynamic shapes) is hoisted/memoised so this stays CUDA-graph capturable.
+        # Lazy import — availability is guaranteed by SWARoPEAttention.__init__ raising
+        # ImportError at construction time when backend='flash' and the wheel is missing.
+        from flash_attn.cute import flash_attn_varlen_func
+
         valid, space_uid = p["valid"], p["space_uid"]
         batch, length = valid.shape
         packed, cu_seqlens, max_seqlen = self._swa_flash_packing(valid, space_uid)

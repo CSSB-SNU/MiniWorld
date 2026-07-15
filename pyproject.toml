@@ -61,8 +61,10 @@ cuda = "13"
 
 [tool.pixi.feature.cuda13.pypi-dependencies]
 cuequivariance-ops-torch-cu13 = "*"
-# FlashAttention-4 (Blackwell/sm_100) for the SWA atom-attention flash backend.
-# FA2 has no sm_100 support, so the SWA path falls back to O(S^2) SDPA without it.
+# FlashAttention-4 (CuTeDSL) for the SWA atom-attention flash backend.
+# Supports Hopper (H100 / sm_90) and Blackwell (B200 / sm_100 / sm_110). FA2/3
+# lack sm_100 support, so on Blackwell the SWA path otherwise falls back to
+# O(S^2) SDPA.
 # Prerelease CuTeDSL JIT wheel — kept OUT of the hard solve (don't perturb it);
 # install manually into the env:
 #   uv pip install --python .pixi/envs/default/bin/python --prerelease=allow "flash-attn-4[cu13]"
@@ -75,6 +77,9 @@ cuda = "12.8"
 
 [tool.pixi.feature.cuda128.pypi-dependencies]
 cuequivariance-ops-torch-cu12 = "*"
+# FA4 (CuTeDSL) — same story as the cu13 feature, but install with the cu12
+# extra so the JIT wheel picks up cu12-compatible CUTLASS:
+#   uv pip install --python .pixi/envs/cu128/bin/python --prerelease=allow "flash-attn-4[cu12]"
 
 [tool.pixi.feature.cuda128.pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/cu128"]
