@@ -1,0 +1,52 @@
+comment: "distogram-only MiniSWA + AF3 source mix (test run, disordered off)"
+run_dir: "logs/distogram_swa_af3_mix/"
+
+# MiniSWAModel (3 SWA embedder / 4 MSA / 48 Pairformer) on the AF3 source mix
+# with disordered_pdb weight = 0. compile:True + the memoization in
+# 92a3978 (input_embedder/_gen_bond_feature, swa_rope_attention/_attend_flash,
+# distance/get_shortest_distances) puts the whole fwd + loss + bwd chain
+# under a single CUDA graph capture.
+
+num_batch: 1
+num_epoch: 1000
+
+# Same LR schedule as distogram_v0.2 (16-GPU eff. batch 256). Tune down if
+# the SWA embedder + longer pairformer stack are unstable.
+max_lr: 1.8e-3
+min_lr: 1e-4
+warmup_steps: 1000
+decay_steps: 5e4
+
+# Full-graph capture requires a single static shape across all iterations;
+# torch.compile(dynamic=False) plus bucket_* multiples set to the max crop /
+# max MSA depth below pad every batch straight to the cap (no intermediate
+# buckets), so shape is constant and the whole fwd+loss+bwd runs from one
+# captured graph.
+compile: True
+
+train_item: 25600
+valid_item: 640
+
+# Effective batch = num_batch * grad_accum_steps * world_size
+#                 = 1 * 16 * 16 = 256 (2 nodes x 8 GPU on B200)
+grad_accum_steps: 16
+save_freq: 5
+eval_freq: 20000
+grad_clip_max_norm: 1.0
+optimizer: "Adam"
+
+num_workers: 4
+prefetch_factor: 4
+use_ema: True
+ema_decay: 0.999
+
+# Pad-to-max buckets (must match data.msa.max_msa_depth + data.crop.max_tokens
+# + data.crop.max_atoms). Any smaller multiple would introduce > 1 bucket
+# shape and break the single-graph capture.
+bucket_msa_multiple: 2048
+bucket_token_multiple: 384
+bucket_atom_multiple: 4096
+
+verbose: False
+use_wandb: True
+wandb_project: "MiniWorld"

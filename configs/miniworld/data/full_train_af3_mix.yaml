@@ -9,7 +9,7 @@
 # 25, protein_ligand 25, ...). AF3's beta_r/alpha_r formula from Eq. 1 is NOT
 # applied.
 #
-# max_msa_depth = 2000 (matches the pre-computed msa_long_d2k_* shard depth cap).
+# max_msa_depth = 2048 (matches the pre-computed msa_long_d2k_* shard depth cap).
 # missing_policy = query so absent MSAs fall back to the query sequence.
 
 DB_PATH: /NHNHOME/WORKSPACE/0226010152_A/data/
@@ -155,9 +155,9 @@ crop:
 
 msa:
   n_samples: 1
-  max_msa_depth: 2000
+  max_msa_depth: 2048
   missing_policy: query
-  # sample_depth default is now "uniform" (AF3-style k ~ Uniform[1, min(n, 2000)]).
+  # sample_depth default is now "uniform" (AF3-style k ~ Uniform[1, min(n, 2048)]).
   # Set to "fixed" here to override if you want legacy always-max sampling.
 
 tokenizer:

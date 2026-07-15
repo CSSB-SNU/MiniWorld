@@ -1,0 +1,87 @@
+# MiniSWAModel (distogram-only) — ESMFold2-style SWA/3D-RoPE atom embedder.
+#
+# Mirrors medium_distogram.yaml (pair-only trunk, distogram loss) but swaps the
+# pair-bias DiffusionTransformer atom encoder for InputFeatureEmbedderESMFold2Style:
+# sliding-window (or global via large swa_window_size) 3D-RoPE + QK-norm atom
+# attention. Trunk uses MiniMSAModule + MiniPairformer (bidir trimul + transition
+# via cute kernels on Hopper+).
+#
+# Presence of ``atom_swa`` triggers the mini_swa branch of Client.Config.model
+# (discriminated union). Removing this block reverts to the plain Model variant.
+
+shared:
+  d_single: 384
+  d_single_atom: 128
+  d_single_token_input: 449
+  d_pair: 128
+  d_pair_atom: 16
+
+  d_time: 256
+  r_max: 32
+  s_max: 2
+  n_distogram_bins: 64
+  num_res_class: 32
+  implementation: triton
+  use_checkpoint: False
+
+
+input_feat_embbeder:
+  n_block: 3
+  n_checkpoint_segments: null
+  d_single: ${..shared.d_single_atom}
+  d_cond: ${..shared.d_single_atom}
+  d_pair: ${..shared.d_pair_atom}
+  n_head: 4
+  implementation: triton
+
+
+# ESMFold2-style atom SWA + 3D-RoPE. swa_window_size 1_000_000 = global attention
+# (window is much larger than any realistic n_atoms so no masking happens).
+# backend=flash → FlashAttention-4 (flash_attn.cute) varlen path. FA4 supports
+# both Hopper (H100 / sm_90) and Blackwell (B200 / sm_100+). Falls back to flex
+# if the wheel is missing (see pyproject.toml for the install line). Only the
+# flash path is exercised by the graph-capture memoisation in 92a3978, so full
+# single-graph capture requires flash-attn-4 installed.
+atom_swa:
+  enabled: true
+  swa_window_size: 1000000
+  backend: flash
+  expansion_ratio: 2
+  n_spatial_rope_pairs_per_axis: 2
+  n_uid_rope_pairs: 10
+  spatial_rope_base_frequency: 20.0
+  uid_rope_base_frequency: 10000.0
+
+
+trunk:
+  n_recycle_max: 4
+  pairformer:
+    n_block: 48
+    n_checkpoint_segments: null
+
+    d_single: ${...shared.d_single}
+    d_pair: ${...shared.d_pair}
+    n_head_tri_attention: 4
+    n_head_attention: 16
+    p_drop: 0.25
+    use_single: False
+    use_self_attention: False
+    implementation: cuequivariance
+
+  msa_module:
+    n_block: 4
+
+    d_msa: 64
+    d_pair: ${...shared.d_pair}
+    d_single_token_input: ${...shared.d_single_token_input}
+    d_hidden_msa: 32
+    d_hidden_tri_multi: 128
+    d_hidden_tri_attention: 32
+    n_head_tri_attention: 4
+    n_head_attention: 16
+    p_drop_msa: 0.15
+    p_drop: 0.25
+    use_self_attention: False
+    n_checkpoint_segments: null
+
+    implementation: cuequivariance
