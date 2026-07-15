@@ -26,7 +26,7 @@ from miniworld.data.features import (
     SchemeFeatures,
     StructureFeatures,
 )
-from miniworld.modules.embeddings import RelativePositionEmbedding, fourier_embedding
+from team_gm.modules.layers import RelativePositionEmbedding, fourier_embedding
 
 
 def _make_atom_transformer(

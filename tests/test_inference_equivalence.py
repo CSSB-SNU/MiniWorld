@@ -32,7 +32,7 @@ from miniworld.modules.diffusion_module import (
     DiffusionConditioning,
     DiffusionModule,
 )
-from miniworld.modules.embeddings import fourier_embedding
+from team_gm.modules.layers import fourier_embedding
 
 
 def _build_diffusion_module(

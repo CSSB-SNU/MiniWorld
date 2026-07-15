@@ -11,7 +11,8 @@ from __future__ import annotations
 import torch
 from jaxtyping import Bool, Float, Int
 from team_gm import typecheck
-from team_gm.modules import DiffusionTransformer
+from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
+from team_gm.modules.layers.swa_atom_attention import build_attention_params
 from team_gm.modules.primitives import Linear
 from torch import nn
 
@@ -23,7 +24,6 @@ from miniworld.data.features.features import (
     StructureFeatures,
 )
 from miniworld.modules.input_embedder import InputFeatureEmbedder, init_atom_features
-from miniworld.modules.swa_rope_attention import SWAAtomTransformer, build_attention_params
 
 
 class ESMFold2InputAtomAttentionEncoder(nn.Module):
@@ -53,12 +53,19 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
             bias=False,
         )
         self.atom_transformer = SWAAtomTransformer(
-            d_atom=shared_config.d_single_atom,
-            n_blocks=diffusion_config.n_block,
-            n_heads=diffusion_config.n_head,
-            swa_window_size=self.atom_swa_config.swa_window_size,
-            expansion_ratio=self.atom_swa_config.expansion_ratio,
-            backend=self.atom_swa_config.backend,
+            SWAAtomTransformer.Config(
+                d_atom=shared_config.d_single_atom,
+                d_cond=shared_config.d_single_atom,
+                n_block=diffusion_config.n_block,
+                n_head=diffusion_config.n_head,
+                swa_window_size=self.atom_swa_config.swa_window_size,
+                expansion_ratio=self.atom_swa_config.expansion_ratio,
+                n_spatial_rope_pairs_per_axis=self.atom_swa_config.n_spatial_rope_pairs_per_axis,
+                n_uid_rope_pairs=self.atom_swa_config.n_uid_rope_pairs,
+                spatial_rope_base_frequency=self.atom_swa_config.spatial_rope_base_frequency,
+                uid_rope_base_frequency=self.atom_swa_config.uid_rope_base_frequency,
+                block_style="esmfold2",
+            ),
         )
         self.atom_single_rep_to_token_single = nn.Sequential(
             Linear(
@@ -99,15 +106,11 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
     ) -> Float[torch.Tensor, "B L_token d_single_token"]:
         atom_single_init, _ = init_atom_features(reference)
         atom_single = self.to_atom_single_cond(atom_single_init)
+        cos, sin = self.atom_transformer.build_rope(
+            reference.pos, reference.space_uid,
+        )
         attention_params = build_attention_params(
-            ref_pos=reference.pos,
-            ref_space_uid=reference.space_uid,
-            atom_mask=structure.atom_mask,
-            d_hidden=self.head_dim,
-            n_spatial_per_axis=self.atom_swa_config.n_spatial_rope_pairs_per_axis,
-            n_uid_pairs=self.atom_swa_config.n_uid_rope_pairs,
-            spatial_base_freq=self.atom_swa_config.spatial_rope_base_frequency,
-            uid_base_freq=self.atom_swa_config.uid_rope_base_frequency,
+            cos, sin, structure.atom_mask, num_aug=1,
         )
         atom_single = self.atom_transformer(atom_single, atom_single, attention_params)
         return self._scatter_atom_to_token(

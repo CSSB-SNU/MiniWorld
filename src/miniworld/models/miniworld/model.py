@@ -28,7 +28,7 @@ from miniworld.modules.msa_util import (
     init_template_feat,
     init_token_single_msa,
 )
-from miniworld.modules.template_module import TemplateEmbedder, TemplatePairformer
+from team_gm.modules import TemplateEmbedder, TemplatePairformer
 
 if TYPE_CHECKING:
     from jaxtyping import Bool, Float
@@ -124,8 +124,9 @@ class Model(nn.Module):
         self.msa_module = MSAModule(config.trunk.msa_module).to(torch.bfloat16)
         if self.use_template:
             self.temp_embedder = TemplateEmbedder(
-                config.shared,
-                config.trunk.template_embedder,
+                d_pair=config.shared.d_pair,
+                d_pair_template=config.shared.d_pair_template,
+                template_pairformer_config=config.trunk.template_embedder,
             ).to(torch.bfloat16)
         self.pairformer_blocks = Pairformer(config.trunk.pairformer).to(torch.bfloat16)
         self.distogram_head = DistogramHead(

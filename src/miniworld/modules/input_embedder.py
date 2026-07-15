@@ -15,7 +15,7 @@ from miniworld.data.features.features import (
     SchemeFeatures,
     StructureFeatures,
 )
-from miniworld.modules.embeddings import RelativePositionEmbedding
+from team_gm.modules.layers import RelativePositionEmbedding
 
 
 @typecheck
