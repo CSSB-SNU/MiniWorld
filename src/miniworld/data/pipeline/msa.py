@@ -24,6 +24,7 @@ class MSA:
         seq_id: str | None,
         sequences: dict[str, ndarray],
         headers: dict[str, ndarray],
+        species_to_idx: dict[object, list[int]] | None = None,
     ) -> None:
         self.seq_id = seq_id
         self.query_sequence: ndarray = sequences["query_sequence"]  # (L, )
@@ -32,10 +33,36 @@ class MSA:
         self.deletion_mean: ndarray = sequences["deletion_mean"]  # (L, )
         self.profile: ndarray = sequences["profile"]  # (L, 21) for now, protein only
         self.species: ndarray = headers["species"]  # (N_seqs, )
-        self.species_to_idx = {
-            species: np.where(self.species == species)[0].tolist()
-            for species in set(self.species)
-        }
+        # ``species_to_idx`` groups sequence indices by species. Reused by
+        # ``_pairing_MSAs`` for every chain and rebuilt on every ``cropped``
+        # (which changes residue axis, not species axis), so cropped instances
+        # pass their parent's dict through instead of rebuilding. The build
+        # itself uses a numpy sort + boundary scan: the equivalent CPython
+        # ``dict.setdefault + list.append`` loop was fast on synthetic data
+        # (~3 ms for 12k rows) but blew up to 18+ s on some AF3 distillation
+        # MSAs with |S121 species arrays — presumably GC/malloc thrash from
+        # the 10k+ Python bytes objects the ``.tolist()`` allocates. numpy
+        # sort at C speed sidesteps that entirely and is ~5 ms worst case.
+        if species_to_idx is not None:
+            self.species_to_idx = species_to_idx
+        else:
+            species_arr = self.species
+            n = species_arr.shape[0]
+            if n == 0:
+                self.species_to_idx = {}
+            else:
+                order = np.argsort(species_arr, kind="stable")
+                sorted_sp = species_arr[order]
+                boundaries = np.concatenate((
+                    np.array([0], dtype=np.int64),
+                    np.nonzero(sorted_sp[1:] != sorted_sp[:-1])[0] + 1,
+                    np.array([n], dtype=np.int64),
+                ))
+                uniques = sorted_sp[boundaries[:-1]].tolist()
+                self.species_to_idx = {
+                    uniques[i]: order[boundaries[i]:boundaries[i + 1]]
+                    for i in range(len(uniques))
+                }
 
         self.num_seqs = self.aligned_sequences.shape[0]
         self.length = self.aligned_sequences.shape[1]
@@ -117,11 +144,14 @@ class MSA:
 
         headers = {"species": msa.species.copy()}
 
-        # 3. Create a new instance
+        # 3. Create a new instance — reuse the parent's species_to_idx since the
+        # residue-axis crop does not touch the sequence axis, so species remain
+        # aligned index-for-index.
         return cls(
             seq_id=msa.seq_id,
             sequences=sequences,
             headers=headers,
+            species_to_idx=msa.species_to_idx,
         )
 
     def get_query_sequence(self) -> ndarray:

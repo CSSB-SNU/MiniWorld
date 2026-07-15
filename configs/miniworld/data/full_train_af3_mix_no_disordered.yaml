@@ -158,6 +158,9 @@ crop:
   bucket_atom_size: 1024
   chain_crop_prob: 0.5
 
+template:
+  n_templates: 4
+
 msa:
   n_samples: 1
   max_msa_depth: 2048

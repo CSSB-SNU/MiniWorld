@@ -603,14 +603,20 @@ def train(  # noqa: PLR0912, PLR0915
         tokenizer_config=cfg.data.tokenizer,
     )
     train_dataset = BioMolData(train_data_config)
+    world_size = fabric.world_size
+    train_num_item = cfg.train.train_item // world_size
     train_dataloader = train_dataset.create_ddp_dataloader(
-        world_size=fabric.world_size,
+        world_size=world_size,
         rank=fabric.global_rank,
         seed=cfg.train.seed,
         drop_last=True,
         batch_size=cfg.train.num_batch,
         num_workers=cfg.train.num_workers,
         prefetch_factor=cfg.train.prefetch_factor,
+        # Sampler draws only what the training loop consumes per rank per
+        # epoch, not the full catalog — critical on multi-source manifests
+        # where the catalog is millions of items.
+        num_samples_per_rank=train_num_item,
         # Keep workers alive across epochs: with spawn context + many workers,
         # respawning every epoch costs ~13 min of cold pipeline fill. Safe here
         # because per-sample crop RNG is unseeded (epoch-independent) and the
@@ -622,8 +628,6 @@ def train(  # noqa: PLR0912, PLR0915
         bucket_token_multiple=cfg.train.bucket_token_multiple,
         bucket_atom_multiple=cfg.train.bucket_atom_multiple,
     )
-    world_size = fabric.world_size
-    train_num_item = cfg.train.train_item // world_size
 
     train_aggregator = MetricsAggregator(client, "train", use_wandb=cfg.train.use_wandb)
     checkpoint_dir = run_sub_dir / "checkpoints"

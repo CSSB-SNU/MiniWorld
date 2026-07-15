@@ -192,9 +192,23 @@ class BioMolData(torch.utils.data.Dataset):
         if len(keys) == 0:
             return
 
+        # Pre-index MSA shards once at __init__ (key -> single shard path) so the
+        # runtime MSA load skips ``_first_raw_data``'s linear scan across all
+        # a3m_db_paths — which, for the 80 msa_long_d2k_shard* on B200, costs
+        # ~40 LMDB opens per miss and dominates per-item CPU time otherwise.
+        # First-shard-wins to match the runtime resolution order.
+        msa_shard_by_key: dict[str, Path] = {}
+        for shard in source.a3m_db_paths:
+            for shard_key in extract_lmdb_keys(shard):
+                msa_shard_by_key.setdefault(shard_key, shard)
+
         n_chains = len(source.chain_ids)
         per_item_weight = 1.0
         for key in keys:
+            resolved_shard = msa_shard_by_key.get(key)
+            msa_paths_for_key: tuple[Path, ...] = (
+                (resolved_shard,) if resolved_shard is not None else ()
+            )
             self.items.append(
                 DataRecord(
                     item_id=f"{source.name}:{key}",
@@ -209,7 +223,7 @@ class BioMolData(torch.utils.data.Dataset):
                     if source.lookup_mode == "record_id"
                     else (),
                     seq_ids=(),
-                    msa_db_paths=(tuple(source.a3m_db_paths),) * n_chains,
+                    msa_db_paths=(msa_paths_for_key,) * n_chains,
                     template_db_paths=(source.template_db_path,) * n_chains,
                     weight=per_item_weight,
                     weight_group=source.name,
@@ -293,17 +307,25 @@ class BioMolData(torch.utils.data.Dataset):
         seed: int = 0,
         drop_last: bool = False,
         num_workers: int = 0,
+        num_samples_per_rank: int | None = None,
         bucket_msa_multiple: int | None = None,
         bucket_token_multiple: int | None = None,
         bucket_atom_multiple: int | None = None,
         **kwargs: object,
     ) -> DataLoader:
-        """Create a distributed DataLoader with WeightedSampler."""
+        """Create a distributed DataLoader with WeightedSampler.
+
+        ``num_samples_per_rank`` pins the epoch length to what the training
+        loop actually consumes (e.g. ``train_item // world_size``); leaving it
+        None keeps the legacy behavior of iterating the full catalog per rank
+        (heavy for multi-source manifests).
+        """
         self.seed = int(seed)
 
         sampler = WeightedSampler(
             dataset=self,
             weights=self.weights,
+            num_samples=num_samples_per_rank,
             num_replicas=world_size,
             rank=rank,
             shuffle=shuffle,

@@ -180,7 +180,22 @@ def load_record_templates(
     n_templates: int,
     rng: np.random.Generator | None,
 ) -> ProteinTemplate:
-    """Load template features using chain-specific feature keys."""
+    """Load template features using chain-specific feature keys.
+
+    When ``n_templates <= 0`` the LMDB read is skipped entirely and each chain
+    gets an empty ``ProteinTemplate`` — models that don't consume templates
+    (e.g. MiniSWAModel's pair-only trunk) then avoid paying the biomol
+    ``load_bytes`` deserialize cost, which was ~55% of preprocess wall time
+    at the default ``n_templates=4``.
+    """
+    if n_templates <= 0:
+        return ProteinTemplate.concat(
+            [
+                ProteinTemplate(n_residues=crop_indices.shape[0], ids=[template_id])
+                for template_id, crop_indices in enumerate(chain_id_to_crop_indices.values())
+            ],
+        )
+
     templates_list: list[ProteinTemplate] = []
     template_id = 0
     for chain_id, crop_indices in chain_id_to_crop_indices.items():
