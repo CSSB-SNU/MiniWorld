@@ -612,14 +612,32 @@ def sample_msa(
     msa: ComplexMSA,
     max_msa_depth: int,
     rng: np.random.Generator | None = None,
+    sample_depth: Literal["uniform", "fixed"] = "uniform",
 ) -> MSAFeatures:
-    """Sample and process MSA for model input."""
+    """Sample and process MSA for model input.
+
+    ``sample_depth="uniform"`` (AF3-style, default) draws the per-item depth
+    k ~ Uniform[1, min(n_available, max_msa_depth)] so the model sees a range
+    of MSA depths. ``sample_depth="fixed"`` always requests max_msa_depth
+    (legacy behavior).
+    """
     if rng is None:
         rng = np.random.default_rng()
+
+    if sample_depth == "uniform":
+        if getattr(msa, "pairing_mode", "mixed") == "no_pairing":
+            n_available = int(msa.sequence.shape[0])
+        else:
+            n_available = int(msa.total_depth)
+        upper = max(1, min(n_available, max_msa_depth))
+        effective_depth = int(rng.integers(1, upper + 1))
+    else:
+        effective_depth = max_msa_depth
+
     profile = msa.profile
     deletion_mean = msa.deletion_mean
     _, aligned_sequences, has_deletion, deletion_value = msa.sample(
-        max_msa_depth,
+        effective_depth,
         rng=rng,
     )
     n_seq, _ = aligned_sequences.shape

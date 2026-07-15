@@ -82,6 +82,12 @@ class MSAConfig(BaseModel):
     missing_policy: Literal["gap", "query"] = "gap"
     pairing_mode: Literal["mixed", "paired_only", "no_pairing"] = "mixed"
 
+    # Per-item MSA depth policy applied inside sample_msa():
+    #   "uniform" (AF3-style, default): k ~ Uniform[1, min(n_available, max_msa_depth)]
+    #                                   sample k rows so the model sees a range of depths.
+    #   "fixed"                       : always request max_msa_depth rows (legacy behavior).
+    sample_depth: Literal["uniform", "fixed"] = "uniform"
+
 
 class TemplateConfig(BaseModel):
     """Configuration for template sampling."""

@@ -1,0 +1,185 @@
+# AF3-style mixed-source training config.
+#
+# Source weights come from AlphaFold 3 Supplementary Table 3 (pre-training row
+# subset). RNA distillation is dropped (user request → 0). Transcription-factor
+# sets are fine-tune only and not included here.
+#
+# Within the "pdb" source, PDB item weighting is unchanged — it still uses the
+# legacy edge_id_to_bias TSV + SamplerConfig type weights below (protein_protein
+# 25, protein_ligand 25, ...). AF3's beta_r/alpha_r formula from Eq. 1 is NOT
+# applied.
+#
+# max_msa_depth = 2000 (matches the pre-computed msa_long_d2k_* shard depth cap).
+# missing_policy = query so absent MSAs fall back to the query sequence.
+
+DB_PATH: /NHNHOME/WORKSPACE/0226010152_A/data/
+DIST_LMDB: /NHNHOME/WORKSPACE/0226010152_A/data/distillation/lmdb/
+
+train_db:
+  ccd_preprocessed_path: ${DB_PATH}/CCD/preprocessed_CCD.lmdb
+
+  # AF3 Table 3 (pre-training) weights; loader normalizes across active sources.
+  source_weights:
+    pdb: 0.5
+    disordered_pdb: 0.02
+    protein_monomer: 0.495
+    short_protein_monomer: 0.005
+
+  sample_with_replacement: true
+  manifest_validation: paths
+
+  pdb:
+    cif_db_path: ${DB_PATH}/v2/cif_attached_train_20260224_res9_chain300.lmdb
+    a3m_db_path: ${DB_PATH}/a3m_16k.lmdb
+    template_db_path: ${DB_PATH}/template.lmdb
+    edge_id_to_bias_path: ${DB_PATH}/v2/metadata/train_20260224_edge_node.tsv
+    ccd_preprocessed_path: ${DB_PATH}/CCD/preprocessed_CCD.lmdb
+
+  distillation_sources:
+    - name: protein_monomer
+      cif_db_path: ${DIST_LMDB}/cif_long_attached.lmdb
+      template_db_path: ${DIST_LMDB}/template_topn_long.lmdb
+      chain_ids: ["1"]
+      lookup_mode: record_id
+      a3m_db_paths:
+        - ${DIST_LMDB}/msa_long_d2k_shard0.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard1.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard2.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard3.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard4.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard5.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard6.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard7.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard8.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard9.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard10.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard11.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard12.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard13.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard14.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard15.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard16.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard17.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard18.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard19.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard20.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard21.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard22.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard23.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard24.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard25.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard26.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard27.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard28.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard29.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard30.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard31.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard32.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard33.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard34.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard35.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard36.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard37.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard38.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard39.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard40.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard41.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard42.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard43.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard44.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard45.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard46.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard47.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard48.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard49.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard50.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard51.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard52.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard53.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard54.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard55.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard56.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard57.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard58.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard59.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard60.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard61.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard62.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard63.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard64.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard65.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard66.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard67.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard68.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard69.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard70.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard71.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard72.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard73.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard74.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard75.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard76.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard77.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard78.lmdb
+        - ${DIST_LMDB}/msa_long_d2k_shard79.lmdb
+
+    - name: short_protein_monomer
+      cif_db_path: ${DIST_LMDB}/cif_short_attached.lmdb
+      template_db_path: ${DIST_LMDB}/template_topn_short.lmdb
+      chain_ids: ["1"]
+      lookup_mode: record_id
+      a3m_db_paths:
+        - ${DIST_LMDB}/msa_short_d5k.lmdb
+
+    - name: disordered_pdb
+      cif_db_path: ${DIST_LMDB}/cif_disordered_attached.lmdb
+      template_db_path: ${DIST_LMDB}/template_disordered.lmdb
+      chain_ids: ["1"]
+      lookup_mode: record_id
+      a3m_db_paths:
+        - ${DIST_LMDB}/msa_disordered_d5k.lmdb
+
+crop:
+  max_tokens: 384
+  max_atoms: 4096
+  min_segment_size: 1
+  max_segment_size: 41
+
+  monomer_only: false
+  remain_invalid_tokens: false
+
+  bucket_msa_size: 128
+  bucket_token_size: 128
+  bucket_atom_size: 1024
+  chain_crop_prob: 0.5
+
+msa:
+  n_samples: 1
+  max_msa_depth: 2000
+  missing_policy: query
+  # sample_depth default is now "uniform" (AF3-style k ~ Uniform[1, min(n, 2000)]).
+  # Set to "fixed" here to override if you want legacy always-max sampling.
+
+tokenizer:
+  level: dynamic
+  dynamic_tokenization:
+    minimum_resolution_ratio: [0.2, 0.6, 0.2]
+    sigma_flat_prob: 0.0
+    sigma_min: 4.0
+    sigma_max: 8.0
+
+# Weighted-PDB internal item weighting (unchanged; per user request).
+sampler:
+  protein_protein: 25.0
+  protein_ligand: 25
+  protein_dna: 10
+  protein_rna: 10
+  antibody_protein: 15
+  dna_dna: 5
+  rna_rna: 5
+  dna_rna: 0.5
+  antibody_antibody: 0.5
+  antibody_ligand: 1.0
+  na_ligand: 1.0
+  etc_interface: 1.0
+  sole: 1.0
