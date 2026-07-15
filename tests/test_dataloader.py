@@ -20,7 +20,7 @@ from miniworld.configs.data import (
     MSAConfig,
     TokenizerConfig,
 )
-from miniworld.data.dataloader.dataloader import BioMolData, DataBias
+from miniworld.data.dataloader import BioMolData, DataRecord
 from miniworld.data.features import Batch
 
 if TYPE_CHECKING:
@@ -313,17 +313,16 @@ def parse_crop_indices(value: str | None) -> np.ndarray | None:
     return np.asarray(indices, dtype=np.int64)
 
 
-def format_bias(bias: DataBias) -> str:
-    """Format one metadata bias row for display."""
-    chain_ids = [bias.chain_id1] + ([bias.chain_id2] if bias.chain_id2 else [])
+def format_bias(bias: DataRecord) -> str:
+    """Format one metadata record for display."""
     return (
-        f"{bias.pdb_id}_{bias.assembly_id}_{bias.model_id}_{bias.alt_id} "
-        f"chains={','.join(chain_ids)}"
+        f"{bias.record_id}_{bias.assembly_id}_{bias.model_id}_{bias.alt_id} "
+        f"chains={','.join(bias.chain_ids)}"
     )
 
 
 def bias_matches(
-    bias: DataBias,
+    bias: DataRecord,
     *,
     pdb_id: str | None,
     assembly_id: str | None,
@@ -332,7 +331,7 @@ def bias_matches(
 ) -> bool:
     """Return whether a metadata row matches optional id filters."""
     return (
-        (pdb_id is None or bias.pdb_id == pdb_id.lower())
+        (pdb_id is None or bias.record_id == pdb_id.lower())
         and (assembly_id is None or bias.assembly_id == assembly_id)
         and (model_id is None or bias.model_id == model_id)
         and (alt_id is None or bias.alt_id == alt_id)
@@ -399,14 +398,13 @@ def fetch_direct_item(dataset: BioMolData, args: ItemOptions) -> FetchedItem:
                 None,
             )
 
-        chain_ids = [bias.chain_id1] + ([bias.chain_id2] if bias.chain_id2 else [])
         start = time.perf_counter()
         batch = dataset.get_item_by_id(
-            pdb_id=bias.pdb_id,
+            pdb_id=bias.record_id,
             assembly_id=bias.assembly_id,
             model_id=bias.model_id,
             alt_id=bias.alt_id,
-            chain_ids=chain_ids,
+            chain_ids=list(bias.chain_ids),
             crop_indices=crop_indices,
             rng=rng,
         )
@@ -451,11 +449,11 @@ def fetch_direct_item(dataset: BioMolData, args: ItemOptions) -> FetchedItem:
             )
             raise click.ClickException(msg)
         selected_index, bias = matches[args.match]
-        pdb_id = bias.pdb_id
+        pdb_id = bias.record_id
         assembly_id = bias.assembly_id
         model_id = bias.model_id
         alt_id = bias.alt_id
-        chain_ids = [bias.chain_id1] + ([bias.chain_id2] if bias.chain_id2 else [])
+        chain_ids = list(bias.chain_ids)
         source = format_bias(bias)
 
     start = time.perf_counter()

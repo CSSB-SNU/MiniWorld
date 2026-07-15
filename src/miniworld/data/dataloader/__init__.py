@@ -1,18 +1,12 @@
-"""Dataloader implementations for MiniWorld."""
+"""Dataloader for MiniWorld — multi-source manifest + legacy PDB compat."""
 
-from .dataloader import BioMolData, DataBias, FragmentedCCDMolCache, WrongCroppingError
-from .dataloader_v2 import (
-    BioMolDataV2,
-    BioMolDBV2Config,
-    DataRecord,
-    DistillationSourceConfig,
-)
+from .dataloader import BioMolData, WrongCroppingError
+from .loading import FragmentedCCDMolCache
+from .types import BioMolDBV2Config, DataRecord, DistillationSourceConfig
 
 __all__ = [
     "BioMolDBV2Config",
     "BioMolData",
-    "BioMolDataV2",
-    "DataBias",
     "DataRecord",
     "DistillationSourceConfig",
     "FragmentedCCDMolCache",
