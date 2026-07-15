@@ -1,0 +1,50 @@
+# [FULL EDM2 / ROPE-SWA AF3 / B200 8GPU] msa3_24_3 NO-SINGLE.  --- LR SWEEP: max_lr=1e-3 ---
+#
+# Single-variable copy with ONLY max_lr = 1.0e-3 (between the 3e-3 base and the
+# dead 1e-4). Tests whether a lower-but-still-trainable LR gives a better final
+# floor than 3e-3 (=> LR was the culprit) or the same (=> mp_full is). mp_full
+# rescales effective LR ~30x, so 1e-4 was too low (flat); 1e-3 stays trainable.
+# Everything else identical (inverse_sqrt, warmup=5000, t_ref=5000, mp_full, grad_accum=32).
+defaults:
+  - model: large_msa3_24_3_no_single_qknorm
+  - train: exp_msa383
+  - data: full_train_balanced_v3_crop384_atom_gap
+  - diffuser: edm
+  - loss: wo_smoothlddt
+  - _self_
+
+model:
+  diffusion:
+    mp_full: True
+    autocast_bf16: False
+    atom_dit:
+      use_bias_norm: True
+      use_rotation: True
+      residual_t: 0.3
+    token_dit:
+      use_bias_norm: True
+      use_rotation: True
+      residual_t: 0.3
+    swa_atom:
+      block_style: af3
+      n_block: 3
+      n_head: 4
+      swa_window_size: 128
+      expansion_ratio: 2
+      n_spatial_rope_pairs_per_axis: 2
+      spatial_rope_base_frequency: 20.0
+      n_uid_rope_pairs: 10
+      uid_rope_base_frequency: 10000.0
+      residual_t: 0.3
+
+train:
+  comment: "LR SWEEP max_lr=1e-3: full-EDM2/DiT-MP + RoPE-SWA AF3 (vs 3e-3 base)"
+  run_dir: "logs/exp/msa3_24_3-no-single-ropeswa-af3-mpfull-b200-8gpu-edm-lr1e3/"
+  grad_accum_steps: 32
+  compile: True
+  optimizer: "Adam"
+  adam_beta1: 0.9
+  adam_beta2: 0.99
+  lr_schedule: "inverse_sqrt"
+  lr_decay_ref_steps: 5000
+  max_lr: 1.0e-3
