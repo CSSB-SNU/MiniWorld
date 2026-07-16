@@ -25,6 +25,12 @@ class StructureFeatures(BaseBatch):
     token_contacts: Int[torch.Tensor, "B n_token_contact 3"]
     token_mask: Bool[torch.Tensor, "B L_res"]
     atom_bond: Int[torch.Tensor, "B n_atom_bond 6"]
+    # Dense token-bond adjacency, precomputed in the dataloader (convert.py) so the
+    # captured forward reads a fixed-shape (bucketed) field instead of scattering the
+    # variable-length ``token_bond`` inside the CUDA graph (which the memoised
+    # ``_gen_bond_feature`` cannot do correctly across replays with fresh batches).
+    # ``None`` -> model falls back to ``_gen_bond_feature`` (legacy / eager path).
+    token_bond_feat: Bool[torch.Tensor, "B L_res L_res"] | None = None
 
 
 @typecheck

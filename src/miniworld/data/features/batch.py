@@ -124,6 +124,7 @@ class Batch(BaseBatch):
                 token_contacts=torch.zeros((1, 0, 3), dtype=torch.long),
                 token_mask=torch.zeros((1, n_tokens), dtype=torch.bool),
                 atom_bond=torch.zeros((1, 0, 6), dtype=torch.long),
+                token_bond_feat=torch.zeros((1, n_tokens, n_tokens), dtype=torch.bool),
             ),
             reference=ReferenceFeatures(
                 pos=torch.zeros((1, n_atoms, 3), dtype=torch.float),

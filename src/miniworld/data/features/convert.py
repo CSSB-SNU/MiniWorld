@@ -214,6 +214,23 @@ def to_structure_features(
     )  # (n_atom_bond, 3)
     atom_bond = np.zeros_like(atom_bond, dtype=np.int64)  # placeholder
 
+    # Dense token-bond adjacency [L_token, L_token] (bool), built once here (per
+    # sample, host-side) so the captured model forward reads a fixed-shape field
+    # instead of scattering the variable-length token_bond inside the CUDA graph.
+    tb = token_bond.astype(np.int64).reshape(-1, 2)
+    token_bond_feat = torch.zeros(
+        (cropped_token_len, cropped_token_len), dtype=torch.bool,
+    )
+    if tb.shape[0] > 0:
+        bi = torch.from_numpy(tb[:, 0])
+        bj = torch.from_numpy(tb[:, 1])
+        keep = (bi != bj) & (bi >= 0) & (bj >= 0) & (bi < cropped_token_len) & (
+            bj < cropped_token_len
+        )
+        bi, bj = bi[keep], bj[keep]
+        token_bond_feat[bi, bj] = True
+        token_bond_feat[bj, bi] = True
+
     return StructureFeatures.from_sample(
         atom_pos=torch.from_numpy(atom_pos.astype(np.float32)),
         atom_pos_mask=torch.from_numpy(atom_pos_mask.astype(np.bool)),
@@ -222,6 +239,7 @@ def to_structure_features(
         token_contacts=token_contacts.to(torch.int64),
         token_mask=torch.ones((cropped_token_len,), dtype=torch.bool),  # all ones
         token_bond=torch.from_numpy(token_bond.astype(np.int64)),
+        token_bond_feat=token_bond_feat,
     )
 
 

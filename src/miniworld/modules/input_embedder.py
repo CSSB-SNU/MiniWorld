@@ -408,8 +408,18 @@ class InputFeatureEmbedder(nn.Module):
             sym_id=scheme.token_sym_id,
         )
 
+        # Prefer the dataloader-precomputed dense adjacency (fixed shape -> the
+        # captured forward stays graph-legal and updates correctly per replay).
+        # Fall back to the in-forward scatter for legacy/eager batches that don't
+        # carry ``token_bond_feat``.
+        if structure.token_bond_feat is not None:
+            bond_onehot = torch.nn.functional.one_hot(
+                structure.token_bond_feat.long(), num_classes=2,
+            )
+        else:
+            bond_onehot = self._gen_bond_feature(structure)
         token_pair_init = token_pair_init + self.add_token_bond(
-            self._gen_bond_feature(structure).to(dtype=token_pair_init.dtype),
+            bond_onehot.to(dtype=token_pair_init.dtype),
         )
 
         return (
