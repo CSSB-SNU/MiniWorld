@@ -14,6 +14,8 @@ LMDB loaders in loading.py.
 from __future__ import annotations
 
 import functools
+import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -55,6 +57,133 @@ if TYPE_CHECKING:
     from miniworld.data.mols import FragmentedCCDMol
 
 __all__ = ["BioMolData", "WrongCroppingError"]
+
+logger = logging.getLogger(__name__)
+
+_CATALOG_CHUNK = 1_000_000  # rows per Arrow record batch when building the cache
+
+
+def _write_catalog_arrow(
+    path: Path, items: list[DataRecord], weights: list[float],
+) -> None:
+    """Serialize the item catalog to an Arrow IPC file (chunked to bound memory).
+
+    Repetitive string columns (paths, source, chain_ids) dictionary-encode to almost
+    nothing; the varying columns are record_id / feature_keys / weight. Written to a
+    temp file then atomically renamed so a crash never leaves a half-written cache.
+    """
+    import pyarrow as pa
+
+    schema = pa.schema([
+        ("item_id", pa.string()),
+        ("source", pa.string()),
+        ("record_id", pa.string()),
+        ("cif_db_path", pa.string()),
+        ("assembly_id", pa.string()),
+        ("model_id", pa.string()),
+        ("alt_id", pa.string()),
+        ("chain_ids", pa.list_(pa.string())),
+        ("feature_keys", pa.list_(pa.string())),
+        ("seq_ids", pa.list_(pa.string())),
+        ("msa_db_paths", pa.list_(pa.list_(pa.string()))),
+        ("template_db_paths", pa.list_(pa.string())),
+        ("item_kind", pa.string()),
+        ("weight_group", pa.string()),
+        ("weight", pa.float64()),
+    ])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with pa.OSFile(str(tmp), "wb") as sink, pa.ipc.new_file(sink, schema) as writer:
+        for start in range(0, len(items), _CATALOG_CHUNK):
+            chunk = items[start : start + _CATALOG_CHUNK]
+            wchunk = weights[start : start + _CATALOG_CHUNK]
+            writer.write_batch(
+                pa.record_batch(
+                    [
+                        pa.array([r.item_id for r in chunk]),
+                        pa.array([r.source for r in chunk]),
+                        pa.array([r.record_id for r in chunk]),
+                        pa.array([str(r.cif_db_path) for r in chunk]),
+                        pa.array([r.assembly_id for r in chunk]),
+                        pa.array([r.model_id for r in chunk]),
+                        pa.array([r.alt_id for r in chunk]),
+                        pa.array([list(r.chain_ids) for r in chunk]),
+                        pa.array([list(r.feature_keys) for r in chunk]),
+                        pa.array([list(r.seq_ids) for r in chunk]),
+                        pa.array(
+                            [
+                                [[str(p) for p in chain] for chain in r.msa_db_paths]
+                                for r in chunk
+                            ],
+                        ),
+                        pa.array(
+                            [
+                                [str(p) if p is not None else None
+                                 for p in r.template_db_paths]
+                                for r in chunk
+                            ],
+                        ),
+                        pa.array([r.item_kind for r in chunk]),
+                        pa.array([r.weight_group for r in chunk]),
+                        pa.array([float(w) for w in wchunk]),
+                    ],
+                    schema=schema,
+                ),
+            )
+    tmp.replace(path)
+
+
+class _LazyArrowCatalog:
+    """List-like view over an mmap'd Arrow catalog; builds one DataRecord per index.
+
+    Holds the memory-mapped table (no Python-object materialization at load); indexing
+    decodes a single row on demand. ``self.items[idx]`` in ``__getitem__`` is the only
+    access pattern, so per-index decode cost is negligible next to the model step.
+    """
+
+    def __init__(self, table: object) -> None:
+        self._t = table
+        self._c = {name: table.column(name) for name in table.schema.names}
+
+    def __len__(self) -> int:
+        return self._t.num_rows
+
+    def __getitem__(self, i: int) -> DataRecord:
+        c = self._c
+        msa = tuple(
+            tuple(Path(p) for p in chain) for chain in c["msa_db_paths"][i].as_py()
+        )
+        tmpl = tuple(
+            Path(p) if p is not None else None
+            for p in c["template_db_paths"][i].as_py()
+        )
+        return DataRecord(
+            item_id=c["item_id"][i].as_py(),
+            source=c["source"][i].as_py(),
+            record_id=c["record_id"][i].as_py(),
+            cif_db_path=Path(c["cif_db_path"][i].as_py()),
+            assembly_id=c["assembly_id"][i].as_py(),
+            model_id=c["model_id"][i].as_py(),
+            alt_id=c["alt_id"][i].as_py(),
+            chain_ids=tuple(c["chain_ids"][i].as_py()),
+            feature_keys=tuple(c["feature_keys"][i].as_py()),
+            seq_ids=tuple(c["seq_ids"][i].as_py()),
+            msa_db_paths=msa,
+            template_db_paths=tmpl,
+            weight=float(c["weight"][i].as_py()),
+            item_kind=c["item_kind"][i].as_py(),
+            weight_group=c["weight_group"][i].as_py(),
+        )
+
+
+def _load_catalog_arrow(path: Path) -> tuple[_LazyArrowCatalog, np.ndarray]:
+    """mmap an Arrow catalog. Returns (lazy items view, balanced weights array)."""
+    import pyarrow as pa
+
+    source = pa.memory_map(str(path), "r")
+    table = pa.ipc.open_file(source).read_all()
+    weights = table.column("weight").to_numpy(zero_copy_only=False)
+    return _LazyArrowCatalog(table), weights
 
 
 class BioMolData(torch.utils.data.Dataset):
@@ -133,6 +262,16 @@ class BioMolData(torch.utils.data.Dataset):
     # -- item catalog ------------------------------------------------------
 
     def _load_items(self) -> None:
+        cache = self.config.DB_config.catalog_cache_path
+        if cache is not None and Path(cache).exists():
+            # mmap the prebuilt Arrow catalog: instant, zero Python-object build,
+            # shared across DDP ranks via the OS page cache.
+            self.items, self.weights = _load_catalog_arrow(Path(cache))
+            logger.info(
+                "loaded catalog from Arrow cache %s (%d items)", cache, len(self.items),
+            )
+            return
+
         self.items = []
         self.weights = []
         if self.config.DB_config.items_path and self.config.DB_config.resources_path:
@@ -154,6 +293,13 @@ class BioMolData(torch.utils.data.Dataset):
             source_weights=configured_source_weights(self.config.DB_config),
             default_source_weight=self.config.DB_config.default_source_weight,
         )
+
+        if cache is not None:
+            _write_catalog_arrow(Path(cache), self.items, self.weights)
+            logger.info(
+                "wrote catalog Arrow cache %s (%d items) — future inits mmap it",
+                cache, len(self.items),
+            )
 
     def _append_pdb_items(self, pdb_config: BioMolDBConfig) -> None:
         edge_items, edge_weights = read_pdb_edge_items(
@@ -188,48 +334,57 @@ class BioMolData(torch.utils.data.Dataset):
             self._append_one_distillation_source(source)
 
     def _append_one_distillation_source(self, source: DistillationSourceConfig) -> None:
+        # Enumerate the record list (cif keys) + resolve each key's MSA shard by
+        # scanning the a3m shards once. This whole enumeration is only ever paid on a
+        # cold build: the assembled catalog is cached to an Arrow file and mmap-loaded
+        # on subsequent __init__ (see _load_items / catalog_cache_path).
         keys = extract_lmdb_keys(source.cif_db_path, max_keys=source.max_items)
         if len(keys) == 0:
             return
-
-        # Pre-index MSA shards once at __init__ (key -> single shard path) so the
-        # runtime MSA load skips ``_first_raw_data``'s linear scan across all
-        # a3m_db_paths — which, for the 80 msa_long_d2k_shard* on B200, costs
-        # ~40 LMDB opens per miss and dominates per-item CPU time otherwise.
-        # First-shard-wins to match the runtime resolution order.
         msa_shard_by_key: dict[str, Path] = {}
         for shard in source.a3m_db_paths:
             for shard_key in extract_lmdb_keys(shard):
                 msa_shard_by_key.setdefault(shard_key, shard)
-
-        n_chains = len(source.chain_ids)
-        per_item_weight = 1.0
         for key in keys:
             resolved_shard = msa_shard_by_key.get(key)
             msa_paths_for_key: tuple[Path, ...] = (
                 (resolved_shard,) if resolved_shard is not None else ()
             )
-            self.items.append(
-                DataRecord(
-                    item_id=f"{source.name}:{key}",
-                    source=source.name,
-                    record_id=key,
-                    cif_db_path=source.cif_db_path,
-                    assembly_id=source.assembly_id,
-                    model_id=source.model_id,
-                    alt_id=source.alt_id,
-                    chain_ids=tuple(source.chain_ids),
-                    feature_keys=(key,) * n_chains
-                    if source.lookup_mode == "record_id"
-                    else (),
-                    seq_ids=(),
-                    msa_db_paths=(msa_paths_for_key,) * n_chains,
-                    template_db_paths=(source.template_db_path,) * n_chains,
-                    weight=per_item_weight,
-                    weight_group=source.name,
-                ),
+            self._append_distillation_record(
+                source, key, source.cif_db_path, msa_paths_for_key, source.template_db_path,
             )
-            self.weights.append(per_item_weight)
+
+    def _append_distillation_record(
+        self,
+        source: DistillationSourceConfig,
+        key: str,
+        cif_db_path: Path,
+        msa_paths_for_key: tuple[Path, ...],
+        template_db_path: Path | None,
+    ) -> None:
+        n_chains = len(source.chain_ids)
+        per_item_weight = 1.0
+        self.items.append(
+            DataRecord(
+                item_id=f"{source.name}:{key}",
+                source=source.name,
+                record_id=key,
+                cif_db_path=cif_db_path,
+                assembly_id=source.assembly_id,
+                model_id=source.model_id,
+                alt_id=source.alt_id,
+                chain_ids=tuple(source.chain_ids),
+                feature_keys=(key,) * n_chains
+                if source.lookup_mode == "record_id"
+                else (),
+                seq_ids=(),
+                msa_db_paths=(msa_paths_for_key,) * n_chains,
+                template_db_paths=(template_db_path,) * n_chains,
+                weight=per_item_weight,
+                weight_group=source.name,
+            ),
+        )
+        self.weights.append(per_item_weight)
 
     def _load_ccd_preprocessed(self) -> None:
         ccd_path = self.config.DB_config.ccd_preprocessed_path

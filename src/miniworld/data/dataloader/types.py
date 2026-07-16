@@ -39,6 +39,14 @@ class BioMolDBV2Config(BaseModel):
     resources_path: Path | None = None
     ccd_preprocessed_path: Path | None = None
 
+    # Memory-mapped Arrow catalog cache (HuggingFace-datasets / MDS-style). The full
+    # item catalog (all sources) is enumerated ONCE and written here as an Arrow IPC
+    # file; every later __init__ mmaps it (zero-copy, instant, shared across DDP ranks
+    # via the OS page cache) and builds a DataRecord lazily per __getitem__ — so init
+    # never re-scans shard LMDBs nor materializes ~31M Python objects. Delete the file
+    # to force a rebuild when the sources change.
+    catalog_cache_path: Path | None = None
+
     # Source/db sampling probabilities. PDB still uses SamplerConfig inside this mass.
     source_weights: dict[str, float] = {}
     default_source_weight: float = 1.0
