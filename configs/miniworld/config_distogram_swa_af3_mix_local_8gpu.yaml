@@ -1,0 +1,19 @@
+# Distogram-only MiniSWAModel — LOCAL-SERVER, 8-GPU single-node real run.
+#
+# Same as config_distogram_swa_af3_mix_local.yaml but the train group targets a
+# single 8xH100 node: grad_accum_steps=32 so
+#   eff batch = num_batch(1) * grad_accum(32) * world_size(8) = 256
+# (the 16-GPU original used grad_accum=16). Launch with torchrun --nproc_per_node=8.
+#
+# Model : ESMFold2-style SWA/3D-RoPE atom embedder (3 blocks) + 4 MiniMSAModule
+#         + 48 MiniPairformer, global attention. compile:True -> CUDA-graph capture.
+# Data  : AF3 Table 3 source mix, disordered_pdb weight=0.
+# Kernels: trimul cute path requires miniworld-kernels @ perf/trimul-sm90-inference
+#          (2ed6dd2) with quack 0.5.0 / cutlass-dsl 4.5.2 / flash-attn-4 b19.
+
+defaults:
+  - model: medium_distogram_swa_pf48
+  - train: distogram_swa_af3_mix_8gpu
+  - data: full_train_af3_mix_no_disordered_local
+  - loss: distogram_only
+  - _self_
