@@ -2,7 +2,7 @@
 # BioAI-cluster paths. Twin of full_train_af3_mix_no_disordered_local.yaml
 # with data roots remapped to this server:
 #   /home/psk6950/data/BioMolDB_20260224/       -> /data/psk6950/BioMolDB_20260224/
-#   /home/psk6950/data/CCD/preprocessed_CCD.lmdb-> /data/psk6950/CCD/biomol_CCD_202602.lmdb
+#   /home/psk6950/data/CCD/preprocessed_CCD.lmdb-> /data/psk6950/CCD/preprocessed_CCD.lmdb
 #   /home/psk6950/data/openfold_distillation/lmdb/ -> /data/shared/cssb_data/BioMol/lmdb/
 # NOTE: BioAI ships a single msa_long_d2k.lmdb (2.4T), not the 80 msa_long_d2k_shard*
 # files the local box used — same d2k (depth-2048) data, so the a3m list has one entry.
@@ -27,7 +27,7 @@
 
 
 train_db:
-  ccd_preprocessed_path: /data/psk6950/CCD/biomol_CCD_202602.lmdb
+  ccd_preprocessed_path: /data/psk6950/CCD/preprocessed_CCD.lmdb
 
   # AF3 Table 3 (pre-training) weights; loader normalizes across active sources.
   # disordered_pdb is at 0.0 for this test run — items still catalog'd, never sampled.
@@ -46,7 +46,7 @@ train_db:
     a3m_db_path: /data/psk6950/BioMolDB_20260224/a3m_16k.lmdb
     template_db_path: /data/psk6950/BioMolDB_20260224/template.lmdb
     edge_id_to_bias_path: /data/psk6950/BioMolDB_20260224/metadata/train_20260224_edge_node.tsv
-    ccd_preprocessed_path: /data/psk6950/CCD/biomol_CCD_202602.lmdb
+    ccd_preprocessed_path: /data/psk6950/CCD/preprocessed_CCD.lmdb
 
   distillation_sources:
     - name: protein_monomer
@@ -55,7 +55,7 @@ train_db:
       chain_ids: ["1"]
       lookup_mode: record_id
       a3m_db_paths:
-        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/msa_long_d2k.lmdb
 
     - name: short_protein_monomer
       cif_db_path: /data/shared/cssb_data/BioMol/lmdb/distillation_short/cif/cif_short_attached.lmdb
@@ -71,7 +71,7 @@ train_db:
       chain_ids: ["1"]
       lookup_mode: record_id
       a3m_db_paths:
-        - /data/shared/cssb_data/BioMol/lmdb/distillation_disordered/msa/msa_disordered_d5k.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_disordered/msa/msa_disordered_d2k.lmdb
 
 crop:
   max_tokens: 384
@@ -94,16 +94,15 @@ msa:
   n_samples: 1
   max_msa_depth: 2048
   missing_policy: query
+  pairing_mode: no_pairing  # skip species pairing (_pairing_MSAs loop)
   # sample_depth default is now "uniform" (AF3-style k ~ Uniform[1, min(n, 2048)]).
   # Set to "fixed" here to override if you want legacy always-max sampling.
 
 tokenizer:
-  level: dynamic
-  dynamic_tokenization:
-    minimum_resolution_ratio: [0.2, 0.6, 0.2]
-    sigma_flat_prob: 0.0
-    sigma_min: 4.0
-    sigma_max: 8.0
+  # Consistent AF3-style tokenization: canonical polymer residues -> 1 token per
+  # residue, ligands / non-canonical -> 1 token per atom (vectorized atom_tokenize).
+  # Replaces the per-atom-loop `dynamic_tokenize`, which was ~56% of per-item time.
+  level: atom
 
 # Weighted-PDB internal item weighting (unchanged; per user request).
 sampler:
