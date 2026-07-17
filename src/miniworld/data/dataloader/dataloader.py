@@ -341,8 +341,24 @@ class BioMolData(torch.utils.data.Dataset):
         keys = extract_lmdb_keys(source.cif_db_path, max_keys=source.max_items)
         if len(keys) == 0:
             return
+        shards = tuple(source.a3m_db_paths)
+        if len(shards) <= 1:
+            # Single-shard fast path: skip enumerating the MSA shard's keys (which
+            # for the 2.7T msa_long_d2k lmdb scans millions of keys over the shared
+            # FS — the dominant cold-build cost). Assign the one shard to every
+            # record; a record whose key is absent from the shard falls back to the
+            # query sequence at load time (_load_a3m_from_paths -> None ->
+            # MSA.from_query), which is exactly what leaving msa_paths_for_key=()
+            # would have done — so the catalog is unchanged, just built faster.
+            single: tuple[Path, ...] = (shards[0],) if shards else ()
+            for key in keys:
+                self._append_distillation_record(
+                    source, key, source.cif_db_path, single, source.template_db_path,
+                )
+            return
+        # Multi-shard: resolve each key's MSA shard by enumerating the shards once.
         msa_shard_by_key: dict[str, Path] = {}
-        for shard in source.a3m_db_paths:
+        for shard in shards:
             for shard_key in extract_lmdb_keys(shard):
                 msa_shard_by_key.setdefault(shard_key, shard)
         for key in keys:

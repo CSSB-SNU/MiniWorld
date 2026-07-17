@@ -98,19 +98,28 @@ def load_raw_data(key: str, env_path: Path) -> bytes | None:
         load_raw_data._env_cache = cache  # pyright: ignore[reportFunctionMemberAccess] # noqa: SLF001
 
     env_key = str(env_path)
-    env = cache.get(env_key)
-    if env is None:
+    entry = cache.get(env_key)
+    if entry is None:
+        # readahead=False (MDB_NORDAHEAD): these are random key lookups into DBs
+        # far larger than RAM (e.g. msa_long_d2k ~2.7T over a shared FS), where OS
+        # readahead only wastes I/O on pages we never touch.
         env = lmdb.open(
             env_key,
             readonly=True,
             lock=False,
             max_readers=4096,
-            readahead=True,
+            readahead=False,
         )
-        cache[env_key] = env
+        # One long-lived read transaction reused for every get: the DBs are
+        # read-only + static during training, so there is no snapshot to grow or
+        # reclaim, and this removes the per-read `env.begin()` cost (~87ms/call on
+        # the huge lmdbs — ~23s over a 40-item profile).
+        txn = env.begin(buffers=True)
+        entry = (env, txn)
+        cache[env_key] = entry
 
-    with env.begin(buffers=True) as txn:
-        value = txn.get(key.encode())
+    _env, txn = entry
+    value = txn.get(key.encode())
 
     if value is None:
         return None

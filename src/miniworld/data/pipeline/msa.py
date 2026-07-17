@@ -233,11 +233,24 @@ class ComplexMSA:
         max_paired_depth: int = 8191,  # 8192 - 1 (query sequence is always included)
     ) -> tuple[dict[int, np.ndarray], set, int]:
         species_to_idx_dict = {ii: MSA.species_to_idx for ii, MSA in MSAs.items()}
-        # gap indices per MSA (sequence entirely gaps) : (L, N) -> column-wise all-gaps
-        gap_idx_dict = {
-            ii: np.where((MSA.aligned_sequences == GAP_IDX).all(axis=0))[0]
-            for ii, MSA in MSAs.items()
-        }
+        # Per-chain removal mask over the sequence-index value space, precomputed
+        # once so the per-species loop below filters by O(1) boolean indexing
+        # instead of a per-(species, chain) np.setdiff1d + `idx != 0`.
+        # Behavior-identical to the original value-based removal: it drops sequence
+        # indices whose value appears in the all-gap-COLUMN set (axis=0, unchanged)
+        # plus the query row 0. Only values < n_seqs can match a sequence index,
+        # so the mask covers [0, n_seqs) and idx (< n_seqs) never overflows it.
+        remove_idx: dict[int, np.ndarray] = {}
+        for ii, MSA in MSAs.items():
+            n = MSA.aligned_sequences.shape[0]
+            r = np.zeros(n, dtype=bool)
+            if n:
+                gap_cols = np.where(
+                    (MSA.aligned_sequences == GAP_IDX).all(axis=0),
+                )[0]
+                r[gap_cols[gap_cols < n]] = True
+                r[0] = True  # query row 0 (was dropped via idx[idx != 0])
+            remove_idx[ii] = r
         all_species = set.union(*(set(d.keys()) for d in species_to_idx_dict.values()))
         all_species.discard("N/A")
 
@@ -262,8 +275,9 @@ class ComplexMSA:
             valid_idx_dict = {}
             for ii, species_map in species_to_idx_dict.items():
                 idx = np.asarray(species_map.get(species, empty), dtype=int)
-                idx = np.setdiff1d(idx, gap_idx_dict[ii], assume_unique=True)
-                idx = idx[idx != 0]
+                r = remove_idx[ii]
+                if idx.size and r.shape[0]:
+                    idx = idx[~r[idx]]
                 valid_idx_dict[ii] = idx
 
             num_seqs = {ii: len(idx) for ii, idx in valid_idx_dict.items()}
@@ -476,55 +490,53 @@ class ComplexMSA:
                 ).astype(np.int32)
         self._test_uniqueness(final_msa_indices)
 
-        final_sequence = []
-        final_deletion = []
-        final_has_deletion = []
-        filtered_paired_num_of_seqs = paired_num_of_seqs
+        # --- Vectorized MSA assembly (replaces the per-row Python loop) --------
+        # Gather each chain's selected rows in one shot, concatenate chains on the
+        # column axis, then drop rows that duplicate the query (row 0) or are
+        # all-gap via boolean masks instead of per-row np.array_equal. Row 0
+        # always defines the query and is kept. Behavior-identical to the loop
+        # (verified against it under MINIWORLD_MSA_VERIFY).
+        if self.missing_policy not in ("gap", "query"):
+            msg = f"Unsupported missing_policy: {self.missing_policy}"
+            raise ValueError(msg)
 
-        query_sequence = None
-        for ii in range(max_msa_depth):
-            seqs = []
-            deletion = []
-            indices = []
-            for key, values in MSAs.items():
-                idx = final_msa_indices[key][ii]
-                indices.append(idx)
-                msa = values
-                if idx == -1:
-                    if self.missing_policy == "gap":
-                        seqs.append(np.full((msa.length,), GAP_IDX))
-                    elif self.missing_policy == "query":
-                        seqs.append(msa.get_query_sequence())
-                    else:
-                        msg = f"Unsupported missing_policy: {self.missing_policy}"
-                        raise ValueError(msg)
-                    deletion.append(np.zeros(msa.length))
+        seq_blocks: list[np.ndarray] = []
+        del_blocks: list[np.ndarray] = []
+        for _key, msa in MSAs.items():
+            # Only the first max_msa_depth rows are consumed (the original loop
+            # ran `for ii in range(max_msa_depth)`); final_msa_indices[key] can be
+            # longer (mixed mode) or exactly max_msa_depth (padded).
+            fmi = final_msa_indices[_key][:max_msa_depth]
+            missing = fmi == -1
+            safe = np.where(missing, 0, fmi)
+            seq_block = msa.aligned_sequences[safe]  # advanced-index -> copy
+            del_block = msa.deletions[safe]
+            if missing.any():
+                if self.missing_policy == "gap":
+                    seq_block[missing] = GAP_IDX
                 else:
-                    seqs.append(msa.aligned_sequences[idx])
-                    deletion.append(msa.deletions[idx])
-            seqs = np.concatenate(seqs)
-            if query_sequence is None:
-                query_sequence = seqs
-            # 1. if all sequences are missing, skip this sequence
-            # 2. if all sequences are identical to query sequence, skip this sequence
-            elif np.array_equal(
-                seqs,
-                query_sequence,
-            ) or np.array_equal(seqs, np.full_like(seqs, GAP_IDX)):
-                if ii < paired_num_of_seqs:
-                    filtered_paired_num_of_seqs -= 1
-                continue
+                    seq_block[missing] = msa.get_query_sequence().astype(
+                        seq_block.dtype,
+                    )
+                del_block[missing] = 0
+            seq_blocks.append(seq_block)
+            del_blocks.append(del_block)
 
-            deletion = np.concatenate(deletion)
-            final_sequence.append(seqs)
-            has_deletion = np.array(deletion > 0, dtype=np.uint8)
-            final_deletion.append(deletion)
-            final_has_deletion.append(has_deletion)
+        full_seq = np.concatenate(seq_blocks, axis=1)
+        full_del = np.concatenate(del_blocks, axis=1)
 
-        # remove all gap sequences
-        final_sequence = np.array(final_sequence)
-        final_has_deletion = np.array(final_has_deletion)
-        final_deletion = np.array(final_deletion)
+        query_row = full_seq[0]
+        skip = (full_seq == query_row).all(axis=1) | (
+            full_seq == GAP_IDX
+        ).all(axis=1)
+        skip[0] = False  # row 0 defines the query and is always kept
+        filtered_paired_num_of_seqs = paired_num_of_seqs - int(
+            skip[:paired_num_of_seqs].sum(),
+        )
+        keep = ~skip
+        final_sequence = full_seq[keep]
+        final_deletion = full_del[keep]
+        final_has_deletion = (final_deletion > 0).astype(np.uint8)
 
         gap_idx = np.where((final_sequence == GAP_IDX).all(axis=1))[0]
         final_sequence = np.delete(final_sequence, gap_idx, axis=0)
