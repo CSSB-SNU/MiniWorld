@@ -1,0 +1,122 @@
+# AF3-style mixed-source training config — DISORDERED_PDB DISABLED variant.
+# BioAI-cluster paths. Twin of full_train_af3_mix_no_disordered_local.yaml
+# with data roots remapped to this server:
+#   /home/psk6950/data/BioMolDB_20260224/       -> /data/psk6950/BioMolDB_20260224/
+#   /home/psk6950/data/CCD/preprocessed_CCD.lmdb-> /data/psk6950/CCD/biomol_CCD_202602.lmdb
+#   /home/psk6950/data/openfold_distillation/lmdb/ -> /data/shared/cssb_data/BioMol/lmdb/
+# NOTE: BioAI ships a single msa_long_d2k.lmdb (2.4T), not the 80 msa_long_d2k_shard*
+# files the local box used — same d2k (depth-2048) data, so the a3m list has one entry.
+#
+# Test-run twin of full_train_af3_mix.yaml where disordered_pdb has
+# source_weights = 0.0 (never sampled). Its DistillationSourceConfig is
+# kept in ``distillation_sources`` so the ~28k records still get registered
+# into dataset.items during __init__, but _source_balanced_weights masks
+# them out of the WeightedSampler.
+#
+# Source weights come from AlphaFold 3 Supplementary Table 3 (pre-training row
+# subset). RNA distillation is dropped (user request → 0). Transcription-factor
+# sets are fine-tune only and not included here.
+#
+# Within the "pdb" source, PDB item weighting is unchanged — it still uses the
+# legacy edge_id_to_bias TSV + SamplerConfig type weights below (protein_protein
+# 25, protein_ligand 25, ...). AF3's beta_r/alpha_r formula from Eq. 1 is NOT
+# applied.
+#
+# max_msa_depth = 2048 (matches the msa_long_d2k depth cap).
+# missing_policy = query so absent MSAs fall back to the query sequence.
+
+
+train_db:
+  ccd_preprocessed_path: /data/psk6950/CCD/biomol_CCD_202602.lmdb
+
+  # AF3 Table 3 (pre-training) weights; loader normalizes across active sources.
+  # disordered_pdb is at 0.0 for this test run — items still catalog'd, never sampled.
+  source_weights:
+    pdb: 0.5
+    disordered_pdb: 0.0
+    protein_monomer: 0.495
+    short_protein_monomer: 0.005
+
+  sample_with_replacement: true
+  manifest_validation: paths
+  catalog_cache_path: /data/psk6950/BioMolDB_20260224/catalog_af3mix_no_disordered_bioai.arrow
+
+  pdb:
+    cif_db_path: /data/psk6950/BioMolDB_20260224/cif_attached_train_20260224_res9_chain300.lmdb
+    a3m_db_path: /data/psk6950/BioMolDB_20260224/a3m_16k.lmdb
+    template_db_path: /data/psk6950/BioMolDB_20260224/template.lmdb
+    edge_id_to_bias_path: /data/psk6950/BioMolDB_20260224/metadata/train_20260224_edge_node.tsv
+    ccd_preprocessed_path: /data/psk6950/CCD/biomol_CCD_202602.lmdb
+
+  distillation_sources:
+    - name: protein_monomer
+      cif_db_path: /data/shared/cssb_data/BioMol/lmdb/distillation_long/cif/cif_long_attached.lmdb
+      template_db_path: /data/shared/cssb_data/BioMol/lmdb/distillation_long/template/template_topn_long.lmdb
+      chain_ids: ["1"]
+      lookup_mode: record_id
+      a3m_db_paths:
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k.lmdb
+
+    - name: short_protein_monomer
+      cif_db_path: /data/shared/cssb_data/BioMol/lmdb/distillation_short/cif/cif_short_attached.lmdb
+      template_db_path: /data/shared/cssb_data/BioMol/lmdb/distillation_short/template/template_topn_short.lmdb
+      chain_ids: ["1"]
+      lookup_mode: record_id
+      a3m_db_paths:
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_short/msa/msa_short_d5k.lmdb
+
+    - name: disordered_pdb
+      cif_db_path: /data/shared/cssb_data/BioMol/lmdb/distillation_disordered/cif/cif_disordered_attached.lmdb
+      template_db_path: /data/shared/cssb_data/BioMol/lmdb/distillation_disordered/template/template_disordered.lmdb
+      chain_ids: ["1"]
+      lookup_mode: record_id
+      a3m_db_paths:
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_disordered/msa/msa_disordered_d5k.lmdb
+
+crop:
+  max_tokens: 384
+  max_atoms: 4096
+  min_segment_size: 1
+  max_segment_size: 41
+
+  monomer_only: false
+  remain_invalid_tokens: false
+
+  bucket_msa_size: 128
+  bucket_token_size: 128
+  bucket_atom_size: 1024
+  chain_crop_prob: 0.5
+
+template:
+  n_templates: 4
+
+msa:
+  n_samples: 1
+  max_msa_depth: 2048
+  missing_policy: query
+  # sample_depth default is now "uniform" (AF3-style k ~ Uniform[1, min(n, 2048)]).
+  # Set to "fixed" here to override if you want legacy always-max sampling.
+
+tokenizer:
+  level: dynamic
+  dynamic_tokenization:
+    minimum_resolution_ratio: [0.2, 0.6, 0.2]
+    sigma_flat_prob: 0.0
+    sigma_min: 4.0
+    sigma_max: 8.0
+
+# Weighted-PDB internal item weighting (unchanged; per user request).
+sampler:
+  protein_protein: 25.0
+  protein_ligand: 25
+  protein_dna: 10
+  protein_rna: 10
+  antibody_protein: 15
+  dna_dna: 5
+  rna_rna: 5
+  dna_rna: 0.5
+  antibody_antibody: 0.5
+  antibody_ligand: 1.0
+  na_ligand: 1.0
+  etc_interface: 1.0
+  sole: 1.0
