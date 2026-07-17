@@ -466,6 +466,41 @@ class VerboseCallback(Callback):
         )
 
 
+class _DummySampler:
+    """Minimal sampler stand-in for the synthetic loader: honors the ``set_epoch``
+    call the training loop makes, nothing else."""
+
+    def set_epoch(self, epoch: int) -> None:  # noqa: ARG002
+        return
+
+
+class _SyntheticDataLoader:
+    """Drop-in for the real DDP dataloader that yields a single static synthetic
+    ``Batch`` (built once at the max bucket shape) ``length`` times per epoch.
+
+    Everything downstream — ``training_epoch`` (``batch.to(device)``, grad-accum,
+    optimizer step, CUDA-graph-capture callbacks) and ``training_step`` (loss +
+    backward) — runs the EXACT real train path; only the data source is fake. The
+    fixed max-bucket shape matches the config's pad-to-max buckets, so the single
+    static shape needed for full-graph capture is preserved.
+    """
+
+    def __init__(self, batch: Batch, length: int) -> None:
+        self._batch = batch
+        self._length = length
+        self.sampler = _DummySampler()
+
+    def __len__(self) -> int:
+        return self._length
+
+    def __iter__(self):  # noqa: ANN204
+        for _ in range(self._length):
+            yield self._batch
+
+    def set_epoch(self, epoch: int) -> None:  # noqa: ARG002 -- dataset.set_epoch stand-in
+        return
+
+
 @click.group()
 def cli():
     pass
@@ -595,39 +630,58 @@ def train(  # noqa: PLR0912, PLR0915
 
     _warmup_bucket_shapes(client, cfg)
 
-    train_data_config = BioMolData.BioMolConfig(
-        crop_config=cfg.data.crop,
-        msa_config=cfg.data.msa,
-        DB_config=cfg.data.train_db,
-        sampler_config=cfg.data.sampler,
-        tokenizer_config=cfg.data.tokenizer,
-    )
-    train_dataset = BioMolData(train_data_config)
     world_size = fabric.world_size
     train_num_item = cfg.train.train_item // world_size
-    train_dataloader = train_dataset.create_ddp_dataloader(
-        world_size=world_size,
-        rank=fabric.global_rank,
-        seed=cfg.train.seed,
-        drop_last=True,
-        batch_size=cfg.train.num_batch,
-        num_workers=cfg.train.num_workers,
-        prefetch_factor=cfg.train.prefetch_factor,
-        # Sampler draws only what the training loop consumes per rank per
-        # epoch, not the full catalog — critical on multi-source manifests
-        # where the catalog is millions of items.
-        num_samples_per_rank=train_num_item,
-        # Keep workers alive across epochs: with spawn context + many workers,
-        # respawning every epoch costs ~13 min of cold pipeline fill. Safe here
-        # because per-sample crop RNG is unseeded (epoch-independent) and the
-        # atom-level tokenizer is deterministic, so frozen worker epoch state
-        # does not change data generation.
-        persistent_workers=cfg.train.num_workers > 0,
-        shuffle=True,
-        bucket_msa_multiple=cfg.train.bucket_msa_multiple,
-        bucket_token_multiple=cfg.train.bucket_token_multiple,
-        bucket_atom_multiple=cfg.train.bucket_atom_multiple,
-    )
+
+    if os.getenv("MW_SYNTH_DATA", "0").strip().lower() in {"1", "true", "yes", "on"}:
+        # Real training path, synthetic data source: swap the BioMolDB dataloader
+        # for a static synthetic Batch at the config's max bucket shape. Loss/backward/
+        # grad-accum/optimizer/capture callbacks are all unchanged.
+        client.logger.info(
+            "MW_SYNTH_DATA=1: using synthetic dataloader (real train path, fake data)",
+        )
+        synth_batch = _build_precompile_batch(
+            device=client.device,
+            msa_depth=cfg.data.msa.max_msa_depth,
+            n_tokens=cfg.data.crop.max_tokens,
+            n_atoms=cfg.data.crop.max_atoms,
+            n_templates=TemplateConfig().n_templates,
+            num_res_class=cfg.model.shared.num_res_class,
+        )
+        train_dataset = _SyntheticDataLoader(synth_batch, train_num_item)
+        train_dataloader = train_dataset
+    else:
+        train_data_config = BioMolData.BioMolConfig(
+            crop_config=cfg.data.crop,
+            msa_config=cfg.data.msa,
+            DB_config=cfg.data.train_db,
+            sampler_config=cfg.data.sampler,
+            tokenizer_config=cfg.data.tokenizer,
+        )
+        train_dataset = BioMolData(train_data_config)
+        train_dataloader = train_dataset.create_ddp_dataloader(
+            world_size=world_size,
+            rank=fabric.global_rank,
+            seed=cfg.train.seed,
+            drop_last=True,
+            batch_size=cfg.train.num_batch,
+            num_workers=cfg.train.num_workers,
+            prefetch_factor=cfg.train.prefetch_factor,
+            # Sampler draws only what the training loop consumes per rank per
+            # epoch, not the full catalog — critical on multi-source manifests
+            # where the catalog is millions of items.
+            num_samples_per_rank=train_num_item,
+            # Keep workers alive across epochs: with spawn context + many workers,
+            # respawning every epoch costs ~13 min of cold pipeline fill. Safe here
+            # because per-sample crop RNG is unseeded (epoch-independent) and the
+            # atom-level tokenizer is deterministic, so frozen worker epoch state
+            # does not change data generation.
+            persistent_workers=cfg.train.num_workers > 0,
+            shuffle=True,
+            bucket_msa_multiple=cfg.train.bucket_msa_multiple,
+            bucket_token_multiple=cfg.train.bucket_token_multiple,
+            bucket_atom_multiple=cfg.train.bucket_atom_multiple,
+        )
 
     train_aggregator = MetricsAggregator(client, "train", use_wandb=cfg.train.use_wandb)
     checkpoint_dir = run_sub_dir / "checkpoints"
