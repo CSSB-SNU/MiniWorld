@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Annotated, Any, Literal, Union, cast
+from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 import numpy as np
 import torch
@@ -96,10 +96,7 @@ class Client(BaseClient):
         """
 
         model: Annotated[
-            Union[
-                Annotated[Model.Config, Tag("model")],
-                Annotated[MiniSWAModel.Config, Tag("mini_swa")],
-            ],
+            Annotated[Model.Config, Tag("model")] | Annotated[MiniSWAModel.Config, Tag("mini_swa")],
             Discriminator(_model_variant_discriminator),
         ]
         train: Client.TrainConfig
@@ -319,6 +316,7 @@ class Client(BaseClient):
             scheme=batch.scheme,
             sequence=batch.sequence,
             structure=batch.structure,
+            template=batch.template,
         )
 
         distogram_loss = cal_atom_distogram_loss(

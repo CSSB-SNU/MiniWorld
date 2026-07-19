@@ -23,6 +23,7 @@ from miniworld.modules.msa_util import (
     init_msa,
     init_token_single_msa,
 )
+from miniworld.modules.template_embedder_af3 import AF3TemplateEmbedder
 
 if TYPE_CHECKING:
     from jaxtyping import Float
@@ -33,7 +34,20 @@ if TYPE_CHECKING:
         SchemeFeatures,
         SequenceFeatures,
         StructureFeatures,
+        TemplateFeatures,
     )
+
+
+class TemplateEmbedderConfig(BaseModel):
+    """AF3 template embedder (``AF3TemplateEmbedder``) config for the mini trunk.
+
+    The per-template trunk is trimul-only (MiniPairformer, miniworld-kernels) — no
+    triangle attention, no cuequivariance — matching the main trunk's backend.
+    """
+
+    num_channels: int = 64
+    n_block: int = 2
+    dropout_prob: float = 0.25
 
 
 class MiniSWAModel(nn.Module):
@@ -59,6 +73,9 @@ class MiniSWAModel(nn.Module):
         pairformer: MiniPairformer.Config
         msa_module: MiniMSAModule.Config
         n_recycle_max: int = 4
+        # AF3-style template stack (adds to the pair rep before the MSA module).
+        use_template: bool = False
+        template_embedder: TemplateEmbedderConfig = TemplateEmbedderConfig()
 
     class Config(BaseModel):
         """Configuration for the SWA-embedder mini distogram-only model."""
@@ -98,10 +115,23 @@ class MiniSWAModel(nn.Module):
             ),
         )
 
+        # AF3 template embedder — adds to the pair rep each recycle (uses the
+        # current pair as query, so it is recomputed inside the recycle loop).
+        self.use_template = config.trunk.use_template
+        if self.use_template:
+            te = config.trunk.template_embedder
+            self.temp_embedder = AF3TemplateEmbedder(
+                d_pair=config.shared.d_pair,
+                num_channels=te.num_channels,
+                num_res_class=config.shared.num_res_class,
+                n_block=te.n_block,
+                dropout_prob=te.dropout_prob,
+            ).to(torch.bfloat16)
+
         # Minimal trunk (bidir trimul + transition; MSA folded via OuterProductMean)
         self.msa_module = MiniMSAModule(config.trunk.msa_module).to(torch.bfloat16)
         self.pairformer_blocks = MiniPairformer(config.trunk.pairformer).to(
-            torch.bfloat16
+            torch.bfloat16,
         )
         self.distogram_head = DistogramHead(
             config.shared.d_pair,
@@ -122,6 +152,7 @@ class MiniSWAModel(nn.Module):
         scheme: SchemeFeatures,
         sequence: SequenceFeatures,
         structure: StructureFeatures,
+        template: TemplateFeatures | None = None,
     ) -> Float[torch.Tensor, "B L_token L_token n_distogram_bins"]:
         """Run the pair-only mini trunk with recycling and return distogram logits."""
         if self._forced_n_recycle is not None:
@@ -166,6 +197,15 @@ class MiniSWAModel(nn.Module):
                 token_pair = token_pair_init_bf16 + self.add_pair_recycle(
                     token_pair,
                 )
+
+                # AF3 trunk order: template → MSA → Pairformer.
+                if self.use_template:
+                    token_pair = token_pair + self.temp_embedder(
+                        token_pair,
+                        template,
+                        scheme.token_asym_id,
+                        token_mask,
+                    )
 
                 token_pair = token_pair + self.msa_module(
                     msa_feat,

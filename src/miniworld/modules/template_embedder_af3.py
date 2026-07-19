@@ -23,7 +23,7 @@ from jaxtyping import Bool, Float, Int
 from torch import nn
 
 from team_gm import typecheck
-from team_gm.modules.blocks.template import TemplatePairformer
+from team_gm.modules import MiniPairformer
 from team_gm.modules.exceptions import ImplementationType
 from team_gm.modules.primitives import LayerNorm, Linear
 
@@ -32,15 +32,17 @@ from miniworld.data.features import TemplateFeatures
 
 def _dgram_from_positions(
     cb: Float[torch.Tensor, "B L 3"],
-    min_bin: float,
-    max_bin: float,
-    num_bins: int,
+    lower: Float[torch.Tensor, "num_bins"],
+    upper: Float[torch.Tensor, "num_bins"],
 ) -> Float[torch.Tensor, "B L L num_bins"]:
-    """AF3 dgram_from_positions: squared-distance histogram over pseudo-beta coords."""
+    """AF3 dgram_from_positions: squared-distance histogram over pseudo-beta coords.
+
+    ``lower``/``upper`` are precomputed squared-distance bin edges (module buffers), so
+    nothing is allocated per forward — creating them here (``torch.linspace`` /
+    ``new_tensor``) does a host->device copy that is illegal under CUDA-graph capture.
+    """
     diff = cb[:, :, None, :] - cb[:, None, :, :]
     dist2 = diff.pow(2).sum(dim=-1)  # [B, L, L]
-    lower = torch.linspace(min_bin, max_bin, num_bins, device=cb.device) ** 2
-    upper = torch.cat([lower[1:], lower.new_tensor([float("inf")])])
     dgram = (dist2[..., None] > lower) & (dist2[..., None] < upper)
     return dgram.to(cb.dtype)
 
@@ -76,12 +78,10 @@ class AF3TemplateEmbedder(nn.Module):
         num_channels: int = 64,
         num_res_class: int = 32,
         n_block: int = 2,
-        n_head_tri_attention: int = 4,
         dgram_min: float = 3.25,
         dgram_max: float = 50.75,
         dgram_bins: int = 39,
         dropout_prob: float = 0.25,
-        implementation: ImplementationType = ImplementationType.PYTORCH,
     ) -> None:
         super().__init__()
         self.num_channels = num_channels
@@ -89,6 +89,14 @@ class AF3TemplateEmbedder(nn.Module):
         self.dgram_min = dgram_min
         self.dgram_max = dgram_max
         self.dgram_bins = dgram_bins
+
+        # Precompute the squared-distance bin edges ONCE as buffers so the dgram op
+        # allocates nothing per forward (host->device tensor creation breaks CUDA-graph
+        # capture). Moved to the right device/dtype with the module.
+        _lower = torch.linspace(dgram_min, dgram_max, dgram_bins) ** 2
+        _upper = torch.cat([_lower[1:], _lower.new_tensor([float("inf")])])
+        self.register_buffer("_dgram_lower", _lower, persistent=False)
+        self.register_buffer("_dgram_upper", _upper, persistent=False)
 
         # Per-feature input projections (AF3 sums independent relu-init projections).
         self.ln_query = LayerNorm(d_pair)
@@ -100,14 +108,15 @@ class AF3TemplateEmbedder(nn.Module):
         self.proj_unit_vec = Linear(3, num_channels, bias=False, init="relu")
         self.proj_bb_mask = Linear(1, num_channels, bias=False, init="relu")
 
-        self.template_pairformer = TemplatePairformer(
-            TemplatePairformer.Config(
+        # Pair-only trunk per template. MiniPairformer is trimul + transition (NO
+        # triangle attention), routed through miniworld-kernels — same backend as the
+        # main trunk, so the template stack carries no cuequivariance dependency.
+        self.template_pairformer = MiniPairformer(
+            MiniPairformer.Config(
                 d_pair=num_channels,
-                d_hidden=num_channels,
                 n_block=n_block,
-                n_head_tri_attention=n_head_tri_attention,
-                dropout_prob=dropout_prob,
-                implementation=implementation,
+                p_drop=dropout_prob,
+                implementation=ImplementationType.TRITON,  # miniworld-kernels whole-op
             ),
         )
         self.ln_out = LayerNorm(num_channels)
@@ -123,53 +132,52 @@ class AF3TemplateEmbedder(nn.Module):
     ) -> Float[torch.Tensor, "B L L d_pair"]:
         """Embed and average all templates into a pair update.
 
-        All ``N_temp`` templates are processed in ONE batched Pairformer pass by folding
-        the template axis into the batch dim (``BT = B * N_temp``) — no Python loop. Every
-        shape is static, so the module stays CUDA-graph capturable.
+        Each of the ``N_temp`` templates is embedded through the per-template trunk
+        SEPARATELY (Python loop over a fixed ``N_temp``) rather than folded into the
+        batch dim: the trunk is a miniworld-kernels MiniPairformer whose bidirectional
+        trimul kernel only supports batch size 1, so the template axis cannot be folded
+        into B. ``N_temp`` is static, so the unrolled loop stays CUDA-graph capturable.
         """
         b, n_temp = template.mask.shape
-        _, length = token_mask.shape
         dtype = pair.dtype
 
-        # Fold (B, N_temp) -> BT so features / Pairformer run once over all templates.
-        cb = template.cb_xyz.flatten(0, 1)  # [BT, L, 3]
-        cb_mask = template.cb_mask.flatten(0, 1)  # [BT, L]
-        res_type = template.res_type.flatten(0, 1).clamp(0, self.num_res_class - 1)
-        bb = template.bb_xyz.flatten(0, 1)  # [BT, L, 3, 3]
-        bb_mask = template.bb_mask.flatten(0, 1)  # [BT, L]
-
-        # Query pair + intra-chain mask are per-(B) — broadcast across templates to BT.
+        # Query pair + intra-chain mask are shared across templates (per-B).
         query = self.proj_query(self.ln_query(pair))  # [B, L, L, C]
-        query = query[:, None].expand(b, n_temp, length, length, -1).flatten(0, 1)
         multichain = (
             token_asym_id[:, :, None] == token_asym_id[:, None, :]
-        )  # [B, L, L]
-        multichain = multichain[:, None].expand(b, n_temp, length, length).flatten(0, 1)
-        mask_bt = token_mask[:, None].expand(b, n_temp, length).flatten(0, 1)  # [BT, L]
+        ).to(dtype)[..., None]  # [B, L, L, 1]
 
-        dgram = _dgram_from_positions(cb, self.dgram_min, self.dgram_max, self.dgram_bins)
-        pb2d = (cb_mask[:, :, None] & cb_mask[:, None, :]).to(dtype)[..., None]
-        aatype = F.one_hot(res_type, self.num_res_class).to(dtype)  # [BT, L, C_res]
-        unit_vec = _backbone_unit_vectors(bb)  # [BT, L, L, 3]
-        bb2d = (bb_mask[:, :, None] & bb_mask[:, None, :]).to(dtype)[..., None]
+        summed = query.new_zeros((b, query.shape[1], query.shape[2], self.num_channels))
+        for t in range(n_temp):
+            cb = template.cb_xyz[:, t]  # [B, L, 3]
+            cb_mask = template.cb_mask[:, t]  # [B, L]
+            res_type = template.res_type[:, t].clamp(0, self.num_res_class - 1)
+            bb = template.bb_xyz[:, t]  # [B, L, 3, 3]
+            bb_mask = template.bb_mask[:, t]  # [B, L]
 
-        act = (
-            query
-            + self.proj_dgram(dgram)
-            + self.proj_pb_mask(pb2d)
-            + self.proj_aatype_i(aatype)[:, None, :, :]  # broadcast over i -> [BT,1,L,C]
-            + self.proj_aatype_j(aatype)[:, :, None, :]  # broadcast over j -> [BT,L,1,C]
-            + self.proj_unit_vec(unit_vec)
-            + self.proj_bb_mask(bb2d)
-        )
-        act = act * multichain[..., None].to(dtype)
-        act = self.template_pairformer(act, mask=mask_bt)
-        act = self.ln_out(act)
+            dgram = _dgram_from_positions(
+                cb, self._dgram_lower, self._dgram_upper,
+            ).to(dtype)
+            pb2d = (cb_mask[:, :, None] & cb_mask[:, None, :]).to(dtype)[..., None]
+            aatype = F.one_hot(res_type, self.num_res_class).to(dtype)  # [B, L, C_res]
+            unit_vec = _backbone_unit_vectors(bb).to(dtype)  # [B, L, L, 3]
+            bb2d = (bb_mask[:, :, None] & bb_mask[:, None, :]).to(dtype)[..., None]
 
-        # Unfold BT -> (B, N_temp) and average over the VALID templates (AF3).
-        act = act.unflatten(0, (b, n_temp))  # [B, N_temp, L, L, C]
-        weight = template.mask.to(dtype)[:, :, None, None, None]  # [B, N_temp, 1, 1, 1]
-        summed = (act * weight).sum(dim=1)  # [B, L, L, C]
-        n_valid = template.mask.to(dtype).sum(dim=1)[:, None, None, None]  # [B, 1, 1, 1]
+            act = (
+                query
+                + self.proj_dgram(dgram)
+                + self.proj_pb_mask(pb2d)
+                + self.proj_aatype_i(aatype)[:, None, :, :]  # broadcast over i
+                + self.proj_aatype_j(aatype)[:, :, None, :]  # broadcast over j
+                + self.proj_unit_vec(unit_vec)
+                + self.proj_bb_mask(bb2d)
+            )
+            act = act * multichain
+            act = self.template_pairformer(act, mask=token_mask)  # B=1 -> miniworld
+            act = self.ln_out(act)
+            # Accumulate only the VALID templates (AF3 average over valid).
+            summed = summed + act * template.mask[:, t].to(dtype)[:, None, None, None]
+
+        n_valid = template.mask.to(dtype).sum(dim=1)[:, None, None, None]  # [B,1,1,1]
         avg = summed / (1e-7 + n_valid)
         return self.proj_out(F.relu(avg))

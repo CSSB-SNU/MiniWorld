@@ -55,6 +55,16 @@ atom_swa:
 
 trunk:
   n_recycle_max: 4
+
+  # AF3-style template stack: embeds all templates through a shared per-template
+  # MiniPairformer (trimul-only, miniworld-kernels — no triangle attention) and adds
+  # the valid-template average to the pair rep, before the MSA module.
+  use_template: true
+  template_embedder:
+    num_channels: 64
+    n_block: 2
+    dropout_prob: 0.25
+
   pairformer:
     n_block: 48
     n_checkpoint_segments: null
@@ -66,7 +76,7 @@ trunk:
     p_drop: 0.25
     use_single: False
     use_self_attention: False
-    implementation: cuequivariance
+    implementation: triton
 
   msa_module:
     n_block: 4
@@ -84,4 +94,4 @@ trunk:
     use_self_attention: False
     n_checkpoint_segments: null
 
-    implementation: cuequivariance
+    implementation: triton
