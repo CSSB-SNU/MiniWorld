@@ -19,3 +19,5 @@ commands/
 tests/inference_data/
 .codex.cache/
 inference/
+# one-off experiment/bench/probe scripts, not for main
+scratch/
