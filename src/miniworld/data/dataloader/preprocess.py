@@ -25,7 +25,7 @@ from miniworld.data.pipeline.utils import (
 from miniworld.utils.crop import crop_spatial_segment_token
 
 from .loading import load_record_msa, load_record_templates
-from .types import DataRecord, feature_key
+from .types import DataRecord
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -92,7 +92,7 @@ class Preprocessor:
             model_id=record.model_id,
             alt_id=record.alt_id,
         )
-        record = self._resolve_feature_keys(record, cifmol)
+        record = self._resolve_feature_keys(record)
 
         if crop_indices is None:
             (
@@ -134,7 +134,6 @@ class Preprocessor:
             )
         record = self._resolve_feature_keys(
             record,
-            cifmol,
             tuple(chain_id_to_crop_indices),
         )
 
@@ -142,6 +141,19 @@ class Preprocessor:
         atom_mask = remove_terminal_oxygen(cifmol)
         cifmol = cifmol.atoms[atom_mask].extract()
         atom_to_token_idx_map = atom_to_token_idx_map[atom_mask]
+
+        # Removing atoms above (remove_terminal_oxygen strips OXT/OP3) can orphan a
+        # token: modified/non-canonical residues are tokenized per-atom, so the
+        # removed OXT had its own token, which would otherwise survive as a valid
+        # (token_mask=True) token with zero atoms. Drop atomless tokens and renumber
+        # so every token keeps >=1 atom and the token/atom maps stay consistent.
+        n_tokens = int(token_to_residue_idx_map.shape[0])
+        token_has_atom = np.zeros(n_tokens, dtype=bool)
+        token_has_atom[atom_to_token_idx_map] = True
+        if not token_has_atom.all():
+            remap = np.cumsum(token_has_atom) - 1  # old token idx -> compacted idx
+            atom_to_token_idx_map = remap[atom_to_token_idx_map]
+            token_to_residue_idx_map = token_to_residue_idx_map[token_has_atom]
 
         complex_msa = load_record_msa(
             cifmol=cifmol,
@@ -158,6 +170,7 @@ class Preprocessor:
         )
 
         templates = load_record_templates(
+            cifmol=cifmol,
             chain_id_to_crop_indices=chain_id_to_crop_indices,
             record=record,
             n_templates=self.template_config.n_templates,
@@ -178,39 +191,47 @@ class Preprocessor:
     def _resolve_feature_keys(
         self,
         record: DataRecord,
-        cifmol: CIFMolAttached,
         chain_ids: Sequence[str] | None = None,
     ) -> DataRecord:
-        """Fill feature keys for compat records from CIF chain seq_ids."""
-        resolved_chain_ids = tuple(chain_ids) if chain_ids is not None else record.chain_ids
-        if (
-            record.chain_ids == resolved_chain_ids
-            and len(record.feature_keys) == len(resolved_chain_ids)
-        ):
-            return record
+        """Align per-chain MSA/template LMDB paths to the resolved chain set.
 
-        if record.source == "pdb":
-            keys = [
-                str(cifmol.chains[cifmol.chains.chain_id == chain_id].seq_id[0].value)
-                for chain_id in resolved_chain_ids
-            ]
-        elif len(record.feature_keys) == 1:
-            keys = list(record.feature_keys) * len(resolved_chain_ids)
-        else:
-            keys = [feature_key(record, chain_id) for chain_id in resolved_chain_ids]
+        The lookup KEYS are read from the CIF at load time (msa←seq_id,
+        template←``{RECORD}_{auth}``), so this only realigns the db PATHS when the
+        chain set changes — a compat pdb record (empty paths → filled from
+        ``pdb_config``) or a crop dropping a chain from an interface item.
+        """
+        resolved = tuple(chain_ids) if chain_ids is not None else record.chain_ids
+        if record.chain_ids == resolved and len(record.msa_db_paths) == len(resolved):
+            return record
 
         if record.source == "pdb" and self.pdb_config is not None:
             pdb = self.pdb_config
-            msa_paths_by_chain: tuple[tuple[Path, ...], ...] = ((pdb.a3m_db_path,),) * len(keys)
-            template_paths_by_chain: tuple[Path | None, ...] = (
-                pdb.template_db_path,
-            ) * len(keys)
-        elif len(record.msa_db_paths) == 1 and len(resolved_chain_ids) > 1:
-            msa_paths_by_chain = record.msa_db_paths * len(resolved_chain_ids)
-            template_paths_by_chain = record.template_db_paths * len(resolved_chain_ids)
+            msa_by: tuple[tuple[Path, ...], ...] = ((pdb.a3m_db_path,),) * len(resolved)
+            tmpl_by: tuple[Path | None, ...] = (pdb.template_db_path,) * len(resolved)
         else:
-            msa_paths_by_chain = record.msa_db_paths
-            template_paths_by_chain = record.template_db_paths
+            # Map each resolved chain back to its original per-chain dbs; every
+            # chain of one distillation/train_item source shares the same shards,
+            # while manifest complexes keep per-chain paths.
+            index_of = {c: i for i, c in enumerate(record.chain_ids)}
+            base_msa = record.msa_db_paths[0] if record.msa_db_paths else ()
+            base_tmpl = (
+                record.template_db_paths[0] if record.template_db_paths else None
+            )
+
+            def msa_of(chain_id: str) -> tuple[Path, ...]:
+                i = index_of.get(chain_id)
+                if i is not None and i < len(record.msa_db_paths):
+                    return record.msa_db_paths[i]
+                return base_msa
+
+            def tmpl_of(chain_id: str) -> Path | None:
+                i = index_of.get(chain_id)
+                if i is not None and i < len(record.template_db_paths):
+                    return record.template_db_paths[i]
+                return base_tmpl
+
+            msa_by = tuple(msa_of(c) for c in resolved)
+            tmpl_by = tuple(tmpl_of(c) for c in resolved)
 
         return DataRecord(
             item_id=record.item_id,
@@ -220,11 +241,11 @@ class Preprocessor:
             assembly_id=record.assembly_id,
             model_id=record.model_id,
             alt_id=record.alt_id,
-            chain_ids=resolved_chain_ids,
-            feature_keys=tuple(keys),
-            seq_ids=tuple(keys),
-            msa_db_paths=msa_paths_by_chain,
-            template_db_paths=template_paths_by_chain,
+            chain_ids=resolved,
+            feature_keys=(),
+            seq_ids=(),
+            msa_db_paths=msa_by,
+            template_db_paths=tmpl_by,
             weight=record.weight,
             item_kind=record.item_kind,
             weight_group=record.weight_group,

@@ -410,6 +410,157 @@ def read_pdb_edge_items(
 
 
 # ---------------------------------------------------------------------------
+# Unified train_item.tsv (edge_node style, source-tagged) parsing
+# ---------------------------------------------------------------------------
+
+
+class SourceDBs:
+    """Per-source LMDB resources the loader routes a train_item row to."""
+
+    def __init__(
+        self,
+        cif_db_path: Path,
+        msa_db_paths: tuple[Path, ...],
+        template_db_path: Path | None,
+    ) -> None:
+        self.cif_db_path = cif_db_path
+        self.msa_db_paths = msa_db_paths
+        self.template_db_path = template_db_path
+
+
+def _edge_id(cluster1: str, cluster2: str) -> str:
+    """Edge id used for PDB interface-type classification / cluster grouping."""
+    return cluster1 if cluster2 == "None" else f"{cluster1}_{cluster2}"
+
+
+def _train_item_weights(
+    source: str,
+    edge_id_to_rows: dict[str, list[int]],
+    type_counts: dict[str, int],
+    sampler_config: SamplerConfig,
+    weights_out: list[float],
+) -> None:
+    """Fill ``weights_out`` for one source's rows with an AF3-style raw weight.
+
+    * pdb: 3-tier — P(type) ∝ sampler weight, uniform over that type's clusters,
+      uniform over a cluster's rows: ``W_type / type_clustercount / rowcount``.
+    * distillation (monomer): cluster-uniform x instance-uniform — ``1 / rowcount``
+      (the number of clusters normalizes out in ``source_balanced_weights``).
+    """
+    is_pdb = source == "pdb"
+    for edge_id, row_indices in edge_id_to_rows.items():
+        rowcount = len(row_indices)
+        if is_pdb:
+            type_name = _pdb_edge_type(edge_id)
+            w = getattr(sampler_config, type_name) / type_counts[type_name] / rowcount
+        else:
+            w = 1.0 / rowcount
+        for row_index in row_indices:
+            weights_out[row_index] = w
+
+
+def read_train_items(
+    train_item_path: Path,
+    source_dbs: dict[str, SourceDBs],
+    sampler_config: SamplerConfig,
+) -> tuple[list[DataRecord], list[float]]:
+    """Read the unified train_item.tsv into DataRecords + AF3-style raw weights.
+
+    Row schema (edge_node style, source-tagged):
+        source cluster1 cluster2 pdb_id assembly_id model_id alt_id
+        chain_id1 chain_id2
+    Interface rows carry both clusters; monomer rows have ``cluster2 == "None"``.
+    Keys are resolved at load time from the CIF (msa←seq_id, template←record+chain),
+    so a record only carries the record id, chains, and per-source LMDB paths.
+    """
+    records: list[DataRecord] = []
+    # Per-source grouping so weights are computed within each source.
+    edge_rows: dict[str, dict[str, list[int]]] = {}
+    type_counts: dict[str, dict[str, int]] = {}
+    skipped_sources: dict[str, int] = {}
+
+    with train_item_path.open("r") as handle:
+        header = handle.readline()
+        if not header.startswith("source"):
+            msg = f"train_item.tsv must start with a 'source' header: {header!r}"
+            raise ValueError(msg)
+        for raw_line in handle:
+            stripped = raw_line.strip()
+            if stripped == "":
+                continue
+            (
+                source,
+                cluster1,
+                cluster2,
+                pdb_id,
+                assembly_id,
+                model_id,
+                alt_id,
+                chain_id1,
+                chain_id2,
+            ) = stripped.split("\t")
+            dbs = source_dbs.get(source)
+            if dbs is None:
+                # Source not declared in this config (e.g. rna/disordered left
+                # out): skip its rows rather than fail, so one train_item.tsv
+                # serves configs that enable different source subsets.
+                skipped_sources[source] = skipped_sources.get(source, 0) + 1
+                continue
+
+            record_id = pdb_id.lower() if source == "pdb" else pdb_id
+            chain_ids = (chain_id1,) if cluster2 == "None" else (chain_id1, chain_id2)
+            n_chains = len(chain_ids)
+
+            row_index = len(records)
+            records.append(
+                DataRecord(
+                    item_id=f"{source}:{record_id}:{assembly_id}:{model_id}:"
+                    f"{alt_id}:{':'.join(chain_ids)}",
+                    source=source,
+                    record_id=record_id,
+                    cif_db_path=dbs.cif_db_path,
+                    assembly_id=assembly_id,
+                    model_id=model_id,
+                    alt_id=alt_id,
+                    chain_ids=chain_ids,
+                    feature_keys=(),  # msa/template keys resolved from the CIF
+                    seq_ids=(),
+                    msa_db_paths=(dbs.msa_db_paths,) * n_chains,
+                    template_db_paths=(dbs.template_db_path,) * n_chains,
+                    weight=1.0,
+                    item_kind="interface" if cluster2 != "None" else "monomer",
+                    weight_group=source,
+                ),
+            )
+
+            edge_id = _edge_id(cluster1, cluster2)
+            source_edges = edge_rows.setdefault(source, {})
+            if edge_id not in source_edges:
+                source_edges[edge_id] = []
+                if source == "pdb":
+                    counts = type_counts.setdefault(
+                        source, dict.fromkeys(_PDB_INTERFACE_TYPES, 0),
+                    )
+                    counts[_pdb_edge_type(edge_id)] += 1
+            source_edges[edge_id].append(row_index)
+
+    if skipped_sources:
+        summary = ", ".join(f"{s}={n}" for s, n in sorted(skipped_sources.items()))
+        print(f"[train_item] skipped rows for unconfigured sources: {summary}")  # noqa: T201
+
+    weights = [1.0] * len(records)
+    for source, source_edges in edge_rows.items():
+        _train_item_weights(
+            source,
+            source_edges,
+            type_counts.get(source, {}),
+            sampler_config,
+            weights,
+        )
+    return records, weights
+
+
+# ---------------------------------------------------------------------------
 # Source-balanced weight computation
 # ---------------------------------------------------------------------------
 

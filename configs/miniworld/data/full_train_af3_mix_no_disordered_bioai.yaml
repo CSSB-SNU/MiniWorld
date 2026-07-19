@@ -30,22 +30,29 @@ train_db:
   ccd_preprocessed_path: /data/psk6950/CCD/preprocessed_CCD.lmdb
 
   # AF3 Table 3 (pre-training) weights; loader normalizes across active sources.
-  # disordered_pdb is at 0.0 for this test run — items still catalog'd, never sampled.
+  # rna / disordered_pdb are not declared below, so their train_item.tsv rows are
+  # skipped at load (read_train_items). Keys resolve from the CIF: msa <- seq_id,
+  # template <- {RECORD}_{auth_chain}; cif <- record_id.
   source_weights:
     pdb: 0.5
-    disordered_pdb: 0.0
+    disordered_pdb: 0.02
     protein_monomer: 0.495
     short_protein_monomer: 0.005
 
   sample_with_replacement: true
   manifest_validation: paths
-  catalog_cache_path: /data/psk6950/BioMolDB_20260224/catalog_af3mix_no_disordered_bioai.arrow
+  catalog_cache_path: /data/psk6950/BioMolDB_20260224/catalog_trainitem_no_disordered_bioai.arrow
+
+  # Unified item list (source-tagged edge_node). Routes each row to its source's
+  # LMDBs (pdb below + distillation_sources) and derives AF3-style raw weights.
+  train_item_path: /data/psk6950/filtering/edge_node/train_item.tsv
 
   pdb:
-    cif_db_path: /data/psk6950/BioMolDB_20260224/cif_attached_train_20260224_res9_chain300.lmdb
-    a3m_db_path: /data/psk6950/BioMolDB_20260224/a3m_16k.lmdb
-    template_db_path: /data/psk6950/BioMolDB_20260224/template.lmdb
-    edge_id_to_bias_path: /data/psk6950/BioMolDB_20260224/metadata/train_20260224_edge_node.tsv
+    cif_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/cif/cif_pdb_attached_train_20210930_res9_residue10k_chain300.lmdb
+    a3m_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/msa/a3m.lmdb
+    a3m_rna_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/msa/msa_rna_pdb_shard0.lmdb
+    template_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/template/template.lmdb
+    edge_id_to_bias_path: /data/psk6950/filtering/edge_node/pdb_edge_node.tsv
     ccd_preprocessed_path: /data/psk6950/CCD/preprocessed_CCD.lmdb
 
   distillation_sources:
@@ -54,8 +61,90 @@ train_db:
       template_db_path: /data/shared/cssb_data/BioMol/lmdb/distillation_long/template/template_topn_long.lmdb
       chain_ids: ["1"]
       lookup_mode: record_id
+      # 80 rekeyed shards, NOT a merged db: merging 2.4T single-threaded on GPFS
+      # is ~7 days (IO-bound). load_raw_data caches envs, so trying all 80 per
+      # lookup is cheap B-tree misses (~us) after warmup.
       a3m_db_paths:
-        - /data/shared/cssb_data/BioMol/lmdb/msa_long_d2k.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard0.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard1.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard2.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard3.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard4.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard5.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard6.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard7.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard8.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard9.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard10.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard11.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard12.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard13.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard14.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard15.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard16.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard17.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard18.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard19.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard20.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard21.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard22.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard23.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard24.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard25.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard26.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard27.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard28.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard29.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard30.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard31.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard32.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard33.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard34.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard35.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard36.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard37.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard38.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard39.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard40.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard41.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard42.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard43.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard44.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard45.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard46.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard47.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard48.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard49.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard50.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard51.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard52.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard53.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard54.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard55.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard56.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard57.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard58.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard59.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard60.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard61.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard62.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard63.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard64.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard65.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard66.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard67.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard68.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard69.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard70.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard71.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard72.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard73.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard74.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard75.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard76.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard77.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard78.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard79.lmdb
 
     - name: short_protein_monomer
       cif_db_path: /data/shared/cssb_data/BioMol/lmdb/distillation_short/cif/cif_short_attached.lmdb
@@ -63,7 +152,7 @@ train_db:
       chain_ids: ["1"]
       lookup_mode: record_id
       a3m_db_paths:
-        - /data/shared/cssb_data/BioMol/lmdb/distillation_short/msa/msa_short_d5k.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_short/msa/msa_short_d5k_seqid.lmdb
 
     - name: disordered_pdb
       cif_db_path: /data/shared/cssb_data/BioMol/lmdb/distillation_disordered/cif/cif_disordered_attached.lmdb

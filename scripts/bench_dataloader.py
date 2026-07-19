@@ -27,6 +27,7 @@ from hydra import compose, initialize_config_dir
 
 from run_miniworld_distogram_train import Config  # type: ignore[import-not-found]
 from miniworld.data.dataloader.dataloader import BioMolData
+from miniworld.configs.data import TemplateConfig
 
 
 def _p(vals, q):
@@ -39,6 +40,7 @@ def main() -> None:
     ap.add_argument("--config", type=Path, required=True)
     ap.add_argument("--n", type=int, default=100, help="items to pull per setting")
     ap.add_argument("--workers", type=str, default="4,8,16", help="comma list of num_workers")
+    ap.add_argument("--templates", type=int, default=0, help="n_templates (0 = skip template LMDB reads)")
     args = ap.parse_args()
 
     cfg_path = args.config.resolve()
@@ -62,6 +64,7 @@ def main() -> None:
             DB_config=cfg.data.train_db,
             sampler_config=cfg.data.sampler,
             tokenizer_config=cfg.data.tokenizer,
+            template_config=TemplateConfig(n_templates=args.templates),
         )
     )
     t_init = time.perf_counter() - t0

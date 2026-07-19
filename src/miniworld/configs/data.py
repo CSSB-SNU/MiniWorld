@@ -101,6 +101,10 @@ class BioMolDBConfig(BaseModel):
 
     cif_db_path: Path = Path("cif_lmdb")
     a3m_db_path: Path = Path("a3m_lmdb")
+    # Optional extra MSA shard tried after a3m_db_path (e.g. PDB RNA-chain MSA,
+    # keyed by the same full seq_id). A chain's seq_id is looked up across both,
+    # so protein chains hit a3m and RNA chains hit this one.
+    a3m_rna_db_path: Path | None = None
     template_db_path: Path = Path("template_lmdb")
     edge_id_to_bias_path: Path = Path("edge_id_to_cif_ids.tsv")
     load_all_msa: bool = False

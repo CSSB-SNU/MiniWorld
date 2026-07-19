@@ -39,6 +39,12 @@ class BioMolDBV2Config(BaseModel):
     resources_path: Path | None = None
     ccd_preprocessed_path: Path | None = None
 
+    # Unified edge_node-style item list (source-tagged). When set, the catalog is
+    # built from this file: each row routes to its source's LMDBs (pdb + the
+    # distillation_sources below) and gets an AF3-style raw weight (pdb 3-tier;
+    # distillation cluster-uniform). msa/template keys resolve from the CIF.
+    train_item_path: Path | None = None
+
     # Memory-mapped Arrow catalog cache (HuggingFace-datasets / MDS-style). The full
     # item catalog (all sources) is enumerated ONCE and written here as an Arrow IPC
     # file; every later __init__ mmaps it (zero-copy, instant, shared across DDP ranks

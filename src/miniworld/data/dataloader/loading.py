@@ -20,7 +20,7 @@ from miniworld.data.pipeline import (
     fragment_ccdmol_all_merges,
 )
 
-from .types import DataRecord, feature_key, msa_paths, template_path
+from .types import DataRecord, msa_paths, template_path
 
 
 # ---------------------------------------------------------------------------
@@ -88,6 +88,15 @@ def _load_a3m_from_paths(key: str, env_paths: Sequence[Path]) -> MSA | None:
     )
 
 
+def chain_seq_id(cifmol: CIFMolAttached, chain_id: str) -> str:
+    """Return a chain's MSA lookup key: its per-sequence ``seq_id`` from the CIF.
+
+    MSAs are keyed by seq_id (identical sequences deduped), so the key is read
+    from the loaded, attached CIF rather than carried on the item.
+    """
+    return str(cifmol.chains[cifmol.chains.chain_id == chain_id].seq_id[0].value)
+
+
 def load_record_msa(
     *,
     cifmol: CIFMolAttached,
@@ -96,16 +105,16 @@ def load_record_msa(
     missing_policy: Literal["gap", "query"],
     pairing_mode: Literal["mixed", "paired_only", "no_pairing"],
 ) -> ComplexMSA:
-    """Load MSA using chain-specific feature keys from the record."""
+    """Load MSA by each chain's seq_id (read from the CIF) from the record's shards."""
     msa_list: list[MSA] = []
     for chain_id, crop_indices in chain_id_to_crop_indices.items():
         if len(crop_indices) == 0:
             continue
-        key = feature_key(record, chain_id)
-        msa = _load_a3m_from_paths(key, msa_paths(record, chain_id))
+        seq_id = chain_seq_id(cifmol, chain_id)
+        msa = _load_a3m_from_paths(seq_id, msa_paths(record, chain_id))
         if msa is None:
             query_seq = get_query_sequence(cifmol, chain_id)
-            msa = MSA.from_query(query_sequence=query_seq, seq_id=key)
+            msa = MSA.from_query(query_sequence=query_seq, seq_id=seq_id)
         else:
             msa = MSA.cropped(msa, crop_indices)
         msa_list.append(msa)
@@ -173,14 +182,35 @@ def _load_template_by_key(
     )
 
 
+def chain_template_key(cifmol: CIFMolAttached, record_id: str, chain_id: str) -> str:
+    """Return a chain's template lookup key: ``{RECORD}_{label_chain}``.
+
+    The template DB (and all upstream cif.fasta / cif_chain / seq_id_map data) is
+    keyed by the **label** chain id, not auth_asym_id. The DB key drops the copy
+    suffix, so cif label ``A_1`` → ``A`` (key ``101M_A``) and distillation label
+    ``1`` → ``1`` (key ``MGYP..._1``). ``record_id`` is used verbatim: all keys
+    (cif + template) are lower-cased, so PDB cif ``100d`` → template ``100d_A``
+    and distillation ``MGYP...`` → ``MGYP..._1`` (already lower-case-consistent).
+
+    Using auth_asym_id here was a bug: for multi-chain PDB entries label≠auth
+    (e.g. label ``C_1`` has auth ``F``), so it fetched a different chain's
+    template — wrong length → IndexError in ``template.residues[crop_indices]``.
+    ``cifmol`` is kept in the signature for call-site compatibility but unused.
+    """
+    del cifmol  # label keying needs no CIF lookup
+    label = chain_id.rsplit("_", 1)[0]
+    return f"{record_id}_{label}"
+
+
 def load_record_templates(
     *,
+    cifmol: CIFMolAttached,
     chain_id_to_crop_indices: dict[str, np.ndarray],
     record: DataRecord,
     n_templates: int,
     rng: np.random.Generator | None,
 ) -> ProteinTemplate:
-    """Load template features using chain-specific feature keys.
+    """Load template features by each chain's ``{RECORD}_{auth}`` key.
 
     When ``n_templates <= 0`` the LMDB read is skipped entirely and each chain
     gets an empty ``ProteinTemplate`` — models that don't consume templates
@@ -192,7 +222,9 @@ def load_record_templates(
         return ProteinTemplate.concat(
             [
                 ProteinTemplate(n_residues=crop_indices.shape[0], ids=[template_id])
-                for template_id, crop_indices in enumerate(chain_id_to_crop_indices.values())
+                for template_id, crop_indices in enumerate(
+                    chain_id_to_crop_indices.values(),
+                )
             ],
         )
 
@@ -208,7 +240,7 @@ def load_record_templates(
             continue
 
         templates = _load_template_by_key(
-            key=feature_key(record, chain_id),
+            key=chain_template_key(cifmol, record.record_id, chain_id),
             template_id=template_id,
             env_path=template_env,
             crop_indices=crop_indices,

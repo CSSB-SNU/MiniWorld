@@ -39,9 +39,11 @@ from .loading import FragmentedCCDMolCache
 from .preprocess import Preprocessor, WrongCroppingError
 from .sampler import WeightedSampler
 from .sources import (
+    SourceDBs,
     configured_source_weights,
     load_manifest_items,
     read_pdb_edge_items,
+    read_train_items,
     source_balanced_weights,
 )
 from .types import (
@@ -97,8 +99,12 @@ def _write_catalog_arrow(
         for start in range(0, len(items), _CATALOG_CHUNK):
             chunk = items[start : start + _CATALOG_CHUNK]
             wchunk = weights[start : start + _CATALOG_CHUNK]
-            writer.write_batch(
-                pa.record_batch(
+            # pa.table (not record_batch) so a column whose string values overflow
+            # the 2 GiB offset limit within a chunk — feature_keys/msa_db_paths on
+            # multi-million-row catalogs — is accepted as a ChunkedArray instead of
+            # raising "Cannot convert ChunkedArray to Array".
+            writer.write_table(
+                pa.table(
                     [
                         pa.array([r.item_id for r in chunk]),
                         pa.array([r.source for r in chunk]),
@@ -274,7 +280,15 @@ class BioMolData(torch.utils.data.Dataset):
 
         self.items = []
         self.weights = []
-        if self.config.DB_config.items_path and self.config.DB_config.resources_path:
+        if self.config.DB_config.train_item_path:
+            records, weights = read_train_items(
+                self.config.DB_config.train_item_path,
+                self._build_source_dbs(),
+                self.config.sampler_config,
+            )
+            self.items.extend(records)
+            self.weights.extend(weights)
+        elif self.config.DB_config.items_path and self.config.DB_config.resources_path:
             records, weights = load_manifest_items(
                 self.config.DB_config.items_path,
                 self.config.DB_config.resources_path,
@@ -300,6 +314,31 @@ class BioMolData(torch.utils.data.Dataset):
                 "wrote catalog Arrow cache %s (%d items) — future inits mmap it",
                 cache, len(self.items),
             )
+
+    def _build_source_dbs(self) -> dict[str, SourceDBs]:
+        """Map each source name to its cif/msa/template LMDBs for train_item rows.
+
+        pdb comes from ``DB_config.pdb`` (a3m keyed by full seq_id, template by
+        ``{RECORD}_{chain}``); each distillation source from its own entry.
+        """
+        source_dbs: dict[str, SourceDBs] = {}
+        pdb = self.config.DB_config.pdb
+        if pdb is not None:
+            pdb_msa = (pdb.a3m_db_path,)
+            if pdb.a3m_rna_db_path is not None:
+                pdb_msa = (pdb.a3m_db_path, pdb.a3m_rna_db_path)
+            source_dbs["pdb"] = SourceDBs(
+                cif_db_path=pdb.cif_db_path,
+                msa_db_paths=pdb_msa,
+                template_db_path=pdb.template_db_path,
+            )
+        for source in self.config.DB_config.distillation_sources:
+            source_dbs[source.name] = SourceDBs(
+                cif_db_path=source.cif_db_path,
+                msa_db_paths=tuple(source.a3m_db_paths),
+                template_db_path=source.template_db_path,
+            )
+        return source_dbs
 
     def _append_pdb_items(self, pdb_config: BioMolDBConfig) -> None:
         edge_items, edge_weights = read_pdb_edge_items(
