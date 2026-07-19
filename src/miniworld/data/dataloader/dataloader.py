@@ -50,6 +50,7 @@ from .types import (
     BioMolDBV2Config,
     DataRecord,
     DistillationSourceConfig,
+    ResourceLocator,
 )
 
 if TYPE_CHECKING:
@@ -244,6 +245,15 @@ class BioMolData(torch.utils.data.Dataset):
         self.weights: list[float] = []
         self.items: list[DataRecord] = []
 
+        # Unified location authority (lmdb). Built once here; opened lazily per
+        # worker process inside ResourceLocator (survives fork + spawn).
+        self.resources: ResourceLocator | None = None
+        if config.DB_config.resources_index_path is not None:
+            self.resources = ResourceLocator(
+                config.DB_config.resources_index_path,
+                base_override=config.DB_config.resources_base,
+            )
+
         self._load_items()
         self._load_ccd_preprocessed()
 
@@ -255,6 +265,7 @@ class BioMolData(torch.utils.data.Dataset):
             msa_config=config.msa_config,
             template_config=config.template_config,
             tokenizer_config=config.tokenizer_config,
+            resources=self.resources,
         )
 
     def set_epoch(self, epoch: int) -> None:
@@ -281,9 +292,15 @@ class BioMolData(torch.utils.data.Dataset):
         self.items = []
         self.weights = []
         if self.config.DB_config.train_item_path:
+            if self.resources is None:
+                msg = (
+                    "train_item_path requires resources_index_path "
+                    "(the unified resources.lmdb location index)."
+                )
+                raise ValueError(msg)
             records, weights = read_train_items(
                 self.config.DB_config.train_item_path,
-                self._build_source_dbs(),
+                self.resources,
                 self.config.sampler_config,
             )
             self.items.extend(records)

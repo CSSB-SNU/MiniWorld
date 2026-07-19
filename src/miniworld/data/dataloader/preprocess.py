@@ -25,7 +25,7 @@ from miniworld.data.pipeline.utils import (
 from miniworld.utils.crop import crop_spatial_segment_token
 
 from .loading import load_record_msa, load_record_templates
-from .types import DataRecord
+from .types import DataRecord, ResourceLocator
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -64,6 +64,7 @@ class Preprocessor:
         msa_config: MSAConfig,
         template_config: TemplateConfig,
         tokenizer_config: TokenizerConfig,
+        resources: ResourceLocator | None = None,
     ) -> None:
         self.tokenizer = tokenizer
         self.fragmented_ccd_mols = fragmented_ccd_mols
@@ -72,6 +73,9 @@ class Preprocessor:
         self.msa_config = msa_config
         self.template_config = template_config
         self.tokenizer_config = tokenizer_config
+        # Unified location authority (train_item mode); resolves the exact msa
+        # shard by seq_id at runtime instead of scanning the shard list.
+        self.resources = resources
 
     # -- top-level entry --------------------------------------------------
 
@@ -161,6 +165,7 @@ class Preprocessor:
             record=record,
             missing_policy=self.msa_config.missing_policy,
             pairing_mode=self.msa_config.pairing_mode,
+            locator=self.resources,
         )
         msa = sample_msa(
             msa=complex_msa,

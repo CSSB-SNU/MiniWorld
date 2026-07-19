@@ -20,7 +20,7 @@ from typing import Literal
 from miniworld.configs.data import BioMolDBConfig, SamplerConfig
 from miniworld.data.io import extract_lmdb_keys
 
-from .types import BioMolDBV2Config, DataRecord, ResourceIndex
+from .types import BioMolDBV2Config, DataRecord, ResourceIndex, ResourceLocator
 
 
 class _PDBEdgeRow:
@@ -461,7 +461,7 @@ def _train_item_weights(
 
 def read_train_items(
     train_item_path: Path,
-    source_dbs: dict[str, SourceDBs],
+    locator: ResourceLocator,
     sampler_config: SamplerConfig,
 ) -> tuple[list[DataRecord], list[float]]:
     """Read the unified train_item.tsv into DataRecords + AF3-style raw weights.
@@ -470,8 +470,13 @@ def read_train_items(
         source cluster1 cluster2 pdb_id assembly_id model_id alt_id
         chain_id1 chain_id2
     Interface rows carry both clusters; monomer rows have ``cluster2 == "None"``.
-    Keys are resolved at load time from the CIF (msa←seq_id, template←record+chain),
-    so a record only carries the record id, chains, and per-source LMDB paths.
+
+    All LMDB locations come from the single ``ResourceLocator`` (the unified
+    location authority): cif/template are resolved to a source path here (baked
+    onto the record), while msa is left empty and resolved at runtime by seq_id
+    (``load_record_msa`` -> ``locator.msa_paths_for``), because the seq_id is only
+    known after the CIF is read. Configured sources = the index's sources, so one
+    train_item.tsv serves configs enabling different source subsets.
     """
     records: list[DataRecord] = []
     # Per-source grouping so weights are computed within each source.
@@ -499,11 +504,10 @@ def read_train_items(
                 chain_id1,
                 chain_id2,
             ) = stripped.split("\t")
-            dbs = source_dbs.get(source)
-            if dbs is None:
-                # Source not declared in this config (e.g. rna/disordered left
-                # out): skip its rows rather than fail, so one train_item.tsv
-                # serves configs that enable different source subsets.
+            if not locator.has_source(source):
+                # Source not in the index (e.g. rna/disordered left out): skip its
+                # rows rather than fail, so one train_item.tsv serves configs that
+                # enable different source subsets.
                 skipped_sources[source] = skipped_sources.get(source, 0) + 1
                 continue
 
@@ -518,15 +522,18 @@ def read_train_items(
                     f"{alt_id}:{':'.join(chain_ids)}",
                     source=source,
                     record_id=record_id,
-                    cif_db_path=dbs.cif_db_path,
+                    cif_db_path=locator.cif_path(source),
                     assembly_id=assembly_id,
                     model_id=model_id,
                     alt_id=alt_id,
                     chain_ids=chain_ids,
                     feature_keys=(),  # msa/template keys resolved from the CIF
                     seq_ids=(),
-                    msa_db_paths=(dbs.msa_db_paths,) * n_chains,
-                    template_db_paths=(dbs.template_db_path,) * n_chains,
+                    # msa resolved at runtime by seq_id via the locator (kept empty
+                    # so records don't carry the 80-shard list); template is a
+                    # single source path.
+                    msa_db_paths=((),) * n_chains,
+                    template_db_paths=(locator.template_path(source),) * n_chains,
                     weight=1.0,
                     item_kind="interface" if cluster2 != "None" else "monomer",
                     weight_group=source,

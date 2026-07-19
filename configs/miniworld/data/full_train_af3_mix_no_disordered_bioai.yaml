@@ -41,11 +41,17 @@ train_db:
 
   sample_with_replacement: true
   manifest_validation: paths
-  catalog_cache_path: /data/psk6950/BioMolDB_20260224/catalog_trainitem_no_disordered_bioai.arrow
+  # Rebuilt for the unified resolver (records carry empty msa_db_paths; the exact
+  # shard is resolved at runtime by seq_id via resources_index_path).
+  catalog_cache_path: /data/psk6950/BioMolDB_20260224/catalog_trainitem_no_disordered_bioai_unified.arrow
 
   # Unified item list (source-tagged edge_node). Routes each row to its source's
   # LMDBs (pdb below + distillation_sources) and derives AF3-style raw weights.
   train_item_path: /data/psk6950/filtering/edge_node/train_item.tsv
+  # Single location authority (built by StructCooker
+  # scripts/maintenance/build_resources_index.py): cif/template per source,
+  # exact msa shard by seq_id (no runtime shard scan).
+  resources_index_path: /data/psk6950/filtering/edge_node/resources.lmdb
 
   pdb:
     cif_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/cif/cif_pdb_attached_train_20210930_res9_residue10k_chain300.lmdb

@@ -20,7 +20,7 @@ from miniworld.data.pipeline import (
     fragment_ccdmol_all_merges,
 )
 
-from .types import DataRecord, msa_paths, template_path
+from .types import DataRecord, ResourceLocator, msa_paths, template_path
 
 
 # ---------------------------------------------------------------------------
@@ -104,14 +104,25 @@ def load_record_msa(
     record: DataRecord,
     missing_policy: Literal["gap", "query"],
     pairing_mode: Literal["mixed", "paired_only", "no_pairing"],
+    locator: ResourceLocator | None = None,
 ) -> ComplexMSA:
-    """Load MSA by each chain's seq_id (read from the CIF) from the record's shards."""
+    """Load MSA by each chain's seq_id (read from the CIF).
+
+    When a ``locator`` is given (unified train_item mode), the exact shard for the
+    chain's seq_id is resolved O(1) from the resources index instead of scanning
+    the record's shard list. Otherwise falls back to ``record.msa_db_paths``.
+    """
     msa_list: list[MSA] = []
     for chain_id, crop_indices in chain_id_to_crop_indices.items():
         if len(crop_indices) == 0:
             continue
         seq_id = chain_seq_id(cifmol, chain_id)
-        msa = _load_a3m_from_paths(seq_id, msa_paths(record, chain_id))
+        paths = (
+            locator.msa_paths_for(record.source, seq_id)
+            if locator is not None
+            else msa_paths(record, chain_id)
+        )
+        msa = _load_a3m_from_paths(seq_id, paths)
         if msa is None:
             query_seq = get_query_sequence(cifmol, chain_id)
             msa = MSA.from_query(query_sequence=query_seq, seq_id=seq_id)
