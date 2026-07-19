@@ -1,9 +1,12 @@
-# AF3-style mixed-source training config — DISORDERED_PDB DISABLED variant.
-# LOCAL-SERVER paths (psk6950 box). Twin of full_train_af3_mix_no_disordered.yaml
-# with data roots remapped:
-#   .../data/v2/                 -> /home/psk6950/data/BioMolDB_20260224/
-#   .../data/CCD/                -> /home/psk6950/data/CCD/
-#   .../data/distillation/lmdb/  -> /home/psk6950/data/openfold_distillation/lmdb/
+# AF3-style mixed-source training config — CSSB (cssb_h100) local paths.
+# Path-remapped from full_train_af3_mix_no_disordered_bioai.yaml onto this server:
+#   /data/shared/cssb_data/BioMol/  -> /home/psk6950/data/BioMol/   (pdb + distillation LMDBs)
+#   /data/psk6950/                  -> /home/psk6950/data/          (CCD, filtering/edge_node, catalog cache)
+# Uses the unified ResourceLocator: resources_index_path (resources.lmdb, rsynced
+# from BioAI) resolves cif/template per source and the EXACT distillation_long a3m
+# shard by seq_id (O(1) lmdb get) — no runtime 80-shard scan. Since the index stores
+# base-relative paths under the bioai mount, resources_base overrides the root to
+# this server's BioMol dir. Atom tokenizer + no_pairing (matches bioai recipe).
 #
 # Test-run twin of full_train_af3_mix.yaml where disordered_pdb has
 # source_weights = 0.0 (never sampled). Its DistillationSourceConfig is
@@ -20,7 +23,7 @@
 # 25, protein_ligand 25, ...). AF3's beta_r/alpha_r formula from Eq. 1 is NOT
 # applied.
 #
-# max_msa_depth = 2048 (matches the pre-computed msa_long_d2k_* shard depth cap).
+# max_msa_depth = 2048 (matches the msa_long_d2k depth cap).
 # missing_policy = query so absent MSAs fall back to the query sequence.
 
 
@@ -28,127 +31,146 @@ train_db:
   ccd_preprocessed_path: /home/psk6950/data/CCD/preprocessed_CCD.lmdb
 
   # AF3 Table 3 (pre-training) weights; loader normalizes across active sources.
-  # disordered_pdb is at 0.0 for this test run — items still catalog'd, never sampled.
+  # rna / disordered_pdb are not declared below, so their train_item.tsv rows are
+  # skipped at load (read_train_items). Keys resolve from the CIF: msa <- seq_id,
+  # template <- {RECORD}_{auth_chain}; cif <- record_id.
   source_weights:
     pdb: 0.5
-    disordered_pdb: 0.0
+    disordered_pdb: 0.02
     protein_monomer: 0.495
     short_protein_monomer: 0.005
 
   sample_with_replacement: true
   manifest_validation: paths
-  catalog_cache_path: /home/psk6950/data/openfold_distillation/catalog_af3mix_no_disordered_local.arrow
+  # Rebuilt for the unified resolver (records carry empty msa_db_paths; the exact
+  # shard is resolved at runtime by seq_id via resources_index_path).
+  catalog_cache_path: /home/psk6950/data/BioMolDB_20260224/catalog_trainitem_no_disordered_bioai_unified.arrow
+
+  # Unified item list (source-tagged edge_node). Routes each row to its source's
+  # LMDBs (pdb below + distillation_sources) and derives AF3-style raw weights.
+  train_item_path: /home/psk6950/data/filtering/edge_node/train_item.tsv
+  # Single location authority (built by StructCooker
+  # scripts/maintenance/build_resources_index.py): cif/template per source,
+  # exact msa shard by seq_id (no runtime shard scan).
+  resources_index_path: /home/psk6950/data/filtering/edge_node/resources.lmdb
+  # index __meta__ base is the bioai mount (/data/shared/cssb_data/BioMol/); override
+  # to this server's BioMol root so the base-relative shard paths resolve on cssb.
+  resources_base: /home/psk6950/data/BioMol/
 
   pdb:
-    cif_db_path: /home/psk6950/data/BioMolDB_20260224/cif_attached_train_20260224_res9_chain300.lmdb
-    a3m_db_path: /home/psk6950/data/BioMolDB_20260224/a3m_16k.lmdb
-    template_db_path: /home/psk6950/data/BioMolDB_20260224/template.lmdb
-    edge_id_to_bias_path: /home/psk6950/data/BioMolDB_20260224/metadata/train_20260224_edge_node.tsv
+    cif_db_path: /home/psk6950/data/BioMol/lmdb/pdb/cif/cif_pdb_attached_train_20210930_res9_residue10k_chain300.lmdb
+    a3m_db_path: /home/psk6950/data/BioMol/lmdb/pdb/msa/a3m.lmdb
+    a3m_rna_db_path: /home/psk6950/data/BioMol/lmdb/pdb/msa/msa_rna_pdb_shard0.lmdb
+    template_db_path: /home/psk6950/data/BioMol/lmdb/pdb/template/template.lmdb
+    edge_id_to_bias_path: /home/psk6950/data/filtering/edge_node/pdb_edge_node.tsv
     ccd_preprocessed_path: /home/psk6950/data/CCD/preprocessed_CCD.lmdb
 
   distillation_sources:
     - name: protein_monomer
-      cif_db_path: /home/psk6950/data/openfold_distillation/lmdb/cif_long_attached.lmdb
-      template_db_path: /home/psk6950/data/openfold_distillation/lmdb/template_topn_long.lmdb
+      cif_db_path: /home/psk6950/data/BioMol/lmdb/distillation_long/cif/cif_long_attached.lmdb
+      template_db_path: /home/psk6950/data/BioMol/lmdb/distillation_long/template/template_topn_long.lmdb
       chain_ids: ["1"]
       lookup_mode: record_id
+      # 80 rekeyed shards, NOT a merged db: merging 2.4T single-threaded on GPFS
+      # is ~7 days (IO-bound). load_raw_data caches envs, so trying all 80 per
+      # lookup is cheap B-tree misses (~us) after warmup.
       a3m_db_paths:
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard0.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard1.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard2.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard3.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard4.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard5.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard6.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard7.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard8.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard9.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard10.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard11.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard12.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard13.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard14.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard15.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard16.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard17.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard18.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard19.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard20.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard21.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard22.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard23.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard24.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard25.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard26.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard27.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard28.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard29.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard30.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard31.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard32.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard33.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard34.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard35.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard36.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard37.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard38.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard39.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard40.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard41.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard42.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard43.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard44.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard45.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard46.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard47.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard48.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard49.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard50.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard51.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard52.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard53.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard54.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard55.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard56.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard57.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard58.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard59.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard60.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard61.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard62.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard63.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard64.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard65.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard66.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard67.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard68.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard69.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard70.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard71.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard72.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard73.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard74.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard75.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard76.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard77.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard78.lmdb
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_long_d2k_shard79.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard0.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard1.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard2.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard3.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard4.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard5.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard6.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard7.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard8.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard9.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard10.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard11.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard12.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard13.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard14.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard15.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard16.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard17.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard18.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard19.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard20.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard21.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard22.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard23.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard24.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard25.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard26.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard27.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard28.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard29.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard30.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard31.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard32.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard33.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard34.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard35.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard36.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard37.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard38.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard39.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard40.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard41.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard42.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard43.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard44.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard45.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard46.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard47.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard48.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard49.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard50.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard51.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard52.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard53.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard54.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard55.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard56.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard57.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard58.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard59.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard60.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard61.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard62.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard63.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard64.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard65.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard66.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard67.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard68.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard69.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard70.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard71.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard72.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard73.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard74.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard75.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard76.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard77.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard78.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard79.lmdb
 
     - name: short_protein_monomer
-      cif_db_path: /home/psk6950/data/openfold_distillation/lmdb/cif_short_attached.lmdb
-      template_db_path: /home/psk6950/data/openfold_distillation/lmdb/template_topn_short.lmdb
+      cif_db_path: /home/psk6950/data/BioMol/lmdb/distillation_short/cif/cif_short_attached.lmdb
+      template_db_path: /home/psk6950/data/BioMol/lmdb/distillation_short/template/template_topn_short.lmdb
       chain_ids: ["1"]
       lookup_mode: record_id
       a3m_db_paths:
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_short_d5k.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_short/msa/msa_short_d5k_seqid.lmdb
 
     - name: disordered_pdb
-      cif_db_path: /home/psk6950/data/openfold_distillation/lmdb/cif_disordered_attached.lmdb
-      template_db_path: /home/psk6950/data/openfold_distillation/lmdb/template_disordered.lmdb
+      cif_db_path: /home/psk6950/data/BioMol/lmdb/distillation_disordered/cif/cif_disordered_attached.lmdb
+      template_db_path: /home/psk6950/data/BioMol/lmdb/distillation_disordered/template/template_disordered.lmdb
       chain_ids: ["1"]
       lookup_mode: record_id
       a3m_db_paths:
-        - /home/psk6950/data/openfold_distillation/lmdb/msa_disordered_d5k.lmdb
+        - /home/psk6950/data/BioMol/lmdb/distillation_disordered/msa/msa_disordered_d2k.lmdb
 
 crop:
   max_tokens: 384
@@ -171,16 +193,15 @@ msa:
   n_samples: 1
   max_msa_depth: 2048
   missing_policy: query
+  pairing_mode: no_pairing  # skip species pairing (_pairing_MSAs loop)
   # sample_depth default is now "uniform" (AF3-style k ~ Uniform[1, min(n, 2048)]).
   # Set to "fixed" here to override if you want legacy always-max sampling.
 
 tokenizer:
-  level: dynamic
-  dynamic_tokenization:
-    minimum_resolution_ratio: [0.2, 0.6, 0.2]
-    sigma_flat_prob: 0.0
-    sigma_min: 4.0
-    sigma_max: 8.0
+  # Consistent AF3-style tokenization: canonical polymer residues -> 1 token per
+  # residue, ligands / non-canonical -> 1 token per atom (vectorized atom_tokenize).
+  # Replaces the per-atom-loop `dynamic_tokenize`, which was ~56% of per-item time.
+  level: atom
 
 # Weighted-PDB internal item weighting (unchanged; per user request).
 sampler:
