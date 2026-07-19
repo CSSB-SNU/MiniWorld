@@ -149,10 +149,15 @@ class AF3TemplateEmbedder(nn.Module):
 
         summed = query.new_zeros((b, query.shape[1], query.shape[2], self.num_channels))
         for t in range(n_temp):
-            cb = template.cb_xyz[:, t]  # [B, L, 3]
+            # Invalid templates (mask=0) and missing residues can carry NaN/Inf coords.
+            # Sanitize BEFORE any math: F.normalize(NaN)=NaN would flow into ``act`` and
+            # then ``act * mask`` gives NaN*0 = NaN (IEEE), poisoning the whole average.
+            # nan_to_num keeps everything finite; per-residue validity is still carried by
+            # the pb/bb mask features, and whole-template validity by the ``mask`` multiply.
+            cb = torch.nan_to_num(template.cb_xyz[:, t])  # [B, L, 3]
             cb_mask = template.cb_mask[:, t]  # [B, L]
             res_type = template.res_type[:, t].clamp(0, self.num_res_class - 1)
-            bb = template.bb_xyz[:, t]  # [B, L, 3, 3]
+            bb = torch.nan_to_num(template.bb_xyz[:, t])  # [B, L, 3, 3]
             bb_mask = template.bb_mask[:, t]  # [B, L]
 
             dgram = _dgram_from_positions(
