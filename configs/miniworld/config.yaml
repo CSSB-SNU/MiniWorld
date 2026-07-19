@@ -1,7 +1,0 @@
-defaults:
-  - model: medium
-  - train: default
-  - data: default
-  - diffuser: xpred_decoupled
-  - loss: default
-  - _self_

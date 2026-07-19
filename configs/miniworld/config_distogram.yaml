@@ -1,6 +1,0 @@
-defaults:
-  - model: medium_distogram
-  - train: default
-  - data: distogram_only
-  - loss: distogram_only
-  - _self_

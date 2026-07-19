@@ -2,8 +2,7 @@
 
 Usage:
     torchrun --nproc_per_node=1 scripts/run_miniworld_only_train.py train \
-        --config configs/miniworld/config.yaml \
-        data=overfitting train=overfitting model=small diffuser=xpred_decoupled
+        --config configs/miniworld/config_distogram_swa_af3_mix_local.yaml
 """
 
 from __future__ import annotations

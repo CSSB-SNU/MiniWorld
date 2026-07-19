@@ -2,7 +2,7 @@
 
 Usage:
     python scripts/run_miniworld_inference.py validate \
-        --config configs/miniworld/config_validation.yaml \
+        --config configs/miniworld/config_inference.yaml \
         --ckpt path/to/checkpoint.pt
 """
 
