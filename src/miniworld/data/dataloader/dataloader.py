@@ -538,6 +538,7 @@ class BioMolData(torch.utils.data.Dataset):
         bucket_msa_multiple: int | None = None,
         bucket_token_multiple: int | None = None,
         bucket_atom_multiple: int | None = None,
+        bucket_template_multiple: int | None = None,
         **kwargs: object,
     ) -> DataLoader:
         """Create a distributed DataLoader with WeightedSampler.
@@ -582,6 +583,7 @@ class BioMolData(torch.utils.data.Dataset):
                 bucket_msa_multiple=bucket_msa_multiple,
                 bucket_token_multiple=bucket_token_multiple,
                 bucket_atom_multiple=bucket_atom_multiple,
+                bucket_template_multiple=bucket_template_multiple,
             ),
         }
         params.update(kwargs)

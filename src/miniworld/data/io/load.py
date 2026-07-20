@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Literal, cast
 
@@ -124,6 +125,28 @@ def load_raw_data(key: str, env_path: Path) -> bytes | None:
     if value is None:
         return None
     return bytes(value)
+
+
+# --------------------------------------------------------------------------- #
+# synthetic-read mode (dataloader throughput isolation)
+# --------------------------------------------------------------------------- #
+# MW_SYNTH_READS=1: after the first real read per LMDB, reuse that cached value
+# for every subsequent key on that db. This removes per-item disk I/O from the
+# hot loop while keeping the ENTIRE dataloader pipeline intact (workers,
+# __getitem__, deserialize, crop, tokenizer, feature build, collate) — so a
+# real-vs-synthetic comparison isolates the LMDB read cost alone. The env var is
+# inherited by spawn workers and each worker re-imports this module, so the wrap
+# takes effect in every worker process (a main-process monkeypatch would not).
+if os.environ.get("MW_SYNTH_READS", "0") == "1":
+    _real_load_raw_data = load_raw_data
+    _synth_value_cache: dict[str, bytes | None] = {}
+
+    def load_raw_data(key: str, env_path: Path) -> bytes | None:  # type: ignore[no-redef]
+        """MW_SYNTH_READS: one real read per db, then reuse it for all keys."""
+        ep = str(env_path)
+        if ep not in _synth_value_cache:
+            _synth_value_cache[ep] = _real_load_raw_data(key, env_path)
+        return _synth_value_cache[ep]
 
 
 def load_all_raw_data(env_path: Path) -> dict[str, bytes]:

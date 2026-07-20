@@ -14,7 +14,7 @@ from miniworld.data.dataloader.dataloader import BioMolData
 
 import os
 CONFIG = "config_distogram_swa_af3_mix_local"
-N_BATCHES = 6
+N_BATCHES = int(os.environ.get("DL_SMOKE_N", "6"))
 NUM_WORKERS = int(os.environ.get("DL_SMOKE_WORKERS", "4"))
 
 

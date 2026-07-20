@@ -62,7 +62,7 @@ def bucketed_collate(
         return batch
 
     dummy = Batch.empty(
-        n_temp=n_temp,
+        n_temp=bucketed_template,
         msa_depth=bucketed_msa,
         n_tokens=bucketed_tokens,
         n_atoms=bucketed_atoms,

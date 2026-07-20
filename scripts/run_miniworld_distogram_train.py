@@ -113,6 +113,20 @@ class Config(BaseModel):
 
 def _fabric_from_torchrun(**fabric_kwargs) -> Fabric:
     """Create Fabric with node/device counts inherited from torchrun."""
+    # DDP collective-sequence consistency: with the default
+    # find_unused_parameters=False, data-dependent gradient flow makes a rank's
+    # backward fire a different number of grad-allreduce buckets than its peers,
+    # desyncing the NCCL collective sequence -> hang at the first opt-step's sync
+    # backward (reproduced at nproc>=4 with real data; synthetic/nproc<=2 got
+    # lucky). find_unused_parameters=True forces DDP to traverse the autograd
+    # graph each step and fire every bucket, keeping the collective count
+    # identical across ranks. The extra traversal is negligible vs the trunk.
+    # Opt out with MW_DDP_FIND_UNUSED=0 (single-GPU / debugging).
+    if os.environ.get("MW_DDP_FIND_UNUSED") != "0" and "strategy" not in fabric_kwargs:
+        from lightning.fabric.strategies import DDPStrategy
+
+        fabric_kwargs["strategy"] = DDPStrategy(find_unused_parameters=True)
+
     world_size = os.environ.get("WORLD_SIZE")
     local_world_size = os.environ.get("LOCAL_WORLD_SIZE")
     if world_size is None or local_world_size is None:
@@ -268,8 +282,13 @@ def _build_precompile_batch(  # noqa: PLR0915
     msa_row_offset = torch.arange(msa_depth, device=device, dtype=torch.long).unsqueeze(1)
     msa_sequences = (seq_token_type.unsqueeze(0) + msa_row_offset).remainder(20)
     batch.msa.aligned_sequences.copy_(msa_sequences.unsqueeze(0))
-    batch.msa.mask.fill_(True)  # noqa: FBT003
-    batch.msa.has_deletion.zero_()
+    # Real pipeline emits msa.mask as float32 (pipeline/msa.py); Batch.empty makes it
+    # bool. Match real's dtype so the compiled graph (guarded on msa.mask dtype) from
+    # warmup is reused at train time instead of recompiling on the first real batch.
+    batch.msa.mask = torch.ones_like(batch.msa.mask, dtype=torch.float32)
+    # Real batch's msa.has_deletion arrives as int32 (dynamo guard "actual Int");
+    # match it so the compiled graph from warmup is reused instead of recompiling.
+    batch.msa.has_deletion = torch.zeros_like(batch.msa.has_deletion, dtype=torch.int32)
     msa_deletion = torch.linspace(
         0.0,
         1.0,
@@ -277,7 +296,8 @@ def _build_precompile_batch(  # noqa: PLR0915
         device=device,
         dtype=torch.float32,
     ).unsqueeze(1).expand(-1, n_tokens)
-    batch.msa.deletion_value.copy_(msa_deletion.unsqueeze(0))
+    # Real deletion_value is float64 (msa.py: 2*arctan(x/3)/pi in numpy double); match it.
+    batch.msa.deletion_value = msa_deletion.unsqueeze(0).to(torch.float64)
     batch.msa.profile.copy_(
         torch.nn.functional.one_hot(
             seq_token_type,
@@ -358,9 +378,30 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
         cfg.train.bucket_atom_multiple,
     )
     n_templates = TemplateConfig().n_templates
-    warmup_n_recycle = 2
+
+    # Compile the SAME path real training uses. Real forward takes the
+    # ``_forced_n_recycle is None`` + ``self.training`` branch and draws n_recycle
+    # from ``self.rng`` (values 1..n_recycle_max). If warmup instead sets
+    # ``_forced_n_recycle`` (the other branch) it compiles a graph guarded on that
+    # attribute, which the first real batch (None) invalidates -> full recompile of
+    # the trunk, once per recycle count. So here we keep _forced_n_recycle=None, run
+    # in train mode, and drive each recycle count via a stub rng — warming exactly
+    # the graphs (per recycle count) that real training will hit.
+    recycle_values = list(range(1, raw_model.n_recycle_max + 1))
+    orig_rng = raw_model.rng
+
+    def _rng_yielding(target: int) -> np.random.Generator:
+        """A REAL numpy Generator (same type real training uses, so no rng-type guard
+        recompile) reseeded so its first ``integers(1, n_recycle_max+1)`` == target."""
+        hi = raw_model.n_recycle_max + 1
+        for seed in range(10000):
+            gen = np.random.default_rng(seed)
+            if int(gen.integers(1, hi)) == target:
+                return np.random.default_rng(seed)  # fresh, unadvanced
+        return np.random.default_rng()  # fallback (shouldn't happen)
+
     total_bucket_shapes = len(msa_buckets) * len(token_buckets) * len(atom_buckets)
-    total_variants = total_bucket_shapes
+    total_variants = total_bucket_shapes * len(recycle_values)
 
     client.fabric.barrier()
     if client.device.type == "cuda":
@@ -369,11 +410,11 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
     if client.is_global_zero:
         client.logger.info(
             (
-                "Starting synthetic bucket warmup: %d shapes x n_recycle=%d "
+                "Starting synthetic bucket warmup: %d shapes x %d recycle counts "
                 "= %d forward/backward passes"
             ),
             total_bucket_shapes,
-            warmup_n_recycle,
+            len(recycle_values),
             total_variants,
         )
 
@@ -381,11 +422,14 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
         client.model.train()
         client.optimizer.zero_grad(set_to_none=True)
 
-        for warmup_idx, (msa_depth, n_tokens, n_atoms) in enumerate(
+        for warmup_idx, ((msa_depth, n_tokens, n_atoms), rc) in enumerate(
             product(
-                reversed(msa_buckets),
-                reversed(token_buckets),
-                reversed(atom_buckets),
+                product(
+                    reversed(msa_buckets),
+                    reversed(token_buckets),
+                    reversed(atom_buckets),
+                ),
+                recycle_values,
             ),
             start=1,
         ):
@@ -397,14 +441,27 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
                 n_templates=n_templates,
                 num_res_class=cfg.model.shared.num_res_class,
             )
-            raw_model._forced_n_recycle = warmup_n_recycle  # noqa: SLF001
-            with client.fabric.no_backward_sync(
-                client.model,  # pyright: ignore[reportArgumentType]
-                enabled=False,
-            ):
-                client.training_step(batch)
-            if warmup_idx == 1:
-                client.optimizer.step()
+            # Real-training branch: _forced_n_recycle None + train mode; drive the
+            # recycle count via the stub rng so this compiles the graph real batches reuse.
+            raw_model._forced_n_recycle = None  # noqa: SLF001
+            raw_model.rng = _rng_yielding(rc)
+            # Mirror the real grad-accumulation step so BOTH backward graphs compile:
+            # a no-sync microbatch (DDP allreduce disabled, as for the 63 accumulation
+            # microbatches) and a sync one (the accumulation-boundary allreduce). This,
+            # plus the recycle loop's no_grad(non-final cycle)/grad(final) transitions,
+            # covers the grad_mode / requires_grad guard variants the first real opt-step
+            # would otherwise recompile on.
+            for sync_enabled in (True, False):
+                with client.fabric.no_backward_sync(
+                    client.model,  # pyright: ignore[reportArgumentType]
+                    enabled=sync_enabled,
+                ):
+                    client.training_step(batch)
+            # Run the FULL optimizer step every recycle count (not just once): the first
+            # real opt-step otherwise does first-time work here (fused optimizer / compiled
+            # step / DDP grad reduction over the stepped params) that stalls it. Warming it
+            # per recycle count pre-compiles/pre-initializes that boundary.
+            client.optimizer.step()
             client.optimizer.zero_grad(set_to_none=True)
 
             if client.is_global_zero and (
@@ -420,10 +477,11 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
                     msa_depth,
                     n_tokens,
                     n_atoms,
-                    warmup_n_recycle,
+                    rc,
                 )
     finally:
         raw_model._forced_n_recycle = None  # noqa: SLF001
+        raw_model.rng = orig_rng  # restore the real Generator before RNG-state restore
         client.optimizer.zero_grad(set_to_none=True)
         with torch.no_grad():
             for name, p in raw_model.named_parameters():
@@ -579,6 +637,11 @@ def train(  # noqa: PLR0912, PLR0915
     if cfg.train.compile:
         torch._dynamo.config.cache_size_limit = 128  # noqa: SLF001
         torch._dynamo.config.accumulated_cache_size_limit = 512  # noqa: SLF001
+        # nn.Module integer attributes (e.g. _forced_n_recycle) are treated as static
+        # guards by default -> a value change recompiles. Relax so those ints don't
+        # force recompiles (see recycle-count warmup in _warmup_bucket_shapes).
+        if hasattr(torch._dynamo.config, "allow_unspec_int_on_nn_module"):  # noqa: SLF001
+            torch._dynamo.config.allow_unspec_int_on_nn_module = True  # noqa: SLF001
         client.model.compile(dynamic=False)
         client.logger.info("Compiled model")
 
@@ -680,6 +743,12 @@ def train(  # noqa: PLR0912, PLR0915
             bucket_msa_multiple=cfg.train.bucket_msa_multiple,
             bucket_token_multiple=cfg.train.bucket_token_multiple,
             bucket_atom_multiple=cfg.train.bucket_atom_multiple,
+            # Pad the template dim to a fixed n_templates so every batch has the
+            # SAME template count. Otherwise it defaults to the raw per-item count
+            # (1..n_templates) -> a new tensor shape per batch -> torch.compile
+            # recompiles the whole trunk each time (the synthetic warmup already
+            # fixes it at n_templates, so real batches otherwise recompile forever).
+            bucket_template_multiple=TemplateConfig().n_templates,
         )
 
     train_aggregator = MetricsAggregator(client, "train", use_wandb=cfg.train.use_wandb)
