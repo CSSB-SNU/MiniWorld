@@ -185,23 +185,37 @@ class ResourceLocator:
     def template_path(self, source: str) -> Path | None:
         return self._abs(self.sources[source].get("template"))
 
+    def _rna_msa_path(self, source: str) -> Path | None:
+        """The source's separate RNA-MSA db, if any (``msa_rna`` slot)."""
+        return self._abs(self.sources.get(source, {}).get("msa_rna"))
+
     def msa_paths_all(self, source: str) -> tuple[Path, ...]:
-        """Every msa shard for a source (fallback / non-sharded)."""
+        """Every msa db for a source (fallback / non-sharded).
+
+        Protein MSA db(s) first, then the source's separate RNA-MSA db (``msa_rna``)
+        if present. RNA seq_ids (``R...``) miss every protein db and hit the RNA db;
+        protein seq_ids (``P...``) hit the first protein db and never touch it. The
+        two namespaces don't overlap, so appending RNA is always safe.
+        """
         info = self.sources.get(source, {})
-        return tuple(p for p in (self._abs(x) for x in info.get("msa", [])) if p)
+        paths = [self._abs(x) for x in info.get("msa", [])]
+        paths.append(self._rna_msa_path(source))
+        return tuple(p for p in paths if p)
 
     def msa_paths_for(self, source: str, seq_id: str) -> tuple[Path, ...]:
-        """Exact shard(s) holding ``seq_id``.
+        """Exact db(s) holding ``seq_id``.
 
-        Non-sharded sources return their single msa path. Sharded sources look up
-        the seq_id -> shard_idx index (O(1)); on a miss they fall back to all
-        shards so a missing index row degrades to the old scan rather than failing.
+        Non-sharded sources return their protein msa db(s) plus the RNA-MSA db.
+        Sharded sources look up the seq_id -> shard_idx index (O(1)) for the exact
+        protein shard, then append the RNA-MSA db; on an index miss they fall back
+        to all dbs so a missing row degrades to the old scan rather than failing.
         """
         info = self.sources.get(source)
         if info is None:
             return ()
         if not info.get("sharded_msa"):
             return self.msa_paths_all(source)
+        rna = self._rna_msa_path(source)
         with self._env_().begin() as txn:
             v = txn.get(f"{source}{self.sep}{seq_id}".encode())
         if v is None:
@@ -211,7 +225,7 @@ class ResourceLocator:
         if idx >= len(msa):
             return self.msa_paths_all(source)
         p = self._abs(msa[idx])
-        return (p,) if p else ()
+        return tuple(x for x in (p, rna) if x)
 
 
 # ---------------------------------------------------------------------------
