@@ -558,6 +558,54 @@ class _SyntheticDataLoader:
         return
 
 
+def _run_cudagraph_path(cfg: Config, job_name: str | None, ckpt: Path | None) -> None:
+    """Set up run dir / logging / wandb, then hand off to the CUDA-graph trainer.
+
+    Used for the fixed-recycle path (no Fabric): sibling module cudagraph_trainer
+    owns the manual-DDP + torch.cuda.CUDAGraph loop.
+    """
+    from cudagraph_trainer import log as cg_log
+    from cudagraph_trainer import train_cudagraph
+
+    rank = int(os.environ.get("RANK", "0"))
+    if not job_name:
+        job_name = cfg.train.comment
+    run_sub_dir = (
+        Path(cfg.train.run_dir) / time.strftime("%Y-%m-%d")
+        / f"{time.strftime('%H%M%S')}_{job_name}"
+    )
+    cg_log.setLevel(logging.INFO)
+    if rank == 0:
+        run_sub_dir.mkdir(parents=True, exist_ok=True)
+        fmt = logging.Formatter(
+            f"[%(asctime)s][rank={rank}][%(name)s][%(levelname)s] %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        fh = logging.FileHandler(run_sub_dir / "train.log")
+        fh.setFormatter(fmt)
+        cg_log.addHandler(fh)
+        cg_log.addHandler(logging.StreamHandler())
+        config_dict = cfg.model_dump(mode="json")
+        OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
+        if cfg.train.use_wandb:
+            wandb_id_file = Path(cfg.train.run_dir) / "wandb_run_id.txt"
+            if wandb_id_file.exists():
+                wandb_id = wandb_id_file.read_text().strip()
+            else:
+                wandb_id = wandb.util.generate_id()
+                wandb_id_file.parent.mkdir(parents=True, exist_ok=True)
+                wandb_id_file.write_text(wandb_id)
+            wandb.init(
+                project=cfg.train.wandb_project, name=job_name,
+                id=wandb_id, resume="allow", config=config_dict,
+            )
+    cg_log.info(
+        "[dispatch] n_recycle_max=%s -> CUDA-graph + manual-DDP trainer (fixed recycle)",
+        getattr(getattr(cfg.model, "trunk", None), "n_recycle_max", "?"),
+    )
+    train_cudagraph(cfg, job_name, run_sub_dir, ckpt)
+
+
 @click.group()
 def cli():
     pass
@@ -597,6 +645,22 @@ def train(  # noqa: PLR0912, PLR0915
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
+
+    # ---- Trainer dispatch --------------------------------------------------
+    # Fixed recycle (n_recycle_max == 1) -> standard torch.cuda.CUDAGraph capture
+    # + manual DDP (scripts/cudagraph_trainer.py): the whole fwd+loss+bwd replays
+    # as ONE graph -> no per-microbatch launch overhead (~1.8x faster, ~96% util).
+    # Random recycle (n_recycle_max > 1) -> Fabric + plain torch.compile below
+    # (cudagraph can't capture the varying recycle depth). Force either with
+    # MW_FORCE_CUDAGRAPH=1 / MW_FORCE_FABRIC=1.
+    n_recycle_max = getattr(getattr(cfg.model, "trunk", None), "n_recycle_max", None)
+    use_cudagraph = os.environ.get("MW_FORCE_CUDAGRAPH") == "1" or (
+        n_recycle_max == 1 and os.environ.get("MW_FORCE_FABRIC") != "1"
+    )
+    if use_cudagraph:
+        _run_cudagraph_path(cfg, job_name, ckpt)
+        return
+
     fabric = _fabric_from_torchrun()
     fabric.launch()
     if cfg.train.seed is not None:
@@ -631,6 +695,11 @@ def train(  # noqa: PLR0912, PLR0915
     file_handler.setFormatter(formatter)
     client.logger.addHandler(file_handler)
 
+    client.logger.info(
+        "[dispatch] n_recycle_max=%s -> Fabric + plain-compile trainer (random recycle)",
+        n_recycle_max,
+    )
+
     if cfg.train.verbose:
         client.add_callback(VerboseCallback())
 
@@ -642,8 +711,18 @@ def train(  # noqa: PLR0912, PLR0915
         # force recompiles (see recycle-count warmup in _warmup_bucket_shapes).
         if hasattr(torch._dynamo.config, "allow_unspec_int_on_nn_module"):  # noqa: SLF001
             torch._dynamo.config.allow_unspec_int_on_nn_module = True  # noqa: SLF001
-        client.model.compile(dynamic=False)
-        client.logger.info("Compiled model")
+        # Default: plain fused compile (proven stable — multi-epoch runs OK).
+        # reduce-overhead (inductor CUDA-graph trees) CRASHES on this model under
+        # DDP: "accessing tensor output of CUDAGraphs that has been overwritten"
+        # (heads.py distogram_head output reused across replays). NOT the default.
+        # MW_COMPILE_MODE=reduce-overhead opts back in for experiments.
+        _cmode = os.environ.get("MW_COMPILE_MODE", "")
+        if _cmode:
+            client.model.compile(mode=_cmode, dynamic=False)
+            client.logger.info("Compiled model (mode=%s)", _cmode)
+        else:
+            client.model.compile(dynamic=False)
+            client.logger.info("Compiled model")
 
     config_dict = cfg.model_dump(mode="json")
     msg = f"config:\n{OmegaConf.to_yaml(OmegaConf.create(config_dict))}"
@@ -651,9 +730,22 @@ def train(  # noqa: PLR0912, PLR0915
     if fabric.is_global_zero:
         OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
         if cfg.train.use_wandb:
+            # Stable run id kept at the run_dir root (survives autoscaler
+            # preempt/resubmit, which makes a fresh timestamped run_sub_dir each
+            # launch) so preemptions append to ONE wandb run instead of forking a
+            # new fragmented curve every restart.
+            wandb_id_file = Path(cfg.train.run_dir) / "wandb_run_id.txt"
+            if wandb_id_file.exists():
+                wandb_id = wandb_id_file.read_text().strip()
+            else:
+                wandb_id = wandb.util.generate_id()
+                wandb_id_file.parent.mkdir(parents=True, exist_ok=True)
+                wandb_id_file.write_text(wandb_id)
             wandb.init(
                 project=cfg.train.wandb_project,
                 name=job_name,
+                id=wandb_id,
+                resume="allow",
                 config=config_dict,
             )
 
@@ -756,6 +848,7 @@ def train(  # noqa: PLR0912, PLR0915
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
     client.logger.info("Start training")
+
     while client.epoch < cfg.train.num_epoch:
         client.logger.info("Training Epoch %d", client.epoch)
         train_dataloader.sampler.set_epoch(client.epoch)  # pyright: ignore[reportAttributeAccessIssue]

@@ -162,12 +162,50 @@ class MiniSWAModel(nn.Module):
         else:
             n_recycle = self.n_recycle_max
 
+        (
+            token_pair_init_bf16,
+            token_single_input_bf16,
+            msa_feat,
+            msa_mask,
+            token_mask,
+        ) = self._embed(msa, reference, scheme, sequence, structure)
+
+        token_pair = torch.zeros_like(token_pair_init_bf16)
+        for i_cycle in range(n_recycle):
+            with ExitStack() as stack:
+                if i_cycle < n_recycle - 1:
+                    stack.enter_context(torch.no_grad())
+                token_pair = self._trunk_step(
+                    token_pair,
+                    token_pair_init_bf16,
+                    token_single_input_bf16,
+                    msa_feat,
+                    msa_mask,
+                    token_mask,
+                    scheme.token_asym_id,
+                    template,
+                )
+        return self.distogram_head(token_pair)
+
+    def _embed(
+        self,
+        msa: MSAFeatures,
+        reference: ReferenceFeatures,
+        scheme: SchemeFeatures,
+        sequence: SequenceFeatures,
+        structure: StructureFeatures,
+    ):
+        """Input embedding done once per microbatch (before the recycle loop).
+
+        Returns the recycle-invariant tensors the trunk step consumes, so the
+        recycle loop can be split into replayable CUDA-graph steps operating on a
+        static ``token_pair`` buffer.
+        """
         token_single_msa = init_token_single_msa(
             msa,
             sequence,
             num_res_class=self.config.shared.num_res_class,
         )
-
         # input feature embedding — token_single_init is None (single-track off)
         (
             token_single_input,
@@ -179,45 +217,57 @@ class MiniSWAModel(nn.Module):
             scheme,
             structure,
         )
-        token_mask = structure.token_mask
-
-        token_pair = torch.zeros_like(token_pair_init).to(torch.bfloat16)
-        token_pair_init_bf16 = token_pair_init.to(torch.bfloat16)
-        token_single_input_bf16 = token_single_input.to(torch.bfloat16)
-        # Trunk forward with recycling
         msa_feat, msa_mask = init_msa(
             msa,
             num_res_class=self.config.shared.num_res_class,
             dtype=torch.bfloat16,
         )
-        for i_cycle in range(n_recycle):
-            with ExitStack() as stack:
-                if i_cycle < n_recycle - 1:
-                    stack.enter_context(torch.no_grad())
-                token_pair = token_pair_init_bf16 + self.add_pair_recycle(
-                    token_pair,
-                )
+        return (
+            token_pair_init.to(torch.bfloat16),
+            token_single_input.to(torch.bfloat16),
+            msa_feat,
+            msa_mask,
+            structure.token_mask,
+        )
 
-                # AF3 trunk order: template → MSA → Pairformer.
-                if self.use_template:
-                    token_pair = token_pair + self.temp_embedder(
-                        token_pair,
-                        template,
-                        scheme.token_asym_id,
-                        token_mask,
-                    )
+    def _trunk_step(
+        self,
+        token_pair,
+        token_pair_init_bf16,
+        token_single_input_bf16,
+        msa_feat,
+        msa_mask,
+        token_mask,
+        token_asym_id,
+        template: TemplateFeatures | None,
+    ):
+        """One recycle iteration of the trunk (template → MSA → Pairformer).
 
-                token_pair = token_pair + self.msa_module(
-                    msa_feat,
-                    msa_mask,
-                    token_pair,
-                    token_single_input_bf16,
-                    token_mask,
-                    scheme.token_asym_id,
-                )
+        Pure function of ``token_pair`` and the recycle-invariant embeddings, so a
+        single capture of this step (no_grad or grad) is replayable for any recycle
+        count: replay under no_grad ``n_recycle-1`` times, then once with grad.
+        """
+        token_pair = token_pair_init_bf16 + self.add_pair_recycle(token_pair)
 
-                token_pair = self.pairformer_blocks(
-                    token_pair,
-                    token_mask,
-                )
-        return self.distogram_head(token_pair)
+        # AF3 trunk order: template → MSA → Pairformer.
+        if self.use_template:
+            token_pair = token_pair + self.temp_embedder(
+                token_pair,
+                template,
+                token_asym_id,
+                token_mask,
+            )
+
+        token_pair = token_pair + self.msa_module(
+            msa_feat,
+            msa_mask,
+            token_pair,
+            token_single_input_bf16,
+            token_mask,
+            token_asym_id,
+        )
+
+        return self.pairformer_blocks(
+            token_pair,
+            token_mask,
+        )
