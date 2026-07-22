@@ -17,7 +17,7 @@ shared:
   s_max: 2
   n_distogram_bins: 64
   num_res_class: 32
-  implementation: triton
+  implementation: miniworld_kernels
   use_checkpoint: False
 
 
@@ -28,7 +28,7 @@ input_feat_embbeder:
   d_cond: ${..shared.d_single_atom}
   d_pair: ${..shared.d_pair_atom}
   n_head: 4
-  implementation: triton
+  implementation: miniworld_kernels
 
 
 atom_swa:
@@ -59,7 +59,7 @@ trunk:
     p_drop: 0.25
     use_single: False
     use_self_attention: False
-    implementation: triton
+    implementation: miniworld_kernels
 
   msa_module:
     n_block: 2
@@ -77,4 +77,4 @@ trunk:
     use_self_attention: False
     n_checkpoint_segments: null
 
-    implementation: triton
+    implementation: miniworld_kernels

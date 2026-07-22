@@ -116,7 +116,7 @@ class AF3TemplateEmbedder(nn.Module):
                 d_pair=num_channels,
                 n_block=n_block,
                 p_drop=dropout_prob,
-                implementation=ImplementationType.TRITON,  # miniworld-kernels whole-op
+                implementation=ImplementationType.MINIWORLD_KERNELS,  # miniworld-kernels whole-op
             ),
         )
         self.ln_out = LayerNorm(num_channels)

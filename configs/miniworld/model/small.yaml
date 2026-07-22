@@ -11,7 +11,7 @@ shared:
   s_max: 2
   n_distogram_bins: 64
   num_res_class: 32
-  implementation: triton
+  implementation: miniworld_kernels
   use_checkpoint: False
 
 
@@ -22,7 +22,7 @@ input_feat_embbeder:
   d_cond: ${..shared.d_single_atom}
   d_pair: ${..shared.d_pair_atom}
   n_head: 4
-  implementation: triton
+  implementation: miniworld_kernels
 
 trunk:
   n_recycle_max: 4
@@ -78,7 +78,7 @@ diffusion:
     d_cond: ${...shared.d_single_atom}
     d_pair: ${...shared.d_pair_atom}
     n_head: 4
-    implementation: triton
+    implementation: miniworld_kernels
     kernel_type: "compute_efficient"
   token_dit:
     n_block: 4
@@ -87,7 +87,7 @@ diffusion:
     d_cond: ${...shared.d_single}
     d_pair: ${...shared.d_pair}
     n_head: 24
-    implementation: triton
+    implementation: miniworld_kernels
     kernel_type: "compute_efficient"
   dit_cond:
     n_expand: 2
