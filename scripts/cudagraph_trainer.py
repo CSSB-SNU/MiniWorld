@@ -133,14 +133,22 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
     it = iter(dl)
     static = next(it).to(device=dev)
 
+    # CB/pseudo-beta distogram target toggle (MW_DISTOGRAM_CB=1). Default off keeps the
+    # legacy shortest-inter-atom-distance target.
+    _use_cb = os.environ.get("MW_DISTOGRAM_CB", "0") == "1"
+    if is_zero:
+        log.info("[cudagraph] distogram target = %s",
+                 "CB/pseudo-beta (rep atom)" if _use_cb else "shortest inter-atom")
+
     def step():
+        rep = static.structure.atom_is_rep if _use_cb else None
         with torch.autocast("cuda", dtype=torch.bfloat16):
             logit = model.forward(
                 msa=static.msa, reference=static.reference, scheme=static.scheme,
                 sequence=static.sequence, structure=static.structure, template=static.template)
             loss = w * cal_atom_distogram_loss(
                 logit, static.structure.atom_pos, static.structure.atom_pos_mask,
-                static.scheme.atom_to_token_idx_map)
+                static.scheme.atom_to_token_idx_map, rep_atom_mask=rep)
         loss.backward()
         return loss
 
@@ -192,9 +200,18 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
         ep_t0 = time.perf_counter()
         losses = []
         for _ in range(steps_per_epoch):
+            micro_acc = None
             for _ in range(ga):
                 _load_static(static, next_batch().to(device=dev))
                 graph.replay()  # fwd+loss+bwd -> accumulate into .grad
+                # Accumulate the per-microbatch loss on-GPU (read BEFORE the next
+                # replay overwrites static_loss). Logging only the last microbatch made
+                # the per-step curve a 1/ga-sample estimate (32x noisier than the true
+                # eff-batch loss); averaging all ga gives the loss over the full
+                # effective batch, so train/distogram_loss and its epoch mean are the
+                # same quantity at two resolutions.
+                _l = static_loss.detach().float()
+                micro_acc = _l.clone() if micro_acc is None else micro_acc + _l
             if world > 1:  # eager cross-rank grad average (once per opt-step)
                 for p in model.parameters():
                     if p.grad is not None:
@@ -212,7 +229,24 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
                 if p.grad is not None:
                     p.grad.zero_()
             global_step += 1
-            losses.append(static_loss.item())
+            step_loss = (micro_acc / ga).item()  # mean over the full effective batch
+            losses.append(step_loss)
+            if is_zero:  # per-step (step-wise) loss, like the Fabric/Client path
+                log.info(
+                    "Step %8d (Epoch %5d) │ train/distogram_loss_step=%.4f",
+                    global_step, epoch + 1, step_loss,
+                )
+                if cfg.train.use_wandb:
+                    # Two explicit curves: *_step (per opt-step, noisy) on the global_step
+                    # x-axis, *_epoch (per-epoch mean, smooth) on the epoch x-axis — bound
+                    # via define_metric so wandb renders them as two clean panels instead
+                    # of one overlaid jagged curve. Log global_step as a key so the step
+                    # curve has its own x-axis.
+                    wandb.log(
+                        {"train/distogram_loss_step": step_loss,
+                         "global_step": global_step},
+                        step=global_step,
+                    )
         torch.cuda.synchronize()
         epoch += 1
         mean_loss = sum(losses) / max(len(losses), 1)
@@ -220,9 +254,10 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
         info(f"Epoch {epoch:5d} │ train/distogram_loss={mean_loss:.3f}  "
              f"train/epoch_time={ep_time:.0f}  step={global_step}")
         if is_zero and cfg.train.use_wandb:
-            wandb.log({"train/distogram_loss": mean_loss, "train/total_loss": mean_loss,
-                       "train/main_loss": mean_loss, "train/epoch_time": ep_time,
-                       "epoch": epoch}, step=global_step)
+            # per-step loop already logged the loss at each step; only add the
+            # epoch-level metrics here (same step -> wandb merges).
+            wandb.log({"train/epoch_time": ep_time, "epoch": epoch,
+                       "train/distogram_loss_epoch": mean_loss}, step=global_step)
         save_ckpt(ckpt_dir / "last.pt")
         if epoch % cfg.train.save_freq == 0:
             save_ckpt(ckpt_dir / f"epoch={epoch:04d}.pt")

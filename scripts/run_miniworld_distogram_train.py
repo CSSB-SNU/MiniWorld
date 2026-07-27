@@ -50,6 +50,18 @@ _V2_DB_KEYS = frozenset(
 )
 
 
+def _define_loss_metrics() -> None:
+    """Bind the step- and epoch-resolution loss curves to their own x-axes so wandb
+    renders two clean panels: ``distogram_loss_step`` vs ``global_step`` (per opt-step,
+    noisy) and ``distogram_loss_epoch`` vs ``epoch`` (per-epoch mean, smooth). Without
+    this both land on wandb's internal step counter and read as one jagged overlay."""
+    wandb.define_metric("global_step")
+    wandb.define_metric("epoch")
+    wandb.define_metric("train/distogram_loss_step", step_metric="global_step")
+    wandb.define_metric("train/distogram_loss_epoch", step_metric="epoch")
+    wandb.define_metric("train/epoch_time", step_metric="epoch")
+
+
 def _db_config_variant(value: object) -> str:
     """Discriminate legacy BioMolDBConfig vs multi-source BioMolDBV2Config."""
     if isinstance(value, BioMolDBV2Config):
@@ -599,6 +611,7 @@ def _run_cudagraph_path(cfg: Config, job_name: str | None, ckpt: Path | None) ->
                 project=cfg.train.wandb_project, name=job_name,
                 id=wandb_id, resume="allow", config=config_dict,
             )
+            _define_loss_metrics()
     cg_log.info(
         "[dispatch] n_recycle_max=%s -> CUDA-graph + manual-DDP trainer (fixed recycle)",
         getattr(getattr(cfg.model, "trunk", None), "n_recycle_max", "?"),
@@ -748,6 +761,7 @@ def train(  # noqa: PLR0912, PLR0915
                 resume="allow",
                 config=config_dict,
             )
+            _define_loss_metrics()
 
     if cfg.train.optimizer is None or cfg.train.optimizer == "AdamW":
         optimizer = torch.optim.AdamW(
