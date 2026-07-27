@@ -17,6 +17,8 @@ whole module is CUDA-graph capturable.
 
 from __future__ import annotations
 
+import os
+
 import torch
 import torch.nn.functional as F
 from jaxtyping import Bool, Float, Int
@@ -98,15 +100,20 @@ class AF3TemplateEmbedder(nn.Module):
         self.register_buffer("_dgram_lower", _lower, persistent=False)
         self.register_buffer("_dgram_upper", _upper, persistent=False)
 
-        # Per-feature input projections (AF3 sums independent relu-init projections).
+        # Per-feature input projections (AF3 sums independent projections). AF3 uses
+        # relu-init (scale 2.0) here; the two AF3 reproductions that actually TRAIN with
+        # templates (Protenix v2, OpenDDE) both drop to default/LeCun (scale 1.0) for
+        # "improved training dynamics" — a gentler start for a pathway that trains to a
+        # large magnitude anyway (AF3's converged output_linear std≈0.71 ≫ any init).
+        # We follow the reproduction consensus (default) to smooth the early ramp.
         self.ln_query = LayerNorm(d_pair)
-        self.proj_query = Linear(d_pair, num_channels, bias=False, init="relu")
-        self.proj_dgram = Linear(dgram_bins, num_channels, bias=False, init="relu")
-        self.proj_pb_mask = Linear(1, num_channels, bias=False, init="relu")
-        self.proj_aatype_i = Linear(num_res_class, num_channels, bias=False, init="relu")
-        self.proj_aatype_j = Linear(num_res_class, num_channels, bias=False, init="relu")
-        self.proj_unit_vec = Linear(3, num_channels, bias=False, init="relu")
-        self.proj_bb_mask = Linear(1, num_channels, bias=False, init="relu")
+        self.proj_query = Linear(d_pair, num_channels, bias=False, init="default")
+        self.proj_dgram = Linear(dgram_bins, num_channels, bias=False, init="default")
+        self.proj_pb_mask = Linear(1, num_channels, bias=False, init="default")
+        self.proj_aatype_i = Linear(num_res_class, num_channels, bias=False, init="default")
+        self.proj_aatype_j = Linear(num_res_class, num_channels, bias=False, init="default")
+        self.proj_unit_vec = Linear(3, num_channels, bias=False, init="default")
+        self.proj_bb_mask = Linear(1, num_channels, bias=False, init="default")
 
         # Pair-only trunk per template. MiniPairformer is trimul + transition (NO
         # triangle attention), routed through miniworld-kernels — same backend as the
@@ -116,11 +123,26 @@ class AF3TemplateEmbedder(nn.Module):
                 d_pair=num_channels,
                 n_block=n_block,
                 p_drop=dropout_prob,
-                implementation=ImplementationType.MINIWORLD_KERNELS,  # miniworld-kernels whole-op
+                # miniworld-kernels whole-op by default; MW_TEMPLATE_IMPL=PYTORCH swaps in
+                # the eager reference (to test whether the LN-bias gradient blow-up is a
+                # fused-kernel artifact vs a genuine pathway property).
+                implementation=ImplementationType[
+                    os.environ.get("MW_TEMPLATE_IMPL", "MINIWORLD_KERNELS")
+                ],
             ),
         )
         self.ln_out = LayerNorm(num_channels)
-        self.proj_out = Linear(num_channels, d_pair, bias=False, init="relu")
+        # Template-injection output (token_pair += temp_embedder(...)). This is NOT a
+        # "keep-it-small residual": in trained AF3 (af3.bin) this projection converges
+        # to std≈0.71 (std·√fan_in≈5.7) — ~5× any init and far above the zero-init
+        # transition outputs (std≈0.16). So it is a genuine high-magnitude feature
+        # injector, never zero-init. AF3 uses relu (2.0); Protenix v2 / OpenDDE use
+        # default (1.0) for a gentler early ramp. We use default to match the two
+        # template-training reproductions (zero-init here was empirically the worst
+        # choice — the pathway trains large, so starting dead only lengthens the ramp).
+        # Overridable via MW_TEMPLATE_OUT_INIT for the init A/B (default vs zero).
+        _out_init = os.environ.get("MW_TEMPLATE_OUT_INIT", "default")
+        self.proj_out = Linear(num_channels, d_pair, bias=False, init=_out_init)
 
     @typecheck
     def forward(
@@ -170,19 +192,28 @@ class AF3TemplateEmbedder(nn.Module):
 
             act = (
                 query
-                + self.proj_dgram(dgram)
+                # AF3 masks the geometric features by the pseudo-beta / backbone masks
+                # BEFORE projection: a missing residue's coord is nan_to_num->origin, so
+                # its dgram/unit-vector to a valid residue would otherwise inject a
+                # spurious contact/direction. pb2d/bb2d zero those out at the source.
+                + self.proj_dgram(dgram * pb2d)
                 + self.proj_pb_mask(pb2d)
                 + self.proj_aatype_i(aatype)[:, None, :, :]  # broadcast over i
                 + self.proj_aatype_j(aatype)[:, :, None, :]  # broadcast over j
-                + self.proj_unit_vec(unit_vec)
+                + self.proj_unit_vec(unit_vec * bb2d)
                 + self.proj_bb_mask(bb2d)
             )
             act = act * multichain
             act = self.template_pairformer(act, mask=token_mask)  # B=1 -> miniworld
             act = self.ln_out(act)
-            # Accumulate only the VALID templates (AF3 average over valid).
-            summed = summed + act * template.mask[:, t].to(dtype)[:, None, None, None]
+            # AF3 averages over a FIXED template count (every padded slot contributes the
+            # shared query projection + its features), not over n_valid. Dividing by the
+            # fluctuating n_valid made the template contribution swing up to ~n_temp x in
+            # magnitude per example and scaled the query term down when fewer templates
+            # were found. Sum all slots / fixed n_temp (invalid-slot geometry is masked via
+            # pb2d/bb2d above; padding-slot gap res_type is a data-side follow-up).
+            summed = summed + act
 
-        n_valid = template.mask.to(dtype).sum(dim=1)[:, None, None, None]  # [B,1,1,1]
-        avg = summed / (1e-7 + n_valid)
+        n_temp_div = template.mask.shape[1]
+        avg = summed / (1e-7 + n_temp_div)
         return self.proj_out(F.relu(avg))

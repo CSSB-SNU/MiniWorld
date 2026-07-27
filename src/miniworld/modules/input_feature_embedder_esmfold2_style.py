@@ -67,6 +67,16 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
                 block_style="esmfold2",
             ),
         )
+        # Final (post-)norm for the pre-norm atom transformer. A pre-norm stack returns
+        # an UN-normalized residual stream whose magnitude grows with depth — pre-norm
+        # transformers need a terminal norm (GPT-2/LLaMA ``ln_f``). Without it the raw
+        # ``atom_single`` fed ``atom_single_rep_to_token_single`` unbounded — the measured
+        # activation blow-up source (86 -> 221 through the ep25-28 excursion). Affine-free
+        # RMSNorm adds NO parameters (state_dict unchanged, checkpoint-compatible) and just
+        # bounds the output magnitude.
+        self.atom_out_norm = nn.RMSNorm(
+            shared_config.d_single_atom, elementwise_affine=False,
+        )
         self.atom_single_rep_to_token_single = nn.Sequential(
             Linear(
                 shared_config.d_single_atom,
@@ -113,6 +123,7 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
             cos, sin, structure.atom_mask, num_aug=1,
         )
         atom_single = self.atom_transformer(atom_single, atom_single, attention_params)
+        atom_single = self.atom_out_norm(atom_single)  # terminal norm for the pre-norm stack
         return self._scatter_atom_to_token(
             scheme.token_idx,
             structure.atom_mask,

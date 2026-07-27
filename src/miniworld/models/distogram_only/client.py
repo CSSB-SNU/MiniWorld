@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import random
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
@@ -319,11 +320,15 @@ class Client(BaseClient):
             template=batch.template,
         )
 
+        # CB/pseudo-beta distogram target toggle (MW_DISTOGRAM_CB=1); default off keeps
+        # the legacy shortest-inter-atom-distance target.
+        _use_cb = os.environ.get("MW_DISTOGRAM_CB", "0") == "1"
         distogram_loss = cal_atom_distogram_loss(
             distogram_logit,
             batch.structure.atom_pos,
             batch.structure.atom_pos_mask,
             batch.scheme.atom_to_token_idx_map,
+            rep_atom_mask=batch.structure.atom_is_rep if _use_cb else None,
         )
 
         loss = self.config.loss.distogram_loss * distogram_loss

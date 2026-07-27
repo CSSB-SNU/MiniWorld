@@ -243,7 +243,10 @@ class ProteinView(BaseResidueView):
     """Mapping view for protein amino acids."""
 
     def _map_single(self, residue: str) -> int:
-        if residue == "-":
+        # AF3: unaligned/gap template positions ("-" AND "" from the offline template
+        # builder) are the GAP token, NOT unknown-amino-acid (X). Mapping "" to X made
+        # the template aatype say "unknown residue" where AF3 says "no coverage here".
+        if residue in ("-", ""):
             return self.GAP_INDEX
         return self._table.AA2NUM.get(residue, self._table.AA_UNKNOWN)
 

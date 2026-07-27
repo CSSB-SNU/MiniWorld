@@ -231,6 +231,18 @@ def to_structure_features(
         token_bond_feat[bi, bj] = True
         token_bond_feat[bj, bi] = True
 
+    # Per-token representative atom (CB, or CA when CB is absent — the pseudo-beta
+    # convention) for the CB-based distogram target. Selecting exactly one atom per
+    # token here lets the loss reuse the shortest-distance path: with one atom/token
+    # the "shortest" token-token distance IS the CB-CB distance. Tokens with neither
+    # CB nor CA (ligands / non-standard) fall back to all their atoms (shortest).
+    atom_is_rep = _build_atom_is_rep(
+        cifmol=cifmol,
+        atom_to_token_idx_map=atom_to_token_idx_map,
+        atom_pos_mask=atom_pos_mask,
+        n_tokens=cropped_token_len,
+    )
+
     return StructureFeatures.from_sample(
         atom_pos=torch.from_numpy(atom_pos.astype(np.float32)),
         atom_pos_mask=torch.from_numpy(atom_pos_mask.astype(np.bool)),
@@ -240,7 +252,48 @@ def to_structure_features(
         token_mask=torch.ones((cropped_token_len,), dtype=torch.bool),  # all ones
         token_bond=torch.from_numpy(token_bond.astype(np.int64)),
         token_bond_feat=token_bond_feat,
+        atom_is_rep=torch.from_numpy(atom_is_rep),
     )
+
+
+def _build_atom_is_rep(
+    cifmol: CIFMolAttached,
+    atom_to_token_idx_map: np.ndarray,
+    atom_pos_mask: np.ndarray,
+    n_tokens: int,
+) -> np.ndarray:
+    """Per-atom bool: one representative atom (CB, else CA) per token.
+
+    Tokens whose CB/CA are both missing fall back to marking ALL their atoms, so the
+    downstream shortest-distance reduction reverts to all-atom for those tokens.
+    """
+    names = np.asarray(cifmol.atoms.id).astype(str)
+    names = np.char.strip(np.char.upper(names))
+    tok = np.asarray(atom_to_token_idx_map).astype(np.int64)
+    valid = np.asarray(atom_pos_mask).astype(bool)
+    n_atom = names.shape[0]
+
+    cb_of = np.full(n_tokens, -1, dtype=np.int64)
+    ca_of = np.full(n_tokens, -1, dtype=np.int64)
+
+    def _assign(dst: np.ndarray, sel: np.ndarray) -> None:
+        idxs = np.where(sel & valid)[0]
+        t = tok[idxs]
+        ok = (t >= 0) & (t < n_tokens)
+        dst[t[ok]] = idxs[ok]
+
+    _assign(cb_of, names == "CB")
+    _assign(ca_of, names == "CA")
+    rep_of = np.where(cb_of >= 0, cb_of, ca_of)  # (n_tokens,)
+
+    atom_is_rep = np.zeros(n_atom, dtype=bool)
+    has_rep = rep_of >= 0
+    atom_is_rep[rep_of[has_rep]] = True
+    # tokens with neither CB nor CA -> fall back to all their atoms (shortest distance)
+    no_rep_tokens = np.where(~has_rep)[0]
+    if no_rep_tokens.size:
+        atom_is_rep |= np.isin(tok, no_rep_tokens)
+    return atom_is_rep
 
 
 def to_chain_features(

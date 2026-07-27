@@ -151,18 +151,23 @@ def get_shortest_distances(
     dist = dist.masked_fill(~valid_atom_mask, max_distance)
     dist = dist.clamp(min=min_distance, max=max_distance)
 
-    # A position is valid if any atom at that position is valid
-    residue_exists = torch.zeros(B, token_num, dtype=torch.bool, device=device)
-
-    # Flatten and mark residues that actually appear
-    batch_idx = torch.arange(B, device=device).unsqueeze(-1).expand(B, L).reshape(-1)
-    flat_atom_to_token_idx_map = atom_to_token_idx_map.reshape(-1)
-    flat_pos_mask = atom_pos_mask.reshape(-1)
-
-    valid_batch_idx = batch_idx[flat_pos_mask]
-    valid_res_idx = flat_atom_to_token_idx_map[flat_pos_mask]
-
-    residue_exists[valid_batch_idx, valid_res_idx] = True
+    # A token exists if ANY of its atoms is valid. Computed with scatter_reduce over
+    # static-shaped tensors rather than boolean-mask indexing
+    # (``batch_idx[flat_pos_mask]``): boolean indexing produces a dynamic-sized output
+    # (implicit nonzero -> host sync), which is ILLEGAL under CUDA-graph capture. The
+    # shortest-distance target only avoided this by hitting the id()-keyed cache during
+    # capture; the CB target (fresh masked tensor each call) misses the cache and runs
+    # the body under capture, so this must be capture-safe.
+    tok_idx = atom_to_token_idx_map.clamp(0, token_num - 1)  # (B, L)
+    exists_f = torch.zeros(B, token_num, dtype=dist.dtype, device=device)
+    exists_f.scatter_reduce_(
+        1,
+        tok_idx,
+        atom_pos_mask.to(dist.dtype),
+        reduce="amax",
+        include_self=True,
+    )
+    residue_exists = exists_f > 0.5
 
     # Residue pair mask: both residues must exist
     mask_i_res = residue_exists.unsqueeze(2)  # (B, R_max, 1)

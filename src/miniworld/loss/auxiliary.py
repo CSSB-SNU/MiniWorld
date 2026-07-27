@@ -139,12 +139,35 @@ def cal_atom_distogram_loss(
     atom_pos: Float[torch.Tensor, "* L_atom 3"],
     atom_pos_mask: Bool[torch.Tensor, "* L_atom"],
     atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
-    min_distance: float = 2.0,
-    max_distance: float = 22.0,
+    min_distance: float = 2.25,
+    max_distance: float = 25.75,
+    rep_atom_mask: Bool[torch.Tensor, "* L_atom"] | None = None,
 ) -> Float[torch.Tensor, "*"]:
-    """Calculate residue level distogram loss from atom positions."""
+    """Calculate residue level distogram loss from atom positions.
+
+    OpenDDE-style binning: ``D`` bins over ``[min_distance, max_distance]`` (default
+    96 bins over [2.25, 25.75]). Distances are NOT max-clamped, so a pair beyond
+    ``max_distance`` lands in the top overflow bin (D-1) — previously that bin was
+    permanently dead because the distance was clamped to ``max`` == the last edge.
+
+    Target definition:
+      * ``rep_atom_mask`` is None -> shortest inter-atom distance between tokens
+        (legacy target).
+      * ``rep_atom_mask`` given -> restrict the atom mask to the per-token
+        representative atom (CB / pseudo-beta), so each token contributes one atom
+        and the "shortest" distance collapses to the CB-CB distance (AF3/Protenix
+        representative-atom distogram target).
+    """
     *lead, L, _, D = logit_pred.shape
     device = logit_pred.device
+    # Disable the top clamp (pass a large max) so ``>max`` distances survive into the
+    # overflow bin; the bin RANGE is set by ``edges`` below. The fill for masked atom
+    # pairs becomes this large value too, but those pairs are dropped by the pair mask.
+    _no_clamp_max = 1.0e4
+
+    # CB/pseudo-beta target: keep only each token's representative atom.
+    if rep_atom_mask is not None:
+        atom_pos_mask = atom_pos_mask & rep_atom_mask
 
     if atom_pos.dim() == 3:
         # Single structure
@@ -154,7 +177,7 @@ def cal_atom_distogram_loss(
             atom_to_token_idx_map=atom_to_token_idx_map,
             token_num=L,
             min_distance=min_distance,
-            max_distance=max_distance,
+            max_distance=_no_clamp_max,
         )  # (L_max, L_max), (L_max, L_max)
     else:
         residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
@@ -162,10 +185,10 @@ def cal_atom_distogram_loss(
             atom_pos_mask=atom_pos_mask,
             atom_to_token_idx_map=atom_to_token_idx_map,
             min_distance=min_distance,
-            max_distance=max_distance,
+            max_distance=_no_clamp_max,
         )  # (..., R_max, R_max), (..., R_max, R_max)
 
-    # Targets (AF2-style binning; last bin is overflow)
+    # OpenDDE binning: D-1 edges over [min,max]; bin 0 = "<min", bin D-1 = ">max" (both live).
     edges = torch.linspace(min_distance, max_distance, D - 1, device=device)
     target = torch.bucketize(residue_dists, edges)  # (*, L, L), int64 in [0, D-1]
 

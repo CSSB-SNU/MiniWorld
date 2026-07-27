@@ -31,6 +31,13 @@ class StructureFeatures(BaseBatch):
     # ``_gen_bond_feature`` cannot do correctly across replays with fresh batches).
     # ``None`` -> model falls back to ``_gen_bond_feature`` (legacy / eager path).
     token_bond_feat: Bool[torch.Tensor, "B L_res L_res"] | None = None
+    # Per-atom "representative atom" flag for the CB/pseudo-beta distogram target:
+    # exactly one atom per token is True (CB, or CA when CB is absent, e.g. glycine),
+    # so masking atom_pos_mask by this leaves one atom/token and the token-token
+    # "shortest" distance collapses to the CB-CB (pseudo-beta) distance. Tokens with
+    # neither CB nor CA fall back to all their atoms (shortest). Optional (None ->
+    # loss uses the all-atom shortest distance, the legacy target).
+    atom_is_rep: Bool[torch.Tensor, "B L_atom"] | None = None
 
 
 @typecheck
