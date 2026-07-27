@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import random
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
@@ -65,6 +64,14 @@ class Client(BaseClient):
         decay_steps: int = int(5e6)
         decay_factor: float = 0.95
         compile: bool = False
+        # Trainer dispatch (was MW_FORCE_CUDAGRAPH / MW_FORCE_FABRIC): "auto" picks
+        # CUDA-graph for fixed recycle (n_recycle_max==1) else Fabric; force either.
+        force_trainer: Literal["auto", "cudagraph", "fabric"] = "auto"
+        # torch.compile mode for the Fabric path (was MW_COMPILE_MODE); None = default.
+        compile_mode: str | None = None
+        # DDP find_unused_parameters (was MW_DDP_FIND_UNUSED); recycle skips some params
+        # per step so default True keeps the collective count identical across ranks.
+        ddp_find_unused: bool = True
         save_freq: int = 5
         eval_freq: int = 10
         grad_clip_max_norm: float = 1.0
@@ -87,6 +94,9 @@ class Client(BaseClient):
         """Configuration for loss weights."""
 
         distogram_loss: float = 1.0
+        # CB/pseudo-beta distogram target (rep-atom mask); False keeps the legacy
+        # shortest-inter-atom-distance target. Was MW_DISTOGRAM_CB.
+        distogram_cb_target: bool = False
 
     class Config(BaseModel):
         """Configuration for the distogram-only client.
@@ -320,9 +330,9 @@ class Client(BaseClient):
             template=batch.template,
         )
 
-        # CB/pseudo-beta distogram target toggle (MW_DISTOGRAM_CB=1); default off keeps
-        # the legacy shortest-inter-atom-distance target.
-        _use_cb = os.environ.get("MW_DISTOGRAM_CB", "0") == "1"
+        # CB/pseudo-beta distogram target (config.loss.distogram_cb_target); default off
+        # keeps the legacy shortest-inter-atom-distance target.
+        _use_cb = self.config.loss.distogram_cb_target
         distogram_loss = cal_atom_distogram_loss(
             distogram_logit,
             batch.structure.atom_pos,

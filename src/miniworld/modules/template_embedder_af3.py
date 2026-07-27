@@ -17,7 +17,6 @@ whole module is CUDA-graph capturable.
 
 from __future__ import annotations
 
-import os
 
 import torch
 import torch.nn.functional as F
@@ -84,6 +83,8 @@ class AF3TemplateEmbedder(nn.Module):
         dgram_max: float = 50.75,
         dgram_bins: int = 39,
         dropout_prob: float = 0.25,
+        out_init: str = "default",
+        implementation: str = "MINIWORLD_KERNELS",
     ) -> None:
         super().__init__()
         self.num_channels = num_channels
@@ -123,12 +124,9 @@ class AF3TemplateEmbedder(nn.Module):
                 d_pair=num_channels,
                 n_block=n_block,
                 p_drop=dropout_prob,
-                # miniworld-kernels whole-op by default; MW_TEMPLATE_IMPL=PYTORCH swaps in
-                # the eager reference (to test whether the LN-bias gradient blow-up is a
-                # fused-kernel artifact vs a genuine pathway property).
-                implementation=ImplementationType[
-                    os.environ.get("MW_TEMPLATE_IMPL", "MINIWORLD_KERNELS")
-                ],
+                # miniworld-kernels whole-op by default; "PYTORCH" swaps in the eager
+                # reference. Set via TemplateEmbedderConfig.implementation.
+                implementation=ImplementationType[implementation],
             ),
         )
         self.ln_out = LayerNorm(num_channels)
@@ -140,9 +138,8 @@ class AF3TemplateEmbedder(nn.Module):
         # default (1.0) for a gentler early ramp. We use default to match the two
         # template-training reproductions (zero-init here was empirically the worst
         # choice — the pathway trains large, so starting dead only lengthens the ramp).
-        # Overridable via MW_TEMPLATE_OUT_INIT for the init A/B (default vs zero).
-        _out_init = os.environ.get("MW_TEMPLATE_OUT_INIT", "default")
-        self.proj_out = Linear(num_channels, d_pair, bias=False, init=_out_init)
+        # Set via TemplateEmbedderConfig.out_init (default vs zero).
+        self.proj_out = Linear(num_channels, d_pair, bias=False, init=out_init)
 
     @typecheck
     def forward(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import ExitStack
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import torch
@@ -48,6 +48,11 @@ class TemplateEmbedderConfig(BaseModel):
     num_channels: int = 64
     n_block: int = 2
     dropout_prob: float = 0.25
+    # Output projection init: "default" (LeCun, the Protenix/OpenDDE reproduction consensus)
+    # or "zero". Was MW_TEMPLATE_OUT_INIT.
+    out_init: Literal["default", "zero"] = "default"
+    # Per-template MiniPairformer backend. Was MW_TEMPLATE_IMPL.
+    implementation: Literal["MINIWORLD_KERNELS", "PYTORCH"] = "MINIWORLD_KERNELS"
 
 
 class MiniSWAModel(nn.Module):
@@ -126,6 +131,8 @@ class MiniSWAModel(nn.Module):
                 num_res_class=config.shared.num_res_class,
                 n_block=te.n_block,
                 dropout_prob=te.dropout_prob,
+                out_init=te.out_init,
+                implementation=te.implementation,
             ).to(torch.bfloat16)
 
         # Minimal trunk (bidir trimul + transition; MSA folded via OuterProductMean)

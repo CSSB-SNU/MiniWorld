@@ -1,4 +1,3 @@
-import os
 
 import torch
 from einops import rearrange
@@ -213,10 +212,9 @@ class InputAtomAttentionEncoder(nn.Module):
         # Same parity guarantee — the chunked path is bit-exact with the
         # canonical (see tests/test_input_embedder_chunked.py). Enabled when
         # the canonical's [B, L_atom, L_atom, d] broadcast OOMs (~14k+ atoms).
-        use_chunked_inference = (
-            not self.training
-            and os.environ.get("MINIWORLD_INFERENCE_CHUNK_ATTN", "0") == "1"
-        )
+        # Default fallback: chunk the atom attention whenever not training (the canonical
+        # [B, L_atom, L_atom, d] broadcast OOMs at ~14k+ atoms); never chunk in training.
+        use_chunked_inference = not self.training
         if use_chunked_inference:
             atom_single_rep, atom_single_cond, atom_pair = (
                 self._before_atom_transformer_chunked(

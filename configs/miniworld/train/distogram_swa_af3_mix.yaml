@@ -23,6 +23,9 @@ decay_steps: 5e4
 # buckets), so shape is constant and the whole fwd+loss+bwd runs from one
 # captured graph.
 compile: True
+force_trainer: auto        # auto | cudagraph | fabric (was MW_FORCE_CUDAGRAPH/FABRIC)
+compile_mode: null         # torch.compile mode for Fabric path (was MW_COMPILE_MODE)
+ddp_find_unused: true      # DDP find_unused_parameters (was MW_DDP_FIND_UNUSED)
 
 train_item: 25600
 valid_item: 640

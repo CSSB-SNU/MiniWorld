@@ -1,1 +1,2 @@
 distogram_loss: 1.0
+distogram_cb_target: false   # CB/pseudo-beta target (was MW_DISTOGRAM_CB); launcher overrides to true

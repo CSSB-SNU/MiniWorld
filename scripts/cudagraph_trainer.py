@@ -133,9 +133,9 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
     it = iter(dl)
     static = next(it).to(device=dev)
 
-    # CB/pseudo-beta distogram target toggle (MW_DISTOGRAM_CB=1). Default off keeps the
+    # CB/pseudo-beta distogram target (cfg.loss.distogram_cb_target). Default off keeps the
     # legacy shortest-inter-atom-distance target.
-    _use_cb = os.environ.get("MW_DISTOGRAM_CB", "0") == "1"
+    _use_cb = cfg.loss.distogram_cb_target
     if is_zero:
         log.info("[cudagraph] distogram target = %s",
                  "CB/pseudo-beta (rep atom)" if _use_cb else "shortest inter-atom")

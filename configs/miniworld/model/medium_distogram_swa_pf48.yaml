@@ -64,6 +64,8 @@ trunk:
     num_channels: 64
     n_block: 2
     dropout_prob: 0.25
+    out_init: default            # output proj init: default | zero (was MW_TEMPLATE_OUT_INIT)
+    implementation: MINIWORLD_KERNELS  # per-template trunk backend (was MW_TEMPLATE_IMPL)
 
   pairformer:
     n_block: 48

@@ -507,14 +507,11 @@ class AtomAttentionEncoder(nn.Module):
 
         # Inference chunking is opt-in via env var. The chunked path is now
         # bit-exact with the canonical _before_atom_transformer — see
-        # tests/test_atom_attention_chunked.py — so it's safe to enable when
-        # the canonical path's [B, L_atom, L_atom, d] temporaries OOM (e.g.
-        # ~13k atoms). Kept opt-in so the default is the long-validated
-        # canonical path; set MINIWORLD_INFERENCE_CHUNK_ATTN=1 to switch.
-        use_chunked_inference = (
-            not self.training
-            and os.environ.get("MINIWORLD_INFERENCE_CHUNK_ATTN", "0") == "1"
-        )
+        # tests/test_atom_attention_chunked.py — bit-exact with the canonical path,
+        # which OOMs on [B, L_atom, L_atom, d] temporaries at ~13k atoms.
+        # Default fallback: chunk the atom attention whenever not training (the canonical
+        # [B, L_atom, L_atom, d] broadcast OOMs at large L_atom); never chunk in training.
+        use_chunked_inference = not self.training
         if use_chunked_inference:
             atom_single_rep, atom_single_cond, atom_pair = (
                 self._before_atom_transformer_chunked(

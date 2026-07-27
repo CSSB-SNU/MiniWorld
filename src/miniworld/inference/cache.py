@@ -20,7 +20,6 @@ mutation a loud bug.
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -187,9 +186,9 @@ def build_inference_cache(
     # paths. Without chunking, the pair gather + broadcast adds + mlp
     # materialise [B, L_atom, L_atom, d] temporaries (~13 GiB at L_atom=14k
     # for H1335), which OOMs cache prep before inference even starts.
-    use_chunked_inference = (
-        os.environ.get("MINIWORLD_INFERENCE_CHUNK_ATTN", "0") == "1"
-    )
+    # Chunked atom attention is the default here (cache prep is inference-only and the
+    # canonical [B, L_atom, L_atom, d] broadcast OOMs at ~14k+ atoms). Built-in fallback.
+    use_chunked_inference = True
     # Atom-pair build-up instrumentation — opt-in dump of per-stage L2 norm
     # pooled to token-pair. The diffusion_module.py helpers handle the env
     # var check, counter cap, and NPZ write. Inference (this cache builder)
@@ -255,8 +254,7 @@ def build_inference_cache(
     else:
         # Non-chunked: full pair gather is [B, L_atom, L_atom, d] — same
         # size as ``atom_pair`` itself, so peak doubles momentarily. Only
-        # safe for small L_atom; set MINIWORLD_INFERENCE_CHUNK_ATTN=1 for
-        # production-scale inputs.
+        # safe for small L_atom (kept as a reference; chunking is the default).
         row_tokens_full = atom_to_token_idx_map.unsqueeze(-1)  # [B, L_atom, 1]
         pair_cond = _to_add_pair[b_arange, row_tokens_full, col_tokens]
         if dump:

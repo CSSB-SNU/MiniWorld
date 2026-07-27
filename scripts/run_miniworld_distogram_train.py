@@ -123,7 +123,7 @@ class Config(BaseModel):
     loss: Client.LossConfig
 
 
-def _fabric_from_torchrun(**fabric_kwargs) -> Fabric:
+def _fabric_from_torchrun(find_unused_parameters: bool = True, **fabric_kwargs) -> Fabric:
     """Create Fabric with node/device counts inherited from torchrun."""
     # DDP collective-sequence consistency: with the default
     # find_unused_parameters=False, data-dependent gradient flow makes a rank's
@@ -133,8 +133,8 @@ def _fabric_from_torchrun(**fabric_kwargs) -> Fabric:
     # lucky). find_unused_parameters=True forces DDP to traverse the autograd
     # graph each step and fire every bucket, keeping the collective count
     # identical across ranks. The extra traversal is negligible vs the trunk.
-    # Opt out with MW_DDP_FIND_UNUSED=0 (single-GPU / debugging).
-    if os.environ.get("MW_DDP_FIND_UNUSED") != "0" and "strategy" not in fabric_kwargs:
+    # Set via cfg.train.ddp_find_unused (default True; disable for single-GPU/debug).
+    if find_unused_parameters and "strategy" not in fabric_kwargs:
         from lightning.fabric.strategies import DDPStrategy
 
         fabric_kwargs["strategy"] = DDPStrategy(find_unused_parameters=True)
@@ -664,17 +664,16 @@ def train(  # noqa: PLR0912, PLR0915
     # + manual DDP (scripts/cudagraph_trainer.py): the whole fwd+loss+bwd replays
     # as ONE graph -> no per-microbatch launch overhead (~1.8x faster, ~96% util).
     # Random recycle (n_recycle_max > 1) -> Fabric + plain torch.compile below
-    # (cudagraph can't capture the varying recycle depth). Force either with
-    # MW_FORCE_CUDAGRAPH=1 / MW_FORCE_FABRIC=1.
+    # (cudagraph can't capture the varying recycle depth). Override with
+    # cfg.train.force_trainer = "cudagraph" | "fabric" (default "auto").
     n_recycle_max = getattr(getattr(cfg.model, "trunk", None), "n_recycle_max", None)
-    use_cudagraph = os.environ.get("MW_FORCE_CUDAGRAPH") == "1" or (
-        n_recycle_max == 1 and os.environ.get("MW_FORCE_FABRIC") != "1"
-    )
+    _force = cfg.train.force_trainer
+    use_cudagraph = _force == "cudagraph" or (_force == "auto" and n_recycle_max == 1)
     if use_cudagraph:
         _run_cudagraph_path(cfg, job_name, ckpt)
         return
 
-    fabric = _fabric_from_torchrun()
+    fabric = _fabric_from_torchrun(find_unused_parameters=cfg.train.ddp_find_unused)
     fabric.launch()
     if cfg.train.seed is not None:
         fabric.seed_everything(cfg.train.seed)
@@ -728,8 +727,8 @@ def train(  # noqa: PLR0912, PLR0915
         # reduce-overhead (inductor CUDA-graph trees) CRASHES on this model under
         # DDP: "accessing tensor output of CUDAGraphs that has been overwritten"
         # (heads.py distogram_head output reused across replays). NOT the default.
-        # MW_COMPILE_MODE=reduce-overhead opts back in for experiments.
-        _cmode = os.environ.get("MW_COMPILE_MODE", "")
+        # cfg.train.compile_mode="reduce-overhead" opts back in for experiments.
+        _cmode = cfg.train.compile_mode or ""
         if _cmode:
             client.model.compile(mode=_cmode, dynamic=False)
             client.logger.info("Compiled model (mode=%s)", _cmode)
