@@ -21,3 +21,9 @@ tests/inference_data/
 inference/
 # one-off experiment/bench/probe scripts, not for main
 scratch/
+# local dependency checkouts (separate git repos, NOT submodules; foldbench is ~147G)
+/libs/datacooker/
+/libs/foldbench/
+/libs/kmer_fast_align/
+# meaningful-but-untracked local artifacts (figures, bioai logs, tools, adhoc tests)
+/temp/
