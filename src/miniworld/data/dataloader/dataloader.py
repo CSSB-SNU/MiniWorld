@@ -44,7 +44,7 @@ from .sources import (
     load_manifest_items,
     read_pdb_edge_items,
     read_train_items,
-    source_balanced_weights,
+    source_balanced_weights_from_sources,
 )
 from .types import (
     BioMolDBV2Config,
@@ -54,7 +54,7 @@ from .types import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Sequence
 
     from miniworld.data.features import Batch
     from miniworld.data.mols import FragmentedCCDMol
@@ -66,8 +66,32 @@ logger = logging.getLogger(__name__)
 _CATALOG_CHUNK = 1_000_000  # rows per Arrow record batch when building the cache
 
 
+def _catalog_fingerprint(db_config: object, sampler_config: object) -> str:
+    """Stable hash of the config that DETERMINES the cached catalog (items + RAW weights):
+    all DB paths/manifests + the sampler config. EXCLUDES ``source_weights`` /
+    ``default_source_weight`` (re-applied on every load) and ``catalog_cache_path`` (the
+    cache location itself). A mismatch means the cache was built from different data, so it
+    is rebuilt — otherwise a changed DB path would be silently ignored (paths are baked into
+    each cached item). Path-based: an in-place edit at the SAME path is not detected (delete
+    the cache for that)."""
+    import hashlib
+    import json
+
+    def _dump(cfg: object) -> object:
+        if hasattr(cfg, "model_dump"):
+            return cfg.model_dump(mode="json")
+        return cfg
+
+    db = dict(_dump(db_config)) if isinstance(_dump(db_config), dict) else {}
+    for k in ("source_weights", "default_source_weight", "catalog_cache_path"):
+        db.pop(k, None)
+    blob = json.dumps({"db": db, "sampler": _dump(sampler_config)},
+                      sort_keys=True, default=str)
+    return hashlib.sha256(blob.encode()).hexdigest()
+
+
 def _write_catalog_arrow(
-    path: Path, items: list[DataRecord], weights: list[float],
+    path: Path, items: list[DataRecord], weights: list[float], fingerprint: str,
 ) -> None:
     """Serialize the item catalog to an Arrow IPC file (chunked to bound memory).
 
@@ -93,7 +117,10 @@ def _write_catalog_arrow(
         ("item_kind", pa.string()),
         ("weight_group", pa.string()),
         ("weight", pa.float64()),
-    ])
+    ], metadata={  # RAW (pre-source_weights) weights, balanced on load; fingerprint invalidates
+        b"weight_kind": b"raw",
+        b"build_fingerprint": fingerprint.encode(),
+    })
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     with pa.OSFile(str(tmp), "wb") as sink, pa.ipc.new_file(sink, schema) as writer:
@@ -183,14 +210,25 @@ class _LazyArrowCatalog:
         )
 
 
-def _load_catalog_arrow(path: Path) -> tuple[_LazyArrowCatalog, np.ndarray]:
-    """mmap an Arrow catalog. Returns (lazy items view, balanced weights array)."""
+def _load_catalog_arrow(
+    path: Path,
+) -> tuple[_LazyArrowCatalog, np.ndarray, np.ndarray, bool]:
+    """mmap an Arrow catalog. Returns (lazy items view, raw weights, per-item source, is_raw).
+
+    ``is_raw`` is True when the cache stores RAW (pre-source_weights) weights — the current
+    format. Legacy caches (no marker) stored source-balanced weights and MUST be rebuilt,
+    else the config ``source_weights`` would be silently ignored on a cache hit.
+    """
     import pyarrow as pa
 
     source = pa.memory_map(str(path), "r")
     table = pa.ipc.open_file(source).read_all()
     weights = table.column("weight").to_numpy(zero_copy_only=False)
-    return _LazyArrowCatalog(table), weights
+    sources = table.column("source").to_numpy(zero_copy_only=False)
+    meta = table.schema.metadata or {}
+    is_raw = meta.get(b"weight_kind") == b"raw"
+    fingerprint = (meta.get(b"build_fingerprint") or b"").decode()
+    return _LazyArrowCatalog(table), weights, sources, is_raw, fingerprint
 
 
 class BioMolData(torch.utils.data.Dataset):
@@ -280,57 +318,80 @@ class BioMolData(torch.utils.data.Dataset):
 
     def _load_items(self) -> None:
         cache = self.config.DB_config.catalog_cache_path
+        # The catalog caches the EXPENSIVE, source_weights-INDEPENDENT parts (items + RAW
+        # per-item weights). Source-first balancing (which bakes in config.source_weights) is
+        # (re)applied AFTER load below, so a cache hit no longer silently ignores
+        # source_weights. ``sources`` is the per-item source array (cheap, straight off the
+        # Arrow ``source`` column on a hit; from the records on a miss).
+        expected_fp = _catalog_fingerprint(
+            self.config.DB_config, self.config.sampler_config,
+        )
+        sources: Sequence[str] | None = None
         if cache is not None and Path(cache).exists():
             # mmap the prebuilt Arrow catalog: instant, zero Python-object build,
             # shared across DDP ranks via the OS page cache.
-            self.items, self.weights = _load_catalog_arrow(Path(cache))
-            logger.info(
-                "loaded catalog from Arrow cache %s (%d items)", cache, len(self.items),
-            )
-            return
-
-        self.items = []
-        self.weights = []
-        if self.config.DB_config.train_item_path:
-            if self.resources is None:
-                msg = (
-                    "train_item_path requires resources_index_path "
-                    "(the unified resources.lmdb location index)."
+            items, raw_weights, cache_sources, is_raw, fp = _load_catalog_arrow(Path(cache))
+            if is_raw and fp == expected_fp:
+                self.items, self.weights, sources = items, raw_weights, cache_sources
+                logger.info(
+                    "loaded catalog from Arrow cache %s (%d items)", cache, len(self.items),
                 )
-                raise ValueError(msg)
-            records, weights = read_train_items(
-                self.config.DB_config.train_item_path,
-                self.resources,
-                self.config.sampler_config,
-            )
-            self.items.extend(records)
-            self.weights.extend(weights)
-        elif self.config.DB_config.items_path and self.config.DB_config.resources_path:
-            records, weights = load_manifest_items(
-                self.config.DB_config.items_path,
-                self.config.DB_config.resources_path,
-                validation=self.config.DB_config.manifest_validation,
-            )
-            self.items.extend(records)
-            self.weights.extend(weights)
-        else:
-            if self.config.DB_config.pdb is not None:
-                self._append_pdb_items(self.config.DB_config.pdb)
-            self._append_distillation_items()
+            else:
+                reason = (
+                    "legacy (source-balanced) format" if not is_raw
+                    else "stale (DB/sampler config changed since it was built)"
+                )
+                logger.warning(
+                    "catalog cache %s is %s — ignoring and rebuilding.", cache, reason,
+                )
 
-        self.weights = source_balanced_weights(
-            records=self.items,
+        if sources is None:  # cache miss, or legacy cache we chose to rebuild
+            self.items = []
+            self.weights = []  # RAW per-item weights during build; balanced below
+            if self.config.DB_config.train_item_path:
+                if self.resources is None:
+                    msg = (
+                        "train_item_path requires resources_index_path "
+                        "(the unified resources.lmdb location index)."
+                    )
+                    raise ValueError(msg)
+                records, weights = read_train_items(
+                    self.config.DB_config.train_item_path,
+                    self.resources,
+                    self.config.sampler_config,
+                )
+                self.items.extend(records)
+                self.weights.extend(weights)
+            elif self.config.DB_config.items_path and self.config.DB_config.resources_path:
+                records, weights = load_manifest_items(
+                    self.config.DB_config.items_path,
+                    self.config.DB_config.resources_path,
+                    validation=self.config.DB_config.manifest_validation,
+                )
+                self.items.extend(records)
+                self.weights.extend(weights)
+            else:
+                if self.config.DB_config.pdb is not None:
+                    self._append_pdb_items(self.config.DB_config.pdb)
+                self._append_distillation_items()
+
+            sources = [r.source for r in self.items]
+            if cache is not None:
+                # cache the RAW weights (+ marker + build fingerprint), NOT balanced ones
+                _write_catalog_arrow(Path(cache), self.items, self.weights, expected_fp)
+                logger.info(
+                    "wrote catalog Arrow cache %s (%d items) — future inits mmap it",
+                    cache, len(self.items),
+                )
+
+        # ALWAYS (re)apply source-first balancing from the CURRENT config source_weights, so
+        # a catalog-cache hit honors source_weights instead of a mix baked into the cache.
+        self.weights = source_balanced_weights_from_sources(
+            sources=sources,
             raw_weights=self.weights,
             source_weights=configured_source_weights(self.config.DB_config),
             default_source_weight=self.config.DB_config.default_source_weight,
         )
-
-        if cache is not None:
-            _write_catalog_arrow(Path(cache), self.items, self.weights)
-            logger.info(
-                "wrote catalog Arrow cache %s (%d items) — future inits mmap it",
-                cache, len(self.items),
-            )
 
     def _build_source_dbs(self) -> dict[str, SourceDBs]:
         """Map each source name to its cif/msa/template LMDBs for train_item rows.

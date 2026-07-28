@@ -617,20 +617,14 @@ def _normalized_raw_weights(source: str, raw_weights: Sequence[float]) -> list[f
     return [weight / weight_sum for weight in weights]
 
 
-def source_balanced_weights(
-    records: Sequence[DataRecord],
+def _balance_by_indices(
+    source_to_indices: dict[str, list[int]],
+    n: int,
     raw_weights: Sequence[float],
     source_weights: dict[str, float],
     default_source_weight: float,
 ) -> list[float]:
-    """Normalize item weights so sampling is source-first, then item/type inside."""
-    if len(records) != len(raw_weights):
-        msg = f"Got {len(records)} records but {len(raw_weights)} weights."
-        raise ValueError(msg)
-    if len(records) == 0:
-        return []
-
-    source_to_indices = _indices_by_source(records)
+    """Source-first sampling weights given a precomputed source->indices grouping."""
     active_weights = _active_source_weights(
         tuple(source_to_indices),
         source_weights,
@@ -641,7 +635,7 @@ def source_balanced_weights(
         msg = "At least one loaded source must have a positive sampling weight."
         raise ValueError(msg)
 
-    weights = [0.0] * len(records)
+    weights = [0.0] * n
     for source, indices in source_to_indices.items():
         source_weight = active_weights.get(source)
         if source_weight is None:
@@ -656,3 +650,45 @@ def source_balanced_weights(
             weights[idx] = source_probability * group_weight
 
     return weights
+
+
+def source_balanced_weights(
+    records: Sequence[DataRecord],
+    raw_weights: Sequence[float],
+    source_weights: dict[str, float],
+    default_source_weight: float,
+) -> list[float]:
+    """Normalize item weights so sampling is source-first, then item/type inside."""
+    if len(records) != len(raw_weights):
+        msg = f"Got {len(records)} records but {len(raw_weights)} weights."
+        raise ValueError(msg)
+    if len(records) == 0:
+        return []
+    return _balance_by_indices(
+        _indices_by_source(records), len(records),
+        raw_weights, source_weights, default_source_weight,
+    )
+
+
+def source_balanced_weights_from_sources(
+    sources: Sequence[str],
+    raw_weights: Sequence[float],
+    source_weights: dict[str, float],
+    default_source_weight: float,
+) -> list[float]:
+    """As :func:`source_balanced_weights` but grouped directly from a per-item ``source``
+    array — avoids decoding the (lazy) DataRecords just to read ``.source``, so the
+    source-first balancing can be re-applied cheaply on every load of a cached catalog.
+    This is what lets ``source_weights`` be honored even on a catalog-cache hit."""
+    if len(sources) != len(raw_weights):
+        msg = f"Got {len(sources)} sources but {len(raw_weights)} weights."
+        raise ValueError(msg)
+    if len(sources) == 0:
+        return []
+    source_to_indices: dict[str, list[int]] = {}
+    for idx, source in enumerate(sources):
+        source_to_indices.setdefault(source, []).append(idx)
+    return _balance_by_indices(
+        source_to_indices, len(sources),
+        raw_weights, source_weights, default_source_weight,
+    )
