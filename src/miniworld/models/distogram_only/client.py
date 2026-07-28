@@ -73,6 +73,10 @@ class Client(BaseClient):
         # per step so default True keeps the collective count identical across ranks.
         ddp_find_unused: bool = True
         save_freq: int = 5
+        # Intra-epoch checkpointing: overwrite last.pt every N optimizer steps so a
+        # preemption mid-epoch doesn't lose progress (critical for large models whose
+        # epoch is hours long on preemptible nodes). None = per-epoch only (legacy).
+        save_steps: int | None = None
         eval_freq: int = 10
         grad_clip_max_norm: float = 1.0
         grad_accum_steps: int = 256

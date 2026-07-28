@@ -34,6 +34,7 @@ valid_item: 640
 #                 = 1 * 16 * 16 = 256 (2 nodes x 8 GPU on B200)
 grad_accum_steps: 16
 save_freq: 5
+save_steps: null   # intra-epoch: overwrite last.pt every N opt steps (preempt safety); null = per-epoch only
 eval_freq: 20000
 grad_clip_max_norm: 1.0
 optimizer: "Adam"

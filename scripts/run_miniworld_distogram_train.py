@@ -862,6 +862,14 @@ def train(  # noqa: PLR0912, PLR0915
 
     client.logger.info("Start training")
 
+    # Intra-epoch checkpoint cadence in *micro-batches* (aligns to optimizer-step
+    # boundaries): save every ``save_steps`` optimizer steps so a preemption mid-epoch
+    # keeps progress. Large-model epochs run hours; per-epoch-only saving loses everything
+    # when preempted before the first epoch ends.
+    _save_micro = (
+        cfg.train.save_steps * cfg.train.grad_accum_steps
+        if cfg.train.save_steps else None
+    )
     while client.epoch < cfg.train.num_epoch:
         client.logger.info("Training Epoch %d", client.epoch)
         train_dataloader.sampler.set_epoch(client.epoch)  # pyright: ignore[reportAttributeAccessIssue]
@@ -869,6 +877,11 @@ def train(  # noqa: PLR0912, PLR0915
 
         for step, result in enumerate(client.training_epoch(train_dataloader)):
             train_aggregator.log_step(result)
+            if _save_micro and (step + 1) % _save_micro == 0:
+                client.save_checkpoint(checkpoint_dir / "last.pt")
+                client.logger.info(
+                    "intra-epoch checkpoint (epoch=%d step=%d)", client.epoch, step + 1,
+                )
             if step == train_num_item - 1:
                 break
         train_aggregator.log_epoch()
