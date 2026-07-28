@@ -520,6 +520,16 @@ class BioMolData(torch.utils.data.Dataset):
         self.weights.append(per_item_weight)
 
     def _load_ccd_preprocessed(self) -> None:
+        # The CCD fragmentation cache is consumed ONLY by dynamic_tokenize. atom/residue
+        # tokenization is CCD-free (atom_tokenize keys off CANONICAL_CHEMCOMPS: canonical
+        # polymer residue -> one token, everything else incl. ligands/ions -> per-atom). So
+        # unless dynamic tokenization is active, skip loading entirely — the dataloader then
+        # runs with ANY ccd db (mismatched schema / missing / none) and never decodes an
+        # entry. Avoids requiring a decodable CCD for the atom-tokenizer training path.
+        self.fragmented_ccd_mols: Mapping[str, dict[int, FragmentedCCDMol]] = {}
+        if self.config.tokenizer_config.level != "dynamic":
+            return
+
         ccd_path = self.config.DB_config.ccd_preprocessed_path
         if ccd_path is None and self.config.DB_config.pdb is not None:
             ccd_path = self.config.DB_config.pdb.ccd_preprocessed_path
@@ -528,9 +538,7 @@ class BioMolData(torch.utils.data.Dataset):
             raise ValueError(msg)
 
         keys = extract_lmdb_keys(ccd_path)
-        self.fragmented_ccd_mols: Mapping[str, dict[int, FragmentedCCDMol]] = (
-            FragmentedCCDMolCache(ccd_path, keys)
-        )
+        self.fragmented_ccd_mols = FragmentedCCDMolCache(ccd_path, keys)
 
     # -- fetch / DDP loader -----------------------------------------------
 
