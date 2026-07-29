@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any, TypeAlias
 
 import numpy as np
 import numpy.typing as npt
 
 from miniworld.data.constants import CANONICAL_CHEMCOMPS
-
-LOGGER = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from miniworld.configs import TokenizerConfig
