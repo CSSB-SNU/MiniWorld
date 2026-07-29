@@ -134,6 +134,55 @@ def cal_distogram_loss(
 
 
 @typecheck
+def atom_distogram_target(
+    atom_pos: Float[torch.Tensor, "* L_atom 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* L_atom"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
+    num_bins: int,
+    token_num: int,
+    min_distance: float = 2.25,
+    max_distance: float = 25.75,
+    rep_atom_mask: Bool[torch.Tensor, "* L_atom"] | None = None,
+) -> tuple[Int[torch.Tensor, "* L L"], Bool[torch.Tensor, "* L L"]]:
+    """Residue-level distogram BIN target + both-valid pair mask (no tri restriction).
+
+    Shared binning behind both the CE distogram loss and the distogram-diffusion
+    target. OpenDDE binning: ``num_bins-1`` edges over ``[min,max]``; bin 0 = "<min",
+    bin ``num_bins-1`` = ">max" (both live — distances are NOT max-clamped). With
+    ``rep_atom_mask`` the target collapses to the CB/pseudo-beta representative-atom
+    distance (AF3/Protenix). The returned mask marks pairs where BOTH residues exist
+    (diagonal included); callers add their own i<j / diagonal restriction.
+    """
+    device = atom_pos.device
+    # Disable the top clamp so ``>max`` distances survive into the overflow bin.
+    _no_clamp_max = 1.0e4
+    if rep_atom_mask is not None:
+        atom_pos_mask = atom_pos_mask & rep_atom_mask
+
+    if atom_pos.dim() == 3:
+        residue_dists, residue_pair_mask = get_shortest_distances(
+            atom_pos=atom_pos,
+            atom_pos_mask=atom_pos_mask,
+            atom_to_token_idx_map=atom_to_token_idx_map,
+            token_num=token_num,
+            min_distance=min_distance,
+            max_distance=_no_clamp_max,
+        )
+    else:
+        residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
+            atom_pos=atom_pos,
+            atom_pos_mask=atom_pos_mask,
+            atom_to_token_idx_map=atom_to_token_idx_map,
+            min_distance=min_distance,
+            max_distance=_no_clamp_max,
+        )
+
+    edges = torch.linspace(min_distance, max_distance, num_bins - 1, device=device)
+    target = torch.bucketize(residue_dists, edges)  # (*, L, L) int64 in [0, num_bins-1]
+    return target, residue_pair_mask.to(torch.bool)
+
+
+@typecheck
 def cal_atom_distogram_loss(
     logit_pred: Float[torch.Tensor, "* L L D"],
     atom_pos: Float[torch.Tensor, "* L_atom 3"],
@@ -160,41 +209,19 @@ def cal_atom_distogram_loss(
     """
     *lead, L, _, D = logit_pred.shape
     device = logit_pred.device
-    # Disable the top clamp (pass a large max) so ``>max`` distances survive into the
-    # overflow bin; the bin RANGE is set by ``edges`` below. The fill for masked atom
-    # pairs becomes this large value too, but those pairs are dropped by the pair mask.
-    _no_clamp_max = 1.0e4
-
-    # CB/pseudo-beta target: keep only each token's representative atom.
-    if rep_atom_mask is not None:
-        atom_pos_mask = atom_pos_mask & rep_atom_mask
-
-    if atom_pos.dim() == 3:
-        # Single structure
-        residue_dists, residue_pair_mask = get_shortest_distances(
-            atom_pos=atom_pos,
-            atom_pos_mask=atom_pos_mask,
-            atom_to_token_idx_map=atom_to_token_idx_map,
-            token_num=L,
-            min_distance=min_distance,
-            max_distance=_no_clamp_max,
-        )  # (L_max, L_max), (L_max, L_max)
-    else:
-        residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
-            atom_pos=atom_pos,
-            atom_pos_mask=atom_pos_mask,
-            atom_to_token_idx_map=atom_to_token_idx_map,
-            min_distance=min_distance,
-            max_distance=_no_clamp_max,
-        )  # (..., R_max, R_max), (..., R_max, R_max)
-
-    # OpenDDE binning: D-1 edges over [min,max]; bin 0 = "<min", bin D-1 = ">max" (both live).
-    edges = torch.linspace(min_distance, max_distance, D - 1, device=device)
-    target = torch.bucketize(residue_dists, edges)  # (*, L, L), int64 in [0, D-1]
+    target, residue_pair_mask = atom_distogram_target(
+        atom_pos=atom_pos,
+        atom_pos_mask=atom_pos_mask,
+        atom_to_token_idx_map=atom_to_token_idx_map,
+        num_bins=D,
+        token_num=L,
+        min_distance=min_distance,
+        max_distance=max_distance,
+        rep_atom_mask=rep_atom_mask,
+    )
 
     # Valid pair mask: i<j and both residues valid
     tri = torch.triu(torch.ones(L, L, dtype=torch.bool, device=device), diagonal=1)
-    residue_pair_mask = residue_pair_mask.to(torch.bool)
     residue_pair_mask = residue_pair_mask & tri  # (*, L, L)
     # CE loss per pair
     logits = logit_pred.permute(*range(len(lead)), -1, -3, -2)  # (*, D, L, L)

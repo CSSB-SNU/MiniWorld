@@ -320,7 +320,15 @@ class Client(BaseClient):
         return client
 
     def loss_fn(self, batch: Batch) -> tuple[torch.Tensor, dict]:
-        """Compute the distogram loss for a batch."""
+        """Compute the distogram loss for a batch (categorical CE or EDM diffusion)."""
+        # CB/pseudo-beta distogram target (config.loss.distogram_cb_target); default off
+        # keeps the legacy shortest-inter-atom-distance target.
+        _use_cb = self.config.loss.distogram_cb_target
+        _rep_mask = batch.structure.atom_is_rep if _use_cb else None
+
+        if getattr(self.model, "diffusion", None) is not None:
+            return self._diffusion_loss_fn(batch)
+
         distogram_logit = self.model.forward(
             msa=batch.msa,
             reference=batch.reference,
@@ -329,16 +337,12 @@ class Client(BaseClient):
             structure=batch.structure,
             template=batch.template,
         )
-
-        # CB/pseudo-beta distogram target (config.loss.distogram_cb_target); default off
-        # keeps the legacy shortest-inter-atom-distance target.
-        _use_cb = self.config.loss.distogram_cb_target
         distogram_loss = cal_atom_distogram_loss(
             distogram_logit,
             batch.structure.atom_pos,
             batch.structure.atom_pos_mask,
             batch.scheme.atom_to_token_idx_map,
-            rep_atom_mask=batch.structure.atom_is_rep if _use_cb else None,
+            rep_atom_mask=_rep_mask,
         )
 
         loss = self.config.loss.distogram_loss * distogram_loss
@@ -347,6 +351,33 @@ class Client(BaseClient):
             "distogram_loss": distogram_loss.item(),
             "total_loss": loss.item(),
             "main_loss": loss.item(),
+        }
+
+    def _diffusion_loss_fn(self, batch: Batch) -> tuple[torch.Tensor, dict]:
+        """EDM distogram-diffusion loss.
+
+        The whole diffusion step (trunk conditioning + denoiser + EDM loss) runs inside
+        ``model.forward()`` so Lightning Fabric / DDP wraps every parameter's forward —
+        forward() returns ``(edm_loss, stats)`` in diffusion mode. The model always uses
+        the CB rep-atom target internally (matches the measured sigma_data/bin_center).
+        """
+        diff_loss, stats = self.model.forward(
+            msa=batch.msa,
+            reference=batch.reference,
+            scheme=batch.scheme,
+            sequence=batch.sequence,
+            structure=batch.structure,
+            template=batch.template,
+        )
+        loss = self.config.loss.distogram_loss * diff_loss
+
+        return loss, {
+            # Keep "distogram_loss" as the primary key so the existing wandb axes work.
+            "distogram_loss": stats["diffusion_loss"],
+            "total_loss": loss.item(),
+            "main_loss": loss.item(),
+            "bin_rmse": stats["bin_rmse"],
+            "sigma_mean": stats["sigma_mean"],
         }
 
     def training_step(self, batch: Batch) -> dict[str, float]:
