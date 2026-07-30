@@ -314,7 +314,7 @@ environments:
       - pypi: https://pypi.nvidia.com/nvidia-nvshmem-cu12/nvidia_nvshmem_cu12-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://pypi.nvidia.com/nvidia-nvtx-cu12/nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: libs/team-gm
-      - pypi: libs/team-gm/third_party/miniworld-kernels
+      - pypi: libs/team-gm/libs/miniworld-kernels
   default:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
@@ -627,7 +627,7 @@ environments:
       - pypi: https://pypi.nvidia.com/nvidia-nvshmem-cu13/nvidia_nvshmem_cu13-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://pypi.nvidia.com/nvidia-nvtx/nvidia_nvtx-13.0.85-py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.whl
       - pypi: libs/team-gm
-      - pypi: libs/team-gm/third_party/miniworld-kernels
+      - pypi: libs/team-gm/libs/miniworld-kernels
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
   build_number: 20
@@ -5676,12 +5676,12 @@ packages:
   - ninja>=1.13,<2
   - torch>=2.8,<3 ; extra == 'cu12'
   - cuequivariance-ops-torch-cu12 ; extra == 'cu12'
-  - miniworld-kernels @ third_party/miniworld-kernels ; extra == 'cu12'
+  - miniworld-kernels @ libs/miniworld-kernels ; extra == 'cu12'
   - torch>=2.10,<3 ; extra == 'cu13'
   - cuequivariance-ops-torch-cu13 ; extra == 'cu13'
-  - miniworld-kernels @ third_party/miniworld-kernels ; extra == 'cu13'
+  - miniworld-kernels @ libs/miniworld-kernels ; extra == 'cu13'
   requires_python: '>=3.10'
-- pypi: libs/team-gm/third_party/miniworld-kernels
+- pypi: libs/team-gm/libs/miniworld-kernels
   name: miniworld-kernels
   requires_dist:
   - torch>=2.8

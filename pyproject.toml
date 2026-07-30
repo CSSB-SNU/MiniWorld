@@ -91,7 +91,7 @@ cu128 = { features = ["cuda128"] }
 [tool.pixi.pypi-dependencies]
 miniworld = { path = ".", editable = true }
 team_gm = { path = "libs/team-gm", editable = true }
-miniworld-kernels = { path = "libs/team-gm/third_party/miniworld-kernels", editable = true }
+miniworld-kernels = { path = "libs/team-gm/libs/miniworld-kernels", editable = true }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"
