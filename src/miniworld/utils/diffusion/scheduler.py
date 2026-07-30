@@ -114,7 +114,7 @@ class EDMScheduler(DiffusionScheduler):
     def output_scale(self, sigma: torch.Tensor) -> torch.Tensor:
         """Compute the output scaling term."""
         sd = self.config.sigma_data
-        return (sigma * sd) / (sigma**2 + sd**2)
+        return (sigma * sd) / torch.sqrt(sigma**2 + sd**2)
 
     def skip_scale(self, sigma: torch.Tensor) -> torch.Tensor:
         """Compute the skip scaling term."""
@@ -686,7 +686,7 @@ class DecoupledEDMScheduler(DiffusionScheduler):
     def output_scale(self, sigma: torch.Tensor) -> torch.Tensor:
         """Compute the output scaling term."""
         sd = self.config.sigma_data
-        return (sigma * sd) / (sigma**2 + sd**2)
+        return (sigma * sd) / torch.sqrt(sigma**2 + sd**2)
 
     def skip_scale(self, sigma: torch.Tensor) -> torch.Tensor:
         """Compute the skip scaling term."""

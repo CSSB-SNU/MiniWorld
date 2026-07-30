@@ -250,7 +250,7 @@ class DecoupledXPredScheduler(DiffusionScheduler):
     ) -> Float[torch.Tensor, ...]:
         """Compute the output scaling term."""
         sd = self.config.sigma_data
-        return (sigma * sd) / (sigma**2 + sd**2)
+        return (sigma * sd) / torch.sqrt(sigma**2 + sd**2)
 
     def skip_scale(
         self,
