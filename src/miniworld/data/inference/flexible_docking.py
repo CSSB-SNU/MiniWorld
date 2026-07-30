@@ -2,7 +2,7 @@
 
 The solver's standard init is ``y = randn * sigma_y_max`` (full noise).
 Two warm-start modes plug into the same ``init_x0`` / ``start_sigma_y``
-solver hook (see :mod:`miniworld.diffusion.decoupled_xpred.solver`):
+solver hook (see :mod:`team_gm.diffusion.decoupled_xpred.solver`):
 
 * **flexible-docking** — :func:`build_flexible_docking_init_x0`. One CIF
   per combine-group provides each group's known internal coords. The

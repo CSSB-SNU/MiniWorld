@@ -27,8 +27,8 @@ import torch
 
 if TYPE_CHECKING:
     from miniworld.data.features.batch import Batch
-    from miniworld.diffusion.decoupled_xpred.scheduler import DecoupledXPredScheduler
-    from miniworld.diffusion.decoupled_xpred.solver import XPredDecoupledSolver
+    from team_gm.diffusion.decoupled_xpred.scheduler import DecoupledXPredScheduler
+    from team_gm.diffusion.decoupled_xpred.solver import XPredDecoupledSolver
     from miniworld.models.miniworld.model import Model
 
 

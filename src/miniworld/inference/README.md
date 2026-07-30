@@ -117,7 +117,7 @@ in flamegraphs of the tight loop.
 
 ## Solver (`sample_trajectory`)
 
-Same math as `miniworld.diffusion.decoupled_xpred.solver.XPredDecoupledSolver`,
+Same math as `team_gm.diffusion.decoupled_xpred.solver.XPredDecoupledSolver`,
 slimmed:
 - All sigmas / c_in / gamma are looked up from `StepSchedule` instead
   of being recomputed.

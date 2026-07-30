@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 from miniworld.configs import XPredDecoupledDiffuserConfig
 from miniworld.training import ParamPolicyConfig
 from miniworld.data.features.batch import Batch
-from miniworld.diffusion import (
+from team_gm.diffusion import (
     DecoupledXPredScheduler,
     XPredDecoupledDiffuser,
     XPredDecoupledSolver,
@@ -700,7 +700,7 @@ class Client(BaseClient):
         ``(n_samples, L, 3)`` and each trajectory is ``(n_samples, T, L, 3)``.
 
         ``init_x0`` / ``start_sigma_y``: flexible-docking warm start; see
-        :meth:`miniworld.diffusion.decoupled_xpred.solver.XPredDecoupledSolver.sample`.
+        :meth:`team_gm.diffusion.decoupled_xpred.solver.XPredDecoupledSolver.sample`.
         """
         if n_samples < 1:
             msg = f"n_samples must be >= 1, got {n_samples}."

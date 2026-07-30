@@ -37,8 +37,8 @@ from miniworld.inference.solver import sample_trajectory
 
 if TYPE_CHECKING:
     from miniworld.data.features.batch import Batch
-    from miniworld.diffusion.decoupled_xpred.scheduler import DecoupledXPredScheduler
-    from miniworld.diffusion.decoupled_xpred.solver import XPredDecoupledSolver
+    from team_gm.diffusion.decoupled_xpred.scheduler import DecoupledXPredScheduler
+    from team_gm.diffusion.decoupled_xpred.solver import XPredDecoupledSolver
     from miniworld.models.miniworld.client import Client
     from miniworld.models.miniworld.model import Model
 
@@ -125,7 +125,7 @@ class Predictor:
         num_steps: int,
         start_sigma_y: float | None,
     ) -> StepSchedule:
-        from miniworld.diffusion.decoupled_xpred.solver import XPredDecoupledSolver
+        from team_gm.diffusion.decoupled_xpred.solver import XPredDecoupledSolver
         # We pass a transient solver instance only so build_step_schedule
         # can read its gamma_0 / gamma_min / step_scale config — it does
         # not call the solver's step().

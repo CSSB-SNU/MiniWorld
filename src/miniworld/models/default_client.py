@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 
 from miniworld.configs import EDMDiffuserConfig
 from miniworld.data.features.batch import Batch
-from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
+from team_gm.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,

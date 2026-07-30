@@ -139,7 +139,7 @@ def _build_step_schedule_for_single_t(
     ``DiffusionConditioning.forward`` produces for the given ``sigma_hat``.
 
     We bypass the real scheduler (which lives in the matplotlib-pulling
-    miniworld.diffusion package — see test_inference_equivalence README)
+    team_gm.diffusion package — see test_inference_equivalence README)
     and instead run the cond's single branch by hand for one timestep.
     """
     cond = dm.diffusion_conditioning
