@@ -25,15 +25,6 @@ class EDMDiffuserConfig(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class XPredEuclideanDiffuserConfig(BaseModel):
-    """Configuration for VE x-prediction Euclidean diffuser."""
-
-    type: Literal["DecoupledEDM"] = "DecoupledEDM"
-    seed: int = 0
-    translation_noise: float = 1.0
-    scheduler: EDMScheduler.EDMSchedulerConfig
-
-
 class XPredDecoupledDiffuserConfig(BaseModel):
     """Configuration for VE x-prediction decoupled diffuser (independent scheduler)."""
 

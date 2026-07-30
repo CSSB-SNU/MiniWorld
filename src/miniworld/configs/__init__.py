@@ -13,12 +13,10 @@ try:
     from .diffusion import (
         EDMDiffuserConfig,
         XPredDecoupledDiffuserConfig,
-        XPredEuclideanDiffuserConfig,
     )
 except ModuleNotFoundError:
     EDMDiffuserConfig = None  # type: ignore[assignment]
     XPredDecoupledDiffuserConfig = None  # type: ignore[assignment]
-    XPredEuclideanDiffuserConfig = None  # type: ignore[assignment]
 
 try:
     from .models import SharedConfig
@@ -43,6 +41,5 @@ if EDMDiffuserConfig is not None:
         [
             "EDMDiffuserConfig",
             "XPredDecoupledDiffuserConfig",
-            "XPredEuclideanDiffuserConfig",
         ],
     )
