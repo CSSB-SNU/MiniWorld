@@ -54,9 +54,9 @@ train_db:
   resources_index_path: /data/psk6950/filtering/edge_node/resources.lmdb
 
   pdb:
-    cif_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/cif/cif_pdb_attached_train_20210930_res9_residue10k_chain300.lmdb
-    a3m_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/msa/a3m.lmdb
-    a3m_rna_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/msa/msa_rna_pdb_shard0.lmdb
+    cif_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/cif/cif_pdb_attached_train_20210930_res9_chain300.lmdb
+    a3m_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/msa/a3m_d2k.lmdb
+    a3m_rna_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/msa/msa_rna_pdb_d2k_shard0.lmdb
     template_db_path: /data/shared/cssb_data/BioMol/lmdb/pdb/template/template.lmdb
     edge_id_to_bias_path: /data/psk6950/filtering/edge_node/pdb_edge_node.tsv
     ccd_preprocessed_path: /data/psk6950/CCD/preprocessed_CCD.lmdb
@@ -158,7 +158,7 @@ train_db:
       chain_ids: ["1"]
       lookup_mode: record_id
       a3m_db_paths:
-        - /data/shared/cssb_data/BioMol/lmdb/distillation_short/msa/msa_short_d5k_seqid.lmdb
+        - /data/shared/cssb_data/BioMol/lmdb/distillation_short/msa/msa_short_d2k_seqid.lmdb
 
     - name: disordered_pdb
       cif_db_path: /data/shared/cssb_data/BioMol/lmdb/distillation_disordered/cif/cif_disordered_attached.lmdb

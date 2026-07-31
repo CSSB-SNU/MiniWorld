@@ -1,6 +1,0 @@
-defaults:
-  - model: small
-  - diffuser: xpred_decoupled
-  - loss: default
-  - infer: default
-  - _self_
