@@ -59,7 +59,7 @@ train_db:
 
   pdb:
     cif_db_path: /home/psk6950/data/BioMol/lmdb/pdb/cif/cif_pdb_attached_train_20210930_res9_chain300.lmdb
-    a3m_db_path: /home/psk6950/data/BioMol/lmdb/pdb/msa/a3m_d2k.lmdb
+    a3m_db_path: /home/psk6950/data/BioMolDB_20260224/a3m_16k.lmdb
     a3m_rna_db_path: /home/psk6950/data/BioMol/lmdb/pdb/msa/msa_rna_pdb_d2k_shard0.lmdb
     template_db_path: /home/psk6950/data/BioMol/lmdb/pdb/template/template.lmdb
     edge_id_to_bias_path: /home/psk6950/data/filtering/edge_node/pdb_edge_node.tsv
