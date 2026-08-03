@@ -21,7 +21,7 @@ shared:
   s_max: 2
   n_distogram_bins: 64
   num_res_class: 32
-  implementation: miniworld_kernels
+  implementation: miniworld_engine
   use_checkpoint: False
 
 
@@ -32,7 +32,7 @@ input_feat_embbeder:
   d_cond: ${..shared.d_single_atom}
   d_pair: ${..shared.d_pair_atom}
   n_head: 4
-  implementation: miniworld_kernels
+  implementation: miniworld_engine
 
 
 # ESMFold2-style atom SWA + 3D-RoPE. swa_window_size 1_000_000 = global attention
@@ -65,7 +65,7 @@ trunk:
     n_block: 2
     dropout_prob: 0.25
     out_init: default            # output proj init: default | zero (was MW_TEMPLATE_OUT_INIT)
-    implementation: MINIWORLD_KERNELS  # per-template trunk backend (was MW_TEMPLATE_IMPL)
+    implementation: MINIWORLD_ENGINE  # per-template trunk backend (was MW_TEMPLATE_IMPL)
 
   pairformer:
     n_block: 48
@@ -78,7 +78,7 @@ trunk:
     p_drop: 0.25
     use_single: False
     use_self_attention: False
-    implementation: miniworld_kernels
+    implementation: miniworld_engine
 
   msa_module:
     n_block: 4
@@ -96,4 +96,4 @@ trunk:
     use_self_attention: False
     n_checkpoint_segments: null
 
-    implementation: miniworld_kernels
+    implementation: miniworld_engine

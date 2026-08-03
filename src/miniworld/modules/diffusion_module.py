@@ -8,8 +8,8 @@ from pydantic import BaseModel
 from team_gm import typecheck
 from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
 from team_gm.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Transformer
-from team_gm.modules.layers import Transition
-from team_gm.modules.layers.swa_atom_attention import (
+from miniworld_engine.modules import Transition
+from miniworld_engine.modules.swa_atom_attention import (
     build_attention_params,
     build_local_structure_neighbor_indices,
 )

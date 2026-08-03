@@ -91,7 +91,12 @@ cu128 = { features = ["cuda128"] }
 [tool.pixi.pypi-dependencies]
 miniworld = { path = ".", editable = true }
 team_gm = { path = "libs/team-gm", editable = true }
-miniworld-kernels = { path = "libs/team-gm/libs/miniworld-kernels", editable = true }
+# miniworld-engine (formerly miniworld-kernels) is now an upstream package, not a
+# nested submodule. team-gm consumes it as a uv git dep, but uv/pixi does NOT make
+# [tool.uv.sources] transitive through the editable team_gm path dep, so MiniWorld
+# must declare the git source itself for team_gm's `miniworld-engine` requirement to
+# resolve. Pin matches team-gm exp/miniworld (26eeba9) -> engine rev 500b5c3.
+miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "500b5c3" }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"

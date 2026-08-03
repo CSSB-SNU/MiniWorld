@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import torch
 from pydantic import BaseModel
-from team_gm.modules import DiffusionTransformer, MiniMSAModule, MiniPairformer
+from team_gm.modules import DiffusionTransformer
 from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
@@ -16,6 +16,8 @@ from torch import nn
 from miniworld.configs import SharedConfig
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
+from miniworld.modules.mini_msa_module import MiniMSAModule
+from miniworld.modules.mini_pairformer import MiniPairformer
 from miniworld.modules.msa_util import (
     init_msa,
     init_token_single_msa,

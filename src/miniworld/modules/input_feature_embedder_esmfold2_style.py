@@ -12,7 +12,7 @@ import torch
 from jaxtyping import Bool, Float, Int
 from team_gm import typecheck
 from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
-from team_gm.modules.layers.swa_atom_attention import build_attention_params
+from miniworld_engine.modules.swa_atom_attention import build_attention_params
 from team_gm.modules.primitives import Linear
 from torch import nn
 

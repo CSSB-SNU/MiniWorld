@@ -17,18 +17,16 @@ whole module is CUDA-graph capturable.
 
 from __future__ import annotations
 
-
 import torch
 import torch.nn.functional as F
 from jaxtyping import Bool, Float, Int
-from torch import nn
-
 from team_gm import typecheck
-from team_gm.modules import MiniPairformer
 from team_gm.modules.exceptions import ImplementationType
 from team_gm.modules.primitives import LayerNorm, Linear
+from torch import nn
 
 from miniworld.data.features import TemplateFeatures
+from miniworld.modules.mini_pairformer import MiniPairformer
 
 
 def _dgram_from_positions(
@@ -84,7 +82,7 @@ class AF3TemplateEmbedder(nn.Module):
         dgram_bins: int = 39,
         dropout_prob: float = 0.25,
         out_init: str = "default",
-        implementation: str = "MINIWORLD_KERNELS",
+        implementation: str = "MINIWORLD_ENGINE",
     ) -> None:
         super().__init__()
         self.num_channels = num_channels
@@ -117,14 +115,14 @@ class AF3TemplateEmbedder(nn.Module):
         self.proj_bb_mask = Linear(1, num_channels, bias=False, init="default")
 
         # Pair-only trunk per template. MiniPairformer is trimul + transition (NO
-        # triangle attention), routed through miniworld-kernels — same backend as the
+        # triangle attention), routed through miniworld-engine — same backend as the
         # main trunk, so the template stack carries no cuequivariance dependency.
         self.template_pairformer = MiniPairformer(
             MiniPairformer.Config(
                 d_pair=num_channels,
                 n_block=n_block,
                 p_drop=dropout_prob,
-                # miniworld-kernels whole-op by default; "PYTORCH" swaps in the eager
+                # miniworld-engine whole-op by default; "PYTORCH" swaps in the eager
                 # reference. Set via TemplateEmbedderConfig.implementation.
                 implementation=ImplementationType[implementation],
             ),
@@ -153,7 +151,7 @@ class AF3TemplateEmbedder(nn.Module):
 
         Each of the ``N_temp`` templates is embedded through the per-template trunk
         SEPARATELY (Python loop over a fixed ``N_temp``) rather than folded into the
-        batch dim: the trunk is a miniworld-kernels MiniPairformer whose bidirectional
+        batch dim: the trunk is a miniworld-engine MiniPairformer whose bidirectional
         trimul kernel only supports batch size 1, so the template axis cannot be folded
         into B. ``N_temp`` is static, so the unrolled loop stays CUDA-graph capturable.
         """

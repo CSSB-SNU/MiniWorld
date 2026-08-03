@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 import torch
 from pydantic import BaseModel
-from team_gm.modules import DiffusionTransformer, MiniMSAModule, MiniPairformer
+from team_gm.modules import DiffusionTransformer
 from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
@@ -19,6 +19,8 @@ from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_feature_embedder_esmfold2_style import (
     InputFeatureEmbedderESMFold2Style,
 )
+from miniworld.modules.mini_msa_module import MiniMSAModule
+from miniworld.modules.mini_pairformer import MiniPairformer
 from miniworld.modules.msa_util import (
     init_msa,
     init_token_single_msa,
@@ -41,7 +43,7 @@ if TYPE_CHECKING:
 class TemplateEmbedderConfig(BaseModel):
     """AF3 template embedder (``AF3TemplateEmbedder``) config for the mini trunk.
 
-    The per-template trunk is trimul-only (MiniPairformer, miniworld-kernels) — no
+    The per-template trunk is trimul-only (MiniPairformer, miniworld-engine) — no
     triangle attention, no cuequivariance — matching the main trunk's backend.
     """
 
@@ -52,7 +54,7 @@ class TemplateEmbedderConfig(BaseModel):
     # or "zero". Was MW_TEMPLATE_OUT_INIT.
     out_init: Literal["default", "zero"] = "default"
     # Per-template MiniPairformer backend. Was MW_TEMPLATE_IMPL.
-    implementation: Literal["MINIWORLD_KERNELS", "PYTORCH"] = "MINIWORLD_KERNELS"
+    implementation: Literal["MINIWORLD_ENGINE", "PYTORCH"] = "MINIWORLD_ENGINE"
 
 
 class MiniSWAModel(nn.Module):

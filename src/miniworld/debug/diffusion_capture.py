@@ -58,7 +58,7 @@ from miniworld.modules.diffusion_module import (
 from team_gm.modules.blocks.diffusion_transformer import (
     DiffusionTransformer,
 )
-from team_gm.modules.layers.augmented_attention import (
+from miniworld_engine.modules import (
     AugmentedAttentionPairBias,
 )
 
