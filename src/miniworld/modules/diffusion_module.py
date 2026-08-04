@@ -955,7 +955,7 @@ class DiffusionConditioning(nn.Module):
         token_pair = self.linear_token_pair(token_pair)
 
         for transition in self.pair_transitions:
-            token_pair = token_pair + transition(token_pair)
+            token_pair = transition(token_pair)
 
         token_single = torch.cat([token_single_input, token_single_trunk], dim=-1)
 
@@ -965,7 +965,7 @@ class DiffusionConditioning(nn.Module):
         token_single = token_single + self.add_time_embedding(time_embedding)
 
         for transition in self.single_transitions:
-            token_single = token_single + transition(token_single)
+            token_single = transition(token_single)
 
         token_single = self.final_layernorm_token_single(token_single)
 

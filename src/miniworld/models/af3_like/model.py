@@ -164,7 +164,7 @@ class Model(nn.Module):
                     token_pair,
                 )
 
-                token_pair = token_pair + self.msa_module(
+                token_pair = self.msa_module(
                     msa_feat,
                     msa_mask,
                     token_pair,

@@ -217,7 +217,7 @@ class Model(nn.Module):
                 if self.use_template:
                     token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
 
-                token_pair = token_pair + self.msa_module(
+                token_pair = self.msa_module(
                     msa_feat,
                     msa_mask,
                     token_pair,

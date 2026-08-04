@@ -139,7 +139,7 @@ def build_inference_cache(
     token_pair_cond = torch.cat([token_pair_trunk, rel_emb], dim=-1)
     token_pair_cond = cond.linear_token_pair(token_pair_cond)
     for transition in cond.pair_transitions:
-        token_pair_cond = token_pair_cond + transition(token_pair_cond)
+        token_pair_cond = transition(token_pair_cond)
 
     # --- DiffusionConditioning single branch, pre-time (t-independent) ---
     token_single_pre_time = cond.linear_token_single(
