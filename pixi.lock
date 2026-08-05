@@ -256,7 +256,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.6.0-pyhd8ed1ab_0.conda
       - pypi: ./
       - pypi: ./libs/team-gm
-      - pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=500b5c3#500b5c342f6a94233fde66ef3b1e8027489a9a49
+      - pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=25743ad#25743ad8178e35b820d3c4b096653261b76e29cc
       - pypi: https://download-r2.pytorch.org/whl/cu128/torch-2.10.0%2Bcu128-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://download-r2.pytorch.org/whl/triton-3.6.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://download.pytorch.org/whl/certifi-2022.12.7-py3-none-any.whl
@@ -569,7 +569,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.6.0-pyhd8ed1ab_0.conda
       - pypi: ./
       - pypi: ./libs/team-gm
-      - pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=500b5c3#500b5c342f6a94233fde66ef3b1e8027489a9a49
+      - pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=25743ad#25743ad8178e35b820d3c4b096653261b76e29cc
       - pypi: https://download-r2.pytorch.org/whl/cu130/torch-2.10.0%2Bcu130-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://download-r2.pytorch.org/whl/triton-3.6.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://download.pytorch.org/whl/certifi-2022.12.7-py3-none-any.whl
@@ -4059,13 +4059,13 @@ packages:
   - ninja>=1.13,<2
   - torch>=2.8,<3 ; extra == 'cu12'
   - cuequivariance-ops-torch-cu12 ; extra == 'cu12'
-  - miniworld-engine @ git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git@500b5c3 ; extra == 'cu12'
+  - miniworld-engine @ git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git@25743ad ; extra == 'cu12'
   - torch>=2.10,<3 ; extra == 'cu13'
   - cuequivariance-ops-torch-cu13 ; extra == 'cu13'
-  - miniworld-engine @ git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git@500b5c3 ; extra == 'cu13'
+  - miniworld-engine @ git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git@25743ad ; extra == 'cu13'
   - flash-attn-4 ; extra == 'flash'
   requires_python: '>=3.10'
-- pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=500b5c3#500b5c342f6a94233fde66ef3b1e8027489a9a49
+- pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=25743ad#25743ad8178e35b820d3c4b096653261b76e29cc
   name: miniworld-engine
   version: 0.1.0
   requires_dist:
