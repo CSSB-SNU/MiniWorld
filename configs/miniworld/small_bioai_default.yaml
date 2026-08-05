@@ -1,0 +1,10 @@
+# Small MiniSWAModel (no template, msa 2, pairformer 8, no recycle) on the BioAI
+# unified train_item + resources.lmdb dataloader. Throughput/loss twin of
+# medium_bioai_default.yaml but with the small (pf8, no-template) model.
+
+defaults:
+  - model: small_swa_pf8_notmpl
+  - train: default
+  - data: bioai_default
+  - loss: distogram_only
+  - _self_

@@ -1,6 +1,6 @@
 # Distogram-only MiniSWAModel — BioAI cluster, 8-GPU single-node real run.
 #
-# Same as config_distogram_swa_af3_mix_local_8gpu.yaml but the data group points
+# Twin of medium_H100_default.yaml but the data group points
 # at BioAI paths (/data/psk6950/... + /data/shared/cssb_data/BioMol/lmdb/).
 # The train group targets a single 8xH100 node: grad_accum_steps=32 so
 #   eff batch = num_batch(1) * grad_accum(32) * world_size(8) = 256.
@@ -13,8 +13,8 @@
 #          (2ed6dd2) with quack 0.5.0 / cutlass-dsl 4.5.2 / flash-attn-4 b19.
 
 defaults:
-  - model: medium_distogram_swa_pf48
-  - train: distogram_swa_af3_mix_8gpu
-  - data: full_train_af3_mix_no_disordered_bioai
+  - model: medium_swa_pf48
+  - train: default
+  - data: bioai_default
   - loss: distogram_only
   - _self_

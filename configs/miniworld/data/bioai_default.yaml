@@ -1,5 +1,5 @@
 # AF3-style mixed-source training config — DISORDERED_PDB DISABLED variant.
-# BioAI-cluster paths. Twin of full_train_af3_mix_no_disordered_local.yaml
+# BioAI-cluster paths. Twin of H100_default.yaml
 # with data roots remapped to this server:
 #   /home/psk6950/data/BioMolDB_20260224/       -> /data/psk6950/BioMolDB_20260224/
 #   /home/psk6950/data/CCD/preprocessed_CCD.lmdb-> /data/psk6950/CCD/preprocessed_CCD.lmdb
@@ -7,8 +7,8 @@
 # NOTE: BioAI ships a single msa_long_d2k.lmdb (2.4T), not the 80 msa_long_d2k_shard*
 # files the local box used — same d2k (depth-2048) data, so the a3m list has one entry.
 #
-# Test-run twin of full_train_af3_mix.yaml where disordered_pdb has
-# source_weights = 0.0 (never sampled). Its DistillationSourceConfig is
+# AF3 source mix (default). disordered_pdb has
+# source_weights = 0.02 (AF3 Table 3 default; the shipped default). Its DistillationSourceConfig is
 # kept in ``distillation_sources`` so the ~28k records still get registered
 # into dataset.items during __init__, but _source_balanced_weights masks
 # them out of the WeightedSampler.
