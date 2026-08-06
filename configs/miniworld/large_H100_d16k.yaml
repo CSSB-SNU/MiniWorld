@@ -1,0 +1,35 @@
+# Distogram-only MiniSWAModel — LARGE trunk (48 MiniPairformer + 4 MiniMSA), deep d16k MSA db.
+# H100, eff batch 256 (= grad_accum 32 * 8 GPU; grad_accum is scaled at submit for other GPU counts).
+#
+# All run-level overrides (recycle, epochs, distogram bins, CB target, MSA depth, distill mix) live
+# HERE so the autoscale launcher only injects DYNAMIC values (grad_accum, run_dir, job_name, ckpt,
+# use_wandb). model=medium_swa_pf48 already carries pf48 / msa4; data=H100_default is the d16k db.
+defaults:
+  - model: medium_swa_pf48
+  - train: default
+  - data: H100_default
+  - loss: distogram_only
+  - _self_
+
+model:
+  shared:
+    n_distogram_bins: 96
+  trunk:
+    n_recycle_max: 4
+    use_template: true
+    template_embedder:
+      out_init: default
+train:
+  num_epoch: 800
+  bucket_msa_multiple: 512
+data:
+  msa:
+    max_msa_depth: 512
+  train_db:
+    source_weights:            # distillation mix (pdb + protein_monomer); disordered off
+      pdb: 0.5
+      disordered_pdb: 0.0
+      protein_monomer: 0.495
+      short_protein_monomer: 0.005
+loss:
+  distogram_cb_target: true

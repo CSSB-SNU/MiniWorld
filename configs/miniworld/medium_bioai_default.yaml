@@ -1,6 +1,6 @@
 # Distogram-only MiniSWAModel — BioAI cluster, 8-GPU single-node real run.
 #
-# Twin of medium_H100_default.yaml but the data group points
+# BioAI-cluster twin (data group points
 # at BioAI paths (/data/psk6950/... + /data/shared/cssb_data/BioMol/lmdb/).
 # The train group targets a single 8xH100 node: grad_accum_steps=32 so
 #   eff batch = num_batch(1) * grad_accum(32) * world_size(8) = 256.
