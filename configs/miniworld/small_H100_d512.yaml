@@ -1,8 +1,10 @@
 # Distogram-only MiniSWAModel — SMALL trunk (4 MiniPairformer + 2 MiniMSA), shallow d512 MSA db.
-# Subordinate autoscale tier (fills GPUs LARGE can't use). Same run overrides as large_H100_d16k
-# but smaller trunk (pf4/msa2), fewer epochs (400), and the shallow d512 pdb-a3m db (data=H100_d512).
+# Subordinate autoscale tier (fills GPUs LARGE can't use). Only the deltas vs the defaults live here.
+#   model=large_swa_pf48 base, trunk shrunk to pf4 / msa2 (recycle_max/use_template/out_init default)
+#   data=H100_d512       -> shallow d512 MSA (pdb a3m + all distillation), capped at max_msa_depth 512
+#   AF3 distill mix (disordered 0.02) comes from the data default.
 defaults:
-  - model: medium_swa_pf48
+  - model: small_swa_pf4
   - train: default
   - data: H100_d512
   - loss: distogram_only
@@ -10,27 +12,12 @@ defaults:
 
 model:
   shared:
-    n_distogram_bins: 96
-  trunk:
-    pairformer:
-      n_block: 4
-    msa_module:
-      n_block: 2
-    n_recycle_max: 4
-    use_template: true
-    template_embedder:
-      out_init: default
+    n_distogram_bins: 96      # 64 -> 96 CB-distogram bins
 train:
   num_epoch: 400
-  bucket_msa_multiple: 512
+  bucket_msa_multiple: 512    # cap MSA at 512 (shallow db); LARGE keeps default 2048
 data:
   msa:
     max_msa_depth: 512
-  train_db:
-    source_weights:
-      pdb: 0.5
-      disordered_pdb: 0.0
-      protein_monomer: 0.495
-      short_protein_monomer: 0.005
 loss:
   distogram_cb_target: true
