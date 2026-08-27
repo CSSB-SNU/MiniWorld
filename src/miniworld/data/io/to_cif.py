@@ -73,12 +73,13 @@ def batch_to_cif(  # noqa: PLR0915
     atom_asym = token_asym[atom_to_token]
     atom_entity = token_entity[atom_to_token]
 
-    # Build crop-order residue index using (asym_id, cif_res_idx) as key.
-    # CIF residue indices are NOT unique across chains (e.g., chain 0 res 1 = LKC,
-    # chain 3 res 1 = MG), so cif_res alone is insufficient.
+    # Map each token back to its cifmol-residue index (== index into `chem_comp_ids`).
+    # Tokens are emitted residue-by-residue with all tokens of one residue consecutive,
+    # so unique_consecutive on a per-(chain, cif_res) key yields the cifmol-residue
+    # index directly — independent of any (asym, cif_res) sort order.
     stride = int(token_cif_res.max().item()) + 1
-    token_res_key = token_asym * stride + token_cif_res   # unique per (chain, res)
-    _, token_crop_res = torch.unique(token_res_key, sorted=True, return_inverse=True)
+    token_res_key = token_asym * stride + token_cif_res
+    _, token_crop_res = torch.unique_consecutive(token_res_key, return_inverse=True)
     atom_crop_res = token_crop_res[atom_to_token]
 
     chain_entity_types = batch.chain.entity_type[0].cpu()
@@ -118,9 +119,14 @@ def batch_to_cif(  # noqa: PLR0915
             strand_ids = ",".join(str(a) for a in sorted(entity_asym_ids[eid]))
             output += f"{eid} '{poly_type}' {strand_ids}\n"
 
-    # _entity_poly_seq — one entry per unique residue per entity, using CIF residue idx as num
+    # _entity_poly_seq — one entry per unique residue per polymer entity.
+    # mmCIF spec: `num` must be 1-based and sequential per entity (and must equal
+    # _atom_site.label_seq_id for the corresponding atoms). We collect unique
+    # (entity, cif_res) pairs in cif_res order, then assign a 1-based num per entity.
+    # `entity_cif_res_to_label_seq` is reused below for _atom_site.label_seq_id so
+    # both fields stay in lock-step.
     seen_res: set[tuple[int, int]] = set()
-    seq_entries: list[tuple[int, str, int]] = []
+    per_entity_res: dict[int, list[tuple[int, str]]] = {}
     for t in range(token_cif_res.shape[0]):
         if not token_mask[t]:
             continue
@@ -134,10 +140,17 @@ def batch_to_cif(  # noqa: PLR0915
         seen_res.add(key)
         crop_idx = token_crop_res[t].item()
         mon_id = chem_comp_ids[crop_idx] if 0 <= crop_idx < len(chem_comp_ids) else "UNK"
-        seq_entries.append((eid, mon_id, cif_res))
+        per_entity_res.setdefault(eid, []).append((cif_res, mon_id))
+
+    entity_cif_res_to_label_seq: dict[tuple[int, int], int] = {}
+    seq_entries: list[tuple[int, str, int]] = []
+    for eid in sorted(per_entity_res.keys()):
+        residues = sorted(per_entity_res[eid], key=lambda x: x[0])
+        for new_num, (cif_res, mon_id) in enumerate(residues, start=1):
+            entity_cif_res_to_label_seq[(eid, cif_res)] = new_num
+            seq_entries.append((eid, mon_id, new_num))
 
     if seq_entries:
-        seq_entries.sort(key=lambda x: (x[0], x[2]))
         output += "#\nloop_\n_entity_poly_seq.entity_id\n_entity_poly_seq.mon_id\n_entity_poly_seq.num\n"
         for eid, mon_id, seq_num in seq_entries:
             output += f"{eid} {mon_id} {seq_num}\n"
@@ -178,8 +191,21 @@ def batch_to_cif(  # noqa: PLR0915
     # Per-atom fields (masked to valid atoms)
     label_atom_id_list = np.array(atom_ids)[atom_mask.numpy()]
     label_comp_id_list = np.array(chem_comp_ids)[atom_crop_res.numpy()][atom_mask.numpy()]
-    group_PDB_list = hetero[atom_crop_res][atom_mask]
-    group_PDB_list = ["HETATM" if g == 1 else "ATOM" for g in group_PDB_list]
+    # group_PDB must be HETATM for anything outside a polymer entity -- ligands,
+    # ions, branched sugars, water. `hetero` cannot decide this: in mmCIF
+    # `_pdbx_poly_seq_scheme.hetero` flags point MICROheterogeneity (alternate
+    # residues at one position), not het records, and it is 0 for every residue
+    # in BioMolDB -- so keying group_PDB off it wrote ATOM for every ligand.
+    # Downstream tools that classify ligands by the het flag then see none:
+    # DockQ (`parse_hetatms`) fails with "no identical corresponding chain was
+    # found" on protein-ligand targets. Entity type is the correct source, and
+    # `poly_entity_set` is already derived from it above.
+    het_res = hetero[atom_crop_res][atom_mask]
+    atom_entity_masked = atom_entity[atom_mask]
+    group_PDB_list = [
+        "HETATM" if (int(e) not in poly_entity_set or int(g) == 1) else "ATOM"
+        for e, g in zip(atom_entity_masked.tolist(), het_res.tolist(), strict=True)
+    ]
 
     id_list = 1 + np.arange(length)
     type_symbol_list = atom_mapping.index_to_atom(
@@ -189,9 +215,18 @@ def batch_to_cif(  # noqa: PLR0915
     label_alt_id_list = ["."] * length
     label_asym_id_list = atom_asym[atom_mask].long()
     label_entity_id_list = atom_entity[atom_mask].long()
-    # Use CIF residue index — atoms of the same residue share the same seq_id
-    label_seq_id_list = atom_cif_res[atom_mask].long()
-    auth_seq_id_list = label_seq_id_list
+    # auth_seq_id keeps the original PDB residue number (cif_res).
+    # label_seq_id must match _entity_poly_seq.num — 1-based per polymer entity —
+    # for polymer atoms, and "." for non-polymer atoms (mmCIF spec).
+    auth_seq_id_list = atom_cif_res[atom_mask].long()
+    masked_eids = atom_entity[atom_mask].tolist()
+    masked_cif_res = atom_cif_res[atom_mask].tolist()
+    label_seq_id_list = [
+        str(entity_cif_res_to_label_seq[(eid, cr)])
+        if (eid, cr) in entity_cif_res_to_label_seq
+        else "."
+        for eid, cr in zip(masked_eids, masked_cif_res)
+    ]
     ins_code_list = ["?"] * length
 
     cartn_x_list = xyz[atom_mask, 0]
@@ -246,4 +281,159 @@ def batch_to_cif(  # noqa: PLR0915
             pdbx_PDB_model_num_list[i],
         ]) + "\n"
 
+    # ── bonds: _struct_conn (inter-residue covalent links) ──
+    # mmCIF readers (biotite/PXMeter) auto-derive intra-residue bonds — including
+    # double/aromatic bond orders — and standard polymer backbone links from
+    # residue names via the CCD, but they cannot derive non-standard covalent
+    # links (disulfides, glycans, covalent ligands, modified residues); those
+    # must be supplied via _struct_conn, which this writes.
+    #
+    # We deliberately do NOT emit _chem_comp_bond: the batch's bond data
+    # (cifmol.atoms.bond_type) only covers polymer residues, not non-polymer
+    # ligands, and biotite treats _chem_comp_bond as an *exclusive* per-component
+    # override (no CCD fallback for comps absent from it). Emitting an incomplete
+    # table would therefore drop every ligand's intra-residue bonds — the
+    # opposite of the goal. See git history / to_cif notes for the analysis.
+    output += _bond_records(
+        bonds=(batch.bonds[0] if getattr(batch, "bonds", None) else None),
+        atom_mask=atom_mask,
+        atom_crop_res=atom_crop_res,
+        atom_asym=atom_asym,
+        atom_entity=atom_entity,
+        atom_cif_res=atom_cif_res,
+        chem_comp_ids=chem_comp_ids,
+        atom_ids=atom_ids,
+        entity_cif_res_to_label_seq=entity_cif_res_to_label_seq,
+        pad=_pad,
+    )
+
     save_path.write_text(output)
+
+
+# struct_conn conn_type_id values that denote covalent (i.e. real) connections;
+# everything else (hydrog, saltbr, mismat, ...) is dropped.
+_COVALENT_CONN_TYPES = {
+    "covale",
+    "covale_base",
+    "covale_phosphate",
+    "covale_sugar",
+    "disulf",
+    "modres",
+    "modres_link",
+    "metalc",
+}
+
+
+def _bond_records(  # noqa: PLR0913
+    bonds: dict | None,
+    atom_mask: torch.Tensor,
+    atom_crop_res: torch.Tensor,
+    atom_asym: torch.Tensor,
+    atom_entity: torch.Tensor,
+    atom_cif_res: torch.Tensor,
+    chem_comp_ids: list[str],
+    atom_ids,
+    entity_cif_res_to_label_seq: dict[tuple[int, int], int],
+    pad,
+) -> str:
+    """Build the ``_struct_conn`` CIF loop (inter-residue covalent links).
+
+    Returns an empty string when no bond metadata is available (callers that
+    construct a Batch without bonds keep the previous bond-free output) or when
+    the structure has no non-standard covalent links.
+
+    Note: we intentionally do not write ``_chem_comp_bond``. Intra-residue bonds
+    (including double/aromatic orders) are recovered by mmCIF readers from the
+    CCD by residue name, and the batch lacks bond data for non-polymer ligands,
+    so an emitted ``_chem_comp_bond`` would necessarily be incomplete — and
+    biotite uses it as an exclusive override, which would then drop ligand bonds.
+    """
+    if not bonds:
+        return ""
+
+    mask = atom_mask.cpu().numpy().astype(bool)
+    n_atom = mask.shape[0]
+    res_of = atom_crop_res.cpu().numpy()
+    asym_of = atom_asym.cpu().numpy()
+    eid_of = atom_entity.cpu().numpy()
+    cifres_of = atom_cif_res.cpu().numpy()
+    comp_of = np.asarray(chem_comp_ids, dtype=object)[res_of]
+    name_of = np.asarray(atom_ids)
+
+    def _present(i: int, j: int) -> bool:
+        return 0 <= i < n_atom and 0 <= j < n_atom and mask[i] and mask[j]
+
+    def _seq_of(i: int) -> str:
+        key = (int(eid_of[i]), int(cifres_of[i]))
+        return str(entity_cif_res_to_label_seq[key]) if key in entity_cif_res_to_label_seq else "."
+
+    # Inter-residue, non-backbone chemical bonds carried in bond_type (e.g. a
+    # polymer crosslink): readers won't auto-derive them, so route to struct_conn.
+    # ("canonical" marks the standard backbone, which readers connect themselves.)
+    b_src = np.asarray(bonds["bond_src"], dtype=np.int64)
+    b_dst = np.asarray(bonds["bond_dst"], dtype=np.int64)
+    b_order = np.asarray(bonds["bond_order"]).astype(str)
+    sc_extra: list[tuple[int, int]] = []
+    for i in range(b_src.shape[0]):
+        s, d = int(b_src[i]), int(b_dst[i])
+        if _present(s, d) and res_of[s] != res_of[d] and str(b_order[i]).lower() != "canonical":
+            sc_extra.append((s, d))
+
+    output = ""
+
+    # ── _struct_conn: inter-residue covalent links ──
+    sc_src = np.asarray(bonds["sc_src"], dtype=np.int64)
+    sc_dst = np.asarray(bonds["sc_dst"], dtype=np.int64)
+    sc_type = np.asarray(bonds["sc_type"]).astype(str)
+    sc_rows: list[tuple] = []
+    seen: set[tuple[int, int]] = set()
+
+    def _add_conn(s: int, d: int, conn_type: str) -> None:
+        if not _present(s, d):
+            return
+        key = (min(s, d), max(s, d))
+        if key in seen:
+            return
+        seen.add(key)
+        value_order = "?" if conn_type == "metalc" else "sing"
+        sc_rows.append((
+            conn_type,
+            value_order,
+            str(asym_of[s]), str(asym_of[d]),
+            str(comp_of[s]), str(comp_of[d]),
+            _seq_of(s), _seq_of(d),
+            str(name_of[s]), str(name_of[d]),
+            "?", "?",
+        ))
+
+    for i in range(sc_src.shape[0]):
+        conn_type = str(sc_type[i]).lower()
+        if conn_type in _COVALENT_CONN_TYPES:
+            _add_conn(int(sc_src[i]), int(sc_dst[i]), conn_type)
+    for s, d in sc_extra:
+        _add_conn(s, d, "covale")
+
+    if sc_rows:
+        ids = [str(k + 1) for k in range(len(sc_rows))]
+        cols = list(zip(*sc_rows))
+        padded = [pad(ids)] + [pad([str(x) for x in col]) for col in cols]
+        output += (
+            "#\nloop_\n"
+            "_struct_conn.id\n"
+            "_struct_conn.conn_type_id\n"
+            "_struct_conn.pdbx_value_order\n"
+            "_struct_conn.ptnr1_label_asym_id\n"
+            "_struct_conn.ptnr2_label_asym_id\n"
+            "_struct_conn.ptnr1_label_comp_id\n"
+            "_struct_conn.ptnr2_label_comp_id\n"
+            "_struct_conn.ptnr1_label_seq_id\n"
+            "_struct_conn.ptnr2_label_seq_id\n"
+            "_struct_conn.ptnr1_label_atom_id\n"
+            "_struct_conn.ptnr2_label_atom_id\n"
+            "_struct_conn.pdbx_ptnr1_PDB_ins_code\n"
+            "_struct_conn.pdbx_ptnr2_PDB_ins_code\n"
+        )
+        for r in range(len(sc_rows)):
+            output += " ".join(col[r] for col in padded) + "\n"
+
+    return output

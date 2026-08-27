@@ -24,7 +24,13 @@ from pathlib import Path
 
 import click
 
+from pxmeter.configs.run_config import RUN_CONFIG
 from pxmeter.eval import evaluate
+
+# Trust the model CIF's entity_id assignment (it already mirrors the reference);
+# disabling the auto-split avoids spurious "Unmapped model entities" warnings
+# from chains whose residue subrange differs but biological entity is the same.
+RUN_CONFIG.mapping.auto_fix_model_entities = False
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s")
 logger = logging.getLogger("evaluate_pxmeter")

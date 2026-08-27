@@ -26,6 +26,10 @@ class Batch(BaseBatch):
     heteros: list
     atom_ids: list
     chem_comp_ids: list
+    # per-sample atom-level bond records for cif writing (chem_comp_bond +
+    # struct_conn); optional pass-through, mirrors atom_ids. See
+    # miniworld.data.features.convert._extract_cif_bonds for the dict layout.
+    bonds: list | None = None
 
     sequence: SequenceFeatures
     structure: StructureFeatures

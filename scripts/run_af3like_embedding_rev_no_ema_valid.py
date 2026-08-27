@@ -1,11 +1,16 @@
 """Validation-only sweep without EMA parameters for atom_token_fingerprint variant.
 
-Based on scripts/run_af3like_embedding_rev.py
-(EmbeddingClient_rev + af3_like_embedding.Model_rev).
+Based on scripts/run_af3like_rev_no_ema_valid.py (the atom_token version) and
+scripts/run_af3like_embedding.py (EmbeddingClient + af3_like_embedding.Model).
 For each checkpoint in --ckpt-dir(s), loads only the non-EMA model weights
 (cfg.train.use_ema=False so the ModelEMA callback is not attached and the
 saved EMA parameters are ignored), runs one validation pass, and appends a
 JSON record (epoch -> metrics) to --output.
+
+Note on use_qk_norm: fingerprint training switched use_qk_norm: false -> true
+mid-run (resume570). Invoke this script once per (config, ckpt-dirs) pair so
+the model arch matches the checkpoint, then append both runs to the same
+--output (epoch dedup handles overlap).
 """
 
 from __future__ import annotations

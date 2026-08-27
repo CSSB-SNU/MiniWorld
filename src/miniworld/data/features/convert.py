@@ -49,6 +49,55 @@ def atom_bonds_to_token_bonds(
     return sc_pairs.astype(np.int64, copy=False)
 
 
+def _extract_cif_bonds(cifmol: CIFMolAttached) -> dict[str, np.ndarray]:
+    """Extract atom-level bond records for CIF writing (``_struct_conn``).
+
+    Returns raw atom-index edges only; classification into intra-/inter-residue and
+    label formatting happen in ``batch_to_cif``, which holds the per-atom label maps.
+    All indices reference the same (already-cropped) atom array as ``cifmol.atoms.id``.
+
+    Keys
+    ----
+    bond_src, bond_dst : int64 (n_bond,)  chemical-bond endpoints
+    bond_order         : str   (n_bond,)  value order, e.g. "sing"/"doub"/"canonical"
+                                          ("canonical" = standard polymer backbone)
+    sc_src, sc_dst     : int64 (n_sc,)    struct_conn endpoints
+    sc_type            : str   (n_sc,)    conn type, e.g. "covale"/"disulf"/"hydrog"
+    """
+    empty_i = np.zeros((0,), dtype=np.int64)
+    empty_s = np.zeros((0,), dtype="<U1")
+
+    # Chemical bonds: intra-residue orders + "canonical" inter-residue backbone
+    # links. Only used to surface non-backbone inter-residue crosslinks; the
+    # value order itself is re-derived from the CCD by readers.
+    try:
+        bt = cifmol.atoms.bond_type
+        bond_src = np.asarray(bt.src, dtype=np.int64)
+        bond_dst = np.asarray(bt.dst, dtype=np.int64)
+        bond_order = np.asarray(bt.value).astype(str)
+    except biomol.exceptions.FeatureKeyError:
+        bond_src, bond_dst, bond_order = empty_i, empty_i, empty_s
+
+    # struct_conn: inter-residue covalent links (covale / disulf / metalc / ...).
+    try:
+        sc = cifmol.atoms.struct_conn
+        sc_value = np.asarray(sc.value)
+        sc_type = (sc_value[:, 0] if sc_value.ndim == 2 else sc_value).astype(str)
+        sc_src = np.asarray(sc.src, dtype=np.int64)
+        sc_dst = np.asarray(sc.dst, dtype=np.int64)
+    except biomol.exceptions.FeatureKeyError:
+        sc_src, sc_dst, sc_type = empty_i, empty_i, empty_s
+
+    return {
+        "bond_src": bond_src,
+        "bond_dst": bond_dst,
+        "bond_order": bond_order,
+        "sc_src": sc_src,
+        "sc_dst": sc_dst,
+        "sc_type": sc_type,
+    }
+
+
 def to_scheme_features(
     cifmol: CIFMolAttached,
     token_to_residue_idx_map: np.ndarray,
@@ -271,11 +320,14 @@ def make_batch(
         cifmol.alt_id,
     )
 
+    bonds = _extract_cif_bonds(cifmol)
+
     return Batch(
         name=[f"{pdb_id}_{assembly_id}_{model_id}_{alt_id}"],
         heteros=[hetero],
         atom_ids=[atom_ids],
         chem_comp_ids=[chem_comp_ids],
+        bonds=[bonds],
         sequence=sequence,
         structure=structure,
         msa=msa_token,

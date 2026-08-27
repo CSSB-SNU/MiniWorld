@@ -160,7 +160,7 @@ def load_cif(key: str, env_path: Path) -> dict[str, dict[str, CIFMol]]:
             The data dictionary retrieved from the LMDB database.
 
     """
-    raw_data = load_raw_data(key, env_path)
+    raw_data = load_raw_data(key, env_path) # biomol data from lmdb
     if raw_data is None:
         msg = f"Key '{key}' not found in LMDB database at '{env_path}'."
         raise KeyError(msg)

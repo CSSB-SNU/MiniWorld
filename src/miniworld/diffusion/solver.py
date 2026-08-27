@@ -4,9 +4,11 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Mapping
 from typing import Any
 
+import numpy as np
 import torch
 from jaxtyping import Float
 from pydantic import BaseModel
+from scipy.spatial.transform import Rotation
 
 from miniworld.diffusion.scheduler import DecoupledEDMScheduler, DiffusionScheduler
 from miniworld.utils.structure.se3 import (
@@ -30,6 +32,7 @@ class DiffusionSolver(ABC):
 
         method: str = "Euler"
         seed: int = 0
+        translation_noise: float = 1.0
         # Add any additional configuration parameters here
 
     def __init__(self, config: SolverConfig, scheduler: DiffusionScheduler) -> None:
@@ -39,12 +42,44 @@ class DiffusionSolver(ABC):
 
     def _set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
+        np.random.seed(seed)
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.enabled = False
         torch.random.manual_seed(seed)
+
+    @torch.no_grad()
+    def centre_random_augmentation(
+        self,
+        x: Float[torch.Tensor, "... L 3"],
+    ) -> Float[torch.Tensor, "... L 3"]:
+        """Center each structure, then apply a random rigid transform."""
+        if x.ndim < 2:
+            msg = "Input tensor must have at least 2 dimensions."
+            raise ValueError(msg)
+        if x.shape[-1] != 3:
+            msg = "Last dimension of input tensor must be of size 3."
+            raise ValueError(msg)
+
+        x_shape = x.shape
+        x = x.reshape(-1, x_shape[-2], x_shape[-1])
+        x = x - x.mean(dim=-2, keepdim=True)
+
+        n = x.shape[0]
+        rot_mats = torch.from_numpy(Rotation.random(n).as_matrix()).to(
+            x.device,
+            x.dtype,
+        )
+        translation = (
+            torch.randn(n, 1, 3, device=x.device, dtype=x.dtype)
+            * self.config.translation_noise
+        )
+
+        x = torch.bmm(x, rot_mats.transpose(-1, -2))
+        x = x + translation
+        return x.reshape(*x_shape)
 
     @abstractmethod
     def step(self, *args: Any, **kwargs: Any) -> Any:
@@ -96,6 +131,7 @@ class AF3Solver(DiffusionSolver):
 
     def _set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
+        np.random.seed(seed)
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
@@ -120,6 +156,7 @@ class AF3Solver(DiffusionSolver):
         gamma = self.gamma_0 if sigma_next > self.gamma_min else 0
         t_hat = sigma_i * (1 + gamma)
 
+        x = self.centre_random_augmentation(x)
         added_noise = self._lambda * (t_hat**2 - sigma_i**2) ** 0.5 * torch.randn_like(x)
 
         x = x + added_noise
@@ -203,6 +240,7 @@ class DecoupledEDMSolver(DiffusionSolver):
 
     def _set_seed(self, seed: int) -> None:
         """Set the random seed for reproducibility."""
+        np.random.seed(seed)
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True

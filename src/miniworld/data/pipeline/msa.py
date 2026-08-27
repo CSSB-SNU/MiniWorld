@@ -33,10 +33,10 @@ class MSA:
         ].value  # (L, )
         self.sequences: ndarray = msa_residue_container[
             "sequences"
-        ].value.T  # (L, N_seqs)
+        ].value.T  # (N_seqs, L)
         self.deletions: ndarray = msa_residue_container[
             "deletions"
-        ].value.T  # (L, N_seqs)
+        ].value.T  # (N_seqs, L)
         self.deletion_mean: ndarray = msa_residue_container[
             "deletion_mean"
         ].value  # (L, )

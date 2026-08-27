@@ -39,7 +39,7 @@ from miniworld.configs import (
 )
 from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.models import DefaultClient_rev as Client
-from miniworld.models.af3_like import Model_rev as Model
+from miniworld.models.af3_like import Model as Model
 
 torch.set_float32_matmul_precision("medium")
 torch.autograd.set_detect_anomaly(False)

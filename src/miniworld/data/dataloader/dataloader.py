@@ -438,8 +438,8 @@ class BioMolData(torch.utils.data.Dataset):
         return (
             crop_indices,
             chain_id_to_crop_indices,
-            cropped_atom_to_token_idx_map_reindexed,
-            cropped_token_to_residue_idx_map_reindexed,
+            cropped_atom_to_token_idx_map_reindexed, # reindex within cropped tokens, not global index
+            cropped_token_to_residue_idx_map_reindexed, # reindex within cropped residues, not global index
             focus,
         )  # pyright: ignore[reportPossiblyUnboundVariable]
 
@@ -752,35 +752,43 @@ if __name__ == "__main__":
         ),
         DB_config=BioMolDBConfig(
             cif_db_path=Path(
-                "/public_data/BioMolDB_20260224/cif_attached_train.lmdb",
+                "/public_data/bsoohyuncd/BioMolDB_20260224/cif_attached_train_20260224_res9_chain300.lmdb",
             ),
-            a3m_db_path=Path("/public_data/BioMolDB_20260224/a3m.lmdb"),
+            a3m_db_path=Path("/public_data/bsoohyuncd/BioMolDB_20260224/a3m.lmdb"),
             edge_id_to_bias_path=(
                 Path(
-                    "/public_data/BioMolDB_20260224/metadata/train_edge_node.tsv",
+                    "/public_data/bsoohyuncd/BioMolDB_20260224/metadata/train_20260224_edge_node.tsv",
                 )
             ),
             # ccd_preprocessed_path=Path("/public_data/preprocessed_CCD.lmdb"),
         ),
     )
     dataset = BioMolData(config)
-    # dataloader = dataset.create_ddp_dataloader(
-    #     rank=0,
-    #     world_size=1,
-    #     shuffle=True,
-    #     seed=42,
-    #     drop_last=False,
-    #     num_workers=0,
-    #     bucket_token_multiple=128,
-    #     bucket_atom_multiple=1024,
-    # )
+    dataloader = dataset.create_ddp_dataloader(
+        rank=0,
+        world_size=1,
+        shuffle=True,
+        seed=42,
+        drop_last=False,
+        num_workers=0,
+        bucket_token_multiple=None,
+        bucket_atom_multiple=None,
+    )
+    for i, batch in enumerate(dataloader):
+        print(f"Batch {i}:")
+        print("  atom pos shape:", batch.structure.atom_pos.shape)
+        print("  atom pos mask shape:", batch.structure.atom_pos_mask.shape)
+        print("  token length:", batch.token_length)
+        print("  atom length:", batch.atom_length)
+        if i >= 0:
+            break
 
     # wo dataloader
     # test data 1hcu
-    cif_id = "3ni0_1_1_._(A_1)_(C_1)"
-    data = dataset.get_item_by_id(pdb_id="3ni0", assembly_id="1", model_id="1", alt_id=".", bias=["A", "C"])
-    print('atom pos', data.structure.atom_pos)
-    print('atom pos mask', data.structure.atom_pos_mask)
+    # cif_id = "3ni0"
+    # data = dataset.get_item_by_id(pdb_id="3ni0", assembly_id="1", model_id="1", alt_id=".", chain_ids=["A", "C"])
+    # print('atom pos', data.structure.atom_pos)
+    # print('atom pos mask', data.structure.atom_pos_mask)
     # for _ in range(10):
     #     batch = dataset[174]
 
@@ -793,8 +801,8 @@ if __name__ == "__main__":
     # for i, batch in enumerate(dataloader):
     #     print(f"Batch {i}:")
     
-    audit_chem_comp_vs_mapped_restype(
-    dataset,
-    n_samples=500,
-    seed=0,
-    )
+    # audit_chem_comp_vs_mapped_restype(
+    # dataset,
+    # n_samples=500,
+    # seed=0,
+    # )

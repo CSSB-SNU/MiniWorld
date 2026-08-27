@@ -26,6 +26,10 @@ from miniworld.configs import (
     TokenizerConfig,
 )
 from miniworld.data.dataloader.dataloader import BioMolData
+from miniworld.data.dataloader.dataloader_infer import (
+    NoModifiedResidueError,
+    apply_modified_focus,
+)
 from miniworld.models import DefaultClient as Client
 from miniworld.models.af3_like import Model as Model
 from miniworld.utils import get_step_decay_scheduler_with_warmup
@@ -368,6 +372,15 @@ def infer(
     state_dict = torch.load(ckpt, map_location="cpu")
     client.load_state_dict(state_dict, model_only=True)
 
+    # Infer on non-EMA weights: load_state_dict swaps in EMA params via the
+    # ModelEMA callback, so restore the original (non-EMA) weights here.
+    ema_cb = next(
+        (cb for cb in client._callbacks if isinstance(cb, ModelEMA)),
+        None,
+    )
+    if ema_cb is not None:
+        ema_cb._restore_original_params(client)  # noqa: SLF001
+
     infer_data_config = BioMolData.BioMolConfig(
         crop_config=cfg.data.crop,
         msa_config=cfg.data.msa,
@@ -376,6 +389,7 @@ def infer(
         tokenizer_config=cfg.data.tokenizer,
     )
     infer_dataset = BioMolData(infer_data_config)
+    # apply_modified_focus(infer_dataset)
     infer_dataloader = infer_dataset.create_ddp_dataloader(
         world_size=1,
         rank=0,
@@ -399,10 +413,28 @@ def infer(
         cfg.data.crop.max_tokens, cfg.data.crop.max_atoms, timesteps, num_samples,
     )
 
-    n_success, n_fail = 0, 0
-    for idx, _batch in enumerate(infer_dataloader):
+    n_success, n_fail, n_skipped = 0, 0, 0
+    infer_iter = iter(infer_dataloader)
+    idx = 0
+    while True:
         if num_items is not None and idx >= num_items:
             break
+        try:
+            _batch = next(infer_iter)
+        except StopIteration:
+            break
+        except NoModifiedResidueError as e:
+            logger.info("[%d/%d] No modified residue, skipping: %s",
+                        idx + 1, total, e)
+            n_skipped += 1
+            idx += 1
+            continue
+        except Exception:
+            logger.exception("[%d/%d] Failed to load item, skipping", idx + 1, total)
+            n_skipped += 1
+            idx += 1
+            continue
+
         batch = _batch
         batch = batch.to(device=client.device)
         name = batch.name[0]
@@ -416,13 +448,12 @@ def infer(
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 output = client.inference(infer_batch, timesteps=timesteps)
 
-            # Write reference CIF only on success
-            ref_path = ref_dir / f"{name}.cif"
+            # idx prefix: distinct edges from same parent PDB collapse to one batch.name
+            ref_path = ref_dir / f"{idx:04d}_{name}.cif"
             batch_to_cif(batch, atom_pos_pred=None, save_path=ref_path)
 
-            # Write predicted CIF for each sample
             for s in range(num_samples):
-                pred_path = pred_dir / f"{name}_sample{s}.cif"
+                pred_path = pred_dir / f"{idx:04d}_{name}_sample{s}.cif"
                 atom_pos_s = output.atom_pos_pred[s : s + 1]
                 batch_to_cif(batch, atom_pos_pred=atom_pos_s, save_path=pred_path)
             n_success += 1
@@ -435,8 +466,13 @@ def infer(
             logger.exception("[%d] Failed on %s, skipping", idx + 1, name)
             n_fail += 1
 
-    logger.info("Inference complete: %d succeeded, %d failed. Results saved to %s",
-                n_success, n_fail, output_dir)
+        idx += 1
+
+    logger.info(
+        "Inference complete: %d succeeded, %d failed, %d skipped (no modified residue). "
+        "Results saved to %s",
+        n_success, n_fail, n_skipped, output_dir,
+    )
 
 
 if __name__ == "__main__":

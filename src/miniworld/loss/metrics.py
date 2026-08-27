@@ -103,7 +103,8 @@ def cal_aligned_rmsd(
         msg = f"NaN in predicted positions. {prb_pos[non_gap_idx]}"
         raise ValueError(msg)
     aligned_prb_pos, _, _ = align_pos(prb_pos[non_gap_idx], ref_pos[non_gap_idx])
-    rmsd = np.mean(np.linalg.norm(aligned_prb_pos - ref_pos[non_gap_idx], axis=-1))
+    diff = aligned_prb_pos - ref_pos[non_gap_idx]
+    rmsd = np.sqrt(np.mean(np.sum(diff ** 2, axis=-1)))
     return rmsd.item()
 
 

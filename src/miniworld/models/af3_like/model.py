@@ -188,6 +188,9 @@ class Model(nn.Module):
                 if i_cycle < n_recycle - 1:
                     stack.enter_context(torch.no_grad())
                     stack.enter_context(torch.inference_mode())
+                else:
+                    token_pair = token_pair.clone()
+                    token_single = token_single.clone()
                 token_pair = token_pair_init_bf16 + self.add_pair_recycle(
                     token_pair,
                 )
