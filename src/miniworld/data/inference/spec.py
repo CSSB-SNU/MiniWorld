@@ -367,8 +367,16 @@ class InferenceSpec(BaseModel):
     fasta: dict[str, Path]
     ccd_db: Path
     a3m: dict[str, Path] = Field(default_factory=dict)
+    # LMDB-keyed MSAs (chain-index-keyed seq_id into one of ``a3m_db``). Preferred
+    # over ``a3m`` files when set — holds already-featurized MSAs (the msa_dict the
+    # training dataloader reads), so round-tripping through a3m text would lose info.
+    a3m_db: Path | list[Path] | None = None
+    a3m_key: dict[str, str] = Field(default_factory=dict)
+    # Chain-index-keyed output chain id (e.g. FoldBench label_asym_id) for naming.
+    chain_names: dict[str, str] = Field(default_factory=dict)
     template_db: Path | None = None
     template: dict[str, str] = Field(default_factory=dict)
+    template_offset: dict[str, int] = Field(default_factory=dict)
     template_n: int = 4
     cif_db: Path | None = None
     complex_templates: list[ComplexTemplateSpec] = Field(default_factory=list)
@@ -456,6 +464,11 @@ class InferenceSpec(BaseModel):
     @field_validator("template", mode="before")
     @classmethod
     def _coerce_int_keys_template(cls, v: object) -> object:
+        return _coerce_int_keys(v)
+
+    @field_validator("a3m_key", "chain_names", "template_offset", mode="before")
+    @classmethod
+    def _coerce_int_keys_index_maps(cls, v: object) -> object:
         return _coerce_int_keys(v)
 
     @field_validator("residue_indices", mode="before")

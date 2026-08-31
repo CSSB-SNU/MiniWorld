@@ -9,6 +9,7 @@ of ``atom_pos`` plus ``atom_mask`` (which atoms exist) for sampling.
 from __future__ import annotations
 
 import dataclasses
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
@@ -29,7 +30,7 @@ from miniworld.data.features.features import (
     TemplateFeatures,
 )
 from miniworld.data.features.convert import to_template_features
-from miniworld.data.io.load import load_template
+from miniworld.data.io.load import load_a3m, load_template
 from miniworld.data.pipeline import ComplexMSA, MSA, ProteinTemplate, sample_msa
 from miniworld.utils.structure.se3 import SE3_oper
 
@@ -37,6 +38,8 @@ from .a3m import parse_a3m_file
 from .ccd import CCDLookup, CCDResidue
 from .fasta import ChainSpec, EntityType, parse_fasta_file
 from .tokenization import TokenizationPolicy
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from .spec import InferenceSpec
@@ -510,14 +513,30 @@ def _load_or_build_chain_msa(
     cs: ChainSpec,
     rm: ResidueMapping,
 ) -> MSA:
-    """Load the chain's a3m if provided, otherwise build a query-only MSA.
+    """Resolve the chain's MSA: ``a3m_db`` key, then a3m file, then query-only.
 
-    a3m is letter-keyed in the spec, so chains sharing a letter (homo-mers)
-    resolve to the same a3m file.
+    ``a3m_db``/``a3m_key`` is chain-index-keyed and holds already-featurized MSAs
+    (the same ``msa_dict`` the training dataloader reads), so it is preferred when
+    set — round-tripping such an MSA through a3m text would only lose information.
+    ``a3m`` stays letter-keyed, so chains sharing a letter (homo-mers) resolve to
+    the same file. A key absent from the LMDB falls through instead of raising,
+    keeping partially covered sets usable.
     """
+    polymer_kind = _ENTITY_TYPE_TO_POLYMER.get(cs.entity_type)
+    if spec.a3m_db is not None and polymer_kind is not None:
+        key = spec.a3m_key.get(str(chain_index))
+        if key:
+            dbs = spec.a3m_db if isinstance(spec.a3m_db, list) else [spec.a3m_db]
+            for db in dbs:
+                msa = load_a3m(key=key, env_path=Path(db))
+                if msa is not None:
+                    return msa
+            logger.warning(
+                "chain %d: a3m_key %s not found in %s; falling back",
+                chain_index, key, [str(d) for d in dbs],
+            )
     letter = spec.chain_letters[str(chain_index)]
     a3m_path = spec.a3m.get(letter)
-    polymer_kind = _ENTITY_TYPE_TO_POLYMER.get(cs.entity_type)
     if a3m_path is not None and polymer_kind is not None:
         return parse_a3m_file(Path(a3m_path), polymer=polymer_kind)
     return MSA.from_query(

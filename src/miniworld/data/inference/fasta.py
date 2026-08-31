@@ -29,6 +29,27 @@ _AA_1TO3: dict[str, str] = {
     "S": "SER", "T": "THR", "W": "TRP", "Y": "TYR", "V": "VAL",
 }
 
+# Modified / non-standard protein residues that may appear inline in a
+# polypeptide(L) body as ``(CCD)`` (e.g. ``LPKGL(SEP)ASLPDL``). The value is
+# the parent standard amino acid's 1-letter code, used only for the MSA /
+# restype embedding (the model has no distinct restype for these — the
+# modification's atoms enter via the CCD reference geometry, typically with the
+# residue atomized through the tokenization policy). Unlisted CCDs fall back to
+# 'X' (unknown). Extend as needed.
+_MODRES_PROTEIN_PARENT: dict[str, str] = {
+    "SEP": "S",  # phosphoserine
+    "TPO": "T",  # phosphothreonine
+    "PTR": "Y",  # phosphotyrosine
+    "MSE": "M",  # selenomethionine
+    "SEC": "C",  # selenocysteine
+    "CSO": "C",  # S-hydroxycysteine
+    "CSD": "C",  # S-cysteinesulfinic acid
+    "HYP": "P",  # 4-hydroxyproline
+    "MLY": "K",  # N-dimethyl-lysine
+    "M3L": "K",  # N-trimethyl-lysine
+    "ALY": "K",  # N-acetyl-lysine
+}
+
 # RNA 1-letter == CCD code (canonical).
 _RNA_1TO_CCD: dict[str, str] = {"A": "A", "U": "U", "G": "G", "C": "C"}
 
@@ -190,42 +211,101 @@ def parse_fasta_file(path: Path, chain_index: int) -> ChainSpec:
 
 
 def _parse_protein_body(body: str, path: Path) -> tuple[list[str], list[str]]:
-    ccds = []
-    one_letter = []
-    for ch in body:
+    """Parse a polypeptide(L) body into per-residue CCD + 1-letter codes.
+
+    Standard residues are single letters (``A``..``Y``). A modified /
+    non-standard residue is written inline as its CCD code in parentheses,
+    e.g. ``LPKGL(SEP)ASLPDL`` for a peptide with a phosphoserine at position 6.
+    The parenthesized CCD becomes that residue's ``chemcomp_id`` (so its real
+    atoms — e.g. the phosphate — come from the CCD reference), while the
+    1-letter code used for the MSA/restype embedding is the parent amino acid
+    (:data:`_MODRES_PROTEIN_PARENT`, fallback ``X``). To give the modification
+    per-atom freedom, atomize the residue via the tokenization policy
+    (resolution ``0.0`` for that ``<chain>:<res>``).
+    """
+    ccds: list[str] = []
+    one_letter: list[str] = []
+    i = 0
+    while i < len(body):
+        ch = body[i]
+        if ch == "(":
+            close = body.find(")", i)
+            if close == -1:
+                msg = f"Unterminated '(' in protein body of {path}: {body!r}."
+                raise ValueError(msg)
+            code = body[i + 1:close].strip().upper()
+            if not code:
+                msg = f"Empty '()' CCD token in protein body of {path}."
+                raise ValueError(msg)
+            ccds.append(code)
+            one_letter.append(_MODRES_PROTEIN_PARENT.get(code, "X"))
+            i = close + 1
+            continue
         ccd = _AA_1TO3.get(ch.upper())
         if ccd is None:
             msg = f"Unknown amino acid letter {ch!r} in {path}."
             raise ValueError(msg)
         ccds.append(ccd)
         one_letter.append(ch.upper())
+        i += 1
+    return ccds, one_letter
+
+
+def _parse_nucleic_body(
+    body: str,
+    path: Path,
+    one_to_ccd: dict[str, str],
+    unknown_ccd: str,
+    label: str,
+) -> tuple[list[str], list[str]]:
+    """Parse a nucleic body into per-residue CCD + 1-letter codes.
+
+    Canonical bases are single letters; anything else is written inline as its
+    CCD code in parentheses, exactly as in a protein body — ``AT(DI)GC`` for a
+    strand with an inosine. The parenthesized CCD becomes that residue's
+    ``chemcomp_id`` (so its real atoms come from the CCD reference), while the
+    1-letter code used for the MSA/restype embedding falls back to ``'X'``,
+    which the RNA/DNA views map to their unknown index.
+
+    A bare letter outside the canonical four (``N``, ``X``, and the ``I``/``U``
+    an entity's canonical spelling can carry) is an unidentified nucleotide
+    rather than an error, so it takes ``unknown_ccd``.
+    """
+    ccds: list[str] = []
+    one_letter: list[str] = []
+    i = 0
+    while i < len(body):
+        ch = body[i]
+        if ch == "(":
+            close = body.find(")", i)
+            if close == -1:
+                msg = f"Unterminated '(' in {label} body of {path}: {body!r}."
+                raise ValueError(msg)
+            code = body[i + 1:close].strip().upper()
+            if not code:
+                msg = f"Empty '()' CCD token in {label} body of {path}."
+                raise ValueError(msg)
+            ccds.append(code)
+            one_letter.append("X")
+            i = close + 1
+            continue
+        ccd = one_to_ccd.get(ch.upper())
+        if ccd is None:
+            ccds.append(unknown_ccd)
+            one_letter.append("X")
+        else:
+            ccds.append(ccd)
+            one_letter.append(ch.upper())
+        i += 1
     return ccds, one_letter
 
 
 def _parse_rna_body(body: str, path: Path) -> tuple[list[str], list[str]]:
-    ccds = []
-    one_letter = []
-    for ch in body:
-        ccd = _RNA_1TO_CCD.get(ch.upper())
-        if ccd is None:
-            msg = f"Unknown RNA letter {ch!r} in {path}."
-            raise ValueError(msg)
-        ccds.append(ccd)
-        one_letter.append(ch.upper())
-    return ccds, one_letter
+    return _parse_nucleic_body(body, path, _RNA_1TO_CCD, "N", "RNA")
 
 
 def _parse_dna_body(body: str, path: Path) -> tuple[list[str], list[str]]:
-    ccds = []
-    one_letter = []
-    for ch in body:
-        ccd = _DNA_1TO_CCD.get(ch.upper())
-        if ccd is None:
-            msg = f"Unknown DNA letter {ch!r} in {path}."
-            raise ValueError(msg)
-        ccds.append(ccd)
-        one_letter.append(ch.upper())
-    return ccds, one_letter
+    return _parse_nucleic_body(body, path, _DNA_1TO_CCD, "DN", "DNA")
 
 
 def _parse_non_polymer_body(body: str, path: Path) -> tuple[list[str], list[str]]:
