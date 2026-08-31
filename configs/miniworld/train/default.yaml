@@ -1,5 +1,5 @@
 comment: "distogram-only MiniSWA + AF3 source mix — 8-GPU single-node, eff batch 256 (grad_accum 32)"
-run_dir: "logs/distogram_swa_af3_mix/"
+run_dir: "runs/distogram_swa_af3_mix/"
 
 # MiniSWAModel (3 SWA embedder / 4 MSA / 48 Pairformer) on the AF3 source mix
 # with disordered_pdb weight = 0. compile:True + the memoization in

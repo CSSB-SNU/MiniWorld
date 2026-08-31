@@ -33,7 +33,7 @@ data:
 
 train:
   comment: "phase3-diffusion-large"
-  run_dir: "logs/phase3/large_H100_diffusion"
+  run_dir: "runs/phase3/large_H100_diffusion"
   num_epoch: 1500
   bucket_token_multiple: 768   # single bucket = 768 crop
   bucket_atom_multiple: 8192

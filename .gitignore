@@ -1,4 +1,5 @@
 logs/
+runs/
 checkpoints/
 *.pt
 *.cif

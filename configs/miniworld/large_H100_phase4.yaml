@@ -30,7 +30,7 @@ data:
 
 train:
   comment: "phase4-confidence-large"
-  run_dir: "logs/phase4/large_H100_confidence"
+  run_dir: "runs/phase4/large_H100_confidence"
   num_epoch: 1000
   bucket_token_multiple: 768   # single bucket = 768 crop
   bucket_atom_multiple: 8192
