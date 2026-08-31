@@ -379,7 +379,8 @@ def _phase3_client_from_config(
               default=Path("/home/psk6950/data/foldbench/inputs"), show_default=True,
               help="Root holding <target>/data.yaml (index mode).")
 @click.option("--output-dir", type=click.Path(path_type=Path),
-              default=Path("/home/psk6950/data/foldbench/runs/phase3"), show_default=True)
+              default=Path("outputs/foldbench/phase3"), show_default=True,
+              help="Prediction output dir (default: repo-relative outputs/foldbench/phase3, gitignored).")
 @click.option("--timesteps", type=int, default=200, show_default=True)
 @click.option("--n-samples", type=int, default=5, show_default=True)
 @click.option("--seed", type=int, default=0, show_default=True)
