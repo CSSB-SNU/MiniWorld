@@ -1,0 +1,2 @@
+# Phase3 loss — DIFFUSION loss ONLY (no distogram / smooth-lDDT aux).
+diffusion_loss: 4.0
