@@ -77,6 +77,7 @@ class AF3TemplateEmbedder(nn.Module):
         num_channels: int = 64,
         num_res_class: int = 32,
         n_block: int = 2,
+        n_checkpoint_segments: int | None = None,
         dgram_min: float = 3.25,
         dgram_max: float = 50.75,
         dgram_bins: int = 39,
@@ -121,6 +122,7 @@ class AF3TemplateEmbedder(nn.Module):
             MiniPairformer.Config(
                 d_pair=num_channels,
                 n_block=n_block,
+                n_checkpoint_segments=n_checkpoint_segments,
                 p_drop=dropout_prob,
                 # miniworld-engine whole-op by default; "PYTORCH" swaps in the eager
                 # reference. Set via TemplateEmbedderConfig.implementation.

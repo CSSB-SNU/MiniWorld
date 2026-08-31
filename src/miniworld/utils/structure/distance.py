@@ -213,6 +213,57 @@ def get_shortest_distances(
 
 
 @typecheck
+def get_representative_distances(
+    atom_pos: Float[torch.Tensor, "* L 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* L"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L"],
+    token_num: int,
+    rep_atom_mask: Bool[torch.Tensor, "* L"],
+    min_distance: float = 2.0,
+    max_distance: float = 22.0,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Token-token distances from ONE representative atom per token (CB / pseudo-beta).
+
+    Memory-efficient CB-distogram target. Instead of building the full ``[L_atom, L_atom]``
+    inter-atom distance matrix and masking it to representatives afterward
+    (:func:`get_shortest_distances`, ``O(L_atom**2)`` — a 768-token / 8k-atom crop
+    materialises several ~0.5 GB atom^2 tensors PER CALL), this gathers each token's
+    representative atom into a compact ``[token_num, 3]`` buffer and computes the
+    ``[token_num, token_num]`` distance directly (``O(token_num**2)``). Capture-safe:
+    uses ``scatter_reduce`` + ``gather`` over static shapes (no boolean ``nonzero()``).
+
+    Equal to the masked shortest-distance for tokens with a single representative atom
+    (the standard CB/CA case). A token whose ``rep_atom_mask`` covers several atoms (the
+    CB/CA-less fallback that marks ALL its atoms) contributes its lowest-index
+    representative atom rather than the all-atom shortest distance.
+    """
+    device = atom_pos.device
+    B, L, _ = atom_pos.shape
+    rep_valid = atom_pos_mask & rep_atom_mask  # (B, L)
+    tok_idx = atom_to_token_idx_map.clamp(0, token_num - 1)  # (B, L)
+
+    # Lowest-index valid representative atom per token (capture-safe: amin over atom ids,
+    # non-reps set to L so they never win; L means "token has no representative").
+    atom_ids = torch.arange(L, device=device).unsqueeze(0).expand(B, L)  # (B, L)
+    cand = torch.where(rep_valid, atom_ids, torch.full_like(atom_ids, L))  # (B, L)
+    rep_idx = torch.full((B, token_num), L, dtype=cand.dtype, device=device)
+    rep_idx.scatter_reduce_(1, tok_idx, cand, reduce="amin", include_self=True)  # (B, R)
+    tok_valid = rep_idx < L  # (B, R): token has >=1 representative atom
+    gather_idx = rep_idx.clamp(max=L - 1)  # safe index for rep-less tokens (masked out below)
+
+    rep_pos = torch.gather(
+        atom_pos, 1, gather_idx.unsqueeze(-1).expand(B, token_num, 3),
+    )  # (B, R, 3)
+
+    diff = rep_pos[:, :, None, :] - rep_pos[:, None, :, :]  # (B, R, R, 3)
+    dist = torch.linalg.norm(diff, dim=-1)  # (B, R, R)
+    pair_mask = tok_valid[:, :, None] & tok_valid[:, None, :]  # (B, R, R)
+    dist = dist.masked_fill(~pair_mask, max_distance)
+    dist = dist.clamp(min=min_distance, max=max_distance)
+    return dist, pair_mask
+
+
+@typecheck
 def get_contact_map(
     atom_pos: Float[torch.Tensor, "* L 3"],
     atom_pos_mask: Bool[torch.Tensor, "* L"],

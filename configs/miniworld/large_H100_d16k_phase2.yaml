@@ -1,0 +1,48 @@
+# LARGE phase2 — CONTINUE the d16k run from epoch 800 with 2x crop (384 -> 768 tokens),
+# +200 epochs (num_epoch 1000). Activation checkpointing (msa4 + pf48) to fit the 768 footprint.
+# Same trunk / db / recycle / distill mix as large_H100_d16k; resume full state (weights +
+# optimizer + scheduler + EMA + epoch/step) from epoch=0800.pt so LR, EMA and the epoch
+# counter carry over. Launch with the SAME run_dir as phase1 so wandb appends to ONE run.
+#
+# Deltas vs large_H100_d16k:
+#   data.crop.max_tokens 384 -> 768, max_atoms 4096 -> 8192  (2x crop; pair activations ~4x)
+#   train.bucket_token_multiple 384 -> 768, bucket_atom_multiple 4096 -> 8192  (single bucket
+#     must cover the max crop) ; bucket_msa_multiple 2048 unchanged (MSA depth unchanged)
+#   train.num_epoch 800 -> 900  (100 more epochs, epoch counter continues from 800)
+#
+# Autotune: L>512 reuses the 512² config (engine bucket-saturate cap, rev 73458b5) -> no
+# live tuning for 768. Compile path is Fabric + plain torch.compile (no CUDA graph).
+#
+# OOM lever (experiment): if 768 OOMs, enable MSA-module gradient checkpointing WITHOUT
+# editing this file, e.g. append on the CLI:
+#   'model.trunk.msa_module.n_checkpoint_segments=4'   (1..n_block=4; 4 = every block)
+# (pairformer.n_checkpoint_segments=48 is the heavier lever if MSA alone isn't enough.)
+defaults:
+  - model: large_swa_pf48
+  - train: default
+  - data: H100_default
+  - loss: distogram_only
+  - _self_
+
+model:
+  shared:
+    n_distogram_bins: 96      # 64 -> 96 CB-distogram bins (matches phase1)
+  trunk:
+    # Activation checkpointing (per-block) to fit the 2x-crop (768) footprint. Both trimul-heavy
+    # stacks recompute their block internals in backward; measured peak drops 57GB -> ~33GB.
+    #   msa_module: 32.2GB -> 5.8GB retained | pairformer: >64GB(unckpt) -> 9.6GB
+    # (template_embedder stays off — 13GB with ~46GB headroom, not worth the extra recompute.)
+    msa_module:
+      n_checkpoint_segments: 4    # = n_block (checkpoint every MSA block)
+    pairformer:
+      n_checkpoint_segments: 48   # = n_block (checkpoint every pairformer block)
+train:
+  num_epoch: 1000             # phase1 reached 800; +200 more (counter continues)
+  bucket_token_multiple: 768  # was 384 — pad-to-max bucket must equal the 768 crop
+  bucket_atom_multiple: 8192  # was 4096 — 2x atoms
+data:
+  crop:
+    max_tokens: 768           # was 384 — 2x token crop
+    max_atoms: 8192           # was 4096 — keep ~10.7 atoms/token ratio
+loss:
+  distogram_cb_target: true

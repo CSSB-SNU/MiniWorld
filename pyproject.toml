@@ -95,8 +95,10 @@ team_gm = { path = "libs/team-gm", editable = true }
 # nested submodule. team-gm consumes it as a uv git dep, but uv/pixi does NOT make
 # [tool.uv.sources] transitive through the editable team_gm path dep, so MiniWorld
 # must declare the git source itself for team_gm's `miniworld-engine` requirement to
-# resolve. Pin matches team-gm exp/miniworld (f3236c2) -> engine rev 31d96e7.
-miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "31d96e7" }
+# resolve. Base pin matches team-gm exp/miniworld (f3236c2) -> engine rev 31d96e7.
+# TEMP: pinned to tmp/autotune-bucket-cap-512 (73458b5, = 31d96e7 + 512² bucket-saturate
+# for 768-token phase2) while engine main is owned by another dev. Re-pin to main once merged.
+miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "73458b5" }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"

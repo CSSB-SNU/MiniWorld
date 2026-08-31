@@ -19,6 +19,7 @@ never re-adds ``pair + drop(...)`` itself.
 
 import torch
 from jaxtyping import Bool, Float, Int
+from torch.utils.checkpoint import checkpoint_sequential
 from miniworld_engine.modules import (
     BidirectionalTriangleMultiplication,
     MSAPairWeightedAveraging,
@@ -166,6 +167,7 @@ class MiniMSAModule(nn.Module):
 
     def __init__(self, config: Config) -> None:
         super().__init__()
+        self.config = config
         self.num_res_class = config.num_res_class
 
         self.embed_msa = Linear(self.num_res_class + 2, config.d_msa, bias=False)
@@ -206,6 +208,24 @@ class MiniMSAModule(nn.Module):
         if single is not None:
             msa = msa + self.single_to_msa(single).unsqueeze(1)
 
-        for block in self.blocks:
-            msa, pair = block(msa, msa_mask, pair, mask, token_asym_id)
+        if self.config.n_checkpoint_segments is None:
+            for block in self.blocks:
+                msa, pair = block(msa, msa_mask, pair, mask, token_asym_id)
+        else:
+            # Activation checkpointing over the MSA blocks: only segment-boundary
+            # (msa, pair) are kept; each segment's internals are recomputed in backward.
+            # msa_mask / mask / token_asym_id are recycle-constant, closed over here.
+            def run_module(module):  # noqa: ANN001, ANN202
+                def forward(inputs):  # noqa: ANN001, ANN202
+                    m, p = inputs
+                    return module(m, msa_mask, p, mask, token_asym_id)
+
+                return forward
+
+            msa, pair = checkpoint_sequential(
+                [run_module(b) for b in self.blocks],
+                segments=self.config.n_checkpoint_segments,
+                use_reentrant=False,
+                input=(msa, pair),
+            )
         return pair

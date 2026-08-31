@@ -63,6 +63,7 @@ trunk:
   template_embedder:
     num_channels: 64
     n_block: 2
+    n_checkpoint_segments: null   # null = off; 1..n_block to checkpoint the per-template pairformer
     dropout_prob: 0.25
     out_init: default            # output proj init: default | zero (was MW_TEMPLATE_OUT_INIT)
     implementation: MINIWORLD_ENGINE  # per-template trunk backend (was MW_TEMPLATE_IMPL)

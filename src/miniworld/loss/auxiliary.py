@@ -5,6 +5,7 @@ from team_gm import typecheck
 
 from miniworld.utils.structure import (
     extract_contact_map,
+    get_representative_distances,
     get_shortest_distances,
     get_shortest_distances_from_multistructures,
 )
@@ -165,21 +166,35 @@ def cal_atom_distogram_loss(
     # pairs becomes this large value too, but those pairs are dropped by the pair mask.
     _no_clamp_max = 1.0e4
 
-    # CB/pseudo-beta target: keep only each token's representative atom.
-    if rep_atom_mask is not None:
-        atom_pos_mask = atom_pos_mask & rep_atom_mask
-
     if atom_pos.dim() == 3:
         # Single structure
-        residue_dists, residue_pair_mask = get_shortest_distances(
-            atom_pos=atom_pos,
-            atom_pos_mask=atom_pos_mask,
-            atom_to_token_idx_map=atom_to_token_idx_map,
-            token_num=L,
-            min_distance=min_distance,
-            max_distance=_no_clamp_max,
-        )  # (L_max, L_max), (L_max, L_max)
+        if rep_atom_mask is not None:
+            # CB/pseudo-beta target: gather one representative atom per token and compute
+            # token-token distances directly (O(token^2)) instead of building the full
+            # O(atom^2) inter-atom matrix and masking to reps afterward.
+            residue_dists, residue_pair_mask = get_representative_distances(
+                atom_pos=atom_pos,
+                atom_pos_mask=atom_pos_mask,
+                atom_to_token_idx_map=atom_to_token_idx_map,
+                token_num=L,
+                rep_atom_mask=rep_atom_mask,
+                min_distance=min_distance,
+                max_distance=_no_clamp_max,
+            )  # (L_max, L_max), (L_max, L_max)
+        else:
+            residue_dists, residue_pair_mask = get_shortest_distances(
+                atom_pos=atom_pos,
+                atom_pos_mask=atom_pos_mask,
+                atom_to_token_idx_map=atom_to_token_idx_map,
+                token_num=L,
+                min_distance=min_distance,
+                max_distance=_no_clamp_max,
+            )  # (L_max, L_max), (L_max, L_max)
     else:
+        # Multi-structure: keep the legacy mask-then-shortest path (CB collapses to CB-CB
+        # once the atom mask is restricted to representatives).
+        if rep_atom_mask is not None:
+            atom_pos_mask = atom_pos_mask & rep_atom_mask
         residue_dists, residue_pair_mask = get_shortest_distances_from_multistructures(
             atom_pos=atom_pos,
             atom_pos_mask=atom_pos_mask,

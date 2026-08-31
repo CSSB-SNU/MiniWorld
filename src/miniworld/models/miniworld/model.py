@@ -6,8 +6,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
-from pydantic import BaseModel
-from team_gm.modules import DiffusionTransformer, MSAModule, Pairformer
+from pydantic import BaseModel, Field
+from team_gm.modules import (
+    DiffusionTransformer,
+    MSAModule,
+    Pairformer,
+    SWAAtomTransformer,
+)
 from team_gm.modules.primitives import (
     LayerNorm,
     Linear,
@@ -60,11 +65,24 @@ class Model(nn.Module):
         use_contact: bool = True
 
     class DiffusionConfig(BaseModel):
-        """Configuration for diffusion module."""
+        """Configuration for diffusion module.
+
+        miniworld DEFAULT: atom DiT = ESMFold2-style SWA + 3D RoPE + QK-norm
+        (``atom_swa``), token DiT = AF3-style pair-bias ``DiffusionTransformer``
+        (``token_dit``). Set ``atom_swa: null`` to fall back to the AF3 pair-bias
+        atom attention (``atom_dit``); ``token_dit`` is always the AF3 token trunk.
+        """
 
         atom_dit: DiffusionTransformer.Config
         token_dit: DiffusionTransformer.Config
         dit_cond: DiffusionConditioning.Config
+        # Present -> the diffusion atom encoder/decoder are the ESMFold2 SWA stack
+        # (3D RoPE from atom positions, sliding window, no atom-pair tensor). d_atom/
+        # d_cond are filled from shared.d_single_atom inside SWAAtomAttentionEncoder;
+        # block_style defaults to "esmfold2". This is the miniworld default.
+        atom_swa: SWAAtomTransformer.Config | None = Field(
+            default_factory=SWAAtomTransformer.Config,
+        )
 
     class Config(BaseModel):
         """Configuration for the AF3Like model."""
@@ -134,12 +152,14 @@ class Model(nn.Module):
             config.shared.n_distogram_bins,
         )
 
-        # Diffusion module
+        # Diffusion module. miniworld default: ESMFold2 3D-RoPE atom DiT (swa_atom_config)
+        # + AF3-style token DiT (token_dit). atom_swa=None -> AF3 pair-bias atom (atom_dit).
         self.diffusion_module = DiffusionModule(
             config.shared,
             config.diffusion.atom_dit,
             config.diffusion.token_dit,
             config.diffusion.dit_cond,
+            swa_atom_config=config.diffusion.atom_swa,
         ).to(torch.float32)
 
         self.rng = np.random.default_rng()

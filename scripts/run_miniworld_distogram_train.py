@@ -795,7 +795,79 @@ def train(  # noqa: PLR0912, PLR0915
         state_dict = torch.load(ckpt, map_location="cpu")
         client.load_state_dict(state_dict, strict=ckpt_strict)
 
+    # Memory-PROFILE mode (guarded, off by default). MW_MEM_PROFILE=1 registers forward
+    # hooks on the top-level trunk modules and logs each one's retained-activation delta and
+    # cumulative allocation AS IT RUNS (so numbers survive an OOM later in the pass), to show
+    # where the 768-token footprint goes (atom vs template vs MSA vs pairformer).
+    if os.getenv("MW_MEM_PROFILE", "0").strip().lower() in {"1", "true", "yes", "on"}:
+        _raw = _find_recycle_model(client.model)
+        _targets = {
+            "atom_input_embedder": getattr(_raw, "input_feature_embedder", None),
+            "template_embedder": getattr(_raw, "temp_embedder", None),
+            "msa_module": getattr(_raw, "msa_module", None),
+            "pairformer_blocks": getattr(_raw, "pairformer_blocks", None),
+            "distogram_head": getattr(_raw, "distogram_head", None),
+        }
+        _GB = 1024 ** 3
+
+        def _mk_hooks(nm, mod):  # noqa: ANN001, ANN202
+            def _pre(m, inp):  # noqa: ANN001, ANN202
+                m._memprof_before = torch.cuda.memory_allocated()
+
+            def _post(m, inp, out):  # noqa: ANN001, ANN202
+                after = torch.cuda.memory_allocated()
+                client.logger.info(
+                    "[memprof] %-20s delta=%+.2fGB exit_alloc=%.2fGB reserved=%.2fGB",
+                    nm,
+                    (after - getattr(m, "_memprof_before", after)) / _GB,
+                    after / _GB,
+                    torch.cuda.memory_reserved() / _GB,
+                )
+
+            mod.register_forward_pre_hook(_pre)
+            mod.register_forward_hook(_post)
+
+        for _nm, _mod in _targets.items():
+            if _mod is not None:
+                _mk_hooks(_nm, _mod)
+        client.logger.info(
+            "[memprof] hooks on: %s (grad-ckpt pf=%s msa=%s)",
+            [k for k, v in _targets.items() if v is not None],
+            getattr(getattr(cfg.model.trunk, "pairformer", None), "n_checkpoint_segments", None),
+            getattr(getattr(cfg.model.trunk, "msa_module", None), "n_checkpoint_segments", None),
+        )
+        _warmup_bucket_shapes(client, cfg)
+        client.logger.info(
+            "[memprof] DONE. peak_allocated=%.2fGB peak_reserved=%.2fGB",
+            torch.cuda.max_memory_allocated() / _GB,
+            torch.cuda.max_memory_reserved() / _GB,
+        )
+        return
+
+    # Autotune cache-BUILD mode (guarded, off by default). With MW_CAPTURE_CACHE=1 (and
+    # MINIWORLD_RUN_AUTOTUNE=1 to unlock the full grid), install the capture hook so the
+    # warmup fwd/bwd sweep records the winning triton config per (op,dtype,bucket) — with
+    # the fork+SIGKILL compile-timeout guard so monster configs can't stall — then flush
+    # the cache and exit WITHOUT training. Used to pre-fill the 768-token (2x crop) shapes.
+    _capture_cache = os.getenv("MW_CAPTURE_CACHE", "0").strip().lower() in {
+        "1", "true", "yes", "on",
+    }
+    if _capture_cache:
+        from miniworld_engine.autotune import capture
+
+        capture.install()
+        client.logger.info(
+            "[capture] autotune capture installed (build mode) — warmup will fill the cache",
+        )
+
     _warmup_bucket_shapes(client, cfg)
+
+    if _capture_cache:
+        from miniworld_engine.autotune import capture
+
+        capture.flush(top_k=5)
+        client.logger.info("[capture] flushed autotune cache; exiting (cache-build mode)")
+        return
 
     world_size = fabric.world_size
     train_num_item = cfg.train.train_item // world_size
