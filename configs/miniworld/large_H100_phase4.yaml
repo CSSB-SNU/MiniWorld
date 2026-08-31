@@ -1,0 +1,73 @@
+# PHASE4 — attach a confidence head (pLDDT / PAE / PDE) on top of the FROZEN phase3
+# structure model (trunk + EDM diffusion) and train ONLY the confidence head with
+# per-bin cross-entropy against targets computed from a predicted structure vs GT.
+#
+# Seed weights come from a phase3 checkpoint (trunk + diffusion), e.g.:
+#   logs/phase3/large_H100_diffusion_hlr/.../checkpoints/last.pt   (pass via --ckpt)
+#
+# The param_policy (default: freeze_loaded) LOADS + FREEZES every param present in the
+# checkpoint (the whole trunk + diffusion + to_token_single_trunk) and re-inits + trains
+# everything else (confidence_head). On a phase4 requeue the checkpoint also contains
+# confidence_head, so load_existing keeps it TRAINABLE.
+#
+# DIFFUSION STEP: the predicted structure that the confidence head scores is produced by
+# a FULL frozen diffusion rollout (train.predict_timesteps). How many steps / whether to
+# run inline per step or read a precomputed cache is an OPEN decision — the seam is
+# phase4.client.Client.predict_structure. num_augment does NOT apply here.
+#
+# Crop: 768-token / 8192-atom (matches phase3). NEW wandb run (phase4-specific run_dir).
+defaults:
+  - model: large_swa_pf48_confidence
+  - train: default
+  - data: H100_default
+  - loss: confidence_only
+  - _self_
+
+data:
+  crop:
+    max_tokens: 768
+    max_atoms: 8192
+
+train:
+  comment: "phase4-confidence-large"
+  run_dir: "logs/phase4/large_H100_confidence"
+  num_epoch: 1000
+  bucket_token_multiple: 768   # single bucket = 768 crop
+  bucket_atom_multiple: 8192
+  # Confidence head is small; compile OFF by default (the expensive part is the frozen
+  # rollout, which is not compiled here). Turn on after the rollout policy is decided.
+  compile: False
+  trunk_compile_mode: ""
+  optimizer: "Adam"
+  # LR for a from-scratch confidence head on a fully frozen structure model.
+  max_lr: 1e-3
+  min_lr: 1e-4
+  warmup_steps: 1000
+  decay_steps: 5e4
+  # DIFFUSION-STEP SEAM: full frozen rollout steps for the predicted structure.
+  predict_timesteps: 200
+  use_wandb: True
+  wandb_project: "MiniWorld"
+
+  # Load + FREEZE the phase3 structure model from --ckpt; train only confidence_head.
+  param_policy:
+    enabled: true
+    default: freeze_loaded          # trunk + diffusion (present in the phase3 ckpt) -> FROZEN
+    load_existing:
+      - confidence_head             # new head -> reinit+train; on requeue stays trainable
+
+# EDM diffuser (AF3 preconditioning) — identical to phase3; used to build the solver
+# that produces the predicted structure the confidence head scores.
+diffuser:
+  type: EDM
+  seed: 0
+  method: AF3
+  scheduler:
+    method: AF3
+    P_mean: -1.2
+    P_std: 1.5
+    sigma_data: 16.0
+    sigma_max: 160.0
+    sigma_min: 4.0e-4
+    rho: 7.0
+    use_time_augmentation: true

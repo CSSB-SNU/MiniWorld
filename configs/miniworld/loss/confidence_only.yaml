@@ -1,0 +1,7 @@
+# Phase4 confidence loss weights (per-bin cross-entropy).
+# PAE is OFF by default (pae_loss: 0.0) — the frame-aligned PAE target needs per-token
+# N/CA/C frames, which are not a dataset feature yet (Stage B). Turn it on once the
+# token-frame feature + pae_target_bins path land.
+plddt_loss: 1.0
+pde_loss: 1.0
+pae_loss: 0.0

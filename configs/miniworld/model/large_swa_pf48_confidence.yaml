@@ -1,0 +1,159 @@
+# Phase4 model — FROZEN phase3 structure model (trunk + EDM diffusion) + confidence head.
+#
+# Identical to large_swa_pf48_diffusion (so the phase3 checkpoint's trunk + diffusion
+# keys load into the inherited submodules with no mismatch), PLUS a `confidence:` block
+# for the trainable pLDDT / PAE / PDE head. Both trunk and diffusion are frozen; only
+# confidence_head trains.
+#
+# Selected by the phase4 top-level config's `model: large_swa_pf48_confidence`.
+
+shared:
+  d_single: 384
+  d_single_atom: 128
+  d_single_token: 768
+  d_single_token_input: 449
+  d_pair: 128
+  d_pair_atom: 16
+
+  d_time: 256
+  r_max: 32
+  s_max: 2
+  n_distogram_bins: 96      # phase2 trained with 96 CB-distogram bins
+  num_res_class: 32
+  implementation: miniworld_engine
+  use_checkpoint: False
+
+
+input_feat_embbeder:
+  n_block: 3
+  n_checkpoint_segments: null
+  d_single: ${..shared.d_single_atom}
+  d_cond: ${..shared.d_single_atom}
+  d_pair: ${..shared.d_pair_atom}
+  n_head: 4
+  implementation: miniworld_engine
+
+
+# ESMFold2-style atom SWA + 3D-RoPE for the TRUNK input embedder (global attention
+# via the very large window). Identical to phase2 large_swa_pf48.
+atom_swa:
+  enabled: true
+  swa_window_size: 1000000
+  backend: flash
+  expansion_ratio: 2
+  n_spatial_rope_pairs_per_axis: 2
+  n_uid_rope_pairs: 10
+  spatial_rope_base_frequency: 20.0
+  uid_rope_base_frequency: 10000.0
+
+
+trunk:
+  n_recycle_max: 4
+
+  use_template: true
+  template_embedder:
+    num_channels: 64
+    n_block: 2
+    n_checkpoint_segments: null
+    dropout_prob: 0.25
+    out_init: default
+    implementation: MINIWORLD_ENGINE
+
+  pairformer:
+    n_block: 48
+    n_checkpoint_segments: null
+    d_single: ${...shared.d_single}
+    d_pair: ${...shared.d_pair}
+    n_head_tri_attention: 4
+    n_head_attention: 16
+    p_drop: 0.25
+    use_single: False
+    use_self_attention: False
+    implementation: miniworld_engine
+
+  msa_module:
+    n_block: 4
+    d_msa: 64
+    d_pair: ${...shared.d_pair}
+    d_single_token_input: ${...shared.d_single_token_input}
+    d_hidden_msa: 32
+    d_hidden_tri_multi: 128
+    d_hidden_tri_attention: 32
+    n_head_tri_attention: 4
+    n_head_attention: 16
+    p_drop_msa: 0.15
+    p_drop: 0.25
+    use_self_attention: False
+    n_checkpoint_segments: null
+    implementation: miniworld_engine
+
+
+# ---------------------------------------------------------------------------
+# Diffusion head (trainable). ESMFold2 3D-RoPE atom DiT + AF3 token DiT.
+# ---------------------------------------------------------------------------
+freeze_trunk: true
+
+diffusion:
+  # AF3-style token DiT (operates on token_single_rep d_single_token, cond
+  # d_single, pair d_pair). This is the token trunk of the diffusion module.
+  token_dit:
+    d_single: ${...shared.d_single_token}   # 768
+    d_cond: ${...shared.d_single}           # 384
+    d_pair: ${...shared.d_pair}             # 128
+    n_head: 16
+    n_block: 24
+    n_checkpoint_segments: 24   # per-block grad-ckpt (fp32 diffusion memory at num_augment 48)
+    implementation: miniworld_engine
+
+  # ESMFold2 SWA atom DiT (3D RoPE, sliding window, no atom-pair tensor). d_atom /
+  # d_cond are filled from shared.d_single_atom inside the encoder/decoder, so they
+  # are not set here. block_style="esmfold2" selects the SWAAtomTransformer flavor.
+  atom_swa:
+    block_style: esmfold2
+    n_block: 3
+    n_checkpoint_segments: 3   # per-block grad-ckpt — the atom DiT (A*B*8192 x d) is the
+                               # dominant fp32 memory (~20GB enc + ~20GB dec at num_augment 48)
+    n_head: 4
+    swa_window_size: 128
+    expansion_ratio: 2
+    n_spatial_rope_pairs_per_axis: 2
+    n_uid_rope_pairs: 10
+    spatial_rope_base_frequency: 20.0
+    uid_rope_base_frequency: 10000.0
+
+  # Unused when atom_swa is set (AF3 pair-bias atom fallback only); kept for the
+  # DiffusionModule signature. Small AF3 atom DiT dims.
+  atom_dit:
+    d_single: ${...shared.d_single_atom}    # 128
+    d_cond: ${...shared.d_single_atom}      # 128
+    d_pair: ${...shared.d_pair_atom}        # 16
+    n_head: 4
+    n_block: 3
+    n_checkpoint_segments: null
+    implementation: miniworld_engine
+
+  # DiffusionConditioning (RelPos + pair/single transitions + time embedding).
+  dit_cond:
+    n_expand: 2
+    n_blocks: 2
+
+
+# ---------------------------------------------------------------------------
+# Confidence head (trainable). AF3-style pLDDT / PAE / PDE over the frozen pair.
+# ---------------------------------------------------------------------------
+confidence:
+  d_pair: ${..shared.d_pair}                    # 128
+  d_single: ${..shared.d_single}                # 384 — confidence single track
+  d_single_input: ${..shared.d_single_token_input}  # 449
+  n_block: 4                                     # confidence MiniPairformer depth (single+pair)
+  n_head_attention: 16                           # AttentionPairBias heads (single track)
+  n_checkpoint_segments: null
+  p_drop: 0.0
+  n_plddt_bins: 50     # per-atom lDDT in [0,1], 0.02/bin
+  n_pae_bins: 64       # aligned error [0, pae_max] Å
+  n_pde_bins: 64       # distance error [0, pde_max] Å
+  pae_max: 32.0
+  pde_max: 32.0
+  n_dist_bins: 64      # predicted-structure distance embedding (input signal)
+  dist_min: 2.0
+  dist_max: 22.0
