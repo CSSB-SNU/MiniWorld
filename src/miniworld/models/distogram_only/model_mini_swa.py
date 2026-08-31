@@ -49,6 +49,8 @@ class TemplateEmbedderConfig(BaseModel):
 
     num_channels: int = 64
     n_block: int = 2
+    # Activation-checkpoint the per-template MiniPairformer blocks (None = off; 1..n_block).
+    n_checkpoint_segments: int | None = None
     dropout_prob: float = 0.25
     # Output projection init: "default" (LeCun, the Protenix/OpenDDE reproduction consensus)
     # or "zero". Was MW_TEMPLATE_OUT_INIT.
@@ -132,6 +134,7 @@ class MiniSWAModel(nn.Module):
                 num_channels=te.num_channels,
                 num_res_class=config.shared.num_res_class,
                 n_block=te.n_block,
+                n_checkpoint_segments=te.n_checkpoint_segments,
                 dropout_prob=te.dropout_prob,
                 out_init=te.out_init,
                 implementation=te.implementation,
@@ -278,5 +281,5 @@ class MiniSWAModel(nn.Module):
 
         return self.pairformer_blocks(
             token_pair,
-            token_mask,
+            mask=token_mask,
         )

@@ -165,6 +165,6 @@ class MiniModel(nn.Module):
 
                 token_pair = self.pairformer_blocks(
                     token_pair,
-                    token_mask,
+                    mask=token_mask,
                 )
         return self.distogram_head(token_pair)
