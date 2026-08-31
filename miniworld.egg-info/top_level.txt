@@ -1,3 +1,0 @@
-datacooker
-kmer_fast_align
-team_gm

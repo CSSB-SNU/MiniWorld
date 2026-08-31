@@ -18,7 +18,7 @@ __pycache__/
 commands/
 tests/inference_data/
 .codex.cache/
-inference/
+/inference/
 # one-off experiment/bench/probe scripts, not for main
 scratch/
 # local dependency checkouts (separate git repos, NOT submodules; foldbench is ~147G)

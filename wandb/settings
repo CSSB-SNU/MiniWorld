@@ -1,5 +1,0 @@
-[default]
-entity = team_gm
-project = MiniWorld
-base_url = https://api.wandb.ai
-
