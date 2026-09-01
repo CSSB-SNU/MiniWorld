@@ -309,6 +309,19 @@ def build_inference_batch(
             merged_neg = list(dict.fromkeys([*contacts.negative, *extra_neg]))
             contacts = ContactsSpec(positive=merged_pos, negative=merged_neg)
     token_contacts = _build_token_contacts(contacts, letter_to_chains, expansions)
+    # Dense [L, L] token-bond adjacency, mirroring convert.py. The training path
+    # (convert.py) always populates this fixed-shape field; build it here too so the
+    # inference batch matches training / Batch.empty field types — required for the
+    # bucketed-collate padding used to align sizes to the engine's fused-GEMM stride.
+    _tb = token_bond.astype(np.int64).reshape(-1, 2)
+    token_bond_feat = torch.zeros((total_tokens, total_tokens), dtype=torch.bool)
+    if _tb.shape[0] > 0:
+        _bi = torch.from_numpy(_tb[:, 0])
+        _bj = torch.from_numpy(_tb[:, 1])
+        _keep = (_bi != _bj) & (_bi >= 0) & (_bj >= 0) & (_bi < total_tokens) & (_bj < total_tokens)
+        _bi, _bj = _bi[_keep], _bj[_keep]
+        token_bond_feat[_bi, _bj] = True
+        token_bond_feat[_bj, _bi] = True
     # ``atom_pos_mask`` marks atoms whose positions should be denoised by the
     # diffusion solver and emitted to the CIF output. For inference we want
     # every atom predicted, so set it to all-True (no GT, but all valid).
@@ -320,6 +333,7 @@ def build_inference_batch(
         token_contacts=token_contacts,
         token_mask=torch.ones(total_tokens, dtype=torch.bool),
         token_bond=torch.from_numpy(token_bond.astype(np.int64)),
+        token_bond_feat=token_bond_feat,
     )
 
     # --- Templates ---

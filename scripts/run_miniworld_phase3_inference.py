@@ -23,6 +23,7 @@ diffusion-head EMA; loading swaps it in automatically (frozen trunk stays as sav
 from __future__ import annotations
 
 import logging
+import dataclasses
 import os
 import time
 from pathlib import Path
@@ -47,6 +48,8 @@ from miniworld.configs import (
 from miniworld.data.dataloader import BioMolDBV2Config
 from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.data.features.batch import Batch
+from miniworld.data.dataloader.collate import _ceil_to_multiple
+from miniworld.data.features import Batch as _Batch
 from miniworld.data.inference import InferenceSpec, build_inference_batch
 from miniworld.data.io.to_cif import batch_to_cif
 from miniworld.loss import metrics
@@ -336,6 +339,43 @@ def validate(  # noqa: PLR0913, PLR0915
 # ---------------------------------------------------------------------------
 # FoldBench inference: run the phase3 model over FoldBench target specs.
 # ---------------------------------------------------------------------------
+def _nullify_like(real: object, dummy: object) -> None:
+    """Set ``dummy.<field> = None`` wherever ``real.<field>`` is None (recursive).
+
+    ``Batch.empty`` populates every optional field, but an inference batch leaves
+    some as None (e.g. ``atom_is_rep`` — no GT structure). Collating the two then
+    fails on the None-vs-Tensor mismatch; matching the dummy's None-ness first lets
+    the pad-collate go through.
+    """
+    for f in dataclasses.fields(real):
+        rv = getattr(real, f.name, None)
+        dv = getattr(dummy, f.name, None)
+        if rv is None and dv is not None:
+            object.__setattr__(dummy, f.name, None)
+        elif dataclasses.is_dataclass(rv) and dataclasses.is_dataclass(dv):
+            _nullify_like(rv, dv)
+
+
+def _pad_inference_batch(batch: Batch, mult: int = 8) -> Batch:
+    """Pad msa/token/atom dims up to a multiple of ``mult``.
+
+    The engine's fused GEMM kernels (quack ``gemm_act``) require the sequence stride
+    divisible by 8; FoldBench targets are arbitrary sizes (training crops were bucket-
+    aligned). Pads via collating with a bucket-sized ``Batch.empty`` dummy (masks mark
+    the padding); the caller slices outputs back to the real atom count.
+    """
+    bt = _ceil_to_multiple(int(batch.token_length), mult)
+    ba = _ceil_to_multiple(int(batch.atom_length), mult)
+    bm = _ceil_to_multiple(int(batch.msa_depth), mult)
+    if bt == int(batch.token_length) and ba == int(batch.atom_length) and bm == int(batch.msa_depth):
+        return batch
+    dummy = _Batch.empty(
+        n_temp=batch.template_number, msa_depth=bm, n_tokens=bt, n_atoms=ba,
+    )
+    _nullify_like(batch, dummy)
+    return _Batch.collate_fn([batch, dummy])[0 : batch.batch_size]
+
+
 def _phase3_client_from_config(
     config: Path,
     ckpt: Path,
@@ -454,15 +494,24 @@ def foldbench(  # noqa: PLR0913
                 spec, max_msa_depth=max_msa_depth, missing_policy=missing_policy, seed=seed,
             )
             name = str(batch.name[0])
-            sample_batch = batch.duplicate(n_samples)
+            orig_atom = int(batch.atom_length)
+            # Pad msa/token/atom to a multiple of 8: the engine's fused GEMM kernels
+            # (quack gemm_act) require the sequence stride divisible by 8. FoldBench
+            # targets are arbitrary sizes (training crops were bucket-aligned). Padding
+            # positions are masked; slice the output back to the real atom count for the
+            # CIF so no padding atoms are written.
+            padded = _pad_inference_batch(batch, 8)
+            sample_batch = padded.duplicate(n_samples)
             torch.manual_seed(seed * 100003 + i * 1009)
             output = client.inference(sample_batch, timesteps=timesteps)
             out_sub.mkdir(parents=True, exist_ok=True)
             for k in range(n_samples):
-                batch_to_cif(batch, output.atom_pos_pred[k : k + 1], out_sub / f"{name}_s{k}_pred.cif")
+                pred = output.atom_pos_pred[k : k + 1, :orig_atom]
+                batch_to_cif(batch, pred, out_sub / f"{name}_s{k}_pred.cif")
             client.logger.info(
-                "[%d/%d] %s: OK tok=%d atom=%d -> %d CIFs",
-                i + 1, len(targets), tid, int(batch.token_length), int(batch.atom_length), n_samples,
+                "[%d/%d] %s: OK tok=%d atom=%d (pad->%d) -> %d CIFs",
+                i + 1, len(targets), tid, int(batch.token_length), orig_atom,
+                int(padded.atom_length), n_samples,
             )
         except Exception as e:  # noqa: BLE001 — one bad target must not kill the shard
             client.logger.exception("[%d/%d] %s: FAILED (%s)", i + 1, len(targets), tid, type(e).__name__)
