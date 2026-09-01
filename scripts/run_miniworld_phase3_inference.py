@@ -474,6 +474,15 @@ def foldbench(  # noqa: PLR0913
     client = _phase3_client_from_config(
         config, ckpt, seed, use_ema, do_compile, fabric, list(overrides),
     )
+    # MW_COMPILE_TIMEOUT=1: install the fork+SIGKILL compile guard so uncached-shape
+    # autotune bounds each "monster" config (e.g. transition_b2b full grid) to 60s
+    # instead of hanging indefinitely. FoldBench targets are arbitrary sizes with no
+    # prebuilt cache, so without this the first uncached op stalls the run.
+    if os.getenv("MW_COMPILE_TIMEOUT", "0").strip().lower() in {"1", "true", "yes", "on"}:
+        from miniworld_engine.autotune import capture
+
+        capture.install()
+        client.logger.info("[capture] compile-timeout guard installed (bounds monster autotune)")
     client.logger.info(
         "FoldBench phase3 inference: %d targets | n_samples=%d timesteps=%d ema=%s",
         len(targets), n_samples, timesteps, use_ema,
