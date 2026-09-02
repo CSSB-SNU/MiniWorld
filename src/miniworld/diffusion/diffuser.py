@@ -187,8 +187,21 @@ class EuclideanDiffuser(Diffuser, ABC):
         x_update: Float[torch.Tensor, "... L 3"],
         sigma: Float[torch.Tensor, ...],
         mask: Bool[torch.Tensor, "... L"] | None = None,
+        atom_weight: Float[torch.Tensor, "... L"] | None = None,
     ) -> Float[torch.Tensor, 1]:
-        """Compute EDM loss between model prediction and true signal."""
+        """Compute EDM loss between model prediction and true signal.
+
+        Two independent weights multiply the squared error:
+
+        - `sigma_weight` is one scalar per sample, the EDM weighting of the
+          noise level, (sigma^2 + sigma_data^2) / (sigma * sigma_data)^2.
+        - `atom_weight` is one scalar per atom, w_l of AF3 SI eq. 4 (built by
+          `miniworld.loss.auxiliary.cal_atom_loss_weight`), upweighting
+          nucleotide and ligand atoms, with invalid atoms zeroed out by `mask`.
+          It also weights the rigid alignment of the ground truth onto the
+          prediction (AF3 SI eq. 2). Passing None leaves every atom at w_l = 1,
+          i.e. the plain masked MSE.
+        """
         if x_update.dtype != self.dtype:
             msg = "x_update must be of type float32, but got dtype: " + str(
                 x_update.dtype,
@@ -204,19 +217,22 @@ class EuclideanDiffuser(Diffuser, ABC):
         noisy_x = noisy_x.to(dtype=dtype)
         c_skip = self.scheduler.skip_scale(sigma).to(dtype=dtype)
         c_out = self.scheduler.output_scale(sigma).to(dtype=dtype)
-        weight = self.scheduler.loss_weight(sigma).to(dtype=dtype)
-        if mask is not None:
-            weight = weight * mask.unsqueeze(-1)
-        else:
+        sigma_weight = self.scheduler.loss_weight(sigma).to(dtype=dtype)
+        if mask is None:
             mask = torch.ones(
                 x0.shape[:-1],
                 device=x0.device,
                 dtype=torch.bool,
             )
+        if atom_weight is None:
+            atom_weight = torch.ones_like(mask, dtype=dtype)
+        atom_weight = atom_weight.to(device=x0.device, dtype=dtype) * mask.to(
+            dtype=dtype,
+        )
 
         x_pred = c_skip * noisy_x + c_out * x_update
         # align x0 to x_pred
-        x0_aligned = weighted_align(x0, x_pred, weight=mask.to(dtype=dtype))
+        x0_aligned = weighted_align(x0, x_pred, weight=atom_weight)
         if torch.isnan((x_pred - x0_aligned).pow(2).mean()):
             torch.save(
                 {
@@ -229,15 +245,19 @@ class EuclideanDiffuser(Diffuser, ABC):
                     "x0": x0,
                     "noisy_x": noisy_x,
                     "mask": mask,
-                    "weight": weight,
+                    "sigma_weight": sigma_weight,
+                    "atom_weight": atom_weight,
                 },
                 "debug_nan_at_loss.pt",
             )
             msg = "NaN detected in the loss calculation."
             raise ValueError(msg)
-        
+
         x_shape = x0.shape
-        return ((x_pred - x0_aligned).pow(2) * weight).mean(), x_pred.reshape(x_shape)
+        loss = (
+            (x_pred - x0_aligned).pow(2) * atom_weight.unsqueeze(-1) * sigma_weight
+        ).mean()
+        return loss, x_pred.reshape(x_shape)
 
 
 class DecoupledEDMDiffuser(Diffuser):

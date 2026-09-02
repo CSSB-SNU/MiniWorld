@@ -168,6 +168,12 @@ _entity_idx_to_type_mapping = {
     7: MoleculeType.BRANCHED,
 }
 
+# Inverse of the above; useful to compare `ChainFeatures.entity_type` tensors
+# against a molecule type without hardcoding the integer index.
+ENTITY_TYPE_TO_IDX: dict[MoleculeType, int] = {
+    molecule_type: idx for idx, molecule_type in _entity_idx_to_type_mapping.items()
+}
+
 CANONICAL_CHEMCOMPS: set[str] = {
     # amino acids
     "ALA",

@@ -3,12 +3,19 @@ import torch.nn.functional as F
 from jaxtyping import Bool, Float, Int
 from team_gm import typecheck
 
+from miniworld.data.constants import ENTITY_TYPE_TO_IDX, MoleculeType
 from miniworld.utils.structure import (
     extract_contact_map,
     get_shortest_distances,
     get_shortest_distances_from_multistructures,
 )
 from collections.abc import Generator, Sequence
+
+_RNA_IDX = ENTITY_TYPE_TO_IDX[MoleculeType.RNA]
+_DNA_IDX = ENTITY_TYPE_TO_IDX[MoleculeType.DNA]
+_NA_IDX = ENTITY_TYPE_TO_IDX[MoleculeType.NA]
+_LIGAND_IDX = ENTITY_TYPE_TO_IDX[MoleculeType.LIGAND]
+_BRANCHED_IDX = ENTITY_TYPE_TO_IDX[MoleculeType.BRANCHED]
 
 @typecheck
 def cal_all_atom_loss(
@@ -646,3 +653,58 @@ def cal_smooth_lddt(
     score = score * mask_2d
     lddt = score.sum(dim=(-1, -2)) / mask_2d.float().sum(dim=(-1, -2)).clamp(min=1)
     return (1 - lddt).mean()
+
+
+@typecheck
+def cal_atom_loss_weight(
+    chain_entity_type: Int[torch.Tensor, "B L_chain"],
+    atom_to_chain_id: Int[torch.Tensor, "B L_atom"],
+    alpha_dna: float = 5.0,
+    alpha_rna: float = 5.0,
+    alpha_ligand: float = 10.0,
+) -> Float[torch.Tensor, "B L_atom"]:
+    """Per-atom weight of the AF3 weighted-MSE diffusion loss (AF3 SI eq. 4).
+
+        w_l = 1 + f_l^is_dna * alpha_dna
+                + f_l^is_rna * alpha_rna
+                + f_l^is_ligand * alpha_ligand
+
+    The same weights are used for the rigid alignment of the ground truth onto
+    the prediction (AF3 SI eq. 2) and for the MSE itself (AF3 SI eq. 3).
+
+    AF3 splits atoms into protein / dna / rna / ligand only, so the two entity
+    types of `miniworld.data.constants.MoleculeType` with no AF3 counterpart are
+    mapped onto the closest one: DNA/RNA hybrid chains (``NA``) are nucleotides,
+    and branched polymers (glycans, ``BRANCHED``) are ligands.
+
+    Parameters
+    ----------
+    chain_entity_type
+        Per-chain entity type index, i.e. ``batch.chain.entity_type``.
+    atom_to_chain_id
+        Chain index of every atom, i.e. ``batch.scheme.atom_to_chain_id``.
+    alpha_dna
+        Upweighting of DNA atoms.
+    alpha_rna
+        Upweighting of RNA atoms.
+    alpha_ligand
+        Upweighting of ligand atoms.
+
+    """
+    atom_entity_type = torch.gather(chain_entity_type, 1, atom_to_chain_id)
+
+    is_dna = atom_entity_type == _DNA_IDX
+    is_rna = atom_entity_type == _RNA_IDX
+    # DNA/RNA hybrid: a nucleotide either way, so use the larger of the two
+    # nucleotide alphas (identical to both at the AF3 default of 5).
+    is_hybrid_na = atom_entity_type == _NA_IDX
+    is_ligand = (atom_entity_type == _LIGAND_IDX) | (atom_entity_type == _BRANCHED_IDX)
+
+    weight = torch.ones_like(atom_entity_type, dtype=torch.float32)
+    return (
+        weight
+        + alpha_dna * is_dna
+        + alpha_rna * is_rna
+        + max(alpha_dna, alpha_rna) * is_hybrid_na
+        + alpha_ligand * is_ligand
+    )

@@ -2,6 +2,7 @@
 
 from .mapping import (
     CANONICAL_CHEMCOMPS,
+    ENTITY_TYPE_TO_IDX,
     AtomMapping,
     EntityMapping,
     MoleculeType,
@@ -10,6 +11,7 @@ from .mapping import (
 
 __all__ = [
     "CANONICAL_CHEMCOMPS",
+    "ENTITY_TYPE_TO_IDX",
     "AtomMapping",
     "EntityMapping",
     "MoleculeType",

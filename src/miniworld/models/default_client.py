@@ -24,6 +24,7 @@ from miniworld.diffusion import (
 from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
+    cal_atom_loss_weight,
     cal_smooth_lddt,
 )
 from miniworld.models.af3_like.model import (
@@ -90,6 +91,11 @@ class Client(BaseClient):
         diffusion_loss: float = 4.0
         distogram_loss: float = 0.03
         smooth_lddt_loss: float = 1.0
+        # Per-atom upweighting of the diffusion MSE (AF3 SI eq. 4).
+        # Set all three to 0.0 for a plain unweighted MSE.
+        alpha_dna: float = 5.0
+        alpha_rna: float = 5.0
+        alpha_ligand: float = 10.0
 
     class Config(BaseModel):
         """Configuration for the AF3Like client."""
@@ -155,12 +161,22 @@ class Client(BaseClient):
             t_emb=t_emb,
         )
 
+        # AF3 SI eq. 4: upweight nucleotide and ligand atoms in the diffusion MSE.
+        atom_weight = cal_atom_loss_weight(
+            batch.chain.entity_type,
+            batch.scheme.atom_to_chain_id,
+            alpha_dna=self.config.loss.alpha_dna,
+            alpha_rna=self.config.loss.alpha_rna,
+            alpha_ligand=self.config.loss.alpha_ligand,
+        )
+
         structure_loss, x_pred = self.diffuser.cal_loss(
             x0=x0,
             x_input=x_input,
             x_update=atom_pos_update,
             sigma=sigma,
             mask=x_mask,
+            atom_weight=atom_weight,
         )
 
         distogram_loss = cal_atom_distogram_loss(
