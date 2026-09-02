@@ -76,28 +76,56 @@ SOLVENTS_AND_AIDS: frozenset[str] = frozenset({
 })
 # Inorganic polyatomic ions and phosphate-mimic ions. Single-atom ions are
 # already handled by the n_atoms_per_res == 1 check.
+#
+# Every code below was checked against the chemical component dictionary
+# (preprocessed_CCD_20260826.lmdb) on 2026-08-31. An earlier revision of this
+# list was written from chemical formulas rather than CCD codes, which put 27
+# wrong entries in it:
+#
+#   19 organic molecules whose code merely looks like an ion formula --
+#     PPI is PROPANOIC ACID (pyrophosphate is PPV/DPO), CL1/CL2 are chlorophyll
+#     a, IO3 is iophenoxic acid, IO4 a pyrazolo compound, BF3 an isoindole, BO2
+#     a boronic-acid inhibitor, SEO is 2-mercaptoethanol, NCS a spiro-naphthalene
+#     (thiocyanate is SCN), CNO/CRO/CR4/MNO/RE4/TC4/HPO/RUS organics, AO3 is
+#     ALLOSAMIDIN and PPS is PAPS -- both genuine ligands that were being
+#     excluded from the small_molecule pool.
+#
+#    8 codes that are not in the CCD at all: BRO, BRO3, CLO, CLO3, CLO4, N3,
+#     S2O3, S2O8. The real codes for two of them are AZI (azide) and THJ
+#     (thiosulfate), which are listed below.
+#
+# Note MO3/MO4 are hydrated magnesium ions, not molybdate; molybdate is MOO.
 POLYATOMIC_IONS: frozenset[str] = frozenset({
     # Nitrogen-based anions
-    "NO3", "NO2", "AZI", "N3",
-    # Cyanide / cyanate / thiocyanate
-    "CN",  "NCO", "CNO", "SCN", "NCS", "TCN",
-    # Halogen oxyanions
-    "CLO", "CL1", "CL2", "CLO3", "CLO4", "BRO", "BRO3", "IO3", "IO4",
+    "NO3", "NO2", "AZI",
+    # Cyanide / thiocyanate / cyano and ammine complexes
+    "CN", "SCN", "TCN", "NCO",
     # Sulfur oxyanions (SO4 already in aids)
-    "SO3", "S2O3", "S2O8", "SUL",
+    "SO3", "SUL", "THJ",
     # Phosphorus oxyanions (PO4 already in aids)
-    "PO3", "HPO", "PPI", "PPV", "PPS", "DPO", "2HP",
+    "PO3", "PPV", "DPO", "POP", "2HP", "PI",
     # Boron-fluorine / boron oxyanions
-    "BF3", "BF4", "BO3", "BO4", "BO2",
+    "BF4", "BO3", "BO4",
     # Phosphate-mimic transition-state analogs
     "BEF", "ALF", "MGF", "AF3",
     # Transition-metal oxoanions
-    "MO4", "MO3", "WO4", "WO3", "VO4", "VO3", "CRO", "CR4",
-    "REO", "RE4", "RUO", "RUS", "TC4", "MNO",
-    # Arsenic / selenium
-    "ARS", "AO3", "SEO",
+    "WO4", "WO3", "VO4", "VO3", "REO", "RUO", "MOO",
+    # Hydrated / multinuclear metal ions
+    "MO3", "MO4", "NI2", "CUA",
     # Misc inorganic
-    "OH", "NH4", "PER", "PEO",
+    "OH", "NH4", "PER", "PEO", "ARS",
+})
+
+# Monatomic ions whose CCD code is not a bare element symbol -- charge-state and
+# variant codes. ``is_ion`` catches these structurally via n_atoms_per_res == 1,
+# so this set exists for code-level classification elsewhere (see
+# scripts/dataset/ligand_classes.py), not for the focus pools below.
+# Every code verified as exactly one heavy atom against the CCD, 2026-08-31.
+# Deliberately NOT here: CO2 is carbon dioxide, RU7 is para-cymene ruthenium
+# chloride, ZN2 is not a CCD code -- the same look-alike trap as above.
+MONATOMIC_ION_CODES: frozenset[str] = frozenset({
+    "FE2", "CU1", "3CO", "MN3", "AU3", "IR3", "YT3", "Y1", "U1",
+    "F", "W", "O", "OS4", "PT4", "RB",
 })
 
 
