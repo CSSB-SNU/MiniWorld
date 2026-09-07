@@ -24,11 +24,12 @@ input_feat_embbeder:
   d_cond: ${..shared.d_single_atom}
   d_pair: ${..shared.d_pair_atom}
   n_head: 4
+  use_qk_norm: true
   implementation: triton
 
 trunk:
-  n_recycle_max: 1 # 4
-  pairformer: 
+  n_recycle_max: 4 # 4
+  pairformer:
     n_block: 4
     n_checkpoint_segments: null
 
@@ -41,6 +42,7 @@ trunk:
     p_drop: 0.25
     use_single: True
     use_self_attention: False
+    use_qk_norm: true
     implementation: cuequivariance
 
   msa_module: 
@@ -70,6 +72,7 @@ diffusion:
     d_cond: ${...shared.d_single_atom}
     d_pair: ${...shared.d_pair_atom}
     n_head: 4
+    use_qk_norm: true
     implementation: triton
   token_dit:
     n_block: 4
@@ -78,6 +81,7 @@ diffusion:
     d_cond: ${...shared.d_single}
     d_pair: ${...shared.d_pair}
     n_head: 24
+    use_qk_norm: true
     implementation: triton
   dit_cond:
     n_expand: 2

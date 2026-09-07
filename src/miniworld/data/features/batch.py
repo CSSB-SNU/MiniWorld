@@ -97,6 +97,10 @@ class Batch(BaseBatch):
             heteros=[None],
             atom_ids=[None],
             chem_comp_ids=[None],
+            # Must be a list, not the None default: _bucketed_collate pads a real
+            # batch against this dummy, and collate_fn rejects a field whose type
+            # differs between the two (list vs NoneType).
+            bonds=[None],
             sequence=SequenceFeatures(
                 token_type=torch.zeros((1, n_tokens), dtype=torch.long),
             ),

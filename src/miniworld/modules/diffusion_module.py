@@ -24,20 +24,25 @@ from miniworld.modules.embeddings import RelativePositionEmbedding, fourier_embe
 @torch.no_grad
 def init_atom_features(
     reference: ReferenceFeatures,
+    use_chemistry: bool = True,
 ) -> tuple[
     Float[torch.Tensor, "B L_atom d_single_atom_cond"],
     Float[torch.Tensor, "B L_atom L_atom d_pair_atom"],
 ]:
-    """Get input feature for atom single and pair embedding."""
-    atom_single_init = torch.cat(
-        [
-            reference.pos,
-            reference.mask.unsqueeze(-1),
+    """Get input feature for atom single and pair embedding.
+
+    ``use_chemistry=False`` drops ref_element and ref_charge, keeping ref_pos
+    and ref_mask, so the reference conformer geometry survives but its chemistry
+    does not (6 channels -> 4). ``atom_pair_init`` is built from ref_pos and
+    ref_space_uid and is unaffected either way.
+    """
+    single_feats = [reference.pos, reference.mask.unsqueeze(-1)]
+    if use_chemistry:
+        single_feats += [
             reference.element.unsqueeze(-1),
             torch.arcsinh(reference.charge).unsqueeze(-1),
-        ],
-        dim=-1,
-    )
+        ]
+    atom_single_init = torch.cat(single_feats, dim=-1)
     atom_single_init = atom_single_init * reference.mask.unsqueeze(-1)
 
     d_lm = reference.pos[:, :, None] - reference.pos[:, None, :]
@@ -70,7 +75,11 @@ class AtomAttentionEncoder(nn.Module):
 
         self.use_checkpoint = shared_config.use_checkpoint
 
-        self.to_atom_single_cond = Linear(6, shared_config.d_single_atom, bias=False)
+        self.to_atom_single_cond = Linear(
+            6 if shared_config.use_reference_chemistry else 4,
+            shared_config.d_single_atom,
+            bias=False,
+        )
 
         self.to_atom_pair = Linear(5, shared_config.d_pair_atom, bias=False)
 
@@ -244,7 +253,10 @@ class AtomAttentionEncoder(nn.Module):
         Float[torch.Tensor, "A B L_atom L_atom d_pair_atom"],
     ]:
         """Forward pass."""
-        atom_single_init, atom_pair_init = init_atom_features(reference)
+        atom_single_init, atom_pair_init = init_atom_features(
+            reference,
+            use_chemistry=self.shared_config.use_reference_chemistry,
+        )
         atom_to_token_idx_map = scheme.atom_to_token_idx_map
 
         if self.use_checkpoint:

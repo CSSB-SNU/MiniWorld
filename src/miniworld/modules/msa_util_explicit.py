@@ -46,7 +46,14 @@ def init_token_single_msa_explicit(
     profile32_to_fp_index: torch.Tensor,    # (32,), long
     token_type_is_fp_index: bool = True,
     dtype: torch.dtype = torch.float32,
+    profile_in_embedding_space: bool = True,
 ) -> Float[torch.Tensor, "B L_token d_single_token_init"]:
+    """Token identity from the embedding table; profile optionally left as-is.
+
+    ``profile_in_embedding_space=False`` keeps ``msa.profile`` in its 32
+    canonical classes instead of projecting it through the table, matching what
+    the one-hot model does. Only the token identity then uses the table.
+    """
     device = msa.aligned_sequences.device
     emb = token_embedding.to(device)
     idx32 = profile32_to_fp_index.to(device).long()
@@ -57,13 +64,17 @@ def init_token_single_msa_explicit(
         token_ids = idx32[token_ids.clamp(0, idx32.numel() - 1)]
     token_fp = F.embedding(token_ids, emb).to(dtype=dtype) 
 
-    # 2) msa.profile (B, L, 32) -> fingerprint-space msa_profile (B, L, D_fp)
-    fp_rows_for_32 = emb.index_select(0, idx32)             # (32, D_fp)
-    msa_profile = torch.einsum(
-        "blc,cd->bld",
-        msa.profile.float(),
-        fp_rows_for_32,
-    ).to(device, dtype=dtype)
+    # 2) msa.profile (B, L, 32) -> fingerprint-space msa_profile (B, L, D_fp),
+    #    or kept in the 32 canonical classes when the MSA side is one-hot.
+    if profile_in_embedding_space:
+        fp_rows_for_32 = emb.index_select(0, idx32)             # (32, D_fp)
+        msa_profile = torch.einsum(
+            "blc,cd->bld",
+            msa.profile.float(),
+            fp_rows_for_32,
+        ).to(device, dtype=dtype)
+    else:
+        msa_profile = msa.profile.to(device, dtype=dtype)       # (B, L, 32)
 
     # 3) final token single init
     return torch.cat(

@@ -1,0 +1,7 @@
+defaults:
+  - model: small_wo_self_attention_noref
+  - train: v1.2.8
+  - data: prt_lig_residue
+  - diffuser: af3_like
+  - loss: default
+  - _self_

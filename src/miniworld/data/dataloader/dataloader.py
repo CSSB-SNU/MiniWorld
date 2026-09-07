@@ -44,7 +44,7 @@ from miniworld.data.pipeline.utils import (
 )
 from miniworld.utils.crop import crop_spatial_segment_token
 
-from .sampler import WeightedSampler
+from .sampler import SamplingMode, WeightedSampler
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -202,6 +202,9 @@ class BioMolData(torch.utils.data.Dataset):
 
         self.weights: list[float] = []
         self.items: list[DataBias] = []
+        # Item indices grouped by edge_id (cluster pair); used by the sweep
+        # sampler to round-robin over clusters instead of over rows.
+        self.groups: list[list[int]] = []
 
         self._load_items()
         # self._load_ccd_preprocessed()
@@ -313,6 +316,7 @@ class BioMolData(torch.utils.data.Dataset):
 
         self.items = []
         self.weights = []
+        self.groups = []
         for edge_id, items in edge_id_to_items.items():
             type_name = _get_type(edge_id)
             if self.config.sampler_config is not None:
@@ -323,6 +327,9 @@ class BioMolData(torch.utils.data.Dataset):
                 )
             else:
                 weights = 1.0 / len(items)
+            self.groups.append(
+                list(range(len(self.items), len(self.items) + len(items))),
+            )
             self.weights.extend([weights] * len(items))
             self.items.extend(items)
 
@@ -590,6 +597,10 @@ class BioMolData(torch.utils.data.Dataset):
         bucket_msa_multiple: int | None = None,
         bucket_token_multiple: int | None = None,
         bucket_atom_multiple: int | None = None,
+        sampling_mode: SamplingMode = "iid",
+        items_per_epoch: int | None = None,
+        quota_baseline: int = 1,
+        quota_ceiling: int | None = 1,
         **kwargs: object,
     ) -> DataLoader:
         """Create a distributed DataLoader with WeightedSampler."""
@@ -604,6 +615,11 @@ class BioMolData(torch.utils.data.Dataset):
             shuffle=shuffle,
             seed=seed,
             drop_last=drop_last,
+            mode=sampling_mode,
+            items_per_epoch=items_per_epoch,
+            groups=self.groups,
+            quota_baseline=quota_baseline,
+            quota_ceiling=quota_ceiling,
         )
 
         kwargs.pop("shuffle", None)

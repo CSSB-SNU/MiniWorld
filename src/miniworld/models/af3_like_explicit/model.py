@@ -21,6 +21,7 @@ from miniworld.modules.diffusion_module import (
 )
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
+from miniworld.modules.msa_util import init_msa
 from miniworld.modules.msa_util_explicit import (
     # apply_template_dropout,
     init_msa_explicit,
@@ -173,12 +174,20 @@ class Model(nn.Module):
         else:
             n_recycle = self.n_recycle_max
 
+        # "onehot": MSA rows and the MSA profile stay in the 32 canonical
+        # classes, as in the one-hot model; only the token identity is looked up
+        # in the embedding table. An MSA row is canonical by construction, so a
+        # per-CCD lookup there is meaningless -- and the token identity still
+        # reaches the MSA module through single_to_msa(token_single_input).
+        msa_onehot = self.config.token_embedding.msa_encoding == "onehot"
+
         token_single_msa = init_token_single_msa_explicit(
             msa,
             sequence,
             token_embedding=self.token_embedding,
             profile32_to_fp_index=self.profile32_to_fp_index,
             dtype=torch.bfloat16,
+            profile_in_embedding_space=not msa_onehot,
         )
 
         # input feature embedding
@@ -200,12 +209,19 @@ class Model(nn.Module):
         token_single_init_bf16 = token_single_init.to(torch.bfloat16)
         token_single_input_bf16 = token_single_input.to(torch.bfloat16)
         # Trunk forward with recycling
-        msa_feat, msa_mask = init_msa_explicit(
-            msa,
-            token_embedding=self.token_embedding,
-            profile32_to_fp_index=self.profile32_to_fp_index,
-            dtype=torch.bfloat16,
-        )
+        if msa_onehot:
+            msa_feat, msa_mask = init_msa(
+                msa,
+                num_res_class=self.config.shared.num_res_class,
+                dtype=torch.bfloat16,
+            )
+        else:
+            msa_feat, msa_mask = init_msa_explicit(
+                msa,
+                token_embedding=self.token_embedding,
+                profile32_to_fp_index=self.profile32_to_fp_index,
+                dtype=torch.bfloat16,
+            )
         # template_feat = init_template_feat(template, dtype=torch.bfloat16)
         # template_feat = apply_template_dropout(
         #     template_feat,

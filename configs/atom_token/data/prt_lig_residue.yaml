@@ -1,0 +1,79 @@
+DB_PATH: /public_data/bsoohyuncd/
+train_db:
+  cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_train_onlyPrtLig.lmdb
+  a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb
+  # Final refined set (rebuilt 2026-09-07): artifact ligand clusters removed,
+  # covalently bonded cL chains exempt from chain stripping. 2,164,787 rows /
+  # 56,651 protein-ligand cluster pairs, so one sweep cycle is 22.1 epochs at
+  # train_item 2560.
+  edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/metadata/train_edge_node_onlyPrtLig.tsv
+
+# NOTE: this is the protein-DNA validation split (634 rows / 156 cluster pairs),
+# not protein-ligand -- there is no onlyPrtLig valid LMDB yet. The valid loss
+# therefore measures protein-DNA interfaces while training is entirely
+# protein-ligand, so it tracks general structure quality rather than the task.
+# Swap both paths to *_onlyPrtLig once that split exists.
+valid_db:
+  cif_db_path: ${..DB_PATH}/BioMolDB_20260224/cif_attached_valid_2_onlyPrtDna.lmdb
+  a3m_db_path: ${..DB_PATH}/BioMolDB_20260224/a3m.lmdb
+  edge_id_to_bias_path: ${..DB_PATH}/BioMolDB_20260224/metadata/valid2_edge_node_onlyPrtDna.tsv
+
+crop:
+  max_tokens: 384
+  max_atoms: 4096
+  min_segment_size: 1
+  max_segment_size: 41
+
+  monomer_only: false
+  remain_invalid_tokens: false
+
+  bucket_msa_size: 128
+  bucket_token_size: 128
+  bucket_atom_size: 1024
+
+msa:
+  max_msa_depth: 384
+  missing_policy: "gap"
+
+tokenizer:
+  level: "residue"
+
+# train_edge_node_onlyPrtLig.tsv holds 967,734 rows over 36,794 cluster pairs,
+# of which 964,683 rows / 36,225 pairs are protein_ligand. The remaining 3,051
+# rows are antibody-ligand (2,933) and D-protein-ligand (118), which _get_type
+# files under etc_interface; zero drops them from the pool entirely.
+#
+# Only relative values matter, and only one type is non-zero here, so every
+# surviving pair carries identical mass and the sweep order is a uniform
+# shuffle of the 36,225 pairs. Set etc_interface to ~0.0075 to keep the
+# antibody-ligand interfaces at roughly 3.6% of the stream instead.
+sampler:
+  antibody_antibody: 0.0
+  antibody_nucleic_acid: 0.0
+  antibody_protein: 0.0
+
+  DNA_DNA: 0.0
+  DNA_RNA: 0.0
+  RNA_RNA: 0.0
+  NA_NA: 0.0
+
+  protein_nucleic_acid: 0.0
+  protein_protein: 0.0
+  protein_ligand: 1.0
+
+  ligand_ligand: 0.0
+
+  etc_interface: 0.0
+  sole: 0.0
+
+  # Round-robin over cluster pairs instead of re-drawing rows every epoch.
+  # One cycle = 36,225 items = 14.2 epochs at train_item 2560; every pair is
+  # visited exactly once per cycle and no row repeats until its pair's other
+  # rows have been used.
+  mode: "sweep"
+  quota_baseline: 1
+  quota_ceiling: 1
+
+  # Validation on a pinned subset so the metric is comparable across epochs
+  # (iid re-draws a different valid_item rows at every eval).
+  valid_mode: "fixed"

@@ -247,6 +247,10 @@ def train(  # noqa: PLR0912, PLR0915
         bucket_msa_multiple=cfg.train.bucket_msa_multiple,
         bucket_token_multiple=cfg.train.bucket_token_multiple,
         bucket_atom_multiple=cfg.train.bucket_atom_multiple,
+        sampling_mode=cfg.data.sampler.mode,
+        items_per_epoch=cfg.train.train_item,
+        quota_baseline=cfg.data.sampler.quota_baseline,
+        quota_ceiling=cfg.data.sampler.quota_ceiling,
     )
 
     valid_dataset = BioMolData(valid_data_config)
@@ -257,6 +261,12 @@ def train(  # noqa: PLR0912, PLR0915
         drop_last=True,
         batch_size=cfg.train.num_batch,  # or 1
         num_workers=0,
+        sampling_mode=cfg.data.sampler.valid_mode,
+        items_per_epoch=cfg.train.valid_item,
+        # Validation pins a subset of *rows*, not one row per cluster: the
+        # valid split can hold fewer clusters than valid_item (the prt_lig one
+        # has 156 pairs for 634 rows), which would silently shorten the window.
+        quota_ceiling=None,
     )
     world_size = fabric.world_size
     train_num_item = cfg.train.train_item // world_size

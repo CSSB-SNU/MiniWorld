@@ -60,6 +60,28 @@ class SamplerConfig(BaseModel):
     etc_interface: float = 0.5
     sole: float = 0.5
 
+    # How an epoch's items are picked out of the dataset.
+    #   "iid"   -- one weighted permutation of the rows per epoch (historical
+    #              behaviour): epochs are independent draws, so they overlap and
+    #              coverage is left to chance.
+    #   "sweep" -- round-robin over cluster pairs without replacement across
+    #              epochs: every pair is visited once per cycle, and a row is
+    #              not repeated until its pair's other rows have been used.
+    mode: Literal["iid", "sweep"] = "iid"
+    valid_mode: Literal["iid", "fixed"] = "iid"
+
+    # sweep only. A cycle hands out max(quota_baseline, min(m_g, quota_ceiling))
+    # items per pair, where m_g is the number of rows the pair holds.
+    #   baseline=1, ceiling=1     -- one row per pair per cycle; equal exposure
+    #                                for every pair (matches the `iid` weights).
+    #   ceiling=None              -- every row of every pair per cycle; full row
+    #                                coverage, but exposure becomes proportional
+    #                                to pair size, so redundant pairs dominate.
+    #   baseline=B, ceiling=C     -- in between: rare pairs keep B items, large
+    #                                pairs are capped at C.
+    quota_baseline: int = 1
+    quota_ceiling: int | None = 1
+
 
 class CropConfig(BaseModel):
     """Configuration for cropping strategy."""
@@ -134,3 +156,14 @@ class TokenEmbeddingConfig(BaseModel):
 
     embedding_path: Path
     vocab_path: Path | None = None
+
+    # How the MSA is encoded, independently of the token identity channel.
+    #   "embedding" -- MSA rows and the MSA profile are mapped through the
+    #                  embedding table (historical behaviour).
+    #   "onehot"    -- MSA rows and the profile stay in the 32 canonical
+    #                  classes, exactly as the one-hot model encodes them, and
+    #                  only the token identity uses the embedding table. An MSA
+    #                  row is a canonical residue by construction, so anything
+    #                  non-standard there is already UNK; routing it through a
+    #                  per-CCD table buys nothing.
+    msa_encoding: Literal["embedding", "onehot"] = "embedding"
