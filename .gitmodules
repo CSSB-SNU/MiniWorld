@@ -1,3 +1,3 @@
 [submodule "team-gm"]
 	path = libs/team-gm
-	url = git@github.com:CSSB-SNU/team-gm.git
+	url = https://github.com/bsoohyuncd/team-gm-local-fix.git
