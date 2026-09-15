@@ -193,7 +193,7 @@ class RefinementSpec(BaseModel):
     Companion mode to :class:`FlexibleDockingSpec`: rather than warm-starting
     from per-combine-group sub-structures with max ``sigma_R`` / ``sigma_T``,
     the solver starts from a **single CIF covering every query chain** at a
-    small ``start_sigma_y`` (deep phase 2 by default). The per-step R/T
+    small ``start_sigma_y`` (deep phase 1b by default). The per-step R/T
     noise stays small, so the input pose is preserved with only a light
     perturbation, and the model denoises whatever sloppiness the rough
     structure carried.
@@ -290,7 +290,7 @@ class InferenceSpec(BaseModel):
           full-noise sampling. Mutually exclusive with :attr:`refinement`.
       refinement: optional warm-start spec for refining a single rough
           full-structure input. Takes one CIF that covers every chain,
-          plus a small ``start_sigma_y`` (default 1.0 — deep phase 2);
+          plus a small ``start_sigma_y`` (default 1.0 — deep phase 1b);
           the solver perturbs the input lightly and denoises. See
           :class:`RefinementSpec`. ``None`` (default) -> standard
           full-noise sampling. Mutually exclusive with

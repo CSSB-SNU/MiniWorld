@@ -1,0 +1,16 @@
+# v1.0.1 phase-2b loss — AF3 "fine tuning" stage (crop 768), bond loss ON.
+#
+# AF3 supplement Eq.6 / Table 6: alpha_bond is 0 for regular (initial) training and 1 for
+# both fine-tuning stages ("Polymer-ligand bond loss weight" = 0 / 1 / 1 / 1). Our phase 2a
+# is AF3's initial-training stage and phase 2b its fine-tuning stage, so 2b turns it on.
+#
+# smooth lDDT stays OFF. AF3 also turns it off from fine tuning 1 onward, and in this line
+# we dropped it entirely: it cost +8% epoch time (2280 -> 2467 s) for no demonstrated gain,
+# so the v1.0.1 setup (no smooth lDDT anywhere) was kept and the budget spent on epochs.
+diffusion_loss: 4.0          # AF3 Eq.15 alpha_diffusion = 4
+# AF3 Eq.4 per-atom up-weighting (unchanged across the whole line).
+alpha_dna: 5.0
+alpha_rna: 5.0
+alpha_ligand: 10.0
+smooth_lddt_loss: 0.0        # OFF everywhere in the v1.0.1 line
+bond_loss: 1.0               # ON: AF3 Table 6 bond loss weight = 1 in fine tuning

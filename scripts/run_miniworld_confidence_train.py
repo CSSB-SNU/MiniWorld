@@ -1,13 +1,18 @@
-"""Training script for MiniWorld phase3.
+"""Training script for MiniWorld phase 3 (confidence head).
 
-Attach an EDM diffusion module on top of the FROZEN phase2 mini-SWA trunk and
-train ONLY the diffusion module (diffusion loss only). The trunk is loaded from
-the epoch-900 checkpoint and frozen via the client's ``param_policy``.
+Attach a confidence head (pLDDT / PAE / PDE) on top of the FROZEN phase 2 structure
+model (trunk + EDM diffusion) and train ONLY the confidence head (cross-entropy vs
+targets from a predicted structure). The structure model is loaded from a phase 2
+checkpoint and frozen via the client's ``param_policy``.
+
+The predicted structure is produced by a FULL frozen diffusion rollout inside
+``confidence.client.Client.predict_structure`` — the diffusion-step seam (step count /
+inline-vs-precomputed cache is an open decision).
 
 Usage:
-    torchrun --nproc_per_node=1 scripts/run_miniworld_phase3_train.py train \
-        --config configs/miniworld/large_H100_phase3.yaml \
-        --ckpt  /path/to/epoch=0900.pt \
+    torchrun --nproc_per_node=1 scripts/run_miniworld_confidence_train.py train \
+        --config configs/miniworld/phase3b_confidence.yaml \
+        --ckpt  /path/to/phase2b_last.pt \
         --no-ckpt-strict
 """
 
@@ -45,7 +50,7 @@ from miniworld.configs import (
 from miniworld.data.dataloader import BioMolDBV2Config
 from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.data.features.batch import Batch
-from miniworld.models.phase3 import Client, Model
+from miniworld.models.confidence import Client, Model
 from miniworld.training import trainable_parameters
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
@@ -123,7 +128,7 @@ def _bucket_values(max_value: int, multiple: int | None) -> list[int]:
 
 
 def _find_recycle_model(module: torch.nn.Module) -> Model:
-    """Unwrap Fabric/compile wrappers to reach the raw phase3 model."""
+    """Unwrap Fabric/compile wrappers to reach the raw phase 2 model."""
     current: object = module
     visited: set[int] = set()
 
@@ -139,7 +144,7 @@ def _find_recycle_model(module: torch.nn.Module) -> Model:
         else:
             break
 
-    msg = f"Could not unwrap raw phase3 model from {type(module).__name__}."
+    msg = f"Could not unwrap raw phase 2 model from {type(module).__name__}."
     raise RuntimeError(msg)
 
 
@@ -439,14 +444,14 @@ def cli():
 @click.option(
     "--ckpt",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    help="phase2 trunk checkpoint (epoch=0900.pt) to load + freeze",
+    help="phase 2b checkpoint (trunk + diffusion) to load + freeze",
 )
 @click.option("--job-name", type=str, help="Job name")
 @click.option(
     "--ckpt-strict/--no-ckpt-strict",
     default=False,
     show_default=True,
-    help="Exact model/optimizer match. Phase3 loads only trunk keys -> use --no-ckpt-strict.",
+    help="Exact model/optimizer match. phase 3 loads only trunk+diffusion keys -> use --no-ckpt-strict.",
 )
 @click.argument("overrides", type=str, nargs=-1)
 def train(  # noqa: PLR0912, PLR0915
@@ -505,7 +510,7 @@ def train(  # noqa: PLR0912, PLR0915
             # EXPERIMENTAL: cudagraph the FROZEN trunk conditioning path with the
             # requested inductor mode (reduce-overhead / cudagraph-trees) and
             # compile only the trainable diffusion module normally. The trunk
-            # outputs are cloned in Phase3Model.forward before the grad path, so a
+            # outputs are cloned in DiffusionModel.forward before the grad path, so a
             # later cudagraph replay never overwrites a tensor the grad path reads.
             client.model.diffusion_module.compile(dynamic=False)
             client.model.enable_trunk_cudagraph(trunk_compile_mode)
@@ -524,8 +529,8 @@ def train(  # noqa: PLR0912, PLR0915
     if fabric.is_global_zero:
         OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
         if cfg.train.use_wandb:
-            # Phase3 is a NEW run: keep a stable id in THIS run_dir so preempt/
-            # resume appends to the same phase3 run (never reuse a phase2 id).
+            # phase 2 is a NEW run: keep a stable id in THIS run_dir so preempt/
+            # resume appends to the same phase 2 run (never reuse a phase 1b id).
             wandb_id_file = Path(cfg.train.run_dir) / "wandb_run_id.txt"
             if wandb_id_file.exists():
                 wandb_id = wandb_id_file.read_text().strip()
@@ -581,11 +586,10 @@ def train(  # noqa: PLR0912, PLR0915
             client.load_state_dict(state_dict, strict=ckpt_strict)
         else:
             # policy ON: maybe_apply_param_policy already restored model weights + epoch/step.
-            # ALSO resume the trainable (diffusion) optimizer + LR scheduler so Adam momentum
-            # and the warmup/decay schedule CONTINUE across requeue instead of resetting every
-            # restart (the schedule is relative to the phase3 optimizer, which starts at step 0
-            # when phase3 begins). Skipped on the epoch-900 SEED, whose optimizer is over the
-            # now-frozen trunk params and will not match the diffusion optimizer.
+            # ALSO resume the trainable (confidence-head) optimizer + LR scheduler so Adam
+            # momentum and the warmup/decay schedule CONTINUE across requeue instead of
+            # resetting every restart. Skipped on the phase 2 SEED, whose optimizer is over
+            # the diffusion params and will not match the confidence-head optimizer.
             opt_sd = state_dict.get("optimizer_state_dict")
             sch_sd = state_dict.get("scheduler_state_dict")
             if opt_sd is not None:
@@ -594,11 +598,11 @@ def train(  # noqa: PLR0912, PLR0915
                     if sch_sd is not None and client.scheduler is not None:
                         client.scheduler.load_state_dict(sch_sd)
                     client.logger.info(
-                        "[resume] restored diffusion optimizer + LR scheduler (continuing schedule)",
+                        "[resume] restored confidence optimizer + LR scheduler (continuing schedule)",
                     )
                 except (ValueError, KeyError, RuntimeError) as e:
                     client.logger.info(
-                        "[resume] seed ckpt (trunk optimizer) -> fresh diffusion optimizer/scheduler (%s)",
+                        "[resume] seed ckpt (phase 2 optimizer) -> fresh confidence optimizer/scheduler (%s)",
                         type(e).__name__,
                     )
 
@@ -658,7 +662,15 @@ def train(  # noqa: PLR0912, PLR0915
             "build mode" if _capture_cache else "timeout-only",
         )
 
-    _warmup_bucket_shapes(client, cfg)
+    # phase 3 warmup: the synthetic-bucket warmup calls client.training_step, which for
+    # phase 3 runs a FULL frozen diffusion rollout (predict_structure) — far too heavy to
+    # do per bucket shape, and its cost/shape depends on the still-open diffusion-step
+    # decision. Skip by default; the 768 trunk/diffusion autotune then happens on the
+    # first real training step (bounded by MW_COMPILE_TIMEOUT). Set MW_WARMUP=1 to force it.
+    if os.getenv("MW_WARMUP", "0").strip().lower() in {"1", "true", "yes", "on"}:
+        _warmup_bucket_shapes(client, cfg)
+    else:
+        client.logger.info("[warmup] skipped (phase 3 default; set MW_WARMUP=1 to enable)")
 
     if _capture_cache:
         from miniworld_engine.autotune import capture

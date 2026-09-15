@@ -1,0 +1,90 @@
+# v1.0.1 PHASE 2b — final leg of the diffusion stage at the full L=768 crop, +20 epochs
+# continuing phase 2a (counter continues: num_epoch 100 = 80 + 20).
+#
+# This is AF3's FINE-TUNING stage, so loss: diffusion_v101_ft turns the AF3 Eq.5
+# polymer-ligand BOND LOSS on (alpha_bond = 1, per AF3 Table 6). smooth lDDT stays off
+# across the whole v1.0.1 line. See docs/pipeline.md.
+# for 20 more epochs (epoch counter continues, so num_epoch = 50 + 20 = 70).
+# Same crop-curriculum shape as phase 1 (1a at 384 -> 1b at 768). See docs/pipeline.md.
+#
+# Resume FULL state (weights + optimizer + scheduler + epoch/step) from the phase-2a
+# checkpoint via --ckpt, so the LR schedule and epoch counter carry over:
+#   runs/v1.0.1/phase2a/large_diffusion_L384/.../checkpoints/last.pt
+#
+# The trunk stays FROZEN (param_policy default: freeze_loaded); only diffusion_module and
+# to_token_single_trunk train, exactly as in 2a.
+#
+# Crop: 768-token / 8192-atom — matches the crop the trunk was trained at in phase 1b. The
+# frozen trunk runs under no_grad (no backward activations), so 768 is cheap on the trunk
+# side; the atom-level diffusion head at 768 x num_augment is the memory driver.
+#
+# NEW wandb run: run_dir is phase-2b-specific, so wandb_run_id.txt is fresh. Pass a fresh
+# --job-name at launch.
+defaults:
+  - model: large_swa_pf48_diffusion
+  - train: default
+  - data: H100_default
+  - loss: diffusion_v101_ft
+  - _self_
+
+data:
+  crop:
+    max_tokens: 768      # match the phase-1b trunk crop (2a ran at 384)
+    max_atoms: 8192      # 2x atoms
+
+train:
+  comment: "v1.0.1-phase2b-diffusion-large-L768"
+  run_dir: "runs/v1.0.1/phase2b/large_diffusion_L768"
+  num_epoch: 100               # 2a reached 80; +20 more (counter continues)
+  bucket_token_multiple: 768   # single bucket = 768 crop
+  bucket_atom_multiple: 8192
+  # torch.compile ON: phase 1 compiled the same trunk fine (plain dynamic=False); ~30% speedup.
+  # Only the new diffusion module is newly compiled. If a diffusion-module compile error shows
+  # up in warmup, set this False to fall back to eager (the CPU/eager path is verified).
+  compile: True
+  # EXPERIMENTAL, default "" = OFF (whole-model compile(dynamic=False), current behaviour).
+  # When set to "reduce-overhead" AND compile: True, the FROZEN trunk conditioning path is
+  # compiled with inductor cudagraph-trees (its outputs are cloned before the grad diffusion
+  # path) while the diffusion module keeps the normal compile(dynamic=False). This targets a
+  # speedup on the static-shape frozen trunk but MUST be validated on GPU first (cudagraph
+  # capture + the "overwritten CUDAGraphs output" risk seen in phase-1 whole-model attempts).
+  trunk_compile_mode: ""
+  optimizer: "Adam"
+  # LR for a from-scratch diffusion head on a frozen trunk.
+  max_lr: 5e-3
+  min_lr: 1e-4
+  warmup_steps: 1000
+  decay_steps: 5e4
+  num_augment: 48
+  use_wandb: True
+  wandb_project: "MiniWorld"
+
+  # Load + FREEZE the phase-1b trunk from --ckpt; train only the diffusion
+  # params. freeze_loaded resolves per-parameter against the checkpoint.
+  param_policy:
+    enabled: true
+    # Trunk (present in the 2a ckpt) -> freeze_loaded -> loaded + FROZEN.
+    default: freeze_loaded
+    # Diffusion head -> load_existing takes precedence over the freeze_loaded default, so
+    # it stays TRAINABLE. Critical for autoscale requeue: a phase-2 checkpoint contains the
+    # diffusion params too, and without this they'd be frozen (freeze_loaded) on resume and
+    # training would silently stop. On the FIRST launch they're absent from the epoch-900
+    # ckpt -> load_existing falls back to reinit + train.
+    load_existing:
+      - diffusion_module
+      - to_token_single_trunk
+
+# EDM diffuser (AF3 preconditioning) — mirrors miniworld.models.default_client.
+diffuser:
+  type: EDM
+  seed: 0
+  method: AF3
+  scheduler:
+    method: AF3
+    P_mean: -1.2
+    P_std: 1.5
+    sigma_data: 16.0
+    sigma_max: 160.0
+    sigma_min: 4.0e-4
+    rho: 7.0
+    use_time_augmentation: true

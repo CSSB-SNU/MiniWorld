@@ -1,14 +1,14 @@
-# Phase3 model — FROZEN phase2 mini-SWA trunk (large: pf48 / msa4) + EDM diffusion head.
+# phase 2 model — FROZEN phase 1b mini-SWA trunk (large: pf48 / msa4) + EDM diffusion head.
 #
-# Trunk block is byte-for-byte the phase2 large_swa_pf48 trunk (so the epoch-900
+# Trunk block is byte-for-byte the phase 1b large_swa_pf48 trunk (so the epoch-900
 # model_state_dict loads into the inherited MiniSWAModel submodules with no
 # missing/unexpected keys), PLUS:
-#   - shared.n_distogram_bins: 96   (phase2 trained with 96; keeps distogram_head
-#     shape-compatible so it loads cleanly even though phase3 does not use it)
+#   - shared.n_distogram_bins: 96   (phase 1b trained with 96; keeps distogram_head
+#     shape-compatible so it loads cleanly even though phase 2 does not use it)
 #   - diffusion:  ESMFold2 3D-RoPE atom DiT (atom_swa) + AF3 token DiT (token_dit)
 #     + DiffusionConditioning (dit_cond). atom_dit is only used if atom_swa is null.
 #
-# Selected by the phase3 top-level config's `model: large_swa_pf48_diffusion`.
+# Selected by the phase 2 top-level config's `model: large_swa_pf48_diffusion`.
 
 shared:
   d_single: 384
@@ -21,7 +21,7 @@ shared:
   d_time: 256
   r_max: 32
   s_max: 2
-  n_distogram_bins: 96      # phase2 trained with 96 CB-distogram bins
+  n_distogram_bins: 96      # phase 1b trained with 96 CB-distogram bins
   num_res_class: 32
   implementation: miniworld_engine
   use_checkpoint: False
@@ -38,7 +38,7 @@ input_feat_embbeder:
 
 
 # ESMFold2-style atom SWA + 3D-RoPE for the TRUNK input embedder (global attention
-# via the very large window). Identical to phase2 large_swa_pf48.
+# via the very large window). Identical to phase 1b large_swa_pf48.
 atom_swa:
   enabled: true
   swa_window_size: 1000000
@@ -105,6 +105,11 @@ diffusion:
     d_pair: ${...shared.d_pair}             # 128
     n_head: 16
     n_block: 24
+    # QK-norm (RMSNorm on q and k) — part of the v1.0.0 baseline. The atom DiT
+    # (rope_swa) already defaults to True; the trunk pairformer stays False because its
+    # weights are frozen phase-1b checkpoints and adding norms would break key compat.
+    # The token DiT is trained from scratch in phase 2a, so this costs no compatibility.
+    use_qk_norm: true
     n_checkpoint_segments: 24   # per-block grad-ckpt (fp32 diffusion memory at num_augment 48)
     implementation: miniworld_engine
 

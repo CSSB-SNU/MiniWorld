@@ -522,6 +522,15 @@ class ComplexMSA:
             seq_blocks.append(seq_block)
             del_blocks.append(del_block)
 
+        # Column span of each chain inside the stacked alignment. Row filtering
+        # below never touches columns, so these stay valid for self.sequence and
+        # are what per-chain subsampling needs (see sample(randomize=True)).
+        spans, _c = {}, 0
+        for _key, _blk in zip(MSAs, seq_blocks, strict=True):
+            spans[_key] = (_c, _c + _blk.shape[1])
+            _c += _blk.shape[1]
+        self.chain_col_spans = spans
+
         full_seq = np.concatenate(seq_blocks, axis=1)
         full_del = np.concatenate(del_blocks, axis=1)
 
@@ -566,24 +575,92 @@ class ComplexMSA:
         self.num_of_unpaired = self.sequence.shape[0] - filtered_paired_num_of_seqs
         self.total_depth = self.num_of_paired + self.num_of_unpaired
 
+    def _subsample_no_pairing(
+        self,
+        depth: int,
+        rng: np.random.Generator,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Pick each chain's homologs independently, then re-stack positionally.
+
+        Sampling rows of the stacked alignment uniformly is wrong here, and badly
+        so. The stack is positional (row r = every chain's r-th homolog) and is as
+        tall as the DEEPEST chain, with shallower chains holding query/gap fill
+        past their own depth. A uniform draw therefore (a) keeps only
+        depth/total of a shallow chain's real homologs -- on 7xld, chain 0 went
+        from 2047 to ~460 of its 3665, and on 8tuz a chain with only 89 homologs
+        in the entire pool kept 12-28 of them -- and (b) throws away the close
+        homologs, because a3m rows are ordered best-first and a uniform sample is
+        overwhelmingly remote hits (7xld chain 0: rows above 70% identity went
+        4 -> 0, chain 1 mean identity 0.507 -> 0.36). Both chains' alignments
+        collapse and the trunk puts the interface in the wrong place.
+
+        AF3 shuffles uniformly too, but over a set where every row is a real
+        homolog and each chain was cropped best-first to its own budget
+        (msa_crop_size, features.py), so the operation is not the same one.
+
+        Under ``no_pairing`` the row-to-row correspondence between chains is
+        arbitrary by construction, so each chain can choose its own homologs
+        independently. Every chain therefore keeps its full available depth while
+        WHICH homologs it contributes still varies with the rng.
+        """
+        length = self.sequence.shape[1]
+        fill = (
+            self.sequence[0]
+            if self.missing_policy == "query"
+            else np.full(length, GAP_IDX, dtype=self.sequence.dtype)
+        )
+        out_seq = np.repeat(fill[None], depth, axis=0)
+        out_hd = np.zeros((depth, length), dtype=self.has_deletion.dtype)
+        out_dv = np.zeros((depth, length), dtype=self.deletion_value.dtype)
+        # Row 0 is the query and is never sampled over.
+        out_seq[0] = self.sequence[0]
+        out_hd[0] = self.has_deletion[0]
+        out_dv[0] = self.deletion_value[0]
+
+        for key, (lo, hi) in self.chain_col_spans.items():
+            rows = np.flatnonzero(np.asarray(self.msa_indices[key]) != -1)
+            rows = rows[rows != 0]
+            if rows.size == 0:
+                continue
+            if rows.size > depth - 1:
+                rows = rng.choice(rows, depth - 1, replace=False)
+            rows = np.sort(rows)  # keep better hits first, as the trunk saw
+            dst = np.arange(1, 1 + rows.size)
+            out_seq[dst, lo:hi] = self.sequence[rows, lo:hi]
+            out_hd[dst, lo:hi] = self.has_deletion[rows, lo:hi]
+            out_dv[dst, lo:hi] = self.deletion_value[rows, lo:hi]
+
+        return np.arange(depth, dtype=int), out_seq, out_hd, out_dv
+
     def sample(
         self,
         max_msa_depth: int = 256,
         ratio: tuple[float, float] = (0.5, 0.5),
         rng: np.random.Generator | None = None,
+        randomize: bool = False,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Randomly sample sequences from the complex MSA.
 
-        ``no_pairing`` mode skips the random draw and takes the first
+        ``no_pairing`` mode normally skips the random draw and takes the first
         ``max_msa_depth`` rows of :attr:`sequence` straight off the top —
-        i.e. each chain's top-N a3m hits, lined up positionally. No
-        species pairing, no shuffling.
+        i.e. each chain's top-N a3m hits, lined up positionally. No species
+        pairing, no shuffling.
+
+        ``randomize=True`` instead draws ``max_msa_depth - 1`` rows uniformly
+        without replacement from rows ``[1, N)`` and keeps them in their original
+        order behind the query at row 0. Used at inference to give each seed a
+        different alignment: the top-N truncation is identical for every seed, so
+        without this a 5-seed ensemble sees one fixed MSA and the seeds differ only
+        in the reference conformers and the diffusion noise.
         """
         if rng is None:
             rng = np.random.default_rng()
 
         if getattr(self, "pairing_mode", "mixed") == "no_pairing":
-            n = min(max_msa_depth, self.sequence.shape[0])
+            total = int(self.sequence.shape[0])
+            n = min(max_msa_depth, total)
+            if randomize and n > 1:
+                return self._subsample_no_pairing(n, rng)
             idx = np.arange(n, dtype=int)
             return (
                 idx,
@@ -654,14 +731,16 @@ def sample_msa(
     msa: ComplexMSA,
     max_msa_depth: int,
     rng: np.random.Generator | None = None,
-    sample_depth: Literal["uniform", "fixed"] = "uniform",
+    sample_depth: Literal["uniform", "fixed", "random"] = "uniform",
 ) -> MSAFeatures:
     """Sample and process MSA for model input.
 
     ``sample_depth="uniform"`` (AF3-style, default) draws the per-item depth
     k ~ Uniform[1, min(n_available, max_msa_depth)] so the model sees a range
     of MSA depths. ``sample_depth="fixed"`` always requests max_msa_depth
-    (legacy behavior).
+    (legacy behavior). ``sample_depth="random"`` also requests max_msa_depth but
+    draws WHICH rows at random (query kept), so two rngs give two different
+    alignments of the same depth -- the inference-side ensemble knob.
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -681,6 +760,7 @@ def sample_msa(
     _, aligned_sequences, has_deletion, deletion_value = msa.sample(
         effective_depth,
         rng=rng,
+        randomize=sample_depth == "random",
     )
     n_seq, _ = aligned_sequences.shape
     mask = np.ones((n_seq), dtype=np.float32)

@@ -1,22 +1,22 @@
-"""Inference / validation for phase3 (frozen mini-SWA trunk + EDM diffusion head).
+"""Inference / validation for phase 2 (frozen mini-SWA trunk + EDM diffusion head).
 
-Runs the phase3 model's EDM diffusion solver (:meth:`phase3.Client.inference`)
+Runs the phase 1b model's EDM diffusion solver (:meth:`diffusion.Client.inference`)
 over a dataset and, for each item, samples ``--num-samples`` structures, scores
 best-of-N RMSD / lDDT against the ground truth, and writes predicted + GT CIFs.
 
-This is the EDM/phase3 analogue of ``run_miniworld_inference.py validate`` (which
-targets the XPred-decoupled *miniworld* model); phase3 uses the AF3 EDM solver, so
-it needs its own entrypoint. It parses the SAME top-level phase3 config used for
-training (e.g. ``configs/miniworld/large_H100_phase3.yaml``) — the evaluation set
+This is the EDM/phase 2 analogue of ``run_miniworld_inference.py validate`` (which
+targets the XPred-decoupled *miniworld* model); phase 2 uses the AF3 EDM solver, so
+it needs its own entrypoint. It parses the SAME top-level phase 2 config used for
+training (e.g. ``configs/miniworld/phase2b_diffusion.yaml``) — the evaluation set
 is ``data.train_db``; point it at a held-out DB via a hydra override, e.g.::
 
     torchrun --standalone --nproc_per_node=1 \
-        scripts/run_miniworld_phase3_inference.py validate \
-        --config configs/miniworld/large_H100_phase3.yaml \
-        --ckpt   logs/phase3/large_H100_diffusion_hlr/.../checkpoints/last.pt \
+        scripts/run_miniworld_diffusion_inference.py validate \
+        --config configs/miniworld/phase2b_diffusion.yaml \
+        --ckpt   runs/v1.0.0/phase2b/large_diffusion_L768/.../checkpoints/last.pt \
         --num-items 50 --num-samples 5 --timesteps 200
 
-EMA weights are used by default (``--use-ema``): the phase3 checkpoint stores the
+EMA weights are used by default (``--use-ema``): the phase 2 checkpoint stores the
 diffusion-head EMA; loading swaps it in automatically (frozen trunk stays as saved).
 """
 
@@ -53,7 +53,7 @@ from miniworld.data.features import Batch as _Batch
 from miniworld.data.inference import InferenceSpec, build_inference_batch
 from miniworld.data.io.to_cif import batch_to_cif
 from miniworld.loss import metrics
-from miniworld.models.phase3 import Client, Model
+from miniworld.models.diffusion import Client, Model
 
 torch.set_float32_matmul_precision("medium")
 torch.autograd.set_detect_anomaly(False)
@@ -78,7 +78,7 @@ def _db_config_variant(value: object) -> str:
 
 
 class DataConfig(BaseModel):
-    """Data config — mirrors the phase3 training script so the same YAML parses."""
+    """Data config — mirrors the phase 2 training script so the same YAML parses."""
 
     train_db: Annotated[
         Union[
@@ -94,7 +94,7 @@ class DataConfig(BaseModel):
 
 
 class Config(BaseModel):
-    """Top-level config — identical shape to the phase3 training config."""
+    """Top-level config — identical shape to the phase 2 training config."""
 
     data: DataConfig
     train: Client.TrainConfig
@@ -155,7 +155,7 @@ def cli():
 @click.option(
     "--output-dir",
     type=click.Path(path_type=Path),
-    default=Path("outputs/phase3_validation"),
+    default=Path("outputs/phase2_validation"),
     show_default=True,
     help="Root dir; results land in <output_dir>/<YYYY-MM-DD>/<HHMMSS>[_<job>]/.",
 )
@@ -207,7 +207,7 @@ def validate(  # noqa: PLR0913, PLR0915
     cfg.train.use_ema = use_ema
     cfg.train.seed = seed
     # param_policy is a training-time load/freeze mechanism; for inference we load
-    # the full phase3 state directly (trunk + diffusion), so disable it.
+    # the full phase 2 state directly (trunk + diffusion), so disable it.
     cfg.train.param_policy.enabled = False
     client = Client(
         Client.Config(
@@ -241,13 +241,13 @@ def validate(  # noqa: PLR0913, PLR0915
 
     client.setup(fabric=fabric)
 
-    # Load the phase3 checkpoint (trunk + diffusion). strict=False tolerates the
+    # Load the phase 2 checkpoint (trunk + diffusion). strict=False tolerates the
     # unused distogram_head / any harmless key drift; use_ema swaps in the EMA
     # diffusion weights via the ModelEMA callback's on_load_state_dict.
     state_dict = torch.load(ckpt, map_location="cpu")
     client.load_state_dict(state_dict, model_only=True, strict=False)
     client.logger.info(
-        "Loaded phase3 ckpt %s (epoch=%d, step=%d) use_ema=%s",
+        "Loaded phase 2 ckpt %s (epoch=%d, step=%d) use_ema=%s",
         ckpt, client.epoch, client.global_step, use_ema,
     )
 
@@ -279,7 +279,7 @@ def validate(  # noqa: PLR0913, PLR0915
 
     client.model.eval()
     client.logger.info(
-        "Start phase3 EDM inference: num_items=%d num_samples=%d timesteps=%d",
+        "Start phase 2 EDM inference: num_items=%d num_samples=%d timesteps=%d",
         num_items, num_samples, timesteps,
     )
 
@@ -291,10 +291,10 @@ def validate(  # noqa: PLR0913, PLR0915
         batch = raw_batch.to(device=client.device)
         name = str(batch.name[0])
 
-        # best-of-N: replicate the single item into num_samples independent draws.
-        sample_batch = batch.duplicate(num_samples)
+        # best-of-N: the client draws num_samples independent diffusion samples
+        # from one B=1 trunk pass (the trimul cute kernel is B=1 only).
         torch.manual_seed(seed * 100003 + batch_idx * 1009)
-        output = client.inference(sample_batch, timesteps=timesteps)
+        output = client.inference(batch, timesteps=timesteps, n_samples=num_samples)
 
         gt = batch.structure.atom_pos[0]
         atom_mask = batch.structure.atom_mask[0]
@@ -337,7 +337,7 @@ def validate(  # noqa: PLR0913, PLR0915
 
 
 # ---------------------------------------------------------------------------
-# FoldBench inference: run the phase3 model over FoldBench target specs.
+# FoldBench inference: run the phase 2 model over FoldBench target specs.
 # ---------------------------------------------------------------------------
 def _nullify_like(real: object, dummy: object) -> None:
     """Set ``dummy.<field> = None`` wherever ``real.<field>`` is None (recursive).
@@ -356,27 +356,76 @@ def _nullify_like(real: object, dummy: object) -> None:
             _nullify_like(rv, dv)
 
 
-def _pad_inference_batch(batch: Batch, mult: int = 8) -> Batch:
-    """Pad msa/token/atom dims up to a multiple of ``mult``.
+# Shape ladders for inference padding. Every distinct (token, atom) shape pays a
+# fresh Triton JIT + autotune grid search in each worker process -- measured at ~7
+# minutes, which on a 1,522-target sweep is 72% of the total wall time (a 28-token
+# target took 10.5 min, a 30-token one that happened to reuse a shape took 2.8).
+# Rounding up to a ladder collapses ~740 distinct shapes to ~23, so each worker pays
+# the compile cost ~23 times instead of once per target. The wasted compute from
+# over-padding is real but small next to that: the worst case is a target just above
+# a rung, and the rungs are tight where targets are dense.
+# Ladder chosen against the measured FoldBench shape distribution
+# (submits/phase2b/foldbench_shapes.csv, produced by scripts/foldbench_scan_shapes.py).
+# A finer ladder is not better: it cuts wasted compute only marginally while adding a
+# compile. Over the 1,522 targets, finer (14x14 rungs) gives 46 buckets at 1.64x mean
+# token^2 padding; this one gives 29 buckets at 1.74x -- 17 fewer compiles, ~4 min each
+# per worker, for ~6% more arithmetic.
+_TOKEN_BUCKETS = (128, 256, 384, 512, 768, 1024, 1536, 2048, 2560)
+_ATOM_BUCKETS = (1024, 2048, 4096, 6144, 8192, 12288, 16384, 24576, 32768, 49152)
+# MSA depth and template count are shape dimensions too, and they vary a lot more than
+# you would guess: a DNA-only target has msa_depth 1, an RNA one 192, a protein one
+# 2048, and template_number is 1 or 4. Leaving them unbucketed kept re-triggering the
+# autotune even for targets that shared a (token, atom) bucket -- measured: with a
+# multi-rung MSA ladder, targets at depth 1 / 192 / 2048 still cost 4.1 min each,
+# while same-depth ones cost 0.12. So collapse both to ONE value. Padding a depth-1
+# MSA up to 2048 is nearly free in absolute terms (those targets are tiny, and every
+# target big enough for the MSA module to matter already has the full 2048 rows).
+_MSA_BUCKETS = (2048,)
+_N_TEMPLATE = 4
+
+
+def _bucket(value: int, ladder: tuple[int, ...], mult: int = 8) -> int:
+    """Round ``value`` up to the next rung, or to a multiple of ``mult`` beyond it."""
+    for rung in ladder:
+        if value <= rung:
+            return rung
+    return _ceil_to_multiple(value, mult)
+
+
+def _pad_inference_batch(batch: Batch, mult: int = 8, *, bucket: bool = True) -> Batch:
+    """Pad msa/token/atom dims, to a shape ladder by default.
 
     The engine's fused GEMM kernels (quack ``gemm_act``) require the sequence stride
     divisible by 8; FoldBench targets are arbitrary sizes (training crops were bucket-
     aligned). Pads via collating with a bucket-sized ``Batch.empty`` dummy (masks mark
     the padding); the caller slices outputs back to the real atom count.
+
+    ``bucket=False`` falls back to the old behaviour (multiple of ``mult``), which
+    wastes no compute but gives almost every target its own shape.
     """
-    bt = _ceil_to_multiple(int(batch.token_length), mult)
-    ba = _ceil_to_multiple(int(batch.atom_length), mult)
-    bm = _ceil_to_multiple(int(batch.msa_depth), mult)
-    if bt == int(batch.token_length) and ba == int(batch.atom_length) and bm == int(batch.msa_depth):
+    if bucket:
+        bt = _bucket(int(batch.token_length), _TOKEN_BUCKETS, mult)
+        ba = _bucket(int(batch.atom_length), _ATOM_BUCKETS, mult)
+    else:
+        bt = _ceil_to_multiple(int(batch.token_length), mult)
+        ba = _ceil_to_multiple(int(batch.atom_length), mult)
+    if bucket:
+        bm = _bucket(int(batch.msa_depth), _MSA_BUCKETS, mult)
+        nt = max(_N_TEMPLATE, int(batch.template_number))
+    else:
+        bm = _ceil_to_multiple(int(batch.msa_depth), mult)
+        nt = int(batch.template_number)
+    if (bt == int(batch.token_length) and ba == int(batch.atom_length)
+            and bm == int(batch.msa_depth) and nt == int(batch.template_number)):
         return batch
     dummy = _Batch.empty(
-        n_temp=batch.template_number, msa_depth=bm, n_tokens=bt, n_atoms=ba,
+        n_temp=nt, msa_depth=bm, n_tokens=bt, n_atoms=ba,
     )
     _nullify_like(batch, dummy)
     return _Batch.collate_fn([batch, dummy])[0 : batch.batch_size]
 
 
-def _phase3_client_from_config(
+def _diffusion_client_from_config(
     config: Path,
     ckpt: Path,
     seed: int,
@@ -385,7 +434,7 @@ def _phase3_client_from_config(
     fabric: Fabric,
     overrides: list[str],
 ) -> Client:
-    """Build a phase3 Client, load the checkpoint (model-only, EMA-aware)."""
+    """Build a phase 2 Client, load the checkpoint (model-only, EMA-aware)."""
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=overrides)
     cfg = Config.model_validate(cfg)
@@ -419,14 +468,40 @@ def _phase3_client_from_config(
               default=Path("/home/psk6950/data/foldbench/inputs"), show_default=True,
               help="Root holding <target>/data.yaml (index mode).")
 @click.option("--output-dir", type=click.Path(path_type=Path),
-              default=Path("runs/foldbench/phase3"), show_default=True,
-              help="Prediction output dir (default: repo-relative runs/foldbench/phase3, gitignored).")
-@click.option("--timesteps", type=int, default=200, show_default=True)
-@click.option("--n-samples", type=int, default=5, show_default=True)
+              default=Path("runs/foldbench/phase2"), show_default=True,
+              help="Prediction output dir (default: repo-relative runs/foldbench/phase2, gitignored).")
+@click.option("--timesteps", default="200", show_default=True,
+              help="Denoising steps. Accepts a comma-separated list (e.g. '20,50,100,200') to "
+                   "sweep in ONE process: the shape-dependent kernel compile is paid once "
+                   "instead of once per value, and each value writes to "
+                   "<output-dir>/steps<N>/<target>/. A single value writes to "
+                   "<output-dir>/<target>/ as usual.")
+@click.option("--n-samples", type=int, default=5, show_default=True,
+              help="Diffusion samples drawn per seed (AF3/FoldBench: 5).")
+@click.option("--n-seeds", type=int, default=5, show_default=True,
+              help="Independent model seeds per target (AF3/FoldBench: 5). Each seed rebuilds\n                   the input features (reference-conformer SE3 randomisation, MSA subsample,\n                   template sampling) and runs its own trunk pass, then draws --n-samples\n                   diffusion samples from it. Total predictions = n_seeds * n_samples.")
+@click.option("--num-recycles", type=int, default=10, show_default=True,
+              help="Trunk recycle depth at inference (overrides model n_recycle_max). 10 is what "
+                   "FoldBench runs the published methods at (Protenix N_cycle=10, AF3 "
+                   "--num_recycles=10). Training samples n_recycle from 1..4, so anything here "
+                   "is an extrapolation; 20 is a bigger one and was never validated.")
 @click.option("--seed", type=int, default=0, show_default=True)
 @click.option("--use-ema/--no-ema", default=True, show_default=True)
 @click.option("--compile/--no-compile", "do_compile", default=False, show_default=True)
-@click.option("--max-msa-depth", type=int, default=256, show_default=True)
+@click.option("--max-msa-depth", type=int, default=2048, show_default=True,
+              help="Max MSA depth (match training: H100_default uses 2048).")
+@click.option("--sample-batch/--no-sample-batch", default=False, show_default=True,
+              help="Draw all --n-samples diffusion trajectories in one batched solver run "
+                   "rather than looping one at a time. Off by default until measured.")
+@click.option("--msa-subsample/--no-msa-subsample", default=True, show_default=True,
+              help="Per seed, draw WHICH max-msa-depth rows to keep at random (query always "
+                   "kept) instead of always taking the top rows. Depth is unchanged. Without "
+                   "it every seed gets the identical alignment, so a 5-seed ensemble only "
+                   "varies the reference conformers and the diffusion noise.")
+@click.option("--no-pairing-msa/--pairing-msa", "no_pairing_msa", default=True,
+              show_default=True,
+              help="Force no_pairing MSA to match training (pairing_mode: no_pairing). "
+                   "The InferenceSpec default is 'mixed' (species pairing on).")
 @click.option("--missing-policy", type=click.Choice(["query", "gap"]), default="query", show_default=True)
 @click.argument("overrides", type=str, nargs=-1)
 def foldbench(  # noqa: PLR0913
@@ -436,26 +511,40 @@ def foldbench(  # noqa: PLR0913
     index_file: Path | None,
     inputs_root: Path,
     output_dir: Path,
-    timesteps: int,
+    timesteps: str,
     n_samples: int,
+    n_seeds: int,
+    num_recycles: int,
     seed: int,
     use_ema: bool,
     do_compile: bool,
     max_msa_depth: int,
+    sample_batch: bool,
+    msa_subsample: bool,
+    no_pairing_msa: bool,
     missing_policy: str,
     overrides: tuple[str, ...],
 ) -> None:
-    """Run the phase3 model over FoldBench targets -> predicted CIFs.
+    """Run the phase 2 model over FoldBench targets -> predicted CIFs.
 
     One GPU worker walks its shard (env ``SHARD``/``N_SHARDS``, stride) of the
     index, holding the model in memory. Finished targets (an existing CIF) are
     skipped, so resubmitting the same shard resumes. Predictions land in
-    ``<output_dir>/<target>/<target>_s{k}_pred.cif`` — feed the dir to
+    ``<output_dir>/<target>/<target>_seed{s}_sample{k}_pred.cif`` — feed the dir to
     ``cal_foldbench.py`` then FoldBench ``evaluate.py``.
     """
     fabric = _fabric_from_torchrun()
     fabric.launch()
     fabric.seed_everything(seed)
+
+    step_list = [int(x) for x in str(timesteps).split(",") if x.strip()]
+    if not step_list:
+        msg = "--timesteps must name at least one value"
+        raise click.UsageError(msg)
+    # One value keeps the flat layout; a sweep gets a steps<N>/ level so the runs stay
+    # separable and the "already done" check below still works per step count.
+    step_dirs = {n: (output_dir if len(step_list) == 1 else output_dir / f"steps{n}")
+                 for n in step_list}
 
     # Resolve the target list.
     if data_path is not None:
@@ -471,7 +560,7 @@ def foldbench(  # noqa: PLR0913
         raise click.UsageError(msg)
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    client = _phase3_client_from_config(
+    client = _diffusion_client_from_config(
         config, ckpt, seed, use_ema, do_compile, fabric, list(overrides),
     )
     # MW_COMPILE_TIMEOUT=1: install the fork+SIGKILL compile guard so uncached-shape
@@ -484,43 +573,112 @@ def foldbench(  # noqa: PLR0913
         capture.install()
         client.logger.info("[capture] compile-timeout guard installed (bounds monster autotune)")
     client.logger.info(
-        "FoldBench phase3 inference: %d targets | n_samples=%d timesteps=%d ema=%s",
-        len(targets), n_samples, timesteps, use_ema,
+        "FoldBench phase 2 inference: %d targets | %d seeds x %d samples = %d preds/target "
+        "| recycles=%d timesteps=%s msa=%d(%s) ema=%s",
+        len(targets), n_seeds, n_samples, n_seeds * n_samples, num_recycles,
+        ",".join(str(n) for n in step_list),
+        max_msa_depth, "subsampled" if msa_subsample else "top-N", use_ema,
     )
 
     for i, (tid, dpath) in enumerate(targets):
         if not dpath.exists():
             client.logger.warning("skip %s: no data.yaml at %s", tid, dpath)
             continue
-        out_sub = output_dir / tid
-        done = out_sub / f"{tid}_s{n_samples - 1}_pred.cif"
-        if done.exists():
+        last = f"{tid}_seed{n_seeds - 1}_sample{n_samples - 1}_pred.cif"
+        if all((step_dirs[n] / tid / last).exists() for n in step_list):
             client.logger.info("[%d/%d] %s: already done, skip", i + 1, len(targets), tid)
             continue
         try:
             spec = InferenceSpec.from_yaml(dpath)
-            batch = build_inference_batch(
-                spec, max_msa_depth=max_msa_depth, missing_policy=missing_policy, seed=seed,
-            )
-            name = str(batch.name[0])
-            orig_atom = int(batch.atom_length)
-            # Pad msa/token/atom to a multiple of 8: the engine's fused GEMM kernels
-            # (quack gemm_act) require the sequence stride divisible by 8. FoldBench
-            # targets are arbitrary sizes (training crops were bucket-aligned). Padding
-            # positions are masked; slice the output back to the real atom count for the
-            # CIF so no padding atoms are written.
-            padded = _pad_inference_batch(batch, 8)
-            sample_batch = padded.duplicate(n_samples)
-            torch.manual_seed(seed * 100003 + i * 1009)
-            output = client.inference(sample_batch, timesteps=timesteps)
-            out_sub.mkdir(parents=True, exist_ok=True)
-            for k in range(n_samples):
-                pred = output.atom_pos_pred[k : k + 1, :orig_atom]
-                batch_to_cif(batch, pred, out_sub / f"{name}_s{k}_pred.cif")
+            if no_pairing_msa and not spec.no_pairing_msa:
+                # Match training (pairing_mode: no_pairing). The InferenceSpec
+                # default resolves to 'mixed' (species pairing on) — override so
+                # inference stacks all homologs block-diagonally like training.
+                spec = spec.model_copy(update={"no_pairing_msa": True})
+            for n in step_list:
+                (step_dirs[n] / tid).mkdir(parents=True, exist_ok=True)
+            # AF3 / FoldBench protocol: n_seeds INDEPENDENT model runs, each drawing
+            # n_samples diffusion samples -> n_seeds * n_samples predictions per target.
+            # A seed is not just a diffusion noise seed: build_inference_batch's rng
+            # drives the per-residue SE3 randomisation of the reference conformers and
+            # the template sampling, so every seed feeds the trunk a different input and
+            # gets its own recycled representation. Drawing 25 samples from ONE trunk
+            # pass instead only varies the diffusion noise.
+            # The MSA joins that list only with --msa-subsample: in no_pairing mode
+            # ComplexMSA.sample otherwise takes the first max_msa_depth rows
+            # deterministically and every seed sees the identical alignment.
+            n_done = 0
+            for s in range(n_seeds):
+                seed_s = seed + s
+                batch = build_inference_batch(
+                    spec, max_msa_depth=max_msa_depth, missing_policy=missing_policy,
+                    seed=seed_s, msa_subsample=msa_subsample,
+                )
+                name = str(batch.name[0])
+                orig_atom = int(batch.atom_length)
+                # Pad msa/token/atom to a multiple of 8: the engine's fused GEMM kernels
+                # (quack gemm_act) require the sequence stride divisible by 8. FoldBench
+                # targets are arbitrary sizes (training crops were bucket-aligned). Padding
+                # positions are masked; slice the output back to the real atom count for the
+                # CIF so no padding atoms are written.
+                padded = _pad_inference_batch(batch, 8)
+                # Keep the batch at B=1 (the trunk trimul cute kernel is B=1 only); the
+                # client runs the trunk once and draws n_samples independent diffusion
+                # samples internally.
+                # Seed BOTH generators. The per-step CentreRandomAugmentation draws
+                # its rotation with scipy's Rotation.random, which reads numpy's
+                # global RNG, not torch's -- seeding only torch leaves the rotations
+                # running off whatever numpy state the process happens to be in, so
+                # a rerun (or a different shard split) would not reproduce.
+                for n_steps in step_list:
+                    # Re-seed per (seed, step count) so every step count starts from the
+                    # same noise for that seed -- the sweep is then a paired comparison
+                    # of step count, not of luck.
+                    torch.manual_seed(seed_s * 100003 + i * 1009)
+                    np.random.seed((seed_s * 100003 + i * 1009) % (2**32 - 1))  # noqa: NPY002
+                    try:
+                        output = client.inference(
+                            padded, timesteps=n_steps, n_samples=n_samples,
+                            n_recycle=num_recycles, sample_batch=sample_batch,
+                        )
+                    except torch.cuda.OutOfMemoryError:
+                        # Batched sampling multiplies the atom-DiT activations by
+                        # n_samples, so the biggest buckets can fall over where the
+                        # sequential loop fits. Drop to the loop for this target rather
+                        # than losing it; the result is identical, only slower.
+                        if not sample_batch:
+                            raise
+                        client.logger.warning(
+                            "%s seed %d steps %d: OOM with sample_batch, "
+                            "retrying one sample at a time", tid, s, n_steps,
+                        )
+                        # Deliberately no torch.cuda.empty_cache() here, the usual
+                        # remedy: it corrupts the engine's cute kernels, which would
+                        # cost the whole shard instead of this one target. See
+                        # docs/known-issues.md. The headroom comes from the retry
+                        # itself -- sequential sampling needs 1/n_samples of the
+                        # activations -- and from expandable_segments in the launcher.
+                        torch.manual_seed(seed_s * 100003 + i * 1009)
+                        np.random.seed((seed_s * 100003 + i * 1009) % (2**32 - 1))  # noqa: NPY002
+                        output = client.inference(
+                            padded, timesteps=n_steps, n_samples=n_samples,
+                            n_recycle=num_recycles, sample_batch=False,
+                        )
+                    for k in range(n_samples):
+                        pred = output.atom_pos_pred[k : k + 1, :orig_atom]
+                        batch_to_cif(
+                            batch, pred,
+                            step_dirs[n_steps] / tid / f"{name}_seed{s}_sample{k}_pred.cif",
+                            chain_names=spec.chain_names,
+                        )
+                        n_done += 1
+                    del output
+                shape = (int(batch.token_length), orig_atom, int(padded.atom_length))
+                del padded, batch
             client.logger.info(
-                "[%d/%d] %s: OK tok=%d atom=%d (pad->%d) -> %d CIFs",
-                i + 1, len(targets), tid, int(batch.token_length), orig_atom,
-                int(padded.atom_length), n_samples,
+                "[%d/%d] %s: OK tok=%d atom=%d (pad->%d) -> %d CIFs (%dx%d, steps=%s)",
+                i + 1, len(targets), tid, shape[0], shape[1], shape[2],
+                n_done, n_seeds, n_samples, ",".join(str(n) for n in step_list),
             )
         except Exception as e:  # noqa: BLE001 — one bad target must not kill the shard
             client.logger.exception("[%d/%d] %s: FAILED (%s)", i + 1, len(targets), tid, type(e).__name__)

@@ -1,11 +1,11 @@
-# Phase4 model — FROZEN phase3 structure model (trunk + EDM diffusion) + confidence head.
+# phase 3 model — FROZEN phase 2 structure model (trunk + EDM diffusion) + confidence head.
 #
-# Identical to large_swa_pf48_diffusion (so the phase3 checkpoint's trunk + diffusion
+# Identical to large_swa_pf48_diffusion (so the phase 2 checkpoint's trunk + diffusion
 # keys load into the inherited submodules with no mismatch), PLUS a `confidence:` block
 # for the trainable pLDDT / PAE / PDE head. Both trunk and diffusion are frozen; only
 # confidence_head trains.
 #
-# Selected by the phase4 top-level config's `model: large_swa_pf48_confidence`.
+# Selected by the phase 3 top-level config's `model: large_swa_pf48_confidence`.
 
 shared:
   d_single: 384
@@ -18,7 +18,7 @@ shared:
   d_time: 256
   r_max: 32
   s_max: 2
-  n_distogram_bins: 96      # phase2 trained with 96 CB-distogram bins
+  n_distogram_bins: 96      # phase 1b trained with 96 CB-distogram bins
   num_res_class: 32
   implementation: miniworld_engine
   use_checkpoint: False
@@ -35,7 +35,7 @@ input_feat_embbeder:
 
 
 # ESMFold2-style atom SWA + 3D-RoPE for the TRUNK input embedder (global attention
-# via the very large window). Identical to phase2 large_swa_pf48.
+# via the very large window). Identical to phase 1b large_swa_pf48.
 atom_swa:
   enabled: true
   swa_window_size: 1000000
@@ -142,6 +142,7 @@ diffusion:
 # Confidence head (trainable). AF3-style pLDDT / PAE / PDE over the frozen pair.
 # ---------------------------------------------------------------------------
 confidence:
+  implementation: ${..shared.implementation}
   d_pair: ${..shared.d_pair}                    # 128
   d_single: ${..shared.d_single}                # 384 — confidence single track
   d_single_input: ${..shared.d_single_token_input}  # 449

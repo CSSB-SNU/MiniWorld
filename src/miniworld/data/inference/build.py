@@ -38,6 +38,7 @@ from .a3m import parse_a3m_file
 from .ccd import CCDLookup, CCDResidue
 from .fasta import ChainSpec, EntityType, parse_fasta_file
 from .tokenization import TokenizationPolicy
+from miniworld.data.constants import CANONICAL_CHEMCOMPS
 
 logger = logging.getLogger(__name__)
 
@@ -101,8 +102,14 @@ def build_inference_batch(
     max_msa_depth: int = 256,
     missing_policy: str = "query",
     seed: int = 0,
+    msa_subsample: bool = False,
 ) -> Batch:
-    """Build a B=1 ``Batch`` from an ``InferenceSpec``."""
+    """Build a B=1 ``Batch`` from an ``InferenceSpec``.
+
+    ``msa_subsample`` picks WHICH ``max_msa_depth`` rows to keep at random
+    (query always kept) instead of taking the top rows. It is the only way a
+    multi-seed ensemble gets different alignments; see the call site below.
+    """
     rng = np.random.default_rng(seed)
     rm = ResidueMapping()
 
@@ -271,7 +278,23 @@ def build_inference_batch(
         pairing_mode=spec.msa_pairing_mode,
         condition_groups=spec.condition_groups,
     )
-    msa_residue = sample_msa(complex_msa, max_msa_depth=max_msa_depth, rng=rng)
+    # Inference always uses the FULL requested DEPTH. The default
+    # sample_depth="uniform" is a TRAINING augmentation (draws a random depth
+    # k ~ Uniform[1, min(n, max)] each call) — leaking it into inference randomly
+    # truncates the MSA (e.g. 2048 -> 148 rows), destroying the evolutionary signal
+    # and degrading structure/docking. Never use it here.
+    #
+    # "random" keeps the depth at max_msa_depth but randomises WHICH rows are kept.
+    # FoldBench targets stack ~10k-16k rows and we can only feed 2048 (the cap the
+    # trunk was trained under), so "fixed" hands every seed the identical top-2048
+    # and the seeds then differ only in the reference conformers and the diffusion
+    # noise. Subsampling is what makes a 5-seed ensemble actually sample the
+    # alignment as well. Note AF3 does NOT do this — its MSA.compute_features takes
+    # no random_state — so this is a deliberate deviation, not a fidelity fix.
+    msa_residue = sample_msa(
+        complex_msa, max_msa_depth=max_msa_depth, rng=rng,
+        sample_depth="random" if msa_subsample else "fixed",
+    )
     msa_features = MSAFeatures(
         aligned_sequences=msa_residue.aligned_sequences[
             :, :, token_to_residue_idx_map,
@@ -784,7 +807,16 @@ def _tokenize_chain(
         zip(residues, residues_full, keep_masks),
     ):
         res_1based = r_local + 1
-        resolution = policy.resolution(cs.chain_letter, res_1based)
+        # Mirror the training tokenizer (`atom_tokenize`, level="atom"): canonical
+        # polymer residues -> residue-level (1 token), everything non-canonical
+        # (ligands / ions / modified residues) -> atomize (1 token per atom). An
+        # explicit user override in the tokenization policy still takes precedence.
+        explicit = policy.per_residue.get((cs.chain_letter, res_1based))
+        if explicit is not None:
+            resolution = explicit
+        else:
+            is_canonical = residue.chemcomp_id in CANONICAL_CHEMCOMPS
+            resolution = policy.default if is_canonical else 0.0
         atom_to_frag_local, n_frags = _residue_token_assignment(
             residue=residue,
             residue_full=residue_full,
@@ -820,6 +852,11 @@ def _residue_token_assignment(
     """
     if resolution >= 1.0 - 1e-9:
         return np.zeros(residue.n_atoms, dtype=np.int64), 1
+    if resolution <= 1e-9:
+        # Full atomize (merge=0): one token per kept atom. Bypass the fragment
+        # graph (which needs bond features unavailable for raw CCD ligands) —
+        # this is exactly the training `atom_tokenize` behaviour for ligands.
+        return np.arange(residue.n_atoms, dtype=np.int64), residue.n_atoms
     fragments = ccd_lookup.fragments(residue.chemcomp_id)
     available = sorted(fragments.keys())
     idx = max(0, min(round(resolution * (len(available) - 1)), len(available) - 1))

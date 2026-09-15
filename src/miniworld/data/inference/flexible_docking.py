@@ -11,7 +11,7 @@ solver hook (see :mod:`team_gm.diffusion.decoupled_xpred.solver`):
   is randomized while *intra-group* structure is preserved.
 * **refinement** — :func:`build_refinement_init_x0`. A single CIF covers
   every query chain (rough full structure). ``start_sigma_y`` is small
-  (deep phase 2), so the per-step R/T noise is tiny and the input's
+  (deep phase 1b), so the per-step R/T noise is tiny and the input's
   inter-chain geometry is essentially preserved while atom coords are
   cleaned up.
 

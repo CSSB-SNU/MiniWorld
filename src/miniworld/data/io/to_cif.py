@@ -13,8 +13,15 @@ def batch_to_cif(  # noqa: PLR0915
     batch: Batch,
     atom_pos_pred: torch.Tensor | None,
     save_path: Path,
+    chain_names: dict[str, str] | None = None,
 ) -> None:
-    """Convert a batch to CIF format string."""
+    """Convert a batch to CIF format string.
+
+    ``chain_names`` maps the numeric ``token_asym_id`` (as a string, e.g. ``"0"``)
+    to the desired output chain label (e.g. ``"A"``). FoldBench scores interfaces
+    by chain id, so the CIF must carry the real chain letters (A/E/F), not the
+    internal 0/1/2. When ``None`` the numeric asym id is written verbatim (legacy).
+    """
 
     def _to_mmcif_format(array: torch.Tensor | list) -> list:
         array = array.cpu().numpy() if isinstance(array, torch.Tensor) else array
@@ -47,9 +54,6 @@ def batch_to_cif(  # noqa: PLR0915
         "_atom_site.auth_atom_id",
         "_atom_site.pdbx_PDB_model_num",
     ]
-    output += "#\n"
-    output += "loop_\n"
-    output += "\n".join(header) + "\n"
     atom_mapping = AtomMapping()
 
     xyz = (
@@ -76,6 +80,12 @@ def batch_to_cif(  # noqa: PLR0915
     )[mask.cpu()]
     label_alt_id_list = ["."] * length
     label_asym_id_list = atom_to_asym[mask]
+    if chain_names is not None:
+        # Map internal numeric asym id -> real chain label (A/E/F) for FoldBench.
+        label_asym_id_list = [
+            chain_names.get(str(int(a)), str(int(a)))
+            for a in label_asym_id_list.cpu().numpy()
+        ]
     label_entity_id_list = atom_to_entity[mask]
     label_seq_id_list = batch.scheme.token_residue_idx[0][atom_to_token][mask]
     auth_idx_list = label_seq_id_list  # assuming auth seq id == label seq id
@@ -87,8 +97,124 @@ def batch_to_cif(  # noqa: PLR0915
     cartn_z_list = xyz[mask, 2]
     occupancy_list = [1.0] * length
     b_iso_or_equiv_list = [100.0] * length  # TODO replace with plddt.
-    pdbx_formal_charge_list = batch.reference.charge[0][mask]
+    # int(), not the raw float tensor: _atom_site.pdbx_formal_charge is an mmCIF int
+    # column, and str(0.0) -> "0.0" makes the file unreadable by OpenStructure
+    # ("Expecting integer value for atom_site.pdbx_formal_charge"), i.e. by every
+    # FoldBench metric, which all go through `ost compare-structures`.
+    pdbx_formal_charge_list = [int(c) for c in batch.reference.charge[0][mask].tolist()]
     pdbx_PDB_model_num_list = [1] * length
+
+    # ---- entity records -------------------------------------------------
+    # _atom_site alone is not enough for the consumers that score these files.
+    # OpenStructure falls back to sequence-identity heuristics without
+    # _entity/_entity_poly ("mmCIF file does not define _entity.type ...",
+    # "SEQRES is missing for polymer chain(s) ..."), and FoldBench's DockQv2
+    # parser hard-requires _entity_poly_seq.entity_id -- without it every
+    # protein-DNA and protein-RNA target raises KeyError and those two
+    # categories score nothing at all. Everything below is derived from the
+    # same masked per-atom arrays the _atom_site loop writes, so the two
+    # tables cannot disagree.
+    #
+    # entity_type ints (EntityMapping): 0 ANTIBODY, 1 PROTEIN, 2 DPROTEIN,
+    # 3 RNA, 4 DNA, 5 NA, 6 LIGAND, 7 BRANCHED.
+    poly_type_by_entity_type = {
+        0: "polypeptide(L)",
+        1: "polypeptide(L)",
+        2: "polypeptide(D)",
+        3: "polyribonucleotide",
+        4: "polydeoxyribonucleotide",
+        5: "polydeoxyribonucleotide/polyribonucleotide hybrid",
+    }
+    # Index the chain features with token_asym_id, not atom_to_chain_id: the latter
+    # doubles as the diffusion solver's rigid-frame grouping and is remapped to group
+    # ids when spec.diffusion_groups is set, while token_asym_id is what this writer
+    # already uses to assign chain labels.
+    atom_entity_type = batch.chain.entity_type[0][atom_to_asym][mask].cpu().numpy()
+    raw_entity_ids = [int(e) for e in label_entity_id_list.cpu().numpy()]
+    raw_seq_ids = [int(v) for v in label_seq_id_list.cpu().numpy()]
+    asym_strs = [
+        str(a) for a in (
+            label_asym_id_list
+            if isinstance(label_asym_id_list, list)
+            else label_asym_id_list.cpu().numpy()
+        )
+    ]
+
+    # First pass, per CHAIN: token_residue_idx runs globally across the complex, so
+    # a homomer's second copy carries different residue ids than its first. Number
+    # residues 1..N within each chain; copies of one entity then agree, which is
+    # what _entity_poly_seq.num means.
+    chain_order: list[str] = []
+    chain_entity: dict[str, int] = {}
+    chain_seq: dict[str, list[tuple[int, str]]] = {}
+    entity_order: list[int] = []
+    entity_mol_type: dict[int, int] = {}
+    entity_chains: dict[int, list[str]] = {}
+    for i in range(length):
+        e, a = raw_entity_ids[i], asym_strs[i]
+        if a not in chain_entity:
+            chain_order.append(a)
+            chain_entity[a] = e
+            chain_seq[a] = []
+        if not chain_seq[a] or chain_seq[a][-1][0] != raw_seq_ids[i]:
+            chain_seq[a].append((raw_seq_ids[i], str(label_comp_id_list[i])))
+        if e not in entity_mol_type:
+            entity_order.append(e)
+            entity_mol_type[e] = int(atom_entity_type[i])
+            entity_chains[e] = []
+        if a not in entity_chains[e]:
+            entity_chains[e].append(a)
+
+    # The entity's sequence is the first chain that carries it; the others repeat it.
+    entity_seq = {e: chain_seq[entity_chains[e][0]] for e in entity_order}
+    # mmCIF entity ids are 1-based; label_seq_id is a 1-based index into
+    # _entity_poly_seq for polymers and "." for non-polymers (matches the
+    # FoldBench ground-truth files).
+    entity_id_1based = {e: str(n + 1) for n, e in enumerate(entity_order)}
+    is_polymer = {
+        e: (t in poly_type_by_entity_type and len(entity_seq[e]) > 1)
+        for e, t in entity_mol_type.items()
+    }
+    seq_num = {
+        a: {old: n + 1 for n, (old, _) in enumerate(seq)}
+        for a, seq in chain_seq.items()
+    }
+    label_entity_id_list = [entity_id_1based[e] for e in raw_entity_ids]
+    label_seq_id_list = [
+        str(seq_num[a][sid]) if is_polymer[e] else "."
+        for e, a, sid in zip(raw_entity_ids, asym_strs, raw_seq_ids, strict=True)
+    ]
+
+    output += "#\nloop_\n_entity.id\n_entity.type\n"
+    for e in entity_order:
+        etype = (
+            "polymer" if is_polymer[e]
+            else ("branched" if entity_mol_type[e] == 7 else "non-polymer")
+        )
+        output += f"{entity_id_1based[e]} {etype}\n"
+
+    poly_entities = [e for e in entity_order if is_polymer[e]]
+    if poly_entities:
+        output += (
+            "#\nloop_\n_entity_poly.entity_id\n_entity_poly.type\n"
+            "_entity_poly.pdbx_strand_id\n"
+        )
+        for e in poly_entities:
+            ptype = poly_type_by_entity_type[entity_mol_type[e]]
+            strands = ",".join(entity_chains[e])
+            output += f"{entity_id_1based[e]} '{ptype}' {strands}\n"
+
+        output += (
+            "#\nloop_\n_entity_poly_seq.entity_id\n_entity_poly_seq.num\n"
+            "_entity_poly_seq.mon_id\n_entity_poly_seq.hetero\n"
+        )
+        for e in poly_entities:
+            for n, (_, comp) in enumerate(entity_seq[e]):
+                output += f"{entity_id_1based[e]} {n + 1} {comp} n\n"
+
+    output += "#\n"
+    output += "loop_\n"
+    output += "\n".join(header) + "\n"
 
     # to mmcif format
     group_PDB_list = _to_mmcif_format(group_PDB_list)

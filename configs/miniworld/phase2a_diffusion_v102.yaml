@@ -1,0 +1,91 @@
+# v1.0.2 variant of phase2a_diffusion.yaml — identical except loss: diffusion_v102 (adds AF3
+# smooth lDDT; bond loss wired at alpha_bond=0 per AF3 Table 6). See docs/pipeline.md.
+# PHASE 2a — attach an EDM diffusion module on top of the FROZEN phase-1b trunk
+# (large: pf48 / msa4) and train ONLY the diffusion module with the EDM diffusion loss.
+# Short crop (L=384), long run (50 epochs); phase 2b then finishes at L=768.
+# See docs/pipeline.md.
+#
+# Trunk weights come from the phase-1b SWA_last12 average (epochs 845-900, uniform),
+# NOT from raw epoch-900:
+#   runs/v1.0.2/phase1b/swa_last12/epoch=0900_swa12.pt   (pass via --ckpt)
+# SWA_last12 beats raw epoch-900 by 3.45% on held-out distogram loss and a full LCSC search
+# could not improve on it. Do NOT use phase-1b online EMA weights (degenerate: bf16 buffer).
+#
+# The param_policy (default: freeze_loaded) LOADS + FREEZES every param present in the
+# checkpoint (the whole trunk, incl. the unused distogram_head) and re-inits + trains
+# everything else (to_token_single_trunk + diffusion_module).
+#
+# Crop: 384-token / 4096-atom. The frozen trunk runs under no_grad, so the atom-level
+# diffusion head at L x num_augment is the memory driver — the short crop is what makes
+# 50 epochs affordable.
+#
+# NEW wandb run: run_dir is phase-2a-specific, so wandb_run_id.txt is fresh. Pass a fresh
+# --job-name at launch.
+defaults:
+  - model: large_swa_pf48_diffusion
+  - train: default
+  - data: H100_default
+  - loss: diffusion_v102
+  - _self_
+
+data:
+  crop:
+    max_tokens: 384
+    max_atoms: 4096
+
+train:
+  comment: "v1.0.2-phase2a-diffusion-large-L384"
+  run_dir: "runs/v1.0.2/phase2a/large_diffusion_L384"
+  num_epoch: 50
+  bucket_token_multiple: 384   # single bucket = 384 crop (one CUDA-graph shape)
+  bucket_atom_multiple: 4096
+  # torch.compile ON: phase 1 compiled the same trunk fine (plain dynamic=False); ~30% speedup.
+  # Only the new diffusion module is newly compiled. If a diffusion-module compile error shows
+  # up in warmup, set this False to fall back to eager (the CPU/eager path is verified).
+  compile: True
+  # EXPERIMENTAL, default "" = OFF (whole-model compile(dynamic=False), current behaviour).
+  # When set to "reduce-overhead" AND compile: True, the FROZEN trunk conditioning path is
+  # compiled with inductor cudagraph-trees (its outputs are cloned before the grad diffusion
+  # path) while the diffusion module keeps the normal compile(dynamic=False). This targets a
+  # speedup on the static-shape frozen trunk but MUST be validated on GPU first (cudagraph
+  # capture + the "overwritten CUDAGraphs output" risk seen in phase-1 whole-model attempts).
+  trunk_compile_mode: ""
+  optimizer: "Adam"
+  # LR for a from-scratch diffusion head on a frozen trunk.
+  max_lr: 5e-3      # v1.0.1 raise, carried into v1.0.2 (cumulative)
+  min_lr: 1e-4
+  warmup_steps: 1000
+  decay_steps: 5e4
+  num_augment: 48
+  use_wandb: True
+  wandb_project: "MiniWorld"
+
+  # Load + FREEZE the phase-1b trunk from --ckpt; train only the diffusion
+  # params. freeze_loaded resolves per-parameter against the checkpoint.
+  param_policy:
+    enabled: true
+    # Trunk (present in the SWA_last12 ckpt) -> freeze_loaded -> loaded + FROZEN.
+    default: freeze_loaded
+    # Diffusion head -> load_existing takes precedence over the freeze_loaded default, so
+    # it stays TRAINABLE. Critical for autoscale requeue: a phase-2 checkpoint contains the
+    # diffusion params too, and without this they'd be frozen (freeze_loaded) on resume and
+    # training would silently stop. On the FIRST launch they're absent from the epoch-900
+    # ckpt -> load_existing falls back to reinit + train.
+    load_existing:
+      - diffusion_module
+      - to_token_single_trunk
+
+# EDM diffuser (AF3 preconditioning) — mirrors miniworld.models.default_client.
+diffuser:
+  type: EDM
+  seed: 0
+  method: AF3
+  scheduler:
+    method: AF3
+    P_mean: -1.2
+    P_std: 1.5
+    sigma_data: 16.0
+    sigma_max: 160.0
+    sigma_min: 4.0e-4
+    rho: 7.0
+    use_time_augmentation: true

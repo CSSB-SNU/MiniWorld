@@ -1,0 +1,70 @@
+# PHASE 2b (high-LR variant) — identical to phase2b_diffusion.yaml except train.max_lr.
+# See phase2b_diffusion.yaml for the full rationale and docs/pipeline.md for the pipeline.
+defaults:
+  - model: large_swa_pf48_diffusion
+  - train: default
+  - data: H100_default
+  - loss: diffusion_only
+  - _self_
+
+data:
+  crop:
+    max_tokens: 768      # match the phase-1b trunk crop (2a ran at 384)
+    max_atoms: 8192      # 2x atoms
+
+train:
+  comment: "v1.0.0-phase2b-diffusion-large-L768-hlr"
+  run_dir: "runs/v1.0.0/phase2b/large_diffusion_L768_hlr"   # NEW run (fresh wandb), old run kept as trace
+  num_epoch: 70                # 2a reached 50; +20 more (counter continues)
+  bucket_token_multiple: 768   # single bucket = 768 crop
+  bucket_atom_multiple: 8192
+  # torch.compile ON: phase 1 compiled the same trunk fine (plain dynamic=False); ~30% speedup.
+  # Only the new diffusion module is newly compiled. If a diffusion-module compile error shows
+  # up in warmup, set this False to fall back to eager (the CPU/eager path is verified).
+  compile: True
+  # EXPERIMENTAL, default "" = OFF (whole-model compile(dynamic=False), current behaviour).
+  # When set to "reduce-overhead" AND compile: True, the FROZEN trunk conditioning path is
+  # compiled with inductor cudagraph-trees (its outputs are cloned before the grad diffusion
+  # path) while the diffusion module keeps the normal compile(dynamic=False). This targets a
+  # speedup on the static-shape frozen trunk but MUST be validated on GPU first (cudagraph
+  # capture + the "overwritten CUDAGraphs output" risk seen in phase-1 whole-model attempts).
+  trunk_compile_mode: ""
+  optimizer: "Adam"
+  # LR for a from-scratch diffusion head on a frozen trunk.
+  max_lr: 5e-3   # raised from 1.8e-3 (frozen trunk + from-scratch diffusion head); warmup 1000 kept
+  min_lr: 1e-4
+  warmup_steps: 1000
+  decay_steps: 5e4
+  num_augment: 48
+  use_wandb: True
+  wandb_project: "MiniWorld"
+
+  # Load + FREEZE the phase-1b trunk from --ckpt; train only the diffusion
+  # params. freeze_loaded resolves per-parameter against the checkpoint.
+  param_policy:
+    enabled: true
+    # Trunk (present in the 2a ckpt) -> freeze_loaded -> loaded + FROZEN.
+    default: freeze_loaded
+    # Diffusion head -> load_existing takes precedence over the freeze_loaded default, so
+    # it stays TRAINABLE. Critical for autoscale requeue: a phase-2 checkpoint contains the
+    # diffusion params too, and without this they'd be frozen (freeze_loaded) on resume and
+    # training would silently stop. On the FIRST launch they're absent from the epoch-900
+    # ckpt -> load_existing falls back to reinit + train.
+    load_existing:
+      - diffusion_module
+      - to_token_single_trunk
+
+# EDM diffuser (AF3 preconditioning) — mirrors miniworld.models.default_client.
+diffuser:
+  type: EDM
+  seed: 0
+  method: AF3
+  scheduler:
+    method: AF3
+    P_mean: -1.2
+    P_std: 1.5
+    sigma_data: 16.0
+    sigma_max: 160.0
+    sigma_min: 4.0e-4
+    rho: 7.0
+    use_time_augmentation: true

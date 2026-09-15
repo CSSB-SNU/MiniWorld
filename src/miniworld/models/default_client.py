@@ -319,6 +319,7 @@ class Client(BaseClient):
             shape=shape,
             num_steps=timesteps,
             device=self.device,
+            mask=batch.structure.atom_mask,
             return_intermediate=True,
         )
         inter_traj = [x.detach().cpu().numpy() for x in inter_traj]

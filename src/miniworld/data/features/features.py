@@ -38,6 +38,15 @@ class StructureFeatures(BaseBatch):
     # neither CB nor CA fall back to all their atoms (shortest). Optional (None ->
     # loss uses the all-atom shortest distance, the legacy target).
     atom_is_rep: Bool[torch.Tensor, "B L_atom"] | None = None
+    # AF3 Eq.5 bonded-ligand bond-loss target: atom-index pairs (i, j) of covalent
+    # bonds (< 2.4 A GT, both endpoints valid). Variable length; read in the eager
+    # loss (not the captured forward). Optional (None -> bond loss is skipped).
+    bond_atom_pairs: Int[torch.Tensor, "B n_bond 2"] | None = None
+    # AF3 §4.3.2 PAE frames: per-token 3-atom frame indices (N/CA/C or C1'/C3'/C4')
+    # and validity (False for single-atom ligand/ion tokens). Optional (None -> PAE
+    # target skipped). Read in the eager confidence target, not the captured forward.
+    token_frame_atoms: Int[torch.Tensor, "B L_res 3"] | None = None
+    token_frame_mask: Bool[torch.Tensor, "B L_res"] | None = None
 
 
 @typecheck

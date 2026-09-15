@@ -1,0 +1,13 @@
+# v1.0.2 phase-2a loss — AF3 "initial training" stage (crop 384).
+# AF3 supplement Eq.6 + Table 6:
+#   L_diffusion = (t^2 + sd^2)/(t + sd)^2 * (L_MSE + alpha_bond * L_bond) + L_smooth_lddt
+#   alpha_bond = 0 for regular (initial) training, 1 for both fine-tuning stages.
+#   smooth lDDT is ON in initial training and turned OFF from fine tuning 1 onward.
+# See configs/miniworld/loss/diffusion_v102_ft.yaml for the phase-2b (fine-tuning) values.
+diffusion_loss: 4.0          # AF3 Eq.15 alpha_diffusion = 4
+# AF3 Eq.4 per-atom up-weighting (unchanged from v1.0.0).
+alpha_dna: 5.0
+alpha_rna: 5.0
+alpha_ligand: 10.0
+smooth_lddt_loss: 1.0        # ON: AF3 initial training
+bond_loss: 0.0               # OFF: AF3 Table 6 "Polymer-ligand bond loss weight" = 0

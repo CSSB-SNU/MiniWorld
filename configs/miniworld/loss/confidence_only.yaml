@@ -1,7 +1,8 @@
-# Phase4 confidence loss weights (per-bin cross-entropy).
-# PAE is OFF by default (pae_loss: 0.0) — the frame-aligned PAE target needs per-token
-# N/CA/C frames, which are not a dataset feature yet (Stage B). Turn it on once the
-# token-frame feature + pae_target_bins path land.
+# phase 3 confidence loss weights (per-bin cross-entropy).
+# PAE ON: the frame-aligned target uses per-token frames (N/CA/C for protein,
+# C1'/C3'/C4' for nucleotides; single-atom ligand/ion tokens invalid) built from the
+# token_frame_atoms dataset feature. pLDDT is NA/ligand-aware (30 A NA neighbors,
+# ligand polymer-only).
 plddt_loss: 1.0
 pde_loss: 1.0
-pae_loss: 0.0
+pae_loss: 1.0

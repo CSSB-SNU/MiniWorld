@@ -220,11 +220,19 @@ class Model(nn.Module):
             contact_feat = init_contact_feat(structure, dtype=torch.bfloat16)
         if self.use_template:
             template_feat = init_template_feat(template, dtype=torch.bfloat16)
-            template_feat = apply_template_dropout(
-                template_feat,
-                self.config.trunk.template_embedder.dropout_prob,
-                dtype=torch.bfloat16,
-            )
+            # TRAINING ONLY. apply_template_dropout is a plain function, not an
+            # nn.Dropout, so model.eval() does not switch it off; without this gate
+            # every inference pass silently erased each of the four template pair
+            # classes with p=0.25. Those channels are a one-hot encoding (contact /
+            # negative / ambiguous / multistate, unknown = all zeros), so a dropped
+            # channel is not scaled-down noise -- it deletes a whole class of
+            # template evidence, and there is no 1/(1-p) rescale to undo at eval.
+            if self.training:
+                template_feat = apply_template_dropout(
+                    template_feat,
+                    self.config.trunk.template_embedder.dropout_prob,
+                    dtype=torch.bfloat16,
+                )
         for i_cycle in range(n_recycle):
             with ExitStack() as stack:
                 if i_cycle < n_recycle - 1:

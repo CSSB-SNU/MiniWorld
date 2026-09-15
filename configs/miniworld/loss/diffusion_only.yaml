@@ -1,2 +1,7 @@
-# Phase3 loss — DIFFUSION loss ONLY (no distogram / smooth-lDDT aux).
+# phase 2 loss — DIFFUSION loss ONLY (no distogram / smooth-lDDT aux).
 diffusion_loss: 4.0
+# AF3 Eq.4 per-atom up-weighting w_l = 1 + is_dna*alpha_dna + is_rna*alpha_rna
+# + is_ligand*alpha_ligand. AF3 Table 6 defaults; part of the v1.0.0 baseline.
+alpha_dna: 5.0
+alpha_rna: 5.0
+alpha_ligand: 10.0

@@ -1,0 +1,12 @@
+# v1.0.2 phase-2b loss — AF3 "fine tuning" stage (crop 768).
+# AF3 supplement Table 6 / Eq.6: relative to initial training, fine tuning
+#   * turns smooth lDDT OFF ("In the first stage of fine tuning, smooth lddt loss was
+#     turned off"; fine tuning 2 keeps that, changing things only "in addition"), and
+#   * turns the polymer-ligand bond loss ON (alpha_bond = 1 for both fine-tuning stages).
+# Our phase 2a = AF3 initial training (384); phase 2b = AF3 fine tuning (768).
+diffusion_loss: 4.0          # AF3 Eq.15 alpha_diffusion = 4
+alpha_dna: 5.0
+alpha_rna: 5.0
+alpha_ligand: 10.0
+smooth_lddt_loss: 0.0        # OFF: AF3 turns it off from fine tuning 1
+bond_loss: 1.0               # ON:  AF3 Table 6 bond loss weight = 1 in fine tuning

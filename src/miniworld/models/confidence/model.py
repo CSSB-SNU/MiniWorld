@@ -1,16 +1,16 @@
-"""Phase4 model: FROZEN phase3 structure model + trainable confidence head.
+"""phase 3 model: FROZEN phase 2 structure model + trainable confidence head.
 
-``Phase4Model`` subclasses :class:`~miniworld.models.phase3.model.Phase3Model`, so it
-inherits the exact trunk + diffusion submodules (their keys match the phase3
+``ConfidenceModel`` subclasses :class:`~miniworld.models.diffusion.model.DiffusionModel`, so it
+inherits the exact trunk + diffusion submodules (their keys match the phase 2
 checkpoint). It adds a single new trainable module:
 
   * ``confidence_head`` — :class:`~miniworld.modules.confidence_head.ConfidenceHead`
     (pLDDT / PAE / PDE) over the frozen trunk's pair + the predicted structure.
 
-Both the trunk AND the diffusion module are frozen (loaded from the phase3 checkpoint
+Both the trunk AND the diffusion module are frozen (loaded from the phase 2 checkpoint
 and kept in eval mode); only ``confidence_head`` trains. The predicted structure that
 the head scores is produced by the frozen diffusion model — see
-``phase4.client.Client.predict_structure`` (the diffusion-step seam). This model does
+``confidence.client.Client.predict_structure`` (the diffusion-step seam). This model does
 NOT run the diffusion rollout itself; it only exposes :meth:`confidence_forward`.
 """
 
@@ -22,31 +22,31 @@ import torch
 from jaxtyping import Bool, Float, Int
 from team_gm import typecheck
 
-from miniworld.models.phase3.model import Phase3Model
+from miniworld.models.diffusion.model import DiffusionModel
 from miniworld.modules.confidence_head import ConfidenceHead
 
 
-class Phase4Model(Phase3Model):
-    """Frozen phase3 structure model + trainable confidence head."""
+class ConfidenceModel(DiffusionModel):
+    """Frozen phase 2 structure model + trainable confidence head."""
 
-    # Freeze the diffusion head too (phase3 only froze the trunk). These modules are
+    # Freeze the diffusion head too (phase 2 only froze the trunk). These modules are
     # kept in eval mode; the client's param_policy sets requires_grad=False on them.
     _TRUNK_MODULE_NAMES = (
-        *Phase3Model._TRUNK_MODULE_NAMES,  # noqa: SLF001
+        *DiffusionModel._TRUNK_MODULE_NAMES,  # noqa: SLF001
         "to_token_single_trunk",
         "diffusion_module",
     )
 
-    class Config(Phase3Model.Config):
-        """Phase4 config = phase3 config + confidence head."""
+    class Config(DiffusionModel.Config):
+        """phase 3 config = phase 2 config + confidence head."""
 
         confidence: ConfidenceHead.Config = ConfidenceHead.Config()
 
     def __init__(self, config: Config) -> None:
-        # Build the phase3 structure model (trunk + diffusion) via the parent, from
-        # the phase3 subset of the config. freeze_trunk semantics + eval mode extend
+        # Build the phase 2 structure model (trunk + diffusion) via the parent, from
+        # the phase 2 subset of the config. freeze_trunk semantics + eval mode extend
         # to the diffusion module through the overridden _TRUNK_MODULE_NAMES.
-        phase3_config = Phase3Model.Config(
+        diffusion_config = DiffusionModel.Config(
             shared=config.shared,
             input_feat_embbeder=config.input_feat_embbeder,
             atom_swa=config.atom_swa,
@@ -54,10 +54,15 @@ class Phase4Model(Phase3Model):
             diffusion=config.diffusion,
             freeze_trunk=config.freeze_trunk,
         )
-        super().__init__(phase3_config)
+        super().__init__(diffusion_config)
         self.config = config
 
-        self.confidence_head = ConfidenceHead(config.confidence).to(torch.float32)
+        confidence_config = config.confidence
+        if "implementation" not in confidence_config.model_fields_set:
+            confidence_config = confidence_config.model_copy(
+                update={"implementation": config.shared.implementation}
+            )
+        self.confidence_head = ConfidenceHead(confidence_config).to(torch.float32)
 
     @typecheck
     def forward(
@@ -70,9 +75,9 @@ class Phase4Model(Phase3Model):
     ) -> dict[str, torch.Tensor]:
         """Run ONLY the confidence head over the frozen conditioning + prediction.
 
-        This overrides :meth:`Phase3Model.forward` (the diffusion path), which phase4
+        This overrides :meth:`DiffusionModel.forward` (the diffusion path), which phase 3
         never calls — the frozen structure prediction goes through
-        :class:`~miniworld.models.phase3.model.ModelWrapper` (``condition_forward`` +
+        :class:`~miniworld.models.diffusion.model.ModelWrapper` (``condition_forward`` +
         ``diffusion_module``), not ``forward``. Routing the trainable path through
         ``forward`` keeps DDP gradient sync intact for the confidence head.
         """
@@ -99,7 +104,7 @@ class Phase4Model(Phase3Model):
 
 
 # Convenience alias so the client/entrypoint can ``import Model``.
-Model = Phase4Model
+Model = ConfidenceModel
 
 
 @dataclass

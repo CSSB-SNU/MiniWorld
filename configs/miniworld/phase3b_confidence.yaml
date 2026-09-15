@@ -1,0 +1,70 @@
+# PHASE 3b — final leg of the confidence stage: CONTINUE phase 3a at the full L=768 crop
+# for 20 more epochs (epoch counter continues, so num_epoch = 50 + 20 = 70).
+# See docs/pipeline.md.
+#
+# Resume FULL state (weights + optimizer + scheduler + epoch/step) from the phase-3a
+# checkpoint via --ckpt, so the LR schedule and epoch counter carry over:
+#   runs/v1.0.0/phase3a/large_confidence_L384/.../checkpoints/last.pt
+#
+# Trunk + diffusion stay FROZEN (param_policy default: freeze_loaded); only confidence_head
+# trains, exactly as in 3a.
+#
+# DIFFUSION STEP: same open decision as 3a — the seam is
+# miniworld.models.confidence.client.Client.predict_structure. num_augment does NOT apply.
+#
+# Crop: 768-token / 8192-atom (matches phase 2b). NEW wandb run (phase-3b-specific run_dir).
+defaults:
+  - model: large_swa_pf48_confidence
+  - train: default
+  - data: H100_default
+  - loss: confidence_only
+  - _self_
+
+data:
+  crop:
+    max_tokens: 768
+    max_atoms: 8192
+
+train:
+  comment: "v1.0.0-phase3b-confidence-large-L768"
+  run_dir: "runs/v1.0.0/phase3b/large_confidence_L768"
+  num_epoch: 70                # 3a reached 50; +20 more (counter continues)
+  bucket_token_multiple: 768   # single bucket = 768 crop
+  bucket_atom_multiple: 8192
+  # Confidence head is small; compile OFF by default (the expensive part is the frozen
+  # rollout, which is not compiled here). Turn on after the rollout policy is decided.
+  compile: False
+  trunk_compile_mode: ""
+  optimizer: "Adam"
+  # LR for a from-scratch confidence head on a fully frozen structure model.
+  max_lr: 1e-3
+  min_lr: 1e-4
+  warmup_steps: 1000
+  decay_steps: 5e4
+  # DIFFUSION-STEP SEAM: full frozen rollout steps for the predicted structure.
+  predict_timesteps: 200
+  use_wandb: True
+  wandb_project: "MiniWorld"
+
+  # Load + FREEZE the phase-2b structure model from --ckpt; train only confidence_head.
+  param_policy:
+    enabled: true
+    default: freeze_loaded          # trunk + diffusion (present in the 3a ckpt) -> FROZEN
+    load_existing:
+      - confidence_head             # new head -> reinit+train; on requeue stays trainable
+
+# EDM diffuser (AF3 preconditioning) — identical to phase 2; used to build the solver
+# that produces the predicted structure the confidence head scores.
+diffuser:
+  type: EDM
+  seed: 0
+  method: AF3
+  scheduler:
+    method: AF3
+    P_mean: -1.2
+    P_std: 1.5
+    sigma_data: 16.0
+    sigma_max: 160.0
+    sigma_min: 4.0e-4
+    rho: 7.0
+    use_time_augmentation: true

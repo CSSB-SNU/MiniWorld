@@ -154,6 +154,14 @@ class Client(BaseClient):
         diffusion_loss: float = 4.0
         distogram_loss: float = 0.03
         smooth_lddt_loss: float = 1.0
+        # AF3 Eq.5 bonded-ligand bond loss weight (alpha_bond): 0 in the main
+        # training stage, 1 in fine-tuning (AF3 Table 6). Off by default.
+        bond_loss: float = 0.0
+        # AF3 Eq.4 per-atom MSE upweighting w_l = 1 + is_dna*alpha_dna +
+        # is_rna*alpha_rna + is_ligand*alpha_ligand. AF3 defaults 5/5/10.
+        alpha_dna: float = 5.0
+        alpha_rna: float = 5.0
+        alpha_ligand: float = 10.0
 
     class Config(BaseModel):
         """Configuration for the MiniWorld client."""
@@ -460,11 +468,27 @@ class Client(BaseClient):
             mask=x_mask,
         )
 
+        # AF3 Eq.4 per-atom weight w_l = 1 + is_dna*a_dna + is_rna*a_rna
+        # + is_ligand*a_ligand, gathered from chain entity_type to atoms.
+        # entity_type ints: RNA=3, DNA=4, NA=5, LIGAND=6, BRANCHED=7.
+        et = batch.chain.entity_type  # [B, L_chain]
+        lc = self.config.loss
+        w_chain = (
+            1.0
+            + lc.alpha_dna * (et == 4).to(x_pred.dtype)
+            + lc.alpha_rna * ((et == 3) | (et == 5)).to(x_pred.dtype)
+            + lc.alpha_ligand * ((et == 6) | (et == 7)).to(x_pred.dtype)
+        )  # [B, L_chain]
+        atom_weight = torch.gather(
+            w_chain, dim=1, index=batch.scheme.atom_to_chain_id,
+        )  # [B, L_atom] -> broadcasts over the augment dim of x0/x_pred
+
         structure_loss = self.diffuser.cal_loss(
             x0=x0,
             x_pred=x_pred,
             sigma_y=sigma_y,
             mask=x_mask,
+            atom_weight=atom_weight,
             dtype=atom_pos_update.dtype,
         )
 
@@ -506,15 +530,33 @@ class Client(BaseClient):
         else:
             smooth_lddt_loss = torch.tensor(0.0, device=x_pred.device)
 
+        # AF3 Eq.5 bonded-ligand bond loss: MSE of bonded-atom-pair distances vs GT.
+        # Read the eager (uncompiled) bond_atom_pairs field; B=1 in training.
+        bond_pairs = batch.structure.bond_atom_pairs
+        if (
+            lc.bond_loss > 0
+            and bond_pairs is not None
+            and bond_pairs.shape[1] > 0
+        ):
+            bi = bond_pairs[0, :, 0].long()
+            bj = bond_pairs[0, :, 1].long()
+            d_pred = (x_pred[:, bi] - x_pred[:, bj]).norm(dim=-1)  # [A, n_bond]
+            d_gt = (x0[:, bi] - x0[:, bj]).norm(dim=-1)  # [A, n_bond]
+            bond_loss = (d_pred - d_gt).pow(2).mean()
+        else:
+            bond_loss = torch.tensor(0.0, device=x_pred.device)
+
         loss = (
             self.config.loss.diffusion_loss * structure_loss
             + self.config.loss.distogram_loss * distogram_loss
             + self.config.loss.smooth_lddt_loss * smooth_lddt_loss
+            + lc.bond_loss * bond_loss
         )
 
         return loss, {
             "diffusion_loss": structure_loss.item(),
             "distogram_loss": distogram_loss.item(),
+            "bond_loss": bond_loss.item(),
             "total_loss": loss.item(),
             "main_loss": loss.item(),
         }

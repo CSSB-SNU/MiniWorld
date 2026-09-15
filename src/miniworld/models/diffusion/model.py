@@ -1,6 +1,6 @@
-"""Phase3 model: FROZEN pair-only mini-SWA trunk + trainable EDM diffusion head.
+"""phase 2 model: FROZEN pair-only mini-SWA trunk + trainable EDM diffusion head.
 
-``Phase3Model`` subclasses the phase2 :class:`MiniSWAModel` so the trunk
+``DiffusionModel`` subclasses the phase 1b :class:`MiniSWAModel` so the trunk
 submodules keep the *exact* attribute/parameter names of the epoch-900
 checkpoint (``input_feature_embedder``, ``add_pair_recycle``, ``temp_embedder``,
 ``msa_module``, ``pairformer_blocks``, ``distogram_head``). The epoch-900
@@ -26,7 +26,7 @@ its dropout/recycle behaviour is deterministic.
 from __future__ import annotations
 
 import logging
-from contextlib import ExitStack, nullcontext
+from contextlib import nullcontext
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -59,11 +59,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Phase3Model(MiniSWAModel):
+class DiffusionModel(MiniSWAModel):
     """Pair-only mini-SWA trunk (frozen) + EDM diffusion module (trainable)."""
 
-    # Inherited (phase2) trunk submodules — their keys match the epoch-900
-    # checkpoint and they stay frozen + eval in phase3. ``distogram_head`` is
+    # Inherited (phase 1b) trunk submodules — their keys match the epoch-900
+    # checkpoint and they stay frozen + eval in phase 2. ``distogram_head`` is
     # loaded (present in the checkpoint) but unused by the diffusion head.
     _TRUNK_MODULE_NAMES = (
         "input_feature_embedder",
@@ -77,7 +77,7 @@ class Phase3Model(MiniSWAModel):
     class DiffusionConfig(BaseModel):
         """Configuration for the diffusion module.
 
-        Phase3 default: atom DiT = ESMFold2-style SWA + 3D RoPE (``atom_swa``),
+        phase 2 default: atom DiT = ESMFold2-style SWA + 3D RoPE (``atom_swa``),
         token DiT = AF3-style pair-bias ``DiffusionTransformer`` (``token_dit``).
         ``atom_dit`` is only used when ``atom_swa`` is null (AF3 pair-bias atom
         attention fallback); with ``atom_swa`` set it is parsed but unused.
@@ -91,7 +91,7 @@ class Phase3Model(MiniSWAModel):
         )
 
     class Config(BaseModel):
-        """Configuration for the phase3 model."""
+        """Configuration for the phase 2 model."""
 
         shared: SharedConfig
         # non-atom parts of the input feature embedder still use this config
@@ -99,14 +99,14 @@ class Phase3Model(MiniSWAModel):
         # ESMFold2-style atom SWA/3D-RoPE front-end for the trunk input embedder
         atom_swa: AtomSWAConfig
         trunk: MiniSWAModel.TrunkConfig
-        diffusion: Phase3Model.DiffusionConfig
+        diffusion: DiffusionModel.DiffusionConfig
         # Freeze the trunk (requires_grad handled by the client's param policy;
         # this flag keeps the trunk modules in eval mode and runs the trunk under
         # ``torch.no_grad`` during forward).
         freeze_trunk: bool = True
 
     def __init__(self, config: Config) -> None:
-        # Build the exact phase2 trunk via the parent, so submodule/param names
+        # Build the exact phase 1b trunk via the parent, so submodule/param names
         # match the epoch-900 checkpoint.
         trunk_config = MiniSWAModel.Config(
             shared=config.shared,
@@ -115,7 +115,7 @@ class Phase3Model(MiniSWAModel):
             trunk=config.trunk,
         )
         super().__init__(trunk_config)
-        # Replace the trunk-only config the parent stored with the phase3 config.
+        # Replace the trunk-only config the parent stored with the phase 2 config.
         self.config = config
         self.freeze_trunk = config.freeze_trunk
 
@@ -158,7 +158,7 @@ class Phase3Model(MiniSWAModel):
         for mod in self._trunk_modules():
             mod.eval()
 
-    def train(self, mode: bool = True) -> Phase3Model:  # noqa: FBT001, FBT002
+    def train(self, mode: bool = True) -> DiffusionModel:  # noqa: FBT001, FBT002
         """Keep the frozen trunk in eval even when the model is set to train."""
         super().train(mode)
         if self.freeze_trunk:
@@ -174,9 +174,9 @@ class Phase3Model(MiniSWAModel):
         i.e. cudagraph-trees). :meth:`forward` then clones the trunk outputs
         before handing them to the grad diffusion path (see note in ``forward``).
 
-        No-op when ``freeze_trunk`` is False: gradients must flow through the
-        trunk in that case, so a cudagraph (which requires ``no_grad`` static
-        replay) is inappropriate — the caller should fall back to normal compile.
+        This entry point only handles a frozen trunk. No-op when ``freeze_trunk``
+        is False; use the normal training compile path in that case. CUDA graphs
+        can also capture backward passes, but this helper does not manage them.
         """
         if not self.freeze_trunk:
             logger.warning(
@@ -262,9 +262,12 @@ class Phase3Model(MiniSWAModel):
 
         token_pair = torch.zeros_like(token_pair_init_bf16)
         for i_cycle in range(n_recycle):
-            with ExitStack() as stack:
-                if i_cycle < n_recycle - 1:
-                    stack.enter_context(torch.no_grad())
+            # ExitStack makes Dynamo abandon this frame and compile the embedding
+            # and each trunk step separately. Preserve the last-recycle gradient
+            # policy using a context manager Dynamo can trace.
+            with torch.set_grad_enabled(
+                torch.is_grad_enabled() and i_cycle == n_recycle - 1
+            ):
                 token_pair = self._trunk_step(
                     token_pair,
                     token_pair_init_bf16,
@@ -349,13 +352,13 @@ class Phase3Model(MiniSWAModel):
 
 # Convenience alias so the entrypoint/client can ``import Model`` like the other
 # model packages (af3_like / miniworld).
-Model = Phase3Model
+Model = DiffusionModel
 
 
 class ModelWrapper(nn.Module):
-    """Wrapper for :class:`Phase3Model` to drive the EDM diffusion solver."""
+    """Wrapper for :class:`DiffusionModel` to drive the EDM diffusion solver."""
 
-    def __init__(self, model: Phase3Model) -> None:
+    def __init__(self, model: DiffusionModel) -> None:
         super().__init__()
         self.conditioned_forwarded = False
         self.model = model
@@ -383,7 +386,7 @@ class ModelWrapper(nn.Module):
             structure,
             template,
         )
-        # Same cudagraph-managed-output guard as ``Phase3Model.forward``: these
+        # Same cudagraph-managed-output guard as ``DiffusionModel.forward``: these
         # conditioning tensors are cached and reused across every solver step, so
         # clone them off any cudagraph buffer before caching.
         if self.model._trunk_compiled is not None:  # noqa: SLF001
@@ -429,7 +432,7 @@ class ModelWrapper(nn.Module):
 
 @dataclass
 class InferenceOutput:
-    """Output of the phase3 model inference."""
+    """Output of the phase 2 model inference."""
 
     atom_pos_pred: torch.Tensor  # (N_str, L, 3)
     model_traj: np.ndarray  # (N_str, T, L, 3)

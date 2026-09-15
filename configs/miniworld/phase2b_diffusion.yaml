@@ -1,23 +1,19 @@
-# PHASE3 — attach an EDM diffusion module on top of the FROZEN phase2 mini-SWA
-# trunk (large: pf48 / msa4) and train ONLY the diffusion module with the EDM
-# diffusion loss.
+# PHASE 2b — final leg of the diffusion stage: CONTINUE phase 2a at the full L=768 crop
+# for 20 more epochs (epoch counter continues, so num_epoch = 50 + 20 = 70).
+# Same crop-curriculum shape as phase 1 (1a at 384 -> 1b at 768). See docs/pipeline.md.
 #
-# Trunk weights come from the phase2 epoch-900 checkpoint:
-#   logs/autoscale/large_H100_full_d16k/2026-08-22/061650_large_H100_full_d16k/
-#     checkpoints/epoch=0900.pt   (pass via --ckpt; loads model_state_dict)
+# Resume FULL state (weights + optimizer + scheduler + epoch/step) from the phase-2a
+# checkpoint via --ckpt, so the LR schedule and epoch counter carry over:
+#   runs/v1.0.0/phase2a/large_diffusion_L384/.../checkpoints/last.pt
 #
-# The param_policy (default: freeze_loaded) LOADS + FREEZES every param present
-# in the checkpoint (the whole trunk, incl. the unused distogram_head) and
-# re-inits + trains everything else (to_token_single_trunk + diffusion_module).
-# Launch with --no-ckpt-strict is unnecessary here because the policy path owns
-# the load; --ckpt alone is enough.
+# The trunk stays FROZEN (param_policy default: freeze_loaded); only diffusion_module and
+# to_token_single_trunk train, exactly as in 2a.
 #
-# Crop: 768-token / 8192-atom (matches the phase2 crop the trunk was trained at). The frozen
-# trunk runs under no_grad (no backward activations), so 768 is cheap on the trunk side; the
-# atom-level diffusion head at 768 x num_augment is the memory driver.
+# Crop: 768-token / 8192-atom — matches the crop the trunk was trained at in phase 1b. The
+# frozen trunk runs under no_grad (no backward activations), so 768 is cheap on the trunk
+# side; the atom-level diffusion head at 768 x num_augment is the memory driver.
 #
-# NEW wandb run: run_dir is phase3-specific, so wandb_run_id.txt is fresh (a new
-# run id is generated) — the phase2 run id (x7npza9j) is NOT reused. Pass a fresh
+# NEW wandb run: run_dir is phase-2b-specific, so wandb_run_id.txt is fresh. Pass a fresh
 # --job-name at launch.
 defaults:
   - model: large_swa_pf48_diffusion
@@ -28,16 +24,16 @@ defaults:
 
 data:
   crop:
-    max_tokens: 768      # match phase2 trunk crop (was 384)
+    max_tokens: 768      # match the phase-1b trunk crop (2a ran at 384)
     max_atoms: 8192      # 2x atoms
 
 train:
-  comment: "phase3-diffusion-large"
-  run_dir: "logs/phase3/large_H100_diffusion_hlr"   # NEW run (fresh wandb), old run kept as trace
-  num_epoch: 1500
+  comment: "v1.0.0-phase2b-diffusion-large-L768"
+  run_dir: "runs/v1.0.0/phase2b/large_diffusion_L768"
+  num_epoch: 70                # 2a reached 50; +20 more (counter continues)
   bucket_token_multiple: 768   # single bucket = 768 crop
   bucket_atom_multiple: 8192
-  # torch.compile ON: phase2 compiled the same trunk fine (plain dynamic=False); ~30% speedup.
+  # torch.compile ON: phase 1 compiled the same trunk fine (plain dynamic=False); ~30% speedup.
   # Only the new diffusion module is newly compiled. If a diffusion-module compile error shows
   # up in warmup, set this False to fall back to eager (the CPU/eager path is verified).
   compile: True
@@ -46,11 +42,11 @@ train:
   # compiled with inductor cudagraph-trees (its outputs are cloned before the grad diffusion
   # path) while the diffusion module keeps the normal compile(dynamic=False). This targets a
   # speedup on the static-shape frozen trunk but MUST be validated on GPU first (cudagraph
-  # capture + the "overwritten CUDAGraphs output" risk seen in phase2 whole-model attempts).
+  # capture + the "overwritten CUDAGraphs output" risk seen in phase-1 whole-model attempts).
   trunk_compile_mode: ""
   optimizer: "Adam"
   # LR for a from-scratch diffusion head on a frozen trunk.
-  max_lr: 5e-3   # raised from 1.8e-3 (frozen trunk + from-scratch diffusion head); warmup 1000 kept
+  max_lr: 1.8e-3
   min_lr: 1e-4
   warmup_steps: 1000
   decay_steps: 5e4
@@ -58,14 +54,14 @@ train:
   use_wandb: True
   wandb_project: "MiniWorld"
 
-  # Load + FREEZE the phase2 trunk from --ckpt; train only the new diffusion
+  # Load + FREEZE the phase-1b trunk from --ckpt; train only the diffusion
   # params. freeze_loaded resolves per-parameter against the checkpoint.
   param_policy:
     enabled: true
-    # Trunk (present in the epoch-900 ckpt) -> freeze_loaded -> loaded + FROZEN.
+    # Trunk (present in the 2a ckpt) -> freeze_loaded -> loaded + FROZEN.
     default: freeze_loaded
     # Diffusion head -> load_existing takes precedence over the freeze_loaded default, so
-    # it stays TRAINABLE. Critical for autoscale requeue: a phase3 checkpoint contains the
+    # it stays TRAINABLE. Critical for autoscale requeue: a phase-2 checkpoint contains the
     # diffusion params too, and without this they'd be frozen (freeze_loaded) on resume and
     # training would silently stop. On the FIRST launch they're absent from the epoch-900
     # ckpt -> load_existing falls back to reinit + train.

@@ -1,8 +1,8 @@
-"""Phase4 client: train ONLY the confidence head over a FROZEN phase3 structure model.
+"""phase 3 client: train ONLY the confidence head over a FROZEN phase 2 structure model.
 
-Reuses the phase3 client's checkpoint/param-policy/EMA machinery (subclass) but:
+Reuses the phase 2 client's checkpoint/param-policy/EMA machinery (subclass) but:
 
-  * registers :class:`~miniworld.models.phase4.model.Phase4Model` (trunk + diffusion
+  * registers :class:`~miniworld.models.confidence.model.ConfidenceModel` (trunk + diffusion
     frozen, confidence head trainable),
   * ``training_step`` runs the frozen structure model to get a predicted structure
     (:meth:`predict_structure` — the diffusion-step SEAM), builds pLDDT / PDE / (PAE)
@@ -28,21 +28,21 @@ from team_gm.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 from miniworld.configs import EDMDiffuserConfig
 from miniworld.data.features.batch import Batch
 from miniworld.loss import confidence as conf
-from miniworld.models.phase3.client import Client as Phase3Client
-from miniworld.models.phase3.model import ModelWrapper
-from miniworld.models.phase4.model import ConfidenceOutput, Phase4Model
+from miniworld.models.diffusion.client import Client as DiffusionClient
+from miniworld.models.diffusion.model import ModelWrapper
+from miniworld.models.confidence.model import ConfidenceOutput, ConfidenceModel
 from miniworld.training import ParamPolicyConfig
 
 
-class Client(Phase3Client):
-    """Client for phase4: train ONLY the confidence head."""
+class Client(DiffusionClient):
+    """Client for phase 3: train ONLY the confidence head."""
 
     class TrainConfig(BaseModel):
-        """Configuration for training (mirrors phase3, + prediction/eval knobs)."""
+        """Configuration for training (mirrors phase 2, + prediction/eval knobs)."""
 
-        comment: str = "phase4-confidence"
-        name: str = "MiniWorld-phase4"
-        run_dir: str = "runs/phase4"
+        comment: str = "v1.0.0-phase3-confidence"
+        name: str = "MiniWorld-phase3"
+        run_dir: str = "runs/v1.0.0/phase3"
         overfitting: bool = False
         overfitting_dir: str | None = None
         train_item: int = 25600
@@ -79,8 +79,8 @@ class Client(Phase3Client):
         use_wandb: bool = False
         wandb_project: str = "MiniWorld"
 
-        # Load + FREEZE the phase3 structure model; train only the confidence head.
-        # On requeue a phase4 checkpoint contains confidence_head too, so keep it
+        # Load + FREEZE the phase 2 structure model; train only the confidence head.
+        # On requeue a phase 3 checkpoint contains confidence_head too, so keep it
         # TRAINABLE via load_existing (else freeze_loaded would freeze it).
         param_policy: ParamPolicyConfig = ParamPolicyConfig(
             enabled=True,
@@ -96,22 +96,22 @@ class Client(Phase3Client):
         pae_loss: float = 0.0
 
     class Config(BaseModel):
-        """Configuration for the phase4 client."""
+        """Configuration for the phase 3 client."""
 
-        model: Phase4Model.Config
+        model: ConfidenceModel.Config
         diffuser: EDMDiffuserConfig
         train: Client.TrainConfig
         loss: Client.LossConfig
 
     def __init__(self, config: Config) -> None:
-        # Bypass Phase3Client.__init__ (which registers a Phase3Model); replicate its
-        # setup but register the Phase4Model instead.
+        # Bypass DiffusionClient.__init__ (which registers a DiffusionModel); replicate its
+        # setup but register the ConfidenceModel instead.
         from team_gm import BaseClient
 
         BaseClient.__init__(self, config)
         self.config = config
         self.set_seed(config.train.seed)
-        self.register_model(Phase4Model(config.model))
+        self.register_model(ConfidenceModel(config.model))
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
@@ -145,7 +145,7 @@ class Client(Phase3Client):
         are open decisions; change them here only.
         """
         steps = timesteps if timesteps is not None else self.config.train.predict_timesteps
-        raw_model = cast("Phase4Model", getattr(self.model, "module", self.model))
+        raw_model = cast("ConfidenceModel", getattr(self.model, "module", self.model))
         wrapper = ModelWrapper(raw_model)
         batch = batch.to(device=self.device)
         wrapper.prepare_condition(
@@ -161,6 +161,7 @@ class Client(Phase3Client):
             shape=batch.structure.atom_pos.shape,
             num_steps=steps,
             device=self.device,
+            mask=batch.structure.atom_mask,
             return_intermediate=True,
         )
         token_single_input = wrapper.condition["token_single_input"]
@@ -202,9 +203,20 @@ class Client(Phase3Client):
             pred_rep_dist = conf.pred_rep_distance(
                 pred_rep_pos, tok_valid, cfg.dist_min, cfg.dist_max,
             )
-            # pLDDT (per-atom lDDT vs GT).
+            # Per-atom molecule-type masks (AF3 §4.3.1): entity_type ints
+            # RNA=3, DNA=4, NA=5, LIGAND=6, BRANCHED=7 -> gather chain->atom.
+            et = batch.chain.entity_type  # [B, L_chain]
+            a2c = scheme.atom_to_chain_id  # [B, L_atom]
+            atom_is_nuc = torch.gather(
+                ((et == 3) | (et == 4) | (et == 5)), 1, a2c,
+            )[0]  # [L_atom]
+            atom_is_ligand = torch.gather(
+                ((et == 6) | (et == 7)), 1, a2c,
+            )[0]  # [L_atom]
+            # pLDDT (per-atom lDDT vs GT): NA neighbors 30 Å, ligand polymer-only.
             lddt, atom_valid = conf.per_atom_lddt(
                 x_pred, structure.atom_pos[0], atom_mask[0],
+                atom_is_nuc=atom_is_nuc, atom_is_ligand=atom_is_ligand,
             )
             plddt_bins = conf.plddt_target_bins(lddt, cfg.n_plddt_bins)
             plddt_mask = atom_valid.unsqueeze(0).expand(n, -1)
@@ -212,14 +224,28 @@ class Client(Phase3Client):
             pde_bins, pde_mask = conf.pde_target_bins(
                 pred_rep_pos, gt_rep_pos, tok_valid, cfg.n_pde_bins, cfg.pde_max,
             )
-            # PAE (frame-aligned) — Stage B seam; None until token frames exist.
-            pae = conf.pae_target_bins(
-                pred_rep_pos, gt_rep_pos, tok_valid,
-                token_frame=None, n_bins=cfg.n_pae_bins, pae_max=cfg.pae_max,
-            )
+            # PAE (frame-aligned): build per-token frames (N/CA/C or C1'/C3'/C4')
+            # for pred + GT, then the frame-relative error target. Needs the
+            # token_frame feature; skipped (None) when absent or pae_loss==0.
+            tfa = structure.token_frame_atoms
+            tfm = structure.token_frame_mask
+            pae = None
+            if self.config.loss.pae_loss > 0 and tfa is not None and tfm is not None:
+                fa = tfa[0].clamp(min=0).reshape(-1)  # [L*3] atom indices
+
+                def _gather_frame(pos: torch.Tensor) -> torch.Tensor:
+                    # pos [M, L_atom, 3] -> frame atoms [M, L, 3, 3]
+                    return pos[:, fa, :].reshape(pos.shape[0], token_num, 3, 3)
+
+                pred_frame = conf.token_frames(_gather_frame(x_pred), tfm[0])
+                gt_frame = conf.token_frames(_gather_frame(structure.atom_pos), tfm[0])
+                pae = conf.pae_target_bins(
+                    pred_rep_pos, gt_rep_pos, tok_valid,
+                    pred_frame, gt_frame, cfg.n_pae_bins, cfg.pae_max,
+                )
 
         # Route through self.model (the DDP/Fabric wrapper) so confidence-head grads
-        # are all-reduced across ranks. Phase4Model.forward IS the confidence head.
+        # are all-reduced across ranks. ConfidenceModel.forward IS the confidence head.
         logits = self.model(
             token_single_input,
             token_pair,
@@ -273,7 +299,7 @@ class Client(Phase3Client):
         del loss
         return loss_dict
 
-    # training_epoch is inherited from Phase3Client (identical loop).
+    # training_epoch is inherited from DiffusionClient (identical loop).
 
     @torch.no_grad()
     def inference(self, batch: Batch, timesteps: int | None = None) -> ConfidenceOutput:
@@ -284,7 +310,7 @@ class Client(Phase3Client):
         token_mask = structure.token_mask
         atom_to_token = scheme.atom_to_token_idx_map
         n = x_pred.shape[0]
-        raw_model = cast("Phase4Model", getattr(self.model, "module", self.model))
+        raw_model = cast("ConfidenceModel", getattr(self.model, "module", self.model))
 
         if structure.atom_is_rep is None:
             msg = "structure.atom_is_rep is required for confidence inference."

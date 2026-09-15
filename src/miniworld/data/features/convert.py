@@ -243,6 +243,25 @@ def to_structure_features(
         n_tokens=cropped_token_len,
     )
 
+    # AF3 Eq.5 bonded-ligand bond loss target: atom-index pairs of covalent
+    # (``covale``) bonds — polymer-ligand / ligand-ligand / glycan links — kept
+    # only when both endpoints survive the crop, have a valid GT position, and are
+    # < 2.4 Å apart in the ground truth (AF3's training bond filter). [n_bond, 2].
+    bond_atom_pairs = _build_bond_atom_pairs(
+        cifmol=cifmol,
+        atom_pos=atom_pos,
+        atom_pos_mask=atom_pos_mask,
+    )
+
+    # AF3 §4.3.2 PAE frames: per-token 3-atom frame — (N, CA, C) for protein,
+    # (C1', C3', C4') for nucleotides; single-atom tokens (ligand/ion) invalid.
+    token_frame_atoms, token_frame_mask = _build_token_frame_atoms(
+        cifmol=cifmol,
+        atom_to_token_idx_map=atom_to_token_idx_map,
+        atom_pos_mask=atom_pos_mask,
+        n_tokens=cropped_token_len,
+    )
+
     return StructureFeatures.from_sample(
         atom_pos=torch.from_numpy(atom_pos.astype(np.float32)),
         atom_pos_mask=torch.from_numpy(atom_pos_mask.astype(np.bool)),
@@ -253,7 +272,78 @@ def to_structure_features(
         token_bond=torch.from_numpy(token_bond.astype(np.int64)),
         token_bond_feat=token_bond_feat,
         atom_is_rep=torch.from_numpy(atom_is_rep),
+        bond_atom_pairs=torch.from_numpy(bond_atom_pairs),
+        token_frame_atoms=torch.from_numpy(token_frame_atoms),
+        token_frame_mask=torch.from_numpy(token_frame_mask),
     )
+
+
+def _build_token_frame_atoms(
+    cifmol: CIFMolAttached,
+    atom_to_token_idx_map: np.ndarray,
+    atom_pos_mask: np.ndarray,
+    n_tokens: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Per-token 3-atom frame indices ``[n_tokens, 3]`` + validity ``[n_tokens]``.
+
+    Frame atoms: protein (N, CA, C), nucleotide (C1', C3', C4'). A token is valid
+    only if all three of one set are present with valid GT positions; otherwise the
+    row is (0, 0, 0) and the mask is False (ligands / ions / single-atom tokens).
+    """
+    names = np.char.strip(np.char.upper(np.asarray(cifmol.atoms.id).astype(str)))
+    tok = np.asarray(atom_to_token_idx_map).astype(np.int64)
+    valid = np.asarray(atom_pos_mask).astype(bool)
+
+    def _name_to_token_atom(target: str) -> np.ndarray:
+        """For each token, the (valid) atom index whose name == target, else -1."""
+        out = np.full(n_tokens, -1, dtype=np.int64)
+        sel = np.where((names == target) & valid)[0]
+        t = tok[sel]
+        ok = (t >= 0) & (t < n_tokens)
+        out[t[ok]] = sel[ok]
+        return out
+
+    prot = np.stack([_name_to_token_atom(n) for n in ("N", "CA", "C")], axis=1)
+    na = np.stack([_name_to_token_atom(n) for n in ("C1'", "C3'", "C4'")], axis=1)
+    prot_ok = (prot >= 0).all(axis=1)
+    na_ok = (na >= 0).all(axis=1)
+
+    frame = np.zeros((n_tokens, 3), dtype=np.int64)
+    frame[prot_ok] = prot[prot_ok]
+    frame[na_ok & ~prot_ok] = na[na_ok & ~prot_ok]
+    frame_mask = prot_ok | na_ok
+    return frame, frame_mask
+
+
+def _build_bond_atom_pairs(
+    cifmol: CIFMolAttached,
+    atom_pos: np.ndarray,
+    atom_pos_mask: np.ndarray,
+) -> np.ndarray:
+    """Atom-index pairs (i, j) of covalent bonds for the AF3 bond loss.
+
+    Returns ``[n_bond, 2]`` int64. Filters: ``covale`` struct_conn only, both
+    endpoints in-range with a valid GT position, and GT distance < 2.4 Å. Empty
+    (``[0, 2]``) when there is no such bond.
+    """
+    n_atom = atom_pos.shape[0]
+    try:
+        sc_value = cifmol.atoms.struct_conn.value[:, 0]
+        covale = sc_value == "covale"
+        src = cifmol.atoms.struct_conn.src[covale].astype(np.int64, copy=False)
+        dst = cifmol.atoms.struct_conn.dst[covale].astype(np.int64, copy=False)
+    except biomol.exceptions.FeatureKeyError:
+        return np.zeros((0, 2), dtype=np.int64)
+    valid = (src >= 0) & (dst >= 0) & (src < n_atom) & (dst < n_atom)
+    src, dst = src[valid], dst[valid]
+    pos_valid = atom_pos_mask.astype(bool)
+    has_pos = pos_valid[src] & pos_valid[dst]
+    src, dst = src[has_pos], dst[has_pos]
+    if src.shape[0] == 0:
+        return np.zeros((0, 2), dtype=np.int64)
+    dist = np.linalg.norm(atom_pos[src] - atom_pos[dst], axis=1)
+    keep = dist < 2.4
+    return np.stack([src[keep], dst[keep]], axis=1).astype(np.int64, copy=False)
 
 
 def _build_atom_is_rep(

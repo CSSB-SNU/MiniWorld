@@ -127,6 +127,9 @@ class Batch(BaseBatch):
                 token_bond_feat=torch.zeros((1, n_tokens, n_tokens), dtype=torch.bool),
                 # padding atoms are never a token's representative atom
                 atom_is_rep=torch.zeros((1, n_atoms), dtype=torch.bool),
+                bond_atom_pairs=torch.zeros((1, 0, 2), dtype=torch.long),
+                token_frame_atoms=torch.zeros((1, n_tokens, 3), dtype=torch.long),
+                token_frame_mask=torch.zeros((1, n_tokens), dtype=torch.bool),
             ),
             reference=ReferenceFeatures(
                 pos=torch.zeros((1, n_atoms, 3), dtype=torch.float),
