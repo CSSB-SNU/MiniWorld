@@ -28,3 +28,15 @@ scratch/
 /libs/kmer_fast_align/
 # meaningful-but-untracked local artifacts (figures, bioai logs, tools, adhoc tests)
 /temp/
+# downloaded reference PDFs for the tech report (not for git)
+docs/refs/
+# LaTeX build artifacts for the tech report (source + refs.bib are tracked)
+docs/paper/*.aux
+docs/paper/*.bbl
+docs/paper/*.blg
+docs/paper/*.log
+docs/paper/*.out
+docs/paper/*.synctex.gz
+docs/paper/main.pdf
+# Local FoldBench runs and per-target outputs; publish source and reports separately.
+/eval_results/

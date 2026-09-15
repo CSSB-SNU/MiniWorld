@@ -25,3 +25,11 @@ environment comments in [pyproject.toml](pyproject.toml).
 The integration preserves the SWA block equations and checkpoint layout.
 [The engine audit](docs/engine-wiring-audit.md) records H100 forward/backward
 checks, numerical differences, CUDA Graph results, and their limits.
+
+## Evaluation and documentation
+
+- [FoldBench evaluation conventions](docs/foldbench-evaluation.md)
+- [Known issues and validation limits](docs/known-issues.md)
+- [Technical report draft and build instructions](docs/paper/README.md)
+
+Generated FoldBench results live under `eval_results/` and are excluded from Git.

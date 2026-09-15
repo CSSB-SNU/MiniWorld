@@ -1,0 +1,157 @@
+% Supplementary information for the MiniWorld 0 technical report.
+% Separate document on purpose: the schematics want a wider text block and
+% bigger boxes than the report's column, and they are reference material
+% rather than part of the argument. Figures number S1, S2, ...
+\documentclass[11pt]{article}
+\usepackage[letterpaper,left=1in,right=1in,top=1.05in,bottom=1.1in]{geometry}
+\usepackage{amsmath}
+\usepackage{libertinus}
+\usepackage{microtype}
+\usepackage[font=small,labelfont={sf,bf},labelsep=period,
+            justification=raggedright,singlelinecheck=false]{caption}
+\usepackage{xcolor}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{xr}
+\externaldocument{main}
+\usepackage{hyperref}
+
+% ---------------------------------------------------------------- palette
+% Brighter than the report body on purpose: these are diagrams, and pale
+% fills with a saturated stroke read as light cards rather than grey slabs
+% (cf. the AlphaFold 2/3 figure panels). Colour is still information only --
+% `accent` = live and retained, `rule` = removed or absent.
+\definecolor{accent}{HTML}{2E86AB}
+\definecolor{accentdeep}{HTML}{1F5673}
+\definecolor{accentsoft}{HTML}{EAF4FA}
+\definecolor{rule}{HTML}{BFD2DE}
+\definecolor{muted}{HTML}{5F7280}
+\hypersetup{colorlinks=true, allcolors=accentdeep}
+
+\titleformat{\section}{\sffamily\large\bfseries\color{accentdeep}}{\thesection}{0.7em}{}
+\titlespacing{\section}{0pt}{1.5\baselineskip}{0.6\baselineskip}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thetable}{S\arabic{table}}
+\captionsetup{labelfont={sf,bf,color=accentdeep}}
+\pagestyle{fancy}\fancyhf{}\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\sffamily\footnotesize\color{muted}MiniWorld~0 \textperiodcentered\ Supplementary information}
+\fancyfoot[R]{\sffamily\footnotesize\color{muted}S\thepage}
+\newcommand{\mw}{MiniWorld~0}
+\newcommand{\mwdisplay}{\mbox{MiniWorld 0}}
+
+% ---------------------------------------------------------------- pseudocode
+% Algorithm blocks in the document's own booktabs idiom: sans header, a heavy
+% rule under it, the def line flush left (as in the AlphaFold 3 supplement),
+% numbered body lines indented under it, and a light rule to close. Built on
+% `list`, not tabular/tabularx -- tabularx re-scans its body, so the `&` inside
+% \al would break the alignment.
+%   \begin{algo}{header}{signature}{signature annotation} ... \end{algo}
+\newcounter{algline}
+\newenvironment{algo}[3]{%
+  \setcounter{algline}{0}%
+  \par\addvspace{0.2em}%
+  \noindent{\sffamily\bfseries\footnotesize\color{accent}#1}%
+  \par\addvspace{0.3em}\nointerlineskip
+  \noindent{\color{accent}\rule{\linewidth}{0.7pt}}%
+  \par\addvspace{0.4em}%
+  \footnotesize
+  \noindent{\sffamily\bfseries def}\ #2\,:%
+  \def\algtmp{#3}\ifx\algtmp\empty\else\hfill{\color{muted}\scriptsize$#3$}\fi%
+  \par\addvspace{0.35em}%
+  \begin{list}{}{%
+    \setlength{\leftmargin}{1.9em}\setlength{\labelwidth}{1.4em}%
+    \setlength{\labelsep}{0.5em}\setlength{\itemsep}{0.32em}%
+    \setlength{\topsep}{0pt}\setlength{\parsep}{0pt}%
+    \setlength{\rightmargin}{0pt}\setlength{\listparindent}{0pt}}%
+}{%
+  \end{list}%
+  \par\addvspace{0.4em}\nointerlineskip
+  \noindent{\color{rule}\rule{\linewidth}{0.4pt}}\par\addvspace{0.2em}%
+}
+% \al[indent]{code}{annotation} -- one numbered line. The optional first
+% argument indents by that many levels, for the body of a branch or loop (the
+% AlphaFold 3 supplement numbers those lines too, and indents them).
+\newlength{\algindent}\setlength{\algindent}{1.3em}
+\newcommand{\al}[3][0]{\stepcounter{algline}%
+  \item[\rmfamily\arabic{algline}:]\hspace*{#1\algindent}$\displaystyle #2$%
+  \def\algtmp{#3}\ifx\algtmp\empty\else\hfill{\color{muted}\scriptsize #3}\fi}
+% \alnote{text} -- an unnumbered continuation line inside a block.
+\newcommand{\alnote}[1]{\item[]{\color{muted}#1}}
+
+\begin{document}
+\thispagestyle{fancy}
+
+{\sffamily\footnotesize\bfseries\color{accentdeep}SUPPLEMENTARY INFORMATION}\\[0.5em]
+{\sffamily\LARGE\bfseries MiniWorld 0}\\[0.3em]
+{\large\color{muted} Architecture schematics}\\[0.9em]
+{\color{rule}\rule{\linewidth}{1.1pt}}
+
+\vspace{1.2em}
+
+\section{The pair update}
+\label{sec:supp-pair}
+
+% Each operator sits in a full-width minipage so a page break can fall between
+% the two but never inside one.
+\par\addvspace{0.9em}
+\noindent\begin{minipage}{\linewidth}
+\begin{algo}{AlphaFold 3 \textperiodcentered\ one operator, invoked twice
+             \citep[Alg.~12--13]{af3}}
+            {TriangleMultiplication$(\{z_{ij}\},\,c=128,\,\mathit{dir})$}
+            {z_{ij}\in\mathbb{R}^{c_z}}
+\al{\hat z_{ij} = \mathrm{LayerNorm}(z_{ij})}{}
+\al{a_{ij},\,b_{ij} = \sigma\big(\mathrm{Linear}(\hat z_{ij})\big) \odot \mathrm{Linear}(\hat z_{ij})}{$a_{ij},b_{ij}\in\mathbb{R}^{c}$}
+\al{g_{ij} = \sigma\big(\mathrm{Linear}(\hat z_{ij})\big)}{$g_{ij}\in\mathbb{R}^{c_z}$}
+\al{\textbf{if } \mathit{dir} = \mathrm{outgoing} \textbf{ then}}{}
+\al[1]{t_{ij} = \textstyle\sum_k a_{ik}\odot b_{jk}}{Alg.~12}
+\al{\textbf{else}}{}
+\al[1]{t_{ij} = \textstyle\sum_k a_{ki}\odot b_{kj}}{Alg.~13}
+\al{\textbf{end if}}{}
+\al{\tilde z_{ij} = g_{ij} \odot \mathrm{Linear}\big(\mathrm{LayerNorm}(t_{ij})\big)}{$t_{ij}\in\mathbb{R}^{c}$}
+\al{\textbf{return } \{\tilde z_{ij}\}}{}
+\end{algo}
+{\footnotesize\color{muted}A pair block runs the whole body twice --- once per
+direction, each call with its own parameters and its own residual:\\[0.3em]
+\hspace*{1.9em}$z \mathrel{+}= \mathrm{DropRow}_{0.25}\big(\mathrm{TriMul}(z,\,\mathrm{outgoing})\big),
+  \qquad z \mathrel{+}= \mathrm{DropRow}_{0.25}\big(\mathrm{TriMul}(z,\,\mathrm{incoming})\big)$\par}
+\end{minipage}
+
+\vspace{1.4em}
+
+\noindent\begin{minipage}{\linewidth}
+\begin{algo}{\mwdisplay{} \textperiodcentered\ one bidirectional operator}
+            {BidirectionalTriangleMultiplication$(\{z_{ij}\},\,h=c_z)$}
+            {z_{ij}\in\mathbb{R}^{c_z}}
+\al{\hat z_{ij} = \mathrm{LayerNorm}(z_{ij})}{one shared input norm}
+\al{l_{ij} = \sigma(W_{lg}\,\hat z_{ij}) \odot W_{l}\,\hat z_{ij}}{$l_{ij}\in\mathbb{R}^{2h}$}
+\al{r_{ij} = \sigma(W_{rg}\,\hat z_{ij}) \odot W_{r}\,\hat z_{ij}}{$r_{ij}\in\mathbb{R}^{2h}$}
+\al{[\,l^{\rightarrow}\!,\;l^{\leftarrow}] = l_{ij}, \qquad [\,r^{\rightarrow}\!,\;r^{\leftarrow}] = r_{ij}}{each $\in\mathbb{R}^{h}$}
+\al{o^{\rightarrow}_{ij} = \textstyle\sum_k l^{\rightarrow}_{ik}\odot r^{\rightarrow}_{jk}}{outgoing}
+\al{o^{\leftarrow}_{ij} = \textstyle\sum_k l^{\leftarrow}_{ki}\odot r^{\leftarrow}_{kj}}{incoming}
+\al{o_{ij} = \mathrm{LayerNorm}\big([\,o^{\rightarrow}_{ij},\;o^{\leftarrow}_{ij}]\big)}{one shared output norm}
+\al{g_{ij} = \sigma(W_{g}\,\hat z_{ij})}{one shared output gate}
+\al{\textbf{return } z_{ij} + \mathrm{DropRow}_{p}\big(g_{ij}\odot W_{o}\,o_{ij}\big)}{residual fused in the epilogue}
+\end{algo}
+\end{minipage}
+
+\vspace{-0.4em}
+\captionof{figure}{The triangular multiplicative update of AlphaFold~3, whose
+body is executed once per direction (\emph{top}), and the single bidirectional
+operator of \mw{}, which executes it once (\emph{bottom}).
+Hidden width per direction and both contractions are unchanged; the input
+normalisation, output normalisation, output gate, dropout and residual are
+shared instead of duplicated. The residual on line~9 belongs to the operator by
+construction --- it is folded into the kernel epilogue (\S\ref{sec:kernels})
+rather than added by the calling block.}
+\label{fig:trimul}
+\vspace{0.6em}
+
+
+
+
+\small
+\bibliographystyle{unsrtnat}
+\bibliography{refs}
+
+\end{document}
