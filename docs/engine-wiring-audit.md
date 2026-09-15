@@ -86,6 +86,22 @@ and `fullgraph_12979/trees.json`.
 
 ## Reproducibility
 
+### Integration with the shared team-gm branch
+
+The MiniWorld consumer now references `team-gm` commit `aaf9356` on
+`exp/miniworld`, including the earlier standalone/FoldForge history at `dbc204f`.
+The integrated source was independently retested in H100 job **12989**:
+**34 tests passed**, and the real L768 probe produced finite output with all
+**685 parameter gradients present and finite**, with no audited PyTorch-default
+module calls. Evidence is in `runs/publish_validation/runtime_12989.json` and
+`runs/v1.0.1/phase2b/full_wiring_12989.out`.
+
+Python 3.10 support is retained for MiniWorld core; the shared repository's
+Biohub ESMFold2 processor dependencies remain gated to Python 3.12. The matching
+Pixi lock adds safetensors and updates team-gm metadata without changing existing
+package versions. Both the Pixi and team-gm uv locks passed consistency checks.
+See [the shared-branch integration record](../libs/team-gm/docs/miniworld-integration-20260915.md).
+
 The dependency remains pinned to engine commit
 `1bc0803e3b2fef3b963fdc383e090c0adcccdb43`. Local engine fixes are stored in the
 three files under `patches/`, rather than depending solely on site-packages edits.
