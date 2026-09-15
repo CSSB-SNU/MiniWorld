@@ -81,6 +81,7 @@ class MiniMSAModuleBlock(nn.Module):
             d_pair=d_pair,
             d_hidden=d_hidden_msa,
             mask_interchain=mask_interchain,
+            implementation=eng,
         )
         if not last_block:
             # MSA self-update (pair-weighted averaging + MSA transition), as in
@@ -90,6 +91,7 @@ class MiniMSAModuleBlock(nn.Module):
                 d_pair=d_pair,
                 d_hidden=d_hidden_msa,
                 p_drop=p_drop_msa,
+                implementation=eng,
             )
             self.transition_msa = Transition(
                 d_msa,

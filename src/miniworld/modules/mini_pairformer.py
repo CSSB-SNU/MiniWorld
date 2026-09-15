@@ -87,8 +87,9 @@ class MiniPairformerBlock(nn.Module):
                 d_pair=d_pair,
                 n_head=n_head_attention,
                 use_qk_norm=use_qk_norm,
+                implementation=eng,
             )
-            self.transition_single = Transition(d_single)
+            self.transition_single = Transition(d_single, implementation=eng)
 
     def forward(
         self,

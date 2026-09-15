@@ -12,7 +12,9 @@ import torch
 from jaxtyping import Bool, Float, Int
 from team_gm import typecheck
 from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
-from miniworld_engine.modules.swa_atom_attention import build_attention_params
+from miniworld_engine.modules.swa_atom_attention.module import build_attention_params
+from miniworld_engine.modules import RMSNorm
+from team_gm.modules.blocks._engine_impl import to_engine_impl
 from team_gm.modules.primitives import Linear
 from torch import nn
 
@@ -56,6 +58,7 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
             SWAAtomTransformer.Config(
                 d_atom=shared_config.d_single_atom,
                 d_cond=shared_config.d_single_atom,
+                implementation=diffusion_config.implementation,
                 n_block=diffusion_config.n_block,
                 n_head=diffusion_config.n_head,
                 swa_window_size=self.atom_swa_config.swa_window_size,
@@ -74,8 +77,9 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
         # activation blow-up source (86 -> 221 through the ep25-28 excursion). Affine-free
         # RMSNorm adds NO parameters (state_dict unchanged, checkpoint-compatible) and just
         # bounds the output magnitude.
-        self.atom_out_norm = nn.RMSNorm(
+        self.atom_out_norm = RMSNorm(
             shared_config.d_single_atom, elementwise_affine=False,
+            implementation=to_engine_impl(diffusion_config.implementation),
         )
         self.atom_single_rep_to_token_single = nn.Sequential(
             Linear(

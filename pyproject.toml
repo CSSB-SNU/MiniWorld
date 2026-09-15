@@ -88,6 +88,10 @@ extra-index-urls = ["https://download.pytorch.org/whl/cu128"]
 default = { features = ["cuda13"] }
 cu128 = { features = ["cuda128"] }
 
+[tool.pixi.tasks]
+# Reapply the pinned engine's reviewed kernel/wiring fixes after env installation.
+engine-setup = "python scripts/apply_engine_audit_patches.py"
+
 [tool.pixi.pypi-dependencies]
 miniworld = { path = ".", editable = true }
 team_gm = { path = "libs/team-gm", editable = true }
@@ -95,10 +99,13 @@ team_gm = { path = "libs/team-gm", editable = true }
 # nested submodule. team-gm consumes it as a uv git dep, but uv/pixi does NOT make
 # [tool.uv.sources] transitive through the editable team_gm path dep, so MiniWorld
 # must declare the git source itself for team_gm's `miniworld-engine` requirement to
-# resolve. Base pin matches team-gm exp/miniworld (f3236c2) -> engine rev 31d96e7.
-# TEMP: pinned to tmp/autotune-bucket-cap-512 (73458b5, = 31d96e7 + 512² bucket-saturate
-# for 768-token phase2) while engine main is owned by another dev. Re-pin to main once merged.
-miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "73458b5" }
+# resolve.
+# Pinned to cache/h100 = engine main (d2266a0) + the committed H100 sm90 autotune caches
+# (72 of 86 ops; 13 still unbuilt -- see submits/engine/ for the build job). The previous
+# TEMP pin tmp/autotune-bucket-cap-512 (73458b5) is fully subsumed: its only commit, the
+# 512² saturating bucket cap that lets 768-token training run with zero live autotuning,
+# is byte-identical on main.
+miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "1bc0803e3b2fef3b963fdc383e090c0adcccdb43" }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"

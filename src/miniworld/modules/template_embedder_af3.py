@@ -22,7 +22,9 @@ import torch.nn.functional as F
 from jaxtyping import Bool, Float, Int
 from team_gm import typecheck
 from team_gm.modules.exceptions import ImplementationType
-from team_gm.modules.primitives import LayerNorm, Linear
+from team_gm.modules.primitives import Linear
+from miniworld_engine.modules import LayerNorm
+from team_gm.modules.blocks._engine_impl import to_engine_impl
 from torch import nn
 
 from miniworld.data.features import TemplateFeatures
@@ -106,7 +108,10 @@ class AF3TemplateEmbedder(nn.Module):
         # "improved training dynamics" — a gentler start for a pathway that trains to a
         # large magnitude anyway (AF3's converged output_linear std≈0.71 ≫ any init).
         # We follow the reproduction consensus (default) to smooth the early ramp.
-        self.ln_query = LayerNorm(d_pair)
+        self.ln_query = LayerNorm(
+            d_pair,
+            implementation=to_engine_impl(ImplementationType[implementation]),
+        )
         self.proj_query = Linear(d_pair, num_channels, bias=False, init="default")
         self.proj_dgram = Linear(dgram_bins, num_channels, bias=False, init="default")
         self.proj_pb_mask = Linear(1, num_channels, bias=False, init="default")
@@ -129,7 +134,10 @@ class AF3TemplateEmbedder(nn.Module):
                 implementation=ImplementationType[implementation],
             ),
         )
-        self.ln_out = LayerNorm(num_channels)
+        self.ln_out = LayerNorm(
+            num_channels,
+            implementation=to_engine_impl(ImplementationType[implementation]),
+        )
         # Template-injection output (token_pair += temp_embedder(...)). This is NOT a
         # "keep-it-small residual": in trained AF3 (af3.bin) this projection converges
         # to std≈0.71 (std·√fan_in≈5.7) — ~5× any init and far above the zero-init

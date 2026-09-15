@@ -8,13 +8,13 @@ from pydantic import BaseModel
 from team_gm import typecheck
 from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
 from team_gm.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Transformer
-from miniworld_engine.modules import Transition
-from miniworld_engine.modules.swa_atom_attention import (
+from team_gm.modules.blocks._engine_impl import to_engine_impl
+from miniworld_engine.modules import LayerNorm, Transition
+from miniworld_engine.modules.swa_atom_attention.module import (
     build_attention_params,
     build_local_structure_neighbor_indices,
 )
 from team_gm.modules.primitives import (
-    LayerNorm,
     Linear,
 )
 from torch import nn
@@ -202,6 +202,7 @@ class AtomAttentionEncoder(nn.Module):
         self.token_single_to_atom_single_cond = nn.Sequential(
             LayerNorm(
                 shared_config.d_single,
+                implementation=to_engine_impl(shared_config.implementation),
             ),
             Linear(
                 shared_config.d_single,
@@ -211,7 +212,9 @@ class AtomAttentionEncoder(nn.Module):
             ),
         )
         self.token_pair_to_atom_pair = nn.Sequential(
-            LayerNorm(d_pair),
+            LayerNorm(
+                d_pair, implementation=to_engine_impl(shared_config.implementation)
+            ),
             Linear(d_pair, d_pair_atom, bias=False, init="zero"),
         )
         self.noisy_to_atom_single_rep = Linear(
@@ -594,7 +597,10 @@ class AtomAttentionDecoder(nn.Module):
         self.atom_transformer = DiffusionTransformer(config=diffusion_config)
 
         self.final_denoising = nn.Sequential(
-            LayerNorm(d_single_atom),
+            LayerNorm(
+                d_single_atom,
+                implementation=to_engine_impl(shared_config.implementation),
+            ),
             Linear(
                 d_single_atom,
                 3,
@@ -714,13 +720,20 @@ class SWAAtomAttentionEncoder(nn.Module):
 
         self.to_atom_single_cond = Linear(6, d_single_atom, bias=False)
         self.token_single_to_atom_single_cond = nn.Sequential(
-            LayerNorm(shared_config.d_single),
+            LayerNorm(
+                shared_config.d_single,
+                implementation=to_engine_impl(shared_config.implementation),
+            ),
             Linear(shared_config.d_single, d_single_atom, bias=False, init="zero"),
         )
         self.noisy_to_atom_single_rep = Linear(3, d_single_atom, bias=True)
 
         resolved = swa_config.model_copy(
-            update={"d_atom": d_single_atom, "d_cond": d_single_atom}
+            update={
+                "d_atom": d_single_atom,
+                "d_cond": d_single_atom,
+                "implementation": swa_config.implementation or shared_config.implementation,
+            }
         )
         if (
             getattr(resolved, "local_structure_attn", False)
@@ -823,11 +836,18 @@ class SWAAtomAttentionDecoder(nn.Module):
 
         self.add_token_info = Linear(d_single_token, d_single_atom, bias=False)
         resolved = swa_config.model_copy(
-            update={"d_atom": d_single_atom, "d_cond": d_single_atom}
+            update={
+                "d_atom": d_single_atom,
+                "d_cond": d_single_atom,
+                "implementation": swa_config.implementation or shared_config.implementation,
+            }
         )
         self.atom_transformer = _make_atom_transformer(resolved)
         self.final_denoising = nn.Sequential(
-            LayerNorm(d_single_atom),
+            LayerNorm(
+                d_single_atom,
+                implementation=to_engine_impl(shared_config.implementation),
+            ),
             Linear(d_single_atom, 3, bias=False, init="zero"),
         )
 
@@ -891,7 +911,7 @@ class DiffusionConditioning(nn.Module):
 
         self.linear_token_pair = nn.Sequential(
             LayerNorm(
-                2 * d_pair,
+                2 * d_pair, implementation=to_engine_impl(shared_config.implementation)
             ),
             Linear(2 * d_pair, d_pair, bias=False),
         )
@@ -900,6 +920,7 @@ class DiffusionConditioning(nn.Module):
                 Transition(
                     d_hidden=d_pair,
                     n=dit_cond_config.n_expand,
+                    implementation=to_engine_impl(shared_config.implementation),
                 )
                 for _ in range(dit_cond_config.n_blocks)
             ],
@@ -907,6 +928,7 @@ class DiffusionConditioning(nn.Module):
         self.linear_token_single = nn.Sequential(
             LayerNorm(
                 shared_config.d_single_token_input + shared_config.d_single,
+                implementation=to_engine_impl(shared_config.implementation),
             ),
             Linear(
                 shared_config.d_single_token_input + shared_config.d_single,
@@ -916,7 +938,7 @@ class DiffusionConditioning(nn.Module):
         )
         self.add_time_embedding = nn.Sequential(
             LayerNorm(
-                d_time,
+                d_time, implementation=to_engine_impl(shared_config.implementation)
             ),
             Linear(d_time, d_single, bias=False),
         )
@@ -925,11 +947,14 @@ class DiffusionConditioning(nn.Module):
                 Transition(
                     d_hidden=d_single,
                     n=dit_cond_config.n_expand,
+                    implementation=to_engine_impl(shared_config.implementation),
                 )
                 for _ in range(dit_cond_config.n_blocks)
             ],
         )
-        self.final_layernorm_token_single = LayerNorm(d_single)
+        self.final_layernorm_token_single = LayerNorm(
+            d_single, implementation=to_engine_impl(shared_config.implementation)
+        )
 
     @typecheck
     def forward(
@@ -1013,6 +1038,7 @@ class DiffusionModule(nn.Module):
         self.add_single_token_cond = nn.Sequential(
             LayerNorm(
                 shared_config.d_single,
+                implementation=to_engine_impl(shared_config.implementation),
             ),
             Linear(
                 shared_config.d_single,
@@ -1024,6 +1050,7 @@ class DiffusionModule(nn.Module):
         self.diffusion_transformer = DiffusionTransformer(config=token_dit_config)
         self.ln_token_single_rep = LayerNorm(
             shared_config.d_single_token,
+            implementation=to_engine_impl(shared_config.implementation),
         )
 
     def _encode_atoms(

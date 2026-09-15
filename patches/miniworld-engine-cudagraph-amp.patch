@@ -1,0 +1,170 @@
+diff --git a/src/miniworld_engine/autotune/shape_key.py b/src/miniworld_engine/autotune/shape_key.py
+index b12ead4c..8f60474f 100644
+--- a/src/miniworld_engine/autotune/shape_key.py
++++ b/src/miniworld_engine/autotune/shape_key.py
+@@ -59,6 +59,14 @@ from __future__ import annotations
+ 
+ import zlib as _zlib
+ 
++from miniworld_engine.kernels._compile import device_constant
++
++
++@device_constant
++def _axis_checksum(names: tuple[str, ...]) -> int:
++    """Only immutable axis NAMES are constant-folded; dimensions stay in pack."""
++    return _zlib.crc32(",".join(names).encode())
++
+ #: Channel width. Exact -- a kernel is compiled for one of these and no other.
+ DIM_BUCKETS: tuple[int, ...] = (64, 128, 256, 384, 512, 768)
+ 
+@@ -284,7 +292,7 @@ def pack(base: int, **axes: int) -> int:
+                 f"_RADIX and re-tune, or check that {name} is really a width."
+             )
+         value = value * _RADIX + w
+-    value = value * _RADIX + (_zlib.crc32(",".join(sorted(axes)).encode()) & (_RADIX - 1))
++    value = value * _RADIX + (_axis_checksum(tuple(sorted(axes))) & (_RADIX - 1))
+     # The per-axis check above is not the whole bound. `shape_key` reaches the kernel as a RUNTIME
+     # scalar argument, so the assembled value has to stay an int64: the budget is
+     # bits(base) + 12 * (axes + 1), and `both_key`'s top bucket (1,048,576 rows) leaves room for
+diff --git a/src/miniworld_engine/kernels/transition/cuda/__init__.py b/src/miniworld_engine/kernels/transition/cuda/__init__.py
+index f74ebb1b..5d159c38 100644
+--- a/src/miniworld_engine/kernels/transition/cuda/__init__.py
++++ b/src/miniworld_engine/kernels/transition/cuda/__init__.py
+@@ -2,6 +2,9 @@
+ 
+ from pathlib import Path
+ 
++import torch
++from ..._compile import opaque
++
+ 
+ from ..._nvcc import ensure_cuda_home, gencodes, host_flags, load_extension, mathdx_includes
+ 
+@@ -31,6 +34,22 @@ def _ext(kind, width, config):
+     return _EXTENSIONS[key]
+ 
+ 
++def _b2b_launch_fake(x, rstd, c1, g, beta, wa, wb, ws, bn, stages, warpgroups, kt, min_blocks):
++    return torch.empty_like(x)
++
++
++@opaque(fake=_b2b_launch_fake, name="transition_b2b_fwd_cuda")
++def _b2b_launch(
++    x: torch.Tensor, rstd: torch.Tensor, c1: torch.Tensor,
++    g: torch.Tensor, beta: torch.Tensor, wa: torch.Tensor,
++    wb: torch.Tensor, ws: torch.Tensor, bn: int, stages: int,
++    warpgroups: int, kt: int, min_blocks: int,
++) -> torch.Tensor:
++    """Native inference launch boundary; keep surrounding LN/reshapes traceable."""
++    config = dict(bn=bn, stages=stages, warpgroups=warpgroups, kt=kt, min_blocks=min_blocks)
++    return _ext("b2b", x.shape[-1], config).transition_b2b_fwd(x, rstd, c1, g, beta, wa, wb, ws, True)
++
++
+ def _run_configured(kind, symbol, tensors, *, config=None, residual=False):
+     from miniworld_engine.autotune.hopper_cuda_config import candidates
+     from miniworld_engine.autotune.native import choose_config, tensor_key
+@@ -49,6 +68,8 @@ def _run_configured(kind, symbol, tensors, *, config=None, residual=False):
+         )
+     if config not in grid:
+         raise ValueError("CUDA transition config does not support the input row count")
++    if kind == "b2b" and residual:
++        return _b2b_launch(*tensors, **config)
+     fn = getattr(_ext(kind, width, config), symbol)
+     return fn(*tensors, True) if residual else fn(*tensors)
+ 
+diff --git a/src/miniworld_engine/modules/adaptive_layernorm/module.py b/src/miniworld_engine/modules/adaptive_layernorm/module.py
+index 267fbaf7..7cc93f3f 100644
+--- a/src/miniworld_engine/modules/adaptive_layernorm/module.py
++++ b/src/miniworld_engine/modules/adaptive_layernorm/module.py
+@@ -63,15 +63,22 @@ class AdaptiveLayerNorm(nn.Module):
+             # out here, and ConditionedTransition had its own shorter version, and the two
+             # disagreed; neither asked whether gradients were being recorded at all.
+             fn = adaln_train if needs_backward(self, x, cond) else adaln_inference
+-            return fn(
+-                x,
+-                cond,
+-                self.ln_cond.weight,
+-                self.to_scale.weight,
+-                self.to_scale.bias,
+-                self.to_bias.weight,
+-                self.ln_in.eps,
+-                self.ln_cond.eps,
+-            )
++            # AMP does not cast custom-op arguments. Keep the native GEMMs and
++            # their saved backward operands in one dtype, with FP32 master params
++            # connected through differentiable casts. Norm affine stays FP32.
++            device_type = x.device.type
++            compute_dtype = (torch.get_autocast_dtype(device_type)
++                             if torch.is_autocast_enabled(device_type) else x.dtype)
++            with torch.autocast(device_type=device_type, enabled=False):
++                return fn(
++                    x.to(compute_dtype),
++                    cond.to(compute_dtype),
++                    self.ln_cond.weight,
++                    self.to_scale.weight.to(compute_dtype),
++                    self.to_scale.bias.to(compute_dtype),
++                    self.to_bias.weight.to(compute_dtype),
++                    self.ln_in.eps,
++                    self.ln_cond.eps,
++                )
+ 
+         raise InvalidImplementationError(self.implementation)
+diff --git a/src/miniworld_engine/modules/conditioned_transition/module.py b/src/miniworld_engine/modules/conditioned_transition/module.py
+index 14c921cc..e6dd630d 100644
+--- a/src/miniworld_engine/modules/conditioned_transition/module.py
++++ b/src/miniworld_engine/modules/conditioned_transition/module.py
+@@ -136,27 +136,38 @@ class ConditionedTransition(nn.Module):
+             # below the kernels only ever see M = B*A, which equals A only when B == 1 -- so the
+             # kernels cannot recover it and it is threaded down as an explicit argument instead.
+             length = length_of(x.shape)
+-            x2 = x.reshape(-1, d)
+-            cond2 = cond.reshape(-1, cond.shape[-1])
++            # AMP can produce BF16 activations while master weights remain FP32.
++            # Native Triton dot operands must agree, and backward must save tensors
++            # in that same compute dtype. Cast through autograd, never mutate params.
++            device_type = x.device.type
++            compute_dtype = (torch.get_autocast_dtype(device_type)
++                             if torch.is_autocast_enabled(device_type)
++                             else self.expand_a.weight.dtype)
++            x2 = x.reshape(-1, d).to(compute_dtype)
++            cond2 = cond.reshape(-1, cond.shape[-1]).to(compute_dtype)
++            wa, wb, ws, wsc, bsc = (
++                p.to(compute_dtype) for p in (self.expand_a.weight, self.expand_b.weight,
++                                             self.squeeze.weight, self.to_scale.weight,
++                                             self.to_scale.bias)
++            )
+             # `x2.requires_grad` alone missed the conditioning tensor AND the projection
+             # weights, which are parameters -- so a detached x with live weights took the
+             # inference path and the gradient vanished silently (the kernels are `@opaque`, so
+             # there is no grad_fn and no error). `dispatch.needs_backward` is the one condition
+             # both this and AdaptiveLayerNorm now ask.
+-            if needs_backward(self, x2, cond2):
+-                y = kernels.cond_transition_train(
+-                    x2, cond2,
+-                    self.expand_a.weight, self.expand_b.weight, self.squeeze.weight,
+-                    self.to_scale.weight, self.to_scale.bias,
+-                    length,
+-                )
+-            else:
+-                y = kernels.cond_transition_inference_dispatch(
+-                    x2, cond2,
+-                    self.expand_a.weight, self.expand_b.weight, self.squeeze.weight,
+-                    self.to_scale.weight, self.to_scale.bias,
+-                    length,
+-                )
++            with torch.autocast(device_type=device_type, enabled=False):
++                if needs_backward(self, x2, cond2):
++                    y = kernels.cond_transition_train(
++                        x2, cond2,
++                        wa, wb, ws, wsc, bsc,
++                        length,
++                    )
++                else:
++                    y = kernels.cond_transition_inference_dispatch(
++                        x2, cond2,
++                        wa, wb, ws, wsc, bsc,
++                        length,
++                    )
+             return y.reshape(*x.shape[:-1], self.d_hidden)
+ 
+         raise InvalidImplementationError(self.implementation)

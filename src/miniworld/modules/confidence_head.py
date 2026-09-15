@@ -1,4 +1,4 @@
-"""AF3-style confidence head (pLDDT / PAE / PDE) for MiniWorld phase4.
+"""AF3-style confidence head (pLDDT / PAE / PDE) for MiniWorld phase 3.
 
 Given the FROZEN pair-only trunk's pair representation ``z`` (``d_pair``) and input
 single ``s_in`` (``d_single_token_input``), plus a *predicted* structure's per-token
@@ -31,6 +31,7 @@ from jaxtyping import Bool, Float, Int
 from pydantic import BaseModel
 from team_gm import typecheck
 from team_gm.modules.primitives import Linear
+from team_gm.modules.exceptions import ImplementationType
 from torch import nn
 
 from miniworld.modules.mini_pairformer import MiniPairformer
@@ -52,6 +53,7 @@ class ConfidenceHead(nn.Module):
         n_head_attention: int = 16
         n_checkpoint_segments: int | None = None
         p_drop: float = 0.0
+        implementation: ImplementationType = ImplementationType.PYTORCH
         # output bins
         n_plddt_bins: int = 50   # lDDT in [0, 1] -> 50 bins (0.02 each)
         n_pae_bins: int = 64     # aligned error [0, pae_max] Å
@@ -91,6 +93,7 @@ class ConfidenceHead(nn.Module):
                 p_drop=config.p_drop,
                 n_block=config.n_block,
                 n_checkpoint_segments=config.n_checkpoint_segments,
+                implementation=config.implementation,
             ),
         ).to(torch.bfloat16)
 

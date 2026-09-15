@@ -1,0 +1,2 @@
+# Unified patches require a leading space on blank context lines.
+patches/*.patch -whitespace

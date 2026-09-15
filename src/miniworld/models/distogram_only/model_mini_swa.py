@@ -8,9 +8,10 @@ import torch
 from pydantic import BaseModel
 from team_gm.modules import DiffusionTransformer
 from team_gm.modules.primitives import (
-    LayerNorm,
     Linear,
 )
+from miniworld_engine.modules import LayerNorm
+from team_gm.modules.blocks._engine_impl import to_engine_impl
 from torch import nn
 
 from miniworld.configs import SharedConfig
@@ -115,6 +116,7 @@ class MiniSWAModel(nn.Module):
             LayerNorm(
                 config.shared.d_pair,
                 dtype=torch.bfloat16,
+                implementation=to_engine_impl(config.shared.implementation),
             ),
             Linear(
                 config.shared.d_pair,
