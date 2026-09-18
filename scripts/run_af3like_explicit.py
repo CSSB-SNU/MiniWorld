@@ -5,7 +5,16 @@ import os
 import time
 from pathlib import Path
 import warnings
-warnings.filterwarnings("ignore", message=".*torch.jit.script_method.*", category=DeprecationWarning) 
+
+# cuequivariance_ops_torch/triangle_attention.py runs a bare
+# warnings.simplefilter("once") at import time. It lands at the front of
+# warnings.filters and shadows every filter registered before it -- including
+# the interpreter default that ignores DeprecationWarning -- which is why the
+# torch.jit.script_method warning leaks out of torch's own mkldnn import.
+# Import it up front, drop that catch-all, then install our filter.
+import cuequivariance_ops_torch.triangle_attention  # noqa: F401
+warnings.filters[:] = [f for f in warnings.filters if f[:4] != ("once", None, Warning, None)]
+warnings.filterwarnings("ignore", message=".*torch.jit.script_method.*", category=DeprecationWarning)
 import click
 import torch
 from hydra import compose, initialize_config_dir
