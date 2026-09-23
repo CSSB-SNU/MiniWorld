@@ -1,0 +1,35 @@
+{
+  "length": 768,
+  "complete": true,
+  "explicit_dropout_errors": {
+    "holed_scale": [
+      0.0,
+      0.0023615125101059675,
+      0.0029568884056061506,
+      0.002228902420029044,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "zero_scale": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "package": "/home/psk6950/MiniWorld/runs/trimul_training_audit_20260916/package/miniworld_engine/kernels/trimul_inproj/triton/bidirectional.py"
+}

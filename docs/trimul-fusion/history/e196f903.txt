@@ -1,0 +1,32 @@
+commit e196f9039fd3f182e3e33713fc9750d77e6441ea
+Author:     SanggeunParrk <psk6950@snu.ac.kr>
+AuthorDate: Sun Aug 2 23:24:59 2026 +0900
+Commit:     SanggeunParrk <psk6950@snu.ac.kr>
+CommitDate: Sun Aug 2 23:24:59 2026 +0900
+
+    feat(trimul-triton): fuse residual+dropout into the TRITON backend gate store
+    
+    The trimul TRITON backend (_forward_triton / bidirectional_trimul_triton) previously returned the
+    raw op and applied the pairformer residual + row-broadcast dropout EXTERNALLY (_r()), unlike the
+    cute dispatch which folds them into the gate_elem store epilogue. Thread residual (== module input
+    pair, [M,D]) + dropscale ([L,D]) through the triton dispatchers, the forward-only _uni_infer /
+    _bidir_infer, and the merged autograd Functions (_UniBackHalfTriton / _BidirBackHalfTriton) into
+    gate_elem_triton (fwd) + gate_elem_bwd_ew (bwd, drop-scales dy) — the SAME fused kernel the cute
+    path already uses. The Functions now take residual/dropscale and return d_residual.
+    
+    This matters on pre-Hopper (A100), where trimul defaults to the TRITON backend, and for any
+    explicit MINIWORLD_TRIMUL_IMPL=triton run — those now fuse instead of an external add + HBM
+    round-trip.
+    
+    Verified on H100 (forced TRITON): single-dir (out+in) and bidir all cos 0.99999 fwd + grad vs the
+    pytorch reference (dropout p=0.15, same seed); dropout deterministic (1.0) and applied (<1). Doc
+    updated: trimul-triton now fused; remaining explicit paths = sm100 back + TriangleAttention.
+    
+    Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+ .../residual-fusion-followups.md                   |  6 ++++
+ .../kernels/trimul_inproj/triton/bidirectional.py  | 37 +++++++++++++++-----
+ .../kernels/trimul_inproj/triton/unidirectional.py | 39 +++++++++++++++++-----
+ .../triangle_multiplication/bidirectional.py       |  8 ++++-
+ .../modules/triangle_multiplication/module.py      |  8 ++++-
+ 5 files changed, 78 insertions(+), 20 deletions(-)

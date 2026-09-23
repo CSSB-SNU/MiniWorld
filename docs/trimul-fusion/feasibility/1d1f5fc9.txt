@@ -1,0 +1,22 @@
+commit 1d1f5fc9ac0e35faf15eb8014f724165a55d9509
+Author:     SanggeunParrk <psk6950@snu.ac.kr>
+AuthorDate: Tue Aug 4 18:36:15 2026 +0900
+Commit:     SanggeunParrk <psk6950@snu.ac.kr>
+CommitDate: Tue Aug 4 18:36:15 2026 +0900
+
+    fix(cute): route layernorm n<=256 + trimul back_split off broken M2 fused -> correct M1
+    
+    The M2 fused LayerNormLinear kernel (gemm_layernorm_linear_fused) is broken on quack 0.5.0 —
+    a deep multi-drift port: load_AB->load_tma (fixed), _epi_smem_map->name-keyed dict (fixed), and
+    its kernel-filled SmemColVec op is now dropped by 0.5.0's None-arg active-op filter (epi op is
+    inactive unless args.<name> is not None) — plus likely more downstream. M2 is an INFERENCE-only
+    optimization (n<=256 fwd, ~0.062 vs M1 0.094 ms); the M1 path is correct and covers it.
+    
+    Until M2's port lands, route both consumers to M1 (config=None -> brute-force autotuned):
+    - layernorm_linear dispatcher: all N (fwd + train) use M1.
+    - trimul back_split: proj uses M1 instead of M2 fused.
+    
+    Verified: layernorm_linear cos=1.0 vs torch for N in {128,512}, fwd + save_stats. Kept the two
+    M2 port fixes (load_tma, _epi_smem_map) as progress toward the eventual M2 revival.
+    
+    Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

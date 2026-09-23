@@ -1,0 +1,32 @@
+{
+  "june-split-source.py": {
+    "commit": "5dcd6663bd145ddfce8f09cea2c50eedffdcc16a",
+    "source": "src/miniworld_kernels/kernels/trimul_inproj/cute/back_split.py",
+    "sha256": "f2ddbef39cac061e9bb67a876db1e3aa1b090c3a30a07089e8959fa67e6057b9"
+  },
+  "june-split-benchmark.md": {
+    "commit": "5dcd6663bd145ddfce8f09cea2c50eedffdcc16a",
+    "source": "src/miniworld_kernels/kernels/trimul_inproj/benchmark/dsweep_split.md",
+    "sha256": "06a513b06d071fd32375da0c4d2e32889047591aca9220c4fba54bcf9678f47b"
+  },
+  "tm2-triton.py": {
+    "commit": "1bc0803e3b2fef3b963fdc383e090c0adcccdb43",
+    "source": "src/miniworld_engine/kernels/tm2/triton/main.py",
+    "sha256": "c853998050b1ad1de9b26bd22dca64b9f1b26a6c9c374b923ac767a47c7706f3"
+  },
+  "dtv1-output.py": {
+    "commit": "1bc0803e3b2fef3b963fdc383e090c0adcccdb43",
+    "source": "src/miniworld_engine/modules/triangle_multiplication/baseline_dtv1.py",
+    "sha256": "2fe581703916a9c1d96ab16cb45aa6fb51426dda3c2a06af6603056615bf0735"
+  },
+  "gate-b200.md": {
+    "commit": "1bc0803e3b2fef3b963fdc383e090c0adcccdb43",
+    "source": "src/miniworld_engine/kernels/trimul_inproj/notes/gate_forward_fused/v1.md",
+    "sha256": "2d65859afc3f8a007e77ae5c7b0dd0f2032e5db9a1e23a2ef3c27714a027f940"
+  },
+  "ln-projection-b200.md": {
+    "commit": "1bc0803e3b2fef3b963fdc383e090c0adcccdb43",
+    "source": "src/miniworld_engine/kernels/trimul_inproj/notes/lnout_fold_fusion_b200/v1.md",
+    "sha256": "f1c88c86459c2b40a974849933f121ce577e95de712a9ebe735f73cb5e6d3f30"
+  }
+}

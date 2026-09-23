@@ -1,0 +1,12 @@
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cute_config.py:142: UserWarning: [miniworld.autotune] native cache source/environment changed for op 'trimul_inproj_masked_sm90_cute' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16). Falling back to the declared native default — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  kw = choose_config(op, [config_to_kwargs(c) for c in candidates], dtype=dtype,
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cute_config.py:142: UserWarning: [miniworld.autotune] native cache source/environment changed for op 'trimul_output_bwd_rows_sm90_cute' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16). Falling back to the declared native default — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  kw = choose_config(op, [config_to_kwargs(c) for c in candidates], dtype=dtype,
+TIMING {'median_ms': 4.1224799156188965, 'p20_ms': 4.10842227935791, 'p80_ms': 4.145139122009278}
+TIMING {'median_ms': 4.104351997375488, 'p20_ms': 4.073055934906006, 'p80_ms': 4.124403095245361}
+TIMING {'median_ms': 4.069087982177734, 'p20_ms': 4.052371311187744, 'p80_ms': 4.090867233276367}
+TIMING {'median_ms': 4.082752227783203, 'p20_ms': 4.059584140777588, 'p80_ms': 4.093977451324463}
+TIMING {'median_ms': 4.071104049682617, 'p20_ms': 4.048947143554687, 'p80_ms': 4.085907173156738}
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/profiler/profiler.py:217: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
+  _warn_once(
+RESULT {"value": 4.082752227783203, "input_dtype": "bfloat16", "parameter_dtype": "float32", "execution_path": "miniworld.v6_training_merged", "reference": "pytorch", "output_max_abs": 7.8292236328125, "output_rel_frob": 0.46769630908966064, "output_cosine": 0.8909522294998169, "grad_max_abs": 5.529655456542969, "grad_rel_frob": 0.5742103457450867, "grad_cosine": 0.8358103036880493}

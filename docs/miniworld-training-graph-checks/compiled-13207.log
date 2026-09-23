@@ -1,0 +1,302 @@
+[22:30:25] Loaded 2 cached real batches
+[22:30:28] Model params=21781312 backends={'triton': 296}; recycle=1; graph=off
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'qk_norm_rope_fwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=1125900443781205). Falling back to the full grid (15 configs) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_expand_swiglu_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=281477125245094). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'rmsnorm_fwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_WEIGHT=0,shape_key=68720001818). Falling back to a heuristic 24 of 1200 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_fwd_saveact_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2473901425434). Falling back to a heuristic 24 of 800 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_gemm_gate_mmajor_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|SAVE_PREACT=1,shape_key=26390426815878). Falling back to a heuristic 24 of 864 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_output_f567_train_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|L=384,M=147456,shape_key=108090791251148953,wg0=64,wg1=1,wp0=128,wp1=1). Falling back to a heuristic 24 of 960 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_expand_swiglu_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=10133100236376230). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_fwd_saveact_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=9895604912922). Falling back to a heuristic 24 of 800 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_expand_swiglu_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=40532397721127078). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=9895604912922). Falling back to a heuristic 24 of 1440 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_bwd_swiglu_recompute_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|NORMALIZE=0,STORE_H=1,shape_key=40532397721127078). Falling back to a heuristic 24 of 1080 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2473901425434). Falling back to a heuristic 24 of 1440 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_bwd_swiglu_recompute_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|NORMALIZE=0,STORE_H=1,shape_key=10133100236376230). Falling back to a heuristic 24 of 1080 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'gated_projection_bwd_gate_dropres_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|FROM_PREACT=0,shape_key=6442713882). Falling back to a heuristic 24 of 480 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_strided_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|shape_key=2473901687578). Falling back to a heuristic 24 of 288 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_input_dual_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|M=147456,fs0=1,fs1=147456,gs0=64,gs1=1,shape_key=108090797693599897,vs0=64,vs1=1,ws0=1,ws1=64). Falling back to a heuristic 24 of 360 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_input_ln_residual_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2473901425434). Falling back to a heuristic 24 of 38 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'rmsnorm_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_WEIGHT=0,shape_key=68720001818). Falling back to a heuristic 24 of 600 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_bwd_swiglu_recompute_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|NORMALIZE=0,STORE_H=1,shape_key=281477125245094). Falling back to a heuristic 24 of 1080 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'qk_norm_rope_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=1125900443781205). Falling back to the full grid (15 configs) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+[22:30:42] warmup 1/3 loss=4.562500 peak=52.66 GiB
+[22:30:42] warmup 2/3 loss=4.562500 peak=52.69 GiB
+[22:30:42] warmup 3/3 loss=4.562500 peak=52.69 GiB
+[22:30:42] Full optimizer-step warmup
+[22:30:50] Step warmup loss=4.562500 grad_norm=209.661682
+[22:30:58] {"round": 0, "wall_seconds": 7.500747467391193, "cuda_seconds": 7.5006259765625, "loss": 4.5625, "grad_norm": 209.66168212890625}
+[22:31:05] {"round": 1, "wall_seconds": 7.500042015686631, "cuda_seconds": 7.4999423828125, "loss": 4.5625, "grad_norm": 209.6616973876953}
+[22:31:13] {"round": 2, "wall_seconds": 7.498287143185735, "cuda_seconds": 7.4981044921875, "loss": 4.5625, "grad_norm": 210.05735778808594}
+[22:31:13] Saved runs/miniworld_graph_ab/r1-off-shared-tuning.json
+[22:31:19] Loaded 2 cached real batches
+[22:31:22] Model params=21781312 backends={'triton': 296}; recycle=1; graph=manual
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'qk_norm_rope_fwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=1125900443781205). Falling back to the full grid (15 configs) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_expand_swiglu_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=281477125245094). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'rmsnorm_fwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_WEIGHT=0,shape_key=68720001818). Falling back to a heuristic 24 of 1200 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_fwd_saveact_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2473901425434). Falling back to a heuristic 24 of 800 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_gemm_gate_mmajor_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|SAVE_PREACT=1,shape_key=26390426815878). Falling back to a heuristic 24 of 864 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_output_f567_train_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|L=384,M=147456,shape_key=108090791251148953,wg0=64,wg1=1,wp0=128,wp1=1). Falling back to a heuristic 24 of 960 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_expand_swiglu_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=10133100236376230). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_fwd_saveact_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=9895604912922). Falling back to a heuristic 24 of 800 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_expand_swiglu_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=40532397721127078). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=9895604912922). Falling back to a heuristic 24 of 1440 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_bwd_swiglu_recompute_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|NORMALIZE=0,STORE_H=1,shape_key=40532397721127078). Falling back to a heuristic 24 of 1080 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2473901425434). Falling back to a heuristic 24 of 1440 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_bwd_swiglu_recompute_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|NORMALIZE=0,STORE_H=1,shape_key=10133100236376230). Falling back to a heuristic 24 of 1080 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'gated_projection_bwd_gate_dropres_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|FROM_PREACT=0,shape_key=6442713882). Falling back to a heuristic 24 of 480 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_strided_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|shape_key=2473901687578). Falling back to a heuristic 24 of 288 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_input_dual_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|M=147456,fs0=1,fs1=147456,gs0=64,gs1=1,shape_key=108090797693599897,vs0=64,vs1=1,ws0=1,ws1=64). Falling back to a heuristic 24 of 360 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_input_ln_residual_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2473901425434). Falling back to a heuristic 24 of 38 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'rmsnorm_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_WEIGHT=0,shape_key=68720001818). Falling back to a heuristic 24 of 600 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_bwd_swiglu_recompute_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|NORMALIZE=0,STORE_H=1,shape_key=281477125245094). Falling back to a heuristic 24 of 1080 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'qk_norm_rope_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=1125900443781205). Falling back to the full grid (15 configs) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+[22:31:35] warmup 1/3 loss=4.562500 peak=52.66 GiB
+[22:31:36] warmup 2/3 loss=4.562500 peak=52.69 GiB
+[22:31:36] warmup 3/3 loss=4.562500 peak=52.69 GiB
+[22:31:36] Capture complete in 0.428s
+[22:31:36] Full optimizer-step warmup
+[22:31:44] Step warmup loss=4.562500 grad_norm=209.661682
+[22:31:51] {"round": 0, "wall_seconds": 7.226464387960732, "cuda_seconds": 7.2262509765625, "loss": 4.5625, "grad_norm": 209.66168212890625}
+[22:31:58] {"round": 1, "wall_seconds": 7.223930988460779, "cuda_seconds": 7.22380224609375, "loss": 4.5625, "grad_norm": 209.6616973876953}
+[22:32:05] {"round": 2, "wall_seconds": 7.236707418225706, "cuda_seconds": 7.23654638671875, "loss": 4.5625, "grad_norm": 210.05735778808594}
+[22:32:05] Saved runs/miniworld_graph_ab/r1-manual-shared-tuning.json
+[22:32:12] Loaded 2 cached real batches
+[22:32:14] Model params=21781312 backends={'triton': 296}; recycle=1; graph=off
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/graph.py:865: UserWarning: Error detected in GeneratedBackwardFor_miniworld_engine_swa_atom_attention_flash_window_defaultBackward. Traceback of forward call that caused the error:
+  File "/home/psk6950/MiniWorld/src/miniworld/models/distogram_only/model_mini_swa.py", line 228, in _embed
+    ) = self.input_feature_embedder(
+  File "/home/psk6950/MiniWorld/src/miniworld/modules/input_embedder.py", line 381, in forward
+    token_single_input = self.atom_attention_encoder(reference, scheme, structure)
+  File "/home/psk6950/MiniWorld/src/miniworld/modules/input_feature_embedder_esmfold2_style.py", line 129, in forward
+    atom_single = self.atom_transformer(atom_single, atom_single, attention_params)
+  File "/home/psk6950/MiniWorld/libs/team-gm/src/team_gm/modules/blocks/swa_atom_transformer.py", line 281, in forward
+    q = block(q, c, attention_params)
+  File "/home/psk6950/MiniWorld/libs/team-gm/src/team_gm/modules/blocks/swa_atom_transformer.py", line 160, in forward
+    attn = gate_a * self.attn(attn_in, attention_params)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/modules/swa_atom_attention/module.py", line 628, in forward
+    out = self._flash_window(q, k, v, cu_seqlens, seqused, max_seqlen, valid, n, s)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/modules/swa_atom_attention/module.py", line 691, in _flash_window
+    return flash_window_seqused(
+ (Triggered internally at /pytorch/torch/csrc/autograd/python_anomaly_mode.cpp:122.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+Traceback (most recent call last):
+  File "/home/psk6950/MiniWorld/scripts/benchmark_miniworld_training_graph.py", line 324, in <module>
+    main()
+  File "/home/psk6950/MiniWorld/scripts/benchmark_miniworld_training_graph.py", line 200, in main
+    loss = micro()
+  File "/home/psk6950/MiniWorld/scripts/benchmark_miniworld_training_graph.py", line 174, in micro
+    logits = model(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1774, in _wrapped_call_impl
+    return self._compiled_call_impl(*args, **kwargs)  # type: ignore[misc]
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py", line 967, in compile_wrapper
+    raise e.remove_dynamo_frames() from None  # see TORCHDYNAMO_VERBOSE=1
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_dynamo/output_graph.py", line 2437, in _call_user_compiler
+    raise BackendCompilerFailed(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_dynamo/output_graph.py", line 2412, in _call_user_compiler
+    compiled_fn = compiler_fn(gm, example_inputs)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_dynamo/repro/after_dynamo.py", line 156, in __call__
+    compiled_gm = compiler_fn(gm, example_inputs)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/__init__.py", line 2435, in __call__
+    return compile_fx(model_, inputs_, config_patches=self.config)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 2486, in compile_fx
+    return compile_fx(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 2537, in compile_fx
+    return _maybe_wrap_and_compile_fx_main(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 2614, in _maybe_wrap_and_compile_fx_main
+    return _compile_fx_main(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_inductor/compile_fx.py", line 2809, in _compile_fx_main
+    return aot_autograd(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_dynamo/backends/common.py", line 123, in __call__
+    cg = aot_module_simplified(gm, example_inputs, **self.kwargs)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/aot_autograd.py", line 1114, in aot_module_simplified
+    aot_graph_capture = aot_stage1_graph_capture(aot_state, functional_call)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/graph_compile.py", line 222, in aot_stage1_graph_capture
+    ) = aot_dispatch_autograd_graph(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/graph_capture.py", line 461, in aot_dispatch_autograd_graph
+    fx_g = _create_graph(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/graph_capture.py", line 89, in _create_graph
+    fx_g = make_fx(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/fx/experimental/proxy_tensor.py", line 2701, in wrapped
+    return make_fx_tracer.trace(f, *args)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/fx/experimental/proxy_tensor.py", line 2626, in trace
+    return self._trace_inner(f, *args)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/fx/experimental/proxy_tensor.py", line 2588, in _trace_inner
+    t = dispatch_trace(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_compile.py", line 54, in inner
+    return disable_fn(*args, **kwargs)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py", line 1181, in _fn
+    return fn(*args, **kwargs)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/fx/experimental/proxy_tensor.py", line 1460, in dispatch_trace
+    graph = tracer.trace(root, concrete_args)  # type: ignore[arg-type]
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py", line 1181, in _fn
+    return fn(*args, **kwargs)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/fx/_symbolic_trace.py", line 879, in trace
+    (self.create_arg(fn(*args)),),
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/fx/_symbolic_trace.py", line 731, in flatten_fn
+    tree_out = root_fn(*tree_args)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/fx/experimental/proxy_tensor.py", line 1526, in wrapped
+    out = f(*tensors)  # type:ignore[call-arg]
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/graph_capture.py", line 72, in inner_f
+    out, out_descs = call_and_expect_output_descs(f, args)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/utils.py", line 738, in call_and_expect_output_descs
+    outs_pair = fn(*args)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/graph_capture_wrappers.py", line 1106, in inner_fn
+    outs, outs_descs = call_and_expect_output_descs(fn, args)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/utils.py", line 738, in call_and_expect_output_descs
+    outs_pair = fn(*args)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/graph_capture_wrappers.py", line 1054, in joint_helper
+    return _functionalized_f_helper(primals, tangents)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/graph_capture_wrappers.py", line 812, in _functionalized_f_helper
+    f_outs, f_outs_descs = call_and_expect_output_descs(fn, f_args)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/utils.py", line 738, in call_and_expect_output_descs
+    outs_pair = fn(*args)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/graph_capture_wrappers.py", line 441, in joint_helper
+    return inner_fn_with_anomaly(primals, tangents)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/graph_capture_wrappers.py", line 438, in inner_fn_with_anomaly
+    return inner_fn(primals, tangents)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/graph_capture_wrappers.py", line 404, in inner_fn
+    backward_out = torch.autograd.grad(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/__init__.py", line 464, in grad
+    return handle_torch_function(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/overrides.py", line 1740, in handle_torch_function
+    result = mode.__torch_function__(public_api, types, args, kwargs)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/fx/experimental/proxy_tensor.py", line 1577, in __torch_function__
+    return func(*args, **kwargs)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/__init__.py", line 515, in grad
+    result = _engine_run_backward(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/graph.py", line 865, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/function.py", line 317, in apply
+    return user_fn(self, *args)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/_library/autograd.py", line 78, in backward
+    result = info._backward_fn(ctx, *grads)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/modules/swa_atom_attention/module.py", line 291, in _flash_window_backward
+    out = _flash_window_core(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/modules/swa_atom_attention/module.py", line 173, in _flash_window_core
+    out = fa4_varlen(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/flash_attn/cute/interface.py", line 2834, in flash_attn_varlen_func
+    return FlashAttnVarlenFunc.apply(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/function.py", line 583, in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/flash_attn/cute/interface.py", line 2602, in forward
+    out, lse, p, row_max = _flash_attn_fwd(
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/flash_attn/cute/interface.py", line 774, in _flash_attn_fwd
+    ) = [
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/flash_attn/cute/interface.py", line 775, in <listcomp>
+    to_cute_tensor(t, assumed_align=4, leading_dim=0)
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/flash_attn/cute/cute_dsl_utils.py", line 79, in to_cute_tensor
+    tensor = from_dlpack(t.detach(), assumed_align=assumed_align, enable_tvm_ffi=enable_tvm_ffi)
+  File "python/tvm_ffi/cython/tensor.pxi", line 228, in tvm_ffi.core.from_dlpack
+  File "python/tvm_ffi/cython/tensor.pxi", line 139, in tvm_ffi.core._from_dlpack_universal
+  File "python/tvm_ffi/cython/tensor.pxi", line 113, in tvm_ffi.core._from_dlpack_exchange_api
+torch._dynamo.exc.BackendCompilerFailed: backend='inductor' raised:
+RuntimeError: Cannot access data pointer of Tensor (e.g. FakeTensor, FunctionalTensor). If you're using torch.compile/export/fx, it is likely that we are erroneously tracing into a custom kernel. To fix this, please wrap the custom kernel into an opaque custom op. Please see the following for details: https://pytorch.org/tutorials/advanced/custom_ops_landing_page.html
+Exception raised from throwNullDataPtrError at /pytorch/c10/core/StorageImpl.cpp:18 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x9d (0x7f0b4aeadfdd in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, char const*) + 0x69 (0x7f0b4ae43637 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #2: <unknown function> + 0x5d7e3 (0x7f0b4ae6e7e3 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #3: at::toDLPackVersioned(at::Tensor const&) + 0x4e3 (0x7f0b89f4e773 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_cpu.so)
+frame #4: <unknown function> + 0x75e35d (0x7f0b9e22235d in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #5: <unknown function> + 0x5de65 (0x7f08e0070e65 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/tvm_ffi/core.cpython-310-x86_64-linux-gnu.so)
+frame #6: <unknown function> + 0x71c96 (0x7f08e0084c96 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/tvm_ffi/core.cpython-310-x86_64-linux-gnu.so)
+frame #7: _PyEval_EvalFrameDefault + 0x49a6 (0x55a7b8a3a556 in .pixi/envs/cu128/bin/python)
+frame #8: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #9: _PyObject_FastCallDictTstate + 0x190 (0x55a7b8a3e170 in .pixi/envs/cu128/bin/python)
+frame #10: <unknown function> + 0x148387 (0x55a7b8a51387 in .pixi/envs/cu128/bin/python)
+frame #11: _PyObject_MakeTpCall + 0x24b (0x55a7b8a3edeb in .pixi/envs/cu128/bin/python)
+frame #12: _PyEval_EvalFrameDefault + 0x5466 (0x55a7b8a3b016 in .pixi/envs/cu128/bin/python)
+frame #13: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #14: _PyEval_EvalFrameDefault + 0x130f (0x55a7b8a36ebf in .pixi/envs/cu128/bin/python)
+frame #15: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #16: _PyEval_EvalFrameDefault + 0x130f (0x55a7b8a36ebf in .pixi/envs/cu128/bin/python)
+frame #17: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #18: _PyEval_EvalFrameDefault + 0x313 (0x55a7b8a35ec3 in .pixi/envs/cu128/bin/python)
+frame #19: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #20: PyObject_Call + 0xba (0x55a7b8a5445a in .pixi/envs/cu128/bin/python)
+frame #21: _PyEval_EvalFrameDefault + 0x2d02 (0x55a7b8a388b2 in .pixi/envs/cu128/bin/python)
+frame #22: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #23: <unknown function> + 0x81f40c (0x7f0b9e2e340c in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #24: <unknown function> + 0x13d0e8 (0x55a7b8a460e8 in .pixi/envs/cu128/bin/python)
+frame #25: PyObject_Call + 0x20f (0x55a7b8a545af in .pixi/envs/cu128/bin/python)
+frame #26: _PyEval_EvalFrameDefault + 0x5870 (0x55a7b8a3b420 in .pixi/envs/cu128/bin/python)
+frame #27: <unknown function> + 0x14a977 (0x55a7b8a53977 in .pixi/envs/cu128/bin/python)
+frame #28: _PyEval_EvalFrameDefault + 0x49a6 (0x55a7b8a3a556 in .pixi/envs/cu128/bin/python)
+frame #29: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #30: _PyEval_EvalFrameDefault + 0x130f (0x55a7b8a36ebf in .pixi/envs/cu128/bin/python)
+frame #31: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #32: _PyEval_EvalFrameDefault + 0x313 (0x55a7b8a35ec3 in .pixi/envs/cu128/bin/python)
+frame #33: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #34: _PyEval_EvalFrameDefault + 0x2d02 (0x55a7b8a388b2 in .pixi/envs/cu128/bin/python)
+frame #35: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #36: _PyEval_EvalFrameDefault + 0x2d02 (0x55a7b8a388b2 in .pixi/envs/cu128/bin/python)
+frame #37: <unknown function> + 0x14aac8 (0x55a7b8a53ac8 in .pixi/envs/cu128/bin/python)
+frame #38: <unknown function> + 0x81a5fe (0x7f0b9e2de5fe in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #39: <unknown function> + 0x5dfef2b (0x7f0b8e407f2b in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_cpu.so)
+frame #40: torch::autograd::Engine::evaluate_function(std::shared_ptr<torch::autograd::GraphTask>&, torch::autograd::Node*, torch::autograd::InputBuffer&, std::shared_ptr<torch::autograd::ReadyQueue> const&) + 0x979 (0x7f0b8e401259 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_cpu.so)
+frame #41: torch::autograd::Engine::thread_main(std::shared_ptr<torch::autograd::GraphTask> const&) + 0x5c9 (0x7f0b8e4026c9 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_cpu.so)
+frame #42: torch::autograd::Engine::execute_with_graph_task(std::shared_ptr<torch::autograd::GraphTask> const&, std::shared_ptr<torch::autograd::Node>, torch::autograd::InputBuffer&&) + 0x423 (0x7f0b8e3fd313 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_cpu.so)
+frame #43: <unknown function> + 0x80e3b5 (0x7f0b9e2d23b5 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #44: torch::autograd::Engine::execute(std::vector<torch::autograd::Edge, std::allocator<torch::autograd::Edge> > const&, std::vector<at::Tensor, std::allocator<at::Tensor> > const&, bool, bool, bool, std::vector<torch::autograd::Edge, std::allocator<torch::autograd::Edge> > const&) + 0x839 (0x7f0b8e4001f9 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_cpu.so)
+frame #45: <unknown function> + 0x80e346 (0x7f0b9e2d2346 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #46: <unknown function> + 0x80e752 (0x7f0b9e2d2752 in /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/lib/libtorch_python.so)
+frame #47: <unknown function> + 0x13d0c6 (0x55a7b8a460c6 in .pixi/envs/cu128/bin/python)
+frame #48: PyObject_Call + 0x20f (0x55a7b8a545af in .pixi/envs/cu128/bin/python)
+frame #49: _PyEval_EvalFrameDefault + 0x5870 (0x55a7b8a3b420 in .pixi/envs/cu128/bin/python)
+frame #50: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #51: _PyEval_EvalFrameDefault + 0x130f (0x55a7b8a36ebf in .pixi/envs/cu128/bin/python)
+frame #52: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #53: PyObject_Call + 0xba (0x55a7b8a5445a in .pixi/envs/cu128/bin/python)
+frame #54: _PyEval_EvalFrameDefault + 0x2d02 (0x55a7b8a388b2 in .pixi/envs/cu128/bin/python)
+frame #55: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #56: _PyEval_EvalFrameDefault + 0x6fb (0x55a7b8a362ab in .pixi/envs/cu128/bin/python)
+frame #57: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #58: _PyEval_EvalFrameDefault + 0x130f (0x55a7b8a36ebf in .pixi/envs/cu128/bin/python)
+frame #59: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #60: _PyEval_EvalFrameDefault + 0x130f (0x55a7b8a36ebf in .pixi/envs/cu128/bin/python)
+frame #61: _PyFunction_Vectorcall + 0x6c (0x55a7b8a4659c in .pixi/envs/cu128/bin/python)
+frame #62: _PyEval_EvalFrameDefault + 0x313 (0x55a7b8a35ec3 in .pixi/envs/cu128/bin/python)
+
+
+Set TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS="+dynamo"
+

@@ -1,0 +1,28 @@
+commit 1694828d32fb36ec3ab391b50a5d1838d9cf9233
+Author:     snu_hwle <psk6950@snu.ac.kr>
+AuthorDate: Mon Jul 6 17:10:01 2026 +0900
+Commit:     snu_hwle <psk6950@snu.ac.kr>
+CommitDate: Tue Jul 7 15:13:04 2026 +0900
+
+    perf(trimul): fuse gate forward via gate_elem_quack_fused (sm100) v1
+    
+    Switch trimul TRAINING gate forward (single-dir v6_training_merged_sm100 +
+    bidir bidir_training_sm100) from gate_elem_triton (cuBLAS glogit GEMM +
+    _gate_mul sigmoid+mul + glogit HBM round-trip) to gate_elem_quack_fused:
+    y = sigmoid(x_n@Wg)⊙proj in ONE quack gemm_act launch (act(A@B)⊙C epilogue).
+    Backward saves the PREACT (glogit) instead of gate; the bwd elementwise kernel
+    gains a FROM_PREACT path that recomputes gate=σ(preact) in-kernel (zero extra HBM).
+    
+    Hypothesis: removes _gate_mul (~156us) + glogit (M,N) write+read.
+    Measured (B200, D=128, bf16, CUDA-graph replay, fair concurrent A/B @L=1024):
+      single 3.7026->3.5799 ms (1.034x); bidir 6.1210->5.9963 ms (1.021x).
+    Validation: full-module grad cos vs fp32 ref >=0.99998 (== baseline), y fwd
+    0.999989, graph replay grads bit-exact vs eager (worst_cos=1.0), all L=384/768/1024.
+    
+    sm100 fix (impl-level, no algo change): _gate_mul_patch installed the act(A@B)⊙C
+    epilogue only on GemmActSm90; B200 uses GemmActSm100 (separate MRO), so the stock
+    additive-C epilogue ran -> y=σ(glogit+proj) (y cos 0.22). Now shadow
+    epi_visit_subtile on every GemmActSm{90,100,120} present (mirrors _bdll_patch).
+    
+    Command: QUACK_CACHE_ENABLED=0 python graph_train_v12.py / graph_train_bidir_v3.py
+    Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

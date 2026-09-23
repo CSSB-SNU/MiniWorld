@@ -1,0 +1,789 @@
+{
+  "baseline_ms": 0.2204331569984311,
+  "rows": [
+    {
+      "config": {
+        "BM": 32,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.34128508006825165,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.48496973514556885,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.3404145404270717,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.48248413801193235,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.3556050445094253,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.43749558484112777,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.35450850689049923,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.43993943885520653,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.31685742558659735,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.3613009452819824,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.31183276176452634,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.3598874149900494,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.30565046408237556,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.3443630106308881,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.3027149934035081,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 32,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.3423371343051686,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.2712577464968659,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.31484626821569495,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.2676146897402677,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.3091018927724738,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.3049739519755046,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.3334142139979771,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.29246648073196413,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.31238408590617933,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.25551366806030273,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.28064068385532925,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.2548486937647281,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.2754774337591127,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.2494231142896287,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.25698921991431195,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.24881436774071225,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 64,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.2540522430254065,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.2508932073065575,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.2543789220892865,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.25014297810006647,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 32,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.25133773519637737,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.2640185442837802,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.2595102628072103,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.24866709607712767,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 32,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.2467526694138845,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.24925582763996532,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.2486255666042896,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.24808170237439744,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 64,
+        "BK": 32,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.24723393122355142,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.23516991806030274,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 1,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.2366561908721924,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 4,
+        "num_stages": 3
+      },
+      "ms": 0.22743587860694298,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "config": {
+        "BM": 128,
+        "BN": 64,
+        "BK": 64,
+        "GROUP_M": 4,
+        "num_warps": 8,
+        "num_stages": 3
+      },
+      "ms": 0.22969167185764686,
+      "errors": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "best": {
+    "config": {
+      "BM": 128,
+      "BN": 64,
+      "BK": 64,
+      "GROUP_M": 4,
+      "num_warps": 4,
+      "num_stages": 3
+    },
+    "ms": 0.22743587860694298,
+    "errors": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  }
+}

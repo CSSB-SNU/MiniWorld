@@ -1,0 +1,30 @@
+commit a476bbade64e208cc0979f3c4f03479200d870fc
+Author:     snu_hwle <psk6950@snu.ac.kr>
+AuthorDate: Sun Jul 12 12:15:30 2026 +0900
+Commit:     snu_hwle <psk6950@snu.ac.kr>
+CommitDate: Sun Jul 12 12:15:30 2026 +0900
+
+    feat(trimul-bidir): TRITON bidirectional trimul (fwd + autograd bwd)
+    
+    Bidir was cute-only. Add a TRITON path composed from the verified
+    unidirectional triton pieces (mirrors the H100 tri-attn bidir reuse
+    strategy): per-direction triton_tm1 front (square d_pair slices,
+    outgoing=[:h] / incoming=[h:]) + torch einsum/cat + F.layer_norm(2h)
+    + triton GateElem back. Every stage autograd-capable, so fwd and
+    training (fwd+bwd) share one code path; backward is by composition.
+    
+    New: kernels/trimul_inproj/triton/bidirectional.py
+    Wire: TRITON branch in modules/.../bidirectional.py forward
+    (_forward_triton). Requires d_hidden==d_pair (as unidir triton does).
+    
+    EAGER cosine vs PYTORCH ref, RANDOM non-zero weights, fwd + d_pair-grad
+    + ALL weight/LN grads (min over all), L in {128,256,768,1024}, +/- mask:
+      bf16: min_cos >= 0.99995 (fwd 0.99998, d_pair 0.99997)
+      fp32: min_cos == 1.00000
+    All 16 configs PASS (>=0.999). Verified ncu/bidir/verify_bidir_triton.py.
+    
+    Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+ .../kernels/trimul_inproj/triton/bidirectional.py  | 105 +++++++++++++++++++++
+ .../triangle_multiplication/bidirectional.py       |  75 ++++++++++-----
+ 2 files changed, 159 insertions(+), 21 deletions(-)

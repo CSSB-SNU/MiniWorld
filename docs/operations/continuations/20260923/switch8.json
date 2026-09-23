@@ -1,0 +1,12 @@
+{
+  "previous_job": 16681,
+  "epoch": 469,
+  "step": 46900,
+  "checkpoint_sha256": "e7c60cf822cf5825ec353bde22ab13282e66f87edcbdebfc88416f12fa29df2c",
+  "wandb_id": "tapgki9e",
+  "switched_at": "2026-09-23T22:02:47.500270+09:00",
+  "new_job": 16779,
+  "checkpoint_verified_before_stop": true,
+  "phase1b_job": 16780,
+  "old_cancel_requested": true
+}

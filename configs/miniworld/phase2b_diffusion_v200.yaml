@@ -1,0 +1,19 @@
+# v2.0.0 phase 2b: v1.0.1 recipe with the token DiT replaced by BiasOnlyTokenDiT --
+# attention logits are ONE shared softmax(pair bias) for all 24 blocks and all augments,
+# value-only attention (no q/k, no qk-norm); AdaLN, value gate, conditioned output scale,
+# ConditionedTransition and residuals unchanged. Parameter names differ from v1 -> fresh
+# phase-2 training on a v1.x/v1.2 trunk. The diffusion module runs in bf16 (params and
+# activations; norm affine params stay fp32, loss on an fp32 upcast of the output) -- v1 ran it
+# in fp32 (Fabric 32-true, TF32 GEMMs). See src/miniworld/modules/bias_only_token_dit.py.
+defaults:
+  - phase2b_diffusion_v101
+  - _self_
+
+train:
+  comment: "v2.0.0-phase2b-diffusion-bias-only-token-dit"
+  run_dir: "runs/v2.0.0/phase2b/large_diffusion"
+
+model:
+  diffusion:
+    token_dit_kind: bias_only
+    dtype: bf16

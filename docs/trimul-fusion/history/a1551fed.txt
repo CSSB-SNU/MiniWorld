@@ -1,0 +1,64 @@
+commit a1551fed6685b02fd684d5d577ebc9b9ddfd6d92
+Author:     SanggeunParrk <psk6950@snu.ac.kr>
+AuthorDate: Tue Sep 8 18:45:16 2026 +0900
+Commit:     SanggeunParrk <psk6950@snu.ac.kr>
+CommitDate: Tue Sep 8 18:45:16 2026 +0900
+
+    perf(trimul): the bidirectional back half fuses, and 18 ladders come down to what wins
+    
+    Two things the A6000 module bench made visible.
+    
+    1. `triangle_multiplication_bidirectional` lost to cuequivariance -- 19.32 ms against 18.12 at
+       L=1024 -- while the UNIdirectional module beat it. Not the cache: the bidirectional target hit
+       the cache on every op but one. The difference is which kernels it reaches. Unidirectional runs
+       `trimul_outproj_layernorm_gemm_gate_triton`, which does LN + proj GEMM + gate GEMM + residual in
+       one pass; bidirectional ran `_te_forward` then `gate_elem_infer`, two passes with a materialised
+       (M, N) proj between them.
+    
+       It was refused, not overlooked: `_back_kernel` normalised `tri` over K and gated `x_n` over the
+       SAME K, and the bidirectional shape is tri 2*d_hidden wide against x_n d_pair. The launcher said
+       so -- "d_hidden != d_pair needs the split back half".
+    
+       So the gate gets its own contraction width. `KG` is x_n's width and Wg's first axis, with its
+       own accumulation loop; at KG == K every loop is single-trip and the square path is what it was.
+       KG is a constexpr the kernel tiles over, so it is in the shape key.
+    
+       Measured on an A6000 at L=1024, d_pair=128, back half alone: 5.05 ms (2.79 + 2.27) -> 2.80 ms,
+       1.81x. Against a fp32 reference the fused path is also the more accurate of the two (rel 1.84e-3
+       vs 2.02e-3): one fewer bf16 round trip through the proj it no longer materialises.
+    
+       Module, after rebuilding the 12 units this invalidates -- benching before that would have
+       measured the heuristic fallback:
+    
+         bidirectional inference  19.32 -> 17.36 ms   (cuequiv 18.26)   0.92x -> 1.05x
+         bidirectional training   145.1 -> 67.86 ms   (cuequiv 72.38)            1.07x
+         unidirectional inference  8.59 ->  8.89 ms   (cuequiv  9.23)            1.04x
+    
+    2. `test_a_ladder_offers_what_wins` went red when the gap-rebuild caches landed, which is the test
+       working: enough kernels crossed "cache covers a whole planned build" for it to start asking that
+       their ladders match what actually wins. 18 edits over 13 kernels, 17 of them narrowings.
+    
+       A narrowing costs nothing to adopt -- `cache_status` treats a grid change as incremental, not
+       STALE, and `store_ranked_configs` drops the configs that left -- and the sweep goes from
+       1,822,605 to 1,693,881 (config, shape), 122 to 113 GPU-hours. The one widening,
+       `adaln_fwd_gate_triton` num_warps + 1, owes a top-up build.
+    
+    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
+ docs/autotune-sweep-grid.html                      |  6 +-
+ .../configs/grid/adaln_bwd_dx_dlnw_triton.csv      |  4 +-
+ .../configs/grid/adaln_fwd_gate_triton.csv         |  2 +-
+ .../autotune/configs/grid/adaln_fwd_triton.csv     |  4 +-
+ ...ond_transition_expand_swiglu_saveact_triton.csv |  4 +-
+ .../cond_transition_fwd_b2b_saveact_triton.csv     |  4 +-
+ .../grid/cond_transition_fwd_b2b_triton.csv        |  4 +-
+ ...cond_transition_squeeze_gate_saveact_triton.csv |  2 +-
+ .../grid/cond_transition_squeeze_gate_triton.csv   |  2 +-
+ .../grid/gated_projection_bwd_dx_triton.csv        |  2 +-
+ .../gated_projection_bwd_gate_dropres_triton.csv   |  2 +-
+ .../grid/gated_projection_bwd_gate_flat_triton.csv |  2 +-
+ .../transition_bwd_swiglu_recompute_triton.csv     |  2 +-
+ .../configs/grid/trimul_bwd_gate_packed_triton.csv |  2 +-
+ .../kernels/trimul_inproj/triton/back.py           | 85 +++++++++++++++-------
+ .../kernels/trimul_inproj/triton/bidirectional.py  | 14 +++-
+ 16 files changed, 90 insertions(+), 51 deletions(-)

@@ -1,0 +1,7 @@
+{
+  "job": 13195,
+  "state": "CANCELLED",
+  "reason": "All queued experiments and installed-package checks finished; idle worker allocation explicitly released.",
+  "gpu_released": true,
+  "partial_tuning": "L768 canonical LN: 384/400 measured; task timeout, checkpoint validated and published"
+}

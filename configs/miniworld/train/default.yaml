@@ -23,6 +23,10 @@ decay_steps: 5e4
 # buckets), so shape is constant and the whole fwd+loss+bwd runs from one
 # captured graph.
 compile: True
+engine_backend: auto  # auto | triton; pins engine kernels before model construction
+# Fused MSA training kernels (engine PairWeightedAveraging / OuterProductMean fwd+bwd; H100, bf16, L%128, msa depth%256).
+# Modules 2.6x / 2.9x, step ~8%; numerics within the bf16 spread of the engine's own path. Off by default; v1.2 configs turn it on.
+fused_msa_train: false
 
 train_item: 25600
 valid_item: 640

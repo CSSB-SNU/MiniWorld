@@ -1,0 +1,150 @@
+{
+  "engine_file": "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/__init__.py",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "torch": "2.10.0+cu128",
+  "config": {
+    "d_single": 384,
+    "d_pair": 128,
+    "d_single_token": 768,
+    "d_single_atom": 128,
+    "d_pair_atom": 16,
+    "n_layers": 1,
+    "n_augment": 48,
+    "mask_prob": 0.0,
+    "min_seq_len": 384,
+    "max_seq_len": 384,
+    "seq_len_step": 128,
+    "min_d_pair": 128,
+    "max_d_pair": 512,
+    "d_pair_step": 128,
+    "d_pair_values": [
+      128,
+      256,
+      512
+    ],
+    "sweep_axis": "seq_len",
+    "sweep_seq_len": 384,
+    "autotune_shard": "",
+    "config_dir": "",
+    "pin_gate_backend": "",
+    "dropout": 0.25,
+    "compile_jobs": 0,
+    "pin_infer_concat": null,
+    "pin_transition_cuda_b2b": null,
+    "target": "triangle_multiplication_bidirectional",
+    "level": "module",
+    "implementations": [
+      "miniworld"
+    ],
+    "mode": "training",
+    "metric": "time",
+    "compile": true,
+    "cudagraph": "disabled",
+    "allow_tf32": true,
+    "precision": "bf16-mixed",
+    "allow_eager": false,
+    "name_suffix": ""
+  },
+  "repetitions": [
+    {
+      "median_ms": 2.812111973762512,
+      "p20_ms": 2.7983999252319336,
+      "p80_ms": 2.8515647888183593
+    },
+    {
+      "median_ms": 2.7951520681381226,
+      "p20_ms": 2.7777472019195555,
+      "p80_ms": 2.819680023193359
+    },
+    {
+      "median_ms": 2.7952640056610107,
+      "p20_ms": 2.7829567909240724,
+      "p80_ms": 2.80664324760437
+    },
+    {
+      "median_ms": 2.7820318937301636,
+      "p20_ms": 2.767443227767944,
+      "p80_ms": 2.8081151962280275
+    },
+    {
+      "median_ms": 2.768607974052429,
+      "p20_ms": 2.7507008075714108,
+      "p80_ms": 2.7873728275299072
+    }
+  ],
+  "scope": "Module forward plus input and all parameter gradients; no optimizer. Runner model.compile() uses default dynamic=None at one fixed L=384. Disabled graph clears grads to None per iteration; manual graph accumulates static grads.",
+  "accuracy_note": "Runner compares independently drawn dropout masks; its accuracy fields are not a matched-dropout correctness test.",
+  "cache_misses": [],
+  "native_cache_warnings": [
+    {
+      "op": "trimul_inproj_masked_sm90_cute",
+      "reason": "native cache source/environment changed"
+    },
+    {
+      "op": "trimul_output_bwd_rows_sm90_cute",
+      "reason": "native cache source/environment changed"
+    }
+  ],
+  "ln_partial_experiment": null,
+  "cache_lookups": [
+    {
+      "kernel": "_ln_mat_kernel",
+      "bucket": "shape_key=2473902211866",
+      "candidates": [
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 4,
+          "num_stages": 1
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 4,
+          "num_stages": 2
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 4,
+          "num_stages": 6
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 8,
+          "num_stages": 3
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 8,
+          "num_stages": 6
+        }
+      ]
+    }
+  ],
+  "result": {
+    "value": 2.7951520681381226,
+    "input_dtype": "bfloat16",
+    "parameter_dtype": "float32",
+    "execution_path": "miniworld.v6_training_merged",
+    "reference": "pytorch",
+    "output_max_abs": 7.8292236328125,
+    "output_rel_frob": 0.46769630908966064,
+    "output_cosine": 0.8909521698951721,
+    "grad_max_abs": 5.529655456542969,
+    "grad_rel_frob": 0.5742102861404419,
+    "grad_cosine": 0.8358103632926941
+  }
+}

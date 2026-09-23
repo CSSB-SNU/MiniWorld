@@ -232,14 +232,16 @@ def get_representative_distances(
     ``[token_num, token_num]`` distance directly (``O(token_num**2)``). Capture-safe:
     uses ``scatter_reduce`` + ``gather`` over static shapes (no boolean ``nonzero()``).
 
-    Equal to the masked shortest-distance for tokens with a single representative atom
-    (the standard CB/CA case). A token whose ``rep_atom_mask`` covers several atoms (the
-    CB/CA-less fallback that marks ALL its atoms) contributes its lowest-index
-    representative atom rather than the all-atom shortest distance.
+    Feature construction supplies at most one chemical representative per token.
+    Missing/nonfinite coordinates and out-of-range token indices are excluded.
+    For externally supplied legacy masks with several representatives, this
+    helper still selects the lowest atom index; it does not compute their minimum
+    inter-atom distance. New training features no longer use that fallback.
     """
     device = atom_pos.device
     B, L, _ = atom_pos.shape
-    rep_valid = atom_pos_mask & rep_atom_mask  # (B, L)
+    rep_valid = (atom_pos_mask & rep_atom_mask & torch.isfinite(atom_pos).all(dim=-1)
+                 & (atom_to_token_idx_map >= 0) & (atom_to_token_idx_map < token_num))
     tok_idx = atom_to_token_idx_map.clamp(0, token_num - 1)  # (B, L)
 
     # Lowest-index valid representative atom per token (capture-safe: amin over atom ids,

@@ -1,0 +1,656 @@
+--- a/src/miniworld_engine/autotune/native.py
++++ b/src/miniworld_engine/autotune/native.py
+@@ -23,6 +23,8 @@
+ 
+ _WINNERS: dict = {}
+ BUILD_OPS = frozenset({
++    "trimul_inproj_masked_sm90_cute",
++    "transition_squeeze_residual_sm90_cute",
+     "layernorm_linear_fwd_foldstats_sm90_cute", "layernorm_linear_fwd_sm90_cute",
+     "transition_swiglu_fwd_sm90_cute", "transition_gate_bwd_sm90_cute",
+     "transition_bwd_dx_sm90_cute", "layernorm_linear_bwd_dx_sm90_cute",
+@@ -41,6 +43,8 @@
+         return width <= 1024 and dtype in ("bfloat16", "float32")
+     if dtype != "bfloat16":
+         return False
++    if op == "transition_squeeze_residual_sm90_cute":
++        return width == 512  # only this width is enabled in production dispatch
+     if op.endswith("sm90_cuda"):
+         return width in ((128, 256) if "b2b" in op else (128, 256, 512))
+     if op in ("transition_bwd_dx_sm90_cute", "layernorm_linear_bwd_dx_sm90_cute"):
+--- a/src/miniworld_engine/autotune/native_compile.py
++++ b/src/miniworld_engine/autotune/native_compile.py
+@@ -79,7 +79,25 @@
+     pp, dyn, device = c["pingpong"], c["is_dynamic_persistent"], (9, 0)
+     a, b = ts[:2]
+     with compile_only_mode():
+-        if op == "layernorm_linear_fwd_foldstats_sm90_cute":
++        if op == "transition_squeeze_residual_sm90_cute":
++            from quack.gemm import _compile_gemm
++            _compile_gemm(
++                a_dtype=_dtype(a), b_dtype=_dtype(b), d_dtype=_dtype(ts[2]), c_dtype=_dtype(ts[2]),
++                a_major=_major(a, "m", "k"), b_major=_major(b, "n", "k"),
++                d_major="n", c_major=_major(ts[2], "m", "n"),
++                tile_shape_mn=tile, cluster_shape_mnk=cluster, pingpong=pp,
++                persistent=True, is_dynamic_persistent=dyn,
++                rowvec_dtype=None, colvec_dtype=None, colvec_ndim=0,
++                alpha_mode=0, beta_mode=0, add_to_output=False, concat_layout=None,
++                varlen_m=False, varlen_k=False, gather_A=False, use_tma_gather=False,
++                has_batch_idx_permute=False, device_capacity=device, rounding_mode=0,
++                sr_seed_mode=0, has_trace_ptr=False, num_warps=None,
++            )
++        elif op == "trimul_inproj_masked_sm90_cute":
++            from miniworld_engine.kernels.trimul_inproj.cute.masked_front import _compile_masked_front
++            _compile_masked_front(_dtype(a), _major(a, "m", "k"), _major(b, "k", "n"),
++                                  task["extra"][0], tile, cluster, pp, dyn, device)
++        elif op == "layernorm_linear_fwd_foldstats_sm90_cute":
+             from miniworld_engine.kernels.layernorm_linear.cute.gemm_layernorm_linear import (
+                 _compile_gemm_lnl,
+             )
+--- a/src/miniworld_engine/kernels/drivers/transition.py
++++ b/src/miniworld_engine/kernels/drivers/transition.py
+@@ -440,3 +440,13 @@
+ def transition_bwd_gate_sm90_cuda():
+     from miniworld_engine.kernels.drivers import hopper
+     return hopper.transition_bwd_gate_sm90_cuda()
++
++
++def squeeze_residual_sm90():
++    """Squeeze epilogue with the residual as an independent read-only C operand."""
++    from miniworld_engine.kernels.transition.cute.squeeze_residual import squeeze_residual
++    width = 512
++    expand = torch.randn(ROWS, 4 * width, device=dev(), dtype=BF16)
++    weight = torch.randn(width, 4 * width, device=dev(), dtype=BF16)
++    residual = torch.randn(ROWS, width, device=dev(), dtype=BF16)
++    squeeze_residual(expand, weight, residual)
+--- a/src/miniworld_engine/kernels/drivers/trimul_inproj.py
++++ b/src/miniworld_engine/kernels/drivers/trimul_inproj.py
+@@ -265,3 +265,15 @@
+     lr = torch.empty(2 * h, M, device=dev(), dtype=BF16)
+     preact = torch.empty(4 * h, M, device=dev(), dtype=BF16)
+     fused_front_gemm(_rows(), b, b.clone(), lr, preact)
++
++
++def masked_front_sm90():
++    """Both single/bidirectional widths and inference/training save contracts."""
++    from miniworld_engine.kernels.trimul_inproj.cute.masked_front import masked_front
++    a = _rows(D)
++    mask = torch.ones(M, device=dev(), dtype=torch.bool)
++    mask[::3] = False
++    for hidden in (D, 2 * D):
++        weight = torch.randn(D, 4 * hidden, device=dev(), dtype=BF16)
++        for save in (False, True):
++            masked_front(a, weight, mask, save)
+--- /dev/null
++++ b/src/miniworld_engine/kernels/h100-retired.md
+@@ -0,0 +1,12 @@
++# H100 experiments excluded from routine optimization
++
++- `transition_expand_gate_sm90_cuda`: developed=no excludes the standalone driver from build all.
++  Commit b2ce8134 measured 0.98x/0.79x/0.55x against CuTe at d128/256/512.
++  The direct API remains available to reproduce the experiment.
++- M2 `lnl_ws=1`: retain as an explicitly selected historical experiment, default remains 0.
++  a806c93b measured 5.8 ms versus M1 0.61 ms at d768, M262144.
++- AdaLN CUTLASS TF32 source/sweeps: no production dispatch or routine builder entry.
++  71fee1c8 measured the forward slower than the existing engine at every tested atom/token size.
++
++Keep M2 with lnl_ws=0, TM2, CuTe gate backward, DAB+LN backward, and split-back experiments
++available for qualified shape-specific comparisons. Inactive is not synonymous with slow.
+--- a/src/miniworld_engine/kernels/layernorm_linear/cute/__init__.py
++++ b/src/miniworld_engine/kernels/layernorm_linear/cute/__init__.py
+@@ -1,6 +1,9 @@
+ """CuTeDSL (quack SM90) backend for fused LayerNormLinear forward."""
+ 
+ from __future__ import annotations
++
++import torch
++from miniworld_engine.kernels._compile import opaque
+ 
+ from .gemm_layernorm_linear import fold_for_gemm, layernorm_linear_cute
+ from .gemm_layernorm_linear_fused import layernorm_linear_cute_fused
+@@ -13,15 +16,31 @@
+ ]
+ 
+ 
++def _m2_inference_fake(x, ln_weight, ln_bias, weight, bias, eps):
++    return x.new_empty((x.shape[0], weight.shape[0]))
++
++
++@opaque(fake=_m2_inference_fake, name="layernorm_linear_m2_inference")
++def _m2_inference(x: torch.Tensor, ln_weight: torch.Tensor, ln_bias: torch.Tensor,
++                  weight: torch.Tensor, bias: torch.Tensor | None, eps: float) -> torch.Tensor:
++    """Keep CuTe compilation and its context variables outside Dynamo tracing."""
++    return layernorm_linear_cute_fused(x, ln_weight, ln_bias, weight, bias, eps)
++
++
+ def layernorm_linear(x, ln_weight, ln_bias, weight, bias, eps: float = 1e-5, *,
+                      save_stats: bool = False, prefolded=None):
+-    """Forward LayerNormLinear through M1 (separate statistics plus folded GEMM).
++    """Use qualified Hopper M2 inference shapes; M1 supplies training statistics.
+ 
+-    Inference returns Y; ``save_stats=True`` returns (Y, mean, rstd) for backward.
+-    M2 computes statistics inside the GEMM. Its quack 0.5 host-side port now passes
+-    CPU compile-only checks, but GPU numerical and synchronization qualification is
+-    still required before restoring the historical small-width inference dispatch.
++    H100 BF16 square width 128 was qualified with both input layouts and CUDA
++    graphs. Width 256 had inconsistent speedups and stays on M1. Prefolded M1
++    operands are respected instead of paying a new fold in M2.
+     """
++    if (not save_stats and prefolded is None and x.is_cuda and x.ndim == 2
++            and x.dtype == torch.bfloat16 and x.shape[-1] == 128
++            and tuple(weight.shape) == (128, 128)
++            and x.numel() // 128 >= 128 and (x.numel() // 128) % 128 == 0
++            and torch.cuda.get_device_capability(x.device)[0] == 9):
++        return _m2_inference(x, ln_weight, ln_bias, weight, bias, eps)
+     return layernorm_linear_cute(
+         x, ln_weight, ln_bias, weight, bias, eps, prefolded=prefolded,
+         return_stats=save_stats, config=None,
+--- a/src/miniworld_engine/kernels/registry.csv
++++ b/src/miniworld_engine/kernels/registry.csv
+@@ -103,5 +103,7 @@
+ transition_bwd_dx_sm90_cute,cute,transition,elem,both,both,,both,yes,bf16,miniworld_engine/kernels/transition/cute/dab_lnbwd.py,transition_dab_lnbwd_cute,miniworld_engine.kernels.drivers.transition:dab_lnbwd,,,sm90,,pair|token,1
+ layernorm_linear_bwd_dx_sm90_cute,cute,layernorm_linear,elem,both,both,,both,yes,bf16,miniworld_engine/kernels/layernorm_linear/cute/dgrad_lnbwd.py,dgrad_lnbwd_cute,miniworld_engine.kernels.drivers.layernorm_linear:dgrad_lnbwd,,,sm90,,pair|token|atom,1
+ transition_fwd_b2b_sm90_cuda,cuda,transition,gemm,both,both,,both,yes,bf16,miniworld_engine/kernels/transition/cuda/transition_b2b_kernel.cu,transition_b2b_rs_wgmma_kernel,miniworld_engine.kernels.drivers.transition:transition_fwd_b2b_sm90_cuda,,,sm90,,pair|token,1
+-transition_expand_gate_sm90_cuda,cuda,transition,gemm,both,both,,both,yes,bf16,miniworld_engine/kernels/transition/cuda/transition_expand_gate_kernel.cu,transition_expand_gate_rs_wgmma_kernel,miniworld_engine.kernels.drivers.transition:transition_expand_gate_sm90_cuda,,,sm90,,pair|token,1
++transition_expand_gate_sm90_cuda,cuda,transition,gemm,both,both,,both,no,bf16,miniworld_engine/kernels/transition/cuda/transition_expand_gate_kernel.cu,transition_expand_gate_rs_wgmma_kernel,miniworld_engine.kernels.drivers.transition:transition_expand_gate_sm90_cuda,,,sm90,,pair|token,1
+ transition_bwd_gate_sm90_cuda,cuda,transition,gemm,both,both,,both,yes,bf16,miniworld_engine/kernels/transition/cuda/transition_gatebwd_kernel.cu,transition_gatebwd_rs_wgmma_kernel,miniworld_engine.kernels.drivers.transition:transition_bwd_gate_sm90_cuda,,,sm90,,pair|token,1
++trimul_inproj_masked_sm90_cute,cute,trimul_inproj,gemm,token,pair,,trunk,yes,bf16,miniworld_engine/kernels/trimul_inproj/cute/masked_front.py,MaskedGatedSm90.epi_visit_subtile,miniworld_engine.kernels.drivers.trimul_inproj:masked_front_sm90,,,sm90,,pair,1
++transition_squeeze_residual_sm90_cute,cute,transition,gemm,both,both,,both,yes,bf16,miniworld_engine/kernels/transition/cute/squeeze_residual.py,squeeze_residual,miniworld_engine.kernels.drivers.transition:squeeze_residual_sm90,,,sm90,,pair|token,1
+--- a/src/miniworld_engine/kernels/tm1/cute/launch.py
++++ b/src/miniworld_engine/kernels/tm1/cute/launch.py
+@@ -127,6 +127,7 @@
+     WR: torch.Tensor,  # (D, D)  — to_right.weight.T
+     WRg: torch.Tensor,  # (D, D)  — to_right_gate.weight.T
+     *,
++    pair_mask: torch.Tensor | None = None,
+     out_layout: str = "bdll",  # "bdll" (spec) or "blld" (cheap path, no permute)
+ ) -> tuple[torch.Tensor, torch.Tensor]:
+     """Forward TM1 (left+right gated dual GEMM). Returns ``(left, right)`` in
+@@ -157,6 +158,16 @@
+ 
+     B_left = _interleave(WLg, WL)  # (D, 2D), gate at even cols, proj at odd
+     B_right = _interleave(WRg, WR)
++
++    if pair_mask is not None:
++        from miniworld_engine.kernels.trimul_inproj.cute.masked_front import masked_front
++        left, _ = masked_front(x_flat, B_left, pair_mask)
++        right, _ = masked_front(x_flat, B_right, pair_mask)
++        if out_layout == "blld":
++            return (left.reshape(B, L, L, D).contiguous(),
++                    right.reshape(B, L, L, D).contiguous())
++        return (left.T.reshape(D, B, L, L).permute(1, 0, 2, 3).contiguous(),
++                right.T.reshape(D, B, L, L).permute(1, 0, 2, 3).contiguous())
+ 
+     if out_layout in ("blld", "bdll"):
+         _, left_flat = gemm_act(A=x_flat, B=B_left, activation="glu", store_preact=False)
+--- a/src/miniworld_engine/kernels/transition/cute/fused.py
++++ b/src/miniworld_engine/kernels/transition/cute/fused.py
+@@ -6,8 +6,8 @@
+ dataflow, same separate-backward design — but swaps the two GEMM-bearing triton kernels for
+ cute WGMMA:
+ 
+-  * FORWARD: ``transition_expand_swiglu_cute`` (LN-folded gated dual-GEMM) + torch.matmul
+-    squeeze  (replaces the triton fused expand + squeeze).
++  * FORWARD: ``transition_expand_swiglu_cute`` (LN-folded gated dual-GEMM), then
++    squeeze with a CuTe residual epilogue on qualified H100 shapes, otherwise cuBLAS.
+   * BACKWARD: ``grad_expand = go @ Ws`` (cuBLAS) -> ONE cute ``transition_expand_gatebwd_cute``
+     (dual-accumulator WGMMA recompute + SwiGLU-backward epilogue -> h, dA, dB) -> dWs/dWa/dWb/
+     d_xn (cuBLAS) -> the EXISTING triton ``_transition_ln_bwd`` (NOT ported — it is a
+@@ -89,13 +89,14 @@
+ 
+ 
+ def _cute_fwd_fake(x2, ln_weight, ln_bias, expand_a_weight, expand_b_weight, squeeze_weight,
+-                   n, eps, shape_key):
++                   n, eps, shape_key, residual=None):
+     """``out`` (M, D) -- still flat, ``CuteTransitionFusedFunction.forward`` does the reshape --
+     plus the saved LN stats ``rstd`` and ``c1`` as (M,) fp32 against a bf16 activation. The (M, ND)
+     expand/h activation is deliberately not among the outputs: the backward recomputes it."""
+     m = x2.shape[0]
+     return (
+-        x2.new_empty((m, squeeze_weight.shape[0])),
++        x2.new_empty((m, squeeze_weight.shape[0]), dtype=(
++            torch.promote_types(x2.dtype, residual.dtype) if residual is not None else x2.dtype)),
+         x2.new_empty((m,), dtype=torch.float32),   # rstd
+         x2.new_empty((m,), dtype=torch.float32),   # c1
+     )
+@@ -112,6 +113,7 @@
+     n: int,
+     eps: float,
+     shape_key: int,
++    residual: torch.Tensor | None = None,
+ ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+     """The cute forward launches -> ``(out, rstd, c1)``; ``x2`` arrives flat, contiguous and cast.
+ 
+@@ -133,7 +135,16 @@
+         eps,
+         stats=(rstd, c1),
+     )
+-    out = torch.matmul(expand, squeeze_weight.T)
++    if (residual is not None and residual.dtype == expand.dtype == torch.bfloat16
++            and squeeze_weight.shape == (512, 2048) and x2.shape[0] >= 16384
++            and x2.shape[0] % 128 == 0 and residual.is_contiguous()
++            and torch.cuda.get_device_capability(x2.device)[0] == 9):
++        from .squeeze_residual import squeeze_residual
++        out = squeeze_residual(expand, squeeze_weight, residual.reshape_as(x2))
++    else:
++        out = torch.matmul(expand, squeeze_weight.T)
++        if residual is not None:
++            out = out + residual.reshape_as(x2)
+ 
+     # Recompute-all training policy: do NOT save the (M, ND) expand/h activation — it is
+     # re-derived in the backward (store_h=True) to keep the training memory footprint minimal.
+@@ -249,6 +260,7 @@
+         n: int,
+         eps: float,
+         backward_backend: str = "triton",
++        residual: torch.Tensor | None = None,
+     ) -> Float[torch.Tensor, "... d"]:
+         if backward_backend not in {"triton", "cute"}:
+             msg = f"backward_backend must be 'triton' or 'cute', got {backward_backend!r}"
+@@ -273,7 +285,7 @@
+         shape_key = both_key(rows_of(orig_shape))
+         out, rstd, c1 = _cute_fwd(
+             x2, ln_weight, ln_bias, expand_a_weight, expand_b_weight,
+-            squeeze_weight, n, eps, shape_key,
++            squeeze_weight, n, eps, shape_key, residual,
+         )
+         ctx.save_for_backward(
+             x2, rstd, c1, ln_weight, ln_bias,
+@@ -284,6 +296,7 @@
+         ctx.orig_shape = orig_shape
+         ctx.shape_key = shape_key
+         ctx.backward_backend = backward_backend
++        ctx.has_residual = residual is not None
+         return out.reshape(orig_shape)
+ 
+     @staticmethod
+@@ -298,7 +311,8 @@
+             list(ctx.orig_shape), ctx.shape_key,
+         )
+         # n, eps, backward_backend take no gradient.
+-        return dx, dgamma, dbeta, dWa, dWb, dWs, None, None, None
++        return dx, dgamma, dbeta, dWa, dWb, dWs, None, None, None, (
++            grad_output if ctx.has_residual else None)
+ 
+ 
+ def cute_transition_fused(
+@@ -311,6 +325,7 @@
+     n: int,
+     eps: float = 1e-5,
+     backward_backend: str = "triton",
++    residual: torch.Tensor | None = None,
+ ) -> torch.Tensor:
+     """Fully fused Transition fwd+bwd with the GEMMs on quack SM90 WGMMA."""
+     return CuteTransitionFusedFunction.apply(
+@@ -323,4 +338,5 @@
+         n,
+         eps,
+         backward_backend,
+-    )
++        residual,
++    )
+--- /dev/null
++++ b/src/miniworld_engine/kernels/transition/cute/squeeze_residual.py
+@@ -0,0 +1,43 @@
++"""Hopper squeeze GEMM with a separate residual C operand and no staging copy."""
++from __future__ import annotations
++
++import torch
++from miniworld_engine.kernels._compile import opaque
++from miniworld_engine.kernels import _quack_compat  # register source identity before Quack import
++from quack.gemm import gemm
++
++
++def _fake(expand, weight, residual):
++    return residual.new_empty(residual.shape)
++
++
++@opaque(fake=_fake, name="transition_squeeze_residual_sm90_cute")
++def squeeze_residual(expand: torch.Tensor, weight: torch.Tensor,
++                     residual: torch.Tensor) -> torch.Tensor:
++    from quack.gemm_config import GemmConfig
++    from miniworld_engine.autotune.cute_config import plain_sm90_candidates, resolve_config
++    from miniworld_engine.autotune.native import tensor_key
++    out = _fake(expand, weight, residual)
++
++    def launch(c):
++        semaphore = (torch.zeros(1, device=expand.device, dtype=torch.int32)
++                     if c.is_dynamic_persistent else None)
++        gemm(expand.unsqueeze(0), weight.unsqueeze(0), out.unsqueeze(0),
++             residual.unsqueeze(0), semaphore, c.tile_m, c.tile_n, c.cluster_m, c.cluster_n,
++             pingpong=c.pingpong, is_dynamic_persistent=c.is_dynamic_persistent,
++             max_swizzle_size=c.max_swizzle_size)
++
++    # H100 d512 / expansion 4 qualification: 12-14% faster squeeze than cuBLAS+add
++    # at M=16384,147456,589824. The full native builder can retune this grid.
++    default = GemmConfig(tile_m=128, tile_n=256, cluster_m=1, cluster_n=1,
++                         pingpong=False, is_dynamic_persistent=False, device_capacity=9)
++    candidates = plain_sm90_candidates()
++    if default not in candidates:
++        candidates = [default] + candidates
++    config = resolve_config(
++        "transition_squeeze_residual_sm90_cute", candidates, default=default,
++        dtype=str(expand.dtype), bucket=tensor_key(expand, weight, residual),
++        device_index=expand.device.index, run=launch,
++    )
++    launch(config)
++    return out
+--- a/src/miniworld_engine/kernels/trimul_inproj/cute/bidir_training.py
++++ b/src/miniworld_engine/kernels/trimul_inproj/cute/bidir_training.py
+@@ -48,12 +48,8 @@
+         H = 2 * h
+         left, right, preact = trimul_inproj_cute_forward(
+             x_n, WL, WLg, WR, WRg, None, bdll_direct=True, compute_gate=False,
+-            b_lr=b_lr, out_hidden=H, return_preact=True)
+-        # Mask only contraction operands; the output gate must see the unmasked LN input.
+-        if pair_mask is not None:
+-            scale = pair_mask.reshape(B, 1, L, L).to(left.dtype)
+-            left = left * scale
+-            right = right * scale
++            b_lr=b_lr, out_hidden=H, return_preact=True, pair_mask=pair_mask)
++        # Mask is fused into the front GEMM stores; saved preactivations stay raw.
+         ctx.pair_mask = pair_mask
+         lf = left.reshape(H, L, L)
+         rf = right.reshape(H, L, L)
+--- a/src/miniworld_engine/kernels/trimul_inproj/cute/dispatch.py
++++ b/src/miniworld_engine/kernels/trimul_inproj/cute/dispatch.py
+@@ -39,23 +39,22 @@
+     """Run the fastest of `candidates` for `key`, caching the choice. candidates: list of
+     (label, thunk()->result).
+ 
+-    A cache MISS calibrates, and calibrating is two things Dynamo cannot have inside a trace: it
+-    writes ``_CACHE`` (a module global -- "Mutating a variable not in the current scope", which
+-    graph-breaks the whole enclosing region) and it runs ``do_bench``, which on the fake tensors
+-    a trace carries would time nothing. So under tracing a miss falls back to ``candidates[0]``
+-    instead. That is not an arbitrary pick: candidate 0 is cuBLAS everywhere in this file, the
+-    always-valid variant the others are compared against.
+-
+-    A HIT traces fine -- reading a global dict is just a guard -- so a run that calibrates before
+-    it compiles (any eager warm-up step) still gets the tuned choice inside the graph. This was
+-    found by tests/compile/test_compile_regimes_gpu.py: with a cold cache a pairformer block traced to 6
+-    graphs, with a warm one to 1, and the whole difference was this function.
++    Calibration and stride-based cache keys stay outside Dynamo tracing. During
++    autograd backward speculation, saved tensors can have unknown strides; reading
++    those for a Python dictionary key fails before any GEMM can be traced. Compiled
++    execution therefore selects the policy-allowed cuBLAS variant directly. Eager
++    execution retains shape/layout-specific calibration and its cached winners.
+     """
+     if not _cute_allowed(operands[0].device, operands[0].dtype, case):
+         candidates = [(label, thunk) for label, thunk in candidates
+                       if label not in ("quack", "cute")]
+     if not candidates:
+         raise RuntimeError(f"{name}: GPU policy excludes every dispatch candidate")
++    if torch.compiler.is_compiling():
++        for label, thunk in candidates:
++            if label == "cublas":
++                return thunk()
++        return candidates[0][1]()
+     # Indices refer to THIS candidate list. A warm winner on another card, dtype,
+     # layout or policy must never select a different (possibly unsupported) backend.
+     key = (key, tuple((t.device, t.dtype, tuple(t.shape), tuple(t.stride())) for t in operands),
+--- a/src/miniworld_engine/kernels/trimul_inproj/cute/launch.py
++++ b/src/miniworld_engine/kernels/trimul_inproj/cute/launch.py
+@@ -85,6 +85,7 @@
+     b_lr: torch.Tensor | None = None,  # pre-packed (D, 4H); skips cat/interleave
+     hidden_dim: int = -1,  # where D lives in x: -1/3 -> BLLD, 1 -> BDLL
+     out_hidden: int | None = None,  # per-side output width H (left/right each H wide); None -> D
++    pair_mask: torch.Tensor | None = None,
+     return_preact: bool = False,  # also return the pre-glu activation [B,4H,L,L] (for front bwd)
+ ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None]:
+     """Forward. Returns ``(left_bdll, right_bdll, gate_blld)``.
+@@ -159,6 +160,16 @@
+         assert b_lr.shape == (D, 4 * H), f"b_lr: expected ({D},{4*H}), got {tuple(b_lr.shape)}"
+     B_lr = b_lr
+ 
++    if pair_mask is not None:
++        from .masked_front import masked_front
++        lr_view, preact_view = masked_front(x_flat, B_lr, pair_mask, return_preact)
++        lr = lr_view.T.reshape(B, 2 * H, L, L)
++        left_bdll, right_bdll = lr[:, :H], lr[:, H:]
++        if return_preact:
++            return left_bdll, right_bdll, preact_view.T.reshape(B, 4 * H, L, L)
++        gate = torch.sigmoid(x_flat @ Wg).reshape(B, L, L, D) if compute_gate else None
++        return left_bdll, right_bdll, gate
++
+     if bdll_direct:
+         # FAST path: M-major view of [B, 2H, L, L]. Stock quack rejects an
+         # M-major gated postact; our in-repo shim owns that policy (no quack file
+--- /dev/null
++++ b/src/miniworld_engine/kernels/trimul_inproj/cute/masked_front.py
+@@ -0,0 +1,113 @@
++"""Hopper gated projection with pair masking in the GEMM output epilogue.
++
++Preactivations remain unmasked for backward. Only the GLU output is masked;
++the normalized input used by the separate output gate is never modified.
++"""
++from __future__ import annotations
++
++import torch
++import cutlass
++import cutlass.cute as cute
++from quack.activation import gate_fn_map
++from quack.compile_utils import make_fake_tensor
++from quack.cute_dsl_utils import get_device_capacity, get_max_active_clusters, torch2cute_dtype_map
++from quack.gemm_act import GemmActMixin, GemmGatedMixin
++from quack.gemm_sm90 import GemmSm90
++from quack.gemm_tvm_ffi_utils import (
++    compile_gemm_kernel, get_major, perm3d_single, make_fake_gemm_tensors,
++    make_fake_scheduler_args, make_fake_varlen_args, make_scheduler_args, make_varlen_args,
++)
++from miniworld_engine.kernels._compile import opaque
++from miniworld_engine.kernels._quack_compat import jit_cache, is_compile_only
++
++
++class MaskedGatedSm90(GemmGatedMixin, GemmSm90):
++    """Reuse Quack's tiled GEMM and gated stores, with a post-GLU row mask."""
++
++    def epi_to_underlying_arguments(self, args, *, loc=None, ip=None):
++        # GemmActMixin accepts the M-major preactivation and output layouts.
++        params = GemmActMixin.epi_to_underlying_arguments(self, args, loc=loc, ip=ip)
++        self.cta_tile_shape_aux_out_mn = (
++            self.cta_tile_shape_mnk[0], self.cta_tile_shape_mnk[1] // 2,
++        )
++        return params
++
++    @cute.jit
++    def epi_visit_subtile(self, params, epi_loop_tensors, tRS_rD, tRS_rC=None):
++        # mColVecBroadcast is a multiplicative output mask in THIS class only.
++        # No call to the default additive-bias epilogue: preactivation stays intact.
++        scale = epi_loop_tensors["mColVecBroadcast"]
++        layout = cute.recast_layout(2, 1, tRS_rD.layout)
++        out = cute.make_rmem_tensor(layout.shape, self.acc_dtype)
++        for i in cutlass.range(cute.size(out), unroll_full=True):
++            out[i] = params.act_fn(tRS_rD[2 * i], tRS_rD[2 * i + 1]) * scale[2 * i]
++        return out
++
++
++@jit_cache
++def _compile_masked_front(dtype, a_major, b_major, save_preact, tile, cluster, pp, dyn, device):
++    a, b, d, c, m, n, k, batch = make_fake_gemm_tensors(
++        dtype, dtype, dtype if save_preact else None, None,
++        a_major, b_major, "m" if save_preact else None, None,
++    )
++    out = make_fake_tensor(dtype, (m, cute.sym_int(), batch), leading_dim=0, divisibility=8)
++    mask = make_fake_tensor(cutlass.Float32, (batch, m), leading_dim=1, divisibility=4)
++    epi = MaskedGatedSm90.EpilogueArguments(
++        out, gate_fn_map["glu"], mColVecBroadcast=mask,
++    )
++    return compile_gemm_kernel(
++        MaskedGatedSm90, dtype, tile, cluster, pp, True, False, dyn,
++        device, a, b, d, c, epi, make_fake_scheduler_args(dyn, False, batch),
++        make_fake_varlen_args(False, False, False, None),
++    )
++
++
++def _launch(a, b, out, preact, mask, config):
++    from miniworld_engine.autotune.cute_config import validate_hopper_config
++    validate_hopper_config(config)
++    ap, bp = perm3d_single(a.unsqueeze(0)), perm3d_single(b.T.unsqueeze(0))
++    device = get_device_capacity(a.device)
++    assert device[0] == 9, "masked gated GEMM requires Hopper"
++    fn = _compile_masked_front(
++        torch2cute_dtype_map[a.dtype], get_major(ap, "m", "k"), get_major(bp, "n", "k"),
++        preact is not None, (config.tile_m, config.tile_n),
++        (config.cluster_m, config.cluster_n, 1), config.pingpong,
++        config.is_dynamic_persistent, device,
++    )
++    if is_compile_only():
++        return
++    semaphore = (torch.zeros(1, dtype=torch.int32, device=a.device)
++                 if config.is_dynamic_persistent else None)
++    epi = MaskedGatedSm90.EpilogueArguments(
++        perm3d_single(out.unsqueeze(0)), None, mColVecBroadcast=mask, rounding_mode=None,
++    )
++    sched = make_scheduler_args(
++        get_max_active_clusters(config.cluster_m * config.cluster_n, device_capacity=device),
++        config.max_swizzle_size, semaphore,
++    )
++    fn(ap, bp, perm3d_single(preact.unsqueeze(0)) if preact is not None else None, None, epi, sched,
++       make_varlen_args(None, None, None), None)
++
++
++def _masked_front_fake(a, b, pair_mask, save_preact=False):
++    m, n = a.shape[0], b.shape[1]
++    out = a.new_empty((n // 2, m)).T
++    preact = a.new_empty((n, m)).T if save_preact else a.new_empty((0,))
++    return out, preact
++
++
++@opaque(fake=_masked_front_fake, name="trimul_inproj_masked_sm90_cute")
++def masked_front(a: torch.Tensor, b: torch.Tensor, pair_mask: torch.Tensor,
++                 save_preact: bool = False) -> tuple[torch.Tensor, torch.Tensor]:
++    from miniworld_engine.autotune.cute_config import resolve_config, gated_sm90_candidates
++    from miniworld_engine.autotune.native import tensor_key
++    out, preact = _masked_front_fake(a, b, pair_mask, save_preact)
++    mask = pair_mask.reshape(1, a.shape[0]).to(torch.float32).contiguous()
++    config = resolve_config(
++        "trimul_inproj_masked_sm90_cute", gated_sm90_candidates(), dtype=str(a.dtype),
++        bucket=tensor_key(a, b, pair_mask, extra=(save_preact,)),
++        device_index=a.device.index,
++        run=lambda c: _launch(a, b, out, preact if save_preact else None, mask, c),
++    )
++    _launch(a, b, out, preact if save_preact else None, mask, config)
++    return out, preact
+--- a/src/miniworld_engine/kernels/trimul_inproj/cute/v6_training_merged.py
++++ b/src/miniworld_engine/kernels/trimul_inproj/cute/v6_training_merged.py
+@@ -48,12 +48,8 @@
+         M = B * L * L
+         left, right, preact = trimul_inproj_cute_forward(
+             x_n, WL, WLg, WR, WRg, None, bdll_direct=True, compute_gate=False,
+-            b_lr=b_lr, return_preact=True)
+-        # Mask only contraction operands; the output gate must see the unmasked LN input.
+-        if pair_mask is not None:
+-            scale = pair_mask.reshape(B, 1, L, L).to(left.dtype)
+-            left = left * scale
+-            right = right * scale
++            b_lr=b_lr, return_preact=True, pair_mask=pair_mask)
++        # Mask is fused into the front GEMM stores; saved preactivations stay raw.
+         ctx.pair_mask = pair_mask
+         lf = left.reshape(D, L, L)
+         rf = right.reshape(D, L, L)
+--- a/src/miniworld_engine/modules/transition/module.py
++++ b/src/miniworld_engine/modules/transition/module.py
+@@ -178,8 +178,9 @@
+                 self.n,
+                 self.ln_in.eps,
+                 backward_backend=backward_backend,
+-            )
+-            return out + x
++                residual=x,
++            )
++            return out
+ 
+         raise InvalidImplementationError(self.implementation)
+ 
+@@ -240,7 +241,7 @@
+         # (sm_100) AND on pre-Hopper (sm_80 / A100) fall through to the triton
+         # family (its split path handles any d) — correctness-guard fallback.
+         if self.d_hidden >= 256 and _dispatch.is_sm90(x.device):
+-            return _r(kernels.cute_transition_fused(
++            return kernels.cute_transition_fused(
+                 x,
+                 self.ln_in.weight.to(x.dtype),
+                 self.ln_in.bias.to(x.dtype),
+@@ -249,7 +250,8 @@
+                 self.squeeze.weight.to(x.dtype),
+                 self.n,
+                 self.ln_in.eps,
+-            ))
++                residual=x,
++            )
+         return kernels.triton_transition_fused(
+             x,
+             self.ln_in.weight.to(x.dtype),
+@@ -296,7 +298,7 @@
+             # SM90 (H100) only; on Blackwell AND pre-Hopper (A100) the triton family (below)
+             # carries d=512 too.
+             backward_backend = _large_d_training_backend_from_env() or "triton"
+-            return _r(kernels.cute_transition_fused(
++            return kernels.cute_transition_fused(
+                 x,
+                 self.ln_in.weight.to(x.dtype),
+                 self.ln_in.bias.to(x.dtype),
+@@ -306,7 +308,8 @@
+                 self.n,
+                 self.ln_in.eps,
+                 backward_backend=backward_backend,
+-            ))
++                residual=x,
++            )
+         # d<=256 (Version A / save_xn=False): fused forward (b2b / sm100 cute fwd) + the
+         # sm100 gatebwd backward (recomputes xn from saved stats, less memory). On sm_100
+         # only d=128 reaches here (d>=256 took the split branch above); the AF3 shape.
+--- a/src/miniworld_engine/modules/triangle_multiplication/bidirectional.py
++++ b/src/miniworld_engine/modules/triangle_multiplication/bidirectional.py
+@@ -55,6 +55,12 @@
+         # GPU arch is resolved ONCE into self._backend; forward routes on that.
+         self.implementation = ImplementationType(implementation)
+         self._backend = _resolve_trimul_backend(implementation)  # concrete KernelBackend
++        if self._backend == KernelBackend.CUTE:
++            from miniworld_engine.kernels.trimul_inproj.cute import _bdll_patch, _gate_mul_patch
++            _bdll_patch.apply()
++            _gate_mul_patch.apply()
++            from .module import _load_cute_fns
++            _load_cute_fns()
+         # ======================================================================================
+         # THIS MODULE ALWAYS APPLIES THE RESIDUAL: y = pair + drop_row(bidir_trimul(pair)).
+         # The residual connection is UNCONDITIONAL (AF3 default; residual is the domain standard) —
+@@ -361,8 +367,9 @@
+                 self.to_right.weight.to(pair.dtype)[sl].T.contiguous(),
+                 self.to_right_gate.weight.to(pair.dtype)[sl].T.contiguous(),
+                 out_layout=_resolve_trimul_out_layout(pair.device),
+-            )
+-            if pair_scale is not None:
++                pair_mask=pair_scale,
++            )
++            if pair_scale is not None and not _dispatch.is_sm90(pair.device):
+                 left, right = left * pair_scale, right * pair_scale
+             return left, right
+ 
+--- a/src/miniworld_engine/modules/triangle_multiplication/module.py
++++ b/src/miniworld_engine/modules/triangle_multiplication/module.py
+@@ -195,8 +195,11 @@
+         self.to_gate = Linear(d_pair, d_pair, bias=False, init="zero")
+         self.to_out = Linear(d_hidden, d_pair, bias=False, init="zero")
+ 
+-        if implementation == ImplementationType.CUTE:
++        if self._backend == KernelBackend.CUTE:
+             _load_cute_fns()
++            from miniworld_engine.kernels.trimul_inproj.cute import _bdll_patch, _gate_mul_patch
++            _bdll_patch.apply()
++            _gate_mul_patch.apply()
+ 
+     def _kernel_tm1(
+         self, pair: torch.Tensor, backend: KernelBackend
+@@ -496,8 +499,10 @@
+             self.to_right.weight.T,
+             self.to_right_gate.weight.T,
+             out_layout=_resolve_trimul_out_layout(pair.device),
++            pair_mask=((mask.unsqueeze(-1) & mask.unsqueeze(-2))
++                       if mask is not None and _dispatch.is_sm90(pair.device) else None),
+         )
+-        if mask is not None:
++        if mask is not None and not _dispatch.is_sm90(pair.device):
+             scale = (mask.unsqueeze(-1) & mask.unsqueeze(-2))[:, None]
+             left_bdll, right_bdll = left_bdll * scale, right_bdll * scale
+         if self.outgoing:

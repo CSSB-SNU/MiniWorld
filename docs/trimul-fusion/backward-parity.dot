@@ -1,0 +1,105 @@
+digraph G {
+graph [rankdir=TB,compound=true,newrank=true,bgcolor="white",pad="0.25",nodesep="0.20",ranksep="0.32",fontname="sans-serif",fontsize=16,label="최신 H100 · Backward · 동일 Triton 융합 · L384 · BF16 B1 D=h=128\n기준: 8c7d8b39 · 동일 융합 / 저장값 · H100 경로는 개발 checkout의 선택 옵션\n전체 학습 FWD+BWD: 1.627 → 1.572 ms (1.035×) · compile + CUDA graph · dropout=0.25/RNG 포함\n청색 Triton / 녹색 CuTe TMA+WGMMA / 보라 cuBLAS / 노랑 HBM · 색상 외곽선 = 커널 경계\n아래 config는 실측 후보이며 shape 하드코딩이나 전체 cache 완료를 뜻하지 않음",labelloc=t];
+node [shape=box,style="rounded,filled",fillcolor="white",color="#b6c4cf",fontname="sans-serif",fontsize=11,margin="0.10,0.07"];
+edge [color="#566d7b",arrowsize=0.65,fontname="sans-serif",fontsize=9];
+dy [label="gy + 저장된 forward buffers",shape=oval,color="#88989d",fillcolor="#f5f7f8"];
+subgraph cluster_gew { label="B1 · _gate_elem_bwd_ew_kernel\nTriton · 1 kernel"; color="#2868ba"; fillcolor="#eef5ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+gew0 [label="v = gy × dropout_scale",shape=box,color="#2868ba",fillcolor="white"];
+gew1 [label="dproj = v × gate\ndglogit = v × proj × gate × (1 − gate)",shape=box,color="#2868ba",fillcolor="white"];
+gew0 -> gew1 [label=""];
+}
+dy -> gew0 [label="",lhead=cluster_gew];
+dp [label="dproj [M,128] · HBM",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+dgl [label="dglogit [M,128] · HBM",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+gew1 -> dp [label=""];
+gew1 -> dgl [label=""];
+subgraph cluster_dwg { label="B2 · cuBLAS mm\n별도 GEMM 호출"; color="#8655ad"; fillcolor="#f7f0ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+dwg0 [label="dWg = x_nᵀ @ dglogit",shape=box,color="#8655ad",fillcolor="white"];
+}
+dgl -> dwg0 [label="",lhead=cluster_dwg];
+subgraph cluster_outdx { label="B3a · cuBLAS matmul\n별도 GEMM 호출"; color="#8655ad"; fillcolor="#f7f0ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+outdx0 [label="dx_normed = (Wpᵀ @ dprojᵀ)ᵀ",shape=box,color="#8655ad",fillcolor="white"];
+}
+dp -> outdx0 [label="",lhead=cluster_outdx];
+dxnorm [label="dx_normed [M,256] · HBM\n큰 중간 gradient buffer",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+outdx0 -> dxnorm [label=""];
+subgraph cluster_dw { label="B3b · cuBLAS matmul\n별도 GEMM 호출"; color="#8655ad"; fillcolor="#f7f0ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+dw0 [label="dWp = dprojᵀ @ xn_out",shape=box,color="#8655ad",fillcolor="white"];
+}
+dp -> dw0 [label="",lhead=cluster_dw];
+subgraph cluster_lob { label="B4 · _ln_bwd_kernel\nTriton · 1 kernel"; color="#2868ba"; fillcolor="#eef5ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+lob0 [label="xhat 재계산; u = dx_normed × γout",shape=box,color="#2868ba",fillcolor="white"];
+lob1 [label="c1 = mean(u × xhat), c2 = mean(u)",shape=box,color="#2868ba",fillcolor="white"];
+lob2 [label="dtri = rstdout × (u − c2 − xhat × c1)",shape=box,color="#2868ba",fillcolor="white"];
+lob3 [label="dγout / dβout atomic reduction",shape=box,color="#2868ba",fillcolor="white"];
+lob0 -> lob1 [label=""];
+lob1 -> lob2 [label=""];
+lob2 -> lob3 [label=""];
+}
+dxnorm -> lob0 [label="",lhead=cluster_lob];
+dtri [label="dtri [256,L,L] · HBM",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+lob3 -> dtri [label=""];
+subgraph cluster_cb0 { label="B6a · cuBLAS bmm\n별도 GEMM 호출"; color="#8655ad"; fillcolor="#f7f0ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+cb00 [label="dleft[:h] = dtri[:h] @ right[:h]",shape=box,color="#8655ad",fillcolor="white"];
+}
+dtri -> cb00 [label="",lhead=cluster_cb0];
+subgraph cluster_cb1 { label="B6b · cuBLAS bmm\n별도 GEMM 호출"; color="#8655ad"; fillcolor="#f7f0ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+cb10 [label="dright[:h] = dtri[:h]ᵀ @ left[:h]",shape=box,color="#8655ad",fillcolor="white"];
+}
+dtri -> cb10 [label="",lhead=cluster_cb1];
+subgraph cluster_cb2 { label="B6c · cuBLAS bmm\n별도 GEMM 호출"; color="#8655ad"; fillcolor="#f7f0ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+cb20 [label="dleft[h:] = right[h:] @ dtri[h:]ᵀ",shape=box,color="#8655ad",fillcolor="white"];
+}
+dtri -> cb20 [label="",lhead=cluster_cb2];
+subgraph cluster_cb3 { label="B6d · cuBLAS bmm\n별도 GEMM 호출"; color="#8655ad"; fillcolor="#f7f0ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+cb30 [label="dright[h:] = left[h:] @ dtri[h:]",shape=box,color="#8655ad",fillcolor="white"];
+}
+dtri -> cb30 [label="",lhead=cluster_cb3];
+dlr [label="dleft / dright · HBM\n4 GEMM이 두 최종 buffer의 slice에 직접 기록\nbackward cat 2회 없음",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+cb00 -> dlr [label=""];
+cb10 -> dlr [label=""];
+cb20 -> dlr [label=""];
+cb30 -> dlr [label=""];
+subgraph cluster_dc { label="B7 · _dconcat_kernel\nTriton · 1 kernel"; color="#2868ba"; fillcolor="#eef5ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+dc0 [label="dleft/right × pair_mask",shape=box,color="#2868ba",fillcolor="white"];
+dc1 [label="gL/R = sigmoid(saved gL/R logits)",shape=box,color="#2868ba",fillcolor="white"];
+dc2 [label="dpL/R = dleft/right × gL/R\ndgL/R = dleft/right × pL/R × gL/R × (1−gL/R)",shape=box,color="#2868ba",fillcolor="white"];
+dc3 [label="4 gradient를 dconc에 packed store",shape=box,color="#2868ba",fillcolor="white"];
+dc0 -> dc1 [label=""];
+dc1 -> dc2 [label=""];
+dc2 -> dc3 [label=""];
+}
+dlr -> dc0 [label="",lhead=cluster_dc];
+dconc [label="dconc [1024,M] · HBM\n이 buffer는 존재함",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+dc3 -> dconc [label=""];
+subgraph cluster_wgrad { label="B8 · cuBLAS mm\n4 입력 weight gradient를 묶은 GEMM"; color="#8655ad"; fillcolor="#f7f0ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+wgrad0 [label="dWs = dconc @ x_n",shape=box,color="#8655ad",fillcolor="white"];
+}
+dconc -> wgrad0 [label="",lhead=cluster_wgrad];
+dws [label="dWL,dWLg,dWR,dWRg\nslice / transpose / copy 별도",shape=note,color="#b6c4cf",fillcolor="white"];
+wgrad0 -> dws [label=""];
+subgraph cluster_dual { label="B9 + B10 · DualBackwardSm90\nCuTe TMA + WGMMA · 1 kernel\nTriton 141.449 → CuTe 132.717 µs · 1.066×\nM64 / N128 / K64 / GROUP_M1 / warps4 / stages3\n사용 완료 gate stage에 front tile TMA prefetch\nWGMMA wait + CTA barrier로 reuse 보호\n추가 shared / HBM allocation 없음"; color="#168269"; fillcolor="#eaf8f2"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+dual0 [label="gate_grad = BF16(dglogit @ Wgᵀ)",shape=box,color="#168269",fillcolor="white"];
+dual1 [label="front_grad = dconcᵀ @ W_stack",shape=box,color="#168269",fillcolor="white"];
+dual2 [label="dx_n = front_grad + gate_grad",shape=box,color="#168269",fillcolor="white"];
+dual0 -> dual2 [label=""];
+dual1 -> dual2 [label=""];
+}
+dgl -> dual0 [label="gate 분기",style=dashed,color="#84929a",constraint=false];
+dconc -> dual1 [label="",lhead=cluster_dual];
+dxn [label="dx_n [M,128] · HBM\ndx_gate 중간 buffer 제거",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+dual2 -> dxn [label=""];
+subgraph cluster_lib { label="B11 + B12 · _ln_bwd_residual_kernel\nTriton · 1 kernel\nCSV: M 1/2/4/8/16/32/64/128 · K 64/128/256/512/1024\nwarps 1/2/4/8/16/32 · stages 1/2/3/4/5/6\nrow/column reduction · GROUP_M 없음"; color="#2868ba"; fillcolor="#eef5ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+lib0 [label="입력 LN xhat 재계산; dx_n × γin",shape=box,color="#2868ba",fillcolor="white"];
+lib1 [label="row c1/c2 reduction → dpair_LN\ndγin / dβin atomic reduction",shape=box,color="#2868ba",fillcolor="white"];
+lib2 [label="dpair = BF16(dpair_LN) + gy\nresidual은 LN 미분 후에만 더함",shape=box,color="#2868ba",fillcolor="white"];
+lib0 -> lib1 [label=""];
+lib1 -> lib2 [label=""];
+}
+dxn -> lib0 [label="",lhead=cluster_lib];
+dy -> lib2 [label="residual identity gradient",style=dashed,color="#84929a",constraint=false];
+end [label="dpair + 모든 parameter gradients",shape=oval,color="#88989d",fillcolor="#f5f7f8"];
+lib2 -> end [label=""];
+bnote [label="B9+B10은 1.15× 목표 미달\nNCU L384: DRAM84.30%, L2 79.92% of peak · TMA 입력 대기가 큼\n137 registers / spill0 · 대역폭의 절대 한계를 입증한 수치는 아님\nB7 dconcat은 GLU 미분 + gradient packing이며 필요한 연산\noutput / 모든 gradient 검증 통과: L384, L768",shape=note,color="#b6c4cf",fillcolor="white"];
+end -> bnote [style=invis];
+}

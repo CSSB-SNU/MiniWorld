@@ -1,0 +1,30 @@
+commit 9bdf9260e0ad4aee06b3a9f67d4d6f06cc338e8e
+Author:     SanggeunParrk <psk6950@snu.ac.kr>
+AuthorDate: Tue Jun 23 15:09:35 2026 +0900
+Commit:     SanggeunParrk <psk6950@snu.ac.kr>
+CommitDate: Tue Jun 23 15:09:35 2026 +0900
+
+    trimul_inproj: re-fused TriMul forward (bdll) + validated NVIDIA comparison + bwd scaffold
+    
+    New fusion unit for the triangle multiplicative update, re-designed for training:
+      LN_in -> trimul_inproj (left+right fused, one gated GEMM, bdll, m-major in-place)
+            -> torch.bmm -> fused back-half (v4 triton dual-gemm / v5 cute LNL + gate-mul)
+    
+    Forward kernels (cute + triton):
+    - cute/launch.py: trimul_inproj_cute_forward (interleaved [gate|proj] GEMM, bdll
+      direct write), _bdll_patch.py shim for stock quack (m-major postact + sigmoid act).
+    - triton/back.py: fused back-half (LN_out(tri)@Wp + sigmoid(x_n@Wg) + mul, gate
+      in-kernel). layernorm_linear_cute_fused gains an optional gate-mul C input (v5).
+    
+    Validated comparison vs NVIDIA (cuequivariance, dt-v1) — team-gm-faithful harness
+    (Fabric bf16-mixed, single layer + mask), all regimes (eager/compile/cudagraph):
+      ours wins every L; compile-everything 1.37-1.65x, each-at-its-best 1.22-1.42x.
+      See modules/triangle_multiplication/benchmark/trimul_compile_analysis.md.
+      Key finding: torch.compile flips cuequiv<->dtv1 ordering; dt-v1's
+      @torch.compiler.disable graph-breaks under compile (so do ours' cute kernels).
+    
+    Backward (B0): autograd.py + bwd_test.py — full manual backward (back-half ->
+    bmm -> front gated-GEMM -> LN_in) verified bit-exact vs torch autograd (rel 6e-16,
+    fp64). Forward kernels swap in next; full(fwd+bwd) is the pending headline vs dt-v1.
+    
+    Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

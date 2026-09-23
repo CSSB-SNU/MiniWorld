@@ -1,0 +1,311 @@
+--- a/src/miniworld_engine/autotune/builder.py
++++ b/src/miniworld_engine/autotune/builder.py
+@@ -146,6 +146,7 @@
+     "ln_bwd_path": (("persistent", "atomic", "cuda"), ("train",)),
+     "ln_out_bwd_path": (("split", "fused"), ("train",)),
+     "transition_force_split": ((True,), ("eval", "train")),
++    "transition_residual_fusion": ((True,), ("eval", "train")),
+     "transition_cuda_b2b": ((False,), ("eval",)),
+     "transition_fuse_stats": ((True,), ("eval", "train")),
+     "transition_savedxn_split_bwd": ((True,), ("train",)),
+@@ -176,6 +177,7 @@
+     "ln_bwd_path": ("layernorm_bwd_path", str),
+     "ln_out_bwd_path": ("layernorm_out_bwd_path", str),
+     "transition_force_split": ("transition_force_split", lambda v: v == "True"),
++    "transition_residual_fusion": ("transition_residual_fusion", lambda v: v == "True"),
+     "transition_cuda_b2b": ("transition_cuda_b2b", lambda v: v == "True"),
+     "transition_fuse_stats": ("transition_fuse_stats", lambda v: v == "True"),
+     "transition_savedxn_split_bwd": ("transition_savedxn_split_bwd", lambda v: v == "True"),
+--- /dev/null
++++ b/src/miniworld_engine/autotune/configs/accuracy/transition_squeeze_residual_triton.csv
+@@ -0,0 +1,2 @@
++BLOCK_K,BLOCK_M1,BLOCK_N,GROUP_M,num_warps,num_stages
++64,64,64,1,2,1
+--- /dev/null
++++ b/src/miniworld_engine/autotune/configs/blk128/transition_squeeze_residual_triton.csv
+@@ -0,0 +1,2 @@
++BLOCK_K,BLOCK_M1,BLOCK_N,GROUP_M,num_warps,num_stages
++128,128,128,1,2,1
+--- /dev/null
++++ b/src/miniworld_engine/autotune/configs/blk16/transition_squeeze_residual_triton.csv
+@@ -0,0 +1,2 @@
++BLOCK_K,BLOCK_M1,BLOCK_N,GROUP_M,num_warps,num_stages
++16,16,16,1,2,1
+--- /dev/null
++++ b/src/miniworld_engine/autotune/configs/blk32/transition_squeeze_residual_triton.csv
+@@ -0,0 +1,2 @@
++BLOCK_K,BLOCK_M1,BLOCK_N,GROUP_M,num_warps,num_stages
++32,32,32,1,2,1
+--- /dev/null
++++ b/src/miniworld_engine/autotune/configs/blk64/transition_squeeze_residual_triton.csv
+@@ -0,0 +1,2 @@
++BLOCK_K,BLOCK_M1,BLOCK_N,GROUP_M,num_warps,num_stages
++64,64,64,1,2,1
+--- /dev/null
++++ b/src/miniworld_engine/autotune/configs/grid/transition_squeeze_residual_triton.csv
+@@ -0,0 +1,7 @@
++axis,values
++BLOCK_K,16 32 64
++BLOCK_M1,32 64 128
++BLOCK_N,32 64 128 256
++GROUP_M,1 4
++num_warps,1 2 4
++num_stages,1 2 3 4 5 6
+--- /dev/null
++++ b/src/miniworld_engine/autotune/configs/mixed1/transition_squeeze_residual_triton.csv
+@@ -0,0 +1,2 @@
++BLOCK_K,BLOCK_M1,BLOCK_N,GROUP_M,num_warps,num_stages
++128,64,32,1,2,1
+--- /dev/null
++++ b/src/miniworld_engine/autotune/configs/mixed2/transition_squeeze_residual_triton.csv
+@@ -0,0 +1,2 @@
++BLOCK_K,BLOCK_M1,BLOCK_N,GROUP_M,num_warps,num_stages
++16,32,64,1,2,1
+--- /dev/null
++++ b/src/miniworld_engine/autotune/configs/warp4/transition_squeeze_residual_triton.csv
+@@ -0,0 +1,2 @@
++BLOCK_K,BLOCK_M1,BLOCK_N,GROUP_M,num_warps,num_stages
++64,64,64,1,4,2
+--- /dev/null
++++ b/src/miniworld_engine/autotune/configs/warp8/transition_squeeze_residual_triton.csv
+@@ -0,0 +1,2 @@
++BLOCK_K,BLOCK_M1,BLOCK_N,GROUP_M,num_warps,num_stages
++64,64,64,1,8,3
+--- a/src/miniworld_engine/kernels/checks/transition.py
++++ b/src/miniworld_engine/kernels/checks/transition.py
+@@ -380,3 +380,13 @@
+             )
+         out[name] = (actual, expected)
+     return out
++
++
++def transition_squeeze_residual_triton():
++    from miniworld_engine.kernels.drivers.transition import SHAPE_KEY
++    from miniworld_engine.kernels.transition.triton.residual import squeeze_residual
++    h = rows2d(ROWS, N_EXPAND * K_SMALL)
++    w = rows2d(K_SMALL, N_EXPAND * K_SMALL)
++    r = rows2d(ROWS, K_SMALL)
++    expected = ((h.float() @ w.float().T).to(h.dtype).float() + r.float()).to(r.dtype)
++    return squeeze_residual(h, w, r, SHAPE_KEY), expected
+--- a/src/miniworld_engine/kernels/drivers/transition.py
++++ b/src/miniworld_engine/kernels/drivers/transition.py
+@@ -450,3 +450,12 @@
+     weight = torch.randn(width, 4 * width, device=dev(), dtype=BF16)
+     residual = torch.randn(ROWS, width, device=dev(), dtype=BF16)
+     squeeze_residual(expand, weight, residual)
++
++
++def transition_squeeze_residual_triton():
++    """Same squeeze/residual launcher and row key used by the split Transition."""
++    from miniworld_engine.kernels.transition.triton.residual import squeeze_residual
++    h = rows2d(ROWS, N_EXPAND * K_SMALL)
++    w = rows2d(K_SMALL, N_EXPAND * K_SMALL)
++    r = rows2d(ROWS, K_SMALL)
++    squeeze_residual(h, w, r, SHAPE_KEY)
+--- a/src/miniworld_engine/kernels/registry.csv
++++ b/src/miniworld_engine/kernels/registry.csv
+@@ -111,3 +111,4 @@
+ trimul_output_f567_train_triton,triton,trimul_inproj,gemm,token,pair,,trunk,yes,bf16,miniworld_engine/kernels/trimul_inproj/triton/output_fused.py,_output_f567_kernel,miniworld_engine.kernels.drivers.trimul_output:output_f567_train,miniworld_engine.kernels.checks.trimul_output:output_f567_train,1.3e-2,sm80,,pair,1
+ trimul_input_ln_residual_bwd_triton,triton,trimul_inproj,reduce,token,pair,,trunk,yes,bf16,miniworld_engine/kernels/trimul_inproj/triton/backward_fused.py,_ln_bwd_residual_kernel,miniworld_engine.kernels.drivers.trimul_backward:ln_residual,miniworld_engine.kernels.checks.trimul_backward:ln_residual,1.3e-2,sm80,,pair,1
+ trimul_input_dual_bwd_triton,triton,trimul_inproj,gemm,token,pair,,trunk,yes,bf16,miniworld_engine/kernels/trimul_inproj/triton/backward_fused.py,_input_dual_bwd_kernel,miniworld_engine.kernels.drivers.trimul_backward:dual,miniworld_engine.kernels.checks.trimul_backward:dual,1.3e-2,sm80,,pair,1
++transition_squeeze_residual_triton,triton,transition,gemm,both,both,N,both,yes,bf16,miniworld_engine/kernels/transition/triton/residual.py,_squeeze_residual_kernel,miniworld_engine.kernels.drivers.transition:transition_squeeze_residual_triton,miniworld_engine.kernels.checks.transition:transition_squeeze_residual_triton,1.2e-2,sm80,,pair|token,1
+--- /dev/null
++++ b/src/miniworld_engine/kernels/transition/triton/residual.py
+@@ -0,0 +1,87 @@
++"""Split Transition with residual in the squeeze and input-LN gradient epilogues."""
++import torch
++import triton
++import triton.language as tl
++
++from miniworld_engine.autotune.configs import configs_for
++from miniworld_engine.autotune.shape_key import both_key, pack, rows_of
++from miniworld_engine.kernels._compile import opaque
++from miniworld_engine.kernels._tiles import tile_grid, tile_order
++from miniworld_engine.kernels.transition.triton.main import _expand_swiglu, swiglu_squeeze_backward
++from miniworld_engine.kernels.trimul_inproj.triton.backward_fused import input_ln_residual
++
++
++@triton.autotune(configs=configs_for("transition_squeeze_residual_triton"), key=["shape_key"])
++@triton.jit
++def _squeeze_residual_kernel(
++    H, W, R, Y, M, N: tl.constexpr, K: tl.constexpr,
++    shm, shk, swn, swk, srm, srn,
++    shape_key, BLOCK_M1: tl.constexpr, BLOCK_N: tl.constexpr,
++    BLOCK_K: tl.constexpr, GROUP_M: tl.constexpr,
++):
++    pm, pn = tile_order(tl.program_id(0).to(tl.int64), tl.cdiv(M, BLOCK_M1),
++                        tl.cdiv(N, BLOCK_N), GROUP_M)
++    m = pm * BLOCK_M1 + tl.arange(0, BLOCK_M1)
++    n = pn * BLOCK_N + tl.arange(0, BLOCK_N)
++    k = tl.arange(0, BLOCK_K)
++    acc = tl.zeros((BLOCK_M1, BLOCK_N), tl.float32)
++    for k0 in range(tl.cdiv(K, BLOCK_K)):
++        kk = k0 * BLOCK_K + k
++        h = tl.load(H + m[:, None] * shm + kk[None, :] * shk,
++                    mask=(m[:, None] < M) & (kk[None, :] < K), other=0)
++        w = tl.load(W + n[None, :] * swn + kk[:, None] * swk,
++                    mask=(n[None, :] < N) & (kk[:, None] < K), other=0)
++        acc = tl.dot(h, w, acc, input_precision="ieee")
++    mask = (m[:, None] < M) & (n[None, :] < N)
++    residual = tl.load(R + m[:, None] * srm + n[None, :] * srn, mask=mask, other=0).to(tl.float32)
++    # Match mm(...).to(activation_dtype) + residual, including the old rounding boundary.
++    y = acc.to(Y.dtype.element_ty).to(tl.float32) + residual
++    tl.store(Y + m[:, None] * N + n[None, :], y, mask=mask)
++
++
++def _squeeze_residual_fake(h, weight, residual, shape_key):
++    return residual.new_empty(residual.shape)
++
++
++@opaque(fake=_squeeze_residual_fake, name="transition_squeeze_residual")
++def squeeze_residual(h: torch.Tensor, weight: torch.Tensor, residual: torch.Tensor,
++                     shape_key: int) -> torch.Tensor:
++    m, k = h.shape
++    n = weight.shape[0]
++    if weight.shape[1] != k or residual.shape != (m, n):
++        raise ValueError("squeeze/residual shapes must be H[M,K], W[N,K], R[M,N]")
++    if h.dtype != weight.dtype or residual.dtype != h.dtype:
++        raise ValueError("squeeze/residual operands must share dtype")
++    out = residual.new_empty((m, n))
++    _squeeze_residual_kernel[lambda c: tile_grid(m, n, c["BLOCK_M1"], c["BLOCK_N"])](
++        h, weight, residual, out, m, n, k,
++        *h.stride(), *weight.stride(), *residual.stride(),
++        shape_key=pack(shape_key, K=k, N=n),
++    )
++    return out
++
++
++class ResidualTransitionFunction(torch.autograd.Function):
++    @staticmethod
++    def forward(ctx, xn, wa, wb, ws, residual):
++        shape = xn.shape
++        xn = xn.reshape(-1, shape[-1]).contiguous()
++        key = both_key(rows_of(shape))
++        h = _expand_swiglu(xn, wa, wb, key)
++        ctx.save_for_backward(xn, wa, wb, ws)
++        ctx.shape = shape
++        return squeeze_residual(h, ws, residual.reshape(-1, shape[-1]), key).reshape(shape)
++
++    @staticmethod
++    def backward(ctx, dy):
++        xn, wa, wb, ws = ctx.saved_tensors
++        flat = dy.reshape(-1, dy.shape[-1]).contiguous()
++        dx, dwa, dwb, dws = swiglu_squeeze_backward(xn, wa, wb, ws, flat, ctx.shape, wa.shape[0])
++        return dx, dwa, dwb, dws, dy
++
++
++def transition_residual(x, gamma, beta, wa, wb, ws, eps):
++    # Returning the identity from the SAME LN Function lets its two gradients meet
++    # inside LN backward. No activation copy, separate dx add, or duplicate dgamma/dbeta.
++    xn, residual = input_ln_residual(x, gamma, beta, eps)
++    return ResidualTransitionFunction.apply(xn, wa, wb, ws, residual)
+--- a/src/miniworld_engine/modules/transition/module.py
++++ b/src/miniworld_engine/modules/transition/module.py
+@@ -84,24 +84,9 @@
+         super().__init__()
+         self.d_hidden = d_hidden
+         self.n = n
+-        # ==========================================================================
+-        # THIS MODULE ALWAYS APPLIES THE POST-TRANSITION RESIDUAL: y = x + transition(x).
+-        # The residual connection is UNCONDITIONAL — it is baked into the op (folded into the
+-        # b2b/triton epilogue for free, reusing the already-loaded input tile). This is the AF3
+-        # pairformer default (``pair = pair + transition(pair)``) and residual connections are
+-        # ubiquitous/standard in this domain, so there is deliberately NO flag to turn it off.
+-        # The transition track has NO dropout (AF3), so this module takes no dropout either.
+-        #
+-        # WHY IT'S FUSED IN (SPEED): the residual add is done INSIDE the transition kernel's
+-        # output epilogue rather than as a separate ``out + x`` elementwise op. That removes a
+-        # whole extra kernel launch and its M×D read+write round-trip through HBM — the input
+-        # tile is already resident in registers/smem at store time, so the add is effectively
+-        # free. Keeping it unconditional is what lets the kernel own that fused epilogue; a
+-        # runtime toggle would force the slow separate-add path.
+-        # >>> The residual is part of what this module IS; there is no way to turn it off, not
+-        # >>> even by editing a local. For the raw op in isolation -- benchmarking, or a caller
+-        # >>> that owns its own residual -- use ``ops.transition``, the weights-as-args facade.
+-        # ==========================================================================
++        # Every backend returns x + transition(x). Residual fusion depends on the
++        # selected path: the legacy split adds it separately; transition_residual_fusion
++        # folds it into squeeze forward and input-LN backward. No dropout in this module.
+         # 'miniworld' (ours, auto) resolves to the TRITON family, which itself
+         # dispatches the best concrete kernel per shape/arch (hand-CUDA b2b for
+         # d in {128,256} & n==4, cute split for d>=512, else triton). Transition has
+@@ -132,11 +117,10 @@
+         (``_backend``), degrading to the pytorch reference (with a warning) on a dtype the fused
+         kernels can't run.
+ 
+-        The residual is UNCONDITIONAL and fused into the kernel epilogue FOR SPEED (no separate
+-        ``out + x`` kernel / HBM round-trip; the input tile is already resident at store time) —
+-        see the constructor comment. There is intentionally no runtime flag to disable it, as
+-        residual connections are the standard in this domain (AF3 ``pair = pair + transition(pair)``).
+-        >>> The raw op without the residual is ``ops.transition``, not a flag on this module."""
++        Residual is always included; whether it shares a kernel with the projection
++        depends on the backend and transition_residual_fusion setting. The raw op
++        without the residual is available through ``ops.transition``.
++        """
+         backend = _dispatch.guard_dtype(self._backend, x.dtype, op="Transition")
+         if backend == KernelBackend.PYTORCH:
+             return self._torch_forward(x) + x
+@@ -189,6 +173,8 @@
+         def _r(out):  # explicit residual add for paths that don't fold it in-kernel
+             return out + x
+ 
++        if settings.current().transition_residual_fusion:
++            return self._residual_triton_forward(x)
+         if settings.current().engine_backend == "triton" or _force_split_enabled():
+             return _r(self._old_triton_forward(x))
+         # Pre-Hopper (sm_80 / A100), large d (>=256): the fused triton path uses the
+@@ -276,6 +262,8 @@
+         def _r(out):  # explicit residual add for paths that don't fold it in-kernel
+             return out + x
+ 
++        if settings.current().transition_residual_fusion:
++            return self._residual_triton_forward(x)
+         if settings.current().engine_backend == "triton" or _force_split_enabled():
+             return _r(self._old_triton_forward(x))
+         # Pre-Hopper (sm_80 / A100), large d (>=256): split beats the fused k-tiled path
+@@ -325,6 +313,15 @@
+             save_xn=False,
+         )
+ 
++    def _residual_triton_forward(self, x: torch.Tensor) -> torch.Tensor:
++        from miniworld_engine.kernels.transition.triton.residual import transition_residual
++
++        return transition_residual(
++            x, self.ln_in.weight, self.ln_in.bias,
++            self.expand_a.weight.to(x.dtype), self.expand_b.weight.to(x.dtype),
++            self.squeeze.weight.to(x.dtype), self.ln_in.eps,
++        )
++
+     def _old_triton_forward(self, x: torch.Tensor) -> torch.Tensor:
+         """Legacy split triton transition (ln_in + triton_transition): the shape-general
+         path used on sm_100 for d>=256, where the fused kernels don't fit (b2b/cute are
+--- a/src/miniworld_engine/settings.py
++++ b/src/miniworld_engine/settings.py
+@@ -206,6 +206,8 @@
+     #: escape hatch and A/B lever; the fused large-d path is the default. Formerly
+     #: MINIWORLD_TRANSITION_FORCE_SPLIT.
+     transition_force_split: bool = False
++    #: Fuse split-path squeeze/residual and LN-backward/residual (Triton only).
++    transition_residual_fusion: bool = False
+     #: Route d=128/n=4 inference through the hand-CUDA fused b2b kernel (~1.29x the Triton b2b).
+     #: Formerly MINIWORLD_TRANSITION_CUDA_B2B.
+     transition_cuda_b2b: bool = True
+--- a/src/miniworld_engine/kernels/registry_module.csv
++++ b/src/miniworld_engine/kernels/registry_module.csv
+@@ -32,11 +32,11 @@
+ tm1,token_pair,128|256|384|512|640|768,d=256,,miniworld,bfloat16,,eval|train,kernel probe,1,1
+ tm2,token_pair,128|256|384|512|640|768,d=128,,miniworld,bfloat16,,eval|train,kernel probe,1,1
+ tm2,token_pair,128|256|384|512|640|768,d=256,,miniworld,bfloat16,,eval|train,kernel probe,1,1
+-transition,token_pair,128|256|384|512|640|768,d_hidden=128,transition_force_split=True|transition_cuda_b2b=False|transition_fuse_stats=True|transition_savedxn_split_bwd=True|transition_dab_lnbwd=True|transition_lnbwd_privatize=False|transition_large_d_training=triton|transition_large_d_training=cute|transition_cute_backward=cute|transition_gatebwd_wgmma=False|transition_lnbwd_cuda=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,MiniWorld shared.d_pair=128,1,1
+-transition,token_pair,128|256|384|512|640|768,d_hidden=256,transition_force_split=True|transition_cuda_b2b=False|transition_fuse_stats=True|transition_savedxn_split_bwd=True|transition_dab_lnbwd=True|transition_lnbwd_privatize=False|transition_large_d_training=triton|transition_large_d_training=cute|transition_cute_backward=cute|transition_gatebwd_wgmma=False|transition_lnbwd_cuda=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,headroom above d_pair,1,1
+-transition,token_pair,128|256|384|512|640|768,d_hidden=384,transition_force_split=True|transition_cuda_b2b=False|transition_fuse_stats=True|transition_savedxn_split_bwd=True|transition_dab_lnbwd=True|transition_lnbwd_privatize=False|transition_large_d_training=triton|transition_large_d_training=cute|transition_cute_backward=cute|transition_gatebwd_wgmma=False|transition_lnbwd_cuda=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,headroom above d_pair,1,1
+-transition,token_single,128|256|384|512|640|768,d_hidden=384,transition_force_split=True|transition_cuda_b2b=False|transition_fuse_stats=True|transition_savedxn_split_bwd=True|transition_dab_lnbwd=True|transition_lnbwd_privatize=False|transition_large_d_training=triton|transition_large_d_training=cute|transition_cute_backward=cute|transition_gatebwd_wgmma=False|transition_lnbwd_cuda=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,pairformer use_single at shared.d_single=384,1,1
+-transition,token_single,128|256|384|512|640|768,d_hidden=768,transition_force_split=True|transition_cuda_b2b=False|transition_fuse_stats=True|transition_savedxn_split_bwd=True|transition_dab_lnbwd=True|transition_lnbwd_privatize=False|transition_large_d_training=triton|transition_large_d_training=cute|transition_cute_backward=cute|transition_gatebwd_wgmma=False|transition_lnbwd_cuda=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,MiniWorld token_dit d_single=768 (AF3 c_token),1,1
++transition,token_pair,128|256|384|512|640|768,d_hidden=128,transition_force_split=True|transition_residual_fusion=True|transition_cuda_b2b=False|transition_fuse_stats=True|transition_savedxn_split_bwd=True|transition_dab_lnbwd=True|transition_lnbwd_privatize=False|transition_large_d_training=triton|transition_large_d_training=cute|transition_cute_backward=cute|transition_gatebwd_wgmma=False|transition_lnbwd_cuda=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,MiniWorld shared.d_pair=128,1,1
++transition,token_pair,128|256|384|512|640|768,d_hidden=256,transition_force_split=True|transition_residual_fusion=True|transition_cuda_b2b=False|transition_fuse_stats=True|transition_savedxn_split_bwd=True|transition_dab_lnbwd=True|transition_lnbwd_privatize=False|transition_large_d_training=triton|transition_large_d_training=cute|transition_cute_backward=cute|transition_gatebwd_wgmma=False|transition_lnbwd_cuda=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,headroom above d_pair,1,1
++transition,token_pair,128|256|384|512|640|768,d_hidden=384,transition_force_split=True|transition_residual_fusion=True|transition_cuda_b2b=False|transition_fuse_stats=True|transition_savedxn_split_bwd=True|transition_dab_lnbwd=True|transition_lnbwd_privatize=False|transition_large_d_training=triton|transition_large_d_training=cute|transition_cute_backward=cute|transition_gatebwd_wgmma=False|transition_lnbwd_cuda=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,headroom above d_pair,1,1
++transition,token_single,128|256|384|512|640|768,d_hidden=384,transition_force_split=True|transition_residual_fusion=True|transition_cuda_b2b=False|transition_fuse_stats=True|transition_savedxn_split_bwd=True|transition_dab_lnbwd=True|transition_lnbwd_privatize=False|transition_large_d_training=triton|transition_large_d_training=cute|transition_cute_backward=cute|transition_gatebwd_wgmma=False|transition_lnbwd_cuda=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,pairformer use_single at shared.d_single=384,1,1
++transition,token_single,128|256|384|512|640|768,d_hidden=768,transition_force_split=True|transition_residual_fusion=True|transition_cuda_b2b=False|transition_fuse_stats=True|transition_savedxn_split_bwd=True|transition_dab_lnbwd=True|transition_lnbwd_privatize=False|transition_large_d_training=triton|transition_large_d_training=cute|transition_cute_backward=cute|transition_gatebwd_wgmma=False|transition_lnbwd_cuda=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,MiniWorld token_dit d_single=768 (AF3 c_token),1,1
+ triangle_attention_bidirectional,token_pair,128|256|384|512|640|768,d_pair=128,gate_backend=fused|gate_backend=split|infer_concat=True|infer_concat=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,MiniWorld d_pair=128,1,1
+ triangle_attention_bidirectional,token_pair,128|256|384|512|640|768,d_pair=256,gate_backend=fused|gate_backend=split|infer_concat=True|infer_concat=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,headroom,1,1
+ triangle_attention_bidirectional,token_pair,128|256|384|512|640|768,d_pair=512,gate_backend=fused|gate_backend=split|infer_concat=True|infer_concat=False|ln_bwd_path=persistent|ln_bwd_path=atomic|ln_bwd_path=cuda|layernorm_cuda_bwd=True,miniworld|triton,bfloat16,,eval|train,headroom,1,1

@@ -128,46 +128,32 @@ it. That asymmetry is what makes this look like a batching bug at first.
 
 ---
 
-## Nucleic-acid pseudo-beta representative atom is not AF3-correct
+## Distogram representative atoms — fixed in v1.1 work
 
-**Status:** documented, not fixed (low priority — affects distogram target /
-confidence representative geometry for RNA/DNA tokens, not the diffusion output).
+**Status:** fixed on 2026-09-16. Canonical proteins use CB (CA only for glycine),
+purines use C4 and pyrimidines use C2. Missing designated atoms are masked,
+without switching to a different atom. Atomized ligands/noncanonical residues
+use their own atom. This also corrects the representative feature consumed by
+confidence. Parameter/checkpoint shapes are unchanged.
 
-**What AF3 does** (SI §4.4, PseudoBetaInfo / representative atom):
-- protein: **Cβ** (Cα for glycine)
-- nucleotide distogram representative: **C4 for purines, C2 for pyrimidines**
-- token centre atom: **C1′** for nucleotides, Cα for protein
+The earlier description of the distogram fallback as an all-atom minimum was
+outdated: the active single-structure helper selected the lowest-index marked
+atom. The fix removes that atom-order-dependent target for canonical residues.
 
-**What we do now:**
-- `_build_atom_is_rep` in
-  [convert.py](../src/miniworld/data/features/convert.py) marks **Cβ, else Cα**;
-  a token with neither (every nucleotide, every ligand) falls back to marking
-  **all of its atoms** as representative.
-- The distogram-target distance
-  ([distance.py](../src/miniworld/utils/structure/distance.py)
-  `get_representative_distances`) then reduces those with **min/amin = shortest
-  inter-token distance** over all marked atoms. So an RNA/DNA token's distogram
-  distance is an all-atom shortest distance, **not** the C4/C2 pseudo-beta.
-- The confidence path
-  ([confidence.py](../src/miniworld/loss/confidence.py)
-  `representative_positions`) instead picks the **lowest atom index** among the
-  marked atoms (`scatter_reduce_(..., reduce="amin")` over atom ids). For a
-  nucleotide (all atoms marked) this selects an **arbitrary atom determined by
-  atom ordering**, not C4/C2/C1′.
+See [implementation, weighting, cropping and validation](v1.1-distogram.md).
 
-**Impact:** RNA/DNA tokens do not get a consistent, chemically-meaningful
-representative point. The distogram target and the PDE/PAE representative for
-nucleic-acid tokens are off relative to AF3. Ligands are similarly all-atom, but
-that matches AF3's per-atom tokenization so it is less of a concern.
+---
 
-**Fix (when addressed):** in `_build_atom_is_rep`, explicitly select
-- protein → Cβ (Cα for Gly),
-- purine (A/G/DA/DG) → C4,
-- pyrimidine (C/U/T/DC/DU/DT) → C2 (or C1′ for the token-centre convention),
-so each polymer token has exactly one representative; keep the all-atom fallback
-only for true ligands. Then both the distogram distance and
-`representative_positions` resolve to the intended atom. Reference: AF3 SI §4.4.
+## Training MSA never saw rows past 2048 (PDB) — fixed in v1.2.0
 
-**Files:** `src/miniworld/data/features/convert.py` (`_build_atom_is_rep`),
-`src/miniworld/utils/structure/distance.py`,
-`src/miniworld/loss/confidence.py` (`representative_positions`).
+**Status:** fixed on 2026-09-17 for the `pdb` source; distillation sources are 2048-capped
+in storage and unchanged.
+
+`sample_depth="uniform"` drew k ~ U[1, min(n, 2048)] and took the first k rows. The PDB a3m
+store holds up to 16k rows (88% of entries exceed 2048), so rows past 2048 were never used and
+the median fed depth was ~1024 — while AF3 draws U[1, n] over the full alignment, shuffles, then
+crops. v1.2.0 adds `sample_depth="af3"` (full-depth draw, random per-chain crop to the 2048
+budget) selected per source via `MSAConfig.sample_depth_by_source`. Shapes and buckets are
+unchanged. v1.2.0 also adds the AF3 SI 3.3 model-stage step: every recycle draws a fresh
+1024-row subset from the pool (`trunk.msa_subsample_per_recycle`), so the MSA module no longer
+reuses one embedded pool across cycles. See [v1.2-msa-sampling.md](v1.2-msa-sampling.md).

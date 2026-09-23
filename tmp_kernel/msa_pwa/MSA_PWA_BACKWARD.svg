@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2800" height="2214" viewBox="0 0 2800 2214" role="img" aria-labelledby="title desc"><title id="title">MSAPairWeightedAveraging BACKWARD  |  설계 (P3) · 측정값 아님</title><desc id="desc">L384 · S1024 · BF16 · 총 ~296 GFLOP = forward의 약 2배 · 저장 52.7 MB / 재계산 604 MB</desc><defs><marker id="read" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#2879ad"/></marker><marker id="write" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#b36b19"/></marker></defs><rect width="2800" height="2214" fill="#f8fafc"/>
+<rect x="0" y="0" width="2800" height="218" fill="#3b2340"/>
+<text x="40" y="60" font-family="Noto Sans CJK KR, sans-serif" font-size="36" fill="#ffffff" font-weight="700">MSAPairWeightedAveraging BACKWARD  |  설계 (P3) · 측정값 아님</text>
+<text x="40" y="103" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#cce0e7">L384 · S1024 · BF16 · 총 ~296 GFLOP = forward의 약 2배 · 저장 52.7 MB / 재계산 604 MB</text>
+<text x="40" y="145" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">큰 contraction 세 개가 모두 표준 GEMM이라 cuBLAS로 갈 수 있다. 다만 레이아웃 전치 비용이 관건이다.</text>
+<text x="40" y="181" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">규칙 — 저장은 m과 w(52.7 MB)뿐, v·g·o(각 201 MB)는 재계산한다.</text>
+<text x="40" y="217" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">시간은 아직 측정하지 않았다. FLOP과 트래픽만 설계 근거로 적는다.</text>
+<text x="40" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#2879ad" font-weight="700">HBM READ · 어디서 온 무엇을 읽는가</text>
+<text x="690" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#12856e" font-weight="700">KERNEL · 계산과 그 PyTorch 대응</text>
+<text x="2160" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#b36b19" font-weight="700">HBM WRITE · 무엇을 어디로 넘기는가</text>
+<text x="40" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#2879ad">파랑 화살표: 읽기</text>
+<text x="690" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#52707e">왼쪽: 설명·수식 / 오른쪽: 같은 일을 하는 PyTorch 문장</text>
+<text x="2160" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#b36b19">주황: 쓰기</text>
+<text x="40" y="382" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#a6537b" font-weight="700">saved tensors + 재계산 · 77.3 GFLOP</text>
+<rect x="40" y="400" width="570" height="268" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="400" width="1390" height="268" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="400" width="600" height="268" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 400 V668" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">forward에서 저장:</text>
+<text x="58" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">m BF16 50.33 MB</text>
+<text x="58" y="535" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">w BF16 2.36 MB</text>
+<text x="58" y="566" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">합계 52.69 MB</text>
+<text x="708" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">v·g·o를 저장하면 블록당 604 MB — m에서 되살리는 편이 싸다</text>
+<text x="708" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">v, g는 forward의 ln_vg를 그대로 다시 돌린다 (0.258 ms)</text>
+<text x="708" y="535" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">o는 forward contraction을 다시 돌린다 (77.3 GFLOP)</text>
+<text x="708" y="566" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 재계산 ──</text>
+<text x="708" y="597" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">mn = LN_m(m);  v = Wv mn;  g = σ(Wg mn)</text>
+<text x="708" y="628" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">o[s,i,h,c] = Σ_j w[h,i,j] v[s,j,h,c]</text>
+<text x="1432" y="473" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">ctx.save_for_backward(m, w)</text>
+<text x="1432" y="501" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37"># backward 진입 직후</text>
+<text x="1432" y="529" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">mn = layer_norm(m, (64,), g_, b_)</text>
+<text x="1432" y="557" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">v, g = mn @ Wv.T, sigmoid(mn @ Wg.T)</text>
+<text x="1432" y="585" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">o = einsum('bhij,bsjhd-&gt;bsihd', w, v)</text>
+<text x="2178" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">v, g, o: 각 201.33 MB (재계산)</text>
+<text x="2178" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">활성값 저장은 52.69 MB</text>
+<text x="2178" y="535" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">(현재 autograd는 604 MB)</text>
+<path d="M 612 534.0 L 678 534.0" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 534.0 L 2148 534.0" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="712" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#a6537b" font-weight="700">gate · 출력 projection backward · ~26 GFLOP</text>
+<rect x="40" y="730" width="570" height="299" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="730" width="1390" height="299" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="730" width="600" height="299" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 730 V1029" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="765" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="765" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="765" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="765" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="803" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dout: BF16 [1,1024,384,64] 50.33 MB</text>
+<text x="58" y="834" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">o, g 402.65 MB</text>
+<text x="58" y="865" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">Wo 32.77 kB</text>
+<text x="708" y="803" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">forward의 fo epilogue를 거꾸로 — 같은 커널에 융합할 후보</text>
+<text x="708" y="834" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">elementwise가 대부분이라 메모리 바운드</text>
+<text x="708" y="865" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="896" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dWo = (g ⊙ o)ᵀ dout</text>
+<text x="708" y="927" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dog = dout · Wo</text>
+<text x="708" y="958" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dg  = dog ⊙ o,   do = dog ⊙ g</text>
+<text x="708" y="989" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dpre_g = dg ⊙ σ'(pre_g) = dg ⊙ g ⊙ (1-g)</text>
+<text x="1432" y="803" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">og  = g * o</text>
+<text x="1432" y="831" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dWo = og.reshape(-1,256).t() @ dout.reshape(-1,64)</text>
+<text x="1432" y="859" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dog = dout @ Wo</text>
+<text x="1432" y="887" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dg, do = dog * o, dog * g</text>
+<text x="1432" y="915" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dpre_g = dg * g * (1 - g)</text>
+<text x="2178" y="803" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">do: BF16 [1,1024,384,256] 201.33 MB</text>
+<text x="2178" y="834" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dpre_g: 201.33 MB</text>
+<text x="2178" y="865" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dWo: [64,256] 32.77 kB</text>
+<path d="M 612 879.5 L 678 879.5" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 879.5 L 2148 879.5" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="1073" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#a6537b" font-weight="700">dv · dw · 각 77.3 GFLOP · cuBLAS 후보</text>
+<rect x="40" y="1091" width="570" height="330" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="1091" width="1390" height="330" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="1091" width="600" height="330" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 1091 V1421" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="1126" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="1126" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="1126" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="1126" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="1164" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">do 201.33 MB</text>
+<text x="58" y="1195" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">v 201.33 MB</text>
+<text x="58" y="1226" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">w 2.36 MB</text>
+<text x="708" y="1164" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dv는 forward contraction에서 w만 전치한 같은 모양 — head별</text>
+<text x="708" y="1195" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  batched GEMM</text>
+<text x="708" y="1226" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dw는 K = S·c = 32,768짜리 큰 GEMM이고 출력이 [8,384,384]</text>
+<text x="708" y="1257" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  2.36 MB로 작다</text>
+<text x="708" y="1288" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">열쇠: cuBLAS가 요구하는 전치(각 201 MB)가 융합 커널보다 싼지</text>
+<text x="708" y="1319" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="1350" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dv[s,j,h,c] = Σ_i w[h,i,j] · do[s,i,h,c]</text>
+<text x="708" y="1381" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dw[h,i,j]   = Σ_{s,c} do[s,i,h,c] · v[s,j,h,c]</text>
+<text x="1432" y="1164" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dv = einsum('bhij,bsihd-&gt;bsjhd', w, do)</text>
+<text x="1432" y="1192" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dw = einsum('bsihd,bsjhd-&gt;bhij', do, v)</text>
+<text x="1432" y="1220" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37"># dw: head별 [384, 32768] x [32768, 384]</text>
+<text x="2178" y="1164" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dv: BF16 201.33 MB</text>
+<text x="2178" y="1195" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dw: BF16 [1,8,384,384] 2.36 MB</text>
+<text x="2178" y="1226" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ softmax backward</text>
+<path d="M 612 1256.0 L 678 1256.0" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 1256.0 L 2148 1256.0" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="1465" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#a6537b" font-weight="700">softmax · pair 경로 backward · ~5 GFLOP</text>
+<rect x="40" y="1483" width="570" height="268" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="1483" width="1390" height="268" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="1483" width="600" height="268" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 1483 V1751" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="1518" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="1518" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="1518" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="1518" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="1556" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dw 2.36 MB</text>
+<text x="58" y="1587" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">w 2.36 MB</text>
+<text x="58" y="1618" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">zn (재계산) 37.75 MB</text>
+<text x="708" y="1556" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">여기부터는 전부 [N,N,H] 크기라 싸다 — torch로 두어도 된다</text>
+<text x="708" y="1587" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="1618" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dβ[h,i,j] = w[h,i,j] · (dw[h,i,j] − Σ_j' w[h,i,j']</text>
+<text x="708" y="1649" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  dw[h,i,j'])</text>
+<text x="708" y="1680" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dWz = dβᵀ zn;   dzn = dβ · Wz</text>
+<text x="708" y="1711" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dz = LN_z_bwd(dzn, z)</text>
+<text x="1432" y="1556" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dbeta = w * (dw - (w*dw).sum(-1, keepdim=True))</text>
+<text x="1432" y="1584" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dWz = einsum('bhij,bijc-&gt;hc', dbeta, zn)</text>
+<text x="1432" y="1612" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dzn = einsum('bhij,hc-&gt;bijc', dbeta, Wz)</text>
+<text x="1432" y="1640" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dz  = layer_norm_backward(dzn, z, gz, bz)</text>
+<text x="2178" y="1556" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dz: BF16 [1,384,384,128] 37.75 MB</text>
+<text x="2178" y="1587" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dWz: [8,128] 2.05 kB</text>
+<text x="2178" y="1618" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ pair 경로 상류</text>
+<path d="M 612 1617.0 L 678 1617.0" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 1617.0 L 2148 1617.0" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="1795" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#a6537b" font-weight="700">value / gate projection · LayerNorm backward · ~26 GFLOP</text>
+<rect x="40" y="1813" width="570" height="299" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="1813" width="1390" height="299" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="1813" width="600" height="299" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 1813 V2112" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="1848" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="1848" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="1848" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="1848" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="1886" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dv 201.33 MB</text>
+<text x="58" y="1917" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dpre_g 201.33 MB</text>
+<text x="58" y="1948" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">mn (재계산) 50.33 MB</text>
+<text x="708" y="1886" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">forward의 ln_vg를 거꾸로 — 한 커널로 융합할 후보</text>
+<text x="708" y="1917" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">s·i축 축약이므로 split-K 2단 fp32 (atomics 금지, 결정성</text>
+<text x="708" y="1948" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  요구)</text>
+<text x="708" y="1979" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="2010" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dWv = dvᵀ mn,   dWg = dpre_gᵀ mn</text>
+<text x="708" y="2041" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dmn = dv · Wv + dpre_g · Wg</text>
+<text x="708" y="2072" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dm  = LN_m_bwd(dmn, m)</text>
+<text x="1432" y="1886" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dWv = dv.reshape(-1,256).t() @ mn.reshape(-1,64)</text>
+<text x="1432" y="1914" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dWg = dpre_g.reshape(-1,256).t() @ mn.reshape(-1,64)</text>
+<text x="1432" y="1942" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dmn = dv @ Wv + dpre_g @ Wg</text>
+<text x="1432" y="1970" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dm  = layer_norm_backward(dmn, m, g_, b_)</text>
+<text x="2178" y="1886" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dm: BF16 [1,1024,384,64] 50.33 MB</text>
+<text x="2178" y="1917" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dWv, dWg: [256,64] 각 32.77 kB</text>
+<text x="2178" y="1948" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">residual과 합산되어 상류로</text>
+<path d="M 612 1962.5 L 678 1962.5" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 1962.5 L 2148 1962.5" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+</svg>

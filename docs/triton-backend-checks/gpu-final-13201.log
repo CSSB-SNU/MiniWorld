@@ -1,0 +1,83 @@
+========= COMPUTE-SANITIZER
+.                                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition128]
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/graph.py:865: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at /pytorch/aten/src/ATen/cuda/CublasHandlePool.cpp:330.)
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+
+tests/test_triton_backend_option.py: 14 warnings
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition128]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_fwd_saveact_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2148008730). Falling back to a heuristic 24 of 800 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition128]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_expand_swiglu_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=8798242605222). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition128]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_bwd_swiglu_recompute_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|NORMALIZE=0,STORE_H=1,shape_key=8798242605222). Falling back to a heuristic 24 of 1080 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition128]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2148008730). Falling back to a heuristic 24 of 1440 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /home/psk6950/MiniWorld/runs/triton_backend_option/gpu-transition128.xml -
+1 passed, 19 warnings in 17.03s
+========= ERROR SUMMARY: 0 errors
+========= COMPUTE-SANITIZER
+.                                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_triton_backend_option.py: 14 warnings
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[trimul128]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_gemm_gate_mmajor_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|SAVE_PREACT=1,shape_key=8800388517254). Falling back to a heuristic 24 of 864 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[trimul128]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_output_f567_train_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|L=128,M=16384,shape_key=36037597407477913,wg0=128,wg1=1,wp0=256,wp1=1). Falling back to a heuristic 24 of 1728 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[trimul128]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_gemm_gate_mmajor_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|SAVE_PREACT=0,shape_key=8800388517254). Falling back to a heuristic 24 of 864 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /home/psk6950/MiniWorld/runs/triton_backend_option/gpu-trimul128.xml -
+1 passed, 17 warnings in 55.66s
+========= ERROR SUMMARY: 0 errors
+.                                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/graph.py:865: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at /pytorch/aten/src/ATen/cuda/CublasHandlePool.cpp:330.)
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+
+tests/test_triton_backend_option.py: 14 warnings
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_fwd_saveact_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2149581594). Falling back to a heuristic 24 of 800 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_expand_swiglu_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=8804691347622). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_bwd_swiglu_recompute_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|NORMALIZE=0,STORE_H=1,shape_key=8804691347622). Falling back to a heuristic 24 of 1080 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2149581594). Falling back to a heuristic 24 of 1440 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /home/psk6950/MiniWorld/runs/triton_backend_option/gpu-512-plain.xml -
+1 passed, 19 warnings in 16.26s

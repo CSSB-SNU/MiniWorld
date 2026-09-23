@@ -1,0 +1,398 @@
+--- a/src/miniworld_engine/kernels/trimul_inproj/triton/unidirectional.py	
++++ b/src/miniworld_engine/kernels/trimul_inproj/triton/unidirectional.py	
+@@ -1,34 +1,28 @@
+-"""Single-direction trimul in TRITON — the SAME fused BDLL pipeline the bidir path
+-uses (``triton/bidirectional.py``), specialised to one direction (outgoing OR
+-incoming). Mirrors the CUTE single-direction dispatch stage-for-stage; only the
+-backend differs (triton/cuBLAS, no quack).
+-
+-The pipeline is:
+-
+-    x_n   = triton_layernorm(pair, ...)              # LN_in
+-    left,right,preact = FRONT(x_n, WL,WLg,WR,WRg)    # gated in-proj, width=d_hidden, bdll
+-    tri   = bmm(lf, rfᵀ)      (outgoing)  |  bmm(lfᵀ, rf)  (incoming)   # ONE contraction
+-    proj  = _te_forward(tri_view, ln_out, Wp)        # LN_out + @Wp  (te_style: triton LN + cuBLAS)
+-    y     = gate_elem(x_n, proj, Wg)                 # sigmoid output-gate  (triton)
+-
+-This is exactly the bidir back-half with h→full width and a SINGLE contraction:
+-the FRONT (``bidir_front_triton``) is direction-agnostic (a wide gated GEMM that
+-emits left/right in channel-major BDLL directly via a transposed store — NO
+-permute), so it is reused verbatim; the only per-direction logic is the one
+-``torch.bmm`` (and its transpose in the backward). All the heavy machinery
+-(``_te_forward/_te_backward``, ``front_bwd_dW``, ``gate_elem_*``) is shared with
+-bidir. B=1, bf16 / fp32. Requires d_hidden == d_pair.
++"""Single-direction Triton TriMul with the bidirectional training fusions.
++
++The shared front emits masked, gated projections in channel-major layout, then
++one cuBLAS contraction computes outgoing or incoming triangles. BF16 training
++uses output LN followed by F567 (projection, gate, dropout and residual), and
++fuses the two input-gradient GEMMs. Input LN backward adds the residual gradient
++in its store. FP32 retains the split GEMMs. Inference keeps the existing fused
++LN/projection/gate output kernel. B=1; d_hidden == d_pair.
+ """
+ 
+ from __future__ import annotations
+ 
+ import torch
+ 
+-from miniworld_engine.kernels.layernorm.triton.main import triton_layernorm
++from miniworld_engine.autotune.shape_key import both_key
+ from miniworld_engine.kernels.layernorm_linear.triton.te_style import (
+     _te_backward,
+     _te_forward,
+-)
++    _ln_materialize,
++)
++from miniworld_engine.kernels.trimul_inproj.triton.backward_fused import (
++    input_dual_bwd,
++    input_ln_residual,
++)
++from miniworld_engine.kernels.trimul_inproj.triton.output_fused import output_f567_train
+ from miniworld_engine.kernels.trimul_inproj.triton.back import trimul_back_triton
+ from miniworld_engine.kernels.trimul_inproj.triton.back_fused import front_bwd_dW
+ from miniworld_engine.kernels.trimul_inproj.triton.bidirectional import (
+@@ -73,11 +67,16 @@
+         mm = mask  # Applied inside the front stores; x_n/output gate stay unmasked.
+         tri = _contract(lf, rf, outgoing)                        # (H, L, L)
+         view = tri.reshape(H, M).t()                             # (M, H) m-major
+-        proj, te_xn, mean_out, rstd_out = _te_forward(
+-            view, ln_out_w, ln_out_b, Wp, None, eps)             # (M, D)
+-        # Fuse the pairformer residual (== module input pair, [M,D]) + row-broadcast dropout
+-        # into the gate store epilogue — same kernel path the cute dispatch uses.
+-        y, gate = gate_elem_train(x_n.reshape(M, D), proj, Wg, residual, dropscale, seq_len=L)
++        if x_n.dtype == torch.bfloat16:
++            te_xn, mean_out, rstd_out = _ln_materialize(
++                view, ln_out_w, ln_out_b, eps, shape_key=both_key(M))
++            y, proj, gate = output_f567_train(
++                te_xn, x_n.reshape(M, D), Wp, Wg, residual, dropscale, L)
++        else:
++            proj, te_xn, mean_out, rstd_out = _te_forward(
++                view, ln_out_w, ln_out_b, Wp, None, eps, shape_key=both_key(M))
++            y, gate = gate_elem_train(
++                x_n.reshape(M, D), proj, Wg, residual, dropscale, seq_len=L)
+         ctx.save_for_backward(x_n, WL, WLg, WR, WRg, Wg, Wp, ln_out_w,
+                               preact, lf, rf, tri, te_xn, mean_out, rstd_out, gate, proj)
+         ctx.eps, ctx.outgoing, ctx.mm = eps, outgoing, mm
+@@ -110,7 +109,8 @@
+         # ① LN_out + @Wp bwd (te_style)
+         view = tri.reshape(H, M).t()
+         d_view, dLNo_w, dLNo_b, dWp, _ = _te_backward(
+-            d_proj, te_xn, view, mean_out, rstd_out, ln_out_w, Wp, has_bias=False)
++            d_proj, te_xn, view, mean_out, rstd_out, ln_out_w, Wp, has_bias=False,
++            shape_key=both_key(M))
+         del d_proj, view
+         d_tri = d_view.t().reshape(H, L, L)
+         del d_view
+@@ -131,9 +131,12 @@
+         dconc, dWL, dWLg, dWR, dWRg, W_stack = front_bwd_dW(
+             d_left, d_right, preact, x_n, WL, WLg, WR, WRg, pair_mask=ctx.mm)
+         del d_left, d_right
+-        dx = torch.mm(d_glogit, Wg.t())                         # dx_gate  (M, D)
++        if x_n.dtype == torch.bfloat16:
++            dx = input_dual_bwd(d_glogit, dconc.t(), Wg.t(), W_stack, L)
++        else:
++            dx = torch.mm(d_glogit, Wg.t())
++            dx.addmm_(dconc.t(), W_stack)
+         del d_glogit
+-        dx.addmm_(dconc.t(), W_stack)                           # + dconcᵀ@W_stack (in-place)
+         del W_stack, dconc
+         dx_n = dx.reshape(B, L, L, D)
+         del dx
+@@ -188,8 +191,8 @@
+     # `.bench/probe/fused_back_ab.py` carries all five guards, and refuses to print a speed if
+     # either path is off the fp32 reference by more than 5e-2.
+     #
+-    # This still makes the TRITON inference path differ in STRUCTURE from the TRITON training path
+-    # (`_UniBackHalfTriton`, unchanged, still splits).
++    # Training retains output LN as a separate stage and uses F567 for BF16 so
++    # its saved activations retain the original rounding points.
+     # Weight forms: trimul_back wants ``.T`` weights, so Wp (to_out, nn.Linear form) -> Wp.T; Wgt is
+     # already to_gate.weight.T. residual comes in flat [M,D] and is reshaped to [B,L,L,D].
+     return trimul_back_triton(tri.unsqueeze(0), x_n, Wp.T.contiguous(), Wgt,
+@@ -238,9 +241,9 @@
+     # The residual is the ORIGINAL (pre-LN_in) input pair, and it is not optional: this op is
+     # ``y = pair + drop_row(trimul(pair))``. dropscale [B,1,L,D] -> [L,D] (B==1) for the gate
+     # store's row-broadcast indexing. Both fold into the gate_elem epilogue (no external add).
+-    residual_flat = pair.reshape(M, d)
++    x_n, residual = input_ln_residual(pair, ln_in_w, ln_in_b, eps_in)
++    residual_flat = residual.reshape(M, d)
+     ds_2d = dropscale.reshape(L, d) if dropscale is not None else None
+-    x_n = triton_layernorm(pair, ln_in_w, ln_in_b, eps_in)
+     WLt, WLgt = WL.t().contiguous(), WLg.t().contiguous()
+     WRt, WRgt, Wgt = WR.t().contiguous(), WRg.t().contiguous(), Wg.t().contiguous()
+     if not torch.is_grad_enabled() and ds_2d is None:
+--- a/src/miniworld_engine/kernels/trimul_inproj/triton/output_fused.py	
++++ b/src/miniworld_engine/kernels/trimul_inproj/triton/output_fused.py	
+@@ -10,6 +10,7 @@
+ import torch
+ import triton
+ import triton.language as tl
++from miniworld_engine.kernels._tiles import tile_order, tile_grid
+ 
+ from miniworld_engine.autotune.configs import configs_for
+ from miniworld_engine.autotune.shape_key import token_key
+@@ -58,12 +59,7 @@
+ ):
+     pid = tl.program_id(0).to(tl.int64)
+     nm, nn = tl.cdiv(M, BLOCK_M1), tl.cdiv(N, BLOCK_N)
+-    group = pid // (GROUP_M * nn)
+-    first_m = group * GROUP_M
+-    group_m = tl.minimum(nm - first_m, GROUP_M)
+-    local = pid % (GROUP_M * nn)
+-    pm = first_m + local % group_m
+-    pn = local // group_m
++    pm, pn = tile_order(pid, nm, nn, GROUP_M)
+     rm = pm * BLOCK_M1 + tl.arange(0, BLOCK_M1)
+     rn = pn * BLOCK_N + tl.arange(0, BLOCK_N)
+ 
+@@ -72,27 +68,40 @@
+     # extent. BLOCK_K is tunable CSV data, not a fixed kernel constant.
+     rkp = tl.arange(0, BLOCK_K)
+     ap = tl.zeros((BLOCK_M1, BLOCK_N), tl.float32)
+-    for k0 in range(tl.cdiv(KP, BLOCK_K)):
+-        k = k0 * BLOCK_K + rkp
+-        a = tl.load(XN + rm[:, None] * KP + k[None, :],
+-                    (rm[:, None] < M) & (k[None, :] < KP), 0)
+-        w = tl.load(WP + k[:, None] * wp1 + rn[None, :] * wp0,
+-                    (k[:, None] < KP) & (rn[None, :] < N), 0)
+-        ap = tl.dot(a, w, ap)
+-    p = ap.to(PROJ.dtype.element_ty)
++    for pk0 in range(tl.cdiv(KP, BLOCK_K)):
++        pk = pk0 * BLOCK_K + rkp
++        pa = tl.load(XN + rm[:, None] * KP + pk[None, :],
++                    (rm[:, None] < M) & (pk[None, :] < KP), 0)
++        pw = tl.load(WP + pk[:, None] * wp1 + rn[None, :] * wp0,
++                    (pk[:, None] < KP) & (rn[None, :] < N), 0)
++        ap = tl.dot(pa, pw, ap)
+     off = rm[:, None] * N + rn[None, :]
+     mask = (rm[:, None] < M) & (rn[None, :] < N)
+-    tl.store(PROJ + off, p, mask)
+ 
+     rkg = tl.arange(0, BLOCK_K)
+-    ag = tl.zeros((BLOCK_M1, BLOCK_N), tl.float32)
+-    for k0 in range(tl.cdiv(KG, BLOCK_K)):
+-        k = k0 * BLOCK_K + rkg
+-        a = tl.load(X + rm[:, None] * KG + k[None, :],
+-                    (rm[:, None] < M) & (k[None, :] < KG), 0)
+-        w = tl.load(WG + k[:, None] * wg0 + rn[None, :] * wg1,
+-                    (k[:, None] < KG) & (rn[None, :] < N), 0)
+-        ag = tl.dot(a, w, ag)
++    # Put the shorter output-tile axis on the gate dot's row axis. On Hopper,
++    # tall second-dot layouts can corrupt aligned operands; unconditionally
++    # transposing instead breaks wide, one-warp tiles. This constexpr choice
++    # keeps every CSV schedule and the same GEMMs, with no architecture or
++    # shape-specific tile blacklist. The projection is saved in the epilogue.
++    if BLOCK_M1 > BLOCK_N:
++        ag = tl.zeros((BLOCK_N, BLOCK_M1), tl.float32)
++    else:
++        ag = tl.zeros((BLOCK_M1, BLOCK_N), tl.float32)
++    for gk0 in range(tl.cdiv(KG, BLOCK_K)):
++        gk = gk0 * BLOCK_K + rkg
++        ga = tl.load(X + rm[:, None] * KG + gk[None, :],
++                    (rm[:, None] < M) & (gk[None, :] < KG), 0)
++        gw = tl.load(WG + gk[:, None] * wg0 + rn[None, :] * wg1,
++                    (gk[:, None] < KG) & (rn[None, :] < N), 0)
++        if BLOCK_M1 > BLOCK_N:
++            ag = tl.dot(tl.trans(gw), tl.trans(ga), ag)
++        else:
++            ag = tl.dot(ga, gw, ag)
++    if BLOCK_M1 > BLOCK_N:
++        ag = tl.trans(ag)
++    p = ap.to(PROJ.dtype.element_ty)
++    tl.store(PROJ + off, p, mask)
+     # Preserve split cuBLAS BF16 logits and proj rounding, then use the FP32
+     # sigmoid for y while storing the BF16 gate expected by the existing bwd.
+     g = tl.sigmoid(ag.to(X.dtype.element_ty).to(tl.float32))
+@@ -102,12 +111,13 @@
+     tl.store(GATE + off, g, mask)
+ 
+ 
+-def _output_f567_fake(norm, x, wp, wg, residual, dropscale, seq_len):
++def _output_f567_train_fake(norm, x, wp, wg, residual, dropscale, seq_len):
++    """Allocate outputs with the same shape, dtype and strides as output_f567_train."""
+     shape = (norm.shape[0], wp.shape[0])
+-    return tuple(norm.new_empty(shape) for _ in range(3))
++    return tuple((norm.new_empty(shape) for _ in range(3)))
+ 
+ 
+-@opaque(fake=_output_f567_fake, name='trimul_output_f567_train')
++@opaque(fake=_output_f567_train_fake, name='trimul_output_f567_train')
+ def output_f567_train(
+     norm: torch.Tensor, x: torch.Tensor, wp: torch.Tensor, wg: torch.Tensor,
+     residual: torch.Tensor, dropscale: torch.Tensor, seq_len: int,
+@@ -134,8 +144,8 @@
+         raise ValueError('F567 input/weight/residual/drop-scale shapes disagree')
+     if any(not t.is_contiguous() for t in (norm, x, residual, dropscale)):
+         raise ValueError('F567 activation/residual/drop-scale operands must be contiguous')
+-    y, proj, gate = _output_f567_fake(*tensors, seq_len)
+-    grid = lambda meta: (triton.cdiv(m, meta['BLOCK_M1']) * triton.cdiv(n, meta['BLOCK_N']),)
++    y, proj, gate = _output_f567_train_fake(*tensors, seq_len)
++    grid = lambda meta: tile_grid(m, n, meta['BLOCK_M1'], meta['BLOCK_N'])
+     _output_f567_kernel[grid](
+         norm, x, wp, wg, proj, gate, y, residual, dropscale,
+         m, seq_len, kp, kg, n, *wp.stride(), *wg.stride(),
+--- a/src/miniworld_engine/kernels/trimul_inproj/triton/backward_fused.py	
++++ b/src/miniworld_engine/kernels/trimul_inproj/triton/backward_fused.py	
+@@ -6,9 +6,10 @@
+ import torch
+ import triton
+ import triton.language as tl
++from miniworld_engine.kernels._tiles import tile_order, tile_grid
+ from miniworld_engine.kernels._compile import opaque
+ from miniworld_engine.autotune.configs import configs_for
+-from miniworld_engine.autotune.shape_key import both_key,rows_of,pack,token_key
++from miniworld_engine.autotune.shape_key import both_key,rows_of,pack,token_key,ShapeKeyTooWide
+ from miniworld_engine.kernels.layernorm.triton.main import _ln_fwd
+ 
+ 
+@@ -127,27 +128,27 @@
+                      dx.to(DX.dtype.element_ty).to(tl.float32) + dr, mask=mask)
+ 
+ 
+-def _ln_fake(dy,x,weight,mean,rstd,dr,shape_key):
+-    return (torch.empty_like(x),weight.new_empty(weight.shape,dtype=torch.float32),
+-            weight.new_empty(weight.shape,dtype=torch.float32))
+-
+-
+-@opaque(fake=_ln_fake,name='trimul_input_ln_residual_bwd')
+-def input_ln_residual_bwd(dy:torch.Tensor,x:torch.Tensor,weight:torch.Tensor,
+-                          mean:torch.Tensor,rstd:torch.Tensor,dr:torch.Tensor,
+-                          shape_key:int)->tuple[torch.Tensor,torch.Tensor,torch.Tensor]:
+-    x=x.contiguous();dy=dy.contiguous();dr=dr.contiguous()
+-    if x.ndim!=2 or dy.shape!=x.shape or dr.shape!=x.shape:
++def _input_ln_residual_bwd_fake(dy, x, weight, mean, rstd, dr, shape_key):
++    """Allocate outputs with the same shape, dtype and strides as input_ln_residual_bwd."""
++    return (torch.empty_like(x), weight.new_empty(weight.shape, dtype=torch.float32), weight.new_empty(weight.shape, dtype=torch.float32))
++
++
++@opaque(fake=_input_ln_residual_bwd_fake, name='trimul_input_ln_residual_bwd')
++def input_ln_residual_bwd(dy: torch.Tensor, x: torch.Tensor, weight: torch.Tensor, mean: torch.Tensor, rstd: torch.Tensor, dr: torch.Tensor, shape_key: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
++    """Execute input ln residual bwd behind an opaque compiler boundary."""
++    x = x.contiguous()
++    dy = dy.contiguous()
++    dr = dr.contiguous()
++    if x.ndim != 2 or dy.shape != x.shape or dr.shape != x.shape:
+         raise ValueError('LN/residual backward requires equal matrix shapes')
+-    if x.dtype!=dy.dtype or dr.dtype!=dy.dtype:
++    if x.dtype != dy.dtype or dr.dtype != dy.dtype:
+         raise ValueError('LN/residual gradients must share the input dtype')
+-    m,n=x.shape
+-    dx=torch.empty_like(x);dw=torch.zeros(n,device=x.device,dtype=torch.float32);db=torch.zeros_like(dw)
+-    _ln_bwd_residual_kernel[lambda c:(triton.cdiv(m,c['BLOCK_M1']),)](
+-        dx,dy,dw,db,dr,x,weight,mean,rstd,rstd,
+-        dw.stride(0),db.stride(0),x.stride(0),x.stride(1),m,n,
+-        shape_key=pack(shape_key,N=n),HAS_ROWSCALE=False)
+-    return dx,dw,db
++    (m, n) = x.shape
++    dx = torch.empty_like(x)
++    dw = torch.zeros(n, device=x.device, dtype=torch.float32)
++    db = torch.zeros_like(dw)
++    _ln_bwd_residual_kernel[lambda c: (triton.cdiv(m, c['BLOCK_M1']),)](dx, dy, dw, db, dr, x, weight, mean, rstd, rstd, dw.stride(0), db.stride(0), x.stride(0), x.stride(1), m, n, shape_key=pack(shape_key, N=n), HAS_ROWSCALE=False)
++    return (dx, dw, db)
+ 
+ 
+ class InputLNResidual(torch.autograd.Function):
+@@ -191,8 +192,7 @@
+     BLOCK_M1:tl.constexpr,BLOCK_N:tl.constexpr,BLOCK_K:tl.constexpr,
+     GROUP_M:tl.constexpr,shape_key):
+     pid=tl.program_id(0).to(tl.int64);nm=tl.cdiv(M,BLOCK_M1);nn=tl.cdiv(N,BLOCK_N)
+-    first=(pid//(GROUP_M*nn))*GROUP_M;gm=tl.minimum(nm-first,GROUP_M)
+-    local=pid%(GROUP_M*nn);pm=first+local%gm;pn=local//gm
++    pm,pn=tile_order(pid,nm,nn,GROUP_M)
+     rows=pm*BLOCK_M1+tl.arange(0,BLOCK_M1);cols=pn*BLOCK_N+tl.arange(0,BLOCK_N)
+     rk=tl.arange(0,BLOCK_K);ag=tl.zeros((BLOCK_M1,BLOCK_N),tl.float32)
+     for step in range(tl.cdiv(KG,BLOCK_K)):
+@@ -211,19 +211,39 @@
+              (rows[:,None]<M)&(cols[None,:]<N))
+ 
+ 
+-def _dual_fake(g,f,w,v,length):return g.new_empty((g.shape[0],w.shape[1]))
+-
+-
+-@opaque(fake=_dual_fake,name='trimul_input_dual_bwd')
+-def input_dual_bwd(g:torch.Tensor,f:torch.Tensor,w:torch.Tensor,v:torch.Tensor,
+-                   length:int)->torch.Tensor:
+-    if any(t.ndim!=2 for t in (g,f,w,v)):raise ValueError('dual dgrad expects matrices')
+-    m,kg=g.shape;kp=f.shape[1];n=w.shape[1]
+-    if f.shape[0]!=m or w.shape[0]!=kg or v.shape!=(kp,n):raise ValueError('dual dgrad shape mismatch')
+-    if any(t.dtype!=torch.bfloat16 or t.device!=g.device for t in (g,f,w,v)):
++def _input_dual_bwd_fake(g, f, w, v, length):
++    """Allocate outputs with the same shape, dtype and strides as input_dual_bwd."""
++    return g.new_empty((g.shape[0], w.shape[1]))
++
++
++def dual_shape_key(length, kg, kp, n):
++    """Keep existing keys; express a wide packed projection by its hidden width.
++
++    The front concatenates four projections in each of two directions. At
++    hidden=512 its reduction width is 4096, one past pack's width limit.
++    KP_DIV8 is exact (never rounded) and its axis name separates this encoding
++    from the ordinary KP keys. The fused GEMM itself still receives full KP.
++    """
++    try:
++        return token_key(length, KG=kg, KP=kp, N=n)
++    except ShapeKeyTooWide:
++        if kp % 8:
++            raise
++        return token_key(length, KG=kg, KP_DIV8=kp // 8, N=n)
++
++
++@opaque(fake=_input_dual_bwd_fake, name='trimul_input_dual_bwd')
++def input_dual_bwd(g: torch.Tensor, f: torch.Tensor, w: torch.Tensor, v: torch.Tensor, length: int) -> torch.Tensor:
++    """Execute input dual bwd behind an opaque compiler boundary."""
++    if any((t.ndim != 2 for t in (g, f, w, v))):
++        raise ValueError('dual dgrad expects matrices')
++    (m, kg) = g.shape
++    kp = f.shape[1]
++    n = w.shape[1]
++    if f.shape[0] != m or w.shape[0] != kg or v.shape != (kp, n):
++        raise ValueError('dual dgrad shape mismatch')
++    if any((t.dtype != torch.bfloat16 or t.device != g.device for t in (g, f, w, v))):
+         raise ValueError('dual dgrad expects BF16 on the same device')
+-    out=_dual_fake(g,f,w,v,length)
+-    _input_dual_bwd_kernel[lambda c:(triton.cdiv(m,c['BLOCK_M1'])*triton.cdiv(n,c['BLOCK_N']),)](
+-        g,f,w,v,out,m,kg,kp,n,*g.stride(),*f.stride(),*w.stride(),*v.stride(),
+-        shape_key=token_key(length,KG=kg,KP=kp,N=n))
++    out = _input_dual_bwd_fake(g, f, w, v, length)
++    _input_dual_bwd_kernel[lambda c: tile_grid(m, n, c['BLOCK_M1'], c['BLOCK_N'])](g, f, w, v, out, m, kg, kp, n, *g.stride(), *f.stride(), *w.stride(), *v.stride(), shape_key=dual_shape_key(length, kg, kp, n))
+     return out
+--- a/src/miniworld_engine/modules/triangle_multiplication/module.py	
++++ b/src/miniworld_engine/modules/triangle_multiplication/module.py	
+@@ -197,7 +197,10 @@
+ 
+         if self._backend == KernelBackend.CUTE:
+             _load_cute_fns()
+-            from miniworld_engine.kernels.trimul_inproj.cute import _bdll_patch, _gate_mul_patch
++            from miniworld_engine.kernels.trimul_inproj.cute import (
++                _bdll_patch,
++                _gate_mul_patch,
++            )
+             _bdll_patch.apply()
+             _gate_mul_patch.apply()
+ 
+@@ -285,9 +288,9 @@
+             if backend == KernelBackend.TRITON:
+                 # Fused BDLL pipeline (mirrors cute's single-direction dispatch):
+                 # LN_in -> gated BDLL front (transposed store, no permute) -> ONE
+-                # bmm contraction -> te-style LN_out+@Wp -> triton output gate. One
+-                # code path serves inference (forward-only) and training (merged
+-                # autograd Function). Requires d_hidden == d_pair. See
++                # bmm contraction -> fused output stages. BF16 training uses
++                # LN_out + F567; inference also folds LN_out into the back kernel.
++                # Requires d_hidden == d_pair. See
+                 # kernels/trimul_inproj/triton/unidirectional.py.
+                 # residual + row-broadcast dropout are now FUSED into the triton gate store
+                 # (same gate_elem epilogue the cute path uses) — no external _r() add.
+@@ -319,9 +322,9 @@
+         dropscale: torch.Tensor | None = None,
+     ) -> torch.Tensor:
+         """TRITON single-direction path (fwd + autograd bwd) — the fused BDLL pipeline
+-        mirroring cute's dispatch (LN_in -> gated BDLL front -> ONE bmm contraction ->
+-        te-style LN_out+@Wp -> triton output gate). Same code path for inference and
+-        training; the front emits left/right in channel-major BDLL directly (transposed
++        (LN_in -> gated BDLL front -> ONE bmm contraction -> fused output stages).
++        BF16 training shares F567 and the two backward fusions with bidirectional
++        TriMul. The front emits left/right in channel-major BDLL directly (transposed
+         store, no permute) so the contraction lowers to a tensor-core cuBLAS bmm on
+         contiguous operands. Requires ``d_hidden == d_pair`` (the front produces per-side
+         width d_hidden). bf16 / fp32, B>=1. See

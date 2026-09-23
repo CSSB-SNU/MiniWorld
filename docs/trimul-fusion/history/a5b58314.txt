@@ -1,0 +1,41 @@
+commit a5b583144660f25a1205c2f179c7575983c1fceb
+Author:     snu_hwle <psk6950@snu.ac.kr>
+AuthorDate: Sun Jul 12 13:21:56 2026 +0900
+Commit:     snu_hwle <psk6950@snu.ac.kr>
+CommitDate: Sun Jul 12 13:21:56 2026 +0900
+
+    feat(trimul-bidir): rewrite TRITON bidir as a faithful CUTE-algorithm mirror
+    
+    Replace the earlier torch-composed / tm1-square-shortcut design (rejected:
+    it leaned on torch.einsum / F.layer_norm / torch@ and a per-direction square
+    front) with a 1:1 mirror of cute's BidirBackHalf (cute/bidir_training.py) —
+    same algorithm, same fusion boundaries, ONLY the backend differs (triton +
+    cuBLAS, no quack). Stage-for-stage:
+    
+      x_n   = triton_layernorm(pair, row_scale=mask)          # cute's LN_in (triton)
+      L,R,preact = FRONT(x_n, WL,WLg,WR,WRg)                  # gated in-proj, 2h, BDLL
+      o_out = bmm(Lf[:h], Rf[:h]ᵀ); o_in = bmm(Lf[h:]ᵀ, Rf[h:])   # 2 triangle contractions
+      tri   = cat([o_out,o_in]); proj = _te_forward(tri, ln_out, Wp)   # LN_out+@Wp (te_style)
+      y     = gate_elem_triton(x_n, proj, Wg)                # sigmoid output-gate (triton)
+    
+    Merged autograd.Function backward matches cute's fused structure
+    (gate-ew -> dWg -> te_backward -> contraction-bwd -> front_bwd_dW, dxn add
+    fused). REUSES the exact helpers cute uses: _te_forward/_te_backward
+    (layernorm_linear/te_style), front_bwd_dW (trimul_inproj/triton/back_fused),
+    gate_elem_triton/gate_elem_bwd_ew (trimul_inproj/triton/gate_elem),
+    triton_layernorm. The two contractions are torch.bmm (== cute dispatch.bmm =
+    cuBLAS); big GEMMs (dWg, dxn) cuBLAS, as in cute. The ONLY new kernel is the
+    front FORWARD (cute's is quack) — reuses front.py's _lr_kernel design (half-acc,
+    transposed BDLL store) at per-side width 2h + emits the interleaved preact.
+    
+    EAGER (no compile) cosine, RANDOM non-zero weights, fwd + ALL grads:
+      triton vs PYTORCH: fwd 0.99998 (bf16)/1.0 (fp32), min over ALL weight/LN/
+        input grads 0.99997 (bf16)/1.0 (fp32), L in {128,256,1024}.
+      triton vs CUTE (bf16, L=256): fwd cos = 1.00000 (bit-identical algorithm),
+        input-grad 0.99998 (cute's train wrapper hides its param grads).
+    Requires d_hidden == d_pair (as single-dir triton trimul).
+    
+    Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+ .../kernels/trimul_inproj/triton/bidirectional.py  | 316 +++++++++++++++------
+ 1 file changed, 224 insertions(+), 92 deletions(-)

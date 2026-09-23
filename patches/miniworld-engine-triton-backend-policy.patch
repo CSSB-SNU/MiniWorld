@@ -1,0 +1,79 @@
+--- a/src/miniworld_engine/kernels/layernorm/compile_native.py	
++++ b/src/miniworld_engine/kernels/layernorm/compile_native.py	
+@@ -57,6 +57,9 @@
+ def _resolve_bwd_path(
+     m: int, n: int, dy: Tensor, x: Tensor, weight: Tensor, mean: Tensor, rstd: Tensor
+ ) -> str:
++    if settings.current().engine_backend == "triton":
++        override = _ln_bwd_override()
++        return override if override in {"atomic", "persistent"} else _static_bwd_path(m, n, False)
+     override = _ln_bwd_override()
+     if override is not None and override in _VALID_BWD_PATHS:
+         if override == "cuda" and x.dtype != weight.dtype:
+--- a/src/miniworld_engine/kernels/layernorm/triton/main.py	
++++ b/src/miniworld_engine/kernels/layernorm/triton/main.py	
+@@ -393,7 +393,7 @@
+     # So auto-take CUDA for the masked path (always wins), but keep dense behind the opt-in
+     # env flag. Lazy import so the nvcc JIT build only triggers when this path is taken; any
+     # build/run failure falls through to triton.
+-    if (x.dtype == torch.bfloat16 and 128 <= N <= 512 and (has_rs or _ln_cuda_bwd_enabled())):
++    if (settings.current().engine_backend != "triton" and x.dtype == torch.bfloat16 and 128 <= N <= 512 and (has_rs or _ln_cuda_bwd_enabled())):
+         try:
+             from ..cuda import layer_norm_bwd_cuda
+             dx_c, dw_c, db_c = layer_norm_bwd_cuda(
+--- a/src/miniworld_engine/modules/dispatch.py	
++++ b/src/miniworld_engine/modules/dispatch.py	
+@@ -269,6 +269,12 @@
+     any concrete backend passes through unchanged. Single entry point behind the per-op
+     ``resolve_*`` wrappers kept below for the modules / benchmark harness."""
+     impl = _coerce(impl)
++    from miniworld_engine import settings
++    if settings.current().engine_backend == "triton":
++        if impl in {ImplementationType.CUTE, ImplementationType.CUDA}:
++            raise ValueError(f"{op}: {impl.value} conflicts with engine_backend=triton")
++        if impl == ImplementationType.MINIWORLD:
++            return KernelBackend.TRITON
+     # An explicit CUEQUIVARIANCE request for an op with no cueq kernel (anything outside
+     # _CUEQ_OPS) falls back to the PYTORCH reference, never the Triton fused path.
+     if impl == ImplementationType.CUEQUIVARIANCE and op not in _CUEQ_OPS:
+--- a/src/miniworld_engine/modules/transition/module.py	
++++ b/src/miniworld_engine/modules/transition/module.py	
+@@ -6,7 +6,7 @@
+ import torch.nn.functional as F
+ from jaxtyping import Float
+ 
+-from miniworld_engine import kernels
++from miniworld_engine import kernels, settings
+ from miniworld_engine._typecheck import typecheck
+ from miniworld_engine.modules import dispatch as _dispatch
+ from miniworld_engine.modules.dispatch import KernelBackend, resolve_transition
+@@ -189,7 +189,7 @@
+         def _r(out):  # explicit residual add for paths that don't fold it in-kernel
+             return out + x
+ 
+-        if _force_split_enabled():
++        if settings.current().engine_backend == "triton" or _force_split_enabled():
+             return _r(self._old_triton_forward(x))
+         # Pre-Hopper (sm_80 / A100), large d (>=256): the fused triton path uses the
+         # bounded-smem k-tiled b2b there (correct, no OOM) but it is SLOWER than the
+@@ -276,7 +276,7 @@
+         def _r(out):  # explicit residual add for paths that don't fold it in-kernel
+             return out + x
+ 
+-        if _force_split_enabled():
++        if settings.current().engine_backend == "triton" or _force_split_enabled():
+             return _r(self._old_triton_forward(x))
+         # Pre-Hopper (sm_80 / A100), large d (>=256): split beats the fused k-tiled path
+         # in training too (d=256 6.3 vs 7.0 ms, d=512 20.2 vs 26.8 ms). d=128 stays fused
+--- a/src/miniworld_engine/settings.py	
++++ b/src/miniworld_engine/settings.py	
+@@ -197,6 +197,9 @@
+     pin_gate_backend: Literal["fused", "split"] | None = None
+     #: Inference LN+proj concat fusion (layernorm_linear).
+     pin_infer_concat: bool | None = None
++
++    #: Process-wide application policy; configure before constructing models.
++    engine_backend: Literal["auto", "triton"] = "auto"
+ 
+     # ---- transition backend selection ------------------------------------------------------ #
+     #: Force the split path (ln_in + non-fused triton_transition) over the fused kernels. An

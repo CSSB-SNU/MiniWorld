@@ -1,0 +1,33 @@
+commit 5dcd6663bd145ddfce8f09cea2c50eedffdcc16a
+Author:     SanggeunParrk <psk6950@snu.ac.kr>
+AuthorDate: Sat Jun 27 15:56:25 2026 +0900
+Commit:     SanggeunParrk <psk6950@snu.ac.kr>
+CommitDate: Sat Jun 27 15:56:25 2026 +0900
+
+    trimul_inproj: bidirectional trimul (cute), backward fusion, per-kernel dispatch
+    
+    Fused Triangle Multiplicative Update kernels (CuTeDSL/quack + Triton + cuBLAS),
+    single-direction and bidirectional, training (fwd+bwd) and inference.
+    
+    Kernels
+    - Bidirectional trimul: inference (bidirectional_trimul_ours) + training
+      (BidirV6TriMul / BidirBackHalf), one wider front gated GEMM (out_hidden=2h),
+      outgoing/incoming split contractions, split back (te LayerNormLinear + gate).
+    - Single-dir v6 training (v6_training): LN_in (repo triton) + cute front + cuBLAS
+      contraction + te LayerNormLinear + triton gate; front bwd = front_bwd_dW/fused.
+    - Gate fully fused in cute for inference: custom quack epilogue act(A@B)*C
+      (_gate_mul_patch) -> sigmoid(x@Wg)*proj in ONE launch (1.3-1.5x vs triton).
+    - Backward fusion (BidirBackHalf): merge back-half into one autograd.Function;
+      dx_n = (d_concat^T @ W_stack) + (d_glogit @ Wg^T) via a cute C-add-epilogue GEMM
+      (fuses dx_gate + the x_n add). dW (dWL/dWg/dWp) stay cuBLAS (huge-K reductions).
+    - int64 offsets in front bwd _dconcat_kernel (fixes d512 L1024 IMA); d_lr cat removed.
+    - Per-kernel dispatch cache (dispatch.py): pick the fastest backend (cuBLAS vs quack)
+      per shape and cache it; wired into every BackHalf matmul + the inference gate.
+    
+    Results (H100, bf16, cos 0.99997+ vs fp32 ref)
+    - Inference: ours fastest at all L/d; vs dt-v1 1.48-1.70x, vs cuEquiv up to ~4.7x.
+    - Training: vs dt-v1 1.36-1.55x at L>=384 (backward fusion lifted ~1.3x -> ~1.5x).
+    - Benchmarks recorded under benchmark/ (bidir_full, bidir_infer, bidir_train,
+      bidir_vs_sep_train, roofline).
+    
+    Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

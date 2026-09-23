@@ -1,0 +1,1385 @@
+{
+  "length": 384,
+  "complete": true,
+  "cases": {
+    "baseline": {
+      "output_and_gradient_errors": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "value_names": [
+        "output",
+        "input",
+        "ln_pair.weight",
+        "ln_pair.bias",
+        "to_left.weight",
+        "to_left_gate.weight",
+        "to_right.weight",
+        "to_right_gate.weight",
+        "ln_out.weight",
+        "ln_out.bias",
+        "to_gate.weight",
+        "to_out.weight"
+      ],
+      "cuda_kernels": [
+        "## Call CompiledFxGraph faz27yvyrnyf725oil34zhb2n3a5d4wxlhpd35jyxxlfckykj3uq ##",
+        "Memcpy DtoD (Device -> Device)",
+        "Memset (Device)",
+        "_dconcat_kernel",
+        "_gate_elem_bwd_ew_kernel",
+        "_ln_bwd_kernel",
+        "layer_norm_bwd_dx_fused",
+        "nvjet_tst_128x128_64x6_1x2_h_bz_splitK_NNT",
+        "nvjet_tst_128x160_64x5_1x2_h_badd_NTT",
+        "nvjet_tst_128x160_64x5_1x2_h_bz_TNT",
+        "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+        "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NTN",
+        "nvjet_tst_192x192_64x4_2x1_v_bz_coopB_TNN",
+        "nvjet_tst_320x128_64x3_1x2_h_bz_coopB_TTT",
+        "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT",
+        "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT",
+        "triton_poi_fused_add_view_5",
+        "triton_poi_fused_cat_clone_t_0",
+        "triton_poi_fused_clone_slice_t_1",
+        "triton_poi_fused_clone_slice_t_2",
+        "triton_poi_fused_clone_slice_t_3",
+        "triton_poi_fused_clone_slice_t_4",
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+        "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+        "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+        "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+        "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+      ],
+      "cuda_events": [
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.6000000000001364
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5360000000000582
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.599999999999909
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.3429999999998472
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.3759999999999764
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.3759999999999764
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.3759999999999764
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.344000000000051
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.2799999999999727
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.3120000000001255
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 12.673000000000002
+        },
+        {
+          "name": "## Call CompiledFxGraph faz27yvyrnyf725oil34zhb2n3a5d4wxlhpd35jyxxlfckykj3uq ##",
+          "duration_us": 1909.2339999999995
+        },
+        {
+          "name": "_gate_elem_bwd_ew_kernel",
+          "duration_us": 67.61599999999999
+        },
+        {
+          "name": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT",
+          "duration_us": 32.896999999999935
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 2.655999999999949
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 1.5679999999997563
+        },
+        {
+          "name": "nvjet_tst_320x128_64x3_1x2_h_bz_coopB_TTT",
+          "duration_us": 42.113000000000284
+        },
+        {
+          "name": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT",
+          "duration_us": 54.75199999999995
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 2.94399999999996
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.3760000000002037
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.66399999999976
+        },
+        {
+          "name": "_ln_bwd_kernel",
+          "duration_us": 113.28099999999995
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7359999999998763
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+          "duration_us": 40.41599999999971
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7359999999998763
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NTN",
+          "duration_us": 42.43299999999999
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7359999999998763
+        },
+        {
+          "name": "nvjet_tst_192x192_64x4_2x1_v_bz_coopB_TNN",
+          "duration_us": 41.3119999999999
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7359999999998763
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+          "duration_us": 42.33699999999999
+        },
+        {
+          "name": "_dconcat_kernel",
+          "duration_us": 246.7550000000001
+        },
+        {
+          "name": "nvjet_tst_128x128_64x6_1x2_h_bz_splitK_NNT",
+          "duration_us": 130.14499999999998
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 3.9039999999999964
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7359999999998763
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_TNT",
+          "duration_us": 22.975999999999658
+        },
+        {
+          "name": "triton_poi_fused_cat_clone_t_0",
+          "duration_us": 2.143999999999778
+        },
+        {
+          "name": "Memcpy DtoD (Device -> Device)",
+          "duration_us": 26.94399999999996
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7679999999995744
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_badd_NTT",
+          "duration_us": 134.5609999999997
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_1",
+          "duration_us": 2.1760000000003856
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_2",
+          "duration_us": 1.9840000000003783
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_3",
+          "duration_us": 1.9520000000002256
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_4",
+          "duration_us": 2.0799999999999272
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5360000000000582
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.2799999999997453
+        },
+        {
+          "name": "layer_norm_bwd_dx_fused",
+          "duration_us": 66.46500000000015
+        },
+        {
+          "name": "triton_poi_fused_add_view_5",
+          "duration_us": 35.96799999999985
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "duration_us": 38.465000000000146
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 5.7280000000000655
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "duration_us": 2.11200000000008
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.88799999999992
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.88799999999992
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.6320000000005166
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.096000000000458
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.9200000000000728
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.287999999999556
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.127999999999702
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.223999999999251
+        }
+      ]
+    },
+    "ln_residual": {
+      "output_and_gradient_errors": [
+        0.0,
+        0.0,
+        9.518454930912412e-07,
+        7.780512589761202e-08,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        6.286298912527855e-07,
+        6.215018402144779e-07,
+        0.0,
+        0.0
+      ],
+      "value_names": [
+        "output",
+        "input",
+        "ln_pair.weight",
+        "ln_pair.bias",
+        "to_left.weight",
+        "to_left_gate.weight",
+        "to_right.weight",
+        "to_right_gate.weight",
+        "ln_out.weight",
+        "ln_out.bias",
+        "to_gate.weight",
+        "to_out.weight"
+      ],
+      "cuda_kernels": [
+        "## Call CompiledFxGraph f4mtqh47y5nt7p3nracefkusdhsh4tkmalfxhjwu4qpe7ubco3ts ##",
+        "Memcpy DtoD (Device -> Device)",
+        "Memset (Device)",
+        "_dconcat_kernel",
+        "_gate_elem_bwd_ew_kernel",
+        "_ln_bwd_kernel",
+        "_ln_bwd_residual_kernel",
+        "nvjet_tst_128x128_64x6_1x2_h_bz_splitK_NNT",
+        "nvjet_tst_128x160_64x5_1x2_h_badd_NTT",
+        "nvjet_tst_128x160_64x5_1x2_h_bz_TNT",
+        "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+        "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NTN",
+        "nvjet_tst_192x192_64x4_2x1_v_bz_coopB_TNN",
+        "nvjet_tst_320x128_64x3_1x2_h_bz_coopB_TTT",
+        "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT",
+        "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT",
+        "triton_poi_fused_cat_clone_t_0",
+        "triton_poi_fused_clone_slice_t_1",
+        "triton_poi_fused_clone_slice_t_2",
+        "triton_poi_fused_clone_slice_t_3",
+        "triton_poi_fused_clone_slice_t_4",
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+        "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+        "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+        "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+        "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+      ],
+      "cuda_events": [
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.4399999999999409
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.3119999999998981
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 2.015999999999849
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.3759999999999764
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.344000000000051
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.344000000000051
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5679999999999836
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5359999999998308
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.3120000000001255
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.3120000000001255
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 12.6400000000001
+        },
+        {
+          "name": "## Call CompiledFxGraph f4mtqh47y5nt7p3nracefkusdhsh4tkmalfxhjwu4qpe7ubco3ts ##",
+          "duration_us": 1869.8100000000002
+        },
+        {
+          "name": "_gate_elem_bwd_ew_kernel",
+          "duration_us": 68.38400000000001
+        },
+        {
+          "name": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT",
+          "duration_us": 33.53600000000006
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 2.8479999999999563
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 1.4080000000001291
+        },
+        {
+          "name": "nvjet_tst_320x128_64x3_1x2_h_bz_coopB_TTT",
+          "duration_us": 41.21600000000012
+        },
+        {
+          "name": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT",
+          "duration_us": 56.19300000000021
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 2.8479999999999563
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.568000000000211
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5360000000000582
+        },
+        {
+          "name": "_ln_bwd_kernel",
+          "duration_us": 112.96100000000024
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7999999999997272
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+          "duration_us": 40.67199999999957
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7680000000000291
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NTN",
+          "duration_us": 41.952000000000226
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.8000000000001819
+        },
+        {
+          "name": "nvjet_tst_192x192_64x4_2x1_v_bz_coopB_TNN",
+          "duration_us": 42.40099999999984
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7680000000000291
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+          "duration_us": 41.66399999999976
+        },
+        {
+          "name": "_dconcat_kernel",
+          "duration_us": 247.42599999999993
+        },
+        {
+          "name": "nvjet_tst_128x128_64x6_1x2_h_bz_splitK_NNT",
+          "duration_us": 129.88900000000012
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 3.8090000000001965
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.8959999999997308
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_TNT",
+          "duration_us": 22.43199999999979
+        },
+        {
+          "name": "triton_poi_fused_cat_clone_t_0",
+          "duration_us": 2.5920000000000982
+        },
+        {
+          "name": "Memcpy DtoD (Device -> Device)",
+          "duration_us": 27.45600000000013
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7680000000000291
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_badd_NTT",
+          "duration_us": 133.56899999999996
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_1",
+          "duration_us": 2.144000000000233
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_2",
+          "duration_us": 2.11200000000008
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_3",
+          "duration_us": 1.9519999999997708
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_4",
+          "duration_us": 2.0159999999996217
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.3760000000002037
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.344000000000051
+        },
+        {
+          "name": "_ln_bwd_residual_kernel",
+          "duration_us": 68.64100000000008
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "duration_us": 34.8159999999998
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.928000000000338
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "duration_us": 1.9519999999997708
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 2.207999999999629
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.9200000000000728
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.7600000000002183
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.032000000000153
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.8240000000000691
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.096000000000004
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.864000000000033
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.320000000000164
+        }
+      ]
+    },
+    "dual": {
+      "output_and_gradient_errors": [
+        0.0,
+        0.0022106897085905075,
+        0.0027574568521231413,
+        0.0023150115739554167,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        5.860488840880862e-07,
+        7.260317147483875e-07,
+        0.0,
+        0.0
+      ],
+      "value_names": [
+        "output",
+        "input",
+        "ln_pair.weight",
+        "ln_pair.bias",
+        "to_left.weight",
+        "to_left_gate.weight",
+        "to_right.weight",
+        "to_right_gate.weight",
+        "ln_out.weight",
+        "ln_out.bias",
+        "to_gate.weight",
+        "to_out.weight"
+      ],
+      "cuda_kernels": [
+        "## Call CompiledFxGraph f7vjaaa53fogglin26gj52l3vaux27ra34cazaau56blt27mqq33 ##",
+        "Memset (Device)",
+        "_dconcat_kernel",
+        "_gate_elem_bwd_ew_kernel",
+        "_input_dual_bwd_kernel",
+        "_ln_bwd_kernel",
+        "layer_norm_bwd_dx_fused",
+        "nvjet_tst_128x128_64x6_1x2_h_bz_splitK_NNT",
+        "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+        "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NTN",
+        "nvjet_tst_192x192_64x4_2x1_v_bz_coopB_TNN",
+        "nvjet_tst_320x128_64x3_1x2_h_bz_coopB_TTT",
+        "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT",
+        "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT",
+        "triton_poi_fused_add_view_5",
+        "triton_poi_fused_cat_clone_t_trimul_input_dual_bwd_0",
+        "triton_poi_fused_clone_slice_t_1",
+        "triton_poi_fused_clone_slice_t_2",
+        "triton_poi_fused_clone_slice_t_3",
+        "triton_poi_fused_clone_slice_t_4",
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+        "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+        "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+        "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+        "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+      ],
+      "cuda_events": [
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5679999999999836
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.344000000000051
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.6000000000000227
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.3759999999999764
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.344000000000051
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.4400000000000546
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.344000000000051
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5359999999999445
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.6639999999999873
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.3439999999999372
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 12.543999999999983
+        },
+        {
+          "name": "## Call CompiledFxGraph f7vjaaa53fogglin26gj52l3vaux27ra34cazaau56blt27mqq33 ##",
+          "duration_us": 1844.0019999999997
+        },
+        {
+          "name": "_gate_elem_bwd_ew_kernel",
+          "duration_us": 67.04099999999994
+        },
+        {
+          "name": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT",
+          "duration_us": 33.63300000000004
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 2.6240000000000236
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.83199999999988
+        },
+        {
+          "name": "nvjet_tst_320x128_64x3_1x2_h_bz_coopB_TTT",
+          "duration_us": 39.74500000000012
+        },
+        {
+          "name": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT",
+          "duration_us": 54.17699999999991
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 2.591999999999871
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.3759999999999764
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5360000000000582
+        },
+        {
+          "name": "_ln_bwd_kernel",
+          "duration_us": 112.86599999999999
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 1.5039999999999054
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+          "duration_us": 41.66500000000042
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7360000000003311
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NTN",
+          "duration_us": 41.4409999999998
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7359999999998763
+        },
+        {
+          "name": "nvjet_tst_192x192_64x4_2x1_v_bz_coopB_TNN",
+          "duration_us": 42.720000000000255
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7680000000000291
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+          "duration_us": 41.3130000000001
+        },
+        {
+          "name": "_dconcat_kernel",
+          "duration_us": 246.46799999999985
+        },
+        {
+          "name": "nvjet_tst_128x128_64x6_1x2_h_bz_splitK_NNT",
+          "duration_us": 130.69000000000005
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 3.8090000000001965
+        },
+        {
+          "name": "triton_poi_fused_cat_clone_t_trimul_input_dual_bwd_0",
+          "duration_us": 2.368000000000393
+        },
+        {
+          "name": "_input_dual_bwd_kernel",
+          "duration_us": 136.25800000000027
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_1",
+          "duration_us": 2.367999999999938
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_2",
+          "duration_us": 2.0160000000000764
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_3",
+          "duration_us": 2.0479999999997744
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_4",
+          "duration_us": 1.9839999999999236
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.344000000000051
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5049999999996544
+        },
+        {
+          "name": "layer_norm_bwd_dx_fused",
+          "duration_us": 54.528999999999996
+        },
+        {
+          "name": "triton_poi_fused_add_view_5",
+          "duration_us": 36.0319999999997
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "duration_us": 39.521000000000186
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.641000000000076
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "duration_us": 2.048000000000229
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.7280000000000655
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.7599999999997635
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.9200000000000728
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.128000000000156
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.7280000000000655
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.031999999999698
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.064000000000306
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.064000000000306
+        }
+      ]
+    },
+    "both": {
+      "output_and_gradient_errors": [
+        0.0,
+        0.0022106897085905075,
+        0.002757463837042451,
+        0.0023149701301008463,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        6.40571556687064e-07,
+        5.459676799546287e-07,
+        0.0,
+        0.0
+      ],
+      "value_names": [
+        "output",
+        "input",
+        "ln_pair.weight",
+        "ln_pair.bias",
+        "to_left.weight",
+        "to_left_gate.weight",
+        "to_right.weight",
+        "to_right_gate.weight",
+        "ln_out.weight",
+        "ln_out.bias",
+        "to_gate.weight",
+        "to_out.weight"
+      ],
+      "cuda_kernels": [
+        "## Call CompiledFxGraph f66hxftrmrclzjjycksv7et7l4lbqhaem55nmdk63mlhtyonetdr ##",
+        "Memset (Device)",
+        "_dconcat_kernel",
+        "_gate_elem_bwd_ew_kernel",
+        "_input_dual_bwd_kernel",
+        "_ln_bwd_kernel",
+        "_ln_bwd_residual_kernel",
+        "nvjet_tst_128x128_64x6_1x2_h_bz_splitK_NNT",
+        "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+        "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NTN",
+        "nvjet_tst_192x192_64x4_2x1_v_bz_coopB_TNN",
+        "nvjet_tst_320x128_64x3_1x2_h_bz_coopB_TTT",
+        "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT",
+        "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT",
+        "triton_poi_fused_cat_clone_t_trimul_input_dual_bwd_0",
+        "triton_poi_fused_clone_slice_t_1",
+        "triton_poi_fused_clone_slice_t_2",
+        "triton_poi_fused_clone_slice_t_3",
+        "triton_poi_fused_clone_slice_t_4",
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+        "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+        "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+        "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+        "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+      ],
+      "cuda_events": [
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5679999999999836
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.3119999999998981
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.8880000000001473
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.5360000000000582
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.344000000000051
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.3120000000001255
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.3439999999998236
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5360000000000582
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.344000000000051
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 1.3120000000001255
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+          "duration_us": 12.960000000000036
+        },
+        {
+          "name": "## Call CompiledFxGraph f66hxftrmrclzjjycksv7et7l4lbqhaem55nmdk63mlhtyonetdr ##",
+          "duration_us": 1793.0379999999998
+        },
+        {
+          "name": "_gate_elem_bwd_ew_kernel",
+          "duration_us": 68.12799999999993
+        },
+        {
+          "name": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT",
+          "duration_us": 33.28099999999995
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 2.8159999999998035
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.8320000000003347
+        },
+        {
+          "name": "nvjet_tst_320x128_64x3_1x2_h_bz_coopB_TTT",
+          "duration_us": 40.19300000000021
+        },
+        {
+          "name": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT",
+          "duration_us": 54.52799999999979
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 2.6239999999997963
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5360000000000582
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5679999999997563
+        },
+        {
+          "name": "_ln_bwd_kernel",
+          "duration_us": 110.17700000000013
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7360000000003311
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+          "duration_us": 40.25699999999961
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7359999999998763
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NTN",
+          "duration_us": 42.11200000000008
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7360000000003311
+        },
+        {
+          "name": "nvjet_tst_192x192_64x4_2x1_v_bz_coopB_TNN",
+          "duration_us": 41.567999999999756
+        },
+        {
+          "name": "Memset (Device)",
+          "duration_us": 0.7360000000003311
+        },
+        {
+          "name": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+          "duration_us": 41.472999999999956
+        },
+        {
+          "name": "_dconcat_kernel",
+          "duration_us": 248.1300000000001
+        },
+        {
+          "name": "nvjet_tst_128x128_64x6_1x2_h_bz_splitK_NNT",
+          "duration_us": 129.88900000000012
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "duration_us": 3.8400000000001455
+        },
+        {
+          "name": "triton_poi_fused_cat_clone_t_trimul_input_dual_bwd_0",
+          "duration_us": 2.5920000000000982
+        },
+        {
+          "name": "_input_dual_bwd_kernel",
+          "duration_us": 135.20100000000002
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_1",
+          "duration_us": 2.143999999999778
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_2",
+          "duration_us": 2.0159999999996217
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_3",
+          "duration_us": 1.9839999999999236
+        },
+        {
+          "name": "triton_poi_fused_clone_slice_t_4",
+          "duration_us": 1.9520000000002256
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5360000000000582
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "duration_us": 1.5359999999996035
+        },
+        {
+          "name": "_ln_bwd_residual_kernel",
+          "duration_us": 67.74499999999989
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "duration_us": 35.71199999999999
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.60799999999972
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "duration_us": 2.143999999999778
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.8240000000000691
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.7919999999999163
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.9200000000000728
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.0
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "duration_us": 1.7280000000000655
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.096000000000004
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.128000000000156
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<c10::BFloat16> >(at::TensorIteratorBase&, at::native::CUDAFunctor_add<c10::BFloat16> const&)::{lambda(int)#1})",
+          "duration_us": 4.128999999999905
+        }
+      ]
+    }
+  },
+  "cache": [
+    {
+      "kernel": "_ln_bwd_residual_kernel",
+      "bucket": "HAS_ROWSCALE=0,shape_key=2473901687578",
+      "candidates": [
+        {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 64
+          },
+          "num_warps": 4,
+          "num_stages": 3
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 64
+          },
+          "num_warps": 4,
+          "num_stages": 4
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 64
+          },
+          "num_warps": 4,
+          "num_stages": 5
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 64
+          },
+          "num_warps": 4,
+          "num_stages": 6
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 2,
+          "num_stages": 1
+        }
+      ]
+    },
+    {
+      "kernel": "_input_dual_bwd_kernel",
+      "bucket": "M=147456,fs0=1,fs1=147456,gs0=128,gs1=1,shape_key=108095204330307737,vs0=128,vs1=1,ws0=1,ws1=128",
+      "candidates": [
+        {
+          "kwargs": {
+            "BLOCK_M1": 64,
+            "BLOCK_N": 128,
+            "BLOCK_K": 32,
+            "GROUP_M": 1
+          },
+          "num_warps": 4,
+          "num_stages": 4
+        },
+        {
+          "kwargs": {
+            "BLOCK_M1": 64,
+            "BLOCK_N": 128,
+            "BLOCK_K": 64,
+            "GROUP_M": 1
+          },
+          "num_warps": 4,
+          "num_stages": 3
+        },
+        {
+          "kwargs": {
+            "BLOCK_M1": 64,
+            "BLOCK_N": 128,
+            "BLOCK_K": 64,
+            "GROUP_M": 1
+          },
+          "num_warps": 4,
+          "num_stages": 4
+        },
+        {
+          "kwargs": {
+            "BLOCK_M1": 128,
+            "BLOCK_N": 64,
+            "BLOCK_K": 64,
+            "GROUP_M": 1
+          },
+          "num_warps": 4,
+          "num_stages": 3
+        },
+        {
+          "kwargs": {
+            "BLOCK_M1": 128,
+            "BLOCK_N": 128,
+            "BLOCK_K": 64,
+            "GROUP_M": 1
+          },
+          "num_warps": 8,
+          "num_stages": 4
+        }
+      ]
+    }
+  ],
+  "dynamic": false,
+  "device": "NVIDIA H100 80GB HBM3",
+  "torch_version": "2.10.0+cu128",
+  "correctness_dropout": 0,
+  "timing_dropout": 0.25,
+  "backward_with_grad_reset": {
+    "baseline": {
+      "ms": 1.2638245264689127,
+      "samples_ms": [
+        1.2644031524658204,
+        1.263982899983724,
+        1.263756815592448,
+        1.2638922373453776,
+        1.2634581247965495,
+        1.2636853535970052,
+        1.263922119140625,
+        1.2640394846598306,
+        1.2636085510253907,
+        1.263693873087565,
+        1.2635541280110678,
+        1.2641045888264975
+      ]
+    },
+    "ln_residual": {
+      "ms": 1.2340661366780599,
+      "samples_ms": [
+        1.2340287526448568,
+        1.2335423787434896,
+        1.2339263916015626,
+        1.233971150716146,
+        1.2344788869222005,
+        1.2347562154134115,
+        1.23427734375,
+        1.2339733123779297,
+        1.2339637756347657,
+        1.2341472625732421,
+        1.2342496236165366,
+        1.234103520711263
+      ]
+    },
+    "dual": {
+      "ms": 1.2113855997721354,
+      "samples_ms": [
+        1.2097323099772135,
+        1.2116373697916667,
+        1.211410140991211,
+        1.2113610585530599,
+        1.2111860911051433,
+        1.2116896311442058,
+        1.2112330118815104,
+        1.2110144297281902,
+        1.211416498819987,
+        1.2112747192382813,
+        1.2114368438720704,
+        1.211843236287435
+      ]
+    },
+    "both": {
+      "ms": 1.181336530049642,
+      "samples_ms": [
+        1.1799147288004557,
+        1.1792308807373046,
+        1.1817119598388672,
+        1.1819093068440756,
+        1.18112424214681,
+        1.1809504191080729,
+        1.1817546844482423,
+        1.1823285420735676,
+        1.1812095642089844,
+        1.181704584757487,
+        1.1814634958902994,
+        1.1812085469563802
+      ]
+    }
+  },
+  "forward_backward_with_grad_reset": {
+    "baseline": {
+      "ms": 1.7924176534016927,
+      "samples_ms": [
+        1.795812225341797,
+        1.792516326904297,
+        1.7919029235839843,
+        1.793222427368164,
+        1.7915796915690103,
+        1.7944330851236978,
+        1.7927594502766928,
+        1.791717274983724,
+        1.7917802174886068,
+        1.7922740936279298,
+        1.7926058451334634,
+        1.7923189798990886
+      ]
+    },
+    "ln_residual": {
+      "ms": 1.7626954396565755,
+      "samples_ms": [
+        1.763904062906901,
+        1.7615392049153646,
+        1.7628789265950522,
+        1.7625258127848307,
+        1.7643051147460938,
+        1.762326431274414,
+        1.7623775482177735,
+        1.7627861022949218,
+        1.7626047770182292,
+        1.763364283243815,
+        1.7628821055094401,
+        1.7624608357747396
+      ]
+    },
+    "dual": {
+      "ms": 1.7367557525634765,
+      "samples_ms": [
+        1.737552007039388,
+        1.73689816792806,
+        1.7354719797770182,
+        1.7368277231852214,
+        1.7366634368896485,
+        1.738006337483724,
+        1.7359765370686848,
+        1.737174352010091,
+        1.7366837819417318,
+        1.7366058349609375,
+        1.7365642547607423,
+        1.7368298848470052
+      ]
+    },
+    "both": {
+      "ms": 1.7067599614461262,
+      "samples_ms": [
+        1.7081899007161458,
+        1.706659189860026,
+        1.7081162770589193,
+        1.7063082377115886,
+        1.7081429799397787,
+        1.7067615509033203,
+        1.707425053914388,
+        1.7064351399739583,
+        1.7049962361653646,
+        1.7065408070882162,
+        1.7067583719889323,
+        1.7070699055989584
+      ]
+    }
+  }
+}

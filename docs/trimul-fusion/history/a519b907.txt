@@ -1,0 +1,29 @@
+commit a519b9070050e42d38d936bed5ee2053b8b1cb55
+Author:     SanggeunParrk <psk6950@snu.ac.kr>
+AuthorDate: Fri Jul 31 18:22:20 2026 +0900
+Commit:     SanggeunParrk <psk6950@snu.ac.kr>
+CommitDate: Fri Jul 31 18:22:20 2026 +0900
+
+    feat(trimul): residual+dropout for the bidirectional path (training fused + inference)
+    
+    Extend the residual + row-broadcast dropout fusion to BidirectionalTriangleMultiplication.
+    Its training back-half (BidirBackHalf) uses the same gate_elem kernels as the single-dir v6,
+    so the fusion is identical.
+    
+    - bidir_training BidirBackHalf: takes `pair` (residual) + `dropscale`; fwd fuses them into the
+      gate (y = pair + dropscale ⊙ trimul(pair)), bwd scales the incoming grad by dropscale and
+      returns d_residual = gy. Threaded through bidir_forward + BidirV6TriMul.forward.
+    - module: `forward(pair, mask, add_residual, dropout_p)` + `_make_drop_row_scale`; training fuses
+      via _forward_cute_train (sm90) / explicit on sm100; inference & non-cute backends apply the
+      residual (+ dropout, training) via `_r`.
+    - pairformer: bidirectional update now `tri_multi(pair, mask, add_residual=True, dropout_p=...)`.
+    
+    H100: inference residual cos 0.99999, training p=0 residual dx grad cos 1.0, dropout deterministic
+    under seed and applied. sm90 (triton gate_elem) fuses; sm100 bidir applies explicitly.
+    
+    Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+ .../kernels/trimul_inproj/cute/bidir_training.py   | 33 +++++++++++----
+ src/miniworld_kernels/modules/pairformer/module.py |  5 ++-
+ .../triangle_multiplication/bidirectional.py       | 48 ++++++++++++++++++----
+ 3 files changed, 66 insertions(+), 20 deletions(-)

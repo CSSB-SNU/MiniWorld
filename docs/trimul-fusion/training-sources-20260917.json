@@ -1,0 +1,16 @@
+{
+  "date": "2026-09-17",
+  "package": "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine",
+  "scope": "current training diagrams source audit; B1 BF16 D=h128 L384/L768; no new profile",
+  "sha256": {
+    "kernels/trimul_inproj/triton/bidirectional.py": "7da6421a9b22d5a1ef5589cda288a0f243c1878ced208f074c65b9f4c00c48b5",
+    "kernels/trimul_inproj/triton/unidirectional.py": "fba4abf7ca501b8a5f9242631761a736ed9d65524597b97037a1357f43bfcd9f",
+    "kernels/trimul_inproj/triton/output_fused.py": "c7aa79ab7936665d5edcc9e7c4d051a9f17ad38a2c1fc9373b4ac5b614f611a1",
+    "kernels/trimul_inproj/triton/backward_fused.py": "37f92cdbcbb48bf9cb36826b06f8eec0306f312462de724393b55b2042383f15",
+    "kernels/trimul_inproj/cute/bidir_training.py": "f2edc4e5273c584063637c2a1e5009270a2aad56d1da447200ef2aac188f17f8",
+    "kernels/trimul_inproj/cute/output_training.py": "d019b6e399dc95e68a1bf03cdda1e2a0e070811fa625d7bfc84ec1c80364c026",
+    "kernels/trimul_inproj/cute/contract.py": "1ec94266899863432444bc29ddc17f00d89bededa6796b777cde33ced03d1724",
+    "kernels/trimul_inproj/cute/dispatch.py": "90294f0bd047873c42f99bc90c49cf725a70d31c7ddebe7fac9bf7d8029062cd",
+    "kernels/layernorm_linear/triton/te_style.py": "21787206b1cbfa53460197d460ff256c33d21d6cafa6a0020fd873c883485346"
+  }
+}

@@ -104,7 +104,7 @@ See [the shared-branch integration record](../libs/team-gm/docs/miniworld-integr
 
 The dependency remains pinned to engine commit
 `1bc0803e3b2fef3b963fdc383e090c0adcccdb43`. Local engine fixes are stored in the
-three files under `patches/`, rather than depending solely on site-packages edits.
+five patch files under `patches/`, rather than depending solely on site-packages edits.
 After reinstalling that dependency, run:
 
 ```bash
@@ -114,7 +114,7 @@ pixi run -e cu128 engine-setup
 The patch helper verifies compatibility before applying changes and tolerates
 repeat execution. Applying all patches to a pristine copy of the pinned source
 and comparing the resulting files against the installed engine checks that the
-fixes survive reinstallation (**13 affected engine files matched**, with repeat
+fixes survive reinstallation (**28 affected engine files matched** after the H100 upgrade, with repeat
 application verified). Team-gm caller changes also live in this workspace's
 `libs/team-gm` submodule and must be included when publishing these changes.
 
@@ -126,3 +126,6 @@ snapshot and output path.
 
 The earlier CUDA Graph investigation and intermediate wiring results are in
 [phase2-cudagraph-bias-audit.md](phase2-cudagraph-bias-audit.md).
+
+H100 kernel classification, fusion changes and new measurements are documented in
+[h100-kernel-upgrade.md](h100-kernel-upgrade.md).

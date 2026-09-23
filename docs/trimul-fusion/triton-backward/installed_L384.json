@@ -1,0 +1,35 @@
+{
+  "length": 384,
+  "complete": true,
+  "explicit_dropout_errors": {
+    "holed_scale": [
+      0.0,
+      0.002362661063671112,
+      0.0026764553040266037,
+      0.002579516964033246,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      5.730804559789249e-07,
+      6.238350351850386e-07,
+      0.0,
+      0.0
+    ],
+    "zero_scale": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "package": "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/kernels/trimul_inproj/triton/bidirectional.py"
+}

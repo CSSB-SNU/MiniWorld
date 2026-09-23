@@ -16,7 +16,12 @@ def init_msa(
     num_res_class: int = 32,
     dtype: torch.dtype = torch.float32,
 ) -> tuple[Float[torch.Tensor, "B N L C"], Bool[torch.Tensor, "B N"]]:
-    """Initialize MSA features for a given recycle index."""
+    """One-hot / deletion MSA features for the rows in ``msa``.
+
+    Row selection is not done here: pass the full pool for the legacy
+    once-per-forward path, or the output of :func:`subsample_msa_rows` for the
+    v1.2.0 per-recycle path.
+    """
     msa_mask = msa.mask
     msa_sequences = msa.aligned_sequences
     msa_has_deletion = msa.has_deletion
@@ -38,6 +43,47 @@ def init_msa(
     return msa_feat.to(dtype=dtype), msa_mask.bool()
 
 
+def subsample_msa_rows(msa: MSAFeatures, n_rows: int) -> MSAFeatures:
+    """Draw ``n_rows`` MSA rows for one recycle iteration (AF3 SI 3.3 / OpenFold3).
+
+    AF3's MSA module "samples a new iid random subset of the MSA for each recycling
+    iteration" (public code: shuffle, truncate to 1024); OpenFold3's
+    ``_subsample_all_msa`` does the same, valid rows first, in training and
+    inference alike. This is that step, written for a static-shape trunk:
+
+    * the output depth is ``min(n_rows, N)`` for every call, so
+      ``torch.compile(dynamic=False)`` and CUDA-graph capture see one shape;
+    * randomness is ``torch.rand`` on the default CUDA generator, whose philox
+      offset advances on every graph replay, so each replay draws new rows;
+    * VALID rows (``mask``) are exhausted before padding rows are ever picked, so a
+      pool padded to a large bucket still hands the module its real homologs;
+    * row 0 (the query) is always kept, and the kept rows stay in their original
+      best-first order, which is how the trunk has always seen the alignment.
+
+    ``profile`` and ``deletion_mean`` are full-alignment statistics and pass
+    through untouched, as in AF3.
+    """
+    _, n_pool = msa.mask.shape
+    if n_rows >= n_pool:
+        return msa
+    valid = msa.mask.to(torch.float32)
+    # sort key: uniform noise, shifted so invalid rows sort after every valid one and
+    # the query (row 0) sorts before everything.
+    key = torch.rand_like(valid) + (1.0 - valid)
+    key[:, 0] = -1.0
+    idx = key.argsort(dim=1)[:, :n_rows]
+    idx, _ = idx.sort(dim=1)  # keep original (best-first) row order
+    idx_l = idx.unsqueeze(-1).expand(-1, -1, msa.aligned_sequences.shape[-1])
+    return MSAFeatures(
+        aligned_sequences=torch.gather(msa.aligned_sequences, 1, idx_l),
+        mask=torch.gather(msa.mask, 1, idx),
+        has_deletion=torch.gather(msa.has_deletion, 1, idx_l),
+        deletion_value=torch.gather(msa.deletion_value, 1, idx_l),
+        profile=msa.profile,
+        deletion_mean=msa.deletion_mean,
+    )
+
+
 @torch.no_grad()
 def init_msa_with_embedding(
     msa: MSAFeatures,
@@ -45,7 +91,12 @@ def init_msa_with_embedding(
     num_res_class: int = 32,
     dtype: torch.dtype = torch.float32,
 ) -> tuple[Float[torch.Tensor, "B N L C"], Bool[torch.Tensor, "B N"]]:
-    """Initialize MSA features for a given recycle index."""
+    """One-hot / deletion MSA features for the rows in ``msa``.
+
+    Row selection is not done here: pass the full pool for the legacy
+    once-per-forward path, or the output of :func:`subsample_msa_rows` for the
+    v1.2.0 per-recycle path.
+    """
     msa_mask = msa.mask
     msa_sequences = msa.aligned_sequences
     msa_has_deletion = msa.has_deletion

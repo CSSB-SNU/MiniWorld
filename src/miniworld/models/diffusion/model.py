@@ -28,11 +28,10 @@ from __future__ import annotations
 import logging
 from contextlib import nullcontext
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import torch
 from pydantic import BaseModel, Field
-from team_gm import typecheck
 from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
 from team_gm.modules.primitives import Linear
 from torch import nn
@@ -89,6 +88,15 @@ class DiffusionModel(MiniSWAModel):
         atom_swa: SWAAtomTransformer.Config | None = Field(
             default_factory=SWAAtomTransformer.Config,
         )
+        # v2.0.0: "bias_only" swaps the token DiT for ``BiasOnlyTokenDiT`` (attention
+        # pattern = one shared softmax of the pair bias; no q/k). "augmented" is the v1
+        # AF3-style ``DiffusionTransformer``. Changes parameter names -> new checkpoints.
+        token_dit_kind: Literal["augmented", "bias_only"] = "augmented"
+        # v2.0.0: run the whole diffusion module (token DiT, atom DiTs, conditioning) in
+        # bf16 parameters/activations. Norm affine params stay fp32 (engine LayerNorm/RMSNorm
+        # pin them; AdaLN via the adaln-fp32-norm engine patch) and the loss is computed on
+        # an fp32 upcast of the output. "fp32" is the v1 policy (fp32 params, TF32 GEMMs).
+        dtype: Literal["fp32", "bf16"] = "fp32"
 
     class Config(BaseModel):
         """Configuration for the phase 2 model."""
@@ -128,12 +136,13 @@ class DiffusionModel(MiniSWAModel):
 
         # Pair-only trunk has no single track: derive the diffusion single
         # conditioning from the trunk input single embedding.
+        self.dit_dtype = torch.bfloat16 if config.diffusion.dtype == "bf16" else torch.float32
         self.to_token_single_trunk = Linear(
             config.shared.d_single_token_input,
             config.shared.d_single,
             bias=False,
             init="default",
-        ).to(torch.float32)
+        ).to(self.dit_dtype)
 
         # ESMFold2 3D-RoPE atom DiT (swa_atom_config) + AF3 token DiT (token_dit).
         self.diffusion_module = DiffusionModule(
@@ -142,7 +151,12 @@ class DiffusionModel(MiniSWAModel):
             config.diffusion.token_dit,
             config.diffusion.dit_cond,
             swa_atom_config=config.diffusion.atom_swa,
-        ).to(torch.float32)
+            token_dit_kind=config.diffusion.token_dit_kind,
+        ).to(self.dit_dtype)  # engine norms keep fp32 affine params under this cast
+        # The relative-position embedder builds an fp32 one-hot internally (team-gm) and
+        # projects it with its own Linear; keep that tiny module fp32 and cast its OUTPUT
+        # to the pair dtype in DiffusionConditioning.forward instead.
+        self.diffusion_module.diffusion_conditioning.relative_position_embedder.float()
 
         if self.freeze_trunk:
             self._set_trunk_eval()
@@ -279,8 +293,8 @@ class DiffusionModel(MiniSWAModel):
                     template,
                 )
         return (
-            token_single_input_bf16.to(torch.float32),
-            token_pair.to(torch.float32),
+            token_single_input_bf16.to(self.dit_dtype),
+            token_pair.to(self.dit_dtype),
         )
 
     def diffusion_forward(
@@ -294,9 +308,15 @@ class DiffusionModel(MiniSWAModel):
         token_single_input: Float[torch.Tensor, "B L_token d_single_token_input"],
         token_pair_trunk: Float[torch.Tensor, "B L_token L_token d_pair"],
     ) -> Float[torch.Tensor, "B L_atom 3"]:
-        """Project the single conditioning and run the diffusion module."""
+        """Project the single conditioning and run the diffusion module.
+
+        The module runs in ``self.dit_dtype``; the denoised update is returned in fp32 so
+        the EDM loss, the sampler and every downstream geometry stay fp32.
+        """
+        token_single_input = token_single_input.to(self.dit_dtype)
+        token_pair_trunk = token_pair_trunk.to(self.dit_dtype)
         token_single_trunk = self.to_token_single_trunk(token_single_input)
-        return self.diffusion_module(
+        out = self.diffusion_module(
             reference,
             scheme,
             structure,
@@ -307,6 +327,7 @@ class DiffusionModel(MiniSWAModel):
             token_single_trunk,
             token_pair_trunk,
         )
+        return out.to(torch.float32)
 
     def forward(
         self,

@@ -1,0 +1,143 @@
+{
+  "module_units": [
+    {
+      "length": 128,
+      "error": null,
+      "launches": [
+        [
+          "layernorm_fwd_saveact_triton",
+          "bfloat16+float32",
+          "HAS_ROWSCALE=0,shape_key=274878432026"
+        ],
+        [
+          "trimul_gemm_gate_mmajor_triton",
+          "bfloat16",
+          "SAVE_PREACT=1,shape_key=8800388517254"
+        ],
+        [
+          "layernorm_fwd_saveact_strided_triton",
+          "bfloat16+float32",
+          "shape_key=2148533018"
+        ],
+        [
+          "trimul_output_f567_train_triton",
+          "bfloat16",
+          "L=128,M=16384,shape_key=36037597407477913,wg0=128,wg1=1,wp0=256,wp1=1"
+        ],
+        [
+          "gated_projection_bwd_gate_dropres_triton",
+          "bfloat16",
+          "FROM_PREACT=0,shape_key=2148008730"
+        ],
+        [
+          "layernorm_bwd_atomic_strided_triton",
+          "bfloat16+float32",
+          "shape_key=2148533018"
+        ],
+        [
+          "trimul_bwd_gate_packed_triton",
+          "bfloat16",
+          "shape_key=2148534788"
+        ],
+        [
+          "layernorm_bwd_atomic_triton",
+          "bfloat16+float32",
+          "HAS_ROWSCALE=0,shape_key=274878432026"
+        ]
+      ]
+    },
+    {
+      "length": 384,
+      "error": null,
+      "launches": [
+        [
+          "layernorm_fwd_saveact_triton",
+          "bfloat16+float32",
+          "HAS_ROWSCALE=0,shape_key=2473901687578"
+        ],
+        [
+          "trimul_gemm_gate_mmajor_triton",
+          "bfloat16",
+          "SAVE_PREACT=1,shape_key=26392574561670"
+        ],
+        [
+          "layernorm_fwd_saveact_strided_triton",
+          "bfloat16+float32",
+          "shape_key=2148533018"
+        ],
+        [
+          "trimul_output_f567_train_triton",
+          "bfloat16",
+          "L=384,M=147456,shape_key=108095191445405849,wg0=128,wg1=1,wp0=256,wp1=1"
+        ],
+        [
+          "gated_projection_bwd_gate_dropres_triton",
+          "bfloat16",
+          "FROM_PREACT=0,shape_key=6442976026"
+        ],
+        [
+          "layernorm_bwd_atomic_strided_triton",
+          "bfloat16+float32",
+          "shape_key=2148533018"
+        ],
+        [
+          "trimul_bwd_gate_packed_triton",
+          "bfloat16",
+          "shape_key=6443502084"
+        ],
+        [
+          "layernorm_bwd_atomic_triton",
+          "bfloat16+float32",
+          "HAS_ROWSCALE=0,shape_key=2473901687578"
+        ]
+      ]
+    },
+    {
+      "length": 768,
+      "error": null,
+      "launches": [
+        [
+          "layernorm_fwd_saveact_triton",
+          "bfloat16+float32",
+          "HAS_ROWSCALE=0,shape_key=9895605175066"
+        ],
+        [
+          "trimul_gemm_gate_mmajor_triton",
+          "bfloat16",
+          "SAVE_PREACT=1,shape_key=52780853628294"
+        ],
+        [
+          "layernorm_fwd_saveact_strided_triton",
+          "bfloat16+float32",
+          "shape_key=2148533018"
+        ],
+        [
+          "trimul_output_f567_train_triton",
+          "bfloat16",
+          "L=768,M=589824,shape_key=216181582502297753,wg0=128,wg1=1,wp0=256,wp1=1"
+        ],
+        [
+          "gated_projection_bwd_gate_dropres_triton",
+          "bfloat16",
+          "FROM_PREACT=0,shape_key=12885426970"
+        ],
+        [
+          "layernorm_bwd_split_triton",
+          "bfloat16+float32",
+          "shape_key=2148533018"
+        ],
+        [
+          "trimul_bwd_gate_packed_triton",
+          "bfloat16",
+          "shape_key=12885953028"
+        ],
+        [
+          "layernorm_bwd_atomic_triton",
+          "bfloat16+float32",
+          "HAS_ROWSCALE=0,shape_key=9895605175066"
+        ]
+      ]
+    }
+  ],
+  "registry_units": 24
+}

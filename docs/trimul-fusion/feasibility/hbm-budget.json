@@ -1,0 +1,81 @@
+{
+  "assumptions": "BF16 B1 N128 Kproj256 Kgate128; one logical tensor read per consumer; saved normalized/proj/gate retained; backward unchanged; exclude weights, LN stats, dropout-scale generation, cache reuse and tile rereads; 2/3 TB/s are assumed sensitivity inputs, not measured bandwidth",
+  "rows": [
+    {
+      "L": 128,
+      "T_bytes": 4194304,
+      "T_MiB": 4.0,
+      "baseline_bytes": 58720256,
+      "A_bytes": 46137344,
+      "B_bytes": 41943040,
+      "A_saving_MiB": 12.0,
+      "B_saving_MiB": 16.0,
+      "A_saving_ms_at_3_and_2_TBs": [
+        0.004194304,
+        0.006291456
+      ],
+      "B_saving_ms_at_3_and_2_TBs": [
+        0.005592405333333333,
+        0.008388608
+      ],
+      "unchanged_gemm_FLOPs": 1610612736
+    },
+    {
+      "L": 384,
+      "T_bytes": 37748736,
+      "T_MiB": 36.0,
+      "baseline_bytes": 528482304,
+      "A_bytes": 415236096,
+      "B_bytes": 377487360,
+      "A_saving_MiB": 108.0,
+      "B_saving_MiB": 144.0,
+      "A_saving_ms_at_3_and_2_TBs": [
+        0.037748736,
+        0.056623104
+      ],
+      "B_saving_ms_at_3_and_2_TBs": [
+        0.050331648,
+        0.075497472
+      ],
+      "unchanged_gemm_FLOPs": 14495514624
+    },
+    {
+      "L": 768,
+      "T_bytes": 150994944,
+      "T_MiB": 144.0,
+      "baseline_bytes": 2113929216,
+      "A_bytes": 1660944384,
+      "B_bytes": 1509949440,
+      "A_saving_MiB": 432.0,
+      "B_saving_MiB": 576.0,
+      "A_saving_ms_at_3_and_2_TBs": [
+        0.150994944,
+        0.226492416
+      ],
+      "B_saving_ms_at_3_and_2_TBs": [
+        0.201326592,
+        0.301989888
+      ],
+      "unchanged_gemm_FLOPs": 57982058496
+    },
+    {
+      "L": 1024,
+      "T_bytes": 268435456,
+      "T_MiB": 256.0,
+      "baseline_bytes": 3758096384,
+      "A_bytes": 2952790016,
+      "B_bytes": 2684354560,
+      "A_saving_MiB": 768.0,
+      "B_saving_MiB": 1024.0,
+      "A_saving_ms_at_3_and_2_TBs": [
+        0.268435456,
+        0.402653184
+      ],
+      "B_saving_ms_at_3_and_2_TBs": [
+        0.3579139413333333,
+        0.536870912
+      ],
+      "unchanged_gemm_FLOPs": 103079215104
+    }
+  ]
+}

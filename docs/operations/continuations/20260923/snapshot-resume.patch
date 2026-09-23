@@ -1,0 +1,79 @@
+--- a/scripts/run_miniworld_distogram_train.py
++++ b/scripts/run_miniworld_distogram_train.py
+@@ -499,6 +499,8 @@
+             for name, p in raw_model.named_parameters():
+                 p.copy_(param_snapshot[name].to(p.device, non_blocking=True))
+         client.optimizer.load_state_dict(optimizer_state_snapshot)
++        from miniworld_engine.integrations.optimizer import align_optimizer_state_layout_
++        align_optimizer_state_layout_(client.optimizer)
+         _restore_rng_state(raw_model, rng_state)
+         client.model.train(was_training)
+ 
+@@ -598,18 +600,20 @@
+         cg_log.addHandler(fh)
+         cg_log.addHandler(logging.StreamHandler())
+         config_dict = cfg.model_dump(mode="json")
+-        OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
++        # Keep the original run configuration record; continuation config is recorded with source provenance.
++        assert (run_sub_dir / "config.yaml").is_file()
+         if cfg.train.use_wandb:
+             wandb_id_file = Path(cfg.train.run_dir) / "wandb_run_id.txt"
+             if wandb_id_file.exists():
+                 wandb_id = wandb_id_file.read_text().strip()
+             else:
++                raise RuntimeError("Existing W&B run id is required for continuation")
+                 wandb_id = wandb.util.generate_id()
+                 wandb_id_file.parent.mkdir(parents=True, exist_ok=True)
+                 wandb_id_file.write_text(wandb_id)
+             wandb.init(
+                 project=cfg.train.wandb_project, name=job_name,
+-                id=wandb_id, resume="allow", config=config_dict,
++                id=wandb_id, resume="must", config=config_dict,
+             )
+             _define_loss_metrics()
+     cg_log.info(
+@@ -685,7 +689,7 @@
+         job_name = cfg.train.comment
+ 
+     run_name += f"_{job_name}"
+-    run_sub_dir = date_dir / run_name
++    run_sub_dir = Path(os.environ["MW_RESUME_RUN_SUBDIR"])
+     run_sub_dir.mkdir(parents=True, exist_ok=True)
+ 
+     client = Client(
+@@ -741,7 +745,8 @@
+     msg = f"config:\n{OmegaConf.to_yaml(OmegaConf.create(config_dict))}"
+     client.logger.debug(msg)
+     if fabric.is_global_zero:
+-        OmegaConf.save(OmegaConf.create(config_dict), run_sub_dir / "config.yaml")
++        # Keep the original run configuration record; continuation config is recorded with source provenance.
++        assert (run_sub_dir / "config.yaml").is_file()
+         if cfg.train.use_wandb:
+             # Stable run id kept at the run_dir root (survives autoscaler
+             # preempt/resubmit, which makes a fresh timestamped run_sub_dir each
+@@ -751,6 +756,7 @@
+             if wandb_id_file.exists():
+                 wandb_id = wandb_id_file.read_text().strip()
+             else:
++                raise RuntimeError("Existing W&B run id is required for continuation")
+                 wandb_id = wandb.util.generate_id()
+                 wandb_id_file.parent.mkdir(parents=True, exist_ok=True)
+                 wandb_id_file.write_text(wandb_id)
+@@ -758,7 +764,7 @@
+                 project=cfg.train.wandb_project,
+                 name=job_name,
+                 id=wandb_id,
+-                resume="allow",
++                resume="must",
+                 config=config_dict,
+             )
+             _define_loss_metrics()
+@@ -795,6 +801,8 @@
+     if ckpt:
+         state_dict = torch.load(ckpt, map_location="cpu")
+         client.load_state_dict(state_dict, strict=ckpt_strict)
++        from miniworld_engine.integrations.optimizer import align_optimizer_state_layout_
++        client.logger.info("[engine2-resume] aligned Adam tensors=%d", align_optimizer_state_layout_(client.optimizer))
+ 
+     # Memory-PROFILE mode (guarded, off by default). MW_MEM_PROFILE=1 registers forward
+     # hooks on the top-level trunk modules and logs each one's retained-activation delta and

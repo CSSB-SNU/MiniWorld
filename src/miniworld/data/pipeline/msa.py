@@ -551,8 +551,15 @@ class ComplexMSA:
         final_sequence = np.delete(final_sequence, gap_idx, axis=0)
         final_deletion = np.delete(final_deletion, gap_idx, axis=0)
         final_has_deletion = np.delete(final_has_deletion, gap_idx, axis=0)
+        # Keep ``msa_indices`` ROW-ALIGNED with ``sequence``: apply the same
+        # ``[:max_msa_depth]`` slice the blocks used, the same ``keep`` filter, then the
+        # same ``gap_idx`` deletion (whose indices are relative to the kept rows).
+        # Before this, only ``gap_idx`` was applied -- to the UNFILTERED indices -- so
+        # every row past the first ``skip``ped one (a homolog identical to the query is
+        # enough) pointed one or more rows too far, and per-chain subsampling either
+        # read the wrong homolog or ran off the end (IndexError on an 8679-row stack).
         final_msa_indices = {
-            key: np.delete(indices, gap_idx, axis=0)
+            key: np.delete(indices[:max_msa_depth][keep], gap_idx, axis=0)
             for key, indices in final_msa_indices.items()
         }
 
@@ -731,27 +738,41 @@ def sample_msa(
     msa: ComplexMSA,
     max_msa_depth: int,
     rng: np.random.Generator | None = None,
-    sample_depth: Literal["uniform", "fixed", "random"] = "uniform",
+    sample_depth: Literal["uniform", "fixed", "random", "af3"] = "uniform",
 ) -> MSAFeatures:
     """Sample and process MSA for model input.
 
-    ``sample_depth="uniform"`` (AF3-style, default) draws the per-item depth
-    k ~ Uniform[1, min(n_available, max_msa_depth)] so the model sees a range
-    of MSA depths. ``sample_depth="fixed"`` always requests max_msa_depth
-    (legacy behavior). ``sample_depth="random"`` also requests max_msa_depth but
-    draws WHICH rows at random (query kept), so two rngs give two different
-    alignments of the same depth -- the inference-side ensemble knob.
+    ``sample_depth="uniform"`` (default) draws the per-item depth
+    k ~ Uniform[1, min(n_available, max_msa_depth)] and takes the FIRST k rows,
+    so the model sees a range of depths but never a row past ``max_msa_depth``.
+    ``sample_depth="fixed"`` always requests max_msa_depth (legacy behavior).
+    ``sample_depth="random"`` also requests max_msa_depth but draws WHICH rows
+    at random (query kept), so two rngs give two different alignments of the
+    same depth -- the inference-side ensemble knob.
+
+    ``sample_depth="af3"`` (v1.2.0) is the AF3 SI 2.2 data-stage rule: the depth
+    is drawn over the FULL stored alignment, k ~ Uniform[1, n_available], and the
+    rows are then cropped to the ``max_msa_depth`` budget -- AF3 shuffles before it
+    crops, so the kept rows are a random per-chain subset, not the best-first
+    prefix. Two things follow. Deep alignments saturate the budget most of the
+    time (P(k >= budget) = 1 - budget/n), instead of a median depth of budget/2,
+    and rows past the budget are actually seen. The budget itself is unchanged,
+    so tensor shapes and MSA buckets are the same as under "uniform".
     """
     if rng is None:
         rng = np.random.default_rng()
 
+    if getattr(msa, "pairing_mode", "mixed") == "no_pairing":
+        n_available = int(msa.sequence.shape[0])
+    else:
+        n_available = int(msa.total_depth)
+
     if sample_depth == "uniform":
-        if getattr(msa, "pairing_mode", "mixed") == "no_pairing":
-            n_available = int(msa.sequence.shape[0])
-        else:
-            n_available = int(msa.total_depth)
         upper = max(1, min(n_available, max_msa_depth))
         effective_depth = int(rng.integers(1, upper + 1))
+    elif sample_depth == "af3":
+        k = int(rng.integers(1, max(1, n_available) + 1))
+        effective_depth = min(k, max_msa_depth)
     else:
         effective_depth = max_msa_depth
 
@@ -760,7 +781,7 @@ def sample_msa(
     _, aligned_sequences, has_deletion, deletion_value = msa.sample(
         effective_depth,
         rng=rng,
-        randomize=sample_depth == "random",
+        randomize=sample_depth in ("random", "af3"),
     )
     n_seq, _ = aligned_sequences.shape
     mask = np.ones((n_seq), dtype=np.float32)

@@ -1,0 +1,20 @@
+{
+  "r1-off-compile.json": "10848d2a28ef8b6f1b2f64becfaf28971cd6ea6e887332872af531405340ab5a",
+  "r1-manual-compile.json": "7df089e24b2766ea422ec97c3ab7e6ed5195c03cb2aa1576578fc5604723776c",
+  "r4-off-compile.json": "97e85ba444bf5151d5488652ef7b25e546a4d36164a7b93e7689c0f1517bd3d9",
+  "r4-manual-compile.json": "16dd6ed40c989b515b171747f4310ec20ad674e0bfd363410f3b0f112d1fa8ac",
+  "summary.json": "b4554f1e6ed27dfca214bc13192e6be210aac8f55b15dc935d3221db2d33fdee",
+  "check.xml": "e1201dd538d5080a0f116ed3ea2c65bb1d2a0d32c006714b387df50c4756c764",
+  "memcheck.xml": "942b9ad2a534ff121186f6eb35c802683f69d7ff07d9ed742f2e028eb09a7733",
+  "cpu.xml": "8bd6f97c70099201faa30abeb5868306aa2e1e50f7d3a109bafdc23e6223bf56",
+  "check-13208.log": "87a0012fe2f89283a46b23511ede3e2a479e973d24386f25e33f318129f50044",
+  "memcheck-13209.log": "9d8159bfe3a140a5950d1e1abfa6d674f2f1f971c70b6037575a62af1dca7222",
+  "compiled-13210.log": "173d8c7f1251514927d4e215695aa3f9247c593d85a189db0fb5ded63fdffa0f",
+  "compiled.sbatch": "5b6b3280e4af2ce8ee3d2501acfeafef2db43aa8a749f9ddcbadb5fa3f0bac5d",
+  "memcheck.sbatch": "96bc8e2444572140d18571c9a0a2839c4048f0973bfc34dead3cd522aeeeead1",
+  "patch-validation.json": "3cd906ebc2f34d6ae257de1d406fede5c35b3def0cd201266ddcc6d3ad3b205a",
+  "manifest.json": "0c3e815fb9b4479f8acf23f490acfac6fd873995ac0ead8208387f9361309290",
+  "activation.json": "58e99d49f0456c1485ce1da637affeb8320991a0b3d09191b667eabcb5a5ddca",
+  "benchmark_miniworld_training_graph.py": "c4311d328bd59f5dbdcde5ed0af812fce1c4ea27a5f9935b07de2b22a84e85ff",
+  "test_phase1_flash_backward_compile.py": "144b5e4728271cfa0fc735e23729a735540dc0f8452e83053eff7e47f5c8fb87"
+}

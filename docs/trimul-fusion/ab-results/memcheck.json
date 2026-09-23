@@ -1,0 +1,1063 @@
+{
+  "length": 384,
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "torch": "2.10.0+cu128",
+  "dynamic": false,
+  "source_sha256": {
+    "benchmark_trimul_fusion_ab.py": "ca6215b63536d656a8c7f520ebd4421319bd7267981efeead277a2d583955dcf",
+    "trimul_output_fusion.py": "3d0e3150537cabeef62a9b65015d4c8875ef14ea08930f9bd3c35a8dfac7aef1",
+    "trimul_fusion_training.py": "57b5b5aa405125ab42daea074b5340d6a3f91223ab4809f7442995994aff0049"
+  },
+  "smoke": [
+    {
+      "baseline": {
+        "output_fp32": {
+          "rel_l2": 0.0019660331308841705,
+          "max_abs": 0.022208213806152344,
+          "finite": true
+        },
+        "saved_vs_baseline": {
+          "y": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "proj": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "norm": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "mean": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "rstd": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gate": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_fp32": {
+          "tri": {
+            "rel_l2": 0.0033184033818542957,
+            "max_abs": 0.011324405670166016,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0036927643232047558,
+            "max_abs": 0.005524873733520508,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0030950219370424747,
+            "max_abs": 0.06088542938232422,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.003142768982797861,
+            "max_abs": 0.10535812377929688,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.003320122603327036,
+            "max_abs": 0.20612525939941406,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.003735601669177413,
+            "max_abs": 0.0726766586303711,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_vs_baseline": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        }
+      },
+      "A": {
+        "output_fp32": {
+          "rel_l2": 0.0019660331308841705,
+          "max_abs": 0.022208213806152344,
+          "finite": true
+        },
+        "saved_vs_baseline": {
+          "y": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "proj": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "norm": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "mean": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "rstd": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gate": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_fp32": {
+          "tri": {
+            "rel_l2": 0.0033184033818542957,
+            "max_abs": 0.011324405670166016,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0036927643232047558,
+            "max_abs": 0.005524873733520508,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0030950219370424747,
+            "max_abs": 0.06088542938232422,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.003142768982797861,
+            "max_abs": 0.10535812377929688,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.003320122603327036,
+            "max_abs": 0.20612525939941406,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.003735601669177413,
+            "max_abs": 0.0726766586303711,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_vs_baseline": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        }
+      },
+      "B": {
+        "output_fp32": {
+          "rel_l2": 0.0019660331308841705,
+          "max_abs": 0.022208213806152344,
+          "finite": true
+        },
+        "saved_vs_baseline": {
+          "y": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "proj": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "norm": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "mean": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "rstd": {
+            "rel_l2": 3.377985535735206e-08,
+            "max_abs": 1.1920928955078125e-07,
+            "finite": true
+          },
+          "gate": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_fp32": {
+          "tri": {
+            "rel_l2": 0.0033184033818542957,
+            "max_abs": 0.011324405670166016,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0036927643232047558,
+            "max_abs": 0.005524873733520508,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0030950219370424747,
+            "max_abs": 0.06088542938232422,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.003142768982797861,
+            "max_abs": 0.10535812377929688,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.003320122603327036,
+            "max_abs": 0.20612525939941406,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.003735601669177413,
+            "max_abs": 0.0726766586303711,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_vs_baseline": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        }
+      }
+    },
+    {
+      "baseline": {
+        "output_fp32": {
+          "rel_l2": 0.001952534425072372,
+          "max_abs": 0.020349502563476562,
+          "finite": true
+        },
+        "saved_vs_baseline": {
+          "y": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "proj": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "norm": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "mean": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "rstd": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gate": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_fp32": {
+          "tri": {
+            "rel_l2": 0.0033510762732475996,
+            "max_abs": 0.010933160781860352,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.003824545070528984,
+            "max_abs": 0.005493044853210449,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0032373119611293077,
+            "max_abs": 0.08254623413085938,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.003548949956893921,
+            "max_abs": 0.07497406005859375,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.0033509416971355677,
+            "max_abs": 0.20066070556640625,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.003805604064837098,
+            "max_abs": 0.0787343978881836,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_vs_baseline": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        }
+      },
+      "A": {
+        "output_fp32": {
+          "rel_l2": 0.0019525331445038319,
+          "max_abs": 0.020349502563476562,
+          "finite": true
+        },
+        "saved_vs_baseline": {
+          "y": {
+            "rel_l2": 1.103897034226975e-06,
+            "max_abs": 0.000244140625,
+            "finite": true
+          },
+          "proj": {
+            "rel_l2": 2.600141215225449e-06,
+            "max_abs": 0.00048828125,
+            "finite": true
+          },
+          "norm": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "mean": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "rstd": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gate": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_fp32": {
+          "tri": {
+            "rel_l2": 0.0033510762732475996,
+            "max_abs": 0.010933160781860352,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0038246638141572475,
+            "max_abs": 0.005493044853210449,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0032373119611293077,
+            "max_abs": 0.08254623413085938,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.003548949956893921,
+            "max_abs": 0.07497406005859375,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.0033509416971355677,
+            "max_abs": 0.20066070556640625,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0038056038320064545,
+            "max_abs": 0.0787343978881836,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_vs_baseline": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 3.915609704563394e-05,
+            "max_abs": 0.0009765625,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 5.847956003890431e-07,
+            "max_abs": 0.00030517578125,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        }
+      },
+      "B": {
+        "output_fp32": {
+          "rel_l2": 0.0019524958916008472,
+          "max_abs": 0.020349502563476562,
+          "finite": true
+        },
+        "saved_vs_baseline": {
+          "y": {
+            "rel_l2": 5.9549078287091106e-05,
+            "max_abs": 0.0078125,
+            "finite": true
+          },
+          "proj": {
+            "rel_l2": 0.00014227282372303307,
+            "max_abs": 0.015625,
+            "finite": true
+          },
+          "norm": {
+            "rel_l2": 5.8220986829837784e-05,
+            "max_abs": 0.015625,
+            "finite": true
+          },
+          "mean": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "rstd": {
+            "rel_l2": 6.086126091986443e-08,
+            "max_abs": 1.1920928955078125e-07,
+            "finite": true
+          },
+          "gate": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_fp32": {
+          "tri": {
+            "rel_l2": 0.0033510762732475996,
+            "max_abs": 0.010933160781860352,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.003827336011454463,
+            "max_abs": 0.005493044853210449,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0032373119611293077,
+            "max_abs": 0.08254623413085938,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.003548949956893921,
+            "max_abs": 0.07497406005859375,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.0033510769717395306,
+            "max_abs": 0.20066070556640625,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0038082972168922424,
+            "max_abs": 0.0787343978881836,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_vs_baseline": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0002661766193341464,
+            "max_abs": 0.00390625,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 8.902577974367887e-05,
+            "max_abs": 0.0625,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.00037375863757915795,
+            "max_abs": 0.0625,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        }
+      }
+    },
+    {
+      "baseline": {
+        "output_fp32": {
+          "rel_l2": 0.0,
+          "max_abs": 0.0,
+          "finite": true
+        },
+        "saved_vs_baseline": {
+          "y": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "proj": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "norm": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "mean": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "rstd": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gate": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_fp32": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.002859298838302493,
+            "max_abs": 0.17971038818359375,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_vs_baseline": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        }
+      },
+      "A": {
+        "output_fp32": {
+          "rel_l2": 0.0,
+          "max_abs": 0.0,
+          "finite": true
+        },
+        "saved_vs_baseline": {
+          "y": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "proj": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "norm": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "mean": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "rstd": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gate": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_fp32": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.002859298838302493,
+            "max_abs": 0.17971038818359375,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_vs_baseline": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        }
+      },
+      "B": {
+        "output_fp32": {
+          "rel_l2": 0.0,
+          "max_abs": 0.0,
+          "finite": true
+        },
+        "saved_vs_baseline": {
+          "y": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "proj": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "norm": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "mean": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "rstd": {
+            "rel_l2": 3.377985535735206e-08,
+            "max_abs": 1.1920928955078125e-07,
+            "finite": true
+          },
+          "gate": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_fp32": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.002859298838302493,
+            "max_abs": 0.17971038818359375,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        },
+        "gradients_vs_baseline": {
+          "tri": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "x_n": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "gamma": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "beta": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wp": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "wg": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          },
+          "residual": {
+            "rel_l2": 0.0,
+            "max_abs": 0.0,
+            "finite": true
+          }
+        }
+      }
+    }
+  ],
+  "complete": true,
+  "runtime_selections": {
+    "('f567', (289, 256), (1, 289), (289, 128), (256, 1), (128, 1), 'torch.bfloat16')": {
+      "config": null,
+      "hit": false
+    },
+    "('f45', (289, 256), (1, 289), (289, 128), (256, 1), (128, 1), 'torch.bfloat16')": {
+      "config": null,
+      "hit": false
+    },
+    "('f67', (289, 256), (1, 289), (289, 128), (256, 1), (128, 1), 'torch.bfloat16')": {
+      "config": null,
+      "hit": false
+    },
+    "('f567', (283, 250), (1, 283), (283, 125), (250, 1), (125, 1), 'torch.bfloat16')": {
+      "config": null,
+      "hit": false
+    },
+    "('f45', (283, 250), (1, 283), (283, 125), (250, 1), (125, 1), 'torch.bfloat16')": {
+      "config": null,
+      "hit": false
+    },
+    "('f67', (283, 250), (1, 283), (283, 125), (250, 1), (125, 1), 'torch.bfloat16')": {
+      "config": null,
+      "hit": false
+    }
+  }
+}

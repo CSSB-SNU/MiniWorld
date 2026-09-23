@@ -1,0 +1,12 @@
+{
+  "r1-off-shared-tuning.json": "5df6af1dda435c830e16bed8775ffa7d96b91efa9171626a9cfd4128bdc85861",
+  "r1-manual-shared-tuning.json": "69f8a03ac887468ffb34969a40ddb125aa36c31760bcd1d1ca542e1d63002d47",
+  "r4-off.json": "7d3ae7b2da18d3f7dd964f931f87803aacd79a5bfb3de5903c71daaa21467555",
+  "r4-manual.json": "68069c58c9394caa6e3459290a692c872dda905698fde4b8194f164e519d94bf",
+  "summary.json": "0a119a59094c783779ca7f4ca4d5ec1c953fac5a6097c71ba32937cf779fe0b7",
+  "worker-13206.log": "fd2d274971c6aa682b3e24957100ad6788103984a18c28c40211788b6036d4ab",
+  "compiled-13207.log": "97742fe9acea76c403ae9f54d2667e394918f73b526752fe657246574473c1f5",
+  "worker.sbatch": "cfc4661b4f5c33b33600ce733a44ec702adf4579239c8967fa721a92dfad1304",
+  "compiled.sbatch": "85a8452330ca4c5e8b4b80b1149722d50280cbbde6a1e74a3ae97036e5966f04",
+  "benchmark_miniworld_training_graph.py": "c4311d328bd59f5dbdcde5ed0af812fce1c4ea27a5f9935b07de2b22a84e85ff"
+}

@@ -1,0 +1,153 @@
+{
+  "date": "2026-09-22",
+  "phase": "experiments_closed_accuracy_issue_open",
+  "new_experiments_started": false,
+  "default_promoted": false,
+  "pushed": false,
+  "performance_job": "15526",
+  "latest_full_us": 1009.8080039024353,
+  "latest_correctness_passed": false,
+  "pending": [
+    "input LN parameter gradient strict tolerance",
+    "L768 latest joint B7 validation",
+    "production integration",
+    "SoL90"
+  ],
+  "artifacts": [
+    {
+      "path": "docs/trimul-fusion/closeout-20260922/README.md",
+      "bytes": 5335,
+      "sha256": "a4388b2eabae96278c604f0bad6d2b2e08556d38fd6966fbd4765aa560b5d184"
+    },
+    {
+      "path": "docs/trimul-fusion/closeout-20260922/selected-L384.svg",
+      "bytes": 7416,
+      "sha256": "97263c662b8733bf3b22b53cee12d6f04ad8ff4e8b6ff41bd95b1dd755eee9ec"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/b1_fused.cu",
+      "bytes": 20856,
+      "sha256": "cfb02167d4bb7b96064a009bcce13489982c6697be33118608435eeadb3d36e2"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/b1_lowreg.inc",
+      "bytes": 4082,
+      "sha256": "de48f7dde4eac3f45863b1fe3df6048f290a304e3b34b2823b2514582c9eb34f"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/b1_pipeline_math.inc",
+      "bytes": 4580,
+      "sha256": "4aca631ce8e0e959ba551eb531911e7fdf9efc5382d7e9af7345014cdbccedd4"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/b1_stream_ln.inc",
+      "bytes": 2470,
+      "sha256": "f4164a3af8b5a9afbe5c52129e40f78bc3d09743e9b7cc6b1ae37b7cf6695ee0"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/build/53d2f7d052b10d559a2a8671170afb2df8850e3844a64169bad1c7550004b356.cubin",
+      "bytes": 422040,
+      "sha256": "cde742fdc3869bfa28a353c3f815610f88ae132ad729f97e782ec6a23fbbba12"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/common_recompute.cuh",
+      "bytes": 2853,
+      "sha256": "f62f21206c3b16aabed33eaacb74c5e438edf9369884dcecd5f35699c596a22e"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/ln_recompute.cuh",
+      "bytes": 4950,
+      "sha256": "60d1928712c787b7776b7214c78590f37f065fb062f99aaf1a2926e34adaeedc"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/lowreg_stats.inc",
+      "bytes": 8778,
+      "sha256": "aeb41fa6458c6842443638e97df6d6cbefd43568f75820d66fe2523d675cbcda"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/policy.py",
+      "bytes": 788,
+      "sha256": "70fcac5a36a1cc50bdcd4046d1b524674acda97e97d46586afa2e7c656c2f884"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/sanitizers-L384.json",
+      "bytes": 174,
+      "sha256": "53c56ba3b92ce3410823c682877529d7afa0c1851c3aa3ee979a6c777bfda2d1"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/sanitizers-L768.json",
+      "bytes": 174,
+      "sha256": "f371d8a76e59e5e1b51b284da549b1c46f63f99eee170669f7bc37173414d2ab"
+    },
+    {
+      "path": "runs/trimul_b1_gate_demote_20260922/xhat_read.inc",
+      "bytes": 782,
+      "sha256": "4fa9d9757b03a8941726890f6120333abed89eebcea63e0aecbde6a21b8f69a4"
+    },
+    {
+      "path": "runs/trimul_b7_weight_batch128_20260922/build/49f07965e1ce5ebd0418282fd119c560fd31e16787aace4b4d51d181016e358d.cubin",
+      "bytes": 417752,
+      "sha256": "0b4bf73b7874f4ea45e0d5383d4004894ee5ca584e720c764f61336b92aa5e39"
+    },
+    {
+      "path": "runs/trimul_b7_weight_batch128_20260922/joint.cu",
+      "bytes": 22315,
+      "sha256": "dee13f2d4d733bc58400fd8eb3169ac38b81a0d1bee9ebc01324fd25ac14f46f"
+    },
+    {
+      "path": "runs/trimul_b7_weight_batch128_20260922/plan.py",
+      "bytes": 4810,
+      "sha256": "a94c030bbc255ab6bd38fb4faf013339fa2ca1cbc73195cb99d568fc47181f0e"
+    },
+    {
+      "path": "runs/trimul_b7_weight_batch128_20260922/sanitizer-L384-p24.json",
+      "bytes": 330,
+      "sha256": "6cded3bd6a54c25a4800008a4802d611ac8e1f24b9c883294b98306e74f87e6e"
+    },
+    {
+      "path": "runs/trimul_b7_weight_batch128_20260922/sanitizer-L384.json",
+      "bytes": 330,
+      "sha256": "6cded3bd6a54c25a4800008a4802d611ac8e1f24b9c883294b98306e74f87e6e"
+    },
+    {
+      "path": "runs/trimul_b7_weight_batch128_20260922/selected.json",
+      "bytes": 2334,
+      "sha256": "5de55fb35a1521707ce39b82c1974758010722e5d244a134ec9b8cefabb93ed0"
+    },
+    {
+      "path": "runs/trimul_b7_weight_batch128_20260922/single_wg.inc",
+      "bytes": 3617,
+      "sha256": "d2e233a020454b624f4d3cd2ac38ca2b8bfc3a13e0a85dd4dbd8b880f2f8444e"
+    },
+    {
+      "path": "runs/trimul_full_latest_20260922/bench.py",
+      "bytes": 5725,
+      "sha256": "fdff854419ad7a2b50bc7ea8e7f52b82a16163aff70ec0b6d20dc6e708e2b393"
+    },
+    {
+      "path": "runs/trimul_full_latest_20260922/bench.sbatch",
+      "bytes": 609,
+      "sha256": "a38812a29fcbbe4c8218f5e4331d9b8c24f1fee452287cda51f9c8330456ba3b"
+    },
+    {
+      "path": "runs/trimul_full_latest_20260922/historical-cubin-verification.json",
+      "bytes": 847,
+      "sha256": "73c4a8dfb697f40db7ecd4774db3f1b566b5b1e0ff3d6cf3a601d59bef752d2c"
+    },
+    {
+      "path": "runs/trimul_full_latest_20260922/policy.py",
+      "bytes": 1794,
+      "sha256": "f5687ee44fb9f9e4b5ebe8bef731c246aebbd94b1f8b44bd9902b290877f87ba"
+    },
+    {
+      "path": "runs/trimul_full_latest_20260922/results.json",
+      "bytes": 1540532,
+      "sha256": "53403d9241f2f0eb717ed93204fc9bbef15737b86d7df683c07d29e62fa8a60a"
+    },
+    {
+      "path": "runs/trimul_full_latest_20260922/summary.json",
+      "bytes": 2358,
+      "sha256": "9a096b863d21789897fbfef2e478541d8ba70f436bf5e8462f15f2d0cf00e58d"
+    }
+  ]
+}

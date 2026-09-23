@@ -1,0 +1,170 @@
+{
+  "01_triton_disabled": {
+    "exit_code": 0,
+    "seconds": 47.6883487701416
+  },
+  "02_pytorch_disabled": {
+    "exit_code": 0,
+    "seconds": 11.532866477966309
+  },
+  "03_triton_manual": {
+    "exit_code": 0,
+    "seconds": 16.792051553726196
+  },
+  "04_pytorch_manual": {
+    "exit_code": 0,
+    "seconds": 7.276036500930786
+  },
+  "05_tune_front": {
+    "exit_code": 0,
+    "seconds": 741.006680727005
+  },
+  "06_tune_lnout": {
+    "exit_code": 0,
+    "seconds": 383.2463846206665
+  },
+  "06b_tune_lnfwd": {
+    "exit_code": 0,
+    "seconds": 823.8151557445526
+  },
+  "07_front_grid": {
+    "exit_code": 0,
+    "seconds": 22.04973793029785
+  },
+  "08_ln_paths": {
+    "exit_code": 0,
+    "seconds": 28.61081552505493
+  },
+  "08b_ln_partial": {
+    "exit_code": 0,
+    "seconds": 51.34594988822937
+  },
+  "09_miniworld_disabled": {
+    "exit_code": 0,
+    "seconds": 27.659541845321655
+  },
+  "10_miniworld_manual": {
+    "exit_code": 0,
+    "seconds": 13.03616452217102
+  },
+  "10b_reference_miniworld": {
+    "exit_code": 0,
+    "seconds": 15.390482902526855
+  },
+  "11_reference": {
+    "exit_code": 0,
+    "seconds": 18.44531798362732
+  },
+  "12_tuned_triton_disabled": {
+    "exit_code": 0,
+    "seconds": 13.335304975509644
+  },
+  "13_tuned_triton_manual": {
+    "exit_code": 0,
+    "seconds": 12.585324048995972
+  },
+  "14_repeat_pytorch_disabled": {
+    "exit_code": 0,
+    "seconds": 7.175090551376343
+  },
+  "15_repeat_pytorch_manual": {
+    "exit_code": 0,
+    "seconds": 7.176458120346069
+  },
+  "15b_paired_modules": {
+    "exit_code": 0,
+    "seconds": 22.00015091896057
+  },
+  "15c_reference_before": {
+    "exit_code": 0,
+    "seconds": 18.694600582122803
+  },
+  "16_tune_lnfwd_128": {
+    "exit_code": 0,
+    "seconds": 90.76090431213379
+  },
+  "17_tune_lnout_128": {
+    "exit_code": 0,
+    "seconds": 26.60614013671875
+  },
+  "18_tune_lnfwd_768": {
+    "exit_code": 0,
+    "seconds": 146.20172667503357
+  },
+  "19_tune_lnout_768": {
+    "exit_code": 124,
+    "seconds": 1800.1467952728271
+  },
+  "19b_wider_warps": {
+    "exit_code": 0,
+    "seconds": 19.29648208618164
+  },
+  "20_runtime_128": {
+    "exit_code": 0,
+    "seconds": 31.953131675720215
+  },
+  "21_runtime_384": {
+    "exit_code": 0,
+    "seconds": 14.795604467391968
+  },
+  "22_runtime_768": {
+    "exit_code": 0,
+    "seconds": 26.307203769683838
+  },
+  "23_reference_128": {
+    "exit_code": 0,
+    "seconds": 24.15311861038208
+  },
+  "24_reference_768": {
+    "exit_code": 0,
+    "seconds": 26.75883960723877
+  },
+  "25_reference_memcheck": {
+    "exit_code": 0,
+    "seconds": 15.93966007232666
+  },
+  "26_lazy_miniworld_disabled": {
+    "exit_code": 0,
+    "seconds": 21.898343801498413
+  },
+  "27_lazy_miniworld_manual": {
+    "exit_code": 0,
+    "seconds": 11.582419872283936
+  },
+  "28_lazy_reference": {
+    "exit_code": 0,
+    "seconds": 12.585731029510498
+  },
+  "29_lazy_reference_128": {
+    "exit_code": 0,
+    "seconds": 13.553473711013794
+  },
+  "30_lazy_reference_768": {
+    "exit_code": 0,
+    "seconds": 20.247687578201294
+  },
+  "31_recover_ln768": {
+    "exit_code": 0,
+    "seconds": 6.575531721115112
+  },
+  "32_retry_24_reference_768": {
+    "exit_code": 0,
+    "seconds": 17.142654418945312
+  },
+  "33_retry_30_lazy_reference_768": {
+    "exit_code": 0,
+    "seconds": 13.536304473876953
+  },
+  "34_installed_triton_reference": {
+    "exit_code": 0,
+    "seconds": 12.987102270126343
+  },
+  "35_installed_native_reference": {
+    "exit_code": 0,
+    "seconds": 12.136327266693115
+  },
+  "36_installed_native_bench": {
+    "exit_code": 0,
+    "seconds": 11.533062934875488
+  }
+}

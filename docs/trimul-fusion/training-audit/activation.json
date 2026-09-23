@@ -1,0 +1,17 @@
+{
+  "installed": true,
+  "patch": "miniworld-engine-trimul-training-audit.patch",
+  "native_identity": "74b088cde6e546049a0018f7c3ff100fea6662d18928a791c0aa078d96eb97bc",
+  "files": [
+    "autotune/cute_config.py",
+    "autotune/data/layernorm_fwd_saveact_strided_triton/NVIDIA H100 80GB HBM3 (sm90).json",
+    "kernels/trimul_inproj/triton/bidirectional.py",
+    "kernels/trimul_inproj/cute/bidir_training.py",
+    "autotune/native.py",
+    "autotune/data/layernorm_bwd_split_triton/NVIDIA H100 80GB HBM3 (sm90).json",
+    "kernels/trimul_inproj/cute/output_training.py",
+    "autotune/data/trimul_gemm_gate_mmajor_triton/NVIDIA H100 80GB HBM3 (sm90).json",
+    "autotune/data/layernorm_bwd_atomic_strided_triton/NVIDIA H100 80GB HBM3 (sm90).json",
+    "autotune/cache.py"
+  ]
+}

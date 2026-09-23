@@ -1,0 +1,29 @@
+========= COMPUTE-SANITIZER
+......                                                                   [100%]
+=============================== warnings summary ===============================
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config0]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config0]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config4]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config4]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config8]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config8]
+  /home/psk6950/MiniWorld/runs/trimul_f567_cute_20260916/package/miniworld_engine/kernels/trimul_inproj/cute/output_f567.py:231: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    warpgroup.OperandMajorMode.K, warpgroup.OperandMajorMode.K,
+
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config0]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config4]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config8]
+  <string>:10: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config0]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config0]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config4]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config4]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config8]
+tests/test_engine_trimul_f567_cute.py::test_tails[False-config8]
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/nvidia_cutlass_dsl/python_packages/cutlass/base_dsl/_mlir_helpers/op.py:121: DeprecationWarning: `make_fragment` is deprecated, use `make_rmem_tensor` instead
+    res_or_list = opFunc(*args, **kwargs, loc=loc)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+6 passed, 18 deselected, 15 warnings in 8.26s
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

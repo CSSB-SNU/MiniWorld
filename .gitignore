@@ -40,3 +40,7 @@ docs/paper/*.synctex.gz
 docs/paper/main.pdf
 # Local FoldBench runs and per-target outputs; publish source and reports separately.
 /eval_results/
+
+# Separate engine worktrees and local proof environment.
+/.engine-release-2.0.0/
+/.engine-v2-proof/

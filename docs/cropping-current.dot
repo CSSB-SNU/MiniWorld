@@ -1,0 +1,44 @@
+digraph Cropping {
+ graph [rankdir=TB, bgcolor="#f5f7fb", pad="0.35", nodesep="0.35", ranksep="0.45", fontname="Noto Sans CJK KR", fontsize=20, labelloc=t, label="MiniWorld v1.1 학습 cropping\nphase1a/b_distogram_v110 · atom tokenizer · 2026-09-16 코드 기준"];
+ node [shape=box, style="rounded,filled", fillcolor="white", color="#94a3b8", fontname="Noto Sans CJK KR", fontsize=12, margin="0.20,0.14"];
+ edge [color="#64748b", fontname="Noto Sans CJK KR", fontsize=11, arrowsize=0.7];
+ input [label="① 샘플 선택 → 전체 CIF assembly 로드\n샘플 record에는 기준 chain 1개 또는 chain pair가 들어 있음", fillcolor="#dbeafe"];
+ kind [shape=diamond, label="record.chain_ids", fillcolor="#e0e7ff"];
+ single [label="chain 1개\n그 chain의 원자들을 후보로"];
+ ab [shape=diamond, label="Ab–Ag pair?\n항체 A + protein P/Q", fillcolor="#e0e7ff"];
+ coin [shape=diamond, label="chain_crop_prob = 0.5", fillcolor="#e0e7ff"];
+ chain [label="Chain 중심 후보 선택\nprotein–비protein: 반드시 비protein\n두 protein / 두 비protein: 둘 중 균등 선택\n선택한 chain의 모든 원자가 후보\n※ 항체도 protein으로 분류", fillcolor="#dcfce7"];
+ interface [label="Interface 중심 후보 선택\nchain 간 원자 거리 ≤ 6 Å의 접촉 잔기를 찾고\n그 잔기의 모든 원자가 후보", fillcolor="#dcfce7"];
+ missing [shape=diamond, label="접촉이 없을 때\nAb–Ag인가?", fillcolor="#fef3c7"];
+ fail [label="Crop 실패 (WrongCroppingError)\n기존 dataloader가 다른 샘플을 재추출", fillcolor="#fee2e2"];
+ focus [label="② 유한 좌표가 있는 후보 원자 중 1개 균등 추출\n그 원자의 좌표가 focus\n※ 접촉 원자만 추출하는 것은 아님", fillcolor="#dbeafe"];
+ tokenize [label="③ segment_size = UniformInteger(1, 41) 추출 후\n전체 assembly를 token화\n표준 단백질·RNA·DNA: 잔기당 1 token\n리간드·비표준 잔기: 원자당 1 token"];
+ segment [label="④ 각 잔기의 모든 원자 중 focus까지 최소 거리를 계산\n전체 assembly의 잔기를 가까운 순서로 방문", fillcolor="#dbeafe"];
+ expand [label="⑤ 방문 잔기의 chain 안에서 양쪽으로 segment 확장\ncif_idx 번호 span ≤ segment_size\n이미 선택된 잔기는 중복 계산하지 않음\n※ 실제 잔기 수가 segment_size와 같다는 보장은 없음"];
+ budget [shape=diamond, label="새 segment를 통째로 넣으면\ntoken / atom 예산 초과?", fillcolor="#fef3c7"];
+ add [label="선택 집합에 segment 추가\n누적 token·atom 수 증가", fillcolor="#dcfce7"];
+ stop [label="즉시 종료 (break)\nsegment를 잘라 넣거나\n더 작은 다음 후보로 건너뛰지 않음", fillcolor="#fee2e2"];
+ output [label="⑥ 선택 잔기를 원래 순서로 정렬·추출\nchain별 MSA·template crop 인덱스 생성\nOXT/OP3 제거 → 원자가 사라진 token 제거·재번호화"];
+ pad [label="⑦ MSA·template 로드 → feature 구성 → batch padding\nL384: token 384 / atom 4096\nL768: token 768 / atom 8192\n기본 MSA 최대 2048 · template 4", fillcolor="#dbeafe"];
+ note [label="현재 동작에서 중요한 점\n• focus가 속한 chain 밖의 잔기도 crop에 들어올 수 있음\n• interface focus여도 양 chain이 모두 남는다는 보장은 없음\n• 예산 미달 crop도 가능하며 뒤에서 padding\n• segment에 미해결 잔기가 포함될 수 있고 좌표 loss는 mask로 제외\n• 별도 Cropper의 20/40/40 분기는 이 학습 경로에서 사용하지 않음", fillcolor="#fff7ed", color="#fb923c"];
+ source [shape=plain, label="실제 경로: Preprocessor.get_crop_indices → crop_spatial_segment_token\nsrc/miniworld/data/dataloader/preprocess.py · src/miniworld/utils/crop.py", fontsize=10];
+ input -> kind;
+ kind -> single [label="1개"];
+ kind -> ab [label="2개"];
+ ab -> interface [label="예: 100%"];
+ ab -> coin [label="아니오"];
+ coin -> chain [label="0.5"];
+ coin -> interface [label="0.5"];
+ interface -> missing [label="접촉 없음", style=dashed];
+ missing -> fail [label="예", style=dashed];
+ missing -> chain [label="아니오: fallback", style=dashed];
+ single -> focus; chain -> focus; interface -> focus [label="접촉 있음"];
+ focus -> tokenize -> segment -> expand -> budget;
+ budget -> add [label="아니오"];
+ add -> expand [label="다음 미선택 잔기", constraint=false];
+ budget -> stop [label="예"];
+ add -> output [label="모든 후보 방문 완료"];
+ stop -> output -> pad -> note -> source;
+ {rank=same; single; chain; interface}
+ {rank=same; add; stop}
+}

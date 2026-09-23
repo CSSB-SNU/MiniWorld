@@ -1,0 +1,15 @@
+# Continue v1.1 phase 1a at L768 with the same interchain objective.
+defaults:
+  - phase1b_distogram
+  - _self_
+
+train:
+  comment: "v1.1.0-phase1b-distogram-large-L768"
+  run_dir: "runs/v1.1.0/phase1b/large_distogram_L768"
+loss:
+  distogram_interchain_weight: 2.0
+
+data:
+  crop:
+    ab_ag_interface_only: true
+    prefer_nonprotein_focus: true

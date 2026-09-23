@@ -1,0 +1,16 @@
+# v1.1 work in progress: corrected chemical targets + interchain upweighting.
+# Pair-focus cropping uses the v1.1 rules below; EMA is still pending.
+defaults:
+  - phase1a_distogram
+  - _self_
+
+train:
+  comment: "v1.1.0-phase1a-distogram-large-L384"
+  run_dir: "runs/v1.1.0/phase1a/large_distogram_L384"
+loss:
+  distogram_interchain_weight: 2.0
+
+data:
+  crop:
+    ab_ag_interface_only: true
+    prefer_nonprotein_focus: true

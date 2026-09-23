@@ -1,0 +1,131 @@
+{
+  "engine": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine",
+  "source_commit": "59bdb335",
+  "kind": "static source audit; no new GPU measurement",
+  "grids": {
+    "transition_expand_swiglu_triton": {
+      "axes": {
+        "BLOCK_K": [
+          "16",
+          "32",
+          "64"
+        ],
+        "BLOCK_M1": [
+          "32",
+          "64",
+          "128"
+        ],
+        "BLOCK_N": [
+          "32",
+          "64",
+          "128",
+          "256"
+        ],
+        "GROUP_M": [
+          "1",
+          "4"
+        ],
+        "num_warps": [
+          "1",
+          "2",
+          "4"
+        ],
+        "num_stages": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ]
+      },
+      "declared_product": 1296
+    },
+    "transition_squeeze_residual_triton": {
+      "axes": {
+        "BLOCK_K": [
+          "16",
+          "32",
+          "64"
+        ],
+        "BLOCK_M1": [
+          "32",
+          "64",
+          "128"
+        ],
+        "BLOCK_N": [
+          "32",
+          "64",
+          "128",
+          "256"
+        ],
+        "GROUP_M": [
+          "1",
+          "4"
+        ],
+        "num_warps": [
+          "1",
+          "2",
+          "4"
+        ],
+        "num_stages": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ]
+      },
+      "declared_product": 1296
+    },
+    "transition_bwd_swiglu_recompute_triton": {
+      "axes": {
+        "BLOCK_K": [
+          "16",
+          "32",
+          "64"
+        ],
+        "BLOCK_M1": [
+          "32",
+          "64",
+          "128"
+        ],
+        "BLOCK_N": [
+          "32",
+          "64",
+          "128",
+          "256"
+        ],
+        "GROUP_M": [
+          "1",
+          "4"
+        ],
+        "num_warps": [
+          "1",
+          "2",
+          "4"
+        ],
+        "num_stages": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ]
+      },
+      "declared_product": 1080
+    }
+  },
+  "sha256": {
+    "modules/transition/module.py": "cd8013f89af079b6850463152725d0cb3db3102889d8c98aca3a2408a76c6ddf",
+    "kernels/transition/triton/residual.py": "8a9053fd57ab28d895aa6f24b18715260af3aec1ab47b900724cd8939d57d628",
+    "kernels/transition/triton/main.py": "46020b3a621eb5d371fff3e7da64800c1291aa4bdc7ff5395a650b4719948cdc",
+    "kernels/transition/triton/fused.py": "c5738eb92cc754420d77d5ff697d7deca9cc9bb5845e1292b280eb8813a70ff7",
+    "kernels/transition/cute/squeeze_residual.py": "069267854da1268e98614b39c0886a89018f52e358f85d73217dac25cae628df",
+    "kernels/transition/cute/backward_gatebwd.py": "e7ecc7898f4f51bbb61d83f188bf8f08c3c8f781831c06df9d4106feef17e089",
+    "kernels/transition/cute/gemm_transition_swiglu.py": "a59c0a773b3d6a06059e934abb15c34268c441f67a4e9815f4ccced7c07213df",
+    "kernels/trimul_inproj/triton/backward_fused.py": "229846a3c021451cb0d24f400a640b807d47afc4d2ee16796139611fc13b2840",
+    "settings.py": "aaa7e4a9a7e7569d7905982ae06f309bae148f717dbb899fd545cb807a8a68f5"
+  }
+}

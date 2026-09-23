@@ -1,0 +1,944 @@
+{
+  "engine_file": "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/__init__.py",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "torch": "2.10.0+cu128",
+  "config": {
+    "d_single": 384,
+    "d_pair": 128,
+    "d_single_token": 768,
+    "d_single_atom": 128,
+    "d_pair_atom": 16,
+    "n_layers": 1,
+    "n_augment": 48,
+    "mask_prob": 0.0,
+    "min_seq_len": 384,
+    "max_seq_len": 384,
+    "seq_len_step": 128,
+    "min_d_pair": 128,
+    "max_d_pair": 512,
+    "d_pair_step": 128,
+    "d_pair_values": [
+      128,
+      256,
+      512
+    ],
+    "sweep_axis": "seq_len",
+    "sweep_seq_len": 384,
+    "autotune_shard": "",
+    "config_dir": "",
+    "pin_gate_backend": "",
+    "dropout": 0.25,
+    "compile_jobs": 0,
+    "pin_infer_concat": null,
+    "pin_transition_cuda_b2b": null,
+    "target": "triangle_multiplication_bidirectional",
+    "level": "module",
+    "implementations": [
+      "miniworld"
+    ],
+    "mode": "training",
+    "metric": "time",
+    "compile": true,
+    "cudagraph": "disabled",
+    "allow_tf32": true,
+    "precision": "bf16-mixed",
+    "allow_eager": false,
+    "name_suffix": ""
+  },
+  "repetitions": [
+    {
+      "median_ms": 4.1224799156188965,
+      "p20_ms": 4.10842227935791,
+      "p80_ms": 4.145139122009278
+    },
+    {
+      "median_ms": 4.104351997375488,
+      "p20_ms": 4.073055934906006,
+      "p80_ms": 4.124403095245361
+    },
+    {
+      "median_ms": 4.069087982177734,
+      "p20_ms": 4.052371311187744,
+      "p80_ms": 4.090867233276367
+    },
+    {
+      "median_ms": 4.082752227783203,
+      "p20_ms": 4.059584140777588,
+      "p80_ms": 4.093977451324463
+    },
+    {
+      "median_ms": 4.071104049682617,
+      "p20_ms": 4.048947143554687,
+      "p80_ms": 4.085907173156738
+    }
+  ],
+  "scope": "Module forward plus input and all parameter gradients; no optimizer. Runner model.compile() uses default dynamic=None at one fixed L=384. Disabled graph clears grads to None per iteration; manual graph accumulates static grads.",
+  "accuracy_note": "Runner compares independently drawn dropout masks; its accuracy fields are not a matched-dropout correctness test.",
+  "cache_misses": [],
+  "ln_partial_experiment": null,
+  "cache_lookups": [
+    {
+      "kernel": "_ln_mat_kernel",
+      "bucket": "shape_key=2148533018",
+      "candidates": [
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 16
+          },
+          "num_warps": 1,
+          "num_stages": 1
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 16
+          },
+          "num_warps": 1,
+          "num_stages": 4
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 16
+          },
+          "num_warps": 2,
+          "num_stages": 3
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 16
+          },
+          "num_warps": 2,
+          "num_stages": 4
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 16
+          },
+          "num_warps": 2,
+          "num_stages": 5
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 4,
+          "num_stages": 1
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 4,
+          "num_stages": 2
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 4,
+          "num_stages": 3
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 4,
+          "num_stages": 4
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 4,
+          "num_stages": 5
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "num_warps": 4,
+          "num_stages": 6
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 64
+          },
+          "num_warps": 4,
+          "num_stages": 2
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 64
+          },
+          "num_warps": 4,
+          "num_stages": 3
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 64
+          },
+          "num_warps": 4,
+          "num_stages": 4
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 64
+          },
+          "num_warps": 4,
+          "num_stages": 5
+        },
+        {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 64
+          },
+          "num_warps": 4,
+          "num_stages": 6
+        }
+      ]
+    }
+  ],
+  "profile": [
+    {
+      "name": "## Call CompiledFxGraph fbkuowgbt5vnq3f4vkug74k47fp76vwdyvjp73krn6cupoqrcalg ##",
+      "count": 3,
+      "self_cuda_us": 8077.8319999999985,
+      "total_cuda_us": 8077.8319999999985,
+      "shapes": "[]"
+    },
+    {
+      "name": "## Call CompiledFxGraph fazp2ioyor4pfwcnyq3v5cuzgqajptjg6fr4oxlejfhwlhhf27eu ##",
+      "count": 3,
+      "self_cuda_us": 6188.701999999999,
+      "total_cuda_us": 6188.701999999999,
+      "shapes": "[]"
+    },
+    {
+      "name": "quack::gemm_out",
+      "count": 18,
+      "self_cuda_us": 772.610999999999,
+      "total_cuda_us": 772.610999999999,
+      "shapes": "[[128, 384, 384], [128, 384, 384], [128, 384, 384], [], [], [], [], [], [], [], [], [], [], [], [], []]"
+    },
+    {
+      "name": "miniworld_engine::trimul_front_bwd_dconcat",
+      "count": 3,
+      "self_cuda_us": 740.9949999999999,
+      "total_cuda_us": 740.9949999999999,
+      "shapes": "[[37748736], [37748736], [1024, 147456], [], [], [], [147456]]"
+    },
+    {
+      "name": "_dconcat_kernel",
+      "count": 3,
+      "self_cuda_us": 740.9949999999999,
+      "total_cuda_us": 740.9949999999999,
+      "shapes": "[]"
+    },
+    {
+      "name": "miniworld_engine::trimul_inproj_masked_sm90_cute",
+      "count": 3,
+      "self_cuda_us": 590.4990000000012,
+      "total_cuda_us": 603.5550000000021,
+      "shapes": "[[147456, 128], [128, 1024], [147456], []]"
+    },
+    {
+      "name": "kernel_cutlass_kernel_miniworld_enginekernelstrimul_inprojcutemasked_frontMaskedGatedSm90_object_at__TiledMMA_ThrLayoutVMNK128211112800_PermutationMNK____MMAAtom_ThrID1281_ShapeMNK6412816_0",
+      "count": 3,
+      "self_cuda_us": 590.4990000000012,
+      "total_cuda_us": 590.4990000000012,
+      "shapes": "[]"
+    },
+    {
+      "name": "kernel_cutlass_kernel_quackgemm_default_epiGemmDefaultSm90_object_at__TiledMMA_ThrLayoutVMNK1281111000_PermutationMNK____MMAAtom_ThrID1281_ShapeMNK6419216_TVLayoutA12864160164_TVLayoutB12_0",
+      "count": 12,
+      "self_cuda_us": 525.1230000000014,
+      "total_cuda_us": 525.1230000000014,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::addmm",
+      "count": 3,
+      "self_cuda_us": 483.26500000000124,
+      "total_cuda_us": 483.26500000000124,
+      "shapes": "[[147456, 128], [147456, 1024], [1024, 128], [], [], [147456, 128]]"
+    },
+    {
+      "name": "nvjet_tst_128x160_64x5_1x2_h_badd_NTT",
+      "count": 3,
+      "self_cuda_us": 398.40100000000166,
+      "total_cuda_us": 398.40100000000166,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::mm",
+      "count": 3,
+      "self_cuda_us": 396.70600000000104,
+      "total_cuda_us": 396.70600000000104,
+      "shapes": "[[1024, 147456], [147456, 128], [1024, 128]]"
+    },
+    {
+      "name": "nvjet_tst_128x128_64x6_1x2_h_bz_splitK_NNT",
+      "count": 3,
+      "self_cuda_us": 385.09000000000106,
+      "total_cuda_us": 385.09000000000106,
+      "shapes": "[]"
+    },
+    {
+      "name": "kernel_cutlass_kernel_quackgemm_default_epiGemmDefaultSm90_object_at__TiledMMA_ThrLayoutVMNK1281111000_PermutationMNK____MMAAtom_ThrID1281_ShapeMNK6412816_TVLayoutA12864160164_TVLayoutB12_0",
+      "count": 6,
+      "self_cuda_us": 247.48799999999756,
+      "total_cuda_us": 247.48799999999756,
+      "shapes": "[]"
+    },
+    {
+      "name": "miniworld_engine::trimul_output_rows_dgrad",
+      "count": 3,
+      "self_cuda_us": 241.53600000000006,
+      "total_cuda_us": 250.33500000000186,
+      "shapes": "[[147456, 128], [128, 256], [147456, 256], [256], [147456], [147456], [147456]]"
+    },
+    {
+      "name": "kernel_cutlass_kernel_miniworld_enginekernelslayernorm_linearcutedgrad_ln_rows_DgradLNRowsSm90_object_at__TiledMMA_ThrLayoutVMNK128211112800_PermutationMNK____MMAAtom_ThrID1281_ShapeMNK64_0",
+      "count": 3,
+      "self_cuda_us": 241.53600000000006,
+      "total_cuda_us": 241.53600000000006,
+      "shapes": "[]"
+    },
+    {
+      "name": "miniworld_engine::trimul_gate_elem_fwd_train",
+      "count": 3,
+      "self_cuda_us": 202.30500000000075,
+      "total_cuda_us": 287.7769999999982,
+      "shapes": "[[147456, 128], [147456, 128], [128, 128], [1, 384, 384, 128], [1, 1, 384, 128], []]"
+    },
+    {
+      "name": "_gate_mul_train_kernel",
+      "count": 3,
+      "self_cuda_us": 202.30500000000075,
+      "total_cuda_us": 202.30500000000075,
+      "shapes": "[]"
+    },
+    {
+      "name": "miniworld_engine::trimul_gate_elem_bwd_ew",
+      "count": 3,
+      "self_cuda_us": 198.2079999999978,
+      "total_cuda_us": 198.2079999999978,
+      "shapes": "[[147456, 128], [147456, 128], [147456, 128], [1, 1, 384, 128], [], []]"
+    },
+    {
+      "name": "_gate_elem_bwd_ew_kernel",
+      "count": 3,
+      "self_cuda_us": 198.2079999999978,
+      "total_cuda_us": 198.2079999999978,
+      "shapes": "[]"
+    },
+    {
+      "name": "miniworld_engine::layernorm_linear_materialize",
+      "count": 3,
+      "self_cuda_us": 179.64900000000125,
+      "total_cuda_us": 179.64900000000125,
+      "shapes": "[[147456, 256], [256], [256], [], []]"
+    },
+    {
+      "name": "_ln_mat_kernel",
+      "count": 3,
+      "self_cuda_us": 179.64900000000125,
+      "total_cuda_us": 179.64900000000125,
+      "shapes": "[]"
+    },
+    {
+      "name": "miniworld_engine::layernorm_bwd",
+      "count": 3,
+      "self_cuda_us": 166.01800000000003,
+      "total_cuda_us": 175.07400000000234,
+      "shapes": "[[147456, 128], [147456, 128], [128], [147456], [147456], [], [], [], []]"
+    },
+    {
+      "name": "layer_norm_bwd_dx_fused",
+      "count": 3,
+      "self_cuda_us": 166.01800000000003,
+      "total_cuda_us": 166.01800000000003,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::mm",
+      "count": 3,
+      "self_cuda_us": 158.0819999999976,
+      "total_cuda_us": 158.0819999999976,
+      "shapes": "[[128, 147456], [147456, 256], [128, 256]]"
+    },
+    {
+      "name": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT",
+      "count": 3,
+      "self_cuda_us": 149.34600000000046,
+      "total_cuda_us": 149.34600000000046,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::addmm",
+      "count": 3,
+      "self_cuda_us": 129.53499999999894,
+      "total_cuda_us": 129.53499999999894,
+      "shapes": "[[128], [147456, 256], [256, 128], [], [], [147456, 128]]"
+    },
+    {
+      "name": "nvjet_tst_128x160_64x5_1x2_h_bz_coopA_bias_TNT",
+      "count": 3,
+      "self_cuda_us": 127.32699999999932,
+      "total_cuda_us": 127.32699999999932,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_per_fused__to_copy_div_mul_sub_sum_trimul_output_rows_dgrad_unsqueeze_1",
+      "count": 3,
+      "self_cuda_us": 117.79199999999855,
+      "total_cuda_us": 117.79199999999855,
+      "shapes": "[[147456], [147456], [147456, 128], [147456, 128], [1, 128], [128], [147456], [], []]"
+    },
+    {
+      "name": "triton_per_fused__to_copy_div_mul_sub_sum_trimul_output_rows_dgrad_unsqueeze_1",
+      "count": 3,
+      "self_cuda_us": 117.79199999999855,
+      "total_cuda_us": 117.79199999999855,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::mm",
+      "count": 3,
+      "self_cuda_us": 108.25599999999758,
+      "total_cuda_us": 108.25599999999758,
+      "shapes": "[[128, 147456], [147456, 128], [128, 128]]"
+    },
+    {
+      "name": "triton_poi_fused_add_view_4",
+      "count": 3,
+      "self_cuda_us": 107.80799999999999,
+      "total_cuda_us": 107.80799999999999,
+      "shapes": "[[1, 384, 384, 128], [1, 384, 384, 128], []]"
+    },
+    {
+      "name": "triton_poi_fused_add_view_4",
+      "count": 3,
+      "self_cuda_us": 107.80799999999999,
+      "total_cuda_us": 107.80799999999999,
+      "shapes": "[]"
+    },
+    {
+      "name": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT",
+      "count": 3,
+      "self_cuda_us": 99.87199999999757,
+      "total_cuda_us": 99.87199999999757,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::mm",
+      "count": 3,
+      "self_cuda_us": 85.47199999999748,
+      "total_cuda_us": 85.47199999999748,
+      "shapes": "[[147456, 128], [128, 128]]"
+    },
+    {
+      "name": "nvjet_tst_128x160_64x5_1x2_h_bz_NNT",
+      "count": 3,
+      "self_cuda_us": 83.29599999999755,
+      "total_cuda_us": 83.29599999999755,
+      "shapes": "[]"
+    },
+    {
+      "name": "Memcpy DtoD (Device -> Device)",
+      "count": 3,
+      "self_cuda_us": 82.65600000000177,
+      "total_cuda_us": 82.65600000000177,
+      "shapes": "[]"
+    },
+    {
+      "name": "miniworld_engine::layernorm_fwd",
+      "count": 3,
+      "self_cuda_us": 81.72800000000029,
+      "total_cuda_us": 81.72800000000029,
+      "shapes": "[[147456, 128], [128], [128], [], [], [], []]"
+    },
+    {
+      "name": "layer_norm_fwd_fused",
+      "count": 3,
+      "self_cuda_us": 81.72800000000029,
+      "total_cuda_us": 81.72800000000029,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::mm",
+      "count": 3,
+      "self_cuda_us": 70.46600000000126,
+      "total_cuda_us": 70.46600000000126,
+      "shapes": "[[147456, 128], [128, 128], [147456, 128]]"
+    },
+    {
+      "name": "nvjet_tst_128x160_64x5_1x2_h_bz_TNT",
+      "count": 3,
+      "self_cuda_us": 68.25799999999981,
+      "total_cuda_us": 68.25799999999981,
+      "shapes": "[]"
+    },
+    {
+      "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})",
+      "count": 18,
+      "self_cuda_us": 47.83900000000267,
+      "total_cuda_us": 47.83900000000267,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::copy_",
+      "count": 15,
+      "self_cuda_us": 39.774999999999636,
+      "total_cuda_us": 39.774999999999636,
+      "shapes": "[[256, 128], [256, 128], []]"
+    },
+    {
+      "name": "aten::sum",
+      "count": 3,
+      "self_cuda_us": 30.113000000000284,
+      "total_cuda_us": 30.113000000000284,
+      "shapes": "[[1152, 128], [], [], []]"
+    },
+    {
+      "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+      "count": 9,
+      "self_cuda_us": 28.735999999997148,
+      "total_cuda_us": 28.735999999997148,
+      "shapes": "[]"
+    },
+    {
+      "name": "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)",
+      "count": 3,
+      "self_cuda_us": 27.87300000000141,
+      "total_cuda_us": 27.87300000000141,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::copy_",
+      "count": 3,
+      "self_cuda_us": 13.05600000000095,
+      "total_cuda_us": 13.05600000000095,
+      "shapes": "[[1, 147456], [1, 147456], []]"
+    },
+    {
+      "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)",
+      "count": 3,
+      "self_cuda_us": 13.05600000000095,
+      "total_cuda_us": 13.05600000000095,
+      "shapes": "[]"
+    },
+    {
+      "name": "Memset (Device)",
+      "count": 15,
+      "self_cuda_us": 11.03999999999769,
+      "total_cuda_us": 11.03999999999769,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_mul_sum_unsqueeze_2",
+      "count": 3,
+      "self_cuda_us": 9.312000000000808,
+      "total_cuda_us": 9.312000000000808,
+      "shapes": "[[256], [128, 256], [128], [256], [128, 256], [128, 256], [256], [], []]"
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_mul_sum_unsqueeze_2",
+      "count": 3,
+      "self_cuda_us": 9.312000000000808,
+      "total_cuda_us": 9.312000000000808,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::mm",
+      "count": 3,
+      "self_cuda_us": 9.152000000003682,
+      "total_cuda_us": 9.152000000003682,
+      "shapes": "[[1, 128], [128, 256], [1, 256]]"
+    },
+    {
+      "name": "void gemvNSP_kernel<float, float, float, float, 1, 16, 4, 1024, false, cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float>, float> >(cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float>, float>)",
+      "count": 3,
+      "self_cuda_us": 9.152000000003682,
+      "total_cuda_us": 9.152000000003682,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::fill_",
+      "count": 6,
+      "self_cuda_us": 9.056000000002314,
+      "total_cuda_us": 9.056000000002314,
+      "shapes": "[[128], []]"
+    },
+    {
+      "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+      "count": 6,
+      "self_cuda_us": 9.056000000002314,
+      "total_cuda_us": 9.056000000002314,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::copy_",
+      "count": 3,
+      "self_cuda_us": 8.064000000003034,
+      "total_cuda_us": 8.064000000003034,
+      "shapes": "[[128, 128], [128, 128], []]"
+    },
+    {
+      "name": "triton_poi_fused_cat_clone_t_3",
+      "count": 3,
+      "self_cuda_us": 7.136000000002241,
+      "total_cuda_us": 7.136000000002241,
+      "shapes": "[[256, 128], [256, 128], [256, 128], [256, 128], [1024, 128], []]"
+    },
+    {
+      "name": "triton_poi_fused_cat_clone_t_3",
+      "count": 3,
+      "self_cuda_us": 7.136000000002241,
+      "total_cuda_us": 7.136000000002241,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_poi_fused_cat_clone_copy_slice_t_1",
+      "count": 3,
+      "self_cuda_us": 6.751999999999498,
+      "total_cuda_us": 6.751999999999498,
+      "shapes": "[[256, 128], [256, 128], [256, 128], [256, 128], [128, 1024], [], []]"
+    },
+    {
+      "name": "triton_poi_fused_cat_clone_copy_slice_t_1",
+      "count": 3,
+      "self_cuda_us": 6.751999999999498,
+      "total_cuda_us": 6.751999999999498,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_poi_fused_clone_slice_t_5",
+      "count": 3,
+      "self_cuda_us": 6.687999999999192,
+      "total_cuda_us": 6.687999999999192,
+      "shapes": "[[1024, 128], [128, 256], [], []]"
+    },
+    {
+      "name": "triton_poi_fused_clone_slice_t_5",
+      "count": 3,
+      "self_cuda_us": 6.687999999999192,
+      "total_cuda_us": 6.687999999999192,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_per_fused__to_copy_mul_sum_unsqueeze_5",
+      "count": 3,
+      "self_cuda_us": 6.4320000000006985,
+      "total_cuda_us": 6.4320000000006985,
+      "shapes": "[[128, 256], [256], [256], [128, 256], [128, 256], [128], [128], [], []]"
+    },
+    {
+      "name": "triton_per_fused__to_copy_mul_sum_unsqueeze_5",
+      "count": 3,
+      "self_cuda_us": 6.4320000000006985,
+      "total_cuda_us": 6.4320000000006985,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_per_fused_mul_sum_unsqueeze_0",
+      "count": 3,
+      "self_cuda_us": 6.33600000000024,
+      "total_cuda_us": 6.33600000000024,
+      "shapes": "[[128, 256], [256], [128], [], []]"
+    },
+    {
+      "name": "triton_per_fused_mul_sum_unsqueeze_0",
+      "count": 3,
+      "self_cuda_us": 6.33600000000024,
+      "total_cuda_us": 6.33600000000024,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_poi_fused_clone_slice_t_6",
+      "count": 3,
+      "self_cuda_us": 6.208999999996195,
+      "total_cuda_us": 6.208999999996195,
+      "shapes": "[[1024, 128], [128, 256], [], []]"
+    },
+    {
+      "name": "triton_poi_fused_clone_slice_t_6",
+      "count": 3,
+      "self_cuda_us": 6.208999999996195,
+      "total_cuda_us": 6.208999999996195,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_poi_fused_clone_slice_t_7",
+      "count": 3,
+      "self_cuda_us": 6.144000000002961,
+      "total_cuda_us": 6.144000000002961,
+      "shapes": "[[1024, 128], [128, 256], [], []]"
+    },
+    {
+      "name": "triton_poi_fused_clone_slice_t_7",
+      "count": 3,
+      "self_cuda_us": 6.144000000002961,
+      "total_cuda_us": 6.144000000002961,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::random_",
+      "count": 3,
+      "self_cuda_us": 6.080999999999904,
+      "total_cuda_us": 6.080999999999904,
+      "shapes": "[[1], [], [], []]"
+    },
+    {
+      "name": "void at::native::(anonymous namespace)::distribution_elementwise_grid_stride_kernel<unsigned long, 2, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1}, at::native::(anonymous namespace)::distribution_nullary_kernel<long, unsigned long, ulonglong2, at::CUDAGeneratorImpl*, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1}, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(unsigned long)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1} const&, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(unsigned long)#1})::{lambda(int, unsigned long)#1}>(long, at::PhiloxCudaState, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1}, at::native::(anonymous namespace)::distribution_nullary_kernel<long, unsigned long, ulonglong2, at::CUDAGeneratorImpl*, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1}, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(unsigned long)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1} const&, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(unsigned long)#1})::{lambda(int, unsigned long)#1})",
+      "count": 3,
+      "self_cuda_us": 6.080999999999904,
+      "total_cuda_us": 6.080999999999904,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_poi_fused_clone_slice_t_8",
+      "count": 3,
+      "self_cuda_us": 6.0479999999997744,
+      "total_cuda_us": 6.0479999999997744,
+      "shapes": "[[1024, 128], [128, 256], [], []]"
+    },
+    {
+      "name": "triton_poi_fused_clone_slice_t_8",
+      "count": 3,
+      "self_cuda_us": 6.0479999999997744,
+      "total_cuda_us": 6.0479999999997744,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_poi_fused_clone_t_trimul_gate_elem_fwd_train_view_6",
+      "count": 3,
+      "self_cuda_us": 5.889000000000124,
+      "total_cuda_us": 5.889000000000124,
+      "shapes": "[[128, 128], [128, 128], [128, 128], [], []]"
+    },
+    {
+      "name": "triton_poi_fused_clone_t_trimul_gate_elem_fwd_train_view_6",
+      "count": 3,
+      "self_cuda_us": 5.889000000000124,
+      "total_cuda_us": 5.889000000000124,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_poi_fused__to_copy_div_gt_rand_0",
+      "count": 3,
+      "self_cuda_us": 5.37700000000018,
+      "total_cuda_us": 5.37700000000018,
+      "shapes": "[[1], [1, 1, 384, 128], [], []]"
+    },
+    {
+      "name": "triton_poi_fused__to_copy_div_gt_rand_0",
+      "count": 3,
+      "self_cuda_us": 5.37700000000018,
+      "total_cuda_us": 5.37700000000018,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_poi_fused__to_copy_bitwise_and_unsqueeze_view_2",
+      "count": 3,
+      "self_cuda_us": 5.375999999999294,
+      "total_cuda_us": 5.375999999999294,
+      "shapes": "[[1, 384], [147456], []]"
+    },
+    {
+      "name": "triton_poi_fused__to_copy_bitwise_and_unsqueeze_view_2",
+      "count": 3,
+      "self_cuda_us": 5.375999999999294,
+      "total_cuda_us": 5.375999999999294,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_poi_fused_layernorm_linear_materialize_ones_like_t_view_zeros_like_3",
+      "count": 3,
+      "self_cuda_us": 3.9679999999993925,
+      "total_cuda_us": 3.9679999999993925,
+      "shapes": "[[256], []]"
+    },
+    {
+      "name": "triton_poi_fused_layernorm_linear_materialize_ones_like_t_view_zeros_like_3",
+      "count": 3,
+      "self_cuda_us": 3.9679999999993925,
+      "total_cuda_us": 3.9679999999993925,
+      "shapes": "[]"
+    },
+    {
+      "name": "triton_poi_fused_layernorm_linear_materialize_ones_like_t_view_zeros_like_4",
+      "count": 3,
+      "self_cuda_us": 3.9670000000010077,
+      "total_cuda_us": 3.9670000000010077,
+      "shapes": "[[256], []]"
+    },
+    {
+      "name": "triton_poi_fused_layernorm_linear_materialize_ones_like_t_view_zeros_like_4",
+      "count": 3,
+      "self_cuda_us": 3.9670000000010077,
+      "total_cuda_us": 3.9670000000010077,
+      "shapes": "[]"
+    },
+    {
+      "name": "Torch-Compiled Region: 0/0",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 1592.8710000000017,
+      "shapes": "[]"
+    },
+    {
+      "name": "CompiledFunction",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 1592.8710000000017,
+      "shapes": "[[1, 384, 384, 128], [256, 128], [256, 128], [256, 128], [256, 128], [128, 128], [1, 384], [128, 256], [128], [128], [256], [256]]"
+    },
+    {
+      "name": "## Call CompiledFxGraph fazp2ioyor4pfwcnyq3v5cuzgqajptjg6fr4oxlejfhwlhhf27eu ##",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 1592.8710000000017,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::randint",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 6.080999999999904,
+      "shapes": "[[], [], [], [1]]"
+    },
+    {
+      "name": "aten::to",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 13.05600000000095,
+      "shapes": "[[1, 147456], [], [], [], []]"
+    },
+    {
+      "name": "aten::_to_copy",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 13.05600000000095,
+      "shapes": "[[1, 147456], [], [], [], [], [], []]"
+    },
+    {
+      "name": "miniworld_engine::trimul_bidir_contract_fwd",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 266.78500000000076,
+      "shapes": "[[256, 384, 384], [256, 384, 384], []]"
+    },
+    {
+      "name": "aten::matmul",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 85.47199999999748,
+      "shapes": "[[147456, 128], [128, 128]]"
+    },
+    {
+      "name": "autograd::engine::evaluate_function: CompiledFunctionBackward",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 3399.9510000000028,
+      "shapes": "[]"
+    },
+    {
+      "name": "CompiledFunctionBackward",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 3399.9510000000028,
+      "shapes": "[[1, 384, 384, 128]]"
+    },
+    {
+      "name": "## Call CompiledFxGraph fbkuowgbt5vnq3f4vkug74k47fp76vwdyvjp73krn6cupoqrcalg ##",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 3399.9510000000028,
+      "shapes": "[]"
+    },
+    {
+      "name": "aten::contiguous",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 8.799000000001797,
+      "shapes": "[[256, 128], []]"
+    },
+    {
+      "name": "aten::clone",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 8.799000000001797,
+      "shapes": "[[256, 128], []]"
+    },
+    {
+      "name": "miniworld_engine::trimul_bidir_contract_bwd",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 505.8259999999982,
+      "shapes": "[[256, 384, 384], [256, 384, 384], [256, 384, 384], []]"
+    },
+    {
+      "name": "aten::zeros",
+      "count": 6,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 9.056000000002314,
+      "shapes": "[[], [], [], [], []]"
+    },
+    {
+      "name": "aten::zero_",
+      "count": 6,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 9.056000000002314,
+      "shapes": "[[128]]"
+    },
+    {
+      "name": "autograd::engine::evaluate_function: torch::autograd::AccumulateGrad",
+      "count": 33,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 39.04000000000087,
+      "shapes": "[]"
+    },
+    {
+      "name": "torch::autograd::AccumulateGrad",
+      "count": 12,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 30.97599999999784,
+      "shapes": "[[256, 128]]"
+    },
+    {
+      "name": "torch::autograd::AccumulateGrad",
+      "count": 3,
+      "self_cuda_us": 0.0,
+      "total_cuda_us": 8.064000000003034,
+      "shapes": "[[128, 128]]"
+    }
+  ],
+  "result": {
+    "value": 4.082752227783203,
+    "input_dtype": "bfloat16",
+    "parameter_dtype": "float32",
+    "execution_path": "miniworld.v6_training_merged",
+    "reference": "pytorch",
+    "output_max_abs": 7.8292236328125,
+    "output_rel_frob": 0.46769630908966064,
+    "output_cosine": 0.8909522294998169,
+    "grad_max_abs": 5.529655456542969,
+    "grad_rel_frob": 0.5742103457450867,
+    "grad_cosine": 0.8358103036880493
+  }
+}

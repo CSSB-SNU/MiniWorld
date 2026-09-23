@@ -1,0 +1,16 @@
+# v1.1.0 Phase 1a medium: only Pairformer depth changes from 48 to 16.
+# Four GPUs x one sample x accumulation 64 preserves effective batch 256.
+defaults:
+  - phase1a_distogram_v110
+  - _self_
+
+model:
+  trunk:
+    pairformer:
+      n_block: 16
+
+train:
+  comment: "v1.1.0-phase1a-distogram-medium-L384"
+  run_dir: "runs/v1.1.0/phase1a/medium_distogram_L384"
+  grad_accum_steps: 64
+  engine_backend: auto

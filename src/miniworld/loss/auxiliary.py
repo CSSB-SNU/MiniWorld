@@ -143,6 +143,8 @@ def cal_atom_distogram_loss(
     min_distance: float = 2.25,
     max_distance: float = 25.75,
     rep_atom_mask: Bool[torch.Tensor, "* L_atom"] | None = None,
+    token_asym_id: Int[torch.Tensor, "* L"] | None = None,
+    interchain_weight: float = 1.0,
 ) -> Float[torch.Tensor, "*"]:
     """Calculate residue level distogram loss from atom positions.
 
@@ -158,8 +160,18 @@ def cal_atom_distogram_loss(
         representative atom (CB / pseudo-beta), so each token contributes one atom
         and the "shortest" distance collapses to the CB-CB distance (AF3/Protenix
         representative-atom distogram target).
+
+    ``interchain_weight`` multiplies CE for different ``token_asym_id`` values.
+    Reduction divides by the number of valid upper-triangle pairs, NOT the sum
+    of weights. At 2.0 only interchain loss/gradient contributions double.
     """
     *lead, L, _, D = logit_pred.shape
+    if not 0 <= interchain_weight < float("inf"):
+        raise ValueError("interchain_weight must be finite and nonnegative")
+    if interchain_weight != 1.0 and token_asym_id is None:
+        raise ValueError("Interchain weighting requires token_asym_id")
+    if token_asym_id is not None and token_asym_id.shape != logit_pred.shape[:-2]:
+        raise ValueError("token_asym_id must match the logit's batch and token dimensions")
     device = logit_pred.device
     # Disable the top clamp (pass a large max) so ``>max`` distances survive into the
     # overflow bin; the bin RANGE is set by ``edges`` below. The fill for masked atom
@@ -190,6 +202,22 @@ def cal_atom_distogram_loss(
                 min_distance=min_distance,
                 max_distance=_no_clamp_max,
             )  # (L_max, L_max), (L_max, L_max)
+    elif rep_atom_mask is not None and atom_pos.dim() == 4:
+        # Compute each conformer's representative pairs before reducing over
+        # structures. Both representatives must coexist in the SAME conformer.
+        batch, conformers, atoms, _ = atom_pos.shape
+        rep = rep_atom_mask
+        if rep.dim() == 2:
+            rep = rep[:, None, :].expand(batch, conformers, atoms)
+        token_map = atom_to_token_idx_map[:, None, :].expand(batch, conformers, atoms)
+        distances, pairs = get_representative_distances(
+            atom_pos.reshape(batch * conformers, atoms, 3),
+            atom_pos_mask.reshape(batch * conformers, atoms),
+            token_map.reshape(batch * conformers, atoms), L,
+            rep.reshape(batch * conformers, atoms), min_distance, _no_clamp_max,
+        )
+        residue_dists = distances.reshape(batch, conformers, L, L).amin(dim=1)
+        residue_pair_mask = pairs.reshape(batch, conformers, L, L).any(dim=1)
     else:
         # Multi-structure: keep the legacy mask-then-shortest path (CB collapses to CB-CB
         # once the atom mask is restricted to representatives).
@@ -217,6 +245,12 @@ def cal_atom_distogram_loss(
 
     # Masked reduction per leading sample
     denom = residue_pair_mask.sum(dim=(-2, -1)).clamp_min(1).to(ce.dtype)  # (*,)
+    # Keep the valid-pair denominator: interchain pairs contribute exactly w times
+    # their original loss/gradient, while intrachain contributions stay unchanged.
+    # asym_id distinguishes physical chains, including identical-sequence copies.
+    if interchain_weight != 1.0:
+        interchain = token_asym_id[..., :, None] != token_asym_id[..., None, :]
+        ce = ce * torch.where(interchain, interchain_weight, 1.0)
     num = (ce * residue_pair_mask).sum(dim=(-2, -1))  # (*,)
     return num / denom  # (*,)
 

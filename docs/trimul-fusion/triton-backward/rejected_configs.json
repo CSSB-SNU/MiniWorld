@@ -1,0 +1,12 @@
+[
+  {
+    "warps": 4,
+    "error": "OutOfResources",
+    "message": "out of resource: shared memory, Required: 262144, Hardware limit: 232448. Reducing block sizes or `num_stages` may help."
+  },
+  {
+    "warps": 8,
+    "error": "OutOfResources",
+    "message": "out of resource: shared memory, Required: 262144, Hardware limit: 232448. Reducing block sizes or `num_stages` may help."
+  }
+]

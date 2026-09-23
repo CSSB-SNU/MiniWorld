@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2070" viewBox="0 0 1600 2070" role="img" aria-labelledby="title desc">
+<title id="title">Anthropic TriMul: 원본 K1/K3 내부와 기존 저장 정책을 유지한 학습 파생형</title>
+<desc id="desc">H100 C128 H256의 128-token CTA 예시. HBM에서 TMA로 shared memory에 입력과 weights를 옮기고, consumer warpgroups가 register LayerNorm과 WGMMA를 수행한다. K1은 gated a/b를, K3는 output projection과 gate를 융합한다. 학습판은 입력과 출력 LN을 별도 Triton 커널로 유지하고 preactivation, projection, gate 저장을 추가하며 기존 backward를 재사용한다.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#405b70"/></marker></defs>
+<style>text{font-family:'Noto Sans CJK KR','Noto Sans KR',Arial,sans-serif;fill:#183344}.muted{fill:#526b7c}.title{font-size:34px;font-weight:750}.h2{font-size:24px;font-weight:700}.h3{font-size:20px;font-weight:700}.body{font-size:17px}.small{font-size:15px}.mono{font-family:Consolas,monospace;font-size:15px}.edge{fill:none;stroke:#405b70;stroke-width:2.5;marker-end:url(#arrow)}.dash{stroke-dasharray:6 5}</style>
+<rect width="1600" height="2070" fill="#f4f7fa"/>
+<text x="40" y="55" class="title">Anthropic TriMul 커널은 어떻게 구성됐나</text>
+<text x="40" y="88" class="body">원본의 내부 파이프라인과, 기존 융합·저장 정책을 유지한 학습 파생형을 구분해서 보기</text>
+<text x="40" y="116" class="small">H100 · C128 / H256 · CTA tile 2×64 예시 · 원본 revision f4f62fa · 2026-09-19</text>
+<rect x="800" y="101" width="17" height="17" rx="3" fill="#efe9ff" stroke="#efe9ff"/>
+<text x="825" y="115" class="small">HBM</text>
+<rect x="965" y="101" width="17" height="17" rx="3" fill="#e6f1ff" stroke="#e6f1ff"/>
+<text x="990" y="115" class="small">shared memory</text>
+<rect x="1190" y="101" width="17" height="17" rx="3" fill="#fff2d6" stroke="#fff2d6"/>
+<text x="1215" y="115" class="small">register</text>
+<rect x="1390" y="101" width="17" height="17" rx="3" fill="#e4f5ed" stroke="#e4f5ed"/>
+<text x="1415" y="115" class="small">파생 CUDA</text>
+<text x="40" y="163" class="h2">1. 원본의 융합 경계</text>
+<rect x="40" y="185" width="560" height="165" rx="12" fill="#fff" stroke="#cfdae3"/>
+<text x="56" y="214" class="h3">K1 · 입력 LN + gated dual projection</text>
+<text x="56" y="242" class="body">x = LN_in(z)</text>
+<text x="56" y="266" class="body">a = sigmoid(x W_agᵀ) × (x W_apᵀ) × mask</text>
+<text x="56" y="290" class="body">b = sigmoid(x W_bgᵀ) × (x W_bpᵀ) × mask</text>
+<text x="56" y="314" class="body">a/b를 channel-major BF16 plane으로 출력</text>
+<rect x="640" y="185" width="290" height="165" rx="12" fill="#f2ecff" stroke="#cfdae3"/>
+<text x="656" y="214" class="h3">cuBLAS contraction</text>
+<text x="656" y="242" class="small">outgoing: A × Bᵀ</text>
+<text x="656" y="266" class="small">incoming: Aᵀ × B</text>
+<text x="656" y="290" class="small">원본 단방향: GEMM 1회</text>
+<text x="656" y="314" class="small">양방향 조립: GEMM 2회</text>
+<rect x="970" y="185" width="590" height="165" rx="12" fill="#fff" stroke="#cfdae3"/>
+<text x="986" y="214" class="h3">K3 · 출력 LN + projection + output gate</text>
+<text x="986" y="242" class="body">p = LN_out(X) W_oᵀ</text>
+<text x="986" y="266" class="body">g = sigmoid(LN_in(z) W_ogᵀ)</text>
+<text x="986" y="290" class="body">update = p × g   /   residual 옵션 지원</text>
+<text x="986" y="314" class="body">원본은 x를 저장하지 않고 여기서 입력 LN을 다시 계산</text>
+<path class="edge" d="M602,263 L634,263"/>
+<path class="edge" d="M932,263 L964,263"/>
+<text x="40" y="382" class="small">원본의 gate는 FP32 GEMM 누산값에서 계산한 뒤 BF16로 반올림한다. 원본에는 학습 backward가 없다.</text>
+<text x="40" y="436" class="h2">2. CTA 내부: producer가 데이터를 공급하고, consumer가 연산한다</text>
+<text x="40" y="465" class="small">이 예시에서 두 커널 모두 384 threads = producer WG0 128개 + consumer WG1/WG2 각 128개</text>
+<rect x="40" y="485" width="740" height="875" rx="16" fill="#ffffff" stroke="#bacbd7"/>
+<rect x="820" y="485" width="740" height="875" rx="16" fill="#ffffff" stroke="#bacbd7"/>
+<text x="62" y="520" class="h2">K1 원본 내부</text>
+<text x="842" y="520" class="h2">K3 원본 내부</text>
+<rect x="60" y="545" width="278" height="100" rx="12" fill="#efe9ff" stroke="#cfdae3"/>
+<text x="76" y="574" class="h3">HBM · 입력 z</text>
+<text x="76" y="602" class="small">BF16 pair + mask</text>
+<text x="76" y="626" class="small">LN gamma/beta</text>
+<rect x="368" y="545" width="392" height="100" rx="12" fill="#efe9ff" stroke="#cfdae3"/>
+<text x="384" y="574" class="h3">HBM · projection weights</text>
+<text x="384" y="602" class="small">gate 32채널 | projection 32채널</text>
+<text x="384" y="626" class="small">left/right blocks를 순서대로 읽음</text>
+<path class="edge" d="M198,647 L198,677"/>
+<text x="208.0" y="657.0" class="small">TMA</text>
+<path class="edge" d="M566,647 L566,677"/>
+<text x="576.0" y="657.0" class="small">TMA</text>
+<rect x="60" y="682" width="700" height="79" rx="12" fill="#edf2f6" stroke="#cfdae3"/>
+<text x="76" y="711" class="h3">WG0 · producer</text>
+<text x="76" y="739" class="body">warp 0: 입력 tile 공급    /    warp 1: weight ring 공급</text>
+<path class="edge" d="M198,763 L198,795"/>
+<path class="edge" d="M566,763 L566,795"/>
+<rect x="60" y="799" width="278" height="100" rx="12" fill="#e6f1ff" stroke="#cfdae3"/>
+<text x="76" y="828" class="h3">Shared · 입력 staging</text>
+<text x="76" y="856" class="small">swizzled [token, C] tile</text>
+<text x="76" y="880" class="small">consumer가 읽으면 다음 tile 적재</text>
+<rect x="368" y="799" width="392" height="100" rx="12" fill="#e6f1ff" stroke="#cfdae3"/>
+<text x="384" y="828" class="h3">Shared · weight ring</text>
+<text x="384" y="856" class="small">mbarrier full/empty로 slot 소유권 교대</text>
+<text x="384" y="880" class="small">TMA load와 WGMMA 실행을 겹침</text>
+<path class="edge" d="M198,901 L198,944"/>
+<text x="208.0" y="917.5" class="small">ldmatrix</text>
+<path class="edge" d="M566,901 L566,944"/>
+<text x="576.0" y="917.5" class="small">WGMMA B operand</text>
+<rect x="60" y="950" width="700" height="155" rx="12" fill="#fff2d6" stroke="#cfdae3"/>
+<text x="76" y="979" class="h3">WG1 / WG2 · 각 64개 token 처리</text>
+<text x="76" y="1007" class="small">입력 fragment를 register로 읽고 LN_in 수행</text>
+<text x="76" y="1031" class="small">WGMMA RS: A = normalized registers / B = shared weights</text>
+<text x="76" y="1055" class="small">m64n64: gate 32 + projection 32 → FP32 accumulators</text>
+<text x="76" y="1079" class="small">block b+1 MMA 실행 중 block b의 gate·곱·저장 처리</text>
+<path class="edge" d="M410,1107 L410,1143"/>
+<rect x="60" y="1148" width="700" height="83" rx="12" fill="#e6f1ff" stroke="#cfdae3"/>
+<text x="76" y="1177" class="h3">Shared · 출력 transpose staging</text>
+<text x="76" y="1205" class="body">sigmoid(gate) × projection × mask → BF16 → stmatrix</text>
+<path class="edge" d="M410,1233 L410,1270"/>
+<text x="420.0" y="1246.5" class="small">TMA store</text>
+<rect x="60" y="1275" width="700" height="64" rx="12" fill="#efe9ff" stroke="#cfdae3"/>
+<text x="76" y="1304" class="h3">HBM · a/b [2H, N, N]</text>
+<rect x="840" y="545" width="310" height="100" rx="12" fill="#efe9ff" stroke="#cfdae3"/>
+<text x="856" y="574" class="h3">HBM · X + 원래 z</text>
+<text x="856" y="602" class="small">X: contraction 결과</text>
+<text x="856" y="626" class="small">z: output gate의 LN 입력</text>
+<rect x="1180" y="545" width="360" height="100" rx="12" fill="#efe9ff" stroke="#cfdae3"/>
+<text x="1196" y="574" class="h3">HBM · W_o / W_og</text>
+<text x="1196" y="602" class="small">output projection / gate weights</text>
+<text x="1196" y="626" class="small">LN gamma/beta</text>
+<path class="edge" d="M997,647 L997,677"/>
+<text x="1007.0" y="657.0" class="small">TMA</text>
+<path class="edge" d="M1357,647 L1357,677"/>
+<text x="1367.0" y="657.0" class="small">TMA</text>
+<rect x="840" y="682" width="700" height="79" rx="12" fill="#edf2f6" stroke="#cfdae3"/>
+<text x="856" y="711" class="h3">WG0 · producer</text>
+<text x="856" y="739" class="small">warp 0: X/z tile 공급    /    warp 1: projection/gate weight 공급</text>
+<path class="edge" d="M997,763 L997,795"/>
+<path class="edge" d="M1357,763 L1357,795"/>
+<rect x="840" y="799" width="310" height="100" rx="12" fill="#e6f1ff" stroke="#cfdae3"/>
+<text x="856" y="828" class="h3">Shared · X / z staging</text>
+<text x="856" y="856" class="small">별도 barrier로 각 입력 관리</text>
+<text x="856" y="880" class="small">z는 residual에도 재사용 가능</text>
+<rect x="1180" y="799" width="360" height="100" rx="12" fill="#e6f1ff" stroke="#cfdae3"/>
+<text x="1196" y="828" class="h3">Shared · weight ring</text>
+<text x="1196" y="856" class="small">projection → gate 순서로 공급</text>
+<text x="1196" y="880" class="small">slot 재사용은 소비 완료 후</text>
+<path class="edge" d="M997,901 L997,944"/>
+<text x="1007.0" y="917.5" class="small">ldmatrix</text>
+<path class="edge" d="M1357,901 L1357,944"/>
+<text x="1367.0" y="917.5" class="small">WGMMA B operand</text>
+<rect x="840" y="950" width="700" height="155" rx="12" fill="#fff2d6" stroke="#cfdae3"/>
+<text x="856" y="979" class="h3">WG1 / WG2 · register LN + 두 GEMM</text>
+<text x="856" y="1007" class="small">X → LN_out register operand / z → LN_in register operand</text>
+<text x="856" y="1031" class="small">WGMMA m64n32: projection / output gate 각각 계산</text>
+<text x="856" y="1055" class="small">FP32 accumulator → sigmoid(gate) × projection</text>
+<text x="856" y="1079" class="small">다음 output block MMA와 현재 block epilogue를 겹침</text>
+<path class="edge" d="M1190,1107 L1190,1143"/>
+<rect x="840" y="1148" width="700" height="83" rx="12" fill="#e6f1ff" stroke="#cfdae3"/>
+<text x="856" y="1177" class="h3">Shared · 출력 staging</text>
+<text x="856" y="1205" class="body">update BF16 반올림 → residual 옵션 → stmatrix</text>
+<path class="edge" d="M1190,1233 L1190,1270"/>
+<text x="1200.0" y="1246.5" class="small">TMA store</text>
+<rect x="840" y="1275" width="700" height="64" rx="12" fill="#efe9ff" stroke="#cfdae3"/>
+<text x="856" y="1304" class="h3">HBM · output [N, N, C]</text>
+<text x="40" y="1390" class="small">mbarrier = producer/consumer 준비·소비 완료 통지. WGMMA wait = 비동기 MMA 완료 대기. TMA store wait = staging 재사용 보호.</text>
+<text x="40" y="1415" class="small">TMA store 그림은 H256 / BJ64 설정 기준이다. 일부 다른 원본 설정은 vector global store를 사용한다.</text>
+<text x="40" y="1463" class="h2">3. 현재 학습판: 위 내부 구조를 차용하되, 기존 융합·저장 정책을 유지</text>
+<rect x="40" y="1490" width="280" height="171" rx="12" fill="#edf2f6" stroke="#cfdae3"/>
+<text x="56" y="1519" class="h3">F1 · 기존 입력 LN</text>
+<text x="56" y="1547" class="small">Triton 유지</text>
+<text x="56" y="1571" class="small">저장: x_n</text>
+<text x="56" y="1595" class="small">저장: mean / rstd</text>
+<text x="56" y="1619" class="small">K1과 output gate가 공유</text>
+<rect x="350" y="1490" width="280" height="171" rx="12" fill="#e4f5ed" stroke="#79ad95"/>
+<text x="366" y="1519" class="h3">F2 · K1 파생 CUDA</text>
+<text x="366" y="1547" class="small">K1 내부 LN 제거</text>
+<text x="366" y="1571" class="small">TMA / WGMMA 구조 계승</text>
+<text x="366" y="1595" class="small">저장: a/b + preact</text>
+<text x="366" y="1619" class="small">preact도 TMA 직접 저장</text>
+<rect x="660" y="1490" width="280" height="171" rx="12" fill="#f2ecff" stroke="#cfdae3"/>
+<text x="676" y="1519" class="h3">F3 · 기존 contraction</text>
+<text x="676" y="1547" class="small">cuBLAS 유지</text>
+<text x="676" y="1571" class="small">outgoing + incoming</text>
+<text x="676" y="1595" class="small">저장: X</text>
+<text x="676" y="1619" class="small">최종 buffer에 직접 출력</text>
+<rect x="970" y="1490" width="280" height="171" rx="12" fill="#edf2f6" stroke="#cfdae3"/>
+<text x="986" y="1519" class="h3">F4 · 기존 출력 LN</text>
+<text x="986" y="1547" class="small">Triton 유지</text>
+<text x="986" y="1571" class="small">저장: normalized X</text>
+<text x="986" y="1595" class="small">저장: mean / rstd</text>
+<text x="986" y="1619" class="small">F567과 별도 커널</text>
+<rect x="1280" y="1490" width="280" height="171" rx="12" fill="#e4f5ed" stroke="#79ad95"/>
+<text x="1296" y="1519" class="h3">F567 · K3 파생 CUDA</text>
+<text x="1296" y="1547" class="small">K3 내부 LN들 제거</text>
+<text x="1296" y="1571" class="small">projection + gate</text>
+<text x="1296" y="1595" class="small">+ dropout + residual</text>
+<text x="1296" y="1619" class="small">저장: projection / gate</text>
+<path class="edge" d="M322,1570 L344,1570"/>
+<path class="edge" d="M632,1570 L654,1570"/>
+<path class="edge" d="M942,1570 L964,1570"/>
+<path class="edge" d="M1252,1570 L1274,1570"/>
+<path class="edge" d="M180,1663 L180,1703"/>
+<path class="edge" d="M490,1663 L490,1703"/>
+<path class="edge" d="M800,1663 L800,1703"/>
+<path class="edge" d="M1110,1663 L1110,1703"/>
+<path class="edge" d="M1420,1663 L1420,1703"/>
+<rect x="40" y="1708" width="1520" height="87" rx="12" fill="#edf2f6" stroke="#cfdae3"/>
+<text x="56" y="1737" class="h3">Backward · 기존 Triton / cuBLAS 그대로</text>
+<text x="56" y="1765" class="body">기존 saved tensor shape·dtype·순서 유지. 위 저장값을 재사용하며, 검증용 경로의 추가 GEMM 6개 재계산은 하지 않는다.</text>
+<rect x="40" y="1824" width="744" height="118" rx="12" fill="#fff" stroke="#cfdae3"/>
+<text x="56" y="1853" class="h3">원본에서 계승한 것</text>
+<text x="56" y="1881" class="small">실제 k1_body / k3_body 파생 코드 · TMA · WGMMA · weight ring</text>
+<text x="56" y="1905" class="small">producer/consumer 분리 · MMA/epilogue overlap · shared staging</text>
+<rect x="814" y="1824" width="746" height="118" rx="12" fill="#e4f5ed" stroke="#cfdae3"/>
+<text x="830" y="1853" class="h3">학습을 위해 바꾼 것</text>
+<text x="830" y="1881" class="small">별도 LN 결과 사용 · 기존 preact/projection/gate 저장 · dropout/residual</text>
+<text x="830" y="1905" class="small">기존 BF16 반올림 위치 유지 · 기존 backward 연결</text>
+<text x="40" y="1975" class="small">선택한 H128/H256 기본 cubin: TMA load/store + HGMMA 확인, local memory/LDL/STL 0. 모든 후보가 spill-free라는 뜻은 아니다.</text>
+<text x="40" y="2003" class="small">출처: anthropics/uplifting-biomolecular-modeling · native/pkg/v5/csrc/tmn_kernels.cuh · Apache-2.0</text>
+<text x="40" y="2029" class="small">파생형: anthropic_saved_front.cu / anthropic_saved_output.cu · 구현과 저장 목록을 대조한 설명도 · 성능 우위의 증명도는 아님</text>
+</svg>

@@ -1,0 +1,538 @@
+{
+  "scope": "H100 strict Triton Transition; static compile; profiler graph disabled",
+  "patch_manifest": [
+    {
+      "file": "kernels/transition/triton/main.py",
+      "before_sha256": "32ecb69320fb8b79088950ba2f2bcf0f9e5918b2e9e1a42cb5bb9711bfe36a8d",
+      "after_sha256": "46020b3a621eb5d371fff3e7da64800c1291aa4bdc7ff5395a650b4719948cdc"
+    },
+    {
+      "file": "kernels/transition/triton/fused.py",
+      "before_sha256": "1ee67e8151a8b0f55de2455b69fd5a1ca93ff80b91904ee24f56b764348875c9",
+      "after_sha256": "c660264b187d75bb227948c3b0ccd13e8062d9242641c12adce78b274c00246f"
+    },
+    {
+      "file": "kernels/layernorm/triton/main.py",
+      "before_sha256": "fea093f09cabd07ba545d918c2e5474af03db42b5a06ab8c6dd93cc6f7835ca8",
+      "after_sha256": "2d0ce5d56e5be70ae7760e2cf7cd4a2220b573b0f65adfbb67501a0e63f4f606"
+    }
+  ],
+  "cat_microbenchmark": [
+    {
+      "m": 16384,
+      "d": 128,
+      "cat_ms": 0.0014072850400437846,
+      "packed_ms": 0.012274179965314196,
+      "split_ms": 0.024784660339355467
+    },
+    {
+      "m": 147456,
+      "d": 128,
+      "cat_ms": 0.001529264085806315,
+      "packed_ms": 0.11977730637076515,
+      "split_ms": 0.17418464626277888
+    },
+    {
+      "m": 589824,
+      "d": 128,
+      "cat_ms": 0.0015757251645158404,
+      "packed_ms": 0.4580132373543673,
+      "split_ms": 0.6552218691507975
+    },
+    {
+      "m": 384,
+      "d": 384,
+      "cat_ms": 0.002115265895588682,
+      "packed_ms": 0.00910160267939333,
+      "split_ms": 0.010545764823345299
+    },
+    {
+      "m": 768,
+      "d": 768,
+      "cat_ms": 0.0042792809720070945,
+      "packed_ms": 0.020178488914412682,
+      "split_ms": 0.01863036485588026
+    }
+  ],
+  "module_check": [
+    {
+      "shape": [
+        1,
+        384,
+        384,
+        128
+      ],
+      "dtype": "torch.bfloat16",
+      "relative_errors": [
+        0.0,
+        0.0,
+        1.0715916687331628e-06,
+        5.784605150438438e-07,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "train_graph_ms": 1.1540121459960937,
+      "infer_graph_ms": 0.29650313444345394
+    },
+    {
+      "shape": [
+        1,
+        384,
+        384
+      ],
+      "dtype": "torch.bfloat16",
+      "relative_errors": [
+        0.0,
+        0.0,
+        1.1331974292261293e-07,
+        3.1141951239987975e-09,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "train_graph_ms": 0.05538943767547608,
+      "infer_graph_ms": 0.015625230937013103
+    },
+    {
+      "shape": [
+        1,
+        768,
+        768
+      ],
+      "dtype": "torch.bfloat16",
+      "relative_errors": [
+        0.0,
+        0.0,
+        1.6185370554921974e-07,
+        1.6859967644222706e-08,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "train_graph_ms": 0.14031392097473144,
+      "infer_graph_ms": 0.036717750335408146
+    },
+    {
+      "shape": [
+        1,
+        37,
+        96
+      ],
+      "dtype": "torch.float32",
+      "relative_errors": [
+        1.725996838786159e-07,
+        1.9099361736607534e-07,
+        2.7547488912205154e-07,
+        2.1199475952471403e-07,
+        1.905517024169967e-07,
+        1.8367289555953903e-07,
+        2.027458947395644e-07
+      ],
+      "train_graph_ms": 0.05600831985473633,
+      "infer_graph_ms": 0.01980484178961431
+    }
+  ],
+  "default": {
+    "package": "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/__init__.py",
+    "shape": [
+      1,
+      384,
+      384,
+      128
+    ],
+    "device": "NVIDIA H100 80GB HBM3",
+    "torch": "2.10.0+cu128",
+    "cases": {
+      "inference-eager-forward": [
+        {
+          "name": "layer_norm_fwd_fused",
+          "us": 27.327999999999975
+        },
+        {
+          "name": "transition_fwd_kernel",
+          "us": 157.5369999999998
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.7999999999997272
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_TNT",
+          "us": 69.5039999999999
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "us": 35.903999999999996
+        }
+      ],
+      "inference-compile-forward": [
+        {
+          "name": "layer_norm_fwd_fused",
+          "us": 27.903999999999996
+        },
+        {
+          "name": "transition_fwd_kernel",
+          "us": 158.36799999999994
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.8000000000001819
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_TNT",
+          "us": 68.99199999999996
+        },
+        {
+          "name": "triton_poi_fused_add_view_0",
+          "us": 36.35199999999986
+        }
+      ],
+      "training-eager-forward": [
+        {
+          "name": "layer_norm_fwd_fused",
+          "us": 26.975000000000364
+        },
+        {
+          "name": "transition_fwd_kernel",
+          "us": 162.5890000000004
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.7680000000000291
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_TNT",
+          "us": 69.69500000000016
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "us": 35.807000000000244
+        }
+      ],
+      "training-eager-backward": [
+        {
+          "name": "Memset (Device)",
+          "us": 0.7359999999998763
+        },
+        {
+          "name": "nvjet_tst_256x128_64x4_1x2_h_bz_coopA_NNT",
+          "us": 70.46500000000015
+        },
+        {
+          "name": "_transition_expand_gatebwd_kernel",
+          "us": 317.922
+        },
+        {
+          "name": "nvjet_tst_128x64_64x8_1x2_h_bz_splitK_NTT",
+          "us": 72.83300000000008
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "us": 2.8799999999996544
+        },
+        {
+          "name": "nvjet_tst_128x96_64x6_1x1_h_bz_splitK_NTT",
+          "us": 127.64900000000034
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "us": 3.3279999999999745
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::CatArrayBatchedCopy_vectorized<at::native::(anonymous namespace)::OpaqueType<2u>, unsigned int, 1, 128, 1, 16, 8>(char*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<2u>, unsigned int, 128, 1>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)",
+          "us": 2.8159999999998035
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.7359999999998763
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_NNT",
+          "us": 113.79199999999992
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "us": 1.6970000000001164
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "us": 1.3119999999998981
+        },
+        {
+          "name": "layer_norm_bwd_dx_fused",
+          "us": 65.21600000000035
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "us": 35.615999999999985
+        }
+      ],
+      "training-compile-forward": [
+        {
+          "name": "layer_norm_fwd_fused",
+          "us": 27.840000000000146
+        },
+        {
+          "name": "transition_fwd_kernel",
+          "us": 161.82399999999984
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.7999999999997272
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_TNT",
+          "us": 69.37599999999975
+        },
+        {
+          "name": "triton_poi_fused_add_view_0",
+          "us": 35.167999999999665
+        }
+      ],
+      "training-compile-backward": [
+        {
+          "name": "Memset (Device)",
+          "us": 1.759999999999991
+        },
+        {
+          "name": "nvjet_tst_256x128_64x4_1x2_h_bz_coopA_NNT",
+          "us": 70.721
+        },
+        {
+          "name": "_transition_expand_gatebwd_kernel",
+          "us": 315.07400000000007
+        },
+        {
+          "name": "nvjet_tst_128x64_64x8_1x2_h_bz_splitK_NTT",
+          "us": 73.15200000000004
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "us": 2.8799999999998818
+        },
+        {
+          "name": "nvjet_tst_128x96_64x6_1x1_h_bz_splitK_NTT",
+          "us": 128.3530000000003
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "us": 3.5520000000001346
+        },
+        {
+          "name": "triton_poi_fused_cat_0",
+          "us": 1.9519999999997708
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.7040000000001783
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_NNT",
+          "us": 114.5600000000004
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "us": 1.7919999999999163
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "us": 1.3119999999998981
+        },
+        {
+          "name": "layer_norm_bwd_dx_fused",
+          "us": 64.2239999999997
+        },
+        {
+          "name": "triton_poi_fused_add_1",
+          "us": 35.20100000000002
+        }
+      ]
+    }
+  },
+  "max_autotune": {
+    "package": "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine/__init__.py",
+    "shape": [
+      1,
+      384,
+      384,
+      128
+    ],
+    "device": "NVIDIA H100 80GB HBM3",
+    "torch": "2.10.0+cu128",
+    "cases": {
+      "inference-eager-forward": [
+        {
+          "name": "layer_norm_fwd_fused",
+          "us": 26.65599999999995
+        },
+        {
+          "name": "transition_fwd_kernel",
+          "us": 160.83199999999988
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.7680000000000291
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_TNT",
+          "us": 69.56899999999996
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "us": 35.93600000000015
+        }
+      ],
+      "inference-compile-forward": [
+        {
+          "name": "layer_norm_fwd_fused",
+          "us": 27.64799999999991
+        },
+        {
+          "name": "transition_fwd_kernel",
+          "us": 165.53600000000006
+        },
+        {
+          "name": "triton_tem_fused_mm_permute_0",
+          "us": 70.30400000000009
+        },
+        {
+          "name": "triton_poi_fused_add_view_1",
+          "us": 36.511999999999716
+        }
+      ],
+      "training-eager-forward": [
+        {
+          "name": "transition_fwd_kernel",
+          "us": 165.663
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.7680000000000291
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_TNT",
+          "us": 69.69599999999991
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "us": 35.934999999999945
+        }
+      ],
+      "training-eager-backward": [
+        {
+          "name": "nvjet_tst_256x128_64x4_1x2_h_bz_coopA_NNT",
+          "us": 69.4079999999999
+        },
+        {
+          "name": "_transition_expand_gatebwd_kernel",
+          "us": 316.15999999999985
+        },
+        {
+          "name": "nvjet_tst_128x64_64x8_1x2_h_bz_splitK_NTT",
+          "us": 74.27099999999973
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "us": 2.912000000000262
+        },
+        {
+          "name": "nvjet_tst_128x96_64x6_1x1_h_bz_splitK_NTT",
+          "us": 125.11999999999989
+        },
+        {
+          "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+          "us": 3.5520000000001346
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::CatArrayBatchedCopy_vectorized<at::native::(anonymous namespace)::OpaqueType<2u>, unsigned int, 1, 128, 1, 16, 8>(char*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<2u>, unsigned int, 128, 1>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)",
+          "us": 2.7519999999999527
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.7359999999998763
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_NNT",
+          "us": 115.42399999999998
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "us": 1.5039999999999054
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "us": 1.344000000000051
+        },
+        {
+          "name": "layer_norm_bwd_dx_fused",
+          "us": 112.70299999999997
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+          "us": 36.128000000000156
+        }
+      ],
+      "training-compile-forward": [
+        {
+          "name": "triton_tem_fused_mm_permute_0",
+          "us": 70.36799999999994
+        },
+        {
+          "name": "triton_poi_fused_add_view_1",
+          "us": 36.28800000000001
+        }
+      ],
+      "training-compile-backward": [
+        {
+          "name": "_transition_expand_gatebwd_kernel",
+          "us": 317.855
+        },
+        {
+          "name": "nvjet_tss_64x64_64x13_4x2_v_bz_NTT",
+          "us": 73.59999999999991
+        },
+        {
+          "name": "triton_poi_fused_mm_permute_view_0",
+          "us": 2.2400000000002365
+        },
+        {
+          "name": "nvjet_tss_64x64_64x13_2x4_h_bz_NTT",
+          "us": 111.61500000000024
+        },
+        {
+          "name": "triton_poi_fused_mm_permute_1",
+          "us": 1.9520000000002256
+        },
+        {
+          "name": "triton_poi_fused_cat_2",
+          "us": 2.0479999999997744
+        },
+        {
+          "name": "Memset (Device)",
+          "us": 0.7359999999998763
+        },
+        {
+          "name": "nvjet_tst_128x160_64x5_1x2_h_bz_NNT",
+          "us": 112.99200000000019
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "us": 1.5360000000000582
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+          "us": 1.3119999999998981
+        },
+        {
+          "name": "layer_norm_bwd_dx_fused",
+          "us": 112.48000000000002
+        },
+        {
+          "name": "triton_poi_fused_add_3",
+          "us": 36.25600000000031
+        }
+      ]
+    }
+  }
+}

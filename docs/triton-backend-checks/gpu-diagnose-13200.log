@@ -1,0 +1,839 @@
+.                                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/graph.py:865: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at /pytorch/aten/src/ATen/cuda/CublasHandlePool.cpp:330.)
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+
+tests/test_triton_backend_option.py: 14 warnings
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_fwd_saveact_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2149581594). Falling back to a heuristic 24 of 800 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_expand_swiglu_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=8804691347622). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_bwd_swiglu_recompute_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|NORMALIZE=0,STORE_H=1,shape_key=8804691347622). Falling back to a heuristic 24 of 1080 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2149581594). Falling back to a heuristic 24 of 1440 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /home/psk6950/MiniWorld/runs/triton_backend_option/gpu-512-plain.xml -
+1 passed, 19 warnings in 25.29s
+PLAIN_EXIT 0
+========= COMPUTE-SANITIZER
+BENCH_CONFIG BLOCK_K: 16, BLOCK_M1: 32, BLOCK_N: 32, GROUP_M: 1, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None
+BENCH_CONFIG BLOCK_K: 16, BLOCK_M1: 32, BLOCK_N: 32, GROUP_M: 1, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None
+BENCH_CONFIG BLOCK_K: 16, BLOCK_M1: 32, BLOCK_N: 32, GROUP_M: 1, num_warps: 4, num_ctas: 1, num_stages: 4, maxnreg: None
+BENCH_CONFIG BLOCK_K: 16, BLOCK_M1: 32, BLOCK_N: 64, GROUP_M: 1, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None
+BENCH_CONFIG BLOCK_K: 16, BLOCK_M1: 64, BLOCK_N: 32, GROUP_M: 1, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None
+BENCH_CONFIG BLOCK_K: 32, BLOCK_M1: 32, BLOCK_N: 32, GROUP_M: 1, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None
+BENCH_CONFIG BLOCK_K: 32, BLOCK_M1: 64, BLOCK_N: 128, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None
+BENCH_CONFIG BLOCK_K: 32, BLOCK_M1: 64, BLOCK_N: 128, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None
+BENCH_CONFIG BLOCK_K: 32, BLOCK_M1: 64, BLOCK_N: 128, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 4, maxnreg: None
+BENCH_CONFIG BLOCK_K: 16, BLOCK_M1: 64, BLOCK_N: 128, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None
+BENCH_CONFIG BLOCK_K: 32, BLOCK_M1: 32, BLOCK_N: 128, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None
+BENCH_CONFIG BLOCK_K: 32, BLOCK_M1: 64, BLOCK_N: 64, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None
+BENCH_CONFIG BLOCK_K: 32, BLOCK_M1: 64, BLOCK_N: 128, GROUP_M: 1, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None
+BENCH_CONFIG BLOCK_K: 32, BLOCK_M1: 64, BLOCK_N: 256, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None
+========= Program hit cudaErrorInvalidPc (error 718) due to "invalid program counter" on CUDA API call to cudaDeviceSynchronize.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: c10::cuda::device_synchronize() [0x44766] in libc10_cuda.so
+=========         Host Frame: THCPModule_cudaSynchronize(_object*, _object*) [0xe06014] in libtorch_python.so
+=========         Host Frame: cfunction_vectorcall_NOARGS in methodobject.c:489 [0x13ae91] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b459] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b459] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b459] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: pybind11::object pybind11::detail::object_api<pybind11::handle>::operator()<(pybind11::return_value_policy)1, pybind11::detail::args_proxy, pybind11::detail::kwargs_proxy>(pybind11::detail::args_proxy&&, pybind11::detail::kwargs_proxy&&) const [0xa2c5ce] in libtorch_python.so
+=========         Host Frame: torch::impl::dispatch::PythonKernelHolder::operator()(c10::OperatorHandle const&, c10::DispatchKeySet, std::vector<c10::IValue, std::allocator<c10::IValue> >*) [0xd91529] in libtorch_python.so
+=========         Host Frame: pybind11::object pybind11::detail::argument_loader<pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&>::call_impl<pybind11::object, torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}&, 0ul, 1ul, 2ul, 3ul, pybind11::detail::void_type>(torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}&, std::integer_sequence<unsigned long, 0ul, 1ul, 2ul, 3ul>, pybind11::detail::void_type&&) && [clone .isra.0] [0xd89a97] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::initialize<torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}, pybind11::object, pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&, pybind11::name, pybind11::is_method, pybind11::sibling>(torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}&&, pybind11::object (*)(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&), pybind11::name const&, pybind11::is_method const&, pybind11::sibling const&)::{lambda(pybind11::detail::function_call&)#1}::_FUN(pybind11::detail::function_call&) [0xd89eb7] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x40d209] in libtorch_python.so
+=========         Host Frame: cfunction_call in methodobject.c:543 [0x13d0c5] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14adaf] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: pybind11::object pybind11::detail::object_api<pybind11::handle>::operator()<(pybind11::return_value_policy)1, c10::DispatchKeySet&, pybind11::detail::args_proxy, pybind11::detail::kwargs_proxy>(c10::DispatchKeySet&, pybind11::detail::args_proxy&&, pybind11::detail::kwargs_proxy&&) const [0xd909d3] in libtorch_python.so
+=========         Host Frame: torch::impl::dispatch::PythonKernelHolder::operator()(c10::OperatorHandle const&, c10::DispatchKeySet, std::vector<c10::IValue, std::allocator<c10::IValue> >*) [0xd914db] in libtorch_python.so
+=========         Host Frame: c10::Dispatcher::callBoxed(c10::OperatorHandle const&, std::vector<c10::IValue, std::allocator<c10::IValue> >*) const [clone .isra.0] [0x66a755b] in libtorch_cpu.so
+=========         Host Frame: torch::jit::invokeOperatorFromPython(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, pybind11::args const&, pybind11::kwargs const&, std::optional<c10::DispatchKey>) [0xaf4463] in libtorch_python.so
+=========         Host Frame: torch::jit::_get_operation_for_overload_or_packet(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, c10::Symbol, pybind11::args const&, pybind11::kwargs const&, bool, std::optional<c10::DispatchKey>) [0xaf4967] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::initialize<torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}, pybind11::object, pybind11::args const&, pybind11::kwargs const&>(torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}&&, pybind11::object (*)(pybind11::args const&, pybind11::kwargs const&))::{lambda(pybind11::detail::function_call&)#1}::_FUN(pybind11::detail::function_call&) [0x9d9dd6] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x40d209] in libtorch_python.so
+=========         Host Frame: cfunction_call in methodobject.c:543 [0x13d0c5] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b5ae] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x13241f] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:142 [0x1350ad] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131d4a] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:142 [0x1350ad] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x1317b5] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: (anonymous namespace)::THPFunction_apply(_object*, _object*) [0x81f40b] in libtorch_python.so
+=========         Host Frame: cfunction_call in methodobject.c:552 [0x13d0e7] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b5ae] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x13241f] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: dynamo__custom_eval_frame [0x88a879] in libtorch_python.so
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: dynamo_eval_custom_code [0x888ca7] in libtorch_python.so
+=========         Host Frame: dynamo__custom_eval_frame [0x88ab27] in libtorch_python.so
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: dynamo__custom_eval_frame [0x88abc9] in libtorch_python.so
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: dynamo__custom_eval_frame [0x88abc9] in libtorch_python.so
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:142 [0x1350ad] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x1317b5] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b459] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:153 [0x13516f] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x132015] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4198 [0x12d2aa] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:153 [0x13516f] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b5ae] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:153 [0x13516f] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x132015] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:153 [0x13516f] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x132015] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:153 [0x13516f] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x132015] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyEval_Vector in ceval.c:5067 [0x1d51ab] in python
+=========         Host Frame: PyEval_EvalCode in ceval.c:1134 [0x1d50f4] in python
+=========         Host Frame: run_eval_code_obj in pythonrun.c:1291 [0x206cb9] in python
+=========         Host Frame: run_mod in pythonrun.c:1312 [0x201772] in python
+=========         Host Frame: pyrun_file.cold in pythonrun.c:1208 [0x9751d] in python
+=========         Host Frame: _PyRun_SimpleFileObject in pythonrun.c:456 [0x1fbf3a] in python
+=========         Host Frame: _PyRun_AnyFileObject in pythonrun.c:90 [0x1fb8c3] in python
+=========         Host Frame: Py_RunMain in main.c:674 [0x1f8ce0] in python
+=========         Host Frame: Py_BytesMain in main.c:1094 [0x1c8946] in python
+=========         Host Frame: __libc_start_main [0x3a7e4] in libc.so.6
+=========         Host Frame:  [0x1c882d] in python
+=========         Host Frame: synchronize in __init__.py:1108
+=========         Host Frame: do_bench in testing.py:150
+=========         Host Frame: _bench in autotuner.py:164
+=========         Host Frame: bench in trace_tune.py:7
+=========         Host Frame: <dictcomp> in autotuner.py:229
+=========         Host Frame: benchmark in autotuner.py:229
+=========         Host Frame: run in autotuner.py:240
+=========         Host Frame: <lambda> in jit.py:370
+=========         Host Frame: _expand_swiglu in main.py:125
+=========         Host Frame: wrapped_fn in custom_ops.py:382
+=========         Host Frame: _fn in eval_frame.py:1181
+=========         Host Frame: inner in _compile.py:54
+=========         Host Frame: backend_impl in custom_ops.py:347
+=========         Host Frame: redispatch in _ops.py:826
+=========         Host Frame: forward_no_grad in autograd.py:41
+=========         Host Frame: autograd_impl in autograd.py:112
+=========         Host Frame: __call__ in _ops.py:819
+=========         Host Frame: call in cdyal77bgglkk3tz67j2aez2hpxzkbhb2pnwbqklc4arnsgxfjsh.py:116
+=========         Host Frame: run in utils.py:3220
+=========         Host Frame: __call__ in output_code.py:638
+=========         Host Frame: inner_fn in runtime_wrappers.py:729
+=========         Host Frame: wrapper in runtime_wrappers.py:531
+=========         Host Frame: call_func_at_runtime_with_args in utils.py:134
+=========         Host Frame: forward in runtime_wrappers.py:2152
+=========         Host Frame: apply in function.py:583
+=========         Host Frame: __float128 in utils.py:108
+=========         Host Frame: call_func_at_runtime_with_args in utils.py:134
+=========         Host Frame: runtime_wrapper in runtime_wrappers.py:343
+=========         Host Frame: forward in aot_autograd.py:1148
+=========         Host Frame: _fn in eval_frame.py:1181
+=========         Host Frame: forward in module.py:128
+=========         Host Frame: _call_impl in module.py:1787
+=========         Host Frame: _wrapped_call_impl in module.py:1776
+=========         Host Frame: compile_wrapper in eval_frame.py:953
+=========         Host Frame: _call_impl in module.py:1787
+=========         Host Frame: _wrapped_call_impl in module.py:1776
+=========         Host Frame: __call__ in eval_frame.py:465
+=========         Host Frame: test_cuda_training_and_graph_no_native_engine_calls in test_triton_backend_option.py:122
+=========         Host Frame: pytest_pyfunc_call in python.py:157
+=========         Host Frame: _multicall in _callers.py:121
+=========         Host Frame: _hookexec in _manager.py:120
+=========         Host Frame: __call__ in _hooks.py:512
+=========         Host Frame: runtest in python.py:1671
+=========         Host Frame: pytest_runtest_call in runner.py:178
+=========         Host Frame: _multicall in _callers.py:121
+=========         Host Frame: _hookexec in _manager.py:120
+=========         Host Frame: __call__ in _hooks.py:512
+=========         Host Frame: <lambda> in runner.py:246
+=========         Host Frame: from_call in runner.py:344
+=========         Host Frame: call_and_report in runner.py:245
+=========         Host Frame: runtestprotocol in runner.py:136
+=========         Host Frame: pytest_runtest_protocol in runner.py:117
+=========         Host Frame: _multicall in _callers.py:121
+=========         Host Frame: _hookexec in _manager.py:120
+=========         Host Frame: __call__ in _hooks.py:512
+=========         Host Frame: pytest_runtestloop in main.py:367
+=========         Host Frame: _multicall in _callers.py:121
+=========         Host Frame: _hookexec in _manager.py:120
+=========         Host Frame: __call__ in _hooks.py:512
+=========         Host Frame: _main in main.py:343
+=========         Host Frame: wrap_session in main.py:289
+=========         Host Frame: pytest_cmdline_main in main.py:336
+=========         Host Frame: _multicall in _callers.py:121
+=========         Host Frame: _hookexec in _manager.py:120
+=========         Host Frame: __call__ in _hooks.py:512
+=========         Host Frame: main in __init__.py:175
+========= 
+========= Program hit cudaErrorInvalidPc (error 718) due to "invalid program counter" on CUDA API call to cudaGetLastError.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: c10::cuda::c10_cuda_check_implementation(int, char const*, char const*, unsigned int, bool) [0x4412c] in libc10_cuda.so
+=========         Host Frame: c10::cuda::device_synchronize() [0x44786] in libc10_cuda.so
+=========         Host Frame: THCPModule_cudaSynchronize(_object*, _object*) [0xe06014] in libtorch_python.so
+=========         Host Frame: cfunction_vectorcall_NOARGS in methodobject.c:489 [0x13ae91] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b459] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b459] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b459] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: pybind11::object pybind11::detail::object_api<pybind11::handle>::operator()<(pybind11::return_value_policy)1, pybind11::detail::args_proxy, pybind11::detail::kwargs_proxy>(pybind11::detail::args_proxy&&, pybind11::detail::kwargs_proxy&&) const [0xa2c5ce] in libtorch_python.so
+=========         Host Frame: torch::impl::dispatch::PythonKernelHolder::operator()(c10::OperatorHandle const&, c10::DispatchKeySet, std::vector<c10::IValue, std::allocator<c10::IValue> >*) [0xd91529] in libtorch_python.so
+=========         Host Frame: pybind11::object pybind11::detail::argument_loader<pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&>::call_impl<pybind11::object, torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}&, 0ul, 1ul, 2ul, 3ul, pybind11::detail::void_type>(torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}&, std::integer_sequence<unsigned long, 0ul, 1ul, 2ul, 3ul>, pybind11::detail::void_type&&) && [clone .isra.0] [0xd89a97] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::initialize<torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}, pybind11::object, pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&, pybind11::name, pybind11::is_method, pybind11::sibling>(torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}&&, pybind11::object (*)(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&), pybind11::name const&, pybind11::is_method const&, pybind11::sibling const&)::{lambda(pybind11::detail::function_call&)#1}::_FUN(pybind11::detail::function_call&) [0xd89eb7] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x40d209] in libtorch_python.so
+=========         Host Frame: cfunction_call in methodobject.c:543 [0x13d0c5] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14adaf] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: pybind11::object pybind11::detail::object_api<pybind11::handle>::operator()<(pybind11::return_value_policy)1, c10::DispatchKeySet&, pybind11::detail::args_proxy, pybind11::detail::kwargs_proxy>(c10::DispatchKeySet&, pybind11::detail::args_proxy&&, pybind11::detail::kwargs_proxy&&) const [0xd909d3] in libtorch_python.so
+=========         Host Frame: torch::impl::dispatch::PythonKernelHolder::operator()(c10::OperatorHandle const&, c10::DispatchKeySet, std::vector<c10::IValue, std::allocator<c10::IValue> >*) [0xd914db] in libtorch_python.so
+=========         Host Frame: c10::Dispatcher::callBoxed(c10::OperatorHandle const&, std::vector<c10::IValue, std::allocator<c10::IValue> >*) const [clone .isra.0] [0x66a755b] in libtorch_cpu.so
+=========         Host Frame: torch::jit::invokeOperatorFromPython(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, pybind11::args const&, pybind11::kwargs const&, std::optional<c10::DispatchKey>) [0xaf4463] in libtorch_python.so
+=========         Host Frame: torch::jit::_get_operation_for_overload_or_packet(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, c10::Symbol, pybind11::args const&, pybind11::kwargs const&, bool, std::optional<c10::DispatchKey>) [0xaf4967] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::initialize<torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}, pybind11::object, pybind11::args const&, pybind11::kwargs const&>(torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}&&, pybind11::object (*)(pybind11::args const&, pybind11::kwargs const&))::{lambda(pybind11::detail::function_call&)#1}::_FUN(pybind11::detail::function_call&) [0x9d9dd6] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x40d209] in libtorch_python.so
+=========         Host Frame: cfunction_call in methodobject.c:543 [0x13d0c5] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b5ae] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x13241f] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:142 [0x1350ad] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131d4a] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:142 [0x1350ad] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x1317b5] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: (anonymous namespace)::THPFunction_apply(_object*, _object*) [0x81f40b] in libtorch_python.so
+=========         Host Frame: cfunction_call in methodobject.c:552 [0x13d0e7] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b5ae] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x13241f] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: dynamo__custom_eval_frame [0x88a879] in libtorch_python.so
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: dynamo_eval_custom_code [0x888ca7] in libtorch_python.so
+=========         Host Frame: dynamo__custom_eval_frame [0x88ab27] in libtorch_python.so
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: dynamo__custom_eval_frame [0x88abc9] in libtorch_python.so
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: dynamo__custom_eval_frame [0x88abc9] in libtorch_python.so
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:142 [0x1350ad] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x1317b5] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b459] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:153 [0x13516f] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x132015] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4198 [0x12d2aa] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:153 [0x13516f] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b5ae] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x12debe] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:153 [0x13516f] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x132015] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:153 [0x13516f] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x132015] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x12cec2] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: method_vectorcall in classobject.c:53 [0x14a976] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:153 [0x13516f] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148e56] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4231 [0x132015] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131555] in python
+=========         Host Frame: _PyEval_Vector in ceval.c:5067 [0x1d51ab] in python
+=========         Host Frame: PyEval_EvalCode in ceval.c:1134 [0x1d50f4] in python
+=========         Host Frame: run_eval_code_obj in pythonrun.c:1291 [0x206cb9] in python
+=========         Host Frame: run_mod in pythonrun.c:1312 [0x201772] in python
+=========         Host Frame: pyrun_file.cold in pythonrun.c:1208 [0x9751d] in python
+=========         Host Frame: _PyRun_SimpleFileObject in pythonrun.c:456 [0x1fbf3a] in python
+=========         Host Frame: _PyRun_AnyFileObject in pythonrun.c:90 [0x1fb8c3] in python
+=========         Host Frame: Py_RunMain in main.c:674 [0x1f8ce0] in python
+=========         Host Frame: Py_BytesMain in main.c:1094 [0x1c8946] in python
+=========         Host Frame: __libc_start_main [0x3a7e4] in libc.so.6
+=========         Host Frame:  [0x1c882d] in python
+=========         Host Frame: synchronize in __init__.py:1108
+=========         Host Frame: do_bench in testing.py:150
+=========         Host Frame: _bench in autotuner.py:164
+=========         Host Frame: bench in trace_tune.py:7
+=========         Host Frame: <dictcomp> in autotuner.py:229
+=========         Host Frame: benchmark in autotuner.py:229
+=========         Host Frame: run in autotuner.py:240
+=========         Host Frame: <lambda> in jit.py:370
+=========         Host Frame: _expand_swiglu in main.py:125
+=========         Host Frame: wrapped_fn in custom_ops.py:382
+=========         Host Frame: _fn in eval_frame.py:1181
+=========         Host Frame: inner in _compile.py:54
+=========         Host Frame: backend_impl in custom_ops.py:347
+=========         Host Frame: redispatch in _ops.py:826
+=========         Host Frame: forward_no_grad in autograd.py:41
+=========         Host Frame: autograd_impl in autograd.py:112
+=========         Host Frame: __call__ in _ops.py:819
+=========         Host Frame: call in cdyal77bgglkk3tz67j2aez2hpxzkbhb2pnwbqklc4arnsgxfjsh.py:116
+=========         Host Frame: run in utils.py:3220
+=========         Host Frame: __call__ in output_code.py:638
+=========         Host Frame: inner_fn in runtime_wrappers.py:729
+=========         Host Frame: wrapper in runtime_wrappers.py:531
+=========         Host Frame: call_func_at_runtime_with_args in utils.py:134
+=========         Host Frame: forward in runtime_wrappers.py:2152
+=========         Host Frame: apply in function.py:583
+=========         Host Frame: __float128 in utils.py:108
+=========         Host Frame: call_func_at_runtime_with_args in utils.py:134
+=========         Host Frame: runtime_wrapper in runtime_wrappers.py:343
+=========         Host Frame: forward in aot_autograd.py:1148
+=========         Host Frame: _fn in eval_frame.py:1181
+=========         Host Frame: forward in module.py:128
+=========         Host Frame: _call_impl in module.py:1787
+=========         Host Frame: _wrapped_call_impl in module.py:1776
+=========         Host Frame: compile_wrapper in eval_frame.py:953
+=========         Host Frame: _call_impl in module.py:1787
+=========         Host Frame: _wrapped_call_impl in module.py:1776
+=========         Host Frame: __call__ in eval_frame.py:465
+=========         Host Frame: test_cuda_training_and_graph_no_native_engine_calls in test_triton_backend_option.py:122
+=========         Host Frame: pytest_pyfunc_call in python.py:157
+=========         Host Frame: _multicall in _callers.py:121
+=========         Host Frame: _hookexec in _manager.py:120
+=========         Host Frame: __call__ in _hooks.py:512
+=========         Host Frame: runtest in python.py:1671
+=========         Host Frame: pytest_runtest_call in runner.py:178
+=========         Host Frame: _multicall in _callers.py:121
+=========         Host Frame: _hookexec in _manager.py:120
+=========         Host Frame: __call__ in _hooks.py:512
+=========         Host Frame: <lambda> in runner.py:246
+=========         Host Frame: from_call in runner.py:344
+=========         Host Frame: call_and_report in runner.py:245
+=========         Host Frame: runtestprotocol in runner.py:136
+=========         Host Frame: pytest_runtest_protocol in runner.py:117
+=========         Host Frame: _multicall in _callers.py:121
+=========         Host Frame: _hookexec in _manager.py:120
+=========         Host Frame: __call__ in _hooks.py:512
+=========         Host Frame: pytest_runtestloop in main.py:367
+=========         Host Frame: _multicall in _callers.py:121
+=========         Host Frame: _hookexec in _manager.py:120
+=========         Host Frame: __call__ in _hooks.py:512
+=========         Host Frame: _main in main.py:343
+=========         Host Frame: wrap_session in main.py:289
+=========         Host Frame: pytest_cmdline_main in main.py:336
+=========         Host Frame: _multicall in _callers.py:121
+=========         Host Frame: _hookexec in _manager.py:120
+=========         Host Frame: __call__ in _hooks.py:512
+=========         Host Frame: main in __init__.py:175
+========= 
+F
+=================================== FAILURES ===================================
+______ test_cuda_training_and_graph_no_native_engine_calls[transition512] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f936b6a7880>
+kind = 'transition', width = 512
+
+    @pytest.mark.skipif(not torch.cuda.is_available(),reason='CUDA required')
+    @pytest.mark.parametrize('kind,width', [('transition',128),('transition',512),('trimul',128)], ids=['transition128','transition512','trimul128'])
+    def test_cuda_training_and_graph_no_native_engine_calls(monkeypatch,kind,width):
+        from miniworld_engine.modules import Transition, BidirectionalTriangleMultiplication
+        from miniworld_engine.autotune import native
+        from miniworld_engine.kernels.layernorm import cuda as ln_cuda
+        configure_engine_backend('triton')
+        settings.configure(layernorm_cuda_bwd=True)  # strict policy must beat this native opt-in
+        native_calls = []
+        def forbidden(*args,**kwargs):
+            native_calls.append(True)
+            raise AssertionError('Native H100 engine kernel entered under Triton policy')
+        monkeypatch.setattr(native,'choose_config',forbidden)
+        monkeypatch.setattr(ln_cuda,'layer_norm_bwd_cuda',forbidden)
+        for name in ['cute_transition_fused','cuda_transition_b2b','triton_transition_fused']:
+            monkeypatch.setattr(kernels,name,forbidden)
+        stream = torch.cuda.Stream()
+        stream.wait_stream(torch.cuda.current_stream())
+        with torch.cuda.stream(stream):
+            torch.manual_seed(9)
+            # Includes wide Transition's unconditional CuTe branch in the old auto route.
+            layer = (BidirectionalTriangleMultiplication(width,implementation=EngineImpl.MINIWORLD,p_drop=0.)
+                     if kind == 'trimul' else Transition(width,implementation=EngineImpl.MINIWORLD))
+            shape = (1,128,128,width) if kind == 'trimul' else (1,128,width)
+            layer = layer.cuda().train()
+            with torch.no_grad():
+                for n,p in layer.named_parameters():
+                    if p.ndim == 2: p.normal_(std=.02)
+            x = torch.randn(shape,device='cuda',dtype=torch.bfloat16,requires_grad=True)
+            ref = type(layer)(128 if len(shape)==4 else shape[-1],implementation=EngineImpl.PYTORCH,
+                              **({'p_drop':0.} if len(shape)==4 else {})).cuda().train()
+            ref.load_state_dict(layer.state_dict())
+            xr = x.detach().clone().requires_grad_()
+            dy = torch.randn_like(x)
+            expected = ref(xr); expected.backward(dy)
+            compiled = torch.compile(layer,dynamic=False)
+>           actual = compiled(x); actual.backward(dy)
+
+tests/test_triton_backend_option.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py:465: in __call__
+    return super().__call__(*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/nn/modules/module.py:1776: in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/nn/modules/module.py:1787: in _call_impl
+    return forward_call(*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py:953: in compile_wrapper
+    return fn(*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/nn/modules/module.py:1776: in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/nn/modules/module.py:1787: in _call_impl
+    return forward_call(*args, **kwargs)
+runs/triton_backend_option/package/miniworld_engine/modules/transition/module.py:128: in forward
+    @typecheck
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py:1181: in _fn
+    return fn(*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/aot_autograd.py:1148: in forward
+    return compiled_fn(full_args)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:343: in runtime_wrapper
+    all_outs = call_func_at_runtime_with_args(
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/utils.py:134: in call_func_at_runtime_with_args
+    out = normalize_as_list(f(args))
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/utils.py:108: in g
+    return f(*args)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/function.py:583: in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2152: in forward
+    fw_outs = call_func_at_runtime_with_args(
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/utils.py:134: in call_func_at_runtime_with_args
+    out = normalize_as_list(f(args))
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:531: in wrapper
+    return compiled_fn(runtime_args)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:729: in inner_fn
+    outs = compiled_fn(args)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_inductor/output_code.py:638: in __call__
+    return self.current_callable(inputs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_inductor/utils.py:3220: in run
+    out = model(new_inputs)
+/tmp/torchinductor_psk6950_triton_policy/dy/cdyal77bgglkk3tz67j2aez2hpxzkbhb2pnwbqklc4arnsgxfjsh.py:116: in call
+    buf4 = torch.ops.miniworld_engine.transition_expand_swiglu.default(buf1, primals_4, primals_5, 128)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_ops.py:819: in __call__
+    return self._op(*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_library/autograd.py:112: in autograd_impl
+    result = forward_no_grad(*args, Metadata(keyset, keyword_only_args))
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_library/autograd.py:41: in forward_no_grad
+    result = op.redispatch(keyset & _C._after_autograd_keyset, *args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_ops.py:826: in redispatch
+    return self._handle.redispatch_boxed(keyset, *args, **kwargs)  # type: ignore[return-value]
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_library/custom_ops.py:347: in backend_impl
+    result = self._backend_fns[device_type](*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_compile.py:54: in inner
+    return disable_fn(*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py:1181: in _fn
+    return fn(*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/_library/custom_ops.py:382: in wrapped_fn
+    return fn(*args, **kwargs)
+runs/triton_backend_option/package/miniworld_engine/kernels/transition/triton/main.py:125: in _expand_swiglu
+    transition_fwd_kernel[grid](
+.pixi/envs/cu128/lib/python3.10/site-packages/triton/runtime/jit.py:370: in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/triton/runtime/autotuner.py:240: in run
+    benchmark()
+.pixi/envs/cu128/lib/python3.10/site-packages/triton/runtime/autotuner.py:229: in benchmark
+    timings = {config: self._bench(*args, config=config, **kwargs) for config in pruned_configs}
+.pixi/envs/cu128/lib/python3.10/site-packages/triton/runtime/autotuner.py:229: in <dictcomp>
+    timings = {config: self._bench(*args, config=config, **kwargs) for config in pruned_configs}
+runs/triton_backend_option/trace_tune.py:7: in bench
+    return original(self, *a, config=config, **kw)
+.pixi/envs/cu128/lib/python3.10/site-packages/triton/runtime/autotuner.py:164: in _bench
+    return self.do_bench(kernel_call, quantiles=(0.5, 0.2, 0.8))
+.pixi/envs/cu128/lib/python3.10/site-packages/triton/testing.py:150: in do_bench
+    di.synchronize()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+device = None
+
+    def synchronize(device: "Device" = None) -> None:
+        r"""Wait for all kernels in all streams on a CUDA device to complete.
+    
+        Args:
+            device (torch.device or int, optional): device for which to synchronize.
+                It uses the current device, given by :func:`~torch.cuda.current_device`,
+                if :attr:`device` is ``None`` (default).
+        """
+        _lazy_init()
+        with torch.cuda.device(device):
+>           return torch._C._cuda_synchronize()
+E           torch.AcceleratorError: CUDA error: invalid program counter
+E           Search for `cudaErrorInvalidPc' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+E           CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+E           For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+E           Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/cuda/__init__.py:1108: AcceleratorError
+=============================== warnings summary ===============================
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/graph.py:865: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at /pytorch/aten/src/ATen/cuda/CublasHandlePool.cpp:330.)
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+
+tests/test_triton_backend_option.py: 14 warnings
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_fwd_saveact_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=2149581594). Falling back to a heuristic 24 of 800 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+  /home/psk6950/MiniWorld/runs/triton_backend_option/package/miniworld_engine/autotune/cache.py:1405: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'transition_expand_swiglu_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|shape_key=8804691347622). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[transition512]
+1 failed, 17 warnings in 10.77s
+========= Target application returned an error
+========= ERROR SUMMARY: 2 errors
+SANITIZER_EXIT 42
+========= COMPUTE-SANITIZER
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_cuda_training_and_graph_no_native_engine_calls[trimul128] ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa4d62d3550>
+kind = 'trimul', width = 128
+
+    @pytest.mark.skipif(not torch.cuda.is_available(),reason='CUDA required')
+    @pytest.mark.parametrize('kind,width', [('transition',128),('transition',512),('trimul',128)], ids=['transition128','transition512','trimul128'])
+    def test_cuda_training_and_graph_no_native_engine_calls(monkeypatch,kind,width):
+        from miniworld_engine.modules import Transition, BidirectionalTriangleMultiplication
+        from miniworld_engine.autotune import native
+        from miniworld_engine.kernels.layernorm import cuda as ln_cuda
+        configure_engine_backend('triton')
+        settings.configure(layernorm_cuda_bwd=True)  # strict policy must beat this native opt-in
+        native_calls = []
+        def forbidden(*args,**kwargs):
+            native_calls.append(True)
+            raise AssertionError('Native H100 engine kernel entered under Triton policy')
+        monkeypatch.setattr(native,'choose_config',forbidden)
+        monkeypatch.setattr(ln_cuda,'layer_norm_bwd_cuda',forbidden)
+        for name in ['cute_transition_fused','cuda_transition_b2b','triton_transition_fused']:
+            monkeypatch.setattr(kernels,name,forbidden)
+        stream = torch.cuda.Stream()
+        stream.wait_stream(torch.cuda.current_stream())
+        with torch.cuda.stream(stream):
+            torch.manual_seed(9)
+            # Includes wide Transition's unconditional CuTe branch in the old auto route.
+            layer = (BidirectionalTriangleMultiplication(width,implementation=EngineImpl.MINIWORLD,p_drop=0.)
+                     if kind == 'trimul' else Transition(width,implementation=EngineImpl.MINIWORLD))
+            shape = (1,128,128,width) if kind == 'trimul' else (1,128,width)
+            layer = layer.cuda().train()
+            with torch.no_grad():
+                for n,p in layer.named_parameters():
+                    if p.ndim == 2: p.normal_(std=.02)
+            x = torch.randn(shape,device='cuda',dtype=torch.bfloat16,requires_grad=True)
+            ref = type(layer)(128 if len(shape)==4 else shape[-1],implementation=EngineImpl.PYTORCH,
+                              **({'p_drop':0.} if len(shape)==4 else {})).cuda().train()
+            ref.load_state_dict(layer.state_dict())
+            xr = x.detach().clone().requires_grad_()
+            dy = torch.randn_like(x)
+>           expected = ref(xr); expected.backward(dy)
+
+tests/test_triton_backend_option.py:120: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/nn/modules/module.py:1776: in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/nn/modules/module.py:1787: in _call_impl
+    return forward_call(*args, **kwargs)
+runs/triton_backend_option/package/miniworld_engine/modules/triangle_multiplication/bidirectional.py:147: in forward
+    left = sigmoid_gate(self.to_left_gate(pair), self.to_left(pair))
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/nn/modules/module.py:1776: in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/nn/modules/module.py:1787: in _call_impl
+    return forward_call(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Linear(in_features=128, out_features=256, bias=False)
+input = tensor([[[[ 2.3730e-01, -1.2812e+00, -2.2344e+00,  ...,  2.9297e-01,
+           -2.0000e+00,  4.6484e-01],
+          [...e-01,
+           -1.3828e+00,  3.5938e-01]]]], device='cuda:0', dtype=torch.bfloat16,
+       grad_fn=<ToCopyBackward0>)
+
+    def forward(self, input: Tensor) -> Tensor:
+        """
+        Runs the forward pass.
+        """
+>       return F.linear(input, self.weight, self.bias)
+E       RuntimeError: expected mat1 and mat2 to have the same dtype, but got: c10::BFloat16 != float
+
+.pixi/envs/cu128/lib/python3.10/site-packages/torch/nn/modules/linear.py:134: RuntimeError
+- generated xml file: /home/psk6950/MiniWorld/runs/triton_backend_option/gpu-trimul128.xml -
+=========================== short test summary info ============================
+FAILED tests/test_triton_backend_option.py::test_cuda_training_and_graph_no_native_engine_calls[trimul128]
+1 failed in 3.04s
+========= Target application returned an error
+========= ERROR SUMMARY: 0 errors
+TRIMUL_EXIT 1

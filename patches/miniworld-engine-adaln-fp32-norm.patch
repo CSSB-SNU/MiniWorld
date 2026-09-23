@@ -1,0 +1,40 @@
+--- a/src/miniworld_engine/modules/adaptive_layernorm/module.py
++++ b/src/miniworld_engine/modules/adaptive_layernorm/module.py
+@@ -14,7 +14,7 @@
+     ImplementationType,
+     InvalidImplementationError,
+ )
+-from miniworld_engine.modules.primitives import Linear
++from miniworld_engine.modules.primitives import Linear, LayerNorm
+ 
+ 
+ class AdaptiveLayerNorm(nn.Module):
+@@ -37,8 +37,13 @@
+         # here as well means a caller can build a bf16 module directly instead of building fp32
+         # and converting, which is what a parent passing its own dtype down needs.
+         self.dtype = dtype
+-        self.ln_in = nn.LayerNorm(d_hidden, elementwise_affine=False, dtype=dtype)
+-        self.ln_cond = nn.LayerNorm(d_cond, bias=False, dtype=dtype)
++        # Norms stay fp32 whatever ``dtype`` the rest of the module runs in:
++        # ``ln_in`` has no affine params (only its compute dtype matters -- see forward),
++        # ``ln_cond`` uses the fp32-pinned engine LayerNorm so a bulk ``.to(bfloat16)`` of
++        # the parent leaves its gamma in fp32 (a bf16 gamma at 1.0 cannot move by one Adam
++        # step). The fused triton path already consumed ``ln_cond.weight`` in fp32.
++        self.ln_in = nn.LayerNorm(d_hidden, elementwise_affine=False)
++        self.ln_cond = LayerNorm(d_cond, bias=False, implementation=self.implementation)
+         self.to_scale = Linear(d_cond, d_hidden, init="gating", dtype=dtype)
+         self.to_bias = Linear(d_cond, d_hidden, bias=False, init="zero", dtype=dtype)
+ 
+@@ -50,8 +55,10 @@
+     ) -> Float[torch.Tensor, "* d_hidden"]:
+         """Forward pass. Routes on the resolved internal backend (``_backend``)."""
+         if self._backend == KernelBackend.PYTORCH:
+-            x_norm = self.ln_in(x)
+-            cond_norm = self.ln_cond(cond)
++            # fp32 normalisation statistics under any input dtype; back to the module's
++            # dtype for the projections.
++            x_norm = self.ln_in(x.float()).to(x.dtype)
++            cond_norm = self.ln_cond(cond).to(cond.dtype)
+             scale = self.to_scale(cond_norm)
+             bias = self.to_bias(cond_norm)
+             return torch.sigmoid(scale) * x_norm + bias

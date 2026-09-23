@@ -1,0 +1,30 @@
+# v1.2.0: v1.1 (pseudo-beta targets, interchain 2.0, pair-focus cropping) + AF3-style MSA
+# sampling in BOTH places AF3 does it:
+#   data stage  (SI 2.2)  pdb: k ~ U[1, n_full] over the 16k-row store, random per-chain crop
+#                         to an 8192-row pool (our no_pairing stack is the unpaired MSA, whose
+#                         AF3 budget is ~8192). Distillation stores hold <=2048 rows: unchanged.
+#   model stage (SI 3.3)  every recycle draws a fresh 1024-row subset from the pool (valid
+#                         rows first, query kept) and embeds only those -- the MSA module now
+#                         runs on 1024 rows instead of the whole pool.
+# bucket_msa_multiple covers the largest pool; the one-hot MSA tensor is built per recycle on
+# the 1024 subset, so the bigger pool costs integer tensors only. Model params unchanged.
+defaults:
+  - phase1b_distogram_v110
+  - _self_
+
+train:
+  fused_msa_train: true       # engine fused PWA/OPM training kernels (see train/default.yaml)
+  bucket_msa_multiple: 8192   # must cover the largest MSA pool (pdb: 8192 below)
+  comment: "v1.2.0-phase1b-distogram-large-L768"
+  run_dir: "runs/v1.2.0/phase1b/large_distogram_L768"
+
+model:
+  trunk:
+    msa_subsample_per_recycle: 1024
+
+data:
+  msa:
+    sample_depth_by_source:
+      pdb: af3
+    max_msa_depth_by_source:
+      pdb: 8192

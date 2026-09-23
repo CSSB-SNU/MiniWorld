@@ -38,8 +38,10 @@ if TYPE_CHECKING:
         TemplateConfig,
         TokenizerConfig,
     )
+    from miniworld.data.features.features import MSAFeatures
     from miniworld.data.mols import CIFMolAttached, FragmentedCCDMol
     from miniworld.data.pipeline import Tokenizer
+    from miniworld.data.pipeline.msa import ComplexMSA
 
 
 class WrongCroppingError(ValueError):
@@ -167,12 +169,7 @@ class Preprocessor:
             pairing_mode=self.msa_config.pairing_mode,
             locator=self.resources,
         )
-        msa = sample_msa(
-            msa=complex_msa,
-            max_msa_depth=self.msa_config.max_msa_depth,
-            rng=rng,
-            sample_depth=self.msa_config.sample_depth,
-        )
+        msa = self._sample_msa(complex_msa, record, rng)
 
         templates = load_record_templates(
             cifmol=cifmol,
@@ -256,6 +253,29 @@ class Preprocessor:
             weight_group=record.weight_group,
         )
 
+    # -- MSA depth policy -------------------------------------------------
+
+    def _sample_msa(
+        self,
+        complex_msa: ComplexMSA,
+        record: DataRecord,
+        rng: np.random.Generator,
+    ) -> MSAFeatures:
+        """Draw this item's MSA rows under the policy for its source.
+
+        v1.2.0: both the depth policy and the pool size are resolved per
+        ``record.source`` (``MSAConfig.policy_for`` / ``depth_for``). PDB items follow
+        the AF3 full-depth rule into an 8192-row pool; distillation sources, whose
+        stores hold at most 2048 rows, keep the uniform prefix draw into a 2048 pool.
+        The trunk then draws its per-recycle rows from whatever pool it is handed.
+        """
+        return sample_msa(
+            msa=complex_msa,
+            max_msa_depth=self.msa_config.depth_for(record.source),
+            rng=rng,
+            sample_depth=self.msa_config.policy_for(record.source),
+        )
+
     # -- cropping ---------------------------------------------------------
 
     def get_crop_indices(
@@ -335,18 +355,53 @@ class Preprocessor:
         chain_ids: list[str],
         rng: np.random.Generator,
     ):
-        """Pick candidate atoms for cropping focus (interface for pairs)."""
+        """Pick focus candidates using the configured chain/interface policy."""
         match chain_ids:
             case [chain_id]:
                 return cifmol.chains.select(chain_id=chain_id).atoms
             case [chain_id1, chain_id2]:
-                if rng.random() < self.crop_config.chain_crop_prob:
-                    chain_id = rng.choice([chain_id1, chain_id2])
+                candidates = [chain_id1, chain_id2]
+                interface_only = False
+                if (
+                    self.crop_config.ab_ag_interface_only
+                    or self.crop_config.prefer_nonprotein_focus
+                ):
+                    # seq_id's first letter is the attached molecule type, also
+                    # used by to_chain_features and remove_terminal_oxygen.
+                    tags = [
+                        str(cifmol.chains.select(chain_id=c).seq_id.value[0])[:1]
+                        for c in candidates
+                    ]
+                    if any(
+                        tag not in {"A", "P", "Q", "R", "D", "N", "L", "B", "X"}
+                        for tag in tags
+                    ):
+                        msg = f"Unknown molecule tags {tags} for crop pair {chain_ids}"
+                        raise WrongCroppingError(msg)
+                    # A: antibody (including nanobody/scFv), P/Q: L/D protein.
+                    # Two antibody chains are a protein pair, not an Ab-Ag label.
+                    interface_only = self.crop_config.ab_ag_interface_only and (
+                        "A" in tags and any(tag in {"P", "Q"} for tag in tags)
+                    )
+                    if self.crop_config.prefer_nonprotein_focus:
+                        nonprotein = [
+                            c
+                            for c, tag in zip(candidates, tags, strict=True)
+                            if tag not in {"A", "P", "Q"}
+                        ]
+                        # Both nonprotein: choose uniformly among both. Both
+                        # protein: retain the existing uniform chain choice.
+                        candidates = nonprotein or candidates
+                if not interface_only and rng.random() < self.crop_config.chain_crop_prob:
+                    chain_id = rng.choice(candidates)
                     return cifmol.chains.select(chain_id=chain_id).atoms
                 try:
                     return find_interface_residues(cifmol, chain_id1, chain_id2).atoms
-                except NoInterfaceError:
-                    chain_id = rng.choice([chain_id1, chain_id2])
+                except NoInterfaceError as exc:
+                    if interface_only:
+                        msg = f"Ab-Ag crop pair {chain_ids} has no interface in {cifmol.id}"
+                        raise WrongCroppingError(msg) from exc
+                    chain_id = rng.choice(candidates)
                     return cifmol.chains.select(chain_id=chain_id).atoms
             case _:
                 msg = f"Unexpected chain_ids: {chain_ids}"

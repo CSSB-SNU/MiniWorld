@@ -1,0 +1,567 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Anthropic TriMul · 심층 분석</title><style>
+:root{--ink:#152d3c;--sub:#536977;--border:#dbe4e8;--green:#087c66;--blue:#345ec0;--purple:#7052a0;--amber:#a3650a;--red:#b44137}*{box-sizing:border-box}body{margin:0;background:#f3f6f7;color:var(--ink);font:15px/1.65 system-ui,-apple-system,'Noto Sans KR',sans-serif}a{color:#205b9b;text-underline-offset:4px}header{background:#132f3d;color:white;padding:38px max(20px,calc((100vw - 1220px)/2)) 30px}.eyebrow{font-size:12px;letter-spacing:.15em;color:#8eddc6;font-weight:700}h1{font-size:clamp(26px,4vw,40px);margin:8px 0 12px;letter-spacing:-.04em;line-height:1.25}header p{max-width:850px;color:#cbdade;margin:8px 0}.snapshot{font-size:12px;color:#a7bec7;margin-top:20px}nav{position:sticky;top:0;z-index:4;background:#fffffff5;backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;gap:20px;overflow:auto;padding:12px max(20px,calc((100vw - 1220px)/2));white-space:nowrap}nav a{color:var(--ink);text-decoration:none;font-size:13px;font-weight:700}main{max-width:1260px;margin:auto;padding:24px 20px 60px}section{scroll-margin-top:70px;margin:26px 0}h2{font-size:23px;letter-spacing:-.03em;margin:0 0 6px}h3{font-size:17px;margin:0 0 12px}p{margin:6px 0 14px}.muted,small{color:var(--sub)}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.panel{background:white;border:1px solid var(--border);border-radius:14px;padding:22px}.card strong{display:block;font-size:32px;line-height:1.3;margin:6px 0}.card .label{font-size:12px;color:var(--sub)}.card p{font-size:12px;margin:0}.green{color:var(--green)}.red{color:var(--red)}.amber{color:var(--amber)}.pill{display:inline-block;padding:3px 9px;border-radius:30px;font-size:11px;font-weight:750;white-space:nowrap;background:#eef3f5}.pill.green{background:#e7f5ee}.pill.red{background:#fff0ed}.pill.amber{background:#fff5e5}.notice{border-left:4px solid var(--green);background:#eaf5f0;border-radius:0 9px 9px 0;padding:16px 20px;margin:18px 0}.notice.amber{border-color:#cf972e;background:#fff5e5;color:var(--ink)}.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0}button,select,input{font:inherit;border:1px solid #b9cbd2;border-radius:8px;background:white;padding:7px 12px;color:var(--ink)}button{cursor:pointer}button.active{background:var(--ink);color:white;border-color:var(--ink)}:focus-visible{outline:3px solid #d19b2b;outline-offset:3px}.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:white}table{width:100%;border-collapse:collapse;text-align:left;font-variant-numeric:tabular-nums}th{font-size:12px;font-weight:700;color:var(--sub);background:#edf3f4;padding:12px 16px;white-space:nowrap}td{padding:12px 16px;border-top:1px solid #e5ecef;font-size:13px}td:first-child{font-weight:650}tr:hover td{background:#f7fafb}small{display:block;font-size:11px;font-weight:400}code{font-size:11px;overflow-wrap:anywhere}#chart{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.chart-title{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:700;margin-bottom:12px}.barline{display:grid;grid-template-columns:74px 1fr 72px;gap:10px;align-items:center;font-size:12px;margin:9px 0}.track{height:15px;background:#edf2f4;border-radius:4px;overflow:hidden}.fill{height:100%;background:#a5b7c1;border-radius:4px;min-width:2px}.fill.up{background:#1a967e}.fill.slow{background:#c47d56}.flow{display:flex;align-items:stretch;gap:8px;margin:16px 0;flex-wrap:wrap}.node{flex:1;min-width:150px;border:2px solid #83baa9;background:#f0faf5;border-radius:10px;padding:14px;font-size:13px}.node b{display:block;margin-bottom:5px}.node.purple{border-color:#b19bce;background:#f6f0fd}.node.gray{border:2px dashed #aab6bd;background:#f5f7f8}.arrow{align-self:center;color:#879ba6;font-size:20px}.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px}.legend span::before{content:'';display:inline-block;width:12px;height:12px;background:#b8dbc9;margin-right:6px;border-radius:3px}.legend .lib::before{background:#ccb9e7}.legend .ordinary::before{background:#cbd3d8}.stack{display:flex;min-height:32px;border-radius:6px;overflow:hidden;margin:12px 0}.stack span{display:flex;align-items:center;justify-content:center;color:white;font-size:11px;min-width:1px;overflow:hidden;white-space:nowrap}.st-0{background:#177d70}.st-1{background:#7355a4}.st-2{background:#2e71ab}.st-3{background:#81949d}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.metric{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:12px}.metric label{width:90px}.metric .track{flex:1;height:9px}.metric strong{width:46px;text-align:right}.metric .fill{background:#607ca5}.tiny{font-size:12px}.reason{max-width:380px;overflow-wrap:anywhere;font-size:11px;font-weight:400}details summary{cursor:pointer;font-weight:700;padding:12px 0}#cases td{vertical-align:top}footer{font-size:12px;color:var(--sub);padding-top:18px;border-top:1px solid var(--border)}.steps{padding-left:22px}.steps li{margin:12px 0}.status-list{display:grid;grid-template-columns:110px 1fr;gap:12px;font-size:14px}.status-list div{padding:8px 0;border-bottom:1px solid var(--border)}@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.split,#chart{grid-template-columns:1fr}.panel,.card{padding:16px}td,th{padding:10px}.flow{display:block}.arrow{text-align:center;transform:rotate(90deg);height:24px}.node{min-width:0}.status-list{grid-template-columns:78px 1fr}.toolbar{gap:8px}nav{gap:17px}.card strong{font-size:28px}}@media print{nav,.toolbar,button{display:none}body{background:white}.panel,.card{break-inside:avoid}details{display:none}header{background:white;color:#123}header p{color:#456}#chart{display:none}}
+p{overflow-wrap:anywhere}.table-wrap{margin:18px 0}td{vertical-align:top}</style></head><body><header><div class="eyebrow">SOURCE · CUBIN · NCU</div><h1>TriMul 커널 개발 현황</h1><p>K1 → cuBLAS → K3. 융합 수식, H100 구현, 실측 병목과 학습으로 계승할 설계.</p></header><nav><a href="#training-shapes">학습 버킷</a><a href="#b1b4-audit">현재 B1–B4 실측</a><a href="#b1b4-shared">이전 B1–B4 기록</a><a href="#b1b4-cuda">B1–B4 CUDA</a><a href="#equal-saves">동일 저장 학습 비교</a><a href="#dropout-ln">Dropout 재튜닝</a><a href="#k3-recompute">K3 재계산 비교</a><a href="#inference-ln">추론 LN 재튜닝</a><a href="#ln-ab">LN 분리·융합 실험</a><a href="#training-progress">현재 학습 개발</a><a href="index.html">← 전체 현황판</a><a href="#s3">H100 설정</a><a href="#s5">성능 분해</a><a href="#s7">후속 설계</a></nav><main><!-- TRAINING_SHAPES_BEGIN --><section class="panel" id="training-shapes"><span class="pill green">2026-09-20 · 학습 길이 정책 반영</span><h2>학습은 두 버킷, 추론은 기존 범위 유지</h2>
+<div class="table-wrap"><table><thead><tr><th>길이 축</th><th>학습</th><th>추론 모듈 빌드</th></tr></thead><tbody><tr><td>Token / pair / MSA token</td><td><b>384, 768</b></td><td>128, 256, 384, 512, 640, 768</td></tr><tr><td>Atom</td><td><b>4096, 8192</b></td><td>1024부터 8192까지 1024 간격</td></tr></tbody></table></div>
+<p>학습 forward/backward의 모듈 빌드와 backward 전용 드라이버에 적용했다. 공유 forward 커널은 추론 버킷을 유지한다. Noise 길이 1은 별도 조건 벡터이며 token/atom 버킷이 아니다. 작은 입력 정확도 검사도 학습 버킷 목록과 별개다.</p>
+<p>학습 모듈 후보 <b>6,756 → 2,188</b>, backward 드라이버 후보 <b>2,238 → 782</b>. 추론 모듈 2,350개와 공유 forward 드라이버 2,843개는 수정 전과 동일하다. 이 숫자는 캐시 적중 제외·중복 커버리지 정리 전의 후보 수다.</p>
+<p>관련 테스트 <b>559개 통과</b>. 기존 커널 캐시 키와 튜닝 결과는 보존한다. 다음 정상 빌드에서 파생 계획을 새 정책으로 생성한다. 실행 중 학습 잡과 추론 패딩은 변경하지 않았으며 GPU 캐시 빌드를 새로 시작하지 않았다.</p>
+<p><a href="assets/training-shape-policy.md">정책과 코드 연결 상세</a> · <a href="assets/training-shape-verification.json">전후 검증 요약</a></p><details><summary>상세 정책과 검증</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere"># Training and inference shape policy
+
+Updated 2026-09-20 to match the training recipe.
+
+| Stream | Training lengths | Inference build lengths (unchanged) |
+| --- | --- | --- |
+| Token pair / token single / MSA token | **384, 768** | 128, 256, 384, 512, 640, 768 |
+| Atom single / atom pair | **4096, 8192** | 1024, 2048, 3072, 4096, 5120, 6144, 7168, 8192 |
+| Noise conditioning vector | 1 | 1 |
+
+These are length axes, not channel dimensions. Token and atom streams are
+enumerated separately; this does not impose a new cross-product of molecule
+shapes or change the model&#x27;s augmentation count. Small correctness probes
+(for example B1–B4 L64) are still useful and are not training cache buckets.
+
+## Where the policy is applied
+
+- `autotune/module_registry.py` keeps the inference ladders and declares
+  `TRAIN_TOKEN_LENGTHS`, `TRAIN_ATOM_LENGTHS`, and `TRAIN_STREAM_LADDERS`.
+  `ModuleRow.lengths_for(mode)` selects the appropriate subset.
+- `derive.units` and the module builder use those mode-specific lengths for
+  both training forward and backward, including dropout/dispatch variants.
+- The legacy Case builder, cache replay audit, and CLI caller audit honor
+  the same policy; they cannot reintroduce intermediate training lengths.
+- `kernels/registry.csv` explicitly declares `build_modes`. Backward-only
+  driver kernels use `train`, and their work list is limited to the two
+  lengths on each side. Shared forward kernels use `eval|train` and retain
+  the inference work list. A `saveact` or `train` name is not sufficient to
+  classify a forward helper: autograd forward may run under `no_grad` too.
+
+## Cache compatibility
+
+Runtime shape-key buckets, packing, tuning configurations, channel-width
+coverage, kernel source, and `build_rev` are unchanged. Existing tuning
+results remain usable; no cache entries are deleted or rebuilt by this edit.
+The source-dependent **derived build plan** becomes stale and is regenerated
+by the normal `build all` workflow. The next build then fills only required
+missing entries. No new GPU cache-build job was launched for this policy edit.
+
+The MiniWorld recipes already pad phase-a batches to384/4096 and phase-b
+batches to768/8192. No running training job or inference padding was changed.
+
+## Verification
+
+CPU plan enumeration on node02, with the SM90 build matrix, before set-cover
+selection or skipping cached work:
+
+| Candidate work list | Before | After |
+| --- | ---: | ---: |
+| Training module invocations | 6756 | **2188** |
+| Inference module invocations | 2350 | **2350** |
+| Backward-only driver units | 2238 | **782** |
+| Shared-forward driver units | 2843 | **2843** |
+
+All inference module labels and shared-forward driver unit records were
+compared with the pre-edit snapshot and are identical. Training retains
+augmentation48 and dropout0.25 variants. Noise length1 remains separate.
+
+559 tests passed: training shape policy, model shape contracts, and the
+module-registry contract suite. This is a scheduling/configuration change;
+no GPU kernel implementation changed and no new speedup is claimed.
+
+```bash
+python -m pytest -q \
+  tests/builder/test_training_shape_policy.py \
+  tests/builder/test_model_shape_contracts.py \
+  tests/registry/test_the_module_registry_says_what_the_model_runs.py
+```
+</pre></details></section><!-- TRAINING_SHAPES_END --><!-- B1B4_AUDIT_BEGIN --><section class="panel" id="b1b4-audit"><span class="pill green">2026-09-20 · LN prefetch · B1–B4 1.738× /1.934×</span><h2>B1–B4 학습 CUDA · 통계 prefetch 추가</h2>
+<p>Anthropic의 inference 결과가 우리의 이전 개발보다 우수했다. <b>Anthropic native v5 CUDA primitives와 아이디어를 계승하여 학습 경로를 확장</b>한다. Forward 저장값·수식·BF16 반올림·6개 출력·Triton B5+를 유지한다.</p>
+<p>40 DW +92 DX/LN CTA를 유지하면서, mean/rstd를 B1 앞에서 읽고 gamma를 launch마다1회 shared에 저장한다. B1의 기존 barrier를 공유하여 late load와 통계용 barrier를 줄였다. 이번 개선폭은 이전 balanced 대비<b>1.68% /1.83%</b>다.</p><div class="table-wrap"><table><thead><tr><th>L</th><th>Triton/cuBLAS µs median/p90</th><th>이전 balanced</th><th>현재 CUDA</th><th>Triton 대비</th><th>이전 대비 시간 감소</th></tr></thead><tbody><tr><td>384</td><td>300.000 / 301.984</td><td>175.584 / 178.688</td><td>172.640 / 175.136</td><td>1.7377x</td><td>1.68%</td></tr><tr><td>768</td><td>1182.256 / 1186.240</td><td>622.656 / 636.672</td><td>611.232 / 621.888</td><td>1.9342x</td><td>1.83%</td></tr></tbody></table></div>
+<h3>전체 backward · B5+ 동일</h3><div class="table-wrap"><table><thead><tr><th>L</th><th>Triton/cuBLAS µs</th><th>현재 CUDA +Triton B5+ µs</th><th>배속</th></tr></thead><tbody><tr><td>384</td><td>1080.928 / 1089.056</td><td>957.584 / 964.448</td><td>1.1288x</td></tr><tr><td>768</td><td>4332.368 / 4355.136</td><td>3779.136 / 3810.880</td><td>1.1464x</td></tr></tbody></table></div>
+<p>node02 H10080GB · BF16 · dropout25% · CUDA Graph · 같은 process 순서 교대 ·20 warmup+200 samples를3회 반복. Pooled600-sample median/p90. Production 기본 dispatch는 미변경이다.</p>
+<div class="notice amber"><b>SoL90% 도달은 아직 아니다.</b> Warm NCU DRAM74.14% /81.98%. Useful traffic과3.35TB/s로 계산한90% 목표시간138.1/552.5µs에 미달한다. 별도 실측 대역폭 probe 대비80.6%/89.0%도90% 도달 근거로 사용하지 않는다.</div>
+<h3 id="cueq-bwd-comparison">cuEquivariance 대비 · 전체 backward</h3><p>cuEq ops0.10.0 /torch wrapper0.9.1. 공개 TMU는 단방향이다. 두 단방향 호출과 수식이 다른 <b>공유256채널 LN 양방향 연산</b>에 맞춰 cuEq 기본 연산을 구성했다. Default와ONDEMAND 자동 튜닝 모두 측정. Vendor 내부 저장/반올림 유지;11 gradients 상대L2 차이 약0.1–0.6%. 동일 BF16 연산순서 비교는 아니다.</p><div class="table-wrap"><table><thead><tr><th>L</th><th>cuEq 튜닝</th><th>cuEq eager µs</th><th>cuEq compile µs</th><th>현재 전체 bwd µs</th><th>compiled cuEq 대비</th></tr></thead><tbody><tr><td>384</td><td>default</td><td>2440.864 / 2444.832</td><td>1691.008 / 1693.920</td><td>965.344 / 968.224</td><td>1.752x</td></tr><tr><td>768</td><td>default</td><td>9267.584 / 9272.128</td><td>6437.472 / 6441.632</td><td>3723.200 / 3733.952</td><td>1.729x</td></tr><tr><td>384</td><td>tuned</td><td>2246.784 / 2251.584</td><td>1498.624 / 1501.600</td><td>963.312 / 966.592</td><td>1.556x</td></tr><tr><td>768</td><td>tuned</td><td>8510.976 / 8520.128</td><td>5679.440 / 5689.696</td><td>3728.448 / 3738.208</td><td>1.523x</td></tr></tbody></table></div>
+<p>두 경로 모두 explicit CUDA Graph. cuEq compile은 static fullgraph; forward는 타이밍 밖이다. 이 전체 배속에는 기존 B5+ 차이도 포함된다. B1–B4 변경만의 효과로 해석하지 않는다.</p>
+<details><summary>B1–B4 통제 실험: cuEq LayerNorm을 넣은 hybrid</summary><p>공통 engine B1 +cuBLAS GEMM3개 +cuEq LN backward/parameter reductions. 공개 cuEq TriMul 전체가 아니다.</p><div class="table-wrap"><table><thead><tr><th>L</th><th>cuEq LN hybrid µs</th><th>현재 CUDA µs</th><th>배속</th></tr></thead><tbody><tr><td>384</td><td>425.056 / 427.712</td><td>172.624 / 174.784</td><td>2.462x</td></tr><tr><td>768</td><td>1473.680 / 1476.320</td><td>612.000 / 619.520</td><td>2.408x</td></tr></tbody></table></div></details>
+<h3>실제 연산 연결 / 융합 / 저장</h3><p><a href="assets/b1b4-shared.svg">SVG 원본</a></p><img src="assets/b1b4-shared.svg" alt="40 DW CTA와92 DX CTA; B1 이전 mean/rstd prefetch, gamma resident, B1 barrier 공유, B5 Triton 연결" style="width:100%;height:auto"/>
+<h3>검증 / 남은 병목</h3><p>24개 strict 조합·72회 비교, 저장 통계/γ를 바꾼 replay8회, sanitizer3종 및 PART1 memcheck 통과.252 registers, spill0. 본체가 지배적이며 마지막 reduction만 제거해서 큰 이득을 기대하기 어렵다. CTA 배치·비동기 통계 load·독립 WG·누적 방식 등은 직접 실험하고 더 느린 변형을 제외했다.</p>
+<p>이전 추가L72 한 seed의 dtri 오차는 원본과 비트 단위로 동일하다. 모든 일반 shape를 완전히 검증했다고 표시하지 않는다. Triton 전체 비교에는 input-dual-backward heuristic cache 경고가 있어 완전 튜닝된 모든 baseline보다 빠르다는 주장도 하지 않는다.</p>
+<p><a href="assets/b1b4-sol-audit-20260920.md">9항목 상세 보고서</a> · <a href="assets/b1b4-sol-audit.json">NCU /검증 요약</a> · <a href="assets/b1b4-sol-results.json">600 samples 원자료</a> · <a href="assets/b1b4-cueq-default.json">cuEq default</a> · <a href="assets/b1b4-cueq-tuned.json">cuEq tuned</a> · <a href="assets/b1b4-ln-prefetch.cu">CUDA 소스</a> · <a href="assets/b1b4-sol-source.tar.gz">재현 소스</a></p><details><summary>상세 보고서</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere"># B1–B4 CUDA: saved-LN prefetch and cuEquivariance comparison
+
+2026-09-20. Selected experimental source: **dual_ln_prefetch.cu/.py**.
+Triton/cuBLAS B1–B4: **1.738x /1.934x** at L384/768, dropout0.25.
+This iteration saves1.68% /1.83% versus dual_balanced. **SoL90% is NOT established.**
+Full backward integration is tested; production dispatch has not been promoted.
+
+Anthropic&#x27;s inference results were superior to our previous development.
+This training extension builds on their native v5 CUDA primitives and ideas.
+Training ratios below do not measure an improvement over Anthropic inference.
+
+## 1. Operation, ownership, shared memory and assumptions
+
+```
+y = dy * ds[row % L]
+dp = bf16(y * gate)
+dg = bf16(((y * proj) * gate) * (1-gate))
+dWg = bf16(sum_fp32(xn.T @ dg))
+dWp = bf16(sum_fp32(dp.T @ norm))
+dnorm = bf16(dp @ Wp)
+xhat = (tri-mean) * rstd; h = dnorm * gamma
+dtri = bf16(rstd * ((h-mean(h))-xhat*mean(h*xhat)))
+dgamma = sum_fp32(dnorm*xhat); dbeta = sum_fp32(dnorm)
+```
+
+Fixed M=L²,C128,H256, six outputs (dg,dWg,dtri,dgamma,dbeta,dWp).
+Forward saves and BF16 rounding boundaries are unchanged. B5+ stays Triton.
+One cooperative launch:40 DW CTAs and92 DX/LN CTAs,256 threads each,
+two128-thread WGs. Ratio10:23 gives20/46 at count66. Cyclic64-row tiles.
+DW does B1+B2+B3b; DX does B1+B3a+B4. Both calculate dp and load dy/gate.
+There is no global dp or dnorm, no cluster/multicast, and no extra dW launch.
+
+DW shared slots0/98304 each96KiB: dy-&gt;dp16KiB,gate-&gt;dg16KiB,
+proj16KiB,xn16KiB,norm32KiB. Each WG owns three64x128 dW tiles;
+192 FP32 accumulators/thread; partials are stored after all owned rows.
+
+DX shared slots0/98304 each64KiB: dy-&gt;dp16KiB,gate-&gt;row statistics16KiB,
+tri-&gt;dtri32KiB. Wp resident163840..229376 (64KiB).
+Warp gamma/beta partials65536..73728 (8KiB).
+NEW saved mean/rstd:73728..74240 (slot0),74240..74752 (slot1).
+NEW gamma resident74752..75776 (1KiB), loaded once PER LAUNCH.
+Running gamma/beta sums229376..231424 (2KiB).
+Dynamic231424B +static1024B;252 registers, zero spills, oneCTA/SM.
+
+After TMA mbarrier wait,16 threads vector-load64 saved means and inverse
+standard deviations, before B1. B1&#x27;s existing CTA barrier publishes these
+loads and gamma. B4 consumes them later, removing late global reads and
+one CTA barrier per tile. Register tri/dnorm lifetime and arithmetic remain.
+Two-stage slot=round&amp;1,phase=(round/2)&amp;1. Consumers and TMA stores finish
+before reuse for tile+2*role_count. Existing WGMMA register/proxy fences,
+commit/wait, cross-WG LN barriers and final ticket publication remain.
+PART2 reduces in the same cooperative launch and resets counters;
+PART1 uses the standalone reducer. No claim of eliminating all CTA barriers.
+
+Contiguous aligned BF16 data, FP32 LN parameters/statistics, L&gt;=64 and
+L²%64=0, int32 indices, per-stream non-reentrant plan workspace. ds is zero
+or a common positive BF16 scale. Mask cache falls back to ordinary loads
+for periods above3. No L384/768-specific mask code. Packing, descriptors,
+allocation and compilation are outside timing; saved pointers stay stable.
+
+## 2. Correctness findings
+
+All required cases pass, including changing saved mean/rstd/gamma between
+graph replays. Gamma is refreshed each launch, not cached across launches.
+Original SHA-256 values still match. Baseline and prior selected files stay
+available. No new source is called qualified merely because it compiles.
+The independent-WG variant with ptxas spills never ran on GPU.
+
+Historical extra L72 seed20261151 has dtri relativeL2=2.1726e-5 in both
+original and balanced, bit-identically; the larger generic shape matrix
+was22/24, not all-pass. New selected path is strictly qualified for the
+requested24 cases; no universal all-shape/all-seed claim.
+
+## 3. Time split and roofline
+
+Completion-frontier medians from20 instrumented diagnostic launches, us:
+
+| L | Body | Dump+publish | Grid wait | Reduce+publish | Reset |
+| --- | --- | --- | --- | --- | --- |
+| 384 | 165.776 | 2.816 | 0.576 | 2.800 | 0.256 |
+| 768 | 605.632 | 0.560 | 0.640 | 2.592 | 0.288 |
+
+These are diagnostic frontiers, not the headline CUDA-event time breakdown.
+Earlier partial writes overlap later body work. Timed instrumented/control
+were170.464/171.360us and611.008/610.640us in that separate process.
+Body dominates; exposed grid waiting is below1us, reduction around2.6–2.8us.
+
+Useful traffic=(2056 read+768 write)*L² =416.416/1665.663MB.
+At3.35TB/s, bandwidth-only minima124.30/497.21us;90% of that throughput
+requires138.11/552.45us. Current172.64/611.23us does not reach either.
+An independent3-read/1-write streaming probe measured2.992/3.062TB/s;
+useful-byte throughput is about80.6%/89.0% of that probe, which is still
+not proof of90% SoL. Actual algorithm has instructions, barriers and extra
+requests. Keep useful traffic distinct from measured total HBM traffic.
+
+Both roles load dy/gate: extra512B/row logical requests can partly hit L2.
+dW/LN partials touch8,052,736B one-way,16.105MB read+write. Host capacity
+is still26.223MB; no allocation-saving claim. No52MB HBM saving inferred.
+
+## 4. Ranked experiments and decisions
+
+Priorities were (1) source-level LN store conflicts and scheduling,
+(2) overlap statistics loads with existing B1 work, (3) independent WG
+row ownership and TMA/WGMMA scheduling. Each keeps the mathematical boundary.
+
+| Experiment | Evidence | Decision |
+| --- | --- | --- |
+| LN shared SoA; direct global statistics | sol-ln-candidates.json | No gain; direct global loses badly at L768. |
+| Persistent register gamma/beta accumulators | sol-lnacc.json | 192 / 740 us; rejected. |
+| Per-warp SMEM accumulators; cached xhat | sol-epilogue.json | No reliable whole-path gain. |
+| TMA read-completion wait; streaming cache hints | sol-tma-read.json; sol-tma-stream.json | No consistent two-shape gain. |
+| Float mask decode / packed mask ballots | sol-mask-float.json; sol-mask-pack.json | Float loses; packed variation too small to adopt. |
+| Independent full-channel WG tiles | dual_wg_tiles build log | 284B spill stores +260B loads: rejected BEFORE GPU execution. |
+| Independent WG tiles with shared reload | sol-wgreload.json | Zero spills but 197 / 711 us; rejected. |
+| Fewer WGMMA fence/commit groups | sol-mma.json | No gain; rejected. |
+| Vector mean/rstd before B1; gamma once per launch | sol-stats-prefetch.json; sol-final-paired-results.json | SELECTED dual_ln_prefetch. |
+| Two tiles ahead / cp.async statistics | sol-stats-prefetch.json; sol-async-stats.json | More overlap alone was slower. |
+| CTA placement, role ratios and combinations | sol-placement.json; sol-combinations.json | Keep40/92. place13 slight core win, full L768 regresses. |
+
+Source counters traced the old36,864 excessive shared wavefronts to the
+two row-statistic STS64 stores, not the8KiB gamma/beta partial buffer.
+Changing to SoA did not improve runtime. The selected prefetch improves
+long-scoreboard stalls, but aggregate shared bank conflicts increased;
+do not describe the improvement as bank-conflict elimination.
+
+## 5. Code and integration
+
+dual_ln_prefetch.cu/.py is the selected full device source and Plan wrapper.
+dual_experiment.py hashes dependencies/flags and rejects spills before launch.
+integrate.backward_cuda replaces B1–B4; B5+ uses the previous engine code.
+dual_ln_prefetch_timing.cu adds diagnostic timestamp probes only.
+Production default/autotune dispatch are unchanged; the code is an
+experimental integration, not a completed production rollout.
+Anthropic native v5 headers remain external repository dependencies.
+
+## 6. Validation
+
+L64/384/768 × dropout0/.25 × count66/132 × PART1/2 =24 cases.
+Ordinary launch +two graph replays changing dy/ds =72 six-output comparisons;
+counters zero. Maximum relativeL2:
+
+| Output | Maximum |
+| --- | --- |
+| dg | 0 |
+| dWg | 0.000364898442 |
+| dtri | 1.46946841e-05 |
+| dgamma | 2.13384396e-06 |
+| dbeta | 6.26282826e-07 |
+| dWp | 0.00035537759 |
+
+Limits: dg bit-exact including signed zero; dtri2e-5; gamma/beta5e-6;
+dWg/dWp5e-4. Full backward11 gradients pass5e-4 at both target shapes.
+Eight further replays change gamma,mean,rstd,dy,ds at both shapes/PART1/2.
+memcheck/racecheck/synccheck at L64/384 and PART1 unfiltered memcheck all pass.
+Four compiled count/PART variants have zero spills. SASS confirms explicit
+HGMMA/TMA and no local loads/stores; NCU local sectors are also zero.
+
+## 7. Reproduction and measured times
+
+node02 H10080GB, CUDA12.9 sm90a, BF16, dropout0.25.
+Same-process explicit one-call CUDA Graphs, alternating order,20 warmups+
+200 samples per block,3 blocks. Pooled600-sample median/p90, us.
+No profiler attached for headline timing; clocks were not locked.
+
+| L | Triton/cuBLAS | Previous balanced | Selected prefetch | Speedup vs Triton | Time saved vs balanced |
+| --- | --- | --- | --- | --- | --- |
+| 384 | 300.000 / 301.984 | 175.584 / 178.688 | 172.640 / 175.136 | 1.7377x | 1.68% |
+| 768 | 1182.256 / 1186.240 | 622.656 / 636.672 | 611.232 / 621.888 | 1.9342x | 1.83% |
+
+Full backward:
+
+| L | Triton/cuBLAS | Selected CUDA +Triton B5+ | Speedup |
+| --- | --- | --- | --- |
+| 384 | 1080.928 / 1089.056 | 957.584 / 964.448 | 1.1288x |
+| 768 | 4332.368 / 4355.136 | 3779.136 / 3810.880 | 1.1464x |
+
+```
+P=runs/anthropic_b1b4_pipeline_20260919
+ENV=runs/anthropic_adoption_20260919/env.sh
+bash &quot;$ENV&quot; python -u -B &quot;$P/check_experiment.py&quot; --source dual_ln_prefetch
+bash &quot;$P/sol_prefetch_audit.sh&quot;
+bash &quot;$ENV&quot; python -u -B &quot;$P/check_sol_saved_updates.py&quot;
+bash &quot;$ENV&quot; python -u -B &quot;$P/measure_sol_final.py&quot;
+bash &quot;$ENV&quot; python -u -B &quot;$P/compare_cueq.py&quot; --output cueq-default-comparison.json
+CUEQ_TRITON_TUNING=ONDEMAND CUEQ_TRITON_CACHE_DIR=&quot;$PWD/$P/cueq-cache&quot; bash &quot;$ENV&quot; python -u -B &quot;$P/compare_cueq.py&quot; --output cueq-tuned-comparison.json
+```
+
+Exact compiler command (other configurations change count/PART):
+
+```
+nvcc -std=c++17 -O3 -arch=sm_90a --cubin -lineinfo -Xptxas=-v -I/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/third_party/anthropic/upstream/common/opt_core/opt_core/kernels/trimul/native/pkg/v5/csrc -DROLE=0 -DUCOUNT=132 -DPART_ONLY=2 /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/dual_ln_prefetch.cu -o /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/22b9f1907c908ec5f2f6489e70e6d90a1704808ff4b8d2915c625f9c1d1929db.cubin
+```
+
+### cuEquivariance comparison: two distinct scopes
+
+Installed cuequivariance-torch0.9.1, ops-cu12 0.10.0; this is not a claim
+about all newer releases. Public TMU is single-direction. Calling it twice
+normalizes128-channel halves separately; our bidirectional operation has
+one shared256-channel LN. Thus compare the engine&#x27;s equivalent composition:
+vendor input LN +gated dual GEMM +two contractions +shared output LN,
+Torch gate/projection, same supplied pair mask/dropout/residual, vendor autograd.
+[Public API](https://docs.nvidia.com/cuda/cuequivariance/api/generated/cuequivariance_torch.triangle_multiplicative_update.html).
+
+Full backward only; forward and saves are prepared before timing. Static
+fullgraph torch.compile, Inductor cudagraphs off; explicit CUDA Graph on
+ALL timed paths. Default and ONDEMAND tuning are separate same-process runs.
+Independent leaves are created on each forward/capture stream to avoid an
+AccumulateGrad legacy-stream capture dependency. Numeric BF16 0/1 pair mask
+avoids the vendor autotuner&#x27;s randn_like(bool) error without changing its math.
+
+| L | Tuning | cuEq eager us | cuEq compile us | Current full bwd us | vs compiled cuEq |
+| --- | --- | --- | --- | --- | --- |
+| 384 | default | 2440.864 / 2444.832 | 1691.008 / 1693.920 | 965.344 / 968.224 | 1.752x |
+| 768 | default | 9267.584 / 9272.128 | 6437.472 / 6441.632 | 3723.200 / 3733.952 | 1.729x |
+| 384 | tuned | 2246.784 / 2251.584 | 1498.624 / 1501.600 | 963.312 / 966.592 | 1.556x |
+| 768 | tuned | 8510.976 / 8520.128 | 5679.440 / 5689.696 | 3728.448 / 3738.208 | 1.523x |
+
+Vendor preserves its own internal rounding/saves. All11 gradients are finite
+and differ by roughly0.1–0.6% relativeL2; forward compile is about4–5e-5.
+This is equivalent mathematical computation, not identical BF16 arithmetic
+or the strict same-saves B1–B4 comparison. The entire full-backward advantage
+must not be attributed to the newly optimized B1–B4 alone. B5+ also differs.
+The Triton full baseline emits a heuristic-cache warning for input dual
+backward; it is the exact current harness, not a claim of exhaustive tuning.
+
+Controlled B1–B4 primitive experiment below uses the same engine B1 and
+three cuBLAS GEMMs, replacing only B4 with vendor LN backward +parameter
+reductions. Six outputs satisfy the strict comparison limits. It is a
+cuEq-LN HYBRID, not the public cuEq TMU or a complete vendor B1–B4 kernel.
+
+| L | cuEq LN hybrid us | Current fused CUDA us | Ratio |
+| --- | --- | --- | --- |
+| 384 | 425.056 / 427.712 | 172.624 / 174.784 | 2.462x |
+| 768 | 1473.680 / 1476.320 | 612.000 / 619.520 | 2.408x |
+
+## 8. NCU observed signals
+
+Warm application replay after20 warmups, cache-control none, clock-control
+none. This aligns cache conditions with event benchmarks; default full
+profiles also exist but are a separate cold/replay measurement.
+[NCU profiling guide](https://docs.nvidia.com/nsight-compute/ProfilingGuide/).
+
+| L | Version | NCU us | DRAM %peak | Read MB | Write MB | Tensor elapsed %peak |
+| --- | --- | --- | --- | --- | --- | --- |
+| 384 | balanced | 176.416 | 72.74% | 306.844 | 123.229 | 13.98% |
+| 384 | prefetch | 172.672 | 74.14% | 306.394 | 122.776 | 14.53% |
+| 768 | balanced | 627.264 | 81.73% | 1256.669 | 461.956 | 15.72% |
+| 768 | prefetch | 612.768 | 81.98% | 1221.776 | 462.125 | 16.35% |
+
+Warm DRAM74.14% /81.98% does not meet90%. Default full profiler duration
+204.8/738.112us and DRAM62.16%/76.85% must not be mixed with warm events.
+Long-scoreboard ratios drop0.467-&gt;0.370 and0.349-&gt;0.239. Barrier ratios
+remain1.529/1.385; these are per-issue-active ratios, not elapsed percentages.
+NCU zero local traffic agrees with ptxas/SASS. Static SASS counts:
+
+| Instruction | Count |
+| --- | --- |
+| HGMMA | 28 |
+| UTMALDG | 59 |
+| UTMASTG | 4 |
+| LDL | 0 |
+| STL | 0 |
+
+## 9. Gap, limitations and next experiment
+
+Relative1.7x reached at both target shapes; L384172.640us also barely
+passes the absolute173us goal in this run. Current gain versus balanced
+is only1.7–1.8%; do not present the full1.74/1.93x as this iteration&#x27;s gain.
+SoL90% remains open. No end-to-end model training-step speedup is established.
+NCU, useful-byte bounds and the bandwidth probe are complementary evidence,
+not interchangeable definitions chosen to make90% pass.
+
+Next candidate: cooperative tail work sharing between DW and DX roles,
+keeping six outputs and rounding fixed. Measured body frontiers leave only
+~2.6us DW-to-DX slack at L384, so setup/extra resident-Wp loads may erase
+the benefit. Prototype only if zero-spill static resource accounting leaves
+room; require lower body-frontier time and repeatable whole-backward gains.
+Not implemented and no estimated speedup is claimed as a result.
+</pre></details><details><summary>이전 balanced 기록</summary><a href="assets/b1b4-balanced-audit-20260920.md">이전 보고서</a> · <a href="assets/b1b4-shared-balanced-history.svg">이전 배선 SVG</a></details></section><!-- B1B4_AUDIT_END --><!-- B1B4_SHARED_BEGIN --><section class="panel" id="b1b4-shared"><span class="pill amber">이전 실측 · 최적화 전 기준</span><h2>이전 B1–B4 CUDA · 개선 전 기록</h2><p><a href="#b1b4-audit">현재 결과와 배선은 맨 위 최신 실측 참조</a></p><p><b>기존 Triton/cuBLAS 대비 L384 1.18×, L768 1.36×.</b> Anthropic의 TMA/WGMMA·fragment 구현을 계승하고 학습용 dW/dX 스케줄을 새로 구현했다. 이전의 느린 CUDA 시제품을 기준으로 목표 달성을 주장하지 않는다.</p><div class="table-wrap"><table><thead><tr><th>shape</th><th>기존 B1–B4 µs</th><th>새 CUDA µs</th><th>구간 속도</th><th>전체 backward µs</th><th>전체 속도</th><th>1.7×에 필요한 시간</th></tr></thead><tbody><tr><td>L384</td><td>295.26</td><td>250.65</td><td><b>1.178×</b></td><td>1084.91 → 1043.84</td><td>1.039×</td><td>173.68 µs 이하</td></tr><tr><td>L768</td><td>1178.59</td><td>868.99</td><td><b>1.356×</b></td><td>4307.44 → 4035.99</td><td>1.067×</td><td>693.29 µs 이하</td></tr></tbody></table></div><p>node02 H100 · BF16 C128/H256 · dropout 25% · 동일 저장값/공통 mask · CUDA Graph 80회 × 20 교대 라운드. 전체 backward는 B1–B4만 교체했다. 나머지 공통 Triton 경로 한 곳은 cache miss로 3개 후보 fallback을 사용했으므로, 전체 시간은 나머지 경로까지 완전히 재튜닝한 결과가 아니다.</p><h3>어디가 합쳐졌나</h3><p>dp/dnorm의 중간 HBM 저장을 없애고, 같은 입력을 dW 타일마다 다시 읽지 않는다. 다음 타일 TMA를 LN epilogue와 겹치고, dW의 최종 합산도 cooperative launch 안에서 처리한다. <b>부분 dW의 global workspace는 남는다.</b></p><a href="assets/b1b4-shared.svg"><img src="assets/b1b4-shared-previous.svg" alt="B1-B4 단일 CUDA 커널의 연산 배선과 HBM 경계" style="display:block;width:100%;height:auto;border-radius:12px"></a><h3>검증 및 현재 한계</h3><ul><li>L64/72/384/768: 수치 비교, dropout 0/1, 입력 변경 후 graph replay와 counter reset 통과.</li><li>전체 backward 11개 gradient 비교. 최종 큰 shape 최대 상대 L2 0.000286. 추가 입력 변경 검사 최대 0.000427.</li><li>L72 / 4 CTAs로 실제 여러 타일을 반복: memcheck 0 errors, racecheck 0 hazards.</li><li>NCU L384: HBM 활용률 47.6%, tensor 활성률 11.2%, active warps 12.5%. local load/store와 register spill은 0. 루프라인에 가깝다고 판단할 근거가 없다.</li><li>남은 병목: 255 registers/thread, dynamic shared 226 KiB로 CTA당 자원이 큼. 메모리 의존 대기와 barrier 비용이 남는다. 1.7×는 계속 미달이다.</li><li>실험용 전체 backward에 연결해 검증했으며 production 기본 배선·autotune cache로 승격하지 않았다.</li></ul><p><a href="assets/b1b4-shared-results.json">최종 paired 결과</a> · <a href="assets/b1b4-shared-validation.json">수치 검증</a> · <a href="assets/b1b4-shared-ncu.json">NCU</a> · <a href="assets/b1b4-shared-README.md">설계·실패한 시도·재현</a> · <a href="assets/b1b4-shared-manifest.json">SHA-256</a></p><p class="muted">아래 B1–B4 표들은 이전 시제품의 실험 기록이다. 현재 결과는 이 섹션을 기준으로 본다.</p></section><!-- B1B4_SHARED_END --><!-- CUDA_SURVEY_BEGIN --><section id="cuda-dw-survey"><h2>CUDA 학습 커널 조사 · dW 중심</h2><p>13개 저장소 조사 · 원본 26개 보존 · 우선순위는 TriMul 적용 가치이며 성능 순위가 아님 · 신규 벤치 결과 없음</p><p><b>핵심:</b> CUTLASS #26의 dW mainloop 입력 변환 + DeepGEMM/FBGEMM의 H100 pipeline + Liger의 dZ/dX/dW persistent 실행 구조. Liger는 phase 순차 실행이며 BF16 반복 누적이므로 그대로 복사하지 않는다.</p><div style="overflow:auto"><table><thead><tr><th>우선순위</th><th>구현</th><th>기술/하드웨어</th><th>gradient</th><th>실제 융합/실행</th><th>TriMul 적용</th><th>소스</th></tr></thead><tbody><tr><td>최우선</td><td>CUTLASS wgrad mainloop fusion</td><td>CUDA C++ / SM80</td><td>dense conv dW</td><td>scale+bias+ReLU를 MMA 입력 fragment에 적용. 다단계 cp.async와 operand transform 결합. dX는 포함하지 않음.</td><td>B1 gate/dropout 미분을 dW mainloop에 융합하는 가장 직접적인 패턴. SM90/BF16로 재설계 필요.</td><td><a href="https://github.com/NVIDIA/cutlass/blob/f614dc40e17fb3ddb1b7b474318b48a8d5d21a2c/include/cutlass/conv/threadblock/implicit_gemm_wgrad_fusion_multistage.h">원본</a></td></tr><tr><td>최우선</td><td>DeepGEMM SM90 1d1d</td><td>CUDA C++ / SM90 FP8</td><td>dense / grouped dW</td><td>전용 TMA warpgroup, 여러 stage의 full/empty barrier, register 재분배, persistent scheduler, K-grouped tensor-map 갱신.</td><td>producer/consumer mainloop를 차용. FP8 연산·양자화 정책은 BF16 TriMul에 그대로 적용하지 않음.</td><td><a href="https://github.com/deepseek-ai/DeepGEMM/blob/78b69000794d0937b47ae3387eff7663410264d1/deep_gemm/include/deep_gemm/impls/sm90_fp8_gemm_1d1d.cuh">원본</a></td></tr><tr><td>최우선</td><td>FBGEMM grouped wgrad</td><td>CUDA C++ CUTLASS / SM90 BF16</td><td>dense grouped dW</td><td>FP32 accumulator. cooperative/ping-pong schedule 선택, tile/cluster 후보와 튜닝 cache. FP32 output accumulation 옵션.</td><td>우리 BF16 dW의 비교 기준 및 config 설계. B1 입력 변환과 dX는 포함하지 않음.</td><td><a href="https://github.com/pytorch/FBGEMM/blob/f2b5cce274a9d830906462d2f3d6122add38242f/fbgemm_gpu/experimental/gen_ai/src/quantize/cutlass_extensions/bf16bf16bf16_grouped_wgrad/bf16bf16bf16_grouped_wgrad_common.cuh">원본</a></td></tr><tr><td>최우선</td><td>Liger fused CE backward</td><td>CuTe DSL + CUDA C++ port / SM90</td><td>dZ + dX + dW</td><td>persistent grid에서 phase별 scheduler/공유 메모리 재사용. 1024-token wave workspace, grid barrier. dW는 wave별 BF16 TMA reduce-add.</td><td>가장 가까운 단일-launch 복합 학습 구조. phase 간은 순차적이며 HBM dZ가 남음. 우리 FP32 최종 반올림 계약으로 수정 필요.</td><td><a href="https://github.com/linkedin/Liger-Kernel/blob/c5b9f31d3e8e9950d12c012b49f6db6293e22d27/src/liger_kernel/ops/cutedsl/ops/_fused_scaled_cross_entropy_backward_fused_sm90.py">원본</a></td></tr><tr><td>높음</td><td>CUTLASS wgrad split-K</td><td>CUDA C++ / SM80</td><td>dense conv dW</td><td>긴 K를 여러 CTA로 분할. FP32 부분합과 별도 최종 reduction kernel.</td><td>작은 dW 출력·매우 긴 K에 직접 관련. 최종 합산까지 한 launch인 예제는 아님.</td><td><a href="https://github.com/NVIDIA/cutlass/blob/f614dc40e17fb3ddb1b7b474318b48a8d5d21a2c/examples/30_wgrad_split_k/30_wgrad_split_k.cu">원본</a></td></tr><tr><td>높음</td><td>CUTLASS SM90 Stream-K</td><td>CUDA C++ / SM90</td><td>일반 GEMM / dW 적용 가능</td><td>출력 타일 및 K 작업 분할, workspace fixup, deterministic reduction 정책.</td><td>split-K=64 고정 대신 SM 수·K 길이·부분합 비용을 고려하는 scheduler 후보.</td><td><a href="https://github.com/NVIDIA/cutlass/blob/f614dc40e17fb3ddb1b7b474318b48a8d5d21a2c/include/cutlass/gemm/kernel/sm90_tile_scheduler_stream_k.hpp">원본</a></td></tr><tr><td>높음</td><td>FlashAttention Hopper backward</td><td>CUDA C++ / SM90</td><td>dQ/dK/dV — 학습 weight dW 아님</td><td>다중 GEMM, 중간 미분, TMA pipeline, RS/SS operand layout, 비동기 MMA 그룹.</td><td>B1-B4 내 여러 GEMM과 elementwise를 겹치는 scheduling/layout 참조.</td><td><a href="https://github.com/Dao-AILab/flash-attention/blob/1bda8f9290cd48d030f1516f0e680cd464ef3554/hopper/mainloop_bwd_sm90_tma_gmma_ws.hpp">원본</a></td></tr><tr><td>높음</td><td>causal-conv1d backward</td><td>CUDA C++ / BF16 지원</td><td>dX + dWeight + dBias</td><td>같은 입력/상류 gradient를 dX와 dW에 재사용. SiLU 미분 포함. 레지스터 부분합→block reduction→atomic 또는 deterministic workspace.</td><td>실제 dX+dW 결합 예제. depthwise의 매우 작은 filter이므로 dense WGMMA에 그대로 이식 불가.</td><td><a href="https://github.com/Dao-AILab/causal-conv1d/blob/cd81f0413cad2fc1e6f17e785ac39f59aae690cd/csrc/causal_conv1d_bwd.cu">원본</a></td></tr><tr><td>높음</td><td>Mamba selective scan backward</td><td>CUDA C++</td><td>dU + dA/dB/dC/dD 등</td><td>재계산·forward/reverse scan·gate 미분·parameter reduction. state별 부분합 누적, block exchange로 atomic store 정렬.</td><td>복잡한 다중 gradient의 shared-memory 수명과 parameter 누적 방식 참조. dense dW GEMM은 아님.</td><td><a href="https://github.com/state-spaces/mamba/blob/e9594ce1c732d97440f0332fdc43170a2294dbfa/csrc/selective_scan/selective_scan_bwd_kernel.cuh">원본</a></td></tr><tr><td>보조</td><td>FlashFFTConv backward</td><td>CUDA C++ / WMMA</td><td>dX + convolution filter dK</td><td>여러 복소 GEMM/FFT 단계와 gate 미분, dK 부분합. host wrapper에 dk_f_out.sum(0)이 남음.</td><td>복합 수식의 on-chip 재사용 참고. 전체 dK reduction까지 단일 kernel은 아님.</td><td><a href="https://github.com/HazyResearch/flash-fft-conv/blob/b8771028717f46d5b22cbb8e12833f35033d621b/csrc/flashfftconv/monarch_cuda/kernels_fp16/monarch_cuda_16_16_16_bwd_kernel.h">원본</a></td></tr><tr><td>보조</td><td>tiny-cuda-nn FullyFusedMLP</td><td>CUDA C++ / WMMA</td><td>dW는 별도 CUTLASS</td><td>여러 층 dX/activation backward를 융합. backward_impl의 fc_multiply_split_k와 보조 stream에서 dW 계산.</td><td>작은 channel MLP의 데이터 재사용 및 multi-stream 비교. dX+dW 완전 융합의 증거로 쓰면 안 됨.</td><td><a href="https://github.com/NVlabs/tiny-cuda-nn/blob/749dd70c5afc5a9dadb85e5652ed65d55e0ba187/src/fully_fused_mlp.cu">원본</a></td></tr><tr><td>보조</td><td>FlashAttention fused_dense / Apex</td><td>CUDA C++ cuBLASLt 호출</td><td>dense dW + dbias</td><td>dW GEMM의 BGRADB epilogue; dX 측 DGELU/DRELU+BGRAD. 여러 GEMM 호출 유지.</td><td>강한 라이브러리 기준. 공개 CUDA mainloop의 완전 융합 사례는 아님.</td><td><a href="https://github.com/Dao-AILab/flash-attention/blob/1bda8f9290cd48d030f1516f0e680cd464ef3554/csrc/fused_dense_lib/fused_dense_cuda.cu">원본</a></td></tr><tr><td>보조</td><td>xLSTM sLSTM backward</td><td>CUDA C++ + cuBLAS</td><td>recurrent weight dR</td><td>pointwise recurrent backward와 strided-batched GEMM. stream/event로 의존성 처리.</td><td>복잡한 학습 일정 비교용. 확인한 경로의 dR은 별도 GEMM.</td><td><a href="https://github.com/NX-AI/xlstm/blob/ab22eadbd245f293dd8dec38ed29963d73758a12/xlstm/blocks/slstm/src/cuda/slstm_backward.cu">원본</a></td></tr><tr><td>보조</td><td>Quack linear cross entropy</td><td>CuTe 기반 GEMM + Python/Triton</td><td>dense dW</td><td>chunk별 loss/dX 계산과 dW 누적. 마지막 chunk를 backward에서 완료하며 FP32 accumulator를 최종 변환.</td><td>파라미터 gradient 수치 정책과 workspace 절감 참고. 전체 단일 CUDA C++ kernel은 아님.</td><td><a href="https://github.com/Dao-AILab/quack/blob/35266c3298f0e9bf6d5f46c30aace2eaeae517e3/quack/linear_cross_entropy.py">원본</a></td></tr><tr><td>목록 확인</td><td>HazyResearch Megakernels</td><td>CUDA / H100·B200</td><td>확인한 README는 inference</td><td>low-latency Llama demo. 이번 조사에서는 dW 구현을 확인하지 못함.</td><td>persistent 전체 모델 scheduling 후보. 학습 dW 근거로 분류하지 않음.</td><td><a href="https://github.com/HazyResearch/Megakernels/blob/7309cec801537b61fea3b50d7dfe454a6cde578e/README.md">원본</a></td></tr></tbody></table></div><p><a href="assets/cuda-dw-survey.md">분석 전체</a> · <a href="assets/cuda-dw-manifest.json">커밋 및 SHA-256</a></p></section><!-- CUDA_SURVEY_END --><!-- OVERLAP_BEGIN --><section id="b1b4-overlap"><h2>B1–B4 CUDA overlap 실험</h2><p>node02 H100 · BF16 C128/H256 · dropout 25% · Graph 80회 × 20 교대 라운드 · B1–B4만 측정</p><pre>현재 타일: raw → registers / MMA용 shared → WGMMA
+다음 타일:                              ↳ TMA prefetch
+변형 3: 다음 타일 gate/dropout 미분도 현재 WGMMA 실행 중 수행</pre><table><thead><tr><th>L</th><th>기존 CUDA µs</th><th>조기 prefetch µs</th><th>미분까지 overlap µs</th><th>Triton/cuBLAS µs</th></tr></thead><tbody><tr><td>384</td><td>470.96</td><td>470.28</td><td>482.36</td><td>293.37</td></tr><tr><td>768</td><td>1903.68</td><td>1826.06</td><td>1870.36</td><td>1174.62</td></tr></tbody></table><p>조기 prefetch는 L768에서 CUDA 대비 약 4.1% 시간 감소. L384는 사실상 동률. 미분까지 겹친 버전은 조기 prefetch보다 느렸다. 추가 shared-memory 없이 raw 버퍼를 재사용하며, 전용 producer warpgroup/multistage 구현은 아직 아니다. 기존 Triton/cuBLAS보다 여전히 느리며 production 경로 변경 없음. 전체 backward는 이번에 재측정하지 않음.</p><p>L64/72/384/768 출력 및 20회 반복/counter reset 통과. <a href="assets/b1b4-overlap-results.json">원자료</a></p></section><!-- OVERLAP_END --><!-- B1B4_BEGIN --><section class="panel" id="b1b4-cuda"><span class="pill">최신 · CUDA backward 융합 실험</span><h2>B1–B4를 한 kernel에 넣은 결과</h2><p><b>구현·정확성 검증 완료. 현재는 기존보다 느려서 기본 경로로 채택하지 않음.</b> Anthropic native v5의 TMA·WGMMA RS·ldmatrix/stmatrix 배치에서 출발한 새 backward다. Anthropic에서 제공한 backward는 아니다.</p><img src="assets/b1b4-backward.svg" alt="B1부터 B4까지 단일 CUDA launch의 행별 gradient와 weight gradient 및 부분합 배선" style="width:100%;height:auto;background:#f7f9fc;border-radius:12px"/><div class="table-wrap"><table><thead><tr><th>L</th><th>구간</th><th>기존 Triton/cuBLAS (µs)</th><th>단일 CUDA (µs)</th><th>시간 증가</th></tr></thead><tbody><tr><td>384</td><td>B1–B4</td><td>294.83</td><td>487.50</td><td>+65.4%</td></tr><tr><td>384</td><td>전체 backward</td><td>1085.12</td><td>1282.98</td><td>+18.2%</td></tr><tr><td>768</td><td>B1–B4</td><td>1174.34</td><td>1901.72</td><td>+61.9%</td></tr><tr><td>768</td><td>전체 backward</td><td>4288.08</td><td>5049.84</td><td>+17.8%</td></tr></tbody></table></div><p>초기 L384 약 1,570µs → BF16 pair/stmatrix 약 827µs → shared-memory 축소 약 634µs → 2 warpgroup 약 526µs → 최종 약 488µs. 초기 구현 대비 약 3.2배 개선했지만 기존 295µs보다 느리다. 큰 accumulator로 입력 재사용을 늘린 버전과 fragment LN 미분도 시험했으나 더 느렸다.</p><p>최종 선택: split-K=64, LN reduction group=64, compact shared memory=80KiB, CTA당 weight warpgroup=2. 24개 최종 후보/shape 및 상위 4개 재측정. 입력 gradient는 WGMMA accumulator 1개를 순차 재사용한다. dp·dnorm의 global 버퍼는 제거했지만 B1 입력 재읽기와 global 부분합은 남는다.</p><p><b>NCU:</b> 최초 구현 HBM 약 11.3%, tensor-active 약 1.62%, active warps 약 6.25%. roofline에 도달한 상태가 아니다. 최종 L384는 HBM 약 41.0%, tensor-active 약 5.47%, active warps 약 17.3%, shared-memory 상한 2 CTAs/SM. SASS에서 TMA·WGMMA 확인, spill 0. 원자료는 아래 JSON에 기록. 큰 버퍼를 없애는 것과 GPU 실행 효율을 높이는 것은 별도로 검증해야 한다.</p><p>node02 H100 · B1 C128/H256 BF16 · dropout 25% · 동일 저장값/동일 나머지 backward · Graph 80회 × 20 교대 라운드. 공통 고정 mask, RNG/weight packing/workspace 초기화 제외. 전체 backward도 실제로 B1–B4만 교체해 직접 측정. baseline cache miss는 기존 3개 후보 fallback이므로 전체 baseline 재튜닝 완료를 뜻하지 않는다.</p><p>Plan은 단일 stream에서 순차 재사용하며 동시 호출에는 별도 workspace가 필요하다. 최종 gradient 비교·mask 변경·Graph 반복 재생·counter reset·memcheck/racecheck 결과를 원자료에 남겼다.</p><p><a href="assets/b1b4-final-results.json">측정·후보·전체 gradient 오차</a> · <a href="assets/b1b4-validation.json">검증</a> · <a href="assets/b1b4-ncu-final-summary.json">최종 NCU</a> · <a href="assets/b1b4-README.md">설계·제약·재현</a></p></section><!-- B1B4_END --><!-- EQUAL_SAVES_BEGIN --><section class="panel" id="equal-saves"><span class="pill green">최신 · 학습 저장 정책 통일</span><h2>입력 LN 융합 vs 분리 — 같은 값을 저장하면?</h2><p>두 경로 모두 <b>x_n, 입력 LN 평균/역표준편차, front preactivation, a/b, 출력 LN 값/통계, projection/gate</b>를 같은 형식으로 저장한다. 출력 LN은 융합하고, K3는 두 경로 모두 저장된 x_n을 읽는다. 동일한 Triton/cuBLAS backward를 사용한다.</p><div class="flow"><div><b>융합형</b>원본 x → K1 [입력 LN + projection/gate]<br>x_n + mean/rstd + preactivation + a/b 저장</div><div><b>분리형</b>원본 x → LN [x_n + mean/rstd 저장]<br>x_n → K1 [projection/gate + preactivation + a/b 저장]</div></div><div class="table-wrap"><table><thead><tr><th>L</th><th>구간</th><th>융합 (µs)</th><th>분리 (µs)</th><th>분리 시간 증감</th></tr></thead><tbody><tr><td>384</td><td>입력 LN + K1 (저장 포함)</td><td>202.84</td><td>218.19</td><td>+7.57%</td></tr><tr><td>384</td><td>전체 forward</td><td>434.63</td><td>451.18</td><td>+3.81%</td></tr><tr><td>384</td><td>backward 단독</td><td>1086.64</td><td>1086.22</td><td>-0.04%</td></tr><tr><td>384</td><td>forward + backward 직접 측정</td><td>1523.60</td><td>1538.22</td><td>+0.96%</td></tr><tr><td>768</td><td>입력 LN + K1 (저장 포함)</td><td>815.58</td><td>847.42</td><td>+3.90%</td></tr><tr><td>768</td><td>전체 forward</td><td>1742.07</td><td>1749.74</td><td>+0.44%</td></tr><tr><td>768</td><td>backward 단독</td><td>4339.08</td><td>4333.38</td><td>-0.13%</td></tr><tr><td>768</td><td>forward + backward 직접 측정</td><td>6068.41</td><td>6061.93</td><td>-0.11%</td></tr></tbody></table></div><p><b>결론:</b> L384에서는 융합형의 전체 학습 시간이 약 1% 짧고, L768에서는 약 0.1% 차이로 사실상 같다. 동일한 값을 저장할 때 분리형이 더 빠르다는 근거는 없다.</p><p>분리 시간 증감은 (분리/융합 − 1)이며 음수일 때 분리형이 빠르다. 전체 forward+backward는 별도 캡처로 직접 측정한 값이라 단독 구간 시간의 합과 다를 수 있다. 작은 차이는 JSON의 라운드별 변동과 함께 해석해야 한다.</p><p>H100 node02 · B1 C128/H256 BF16 · pair mask · row dropout 25% · residual 포함 · 고정 공통 dropout mask, RNG 제외 · weight prepacked · optimizer 제외. CUDA Graph 80회 × 20 교대 라운드. CPU/autograd dispatch 제외 커널 실행 시간.</p><p><b>튜닝:</b> 저장 코드가 추가된 융합/분리 K1 각각 shape별 58개 설정. 타일·weight ring·K chunk·accumulator schedule 탐색, 상위 4개 재측정. standalone LN은 4개 설정. 기존 register/start-offset 기본값 유지. 변경 없는 공통 backward는 기존 cache와 miss 시 동일한 3개 후보 fallback 사용으로, 전체 backward를 새로 exhaustive tuning한 결과는 아니다.</p><p><b>정확성:</b> 두 경로 forward와 저장값 비트 일치, gradient 비교 및 기존 엔진 reference 통과. 선택 설정에 대해 L64/72 검증, memcheck/racecheck 통과. production 배선은 변경하지 않았다.</p><p><a href="assets/equal-saves-results.json">측정·선택 설정·gradient 원자료</a> · <a href="assets/equal-saves-validation.json">최종 검증</a> · <a href="assets/equal-saves-README.md">방법·재현</a></p></section><!-- EQUAL_SAVES_END --><!-- DROPOUT_BEGIN --><section class="panel" id="dropout-ln"><span class="pill green">최신 · dropout 25%</span><h2>입력 LN 공유 vs K3 재계산 — dropout 재튜닝</h2><p>출력 LN은 항상 융합. backward 저장 없는 forward 비교를 유지하고 row dropout 25%를 추가했다. 변경된 공유형·재계산형 K3를 L384/L768 각각 <b>44개 설정</b>으로 재튜닝했다. 변경 없는 LN/K1 설정은 유지했다.</p><div class="flow"><div><b>공유형</b>입력 LN → x_n → K1<br>K3: x_n + residual 별도 TMA → dropout → residual</div><div><b>재계산형</b>입력 LN → x_n → K1<br>K3: 원본 x → 입력 LN 재계산 → dropout → residual</div></div><h3>전체 forward · 매 replay 새 mask 생성 포함</h3><div class="table-wrap"><table><thead><tr><th>경로</th><th>L384 (µs)</th><th>L768 (µs)</th></tr></thead><tbody><tr><td>입력 LN 융합 · dropout 파생 K3</td><td>297.61</td><td>1185.77</td></tr><tr><td>분리 · Anthropic LN · x_n 공유</td><td>306.03</td><td>1191.36</td></tr><tr><td>분리 · Anthropic LN · K3 재계산</td><td>305.79</td><td>1196.61</td></tr><tr><td>분리 · Triton LN · x_n 공유</td><td>307.56</td><td>1205.12</td></tr><tr><td>분리 · Triton LN · K3 재계산</td><td>305.05</td><td>1198.44</td></tr></tbody></table></div><h3>전체 forward · 고정 공통 mask, RNG 제외</h3><div class="table-wrap"><table><thead><tr><th>경로</th><th>L384 (µs)</th><th>L768 (µs)</th></tr></thead><tbody><tr><td>입력 LN 융합 · dropout 파생 K3</td><td>285.65</td><td>1174.48</td></tr><tr><td>분리 · Anthropic LN · x_n 공유</td><td>292.38</td><td>1184.86</td></tr><tr><td>분리 · Anthropic LN · K3 재계산</td><td>292.09</td><td>1183.88</td></tr><tr><td>분리 · Triton LN · x_n 공유</td><td>293.65</td><td>1191.22</td></tr><tr><td>분리 · Triton LN · K3 재계산</td><td>292.15</td><td>1189.04</td></tr></tbody></table></div><p><b>결론:</b> 공유/재계산 전체 시간 차이는 1% 미만이며 LN 구현·shape에 따라 순위가 바뀐다. 재계산의 일관된 우위는 확인되지 않았다. 특히 L768 RNG 포함 측정의 표준편차는 약 7–12µs이므로 작은 중앙값 차이를 확정적 이득으로 해석하지 않는다.</p><h3>K3 재튜닝 효과 (동일 dropout 커널)</h3><table><tr><th>경로</th><th>L384 기존 → 재튜닝 (µs)</th><th>L768 기존 → 재튜닝 (µs)</th></tr><tr><td>공유형</td><td>89.17 → 84.82 (4.9% 감소)</td><td>316.04 → 291.40 (7.8% 감소)</td></tr><tr><td>재계산형</td><td>84.66 → 83.76 (1.1% 감소)</td><td>296.92 → 283.15 (4.6% 감소)</td></tr></table><p>선택 설정 (BI,BJ,NSLOT,NACC,R240_SWITCH,LN_SERIAL): 공유384=(1,128,4,1,0,1), 공유768=(2,64,6,2,0,0), 재계산384=(2,64,4,1,0,0), 재계산768=(1,128,4,1,1,0).</p><p>H100 node02 · B1 C128/H256 BF16 · 양방향 packed cuBLAS · mask/residual 포함 · weight prepacked · CUDA Graph 200회 × 20라운드, 순서 순환·역전. 첫 행은 원본 K1 + dropout 추가·재튜닝 K3로, 변경 없는 Anthropic 원본 수치가 아니다. dropout scale [L,C]는 첫 pair 축을 공유한다. BF16 gated update → BF16 dropout → residual 순서이며 기존 학습 F567 저장/반올림 계약이나 전체 학습 시간 측정이 아니다.</p><p>44×4 후보 parity 통과. 최종 설정 L64/72 Torch reference·공유/재계산 비트 일치·0/1 mask·graph mask 갱신 검증 통과. memcheck 0 errors, racecheck 0 hazards. production 배선은 변경하지 않았다.</p><p><a href="assets/dropout-rng-results.json">RNG 포함 원자료</a> · <a href="assets/dropout-results.json">고정 mask·설정 원자료</a> · <a href="assets/dropout-validation.json">검증</a> · <a href="assets/dropout-README.md">방법·재현</a></p></section><!-- DROPOUT_END --><!-- RECOMPUTE_BEGIN --><section class="panel" id="k3-recompute"><span class="pill green">최신 추가 실험</span><h2>분리형에서 K3만 입력 LN을 재계산하면?</h2>
+<p><b>별도 입력 LN과 재튜닝한 K1은 고정.</b> K3만 원본 x를 받아 입력 LN을 다시 계산하는 원본 Anthropic 커널로 교체했다.
+원본 융합형·x_n 공유형·K3 재계산형을 같은 프로세스에서 비교했다. 두 종류의 별도 LN 모두 측정했다.</p>
+<div class="flow"><div><b>공유형</b>입력 LN → x_n → K1<br>K3: x_n + 원본 residual 별도 TMA</div><div><b>재계산형</b>입력 LN → x_n → K1<br>K3: 원본 x → 입력 LN 재계산 + residual</div></div>
+<div class="table-wrap"><table><thead><tr><th>경로</th><th>L384</th><th>L768</th></tr></thead><tbody><tr><td>원본 융합</td><td>0.279 ms</td><td>1.155 ms</td></tr><tr><td>분리 · Anthropic LN · x_n 공유</td><td>0.283 ms</td><td>1.153 ms</td></tr><tr><td>분리 · Anthropic LN · K3 재계산</td><td>0.285 ms</td><td>1.169 ms</td></tr><tr><td>분리 · Triton LN · x_n 공유</td><td>0.284 ms</td><td>1.165 ms</td></tr><tr><td>분리 · Triton LN · K3 재계산</td><td>0.285 ms</td><td>1.176 ms</td></tr></tbody></table></div>
+<p><b>결론:</b> 두 LN 구현 모두 재계산형의 중앙값이 공유형보다 소폭 느렸다. 이번 실험에서 K3 재계산의 이득은 확인되지 않았다. L768의 변동이 있으므로 정확한 작은 비율을 확정적인 성능 차이로 취급하지 않는다.</p><p>H100 node02 · B1 C128/H256 BF16 · 양방향 contraction · mask/residual 포함 · dropout/학습 저장 없음 · weight prepacked.
+CUDA Graph 200회 × 20라운드. 실행 순서를 순환·역전. 원본과 K3 재계산형은 원본 설정 고정, 추가 재튜닝 없음.</p>
+<p>Anthropic LN 두 경로는 원본과 출력 비트 일치. Triton LN 두 경로도 상대 L2 0.005 미만 검증 통과.
+작은 중앙값 차이를 단독으로 속도 우위로 해석하지 말 것. 라운드별 변동 및 두 경로 차이도 JSON에 기록했다.</p>
+<p><a href="assets/k3-recompute-results.json">전체 측정·paired 차이 JSON</a>. 로컬 재현: runs/anthropic_ln_inference_20260919/bench_recompute.py</p></section><!-- RECOMPUTE_END --><!-- INFER_LN_BEGIN --><section class="panel" id="inference-ln"><span class="pill green">최신 · 추론 전용 재측정</span>
+<h2>입력 LN 분리 vs 원본 Anthropic 융합</h2>
+<p><b>원본 융합형은 재튜닝하지 않았다.</b> 원본 k1_body/k3_body와 C128/H256 배포 설정을 그대로 고정했다.
+분리형의 변경된 K1·K3와 별도 LN만 재튜닝했다. 출력 LN은 모든 경로에서 K3 안에 융합한다.</p>
+<div class="flow"><div><b>원본 융합</b>K1: 입력 LN + projection/gate → cuBLAS → K3: 입력 LN 재계산 + 출력 LN + projection/gate/residual</div>
+<div><b>입력 분리</b>입력 LN 한 번 → x_n 공유 → K1 projection/gate → cuBLAS → K3 출력 LN + projection/gate/residual</div></div>
+<p><b>backward용 저장·dropout 없음.</b> 통계, preactivation, projection, gate, normalized contraction을 저장하지 않는다.
+분리형 x_n은 forward에 필요한 중간값이다. B1 C128/H256 BF16 · 양방향 packed cuBLAS · H100 node02 · mask/residual 포함.</p>
+<p><b>결론:</b> L384는 원본 융합형이 중앙값 기준 약 1.6% 빠르고, L768은 1% 미만 차이로 측정 변동 범위 안이다. 입력 LN 분리의 뚜렷한 추론 이득은 확인되지 않았다.</p><h3>추론 forward 전체</h3><div class="table-wrap"><table><thead><tr><th>경로</th><th>L384</th><th>L768</th></tr></thead><tbody><tr><td>원본 Anthropic 융합 · 설정 고정</td><td>0.277 ms</td><td>1.151 ms</td></tr><tr><td>입력 분리 · Anthropic LN</td><td>0.282 ms</td><td>1.154 ms</td></tr><tr><td>입력 분리 · Triton LN</td><td>0.281 ms</td><td>1.160 ms</td></tr></tbody></table></div>
+<p>18라운드 순서 순환·역전 × CUDA Graph 200회 중앙값. 각 경로 200회 초기 warmup. Weight는 미리 packing. Python 호출·weight packing 제외.
+원본 K1/K3를 같은 양방향 contraction에 연결한 비교이며 upstream 단방향 API 전체 시간과는 다르다.</p>
+<h3>커널별 측정 · µs</h3><div class="table-wrap"><table><thead><tr><th>커널</th><th>L384</th><th>L768</th></tr></thead><tbody><tr><td>입력 LN · Triton</td><td>28.24</td><td>102.06</td></tr><tr><td>입력 LN · 원본에서 추출한 CUDA</td><td>29.23</td><td>104.60</td></tr><tr><td>K1 · 원본 융합</td><td>107.55</td><td>441.21</td></tr><tr><td>K1 · LN 제거 / 재튜닝</td><td>88.50</td><td>337.02</td></tr><tr><td>K3 · 원본 입력 LN 재계산</td><td>76.91</td><td>271.95</td></tr><tr><td>K3 · x_n 공유 / 재튜닝</td><td>75.68</td><td>271.30</td></tr></tbody></table></div>
+<p>Anthropic LN은 배포된 독립 LN 제품이 아니라 원본 ln_fragment를 직접 include한 추론용 CUDA 추출판이다.
+Triton도 기존 LN에서 mean/rstd 저장만 제거한 추론판이다. 둘 다 normalized 출력만 쓴다.</p>
+<h3>탐색 범위와 선택값</h3><ul><li>분리 K1: 유효 타일/ring/chunk 66개, 상위 3개에서 register budget·schedule·warpgroup 시작 간격 추가 탐색.</li>
+<li>분리 K3: 타일/ring/accumulator/register 분배/LN schedule 44개씩, residual 글로벌 로드/TMA 로드 두 구현 비교. 최종은 TMA로 shared stage를 재사용.</li>
+<li>Triton LN: 등록 설정 800개 명시적 실행. 24개 heuristic 제한 없음.</li><li>Anthropic 파생 LN: vector/TMA load/TMA store/thread/SERIAL 12개.</li></ul>
+<div class="table-wrap"><table><thead><tr><th>L</th><th>K1</th><th>K3</th><th>Triton LN</th><th>Anthropic LN</th></tr></thead><tbody><tr><td>384</td><td><code>[6, 32, 8, 2, 0, 152, 0]</code></td><td><code>[1, 128, 6, 2, 0, 1]</code></td><td><code>[8, 128, 2, 1]</code></td><td><code>['tma', 128, 1, 1]</code></td></tr><tr><td>768</td><td><code>[1, 192, 8, 2, 0, 152, 0]</code></td><td><code>[1, 128, 6, 2, 0, 0]</code></td><td><code>[8, 128, 4, 2]</code></td><td><code>['tma', 128, 1, 1]</code></td></tr></tbody></table></div>
+<p class="tiny muted">K1: BI,BJ,slots,Kchunk,schedule,consumer registers,start offset. K3: BI,BJ,slots,accumulators,24/240 split switch,LN serial.
+Triton: rows,feature tile,warps,stages. CUDA LN: load type,threads,serial,bulk store.
+각 후보 정확도 확인 후 상위 4개를 8라운드 재측정. 유한 탐색 결과이며 전역 최적 보장은 아니다.</p>
+<p><a href="assets/inference-ln-results.json">전체 결과·round sample JSON</a> · <a href="assets/inference-ln-validation.json">정확도 기록</a></p>
+<p>선택한 경로의 memcheck 0 errors, racecheck 0 hazards. 원본과 Anthropic LN 분리형 출력은 비트 일치하고, Triton LN 경로는 상대 L2 8e-5 수준. 실험 구현은 보존했고 production dispatch는 변경하지 않았다. 이전 저장 포함 학습 forward 실험은 아래 이력으로 남긴다.</p>
+</section><!-- INFER_LN_END --><!-- LN_AB_BEGIN --><section id="ln-ab" class="panel"><span class="pill green">새 실험 · 2026-09-19</span>
+<h2>Anthropic LayerNorm — 분리 vs 융합</h2>
+<p><b>같은 원본 LN 함수와 같은 학습 저장값으로 비교했다. 모두 융합할 때 forward 시간이 L384 6.0%, L768 4.7% 감소했다.</b></p>
+<h3>원본에서 확인한 LN 최적화</h3>
+<ul><li>MMA fragment 배치 그대로, 4개 lane의 shuffle reduction으로 두 행의 FP32 평균·분산 계산.</li>
+<li>BF16 packed 레지스터를 유지하고 각 pass에서 변환. FP32 값을 계속 보관하는 비용을 줄임.</li>
+<li>register fence와 2개 affine dependency chain으로 live register 및 spill 제어.</li>
+<li>공유 메모리 gamma/beta 벡터 로드, affine 뒤 바로 BF16 packing. 원본 TMA·ldmatrix 입력 배치 유지.</li></ul>
+<p><code>ln_fragment</code> 원본을 직접 include했다. SERIAL은 스케줄 차이이며 수식은 같다.
+<code>ln_stock</code>은 참조 라이브러리의 합산 순서 재현용으로 별개다.</p>
+<h3>학습 forward 전체 — 네 조합</h3>
+<div class="table-wrap"><table><thead><tr><th>LN 배치</th><th>L384</th><th>L768</th></tr></thead><tbody><tr><td>입력 분리 / 출력 분리</td><td>0.474 ms</td><td>1.823 ms</td></tr><tr><td>입력 분리 / 출력 융합</td><td>0.448 ms</td><td>1.761 ms</td></tr><tr><td>입력 융합 / 출력 분리</td><td>0.464 ms</td><td>1.793 ms</td></tr><tr><td>입력 융합 / 출력 융합</td><td>0.445 ms</td><td>1.737 ms</td></tr></tbody></table></div>
+<p>B1 · C128/H256 · BF16 · dropout 25% · residual · H100 node02.
+8라운드 순서 교대 CUDA Graph 중앙값. <b>모든 학습용 저장 포함. Weight는 미리 packing.</b>
+RNG 생성·weight packing·backward·optimizer 시간 제외. 이전 packing 포함 표와 절대 시간 직접 비교 금지.</p>
+<div class="flow"><div><b>분리</b>원본 LN → normalized 저장 → K1/F567이 다시 읽음</div>
+<div><b>융합</b>K1/K3 안의 원본 LN → 레지스터에서 바로 GEMM 사용<br>backward용 normalized·통계 저장은 그대로</div></div>
+<p>입력·출력 normalized 쓰기는 학습 때문에 양쪽 모두 남는다. 융합은 GEMM이 normalized를 다시 읽는 비용을 없앤다.
+이론상 제거되는 글로벌 읽기는 L384 108 MiB, L768 432 MiB. L2 적중에 따라 실제 HBM 감소량은 다르다.</p>
+<h3>LN 단독 — 원본을 꺼내면 더 빠른가?</h3>
+<div class="table-wrap"><table><thead><tr><th>shape</th><th>기존 Triton · µs</th><th>Anthropic LN + TMA load/store · µs</th></tr></thead><tbody><tr><td>L384 / 입력 LN</td><td>28.93</td><td>30.10</td></tr><tr><td>L384 / 출력 LN</td><td>58.52</td><td>59.58</td></tr><tr><td>L768 / 입력 LN</td><td>104.88</td><td>106.36</td></tr><tr><td>L768 / 출력 LN</td><td>215.11</td><td>214.86</td></tr></tbody></table></div>
+<p><b>단독 LN의 우위는 확인되지 않았다.</b> 원본 최적화는 융합 커널 안의 register/MMA 연결에 맞춰져 있다.
+분리형은 vector/TMA load, TMA store, thread 수, SERIAL 조합 8개를 비교했다.
+GEMM은 기존 schedule 고정으로 전수 재튜닝 결과가 아니다. Triton cache miss는 24개 heuristic 후보.</p>
+<h3>검증 및 적용 범위</h3>
+<ul><li>L384/768 네 조합의 출력·저장값 12개 모두 비트 일치. L64/72 개별 저장 비교도 통과.</li>
+<li>Compute Sanitizer memcheck 0 errors / racecheck 0 hazards.</li>
+<li>실험 코드에 두 버전 보존. production dispatch와 기존 학습 잡은 변경하지 않음.</li>
+<li>원본 inference와 달리 K3의 입력 LN은 재계산하지 않고 저장한 x_n을 공유. 원본 inference 승리 주장이 아님.</li></ul>
+<p><a href="assets/ln-ab-results.json">전체 측정 JSON</a> · <a href="assets/ln-ab-reference.json">LN 단독 JSON</a></p>
+<p class="tiny muted">출처: Anthropic uplifting-biomolecular-modeling f4f62fa · Apache-2.0 · native/v5/csrc/tmn_kernels.cuh의 ln_fragment.
+로컬 재현: ../../runs/anthropic_ln_ab_20260919/README.md</p></section><!-- LN_AB_END --><!-- TRAINING_PROGRESS_BEGIN -->
+<section id="training-progress" class="panel" style="border:2px solid #087c66">
+<div class="eyebrow" style="color:#087c66">CURRENT · 2026.09.19 · H100 / NODE02 · SAME TRAINING SAVE POLICY</div>
+<h2>기존 융합·저장 정책 유지 + Anthropic 파생 CUDA</h2>
+<div class="notice"><b>학습 경로를 기존 저장 정책으로 연결했다.</b><br>
+입력 projection과 F567을 원본 K1/K3에서 파생한 CUDA로 교체했다.
+별도 입력/출력 LN과 기존 Triton/cuBLAS backward는 유지한다. 느린 재계산 backward를 쓰지 않는다.</div>
+<h3>실제 융합 경계와 저장값</h3>
+<div class="flow">
+<div class="node gray"><b>F1 · 입력 LN</b>기존 Triton<br>x_n + mean/rstd 저장</div><div class="arrow">→</div>
+<div class="node"><b>F2 · K1 파생 CUDA</b>prenormalized x_n 입력<br>projection + gate + mask<br>a/b + preact TMA 저장</div><div class="arrow">→</div>
+<div class="node purple"><b>F3 · cuBLAS</b>outgoing + incoming<br>최종 X buffer로 직접 출력</div><div class="arrow">→</div>
+<div class="node gray"><b>F4 · 출력 LN</b>기존 Triton<br>normalized X + mean/rstd 저장</div><div class="arrow">→</div>
+<div class="node"><b>F567 · K3 파생 CUDA</b>projection + output gate<br>+ dropout + residual<br>projection / gate TMA 저장</div>
+</div>
+<div class="notice"><b>Backward: 기존 Triton/cuBLAS 그대로.</b> 저장 목록의 shape·dtype·순서가 이전과 일치한다.
+입력 projection/gate GEMM 4개와 출력 GEMM 2개를 backward에서 재계산하지 않는다.</div>
+<h3 id="kernel-svg">Anthropic 커널은 어떻게 만들어졌나 — SVG</h3>
+<p><a href="assets/anthropic-trimul-kernels.svg" target="_blank" rel="noopener">SVG 원본 열기 / 확대 →</a></p>
+<img src="assets/anthropic-trimul-kernels.svg" alt="원본 K1과 K3의 HBM, TMA, shared memory, warpgroup, WGMMA 연결 및 학습 파생형 변경 지점" style="display:block;width:100%;height:auto;border:1px solid #dbe4e8;border-radius:12px" loading="lazy">
+<p>원본 커널 본체를 직접 변형했다. TMA/WGMMA, producer/consumer, weight ring, MMA/epilogue overlap을 계승한다.
+K1/K3 내부의 LN 대신 기존 별도 LN 결과를 읽고, 학습에 필요한 저장 및 dropout/residual을 추가했다.
+단순히 아이디어만 참고한 독립 구현이 아니다.</p>
+<h3>동일 저장 정책 · 같은 프로세스 A/B</h3>
+<p>양방향 C128/H256 · BF16 · B1 · dropout 25% · residual 포함. 단위 <b>ms</b>.
+순서를 교대하며 CUDA Graph replay 8라운드 중앙값. Weight packing 포함, RNG 생성/optimizer 제외.</p>
+<div class="table-wrap"><table><thead><tr><th>L</th><th>측정 범위</th><th>기존 Triton 학습</th><th>현재 Anthropic 파생형</th><th>시간 감소</th></tr></thead><tbody><tr><td>384</td><td>forward</td><td>0.548</td><td><b>0.508</b></td><td>7.3%</td></tr><tr><td>384</td><td>forward + backward</td><td>1.633</td><td><b>1.588</b></td><td>2.8%</td></tr><tr><td>768</td><td>forward</td><td>2.124</td><td><b>1.859</b></td><td>12.5%</td></tr><tr><td>768</td><td>forward + backward</td><td>6.419</td><td><b>6.175</b></td><td>3.8%</td></tr></tbody></table></div>
+<p><b>이 표는 기존 학습 대비 개선이다.</b> Anthropic 원본 inference를 이겼다는 결과는 아니다.
+전체 학습 15% 개선은 아직 달성하지 않았다.</p>
+<div class="table-wrap"><table><thead><tr><th>초기 커널 호출 비교 · µs</th><th>L384 Triton → 파생형</th><th>L768 Triton → 파생형</th></tr></thead><tbody>
+<tr><td>입력 projection · packing 포함</td><td>253.0 → 202.8</td><td>975.7 → 756.0</td></tr>
+<tr><td>F567</td><td>106.5 → 108.6 · 약간 느림</td><td>401.1 → 380.4</td></tr></tbody></table></div>
+<p class="tiny muted">새 CUDA는 각 커널 초기 6개 후보를 비교했다. Triton cache miss는 24개 heuristic 후보로 튜닝했다.
+전수 튜닝 결과가 아니다. 유효 config 공간은 front 58개, F567 H128 30개/H256 12개.
+LN을 하지 않는 F567에서 LNSERIAL 축은 제거했다.</p>
+<h3>검증 및 NCU</h3>
+<ul><li><b>GPU 테스트 14개 통과:</b> 저장 목록 동일성, 단방향/양방향, 전체 gradient, zero mask/dropout/projection, 모듈 SGD/eval, 여러 forward.</li>
+<li>fullgraph compile + CUDA Graph에서 weight/dropout 변경 검증. L384/768 출력은 기존 Triton과 이번 입력에서 비트 일치.</li>
+<li>Memcheck / synccheck: 0 errors. Racecheck: 0 hazards.</li>
+<li>선택한 H128/H256 cubin에 TMA load/store·HGMMA 존재. local memory / LDL / STL 0.</li>
+<li>NCU L768/H256: front 754.8µs / 2.59TB/s, F567 396.6µs / 2.61TB/s. DRAM active 77.1% / 78.0%.</li></ul>
+<p>NCU 수치만으로 roofline 도달을 단정하지 않는다. F567 L384와 backward 최적화 여지가 남아 있다.</p>
+<h3>선택 방법과 범위</h3>
+<pre style="overflow-x:auto"><code>BidirectionalTriangleMultiplication(
+    128, implementation="anthropic",
+    anthropic_row="training_saved", p_drop=0.25,
+)
+# 단방향 TriangleMultiplication도 같은 row
+# global engine_backend="auto" (CUDA이므로 Triton-only 강제와 함께 사용하지 않음)</code></pre>
+<p>현재 H100 / C128 / H128 또는 H256 / B1 / BF16 / L이 8의 배수.
+전체 모델 수렴, 다른 폭·GPU·배치, engine 전체 autotune/cache 통합은 남아 있다.
+원본 전체 forward와 재계산 backward 기준선은 <code>native_rebuilt</code>로 별도 보관한다.</p>
+<p class="tiny muted">원본: <a href="https://github.com/anthropics/uplifting-biomolecular-modeling/tree/f4f62fa6592ae4938d49b1757bea0cfeff9f468e">Anthropic · f4f62fa · Apache-2.0</a>.
+우리의 이전 inference 개발보다 뛰어난 원본 성과를 인정하고 계승한다. 추가 기여는 engine 통합과 학습 지원이다.</p>
+<details><summary>이전 단계: 원본 전체 forward + 검증용 재계산 backward 기록</summary>
+<section id="native-recompute-baseline" class="panel" style="border:2px solid #087c66">
+<div class="eyebrow" style="color:#087c66">CURRENT BASELINE · 2026.09.19 · H100 / NODE02</div>
+<h2>Anthropic 원본 forward를 학습에 연결</h2>
+<div class="notice"><b>현재: 원본 K1 → cuBLAS → 원본 K3 전체를 사용하는 autograd 학습 기준선.</b><br>
+앞서 만든 K3만 차용한 경로와 다르다. 단방향 outgoing/incoming과 양방향에 연결했다.
+Backward는 아직 검증용 PyTorch 재계산 + cuBLAS이며, 최적화된 CUDA backward가 아니다.</div>
+<h3>현재 학습 forward — 어떤 연산이 어디에 묶였나</h3>
+<div class="flow">
+<div class="node"><b>Anthropic 원본 K1 · 변경 없음</b>입력 LayerNorm<br>left/right projection + sigmoid gate + mask<br>TMA / WGMMA → a,b 저장</div>
+<div class="arrow">→</div><div class="node purple"><b>cuBLAS contraction</b>단방향: 1회<br>양방향: outgoing + incoming 2회<br>하나의 최종 X buffer에 직접 출력</div>
+<div class="arrow">→</div><div class="node"><b>Anthropic 원본 K3 · 변경 없음</b>출력 LayerNorm + projection<br>입력 LN 재계산 + output gate<br>TMA / WGMMA → update</div>
+<div class="arrow">→</div><div class="node gray"><b>학습용 외부 연산</b>row dropout 25%<br>원래 pair residual 더하기<br>원본 K3에는 새 dropout을 넣지 않음</div>
+</div>
+<p><b>양방향의 수학:</b> 원본 K1의 H256 출력을 H128씩 나눠 outgoing/incoming contraction을 계산한다.
+그 결과 전체 H256에 한 번의 LN_out을 적용하고 원본 K3가 C128로 투영한다.
+단방향 원본 모듈 두 개를 더한 것이 아니다. 이 양방향 조립은 engine의 연결 코드다.</p>
+<h3>현재 backward — 학습 가능 여부를 검증하는 기준선</h3>
+<div class="flow"><div class="node gray"><b>출력 surround 재계산</b>PyTorch FP32 수식<br>LN_out / projection / gate 미분<br>forward의 실제 native X를 소비</div>
+<div class="arrow">→</div><div class="node purple"><b>Contraction 미분</b>cuBLAS<br>forward의 실제 native a,b를 소비<br>outgoing/incoming 각각 미분</div>
+<div class="arrow">→</div><div class="node gray"><b>입력 surround 재계산</b>PyTorch FP32 수식<br>projection / gate / LN_in 미분<br>입력 및 모든 10개 parameter gradient</div></div>
+<p><b>이 backward는 느리다.</b> 원본에는 backward가 없어서 먼저 수식 검증용으로 붙였다.
+이를 Anthropic 학습 커널의 성능이라고 부르거나 기존 Triton 대비 승리라고 해석하지 않는다.</p>
+<h3>현재 기준선 실측</h3>
+<p>BF16 pair · C128 · B1 · dropout 25% · residual 포함. CUDA Graph replay 중앙값, 단위 <b>ms</b>.
+Forward에는 매 실행 live weight packing이 포함된다. 고정 dropout scale을 사용하며 RNG 생성과 optimizer는 제외한다.</p>
+<div class="table-wrap"><table><thead><tr><th>경로</th><th>L</th><th>전체 H</th><th>학습 forward</th><th>forward + 검증용 backward</th></tr></thead><tbody><tr><td>단방향 outgoing</td><td>384</td><td>128</td><td>0.258</td><td>8.837</td></tr><tr><td>양방향</td><td>384</td><td>256</td><td>0.386</td><td>13.954</td></tr><tr><td>단방향 outgoing</td><td>768</td><td>128</td><td>0.915</td><td>50.803</td></tr><tr><td>양방향</td><td>768</td><td>256</td><td>1.420</td><td>89.458</td></tr></tbody></table></div>
+<p>원본 단방향 update-only · weight pack 재사용 · dropout/residual 제외 시간은 L384 <b>0.155ms</b>, L768 <b>0.603ms</b>였다.
+위 학습 forward와 작업량이 다르므로 가속률로 비교하지 않는다. 이번에 원본을 더 빠르게 바꾼 것은 아니다.</p>
+<h3>검증 완료</h3>
+<ul><li><b>14개 GPU 테스트 통과:</b> original forward 동일성, 모든 gradient, mask/dropout/residual, 단방향·양방향 모듈.</li>
+<li>단방향 원본 호출과 update 출력이 비트 단위로 일치: L64·65·384·768 outgoing, L64·65 incoming.</li>
+<li>L384·768 단방향/양방향 수식 비교: 출력 상대 L2 최대 0.052%, 모든 gradient 최대 0.290%.</li>
+<li>SGD weight 갱신, 여러 forward를 쌓은 뒤 backward, CUDA Graph replay 중 weight/dropout 변경 검증.</li>
+<li>실제 GPU trace에서 원본 <code>tmn_k1_*</code> / <code>tmn_k3_*_u</code> 호출 확인.</li></ul>
+<h3>사용과 범위</h3>
+<pre style="overflow-x:auto"><code>BidirectionalTriangleMultiplication(
+    128, implementation="anthropic",
+    anthropic_row="native_rebuilt", p_drop=0.25,
+)
+# 단방향 TriangleMultiplication도 같은 옵션
+# TRIMUL_NATIVE_BUILD_DIR 설정, TF32 비활성화 필요</code></pre>
+<p>현재 검증 범위: H100 / BF16 pair / B1 / C128 / H128 또는 H256.
+Eager와 CUDA Graph는 검증했다. torch.compile fullgraph는 아직 지원하지 않으며 명시적으로 graph break한다.
+Backward는 1차 미분만 지원한다. 전체 MiniWorld 모델 학습 실행은 아직 검증하지 않았다.</p>
+<h3>다음 작업</h3>
+<ol><li>이 원본 forward + 검증용 backward를 정확도 기준으로 고정.</li>
+<li>원본 forward의 계산·반올림 규약에 맞춘 빠른 backward를 연결·개발.</li>
+<li>live weight packing과 dropout/residual 등 학습 연결 비용을 줄이고 compile/cache 경로 정리.</li>
+<li>원본 kernel 자체 개선은 같은 작업량으로 직접 A/B 비교. 세부 NCU stall 분석을 선행.</li></ol>
+<details><summary>이전 K3 학습 시제품과 원본 NCU 기록</summary>
+<p>이전 <code>implementation="triton", training_output_backend="anthropic_cuda"</code>는 Triton front + 파생 CUDA K3 + 기존 backward다.
+그 경로의 Triton 대비 약 1.15배 K3 가속은 Anthropic 원본을 이겼다는 근거가 아니다. 이번 원본 전체 forward 기준선과 분리해서 보관한다.</p>
+<p>원본 L768/C128 NCU: K1 209.3µs, K3 211.8µs; HBM 약 2.15/2.14TB/s; DRAM active 약 64%.
+세부 stall 자료가 부족하므로 이 값만으로 roofline 도달 여부나 15% 추가 개선 가능성을 확정하지 않는다.
+원본은 이미 hand CUDA/PTX·TMA·WGMMA를 사용한다.</p></details>
+<p class="tiny muted">원본: <a href="https://github.com/anthropics/uplifting-biomolecular-modeling/tree/f4f62fa6592ae4938d49b1757bea0cfeff9f468e">Anthropic 공개 코드 · f4f62fa</a> (Apache-2.0).
+우리의 이전 inference 개발보다 뛰어난 원본의 성과를 인정하고 계승한다. 현재 추가한 것은 engine 연결과 학습 지원 기준선이다.
+아래는 기존 추론 분석 스냅샷이다. 이 페이지는 실시간 모니터가 아니다.</p>
+</section></details>
+</section><!-- TRAINING_PROGRESS_END --><section id="s1" class="panel"><h2>1. 정확히 무엇이 연결됐나</h2><p>분석 대상은 <code>native_rebuilt</code>, BF16, C_z=C_h=128, B=1, residual 포함, dropout=0이다.<br>원본 커밋 <code>f4f62fa6592ae4938d49b1757bea0cfeff9f468e</code>의 CUDA 소스를 수정하지 않은<br>CUDA12.9 재빌드다. 호출은 engine module → integration → native face → ops → K1/cuBLAS/K3다.</p>
+<div class="table-wrap"><table><tr><th>범위</th><th>현재 상태</th></tr><tr><td>단방향 outgoing / incoming inference module</td><td>연결 및 수치·CUDA Graph 검증</td></tr><tr><td>배치 B=2, 서로 다른 mask, weight 변경</td><td>추가 검증 통과</td></tr><tr><td>기본값</td><td>implementation=anthropic만 주면 v4. 이번 분석 경로는 anthropic_row=native_rebuilt 명시 필요</td></tr><tr><td>양방향 inference fusion</td><td>새 native 연결 없음. 두 단방향 호출은 별도</td></tr><tr><td>training / backward / dropout</td><td>새 native 경로 미구현. engine는 grad-enabled 호출 거절</td></tr><tr><td>MiniWorld 전체 모델</td><td>아직 통합 성능·정확도 검증 미완료</td></tr></table></div>
+<p>이 문서는 새 timing 실험이 아니다. 앞선 H100 결과를 소스, ptxas, 이번에 추출한 실제 cubin SASS와 대조했다.</p></section><section id="s2" class="panel"><h2>2. 수식과 세 개의 핵심 단계</h2><p>x = LN_in(z)<br>a = mask × sigmoid(x W_agᵀ) × (x W_apᵀ)<br>b = mask × sigmoid(x W_bgᵀ) × (x W_bpᵀ)</p>
+<p>outgoing: X[c,i,j] = Σ_k a[c,i,k] b[c,j,k]<br>incoming: X[c,i,j] = Σ_k a[c,k,i] b[c,k,j]</p>
+<p>y = z + sigmoid(LN_in(z) W_ogᵀ) × (LN_out(X) W_oᵀ)</p>
+<div class="table-wrap"><table><tr><th>단계</th><th>융합 내용</th><th>HBM에 남기는 결과</th></tr><tr><td>K1</td><td>LN_in + a/b 양쪽 projection/gate + mask + channel-major 배치</td><td>ab[2H,Np,Np], BF16</td></tr><tr><td>cuBLAS</td><td>채널별 triangle contraction, FP32 accumulate</td><td>X[H,Np,Np], BF16</td></tr><tr><td>K3</td><td>LN_in 재계산 + output gate, LN_out + output projection, gate×projection + residual</td><td>y[N,N,C]</td></tr></table></div>
+<p>핵심 kernel은 3개지만 engine mask 생성·dtype 변환까지 포함한 전체 호출이 3 launch라는 뜻은 아니다.<br>mask는 contraction 입력 a/b에만 적용되고 output gate에는 적용하지 않는다.<br>여기서 a/b 두 projection은 <b>한 방향의 두 operand</b>이며 outgoing+incoming 양방향 실행이 아니다.</p>
+<p>Incoming 기본 kt 경로는 K1의 TMA tensor-map stride를 바꿔 transposed plane을 바로 만든다.<br>따로 큰 transpose kernel을 실행하지 않고 outgoing과 같은 NT GEMM을 쓴다.<br>L384/768은 16의 배수이므로 Np=ceil16(N)에 따른 padding 낭비가 없다.</p></section><section id="s3" class="panel"><h2>3. H100 구현: 실제 선택된 설정</h2><div class="table-wrap"><table><tr><th>항목</th><th>K1</th><th>K3</th></tr><tr><td>선택 kernel</td><td>t6x32_s8k2_m1_l2_v0</td><td>t2x64_s8a2_l1</td></tr><tr><td>한 tile의 pair 위치</td><td>6×32 = 192개</td><td>2×64 = 128개</td></tr><tr><td>producer / consumer warpgroups</td><td>1 / 3</td><td>1 / 2</td></tr><tr><td>CTA threads</td><td>512</td><td>384</td></tr><tr><td>persistent grid</td><td>132 CTA</td><td>132 CTA</td></tr><tr><td>CTA당 dynamic shared memory</td><td>206,080 B (201.25 KiB)</td><td>149,760 B (146.25 KiB)</td></tr><tr><td>compile register allocation</td><td>128/thread</td><td>168/thread</td></tr><tr><td>runtime producer / consumer budget</td><td>40 / 152 regs</td><td>24 / 240 regs</td></tr><tr><td>weight ring</td><td>8 slots × 16 KiB</td><td>8 slots × 8 KiB</td></tr><tr><td>선택 C128에서 weight residency</td><td>전체 W1을 CTA shared에 유지</td><td>W_og + W_o를 CTA shared에 유지</td></tr><tr><td>WGMMA</td><td>m64n64k16, register A / shared B</td><td>m64n32k16, register A / shared B</td></tr><tr><td>입력 이동</td><td>TMA</td><td>TMA</td></tr><tr><td>출력 이동</td><td>shared stmatrix → vector global store</td><td>shared stmatrix → TMA store</td></tr><tr><td>ptxas spill loads / stores</td><td>0 / 0</td><td>0 / 0</td></tr></table></div>
+<p>K1 헤더의 ‘producer 1 + consumer 2’ 설명만 읽으면 틀린다. 현재 선택된 tile은 consumer가 3개다.<br>또 K1은 BJ=32이므로 <code>BJ % 64 == 0</code>인 TMA-store 조건을 만족하지 않는다.<br>실제 cubin에서 <b>K1: UTMALDG + HGMMA + STG, UTMASTG 없음</b>, <b>K3: UTMALDG + HGMMA + UTMASTG</b>를 확인했다.<br>SASS opcode의 정적 개수는 실행 횟수/성능 비중이 아니다.</p>
+<p>둘 다 producer가 TMA와 mbarrier를 관리하고 consumer는 ldmatrix로 읽은 fragment를<br>register 안에서 정규화한 뒤 WGMMA의 A operand로 직접 사용한다.<br>따라서 normalized activation을 global memory에 써서 다시 읽을 필요가 없다.<br>128-byte shared swizzle, weight resident ring, producer/consumer register 재분배,<br>MMA와 gate/store의 겹침이 함께 설계돼 있다. 단순히 cp.async만 TMA로 바꾼 커널이 아니다.<br>K1 SCHED=0, K3 NACC=2로 두 accumulator 세트를 사용해 다음 MMA와 현재 epilogue를 겹친다.</p></section><section id="s4" class="panel"><h2>4. 기존 Triton과 무엇이 다른가</h2><div class="table-wrap"><table><tr><th>항목</th><th>현재 비교한 engine Triton</th><th>Anthropic native</th></tr><tr><td>입력 LN</td><td>별도 kernel, x_n 저장</td><td>K1 내부 register LN</td></tr><tr><td>gate 입력</td><td>저장된 x_n 재사용</td><td>K3에서 원본 z를 읽고 LN 재계산</td></tr><tr><td>front</td><td>a/b projection+gate+mask</td><td>여기에 LN과 직접 plane 출력을 통합</td></tr><tr><td>contraction</td><td>cuBLAS</td><td>cuBLAS, 같은 주요 GEMM 이름 확인</td></tr><tr><td>back</td><td>LN_out + projection + gate + residual fusion</td><td>같은 큰 수식에 LN_in 재계산과 H100 pipeline을 결합</td></tr><tr><td>weight 준비</td><td>호출 경로에 작은 stack/cat/transpose 복사가 남음</td><td>weight packing은 최초 1회, 이후 cache</td></tr></table></div>
+<p>따라서 이번 비교는 <b>융합 알고리즘이 완전히 같은 Triton vs CUDA 비교가 아니다.</b><br>입력 LN 저장/재계산 정책, packing 비용, 메모리 배치, Hopper 구현이 함께 다르다.<br>‘향상 전체가 TMA 덕분’이라고 분해할 수 없으며 이를 입증하려면 별도 ablation이 필요하다.</p>
+<p>Triton NCU에 남은 CatArray kernel은 주로 weight packing이다. pair activation의 대형<br>concat과 혼동하면 안 된다. 이번 작업에서 이를 수정하지는 않았다.</p></section><section id="s5" class="panel"><h2>5. 성능 이득은 어디서 나오나</h2><p>NCU replay 기준 µs. Graph latency와 분리해서 읽는다.</p>
+<div class="table-wrap"><table><tr><th>L</th><th>구간</th><th>기존 Triton</th><th>Anthropic</th></tr><tr><td>384</td><td>입력 LN + front / K1</td><td>94.11</td><td>56.67</td></tr><tr><td>384</td><td>cuBLAS contraction</td><td>40.32</td><td>39.74</td></tr><tr><td>384</td><td>출력 fusion / K3</td><td>102.43</td><td>59.23</td></tr><tr><td>384</td><td>mask·packing 등</td><td>43.07</td><td>13.31</td></tr><tr><td>384</td><td>합계</td><td>279.94</td><td>168.96</td></tr><tr><td>768</td><td>입력 LN + front / K1</td><td>358.11</td><td>209.28</td></tr><tr><td>768</td><td>cuBLAS contraction</td><td>180.99</td><td>182.40</td></tr><tr><td>768</td><td>출력 fusion / K3</td><td>378.05</td><td>211.78</td></tr><tr><td>768</td><td>mask·packing 등</td><td>43.81</td><td>14.98</td></tr><tr><td>768</td><td>합계</td><td>960.96</td><td>618.43</td></tr></table></div>
+<p>L768에서는 K1 측 약 149µs, K3 약 166µs가 줄었다. cuBLAS는 거의 그대로다.<br>따라서 이득의 중심은 앞뒤 fused kernel이다. K1/K3를 먼저 분석하고 cuBLAS를 유지하는 판단이 현재 데이터와 맞는다.</p></section><section id="s6" class="panel"><h2>6. Roofline과 메모리: 아직 여지가 있나</h2><div class="table-wrap"><table><tr><th>L768</th><th>K1</th><th>K3</th></tr><tr><td>전체 native 호출 내 시간 비중</td><td>33.8%</td><td>34.2%</td></tr><tr><td>HBM throughput / sustained peak</td><td>64.1%</td><td>64.0%</td></tr><tr><td>L2 throughput / sustained peak</td><td>59.6%</td><td>62.4%</td></tr><tr><td>BF16 Tensor throughput / sustained peak</td><td>19.8%</td><td>9.5%</td></tr><tr><td>issue-active / active cycles</td><td>57.0%</td><td>45.9%</td></tr><tr><td>eligible warps / scheduler cycle</td><td>1.06</td><td>0.71</td></tr></table></div>
+<p>둘 다 register/shared-memory 제약상 1 CTA/SM이다. 하지만 ‘occupancy가 낮으니 실패’가 아니다.<br>weight 재사용과 fusion을 얻기 위해 자원을 많이 쓰는 설계다. spill은 없다.<br>K3는 낮은 eligible-warp 및 issue 비율이 보여 의존성·scheduling을 더 볼 가치가 있다.<br>이것만으로 특정 stall 원인이나 가능한 개선 배율을 확정할 수는 없다.</p>
+<p>동일 작업량에서 HBM을 100% 쓰는 이상적 모델만 가정하면 64% 이용률은 약 1.56×의<br>kernel 속도 여유에 대응한다. 그러나 혼합 연산이므로 이것은 구현 가능 이득도,<br>알고리즘 전체의 엄밀한 상한도 아니다. 실제 15% 개선은 별도 실험이 필요하다.<br>K1/K3가 합쳐 약 68%이므로 둘 다 1.15×가 돼도 전체는 대략 1.10×다.<br>전체 1.15×를 원하면 나머지가 고정일 때 두 kernel이 약 1.24×여야 한다(Amdahl 계산).</p>
+<div class="table-wrap"><table><tr><th>C=H=128</th><th>L384</th><th>L768</th></tr><tr><td>ab plane</td><td>72 MiB</td><td>288 MiB</td></tr><tr><td>X contraction 결과</td><td>36 MiB</td><td>144 MiB</td></tr><tr><td>ab + X workspace</td><td>108 MiB</td><td>432 MiB</td></tr><tr><td>저장하지 않는 x_n 크기</td><td>36 MiB</td><td>144 MiB</td></tr><tr><td>upstream workspace 정책</td><td>cache에 유지</td><td>256 MiB 기준 초과, transient allocation</td></tr></table></div>
+<p>x_n의 global write와 front/back read를 피하지만 K3에서 z를 다시 읽는다.<br>실제 DRAM 절감량은 L2 재사용과 residual의 shared 재사용도 포함해 달라지므로<br>위 tensor 크기를 그대로 HBM byte 감소량이라고 주장하지 않는다.<br>L768의 transient는 framework caching allocator 정책이며, kernel 컴파일 cache miss를 뜻하지 않는다.</p></section><section id="s7" class="panel"><h2>7. 살릴 설계와 주의할 계약</h2><p><b>계승할 핵심:</b> register LN → WGMMA RS 연결, channel-major plane 직접 출력,<br>incoming의 descriptor transpose, CTA 내 weight residency, K3의 gate/projection/residual<br>융합, shape별 명시적 tile table 및 binary/source provenance 관리.</p>
+<p><b>후속 실험 우선순위:</b> K3 scheduling/epilogue, K1 6×32와 TMA-store 가능한 tile의<br>전체 비용 비교, 작은 wrapper packing 비용 정리. K1의 TMA store 미사용은 결함으로<br>단정하지 않는다. tile 모양을 바꾸면 locality·레지스터·파이프라인도 함께 변한다.</p>
+<p><b>학습으로 가져갈 때:</b> API의 save_intermediates는 현재 명시적으로 거절된다.<br>K1 stats 저장용 낮은 수준 hook이 있다는 것과 학습 지원은 다르다.<br>Backward가 쓸 a/b, X, LN stats, gate/projection 값을 저장할지 재계산할지 설계하고<br>mask/dropout/residual gradient 및 모든 파라미터 gradient를 새로 검증해야 한다.</p>
+<p><b>Cache 계약:</b> 원본 pack은 기본적으로 주소 기반이고 weight in-place 변경 시<br>caller가 cache를 무효화해야 한다. engine adapter는 parameter version/교체/epsilon을<br>키에 포함시켜 재생성한다. workspace key에는 CUDA stream이 없으므로 같은 module/cache의<br>동시 multi-stream 재진입은 이번에 검증하지 않았고 별도 cache/event 설계가 필요하다.<br>B&gt;1은 각 plane 순차 호출 후 torch.stack이므로 완전히 fused batched kernel이 아니다.</p></section><section id="s8" class="panel"><h2>8. 원본·증거 위치</h2><p>원본 pinned revision: https://github.com/anthropics/uplifting-biomolecular-modeling/tree/f4f62fa6592ae4938d49b1757bea0cfeff9f468e</p>
+<p>- <code>native_rebuilt/python/trimul_native/ops.py</code>: pack_weights(59), trimul_plane(191), trimul(258)<br>- <code>native_rebuilt/python/trimul_native/kernel.py</code>: tile/SMEM(66), K1 launch(307), K3 launch(362)<br>- <code>native_rebuilt/csrc/tmn_kernels.cuh</code>: K1Cfg(82), K1 body(448), TMAST 조건(535), K3 body(708)<br>- <code>native_rebuilt/csrc/tmn_ptx.cuh</code>: TMA load/store(93/111), WGMMA(158/213)<br>- <code>native_rebuilt/csrc/common/tmn_math.cuh</code>: LN/gate/residual 반올림 수식<br>- <code>trimul-k1-selected.sass</code>, <code>trimul-k3-selected.sass</code>, <code>trimul-sass-summary.json</code>: 이번 cubin 대조 결과<br>- <code>ncu/trimul-L384-C128-native_rebuilt.csv</code>, <code>ncu/trimul-L768-C128-native_rebuilt.csv</code>: 실행 config/지표<br>- <code>all-results.json</code>: 후보별 수치 검사 및 CUDA Graph 시간</p>
+<p>상대 경로의 기준은 <code>runs/anthropic_adoption_20260919/</code>이다.<br>원본 소스·커널은 수정하지 않았다. 이 문서는 후속 최적화나 학습 개발 완료 주장이 아니다.</p></section></main></body></html>

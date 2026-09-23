@@ -42,6 +42,7 @@ from miniworld.models.diffusion.model import (
     DiffusionModel,
 )
 from miniworld.training import ParamPolicyConfig
+from miniworld.training.engine_backend import EngineBackend, configure_engine_backend
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -57,6 +58,7 @@ class Client(BaseClient):
         comment: str = "v1.0.0-phase2-diffusion"
         name: str = "MiniWorld-phase2"
         run_dir: str = "runs/v1.0.0/phase2"
+        engine_backend: EngineBackend = "auto"
         overfitting: bool = False
         overfitting_dir: str | None = None
         train_item: int = 25600
@@ -133,6 +135,7 @@ class Client(BaseClient):
         loss: Client.LossConfig
 
     def __init__(self, config: Config) -> None:
+        configure_engine_backend(config.train.engine_backend)
         super().__init__(config)
         self.config = config
         self.set_seed(config.train.seed)

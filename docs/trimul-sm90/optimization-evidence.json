@@ -1,0 +1,30 @@
+{
+  "commit": "600c8c4c1f1549e0dae82b9ad82e66c0955f9f23",
+  "checkout": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine",
+  "source_sha256": {
+    "src/miniworld_engine/kernels/trimul_inproj/cute/parity_front.py": "252a48ae961e8f3243ee806a1423dbbbbaf68331095a2cdefc179b3001773f68",
+    "src/miniworld_engine/kernels/trimul_inproj/cute/front_single_warpgroup.py": "31eff926dc59d0d7d9469f7b56ed010e7d4db0e7a1b34470fce79d27cb682e90",
+    "src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py": "83458dc426e5f981271a8a65cb828203d27d8f49a24fb022cfdbfe8a35f6d3b8",
+    "src/miniworld_engine/kernels/trimul_inproj/cute/parity_dual_bwd.py": "b47b75eed739148173ca988a20e7ecca487b10e2d45b44a28a3307c1f2204bfc"
+  },
+  "gpu_regression_passes": 95,
+  "registry_passes": 414,
+  "memcheck_racecheck_cases": {
+    "front": 32,
+    "f567": 26,
+    "dual_bwd": 32
+  },
+  "sanitizer_errors": 0,
+  "module_ms": {
+    "triton": 1.6152799725532532,
+    "front": 1.6107680201530457,
+    "f567": 1.6126239895820618,
+    "dual_bwd": 1.6105759739875793,
+    "all": 1.602735996246338,
+    "front8": 1.611519992351532,
+    "all8": 1.6038879752159119
+  },
+  "module_max_relative_l2": 7.975841072038747e-07,
+  "native_cache_fully_built": false,
+  "production_install_changed": false
+}

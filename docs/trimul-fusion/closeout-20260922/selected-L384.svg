@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1350" role="img" aria-labelledby="title desc"><title id="title">TriMul final measured L384 candidate</title><desc id="desc">Inputs and outputs at global memory boundaries. Candidate has an unresolved input LN gradient validation issue.</desc><rect width="1600" height="1350" fill="#f5f8fc"/><g font-family="sans-serif">
+<text x="32" y="45" font-size="27" font-weight="bold">TriMul L384 · final measured candidate · 1.010 ms</text>
+<text x="32" y="80" font-size="19" fill="#9a4e12">Input LN gradient validation pending; not promoted to default. Formulas are schematic (BF16 rounding omitted).</text>
+<text x="32" y="133" font-size="21" font-weight="bold">F1 · infer_k1</text>
+<rect x="32" y="147" width="355" height="120" rx="9" fill="#e8f3fc" stroke="#bdd0dd"/>
+<rect x="414" y="147" width="752" height="120" rx="9" fill="#eaf8f0" stroke="#bdd0dd"/>
+<rect x="1193" y="147" width="375" height="120" rx="9" fill="#fff1da" stroke="#bdd0dd"/>
+<text x="46" y="174" font-size="16" font-weight="bold">GLOBAL READ</text>
+<text x="46" y="198" font-size="16">x, input LN params, front weights, mask</text>
+<text x="1207" y="174" font-size="16" font-weight="bold">GLOBAL WRITE</text>
+<text x="1207" y="198" font-size="16">BF16 ab (left/right; both directions)</text>
+<text x="430" y="174" font-size="16" font-weight="bold">ON-CHIP COMPUTATION / SCHEMATIC CODE</text>
+<text x="430" y="202" font-family="monospace" font-size="15">xn = LN_in(x)</text>
+<text x="430" y="225" font-family="monospace" font-size="15">ab = masked_front_GLU(xn)</text>
+<text x="394" y="220" font-size="24">→</text>
+<text x="1173" y="220" font-size="24">→</text>
+<text x="32" y="313" font-size="21" font-weight="bold">F2 · cuBLAS</text>
+<rect x="32" y="327" width="355" height="120" rx="9" fill="#e8f3fc" stroke="#bdd0dd"/>
+<rect x="414" y="327" width="752" height="120" rx="9" fill="#eaf8f0" stroke="#bdd0dd"/>
+<rect x="1193" y="327" width="375" height="120" rx="9" fill="#fff1da" stroke="#bdd0dd"/>
+<text x="46" y="354" font-size="16" font-weight="bold">GLOBAL READ</text>
+<text x="46" y="378" font-size="16">BF16 ab (left/right)</text>
+<text x="1207" y="354" font-size="16" font-weight="bold">GLOBAL WRITE</text>
+<text x="1207" y="378" font-size="16">BF16 tri [256,L,L]</text>
+<text x="430" y="354" font-size="16" font-weight="bold">ON-CHIP COMPUTATION / SCHEMATIC CODE</text>
+<text x="430" y="382" font-family="monospace" font-size="15">tri = bidirectional_contraction(ab)</text>
+<text x="394" y="400" font-size="24">→</text>
+<text x="1173" y="400" font-size="24">→</text>
+<text x="32" y="493" font-size="21" font-weight="bold">F3 · save_k3</text>
+<rect x="32" y="507" width="355" height="120" rx="9" fill="#e8f3fc" stroke="#bdd0dd"/>
+<rect x="414" y="507" width="752" height="120" rx="9" fill="#eaf8f0" stroke="#bdd0dd"/>
+<rect x="1193" y="507" width="375" height="120" rx="9" fill="#fff1da" stroke="#bdd0dd"/>
+<text x="46" y="534" font-size="16" font-weight="bold">GLOBAL READ</text>
+<text x="46" y="558" font-size="16">x, tri, Wp/Wg, LN params, dropscale</text>
+<text x="1207" y="534" font-size="16" font-weight="bold">GLOBAL WRITE</text>
+<text x="1207" y="558" font-size="16">y; saved affine x_n; output mean/rstd</text>
+<text x="430" y="534" font-size="16" font-weight="bold">ON-CHIP COMPUTATION / SCHEMATIC CODE</text>
+<text x="430" y="562" font-family="monospace" font-size="15">p = LN_out(tri) @ Wp.T; g = sigmoid(LN_in(x) @ Wg.T)</text>
+<text x="430" y="585" font-family="monospace" font-size="15">y = x + dropscale * p * g</text>
+<text x="394" y="580" font-size="24">→</text>
+<text x="1173" y="580" font-size="24">→</text>
+<text x="32" y="673" font-size="21" font-weight="bold">B1–B4 · b1_fused · one launch</text>
+<rect x="32" y="687" width="355" height="120" rx="9" fill="#e8f3fc" stroke="#bdd0dd"/>
+<rect x="414" y="687" width="752" height="120" rx="9" fill="#eaf8f0" stroke="#bdd0dd"/>
+<rect x="1193" y="687" width="375" height="120" rx="9" fill="#fff1da" stroke="#bdd0dd"/>
+<text x="46" y="714" font-size="16" font-weight="bold">GLOBAL READ</text>
+<text x="46" y="738" font-size="16">dy, x_n, tri, output stats, Wp/Wg,</text>
+<text x="46" y="759" font-size="16">dropscale</text>
+<text x="1207" y="714" font-size="16" font-weight="bold">GLOBAL WRITE</text>
+<text x="1207" y="738" font-size="16">dTri, dG, dWp/dWg, output LN grads</text>
+<text x="430" y="714" font-size="16" font-weight="bold">ON-CHIP COMPUTATION / SCHEMATIC CODE</text>
+<text x="430" y="742" font-family="monospace" font-size="15">recompute output LN / p / g; form dP and dG</text>
+<text x="430" y="765" font-family="monospace" font-size="15">dWproj + output LN backward; then dWgate</text>
+<text x="394" y="760" font-size="24">→</text>
+<text x="1173" y="760" font-size="24">→</text>
+<text x="32" y="853" font-size="21" font-weight="bold">B5–B6 · cuBLAS</text>
+<rect x="32" y="867" width="355" height="120" rx="9" fill="#e8f3fc" stroke="#bdd0dd"/>
+<rect x="414" y="867" width="752" height="120" rx="9" fill="#eaf8f0" stroke="#bdd0dd"/>
+<rect x="1193" y="867" width="375" height="120" rx="9" fill="#fff1da" stroke="#bdd0dd"/>
+<text x="46" y="894" font-size="16" font-weight="bold">GLOBAL READ</text>
+<text x="46" y="918" font-size="16">dTri, saved ab</text>
+<text x="1207" y="894" font-size="16" font-weight="bold">GLOBAL WRITE</text>
+<text x="1207" y="918" font-size="16">BF16 dLeft, dRight</text>
+<text x="430" y="894" font-size="16" font-weight="bold">ON-CHIP COMPUTATION / SCHEMATIC CODE</text>
+<text x="430" y="922" font-family="monospace" font-size="15">dLeft, dRight = contraction_backward(dTri, ab)</text>
+<text x="394" y="940" font-size="24">→</text>
+<text x="1173" y="940" font-size="24">→</text>
+<text x="32" y="1033" font-size="21" font-weight="bold">B7–B12 · b7_joint · one launch</text>
+<rect x="32" y="1047" width="355" height="120" rx="9" fill="#e8f3fc" stroke="#bdd0dd"/>
+<rect x="414" y="1047" width="752" height="120" rx="9" fill="#eaf8f0" stroke="#bdd0dd"/>
+<rect x="1193" y="1047" width="375" height="120" rx="9" fill="#fff1da" stroke="#bdd0dd"/>
+<text x="46" y="1074" font-size="16" font-weight="bold">GLOBAL READ</text>
+<text x="46" y="1098" font-size="16">dLeft/dRight, dG, x_n, x, dy, weights,</text>
+<text x="46" y="1119" font-size="16">mask</text>
+<text x="1207" y="1074" font-size="16" font-weight="bold">GLOBAL WRITE</text>
+<text x="1207" y="1098" font-size="16">dX; four front dW; input LN grads</text>
+<text x="430" y="1074" font-size="16" font-weight="bold">ON-CHIP COMPUTATION / SCHEMATIC CODE</text>
+<text x="430" y="1102" font-family="monospace" font-size="15">recompute front p/g; share derivatives for dX/dW</text>
+<text x="430" y="1125" font-family="monospace" font-size="15">input LN backward + residual dy + output gate branch</text>
+<text x="394" y="1120" font-size="24">→</text>
+<text x="1173" y="1120" font-size="24">→</text>
+<rect x="32" y="1200" width="1536" height="110" rx="9" fill="#f5e9f4"/>
+<text x="48" y="1228" font-size="18" font-weight="bold">GLOBAL SCRATCH (not eliminated by a single CUDA launch)</text>
+<text x="48" y="1256" font-size="17">B1: FP32 dW/LN partial writes and final reads. B7: ring/xring + flags + dW/LN partial writes/reads.</text>
+<text x="48" y="1284" font-size="17">Live weight packing and Wp transpose are included in measured time. No output-normalized activation or p/g saves.</text>
+</g></svg>

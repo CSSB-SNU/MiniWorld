@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="1100" viewBox="0 0 1360 1100"><style>text{font-family:system-ui,Arial,sans-serif;fill:#173044}.title{font-size:27px;font-weight:700}.h{font-size:20px;font-weight:650}.t{font-size:17px}.code{font:16px monospace;fill:#075c42}</style><rect width="1360" height="1100" fill="#f3f7fa"/>
+<text x="35" y="45" class="title">L384 · B7–B12 단일 CUDA — 최신 실험 후보</text>
+<text x="35" y="77" class="t">454 µs / 분리 388 µs / 목표 ≤252 µs · 목표 미달 · 기존 기본 경로와 구분</text>
+<rect x="30" y="105" width="1300" height="105" rx="12" fill="#e4edf6" stroke="#9aafbc"/>
+<text x="50" y="136" class="h">Global 입력 → TMA / scalar loads</text>
+<text x="50" y="167" class="t">x_n, dLeft, dRight, mask, packed W → 공통 도함수 생성</text>
+<text x="50" y="194" class="t">원본 x, dGate, residual gradient, gate weight, LN γ → dX·LayerNorm·residual</text>
+<rect x="30" y="235" width="1300" height="645" rx="12" fill="#fff" stroke="#9aafbc"/>
+<text x="50" y="266" class="h">하나의 cooperative CUDA launch · 260 CTA · 각 256 threads / shared 112 KiB</text>
+<rect x="50" y="292" width="605" height="210" rx="12" fill="#e0f4e9" stroke="#9aafbc"/>
+<text x="70" y="323" class="h">Source CTA ×160 — 두 row tile을 겹쳐 처리</text>
+<text x="70" y="355" class="t">입력: x_n, dLeft/right, mask, W</text>
+<text x="70" y="386" class="t">p, g 재계산 → dP·dG를 shared에 한 번 생성</text>
+<text x="70" y="417" class="code">dp32 = da * g</text>
+<text x="70" y="444" class="code">dg32 = dp32 * p * (1 - g)</text>
+<text x="70" y="481" class="t">다른 타일 GP와 GLU를 overlap; dW가 같은 값 재사용</text>
+<rect x="680" y="292" width="630" height="210" rx="12" fill="#e0f4e9" stroke="#9aafbc"/>
+<text x="700" y="323" class="h">Local dW 계산 → FP32 partials</text>
+<text x="700" y="357" class="t">입력: 공유 dP·dG, x_n</text>
+<text x="700" y="390" class="code">dWp += dP.T @ x_n</text>
+<text x="700" y="417" class="code">dWg += dG.T @ x_n</text>
+<text x="700" y="456" class="t">최선 후보: GP/GLU와 dW는 같은 계산 warp-group</text>
+<text x="700" y="483" class="t">독립 GP/dW warp-group 후보도 구현: 523 µs</text>
+<rect x="50" y="526" width="1260" height="95" rx="12" fill="#fff1d7" stroke="#9aafbc"/>
+<text x="70" y="557" class="h">도함수 전달: global ring 10 MiB — L2 상주를 의도하지만 HBM 회피를 보장하지 않음</text>
+<text x="70" y="590" class="t">공통 dP·dG → source가 게시 → 8개 ready flag 병렬 확인 → 64 KiB TMA로 dX consumer가 읽음</text>
+<rect x="50" y="647" width="1260" height="208" rx="12" fill="#e0f4e9" stroke="#9aafbc"/>
+<text x="70" y="678" class="h">dX consumer CTA ×100 — 별도로 진행</text>
+<text x="70" y="710" class="t">입력: ring의 dP·dG, Wp/Wg, dGate, 원본 x, γ, residual gradient</text>
+<text x="70" y="744" class="code">dxn += dP @ Wp + dG @ Wg</text>
+<text x="70" y="774" class="code">dxn += dGate @ Wgate;  dx, dγ, dβ = layernorm_backward(x, dxn)</text>
+<text x="70" y="811" class="code">dx += residual_gradient;  shared → TMA store → global dx</text>
+<text x="70" y="838" class="t">가중치 16 KiB당 TMA 1회; LN parameter partials는 FP32로 저장</text>
+<rect x="30" y="904" width="1300" height="160" rx="12" fill="#e4edf6" stroke="#9aafbc"/>
+<text x="50" y="936" class="h">같은 launch의 최종 reduction → dWp, dWg, dγ, dβ</text>
+<text x="50" y="970" class="t">NCU: HBM read 312.3 MB + write 56.0 MB · Tensor Core activity 27.2% (SoL 수치 아님)</text>
+<text x="50" y="1003" class="t">입력 변형 5개 / eager·graph 일치 / scratch poisoning / counters·flags 초기화 / memcheck·racecheck 통과</text>
+<text x="50" y="1036" class="t">L768·전체 학습 미측정 · production 미반영 · 기준 대비 35% 단축 및 SoL90 미달</text>
+</svg>

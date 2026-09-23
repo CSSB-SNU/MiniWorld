@@ -1,0 +1,11 @@
+{
+  "current_starting_line": 47,
+  "old_starting_line": 69,
+  "current_jit": "1dbce60f1102fbc895c3ec214f5e16b832f5bfb3f45b0fbc1af818995e0f73a7",
+  "saved_jit": "b54b71792d46197eb30d2b0ae2b65d7d5851c2632c2fe678c41865b67024c251",
+  "synthesized_old_line_jit": "b54b71792d46197eb30d2b0ae2b65d7d5851c2632c2fe678c41865b67024c251",
+  "op_identity": "46b51ccf88c7",
+  "saved_op_identity": "46b51ccf88c7",
+  "same_kernel_body": true,
+  "source_sha256": "4e636e3b8259ce7a63079cbe812706611de1558057598f6104d3d70abf65729d"
+}

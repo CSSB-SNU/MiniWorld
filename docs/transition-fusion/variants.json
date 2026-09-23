@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-18",
+  "scope": "Transition development variants, forward and backward together; not a production dispatch table",
+  "widths": [
+    128,
+    256,
+    384,
+    512
+  ],
+  "lengths": [
+    384,
+    768
+  ],
+  "expansion": 4,
+  "activation_dtype": "bfloat16",
+  "affine_dtype": "float32",
+  "primary_ln_mode": "separate",
+  "residual": {
+    "forward": "squeeze_epilogue",
+    "backward": "layernorm_dx_epilogue"
+  },
+  "training_contract": "saved_xn_stacked_backward",
+  "variants": {
+    "streamed_k": {
+      "condition": "BK < D",
+      "input_reuse": "K tiles loaded inside each hidden tile",
+      "triton_core": "kernels/transition/triton/segmented_b2b.py:_segmented",
+      "triton_entry": "kernels/transition/triton/wide_b2b.py:transition_wide_b2b",
+      "config_requirement": "explicit BM/BN/BK/BO/num_warps/num_stages; BO selects segmented core",
+      "cuda_status": "implemented_experimental; 18 GPU checks and 10 unfiltered memcheck checks passed; bounded tuning completed",
+      "large_d_evidence": "runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-variants-20260918/RESULTS.md",
+      "cuda_entry": "kernels/transition/cuda/variants.py:transition",
+      "cuda_kernel": "kernels/transition/cuda/transition_variants_kernel.cu:variant_kernel",
+      "cuda_config_axes": [
+        "bk",
+        "bn",
+        "bo",
+        "mgroups",
+        "ngroups",
+        "stages",
+        "min_blocks"
+      ],
+      "cuda_module": "Transition(implementation=\"cuda\", cuda_variant=..., cuda_forward_config=..., cuda_backward_config=..., cuda_norm_config=...)"
+    },
+    "full_k": {
+      "condition": "whole K: Triton BK=next_power_of_2(D); CUDA BK=D or next_power_of_2(D)",
+      "input_reuse": "load full logical K before hidden loop and reuse",
+      "triton_core": "kernels/transition/triton/segmented_b2b.py:_segmented",
+      "triton_entry": "kernels/transition/triton/wide_b2b.py:transition_wide_b2b",
+      "config_requirement": "explicit BM/BN/BK/BO/num_warps/num_stages; D384 uses BK512",
+      "cuda_status": "implemented_experimental; 18 GPU checks and 10 unfiltered memcheck checks passed; bounded tuning completed",
+      "large_d_evidence": "runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-variants-20260918/RESULTS.md",
+      "cuda_entry": "kernels/transition/cuda/variants.py:transition",
+      "cuda_kernel": "kernels/transition/cuda/transition_variants_kernel.cu:variant_kernel",
+      "cuda_config_axes": [
+        "bk",
+        "bn",
+        "bo",
+        "mgroups",
+        "ngroups",
+        "stages",
+        "min_blocks"
+      ],
+      "cuda_module": "Transition(implementation=\"cuda\", cuda_variant=..., cuda_forward_config=..., cuda_backward_config=..., cuda_norm_config=...)"
+    }
+  },
+  "shared_backward": {
+    "triton_entry": "kernels/transition/triton/main.py:swiglu_squeeze_backward",
+    "gate": "kernels/transition/triton/fused.py:_transition_expand_gatebwd_savedxn_stacked",
+    "ln_residual": "kernels/trimul_inproj/triton/backward_fused.py:input_ln_residual_bwd",
+    "cublas_calls": [
+      "dh=dy@Ws",
+      "dWs=dy.T@h",
+      "dWab=dAB.T@xn",
+      "dxn=dAB@[Wa;Wb]"
+    ],
+    "remaining_weight_preparation": "torch.cat((Wa, Wb), dim=0)",
+    "cuda_gate_status": "implemented: saved-xn TMA/WGMMA gate; TMA dh; coalesced stacked stores",
+    "cuda_ln_status": "implemented: native FP32-affine LN backward plus residual dx and parameter reduction",
+    "cuda_entry": "kernels/transition/cuda/variants.py:_Transition.backward + _Norm.backward"
+  },
+  "baseline": "existing Triton split with the same saved-xn backward",
+  "legacy_cuda": {
+    "b2b_forward": "existing D128/256 fused-LN implementation, reuse candidate, not either new complete variant",
+    "gate_backward": "existing recompute-LN implementation, reuse candidate, not the new saved-xn implementation"
+  },
+  "required_result_fields": [
+    "backend",
+    "variant",
+    "direction",
+    "source_sha256",
+    "D",
+    "L",
+    "dtypes",
+    "ln_mode",
+    "saved_tensors",
+    "config",
+    "correctness",
+    "inference_fwd_ms",
+    "training_fwd_ms",
+    "bwd_ms",
+    "training_total_ms",
+    "peak_memory_bytes",
+    "cublas_ms",
+    "ncu_report"
+  ],
+  "cuda_tuning_status": "bounded seed sweep plus large-D MG2/S1 follow-up; L384-selected configurations reused at L768; not exhaustive; not automatic dispatch",
+  "cuda_result_record": "runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-variants-20260918/README.md",
+  "cuda_validation": {
+    "gpu_passed": 18,
+    "memcheck_passed": 10,
+    "memcheck_errors": 0,
+    "integration_passed": 47,
+    "integration_skipped": 1
+  }
+}

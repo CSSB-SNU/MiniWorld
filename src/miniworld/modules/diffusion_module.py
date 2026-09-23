@@ -4,16 +4,17 @@ from pathlib import Path
 import numpy as np
 import torch
 from jaxtyping import Bool, Float, Int
-from pydantic import BaseModel
-from team_gm import typecheck
-from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
-from team_gm.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Transformer
-from team_gm.modules.blocks._engine_impl import to_engine_impl
 from miniworld_engine.modules import LayerNorm, Transition
 from miniworld_engine.modules.swa_atom_attention.module import (
     build_attention_params,
     build_local_structure_neighbor_indices,
 )
+from pydantic import BaseModel
+from team_gm import typecheck
+from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
+from team_gm.modules.blocks._engine_impl import to_engine_impl
+from team_gm.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Transformer
+from team_gm.modules.layers import RelativePositionEmbedding, fourier_embedding
 from team_gm.modules.primitives import (
     Linear,
 )
@@ -26,7 +27,7 @@ from miniworld.data.features import (
     SchemeFeatures,
     StructureFeatures,
 )
-from team_gm.modules.layers import RelativePositionEmbedding, fourier_embedding
+from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
 
 
 def _make_atom_transformer(
@@ -263,8 +264,9 @@ class AtomAttentionEncoder(nn.Module):
         Float[torch.Tensor, "A B L_atom d_single_atom_cond"],
         Float[torch.Tensor, "B L_atom L_atom d_pair_atom_cond"],
     ]:
-        atom_single_cond = self.to_atom_single_cond(atom_single_init)
-        atom_pair = self.to_atom_pair(atom_pair_init)
+        atom_single_cond = self.to_atom_single_cond(
+            atom_single_init.to(self.to_atom_single_cond.weight.dtype))
+        atom_pair = self.to_atom_pair(atom_pair_init.to(self.to_atom_pair.weight.dtype))
         # Snapshot stage 1 — pure geometric init projection (no token / single
         # / MLP contribution yet). Captured before any "+= ..." so it's the
         # baseline against which subsequent stages compose.
@@ -299,7 +301,7 @@ class AtomAttentionEncoder(nn.Module):
         # augmentation
         atom_single_rep = atom_single_cond.unsqueeze(0)
         to_add = self.noisy_to_atom_single_rep(
-            x_t.to(torch.float32),
+            x_t.to(self.noisy_to_atom_single_rep.weight.dtype),
         )
         to_add = to_add * x_mask.unsqueeze(-1)
         atom_single_rep = atom_single_rep + to_add
@@ -346,8 +348,9 @@ class AtomAttentionEncoder(nn.Module):
         Float[torch.Tensor, "A B L_atom d_single_atom_cond"],
         Float[torch.Tensor, "B L_atom L_atom d_pair_atom_cond"],
     ]:
-        atom_single_cond = self.to_atom_single_cond(atom_single_init)
-        atom_pair = self.to_atom_pair(atom_pair_init)
+        atom_single_cond = self.to_atom_single_cond(
+            atom_single_init.to(self.to_atom_single_cond.weight.dtype))
+        atom_pair = self.to_atom_pair(atom_pair_init.to(self.to_atom_pair.weight.dtype))
         dump = _should_dump("diffusion_chunked")
         L_token = token_pair_cond.shape[1]
         # Snapshot pooled stages eagerly — atom_pair is mutated in-place
@@ -415,7 +418,7 @@ class AtomAttentionEncoder(nn.Module):
                 pair_slice.add_(_right.unsqueeze(1))
 
         atom_single_rep = atom_single_cond.unsqueeze(0)
-        to_add = self.noisy_to_atom_single_rep(x_t.to(torch.float32))
+        to_add = self.noisy_to_atom_single_rep(x_t.to(self.noisy_to_atom_single_rep.weight.dtype))
         to_add = to_add * x_mask.unsqueeze(-1)
         atom_single_rep = atom_single_rep + to_add
         atom_single_cond = atom_single_cond.unsqueeze(0).expand(num_aug, -1, -1, -1)
@@ -768,7 +771,8 @@ class SWAAtomAttentionEncoder(nn.Module):
         atom_to_token = scheme.atom_to_token_idx_map
 
         atom_single_init = init_atom_single_features(reference)
-        atom_single_cond = self.to_atom_single_cond(atom_single_init)  # [B, L, d]
+        atom_single_cond = self.to_atom_single_cond(
+            atom_single_init.to(self.to_atom_single_cond.weight.dtype))  # [B, L, d]
 
         to_add_single = self.token_single_to_atom_single_cond(token_single_cond)
         batch_1d_idx = torch.arange(batch_size, device=device).view(batch_size, 1)
@@ -778,7 +782,7 @@ class SWAAtomAttentionEncoder(nn.Module):
         )  # [B, L, d]
 
         atom_single_rep = atom_single_cond.unsqueeze(0)
-        to_add = self.noisy_to_atom_single_rep(x_t.to(torch.float32))
+        to_add = self.noisy_to_atom_single_rep(x_t.to(self.noisy_to_atom_single_rep.weight.dtype))
         atom_single_rep = atom_single_rep + to_add * x_mask.unsqueeze(-1)  # [A, B, L, d]
         atom_single_cond = atom_single_cond.unsqueeze(0).expand(num_aug, -1, -1, -1)
 
@@ -976,7 +980,7 @@ class DiffusionConditioning(nn.Module):
             entity_id=scheme.token_entity_id,
             sym_id=scheme.token_sym_id,
         )
-        token_pair = torch.cat([token_pair_trunk, rel_emb], dim=-1)
+        token_pair = torch.cat([token_pair_trunk, rel_emb.to(token_pair_trunk.dtype)], dim=-1)
         token_pair = self.linear_token_pair(token_pair)
 
         for transition in self.pair_transitions:
@@ -985,7 +989,7 @@ class DiffusionConditioning(nn.Module):
         token_single = torch.cat([token_single_input, token_single_trunk], dim=-1)
 
         token_single = self.linear_token_single(token_single)
-        time_embedding = fourier_embedding(t_emb)
+        time_embedding = fourier_embedding(t_emb).to(token_single.dtype)  # fp32 table -> module dtype
         time_embedding = time_embedding.squeeze(-2)
         token_single = token_single + self.add_time_embedding(time_embedding)
 
@@ -1007,8 +1011,10 @@ class DiffusionModule(nn.Module):
         token_dit_config: DiffusionTransformer.Config,
         dit_cond_config: DiffusionConditioning.Config,
         swa_atom_config: SWAAtomTransformer.Config | None = None,
+        token_dit_kind: str = "augmented",
     ) -> None:
         super().__init__()
+        self.token_dit_kind = token_dit_kind
         self.diffusion_conditioning = DiffusionConditioning(
             shared_config=shared_config,
             dit_cond_config=dit_cond_config,
@@ -1047,7 +1053,21 @@ class DiffusionModule(nn.Module):
                 init="zero",
             ),
         )
-        self.diffusion_transformer = DiffusionTransformer(config=token_dit_config)
+        if token_dit_kind == "augmented":
+            self.diffusion_transformer = DiffusionTransformer(config=token_dit_config)
+        elif token_dit_kind == "bias_only":
+            # v2.0.0: one shared softmax(pair bias) for all blocks and augments, value-only
+            # attention (see modules/bias_only_token_dit.py). Same call signature.
+            self.diffusion_transformer = BiasOnlyTokenDiT(BiasOnlyTokenDiT.Config(
+                d_single=token_dit_config.d_single, d_cond=token_dit_config.d_cond,
+                d_pair=token_dit_config.d_pair, n_head=token_dit_config.n_head,
+                n_block=token_dit_config.n_block,
+                n_checkpoint_segments=token_dit_config.n_checkpoint_segments,
+                implementation=token_dit_config.implementation,
+            ))
+        else:
+            msg = f"unknown token_dit_kind {token_dit_kind!r} (augmented | bias_only)"
+            raise ValueError(msg)
         self.ln_token_single_rep = LayerNorm(
             shared_config.d_single_token,
             implementation=to_engine_impl(shared_config.implementation),

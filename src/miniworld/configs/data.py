@@ -73,6 +73,9 @@ class CropConfig(BaseModel):
     bucket_atom_size: int = 1024
 
     chain_crop_prob: float = 0.5
+    # v1.1 pair-focus policy. Off by default for older experiment configs.
+    ab_ag_interface_only: bool = False
+    prefer_nonprotein_focus: bool = False
 
 
 class MSAConfig(BaseModel):
@@ -83,10 +86,43 @@ class MSAConfig(BaseModel):
     pairing_mode: Literal["mixed", "paired_only", "no_pairing"] = "mixed"
 
     # Per-item MSA depth policy applied inside sample_msa():
-    #   "uniform" (AF3-style, default): k ~ Uniform[1, min(n_available, max_msa_depth)]
-    #                                   sample k rows so the model sees a range of depths.
-    #   "fixed"                       : always request max_msa_depth rows (legacy behavior).
-    sample_depth: Literal["uniform", "fixed"] = "uniform"
+    #   "uniform" (default): k ~ Uniform[1, min(n_available, max_msa_depth)], then the FIRST
+    #                        k rows (best-first prefix). Rows past max_msa_depth are never seen.
+    #   "fixed"            : always request max_msa_depth rows (legacy behavior).
+    #   "af3"    (v1.2.0)  : k ~ Uniform[1, n_available] over the FULL stored depth (AF3 SI
+    #                        2.2), then min(k, max_msa_depth) rows drawn at random per chain
+    #                        (AF3 shuffles before it crops). max_msa_depth stays the row budget
+    #                        the trunk is fed, so shapes/buckets are unchanged; what changes is
+    #                        that deep alignments saturate the budget more often and every
+    #                        stored row can be seen.
+    sample_depth: Literal["uniform", "fixed", "af3"] = "uniform"
+    # v1.2.0: override the policy per DataRecord.source. Unlisted sources use
+    # ``sample_depth``. The v1.2 configs set {"pdb": "af3"}: the PDB a3m store holds up to
+    # 16k rows (88% of entries exceed 2048), while the distillation stores are capped at
+    # 2048 rows anyway, so they keep "uniform".
+    sample_depth_by_source: dict[str, Literal["uniform", "fixed", "af3"]] = Field(
+        default_factory=dict,
+    )
+
+    # v1.2.0: per-source POOL size handed to the trunk (rows the model may draw its
+    # per-recycle subset from). Unlisted sources use ``max_msa_depth``. The v1.2 configs
+    # set {"pdb": 8192}: the PDB store holds up to 16k rows and our no_pairing stack is
+    # the unpaired MSA, whose AF3 budget is 16384 - 8191 paired ~ 8192; the distillation
+    # stores hold at most 2048 rows, so a larger pool would only be padding.
+    # ``train.bucket_msa_multiple`` must cover the largest pool.
+    max_msa_depth_by_source: dict[str, int] = Field(default_factory=dict)
+
+    def depth_for(self, source: str | None) -> int:
+        """Pool size for a record of ``source`` (falls back to ``max_msa_depth``)."""
+        if source is None:
+            return self.max_msa_depth
+        return self.max_msa_depth_by_source.get(source, self.max_msa_depth)
+
+    def policy_for(self, source: str | None) -> Literal["uniform", "fixed", "af3"]:
+        """Depth policy for a record of ``source`` (falls back to ``sample_depth``)."""
+        if source is None:
+            return self.sample_depth
+        return self.sample_depth_by_source.get(source, self.sample_depth)
 
 
 class TemplateConfig(BaseModel):

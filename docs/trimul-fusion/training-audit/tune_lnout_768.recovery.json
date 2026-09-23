@@ -1,0 +1,122 @@
+{
+  "complete": false,
+  "published": true,
+  "reason": "Full search exceeded 1800 second limit",
+  "measured": 384,
+  "grid_count": 400,
+  "errors": [
+    1.187883572129067e-05,
+    2.3076920570019865e-06,
+    1.1651389968392323e-06
+  ],
+  "winner": {
+    "kwargs": {
+      "BLOCK_K": 128,
+      "BLOCK_M1": 32
+    },
+    "num_warps": 2,
+    "num_stages": 5
+  },
+  "winner_kernel_ms": 0.5305578549702963,
+  "metadata": {
+    "op": "layernorm_bwd_split_triton",
+    "dtype": "bfloat16+float32",
+    "bucket": "shape_key=9895605699354",
+    "measurement": {
+      "scheme": 1,
+      "arguments": {
+        "DX": {
+          "shape": [
+            589824,
+            256
+          ],
+          "stride": [
+            1,
+            589824
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        "PART_DW": {
+          "shape": [
+            264,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ],
+          "dtype": "torch.float32"
+        },
+        "PART_DB": {
+          "shape": [
+            264,
+            256
+          ],
+          "stride": [
+            256,
+            1
+          ],
+          "dtype": "torch.float32"
+        },
+        "DY": {
+          "shape": [
+            589824,
+            256
+          ],
+          "stride": [
+            1,
+            589824
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        "X": {
+          "shape": [
+            589824,
+            256
+          ],
+          "stride": [
+            1,
+            589824
+          ],
+          "dtype": "torch.bfloat16"
+        },
+        "W": {
+          "shape": [
+            256
+          ],
+          "stride": [
+            1
+          ],
+          "dtype": "torch.float32"
+        },
+        "Mean": {
+          "shape": [
+            589824
+          ],
+          "stride": [
+            1
+          ],
+          "dtype": "torch.float32"
+        },
+        "Rstd": {
+          "shape": [
+            589824
+          ],
+          "stride": [
+            1
+          ],
+          "dtype": "torch.float32"
+        },
+        "stride_part": 256,
+        "stride_r": 1,
+        "stride_c": 589824,
+        "M": 589824,
+        "N": 256,
+        "shape_key": 9895605699354
+      },
+      "implementation": "36dd77cca6e0681de4fba6221ebfe9dbb0cb2488e0e1c5106bcc488babbe8aa4"
+    }
+  },
+  "kernel_sha256": "c1a74dfe44d1b17d97c78aa8475b21fe1391d9fb96891b7c87243160b440bd05",
+  "cache": "/home/psk6950/MiniWorld/runs/trimul_training_audit_20260916/package/miniworld_engine/autotune/data/layernorm_bwd_split_triton/NVIDIA H100 80GB HBM3 (sm90).json"
+}

@@ -1,0 +1,20 @@
+==WARNING== Note: Running with uncontrolled GPU caches. Profiling results may be inconsistent.
+==PROF== Connected to process 3553095 (/home/psk6950/MiniWorld/.pixi/envs/cu128/bin/python3.10)
+==PROF== Disconnected from process 3553095
+"ID","Process ID","Process Name","Host Name","Kernel Name","Context","Stream","Block Size","Grid Size","Device","CC","Section Name","Metric Name","Metric Unit","Metric Value"
+"0","3553095","python3.10","127.0.0.1","_ln_mat_kernel","1","7","(128, 1, 1)","(9216, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_read.sum","byte","302029568"
+"0","3553095","python3.10","127.0.0.1","_ln_mat_kernel","1","7","(128, 1, 1)","(9216, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_write.sum","byte","301743616"
+"1","3553095","python3.10","127.0.0.1","nvjet_tst_128x256_64x4_1x2_h_bz_coopA_TNN","1","7","(384, 1, 1)","(2, 66, 1)","0","9.0","Command line profiler metrics","dram__bytes_read.sum","byte","302094080"
+"1","3553095","python3.10","127.0.0.1","nvjet_tst_128x256_64x4_1x2_h_bz_coopA_TNN","1","7","(384, 1, 1)","(2, 66, 1)","0","9.0","Command line profiler metrics","dram__bytes_write.sum","byte","152225024"
+"2","3553095","python3.10","127.0.0.1","nvjet_tst_128x256_64x4_1x2_h_bz_coopA_NNN","1","7","(384, 1, 1)","(2, 66, 1)","0","9.0","Command line profiler metrics","dram__bytes_read.sum","byte","151057152"
+"2","3553095","python3.10","127.0.0.1","nvjet_tst_128x256_64x4_1x2_h_bz_coopA_NNN","1","7","(384, 1, 1)","(2, 66, 1)","0","9.0","Command line profiler metrics","dram__bytes_write.sum","byte","147083776"
+"3","3553095","python3.10","127.0.0.1","_gate_mul_train_kernel","1","7","(1024, 1, 1)","(18432, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_read.sum","byte","453247488"
+"3","3553095","python3.10","127.0.0.1","_gate_mul_train_kernel","1","7","(1024, 1, 1)","(18432, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_write.sum","byte","305859072"
+"4","3553095","python3.10","127.0.0.1","_ln_mat_kernel","1","7","(128, 1, 1)","(9216, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_read.sum","byte","302015744"
+"4","3553095","python3.10","127.0.0.1","_ln_mat_kernel","1","7","(128, 1, 1)","(9216, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_write.sum","byte","302590720"
+"5","3553095","python3.10","127.0.0.1","_f567","1","7","(256, 1, 1)","(9216, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_read.sum","byte","604405760"
+"5","3553095","python3.10","127.0.0.1","_f567","1","7","(256, 1, 1)","(9216, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_write.sum","byte","456753664"
+"6","3553095","python3.10","127.0.0.1","_f45","1","7","(128, 1, 1)","(9216, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_read.sum","byte","302110720"
+"6","3553095","python3.10","127.0.0.1","_f45","1","7","(128, 1, 1)","(9216, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_write.sum","byte","451660032"
+"7","3553095","python3.10","127.0.0.1","_f567","1","7","(128, 1, 1)","(36864, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_read.sum","byte","453251840"
+"7","3553095","python3.10","127.0.0.1","_f567","1","7","(128, 1, 1)","(36864, 1, 1)","0","9.0","Command line profiler metrics","dram__bytes_write.sum","byte","308396800"

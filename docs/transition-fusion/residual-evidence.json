@@ -1,0 +1,1618 @@
+{
+  "benchmark": [
+    {
+      "length": 128,
+      "regime": "inference",
+      "ms": {
+        "separate": 0.03868800029158592,
+        "fused": 0.036031998693943024
+      },
+      "speedup": 1.0737123027840632,
+      "samples": {
+        "separate": [
+          0.03868800029158592,
+          0.03868800029158592,
+          0.038656000047922134,
+          0.03868800029158592,
+          0.03868800029158592,
+          0.03868800029158592,
+          0.03868800029158592,
+          0.038656000047922134,
+          0.038656000047922134,
+          0.03868800029158592,
+          0.03868800029158592,
+          0.03872000053524971
+        ],
+        "fused": [
+          0.035999998450279236,
+          0.035999998450279236,
+          0.036031998693943024,
+          0.036031998693943024,
+          0.036031998693943024,
+          0.03596799820661545,
+          0.035999998450279236,
+          0.036031998693943024,
+          0.03606399893760681,
+          0.036031998693943024,
+          0.035999998450279236,
+          0.036031998693943024
+        ]
+      },
+      "harness": {
+        "separate": {
+          "value": 0.03753599897027016,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0,
+          "grad_max_abs": null,
+          "grad_rel_frob": null,
+          "grad_cosine": null,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward",
+          "input_shapes": "{\"x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 128, 128, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 1, \"graph_replay\": {\"output\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        },
+        "fused": {
+          "value": 0.03513599932193756,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0,
+          "grad_max_abs": null,
+          "grad_rel_frob": null,
+          "grad_cosine": null,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward",
+          "input_shapes": "{\"x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 128, 128, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 1, \"graph_replay\": {\"output\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        }
+      },
+      "config": {
+        "d_single": 384,
+        "d_pair": 128,
+        "d_single_token": 768,
+        "d_single_atom": 128,
+        "d_pair_atom": 16,
+        "n_layers": 1,
+        "trimul_direction": "outgoing",
+        "n_augment": 5,
+        "mask_prob": 0.2,
+        "min_seq_len": 128,
+        "max_seq_len": 128,
+        "seq_len_step": 64,
+        "min_d_pair": 64,
+        "max_d_pair": 256,
+        "d_pair_step": 64,
+        "d_pair_values": null,
+        "sweep_axis": "seq_len",
+        "sweep_seq_len": 512,
+        "autotune_shard": "",
+        "config_dir": "",
+        "pin_gate_backend": "",
+        "dropout": 0.0,
+        "compile_jobs": 0,
+        "pin_infer_concat": null,
+        "pin_transition_cuda_b2b": null,
+        "target": "transition",
+        "level": "module",
+        "implementations": [
+          "pytorch",
+          "triton"
+        ],
+        "mode": "inference",
+        "metric": "time",
+        "compile": true,
+        "cudagraph": "manual",
+        "allow_tf32": true,
+        "precision": "bf16-mixed",
+        "layernorm_weight_precision": null,
+        "allow_eager": false,
+        "name_suffix": "",
+        "swa_component": "block",
+        "swa_kernels": null,
+        "swa_active_gates": false
+      },
+      "cache_misses": [
+        {
+          "arm": "separate",
+          "op": "layernorm_fwd_saveact_triton",
+          "reason": "('bfloat16+float32', 'tuned autotune cache is STALE (kernel source or autotune key list changed)')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_expand_swiglu_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "fused",
+          "op": "transition_squeeze_residual_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        }
+      ],
+      "device": "NVIDIA H100 80GB HBM3"
+    },
+    {
+      "length": 128,
+      "regime": "training_graph",
+      "ms": {
+        "separate": 0.15720000118017197,
+        "fused": 0.14588800072669983
+      },
+      "speedup": 1.077538936698869,
+      "samples": {
+        "separate": [
+          0.1570879966020584,
+          0.15718400478363037,
+          0.15727999806404114,
+          0.15727999806404114,
+          0.157151997089386,
+          0.1571200042963028,
+          0.15727999806404114,
+          0.15721599757671356,
+          0.1571200042963028,
+          0.15727999806404114,
+          0.157151997089386,
+          0.15724800527095795
+        ],
+        "fused": [
+          0.14582400023937225,
+          0.14585599303245544,
+          0.14585599303245544,
+          0.1459839940071106,
+          0.14585599303245544,
+          0.14591999351978302,
+          0.14591999351978302,
+          0.14580800384283066,
+          0.14588800072669983,
+          0.14588800072669983,
+          0.14588800072669983,
+          0.14591999351978302
+        ]
+      },
+      "harness": {
+        "separate": {
+          "value": 0.15328000485897064,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 1.0,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 128, 128, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 128, 128, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7, \"graph_replay\": {\"output[gradients][0]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][1]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][2]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][3]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][4]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][5]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[result]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        },
+        "fused": {
+          "value": 0.1425279974937439,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 1.0,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 128, 128, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 128, 128, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7, \"graph_replay\": {\"output[gradients][0]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][1]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][2]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][3]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][4]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][5]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[result]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        }
+      },
+      "config": {
+        "d_single": 384,
+        "d_pair": 128,
+        "d_single_token": 768,
+        "d_single_atom": 128,
+        "d_pair_atom": 16,
+        "n_layers": 1,
+        "trimul_direction": "outgoing",
+        "n_augment": 48,
+        "mask_prob": 0.2,
+        "min_seq_len": 128,
+        "max_seq_len": 128,
+        "seq_len_step": 64,
+        "min_d_pair": 64,
+        "max_d_pair": 256,
+        "d_pair_step": 64,
+        "d_pair_values": null,
+        "sweep_axis": "seq_len",
+        "sweep_seq_len": 512,
+        "autotune_shard": "",
+        "config_dir": "",
+        "pin_gate_backend": "",
+        "dropout": 0.0,
+        "compile_jobs": 0,
+        "pin_infer_concat": null,
+        "pin_transition_cuda_b2b": null,
+        "target": "transition",
+        "level": "module",
+        "implementations": [
+          "pytorch",
+          "triton"
+        ],
+        "mode": "training",
+        "metric": "time",
+        "compile": true,
+        "cudagraph": "manual",
+        "allow_tf32": true,
+        "precision": "bf16-mixed",
+        "layernorm_weight_precision": null,
+        "allow_eager": false,
+        "name_suffix": "",
+        "swa_component": "block",
+        "swa_kernels": null,
+        "swa_active_gates": false
+      },
+      "cache_misses": [
+        {
+          "arm": "separate",
+          "op": "layernorm_fwd_saveact_triton",
+          "reason": "('bfloat16+float32', 'tuned autotune cache is STALE (kernel source or autotune key list changed)')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_expand_swiglu_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_bwd_swiglu_recompute_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "layernorm_bwd_atomic_triton",
+          "reason": "('bfloat16+float32|HAS_ROWSCALE=0,shape_key=274878432026', 'no tuned autotune cache entry for this shape')"
+        },
+        {
+          "arm": "fused",
+          "op": "transition_squeeze_residual_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        }
+      ],
+      "device": "NVIDIA H100 80GB HBM3"
+    },
+    {
+      "length": 128,
+      "regime": "training",
+      "ms": {
+        "separate": 0.7942720055580139,
+        "fused": 0.754271999001503
+      },
+      "speedup": 1.0530312759978662,
+      "samples": {
+        "separate": [
+          0.8084800243377686,
+          0.7939839959144592,
+          0.8057439923286438,
+          0.7897599935531616,
+          0.7970240116119385,
+          0.7896639704704285,
+          0.79612797498703,
+          0.7945600152015686,
+          0.8048959970474243,
+          0.7909919917583466,
+          0.7939519882202148,
+          0.7844479978084564
+        ],
+        "fused": [
+          0.7693440020084381,
+          0.7720800042152405,
+          0.7520319819450378,
+          0.7347519993782043,
+          0.7525759935379028,
+          0.7493119835853577,
+          0.7656159996986389,
+          0.7599680125713348,
+          0.7430239915847778,
+          0.7460959851741791,
+          0.7559680044651031,
+          0.7609919905662537
+        ]
+      },
+      "harness": {
+        "separate": {
+          "value": 0.8138400018215179,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 1.0,
+          "compiled": true,
+          "cudagraph": "disabled",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 128, 128, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 128, 128, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7}"
+        },
+        "fused": {
+          "value": 0.7466079890727997,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 1.0,
+          "compiled": true,
+          "cudagraph": "disabled",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 128, 128, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 128, 128, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7}"
+        }
+      },
+      "config": {
+        "d_single": 384,
+        "d_pair": 128,
+        "d_single_token": 768,
+        "d_single_atom": 128,
+        "d_pair_atom": 16,
+        "n_layers": 1,
+        "trimul_direction": "outgoing",
+        "n_augment": 48,
+        "mask_prob": 0.2,
+        "min_seq_len": 128,
+        "max_seq_len": 128,
+        "seq_len_step": 64,
+        "min_d_pair": 64,
+        "max_d_pair": 256,
+        "d_pair_step": 64,
+        "d_pair_values": null,
+        "sweep_axis": "seq_len",
+        "sweep_seq_len": 512,
+        "autotune_shard": "",
+        "config_dir": "",
+        "pin_gate_backend": "",
+        "dropout": 0.0,
+        "compile_jobs": 0,
+        "pin_infer_concat": null,
+        "pin_transition_cuda_b2b": null,
+        "target": "transition",
+        "level": "module",
+        "implementations": [
+          "pytorch",
+          "triton"
+        ],
+        "mode": "training",
+        "metric": "time",
+        "compile": true,
+        "cudagraph": "disabled",
+        "allow_tf32": true,
+        "precision": "bf16-mixed",
+        "layernorm_weight_precision": null,
+        "allow_eager": false,
+        "name_suffix": "",
+        "swa_component": "block",
+        "swa_kernels": null,
+        "swa_active_gates": false
+      },
+      "cache_misses": [
+        {
+          "arm": "separate",
+          "op": "layernorm_fwd_saveact_triton",
+          "reason": "('bfloat16+float32', 'tuned autotune cache is STALE (kernel source or autotune key list changed)')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_expand_swiglu_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_bwd_swiglu_recompute_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "layernorm_bwd_atomic_triton",
+          "reason": "('bfloat16+float32|HAS_ROWSCALE=0,shape_key=274878432026', 'no tuned autotune cache entry for this shape')"
+        },
+        {
+          "arm": "fused",
+          "op": "transition_squeeze_residual_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        }
+      ],
+      "device": "NVIDIA H100 80GB HBM3"
+    },
+    {
+      "length": 384,
+      "regime": "inference",
+      "ms": {
+        "separate": 0.3020559996366501,
+        "fused": 0.27750399708747864
+      },
+      "speedup": 1.0884744104836508,
+      "samples": {
+        "separate": [
+          0.302047997713089,
+          0.3022080063819885,
+          0.30212800204753876,
+          0.30193600058555603,
+          0.3020800054073334,
+          0.30211201310157776,
+          0.3019680082798004,
+          0.30191999673843384,
+          0.3020640015602112,
+          0.30191999673843384,
+          0.3020159900188446,
+          0.30217599868774414
+        ],
+        "fused": [
+          0.2775520086288452,
+          0.27744001150131226,
+          0.27750399708747864,
+          0.277536004781723,
+          0.27750399708747864,
+          0.27748799324035645,
+          0.27745600044727325,
+          0.27750399708747864,
+          0.27740800380706787,
+          0.2775680124759674,
+          0.27750399708747864,
+          0.277536004781723
+        ]
+      },
+      "harness": {
+        "separate": {
+          "value": 0.30134400725364685,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0000001192092896,
+          "grad_max_abs": null,
+          "grad_rel_frob": null,
+          "grad_cosine": null,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward",
+          "input_shapes": "{\"x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 384, 384, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 1, \"graph_replay\": {\"output\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        },
+        "fused": {
+          "value": 0.2760320007801056,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0000001192092896,
+          "grad_max_abs": null,
+          "grad_rel_frob": null,
+          "grad_cosine": null,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward",
+          "input_shapes": "{\"x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 384, 384, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 1, \"graph_replay\": {\"output\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        }
+      },
+      "config": {
+        "d_single": 384,
+        "d_pair": 128,
+        "d_single_token": 768,
+        "d_single_atom": 128,
+        "d_pair_atom": 16,
+        "n_layers": 1,
+        "trimul_direction": "outgoing",
+        "n_augment": 5,
+        "mask_prob": 0.2,
+        "min_seq_len": 384,
+        "max_seq_len": 384,
+        "seq_len_step": 64,
+        "min_d_pair": 64,
+        "max_d_pair": 256,
+        "d_pair_step": 64,
+        "d_pair_values": null,
+        "sweep_axis": "seq_len",
+        "sweep_seq_len": 512,
+        "autotune_shard": "",
+        "config_dir": "",
+        "pin_gate_backend": "",
+        "dropout": 0.0,
+        "compile_jobs": 0,
+        "pin_infer_concat": null,
+        "pin_transition_cuda_b2b": null,
+        "target": "transition",
+        "level": "module",
+        "implementations": [
+          "pytorch",
+          "triton"
+        ],
+        "mode": "inference",
+        "metric": "time",
+        "compile": true,
+        "cudagraph": "manual",
+        "allow_tf32": true,
+        "precision": "bf16-mixed",
+        "layernorm_weight_precision": null,
+        "allow_eager": false,
+        "name_suffix": "",
+        "swa_component": "block",
+        "swa_kernels": null,
+        "swa_active_gates": false
+      },
+      "cache_misses": [
+        {
+          "arm": "separate",
+          "op": "layernorm_fwd_saveact_triton",
+          "reason": "('bfloat16+float32', 'tuned autotune cache is STALE (kernel source or autotune key list changed)')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_expand_swiglu_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "fused",
+          "op": "transition_squeeze_residual_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        }
+      ],
+      "device": "NVIDIA H100 80GB HBM3"
+    },
+    {
+      "length": 384,
+      "regime": "training_graph",
+      "ms": {
+        "separate": 1.1657920479774475,
+        "fused": 1.0621119737625122
+      },
+      "speedup": 1.0976168961240975,
+      "samples": {
+        "separate": [
+          1.1653119921684265,
+          1.1661440134048462,
+          1.165727972984314,
+          1.165824055671692,
+          1.1654720306396484,
+          1.1657600402832031,
+          1.166320025920868,
+          1.1661759614944458,
+          1.1656639575958252,
+          1.1663039922714233,
+          1.1655679941177368,
+          1.1658560037612915
+        ],
+        "fused": [
+          1.0616639852523804,
+          1.0620479583740234,
+          1.0626239776611328,
+          1.0622080564498901,
+          1.0618879795074463,
+          1.061951994895935,
+          1.0621119737625122,
+          1.0621119737625122,
+          1.0626879930496216,
+          1.0617280006408691,
+          1.062432050704956,
+          1.0621440410614014
+        ]
+      },
+      "harness": {
+        "separate": {
+          "value": 1.156719982624054,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0000001192092896,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 1.0000001192092896,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 384, 384, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 384, 384, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7, \"graph_replay\": {\"output[gradients][0]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][1]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][2]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][3]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][4]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][5]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[result]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        },
+        "fused": {
+          "value": 1.0530240535736084,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0000001192092896,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 1.0000001192092896,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 384, 384, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 384, 384, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7, \"graph_replay\": {\"output[gradients][0]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][1]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][2]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][3]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][4]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][5]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[result]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        }
+      },
+      "config": {
+        "d_single": 384,
+        "d_pair": 128,
+        "d_single_token": 768,
+        "d_single_atom": 128,
+        "d_pair_atom": 16,
+        "n_layers": 1,
+        "trimul_direction": "outgoing",
+        "n_augment": 48,
+        "mask_prob": 0.2,
+        "min_seq_len": 384,
+        "max_seq_len": 384,
+        "seq_len_step": 64,
+        "min_d_pair": 64,
+        "max_d_pair": 256,
+        "d_pair_step": 64,
+        "d_pair_values": null,
+        "sweep_axis": "seq_len",
+        "sweep_seq_len": 512,
+        "autotune_shard": "",
+        "config_dir": "",
+        "pin_gate_backend": "",
+        "dropout": 0.0,
+        "compile_jobs": 0,
+        "pin_infer_concat": null,
+        "pin_transition_cuda_b2b": null,
+        "target": "transition",
+        "level": "module",
+        "implementations": [
+          "pytorch",
+          "triton"
+        ],
+        "mode": "training",
+        "metric": "time",
+        "compile": true,
+        "cudagraph": "manual",
+        "allow_tf32": true,
+        "precision": "bf16-mixed",
+        "layernorm_weight_precision": null,
+        "allow_eager": false,
+        "name_suffix": "",
+        "swa_component": "block",
+        "swa_kernels": null,
+        "swa_active_gates": false
+      },
+      "cache_misses": [
+        {
+          "arm": "separate",
+          "op": "layernorm_fwd_saveact_triton",
+          "reason": "('bfloat16+float32', 'tuned autotune cache is STALE (kernel source or autotune key list changed)')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_expand_swiglu_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_bwd_swiglu_recompute_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "layernorm_bwd_atomic_triton",
+          "reason": "('bfloat16+float32|HAS_ROWSCALE=0,shape_key=2473901687578', 'no tuned autotune cache entry for this shape')"
+        },
+        {
+          "arm": "fused",
+          "op": "transition_squeeze_residual_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        }
+      ],
+      "device": "NVIDIA H100 80GB HBM3"
+    },
+    {
+      "length": 384,
+      "regime": "training",
+      "ms": {
+        "separate": 1.1811679601669312,
+        "fused": 1.0772560238838196
+      },
+      "speedup": 1.0964598331123543,
+      "samples": {
+        "separate": [
+          1.1800960302352905,
+          1.1814080476760864,
+          1.1807680130004883,
+          1.1813119649887085,
+          1.1804159879684448,
+          1.1817280054092407,
+          1.1809920072555542,
+          1.1813440322875977,
+          1.1798720359802246,
+          1.1812479496002197,
+          1.1810879707336426,
+          1.181663990020752
+        ],
+        "fused": [
+          1.077023983001709,
+          1.0773279666900635,
+          1.0772160291671753,
+          1.0771839618682861,
+          1.0769920349121094,
+          1.0772960186004639,
+          1.0782079696655273,
+          1.07668799161911,
+          1.0773599743843079,
+          1.078224003314972,
+          1.0767199993133545,
+          1.0782079696655273
+        ]
+      },
+      "harness": {
+        "separate": {
+          "value": 1.1816480159759521,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0000001192092896,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 1.0000001192092896,
+          "compiled": true,
+          "cudagraph": "disabled",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 384, 384, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 384, 384, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7}"
+        },
+        "fused": {
+          "value": 1.0782400369644165,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 1.0000001192092896,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 1.0000001192092896,
+          "compiled": true,
+          "cudagraph": "disabled",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 384, 384, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 384, 384, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7}"
+        }
+      },
+      "config": {
+        "d_single": 384,
+        "d_pair": 128,
+        "d_single_token": 768,
+        "d_single_atom": 128,
+        "d_pair_atom": 16,
+        "n_layers": 1,
+        "trimul_direction": "outgoing",
+        "n_augment": 48,
+        "mask_prob": 0.2,
+        "min_seq_len": 384,
+        "max_seq_len": 384,
+        "seq_len_step": 64,
+        "min_d_pair": 64,
+        "max_d_pair": 256,
+        "d_pair_step": 64,
+        "d_pair_values": null,
+        "sweep_axis": "seq_len",
+        "sweep_seq_len": 512,
+        "autotune_shard": "",
+        "config_dir": "",
+        "pin_gate_backend": "",
+        "dropout": 0.0,
+        "compile_jobs": 0,
+        "pin_infer_concat": null,
+        "pin_transition_cuda_b2b": null,
+        "target": "transition",
+        "level": "module",
+        "implementations": [
+          "pytorch",
+          "triton"
+        ],
+        "mode": "training",
+        "metric": "time",
+        "compile": true,
+        "cudagraph": "disabled",
+        "allow_tf32": true,
+        "precision": "bf16-mixed",
+        "layernorm_weight_precision": null,
+        "allow_eager": false,
+        "name_suffix": "",
+        "swa_component": "block",
+        "swa_kernels": null,
+        "swa_active_gates": false
+      },
+      "cache_misses": [
+        {
+          "arm": "separate",
+          "op": "layernorm_fwd_saveact_triton",
+          "reason": "('bfloat16+float32', 'tuned autotune cache is STALE (kernel source or autotune key list changed)')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_expand_swiglu_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_bwd_swiglu_recompute_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "layernorm_bwd_atomic_triton",
+          "reason": "('bfloat16+float32|HAS_ROWSCALE=0,shape_key=2473901687578', 'no tuned autotune cache entry for this shape')"
+        },
+        {
+          "arm": "fused",
+          "op": "transition_squeeze_residual_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        }
+      ],
+      "device": "NVIDIA H100 80GB HBM3"
+    },
+    {
+      "length": 768,
+      "regime": "inference",
+      "ms": {
+        "separate": 1.1316560208797455,
+        "fused": 1.0323840081691742
+      },
+      "speedup": 1.0961580302726888,
+      "samples": {
+        "separate": [
+          1.1421760320663452,
+          1.1311999559402466,
+          1.1294080018997192,
+          1.1320960521697998,
+          1.1312159895896912,
+          1.1433759927749634,
+          1.1307039856910706,
+          1.142367959022522,
+          1.130832016468048,
+          1.143343985080719,
+          1.1307839751243591,
+          1.1427199840545654
+        ],
+        "fused": [
+          1.0289280414581299,
+          1.0413119792938232,
+          1.0333279967308044,
+          1.042080044746399,
+          1.0304640531539917,
+          1.0313600301742554,
+          1.0396640300750732,
+          1.031440019607544,
+          1.0379199981689453,
+          1.0311359763145447,
+          1.0396960377693176,
+          1.0295039415359497
+        ]
+      },
+      "harness": {
+        "separate": {
+          "value": 1.1342400312423706,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 0.9999998807907104,
+          "grad_max_abs": null,
+          "grad_rel_frob": null,
+          "grad_cosine": null,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward",
+          "input_shapes": "{\"x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 768, 768, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 1, \"graph_replay\": {\"output\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        },
+        "fused": {
+          "value": 1.0323200225830078,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 0.9999998807907104,
+          "grad_max_abs": null,
+          "grad_rel_frob": null,
+          "grad_cosine": null,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward",
+          "input_shapes": "{\"x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 768, 768, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 1, \"graph_replay\": {\"output\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        }
+      },
+      "config": {
+        "d_single": 384,
+        "d_pair": 128,
+        "d_single_token": 768,
+        "d_single_atom": 128,
+        "d_pair_atom": 16,
+        "n_layers": 1,
+        "trimul_direction": "outgoing",
+        "n_augment": 5,
+        "mask_prob": 0.2,
+        "min_seq_len": 768,
+        "max_seq_len": 768,
+        "seq_len_step": 64,
+        "min_d_pair": 64,
+        "max_d_pair": 256,
+        "d_pair_step": 64,
+        "d_pair_values": null,
+        "sweep_axis": "seq_len",
+        "sweep_seq_len": 512,
+        "autotune_shard": "",
+        "config_dir": "",
+        "pin_gate_backend": "",
+        "dropout": 0.0,
+        "compile_jobs": 0,
+        "pin_infer_concat": null,
+        "pin_transition_cuda_b2b": null,
+        "target": "transition",
+        "level": "module",
+        "implementations": [
+          "pytorch",
+          "triton"
+        ],
+        "mode": "inference",
+        "metric": "time",
+        "compile": true,
+        "cudagraph": "manual",
+        "allow_tf32": true,
+        "precision": "bf16-mixed",
+        "layernorm_weight_precision": null,
+        "allow_eager": false,
+        "name_suffix": "",
+        "swa_component": "block",
+        "swa_kernels": null,
+        "swa_active_gates": false
+      },
+      "cache_misses": [
+        {
+          "arm": "separate",
+          "op": "layernorm_fwd_saveact_triton",
+          "reason": "('bfloat16+float32', 'tuned autotune cache is STALE (kernel source or autotune key list changed)')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_expand_swiglu_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "fused",
+          "op": "transition_squeeze_residual_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        }
+      ],
+      "device": "NVIDIA H100 80GB HBM3"
+    },
+    {
+      "length": 768,
+      "regime": "training_graph",
+      "ms": {
+        "separate": 4.406776070594788,
+        "fused": 3.9961360692977905
+      },
+      "speedup": 1.102759263993019,
+      "samples": {
+        "separate": [
+          4.405087947845459,
+          4.408095836639404,
+          4.405152082443237,
+          4.406768083572388,
+          4.407455921173096,
+          4.406032085418701,
+          4.4075517654418945,
+          4.4067840576171875,
+          4.405663967132568,
+          4.407952070236206,
+          4.407327890396118,
+          4.4062559604644775
+        ],
+        "fused": [
+          3.9948800802230835,
+          3.996448040008545,
+          3.9963680505752563,
+          3.997040033340454,
+          3.9959840774536133,
+          3.9962880611419678,
+          3.9949759244918823,
+          3.9950239658355713,
+          3.995967984199524,
+          3.996384024620056,
+          3.9935519695281982,
+          3.9969440698623657
+        ]
+      },
+      "harness": {
+        "separate": {
+          "value": 4.414656162261963,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 0.9999998807907104,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 0.9999997019767761,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 768, 768, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 768, 768, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7, \"graph_replay\": {\"output[gradients][0]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][1]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][2]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][3]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][4]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][5]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[result]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        },
+        "fused": {
+          "value": 3.997007966041565,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 0.9999998807907104,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 0.9999997019767761,
+          "compiled": true,
+          "cudagraph": "manual",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 768, 768, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 768, 768, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7, \"graph_replay\": {\"output[gradients][0]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][1]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][2]\": {\"limit\": 0.0001, \"relative_frobenius\": 0.0}, \"output[gradients][3]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][4]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[gradients][5]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}, \"output[result]\": {\"limit\": 0.02, \"relative_frobenius\": 0.0}}}"
+        }
+      },
+      "config": {
+        "d_single": 384,
+        "d_pair": 128,
+        "d_single_token": 768,
+        "d_single_atom": 128,
+        "d_pair_atom": 16,
+        "n_layers": 1,
+        "trimul_direction": "outgoing",
+        "n_augment": 48,
+        "mask_prob": 0.2,
+        "min_seq_len": 768,
+        "max_seq_len": 768,
+        "seq_len_step": 64,
+        "min_d_pair": 64,
+        "max_d_pair": 256,
+        "d_pair_step": 64,
+        "d_pair_values": null,
+        "sweep_axis": "seq_len",
+        "sweep_seq_len": 512,
+        "autotune_shard": "",
+        "config_dir": "",
+        "pin_gate_backend": "",
+        "dropout": 0.0,
+        "compile_jobs": 0,
+        "pin_infer_concat": null,
+        "pin_transition_cuda_b2b": null,
+        "target": "transition",
+        "level": "module",
+        "implementations": [
+          "pytorch",
+          "triton"
+        ],
+        "mode": "training",
+        "metric": "time",
+        "compile": true,
+        "cudagraph": "manual",
+        "allow_tf32": true,
+        "precision": "bf16-mixed",
+        "layernorm_weight_precision": null,
+        "allow_eager": false,
+        "name_suffix": "",
+        "swa_component": "block",
+        "swa_kernels": null,
+        "swa_active_gates": false
+      },
+      "cache_misses": [
+        {
+          "arm": "separate",
+          "op": "layernorm_fwd_saveact_triton",
+          "reason": "('bfloat16+float32', 'tuned autotune cache is STALE (kernel source or autotune key list changed)')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_expand_swiglu_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_bwd_swiglu_recompute_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "layernorm_bwd_atomic_triton",
+          "reason": "('bfloat16+float32|HAS_ROWSCALE=0,shape_key=9895605175066', 'no tuned autotune cache entry for this shape')"
+        },
+        {
+          "arm": "fused",
+          "op": "transition_squeeze_residual_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        }
+      ],
+      "device": "NVIDIA H100 80GB HBM3"
+    },
+    {
+      "length": 768,
+      "regime": "training",
+      "ms": {
+        "separate": 4.430032014846802,
+        "fused": 4.0121119022369385
+      },
+      "speedup": 1.1041646202282775,
+      "samples": {
+        "separate": [
+          4.428160190582275,
+          4.4297919273376465,
+          4.429408073425293,
+          4.4303998947143555,
+          4.43017578125,
+          4.430335998535156,
+          4.4297919273376465,
+          4.430079936981201,
+          4.43017578125,
+          4.429855823516846,
+          4.429984092712402,
+          4.43068790435791
+        ],
+        "fused": [
+          4.013152122497559,
+          4.012736082077026,
+          4.012192010879517,
+          4.009183883666992,
+          4.010464191436768,
+          4.010528087615967,
+          4.010576009750366,
+          4.012703895568848,
+          4.010655879974365,
+          4.012079954147339,
+          4.012143850326538,
+          4.012560129165649
+        ]
+      },
+      "harness": {
+        "separate": {
+          "value": 4.448448181152344,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 0.9999998807907104,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 0.9999997019767761,
+          "compiled": true,
+          "cudagraph": "disabled",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 768, 768, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 768, 768, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7}"
+        },
+        "fused": {
+          "value": 4.030496120452881,
+          "input_dtype": "bfloat16",
+          "parameter_dtype": "bfloat16+float32",
+          "execution_path": "modules.transition.module.Transition",
+          "reference": "module.reference.torch",
+          "output_max_abs": 0.0,
+          "output_rel_frob": 0.0,
+          "output_cosine": 0.9999998807907104,
+          "grad_max_abs": 0.0,
+          "grad_rel_frob": 0.0,
+          "grad_cosine": 0.9999997019767761,
+          "compiled": true,
+          "cudagraph": "disabled",
+          "compile_scope": "module_forward:partial_allowed",
+          "compiled_graphs": 1,
+          "measurement_scope": "forward_backward",
+          "input_shapes": "{\"dy\": {\"dtype\": \"bfloat16\", \"shape\": [1, 768, 768, 128]}, \"inference_step.x\": {\"dtype\": \"bfloat16\", \"shape\": [1, 768, 768, 128]}}",
+          "execution_validation": "{\"finite_tensors\": 7}"
+        }
+      },
+      "config": {
+        "d_single": 384,
+        "d_pair": 128,
+        "d_single_token": 768,
+        "d_single_atom": 128,
+        "d_pair_atom": 16,
+        "n_layers": 1,
+        "trimul_direction": "outgoing",
+        "n_augment": 48,
+        "mask_prob": 0.2,
+        "min_seq_len": 768,
+        "max_seq_len": 768,
+        "seq_len_step": 64,
+        "min_d_pair": 64,
+        "max_d_pair": 256,
+        "d_pair_step": 64,
+        "d_pair_values": null,
+        "sweep_axis": "seq_len",
+        "sweep_seq_len": 512,
+        "autotune_shard": "",
+        "config_dir": "",
+        "pin_gate_backend": "",
+        "dropout": 0.0,
+        "compile_jobs": 0,
+        "pin_infer_concat": null,
+        "pin_transition_cuda_b2b": null,
+        "target": "transition",
+        "level": "module",
+        "implementations": [
+          "pytorch",
+          "triton"
+        ],
+        "mode": "training",
+        "metric": "time",
+        "compile": true,
+        "cudagraph": "disabled",
+        "allow_tf32": true,
+        "precision": "bf16-mixed",
+        "layernorm_weight_precision": null,
+        "allow_eager": false,
+        "name_suffix": "",
+        "swa_component": "block",
+        "swa_kernels": null,
+        "swa_active_gates": false
+      },
+      "cache_misses": [
+        {
+          "arm": "separate",
+          "op": "layernorm_fwd_saveact_triton",
+          "reason": "('bfloat16+float32', 'tuned autotune cache is STALE (kernel source or autotune key list changed)')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_expand_swiglu_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "transition_bwd_swiglu_recompute_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        },
+        {
+          "arm": "separate",
+          "op": "layernorm_bwd_atomic_triton",
+          "reason": "('bfloat16+float32|HAS_ROWSCALE=0,shape_key=9895605175066', 'no tuned autotune cache entry for this shape')"
+        },
+        {
+          "arm": "fused",
+          "op": "transition_squeeze_residual_triton",
+          "reason": "('bfloat16', 'no tuned autotune cache')"
+        }
+      ],
+      "device": "NVIDIA H100 80GB HBM3"
+    }
+  ],
+  "random_weight_validation": [
+    {
+      "shape": [
+        1,
+        128,
+        128,
+        128
+      ],
+      "errors_y_dx_dgamma_dbeta_dwa_dwb_dws": [
+        0.0,
+        0.0,
+        5.97827920501004e-07,
+        1.8623863695665932e-07,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "shape": [
+        1,
+        384,
+        384,
+        128
+      ],
+      "errors_y_dx_dgamma_dbeta_dwa_dwb_dws": [
+        0.0,
+        5.01102113048546e-06,
+        2.0071527160325786e-06,
+        5.904536237721913e-07,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "shape": [
+        1,
+        384,
+        384
+      ],
+      "errors_y_dx_dgamma_dbeta_dwa_dwb_dws": [
+        0.0,
+        0.0,
+        1.8354624842231715e-07,
+        8.595347544826382e-09,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "shape": [
+        1,
+        768,
+        768
+      ],
+      "errors_y_dx_dgamma_dbeta_dwa_dwb_dws": [
+        0.0,
+        0.0,
+        1.6687263837411592e-07,
+        1.9741214885016234e-08,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "shape": [
+        2,
+        17,
+        96
+      ],
+      "errors_y_dx_dgamma_dbeta_dwa_dwb_dws": [
+        0.0,
+        0.0,
+        8.789268690634344e-08,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "source_sha256": {
+    "kernels/transition/triton/residual.py": "8a9053fd57ab28d895aa6f24b18715260af3aec1ab47b900724cd8939d57d628",
+    "kernels/trimul_inproj/triton/backward_fused.py": "37f92cdbcbb48bf9cb36826b06f8eec0306f312462de724393b55b2042383f15",
+    "modules/transition/module.py": "044edb3f994fe275422d238b8c946e39dec8223e6395bd9c3da6406aa202ba96",
+    "settings.py": "e5b083f2d3cc9efd5c7ffc81e6548ca06161d550290c302e4bd5bb22696bc617",
+    "autotune/builder.py": "fc3e0d81cd8f9c0223a453d7e1653729969a7871ac4c24b9c94e918e4727f955",
+    "kernels/registry_module.csv": "b6b47b50762ddec746b3684058b8fc62db82d82bab632c92889c30a49316dbf0"
+  },
+  "profile": {
+    "inference-eager-forward": [
+      {
+        "name": "layer_norm_fwd_fused",
+        "us": 23.934999999999945
+      },
+      {
+        "name": "transition_fwd_kernel",
+        "us": 163.29599999999982
+      },
+      {
+        "name": "_squeeze_residual_kernel",
+        "us": 81.24800000000005
+      }
+    ],
+    "inference-compile-forward": [
+      {
+        "name": "layer_norm_fwd_fused",
+        "us": 24.031999999999925
+      },
+      {
+        "name": "transition_fwd_kernel",
+        "us": 165.69799999999987
+      },
+      {
+        "name": "_squeeze_residual_kernel",
+        "us": 80.73599999999988
+      }
+    ],
+    "training-eager-forward": [
+      {
+        "name": "layer_norm_fwd_fused",
+        "us": 24.7349999999999
+      },
+      {
+        "name": "transition_fwd_kernel",
+        "us": 167.20100000000025
+      },
+      {
+        "name": "_squeeze_residual_kernel",
+        "us": 82.04899999999998
+      }
+    ],
+    "training-eager-backward": [
+      {
+        "name": "Memset (Device)",
+        "us": 0.7359999999998763
+      },
+      {
+        "name": "nvjet_tst_256x128_64x4_1x2_h_bz_coopA_NNT",
+        "us": 70.11200000000008
+      },
+      {
+        "name": "_transition_expand_gatebwd_kernel",
+        "us": 316.6079999999997
+      },
+      {
+        "name": "nvjet_tst_128x64_64x8_1x2_h_bz_splitK_NTT",
+        "us": 72.70400000000018
+      },
+      {
+        "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+        "us": 2.9760000000001128
+      },
+      {
+        "name": "nvjet_tst_128x96_64x6_1x1_h_bz_splitK_NTT",
+        "us": 125.66399999999976
+      },
+      {
+        "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+        "us": 3.8399999999996908
+      },
+      {
+        "name": "void at::native::(anonymous namespace)::CatArrayBatchedCopy_vectorized<at::native::(anonymous namespace)::OpaqueType<2u>, unsigned int, 1, 128, 1, 16, 8>(char*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<2u>, unsigned int, 128, 1>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)",
+        "us": 2.880000000000109
+      },
+      {
+        "name": "Memset (Device)",
+        "us": 0.7040000000001783
+      },
+      {
+        "name": "nvjet_tst_128x160_64x5_1x2_h_bz_NNT",
+        "us": 114.4960000000001
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+        "us": 1.6959999999999127
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+        "us": 1.5040000000003602
+      },
+      {
+        "name": "_ln_bwd_residual_kernel",
+        "us": 73.4090000000001
+      }
+    ],
+    "training-compile-forward": [
+      {
+        "name": "layer_norm_fwd_fused",
+        "us": 24.032000000000153
+      },
+      {
+        "name": "transition_fwd_kernel",
+        "us": 166.08000000000015
+      },
+      {
+        "name": "_squeeze_residual_kernel",
+        "us": 81.60000000000014
+      }
+    ],
+    "training-compile-backward": [
+      {
+        "name": "Memset (Device)",
+        "us": 0.7360000000001037
+      },
+      {
+        "name": "nvjet_tst_256x128_64x4_1x2_h_bz_coopA_NNT",
+        "us": 70.27299999999991
+      },
+      {
+        "name": "_transition_expand_gatebwd_kernel",
+        "us": 314.62599999999975
+      },
+      {
+        "name": "nvjet_tst_128x64_64x8_1x2_h_bz_splitK_NTT",
+        "us": 74.52800000000025
+      },
+      {
+        "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+        "us": 3.007999999999811
+      },
+      {
+        "name": "nvjet_tst_128x96_64x6_1x1_h_bz_splitK_NTT",
+        "us": 124.60899999999992
+      },
+      {
+        "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+        "us": 3.8400000000001455
+      },
+      {
+        "name": "triton_poi_fused_cat_0",
+        "us": 2.048000000000229
+      },
+      {
+        "name": "Memset (Device)",
+        "us": 0.7359999999998763
+      },
+      {
+        "name": "nvjet_tst_128x160_64x5_1x2_h_bz_NNT",
+        "us": 114.6890000000003
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+        "us": 1.5360000000000582
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+        "us": 1.4719999999997526
+      },
+      {
+        "name": "_ln_bwd_residual_kernel",
+        "us": 73.11999999999989
+      }
+    ]
+  }
+}

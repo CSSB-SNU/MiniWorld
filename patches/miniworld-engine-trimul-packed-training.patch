@@ -1,0 +1,1124 @@
+--- a/src/miniworld_engine/kernels/trimul_inproj/cute/bidir_training.py	
++++ b/src/miniworld_engine/kernels/trimul_inproj/cute/bidir_training.py	
+@@ -24,6 +24,7 @@
+ from miniworld_engine.kernels.layernorm.triton.main import triton_layernorm
+ from miniworld_engine.kernels.layernorm_linear.triton.te_style import _te_backward, _te_forward
+ from miniworld_engine.kernels.trimul_inproj.cute import _bdll_patch, _gate_mul_patch, dispatch
++from miniworld_engine.kernels.trimul_inproj.cute.contract import packed_backward, packed_forward
+ from miniworld_engine.kernels.trimul_inproj.cute.launch import (
+     prepack_lr_operand, trimul_inproj_cute_forward,
+ )
+@@ -35,7 +36,7 @@
+ 
+ class BidirBackHalf(torch.autograd.Function):
+     """Front (cute gated GEMM, out_hidden=2h) → 2 contractions (outgoing [:h] / incoming [h:],
+-    cuBLAS bmm, contiguous-grad) → LN_out+@Wp (te) → gate (triton), as ONE Function. Backward
++    packed bmm, contiguous-grad) → LN_out+@Wp (te) → gate (triton), as ONE Function. Backward
+     fuses the gate input-grad + the x_n-add into the front dxn GEMM (cute); dW stays cuBLAS."""
+ 
+     @staticmethod
+@@ -53,9 +54,7 @@
+         ctx.pair_mask = pair_mask
+         lf = left.reshape(H, L, L)
+         rf = right.reshape(H, L, L)
+-        o_out = dispatch.bmm("contr_o_fwd", lf[:h], rf[:h].transpose(1, 2))   # outgoing
+-        o_in = dispatch.bmm("contr_i_fwd", lf[h:].transpose(1, 2), rf[h:])    # incoming
+-        tri = torch.cat([o_out, o_in], dim=0)                   # (H, L, L)
++        tri = packed_forward(lf, rf, h)
+         view = tri.reshape(H, M).t()                            # (M, H) m-major
+         proj, te_xn, mean_out, rstd_out = _te_forward(view, ln_out_w, ln_out_b, Wp, None, eps)
+         y, gate = gate_elem_train(
+@@ -96,19 +95,10 @@
+         del d_view
+ 
+         # contraction bwd (contiguous-grad formulas), split outgoing/incoming
+-        d_o_out, d_o_in = d_tri[:h], d_tri[h:]
+-        lo, ro, li, ri = lf[:h], rf[:h], lf[h:], rf[h:]
+-        d_lo = dispatch.bmm("contr_o_dl", d_o_out, ro)          # outgoing: O=lo@roᵀ
+-        d_ro = dispatch.bmm("contr_o_dr", d_o_out.transpose(1, 2), lo)
+-        d_li = dispatch.bmm("contr_i_dl", ri, d_o_in.transpose(1, 2))   # incoming: O=liᵀ@ri
+-        d_ri = dispatch.bmm("contr_i_dr", li, d_o_in)
+-        d_left = torch.cat([d_lo, d_li], dim=0).reshape(B, H, L, L)
+-        del d_li, d_lo
+-        d_right = torch.cat([d_ro, d_ri], dim=0).reshape(B, H, L, L)
+-        # d_tri's slices keep its storage alive, so the base and both views go together or not at
+-        # all -- 288 MiB at B=1 L=768 h=128 bf16. lo/ro/li/ri are slices of the SAVED lf/rf, which
+-        # ctx holds regardless; they are named here only so no slice of d_tri is missed.
+-        del d_ri, d_ro, d_o_out, d_o_in, d_tri, lo, ro, li, ri
++        d_left, d_right = packed_backward(d_tri, lf, rf, h)
++        d_left = d_left.reshape(B, H, L, L)
++        d_right = d_right.reshape(B, H, L, L)
++        del d_tri
+ 
+         # front bwd: d_concat + dW (cuBLAS) + W_stack; dxn fused with the gate add.
+         dconc, dWL, dWLg, dWR, dWRg, W_stack = front_bwd_dW(
+--- /dev/null
++++ b/src/miniworld_engine/kernels/trimul_inproj/cute/contract.py	
+@@ -0,0 +1,82 @@
++"""Bidirectional contractions write directly into the downstream packed buffers.
++
++Two forward and four backward GEMMs need no concatenation copies. These opaque
++launch sequences choose the same backend in eager, cold compile, and CUDA graphs;
++no shape inspection or calibration occurs while Dynamo traces fake tensors.
++"""
++
++from functools import lru_cache
++
++import torch
++
++from miniworld_engine.kernels._compile import opaque
++from miniworld_engine.kernels.trimul_inproj.cute.dispatch import _cute_allowed
++
++
++@lru_cache(None)
++def _measured_gpu(device):
++    return (
++        torch.cuda.get_device_capability(device) == (9, 0)
++        and torch.cuda.get_device_name(device) == "NVIDIA H100 80GB HBM3"
++    )
++
++
++def _use_quack(*operands):
++    """Whole-training graph measurements: Quack wins these exact contracts.
++
++    BF16 [256, L, L], L=384/768: all six Quack GEMMs beat packed cuBLAS.
++    L=128 and unmeasured layouts/shapes/devices retain cuBLAS. Weight-gradient
++    reductions are separate operations and are deliberately not covered here.
++    Evidence: MiniWorld docs/trimul-packed-training.md and its paired samples.
++    """
++    first = operands[0]
++    return (
++        first.device.type == "cuda"
++        and first.dtype == torch.bfloat16
++        and tuple(first.shape) in ((256, 384, 384), (256, 768, 768))
++        and all(
++            t.shape == first.shape and t.dtype == first.dtype
++            and t.device == first.device and t.is_contiguous()
++            for t in operands
++        )
++        and _measured_gpu(first.device)
++        and _cute_allowed(first.device, first.dtype, "triangle_multiplication_bidirectional")
++    )
++
++
++def _bmm(a, b, out, quack):
++    if quack:
++        from miniworld_engine.kernels._quack_compat import gemm
++        gemm(a, b, out=out)
++    else:
++        torch.bmm(a, b, out=out)
++
++
++def _forward_fake(left, right, h):
++    return left.new_empty(left.shape)
++
++
++@opaque(fake=_forward_fake, name="trimul_bidir_contract_fwd")
++def packed_forward(left: torch.Tensor, right: torch.Tensor, h: int) -> torch.Tensor:
++    quack = _use_quack(left, right) and h == 128
++    tri = left.new_empty(left.shape)
++    _bmm(left[:h], right[:h].transpose(1, 2), tri[:h], quack)
++    _bmm(left[h:].transpose(1, 2), right[h:], tri[h:], quack)
++    return tri
++
++
++def _backward_fake(grad, left, right, h):
++    return left.new_empty(left.shape), right.new_empty(right.shape)
++
++
++@opaque(fake=_backward_fake, name="trimul_bidir_contract_bwd")
++def packed_backward(
++    grad: torch.Tensor, left: torch.Tensor, right: torch.Tensor, h: int,
++) -> tuple[torch.Tensor, torch.Tensor]:
++    quack = _use_quack(left, right, grad) and h == 128
++    dl, dr = left.new_empty(left.shape), right.new_empty(right.shape)
++    _bmm(grad[:h], right[:h], dl[:h], quack)
++    _bmm(grad[:h].transpose(1, 2), left[:h], dr[:h], quack)
++    _bmm(right[h:], grad[h:].transpose(1, 2), dl[h:], quack)
++    _bmm(left[h:], grad[h:], dr[h:], quack)
++    return dl, dr
+--- a/src/miniworld_engine/autotune/data/trimul_inproj_masked_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json	
++++ b/src/miniworld_engine/autotune/data/trimul_inproj_masked_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json	
+@@ -36,7 +36,7 @@
+           "tile_m": 256,
+           "tile_n": 128
+         },
+-        "ms": 0.194071044921875,
++        "ms": 0.1947599983215332,
+         "num_stages": 0,
+         "num_warps": 0
+       },
+@@ -51,37 +51,37 @@
+           "tile_m": 256,
+           "tile_n": 192
+         },
+-        "ms": 0.19443807601928711,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 256
+-        },
+-        "ms": 0.19507967948913574,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 256,
+-          "tile_n": 128
+-        },
+-        "ms": 0.1956208038330078,
++        "ms": 0.19477599143981933,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 256
++        },
++        "ms": 0.19511520385742187,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 256,
++          "tile_n": 128
++        },
++        "ms": 0.19532511711120606,
+         "num_stages": 0,
+         "num_warps": 0
+       },
+@@ -96,7 +96,7 @@
+           "tile_m": 256,
+           "tile_n": 160
+         },
+-        "ms": 0.1964729595184326,
++        "ms": 0.19627711296081543,
+         "num_stages": 0,
+         "num_warps": 0
+       }
+@@ -113,22 +113,22 @@
+           "tile_m": 128,
+           "tile_n": 128
+         },
+-        "ms": 0.04279999971389771,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": true,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 128
+-        },
+-        "ms": 0.043129920959472656,
++        "ms": 0.0427513599395752,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": true,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 128
++        },
++        "ms": 0.04290271997451782,
+         "num_stages": 0,
+         "num_warps": 0
+       },
+@@ -143,7 +143,7 @@
+           "tile_m": 192,
+           "tile_n": 128
+         },
+-        "ms": 0.04356288194656372,
++        "ms": 0.04350719928741455,
+         "num_stages": 0,
+         "num_warps": 0
+       },
+@@ -158,22 +158,22 @@
+           "tile_m": 192,
+           "tile_n": 128
+         },
+-        "ms": 0.04395936012268066,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 256,
+-          "tile_n": 128
+-        },
+-        "ms": 0.047872960567474365,
++        "ms": 0.04388352155685425,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 256,
++          "tile_n": 128
++        },
++        "ms": 0.04783423900604248,
+         "num_stages": 0,
+         "num_warps": 0
+       }
+@@ -190,7 +190,7 @@
+           "tile_m": 256,
+           "tile_n": 128
+         },
+-        "ms": 0.10674367904663086,
++        "ms": 0.10664639949798585,
+         "num_stages": 0,
+         "num_warps": 0
+       },
+@@ -205,52 +205,52 @@
+           "tile_m": 256,
+           "tile_n": 192
+         },
+-        "ms": 0.10788928031921387,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 256
+-        },
+-        "ms": 0.10817567825317383,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 256,
+-          "tile_n": 128
+-        },
+-        "ms": 0.10845856189727784,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 256
+-        },
+-        "ms": 0.1090393590927124,
++        "ms": 0.10863647937774659,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 256
++        },
++        "ms": 0.10864223957061767,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 256,
++          "tile_n": 128
++        },
++        "ms": 0.10911488056182861,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 256
++        },
++        "ms": 0.10918431758880615,
+         "num_stages": 0,
+         "num_warps": 0
+       }
+@@ -258,8 +258,8 @@
+     "bfloat16|([((16384, 128), (128, 1), 'torch.bfloat16'), ((128, 1024), (1024, 1), 'torch.bfloat16'), ((1, 16384), (16384, 1), 'torch.float32')], (True,))": [
+       {
+         "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
++          "cluster_m": 2,
++          "cluster_n": 1,
+           "is_dynamic_persistent": false,
+           "max_swizzle_size": 8,
+           "pingpong": false,
+@@ -267,14 +267,14 @@
+           "tile_m": 256,
+           "tile_n": 192
+         },
+-        "ms": 0.025895999670028688,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
++        "ms": 0.025652160644531248,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
+           "is_dynamic_persistent": false,
+           "max_swizzle_size": 8,
+           "pingpong": false,
+@@ -282,52 +282,52 @@
+           "tile_m": 256,
+           "tile_n": 192
+         },
+-        "ms": 0.026039679050445557,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 256,
+-          "tile_n": 128
+-        },
+-        "ms": 0.026107840538024903,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 256
+-        },
+-        "ms": 0.026182719469070435,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": true,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 128
+-        },
+-        "ms": 0.026183680295944214,
++        "ms": 0.02590559959411621,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 256,
++          "tile_n": 128
++        },
++        "ms": 0.026004159450531007,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 256
++        },
++        "ms": 0.026121280193328857,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": true,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 128
++        },
++        "ms": 0.026179200410842894,
+         "num_stages": 0,
+         "num_warps": 0
+       }
+@@ -344,67 +344,67 @@
+           "tile_m": 128,
+           "tile_n": 128
+         },
+-        "ms": 0.007376959919929505,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 256,
+-          "tile_n": 128
+-        },
+-        "ms": 0.007439680099487304,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 256
+-        },
+-        "ms": 0.007668160200119019,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": true,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 128
+-        },
+-        "ms": 0.007802560031414032,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 256,
+-          "tile_n": 128
+-        },
+-        "ms": 0.00800416022539139,
++        "ms": 0.007336319983005523,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 256,
++          "tile_n": 128
++        },
++        "ms": 0.007372480034828186,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 256
++        },
++        "ms": 0.007631039917469025,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 256,
++          "tile_n": 128
++        },
++        "ms": 0.007904320061206817,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": true,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 128
++        },
++        "ms": 0.00791808009147644,
+         "num_stages": 0,
+         "num_warps": 0
+       }
+@@ -421,7 +421,7 @@
+           "tile_m": 128,
+           "tile_n": 128
+         },
+-        "ms": 0.013233600258827208,
++        "ms": 0.012945919632911682,
+         "num_stages": 0,
+         "num_warps": 0
+       },
+@@ -436,52 +436,52 @@
+           "tile_m": 192,
+           "tile_n": 128
+         },
+-        "ms": 0.013772159814834595,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": true,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 128
+-        },
+-        "ms": 0.014052480459213257,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 256,
+-          "tile_n": 128
+-        },
+-        "ms": 0.014191679954528809,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 256
+-        },
+-        "ms": 0.014207680225372315,
++        "ms": 0.013792319893836976,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": true,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 128
++        },
++        "ms": 0.014055999517440795,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 256
++        },
++        "ms": 0.014104639887809753,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 256,
++          "tile_n": 128
++        },
++        "ms": 0.014222080111503601,
+         "num_stages": 0,
+         "num_warps": 0
+       }
+@@ -498,7 +498,7 @@
+           "tile_m": 256,
+           "tile_n": 192
+         },
+-        "ms": 0.738548469543457,
++        "ms": 0.7418310546875,
+         "num_stages": 0,
+         "num_warps": 0
+       },
+@@ -513,22 +513,7 @@
+           "tile_m": 256,
+           "tile_n": 192
+         },
+-        "ms": 0.7512502288818359,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 256
+-        },
+-        "ms": 0.7614348983764649,
++        "ms": 0.7539593505859374,
+         "num_stages": 0,
+         "num_warps": 0
+       },
+@@ -543,22 +528,37 @@
+           "tile_m": 256,
+           "tile_n": 160
+         },
+-        "ms": 0.7629327774047852,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 256,
+-          "tile_n": 128
+-        },
+-        "ms": 0.7644765090942383,
++        "ms": 0.7616371154785155,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 256,
++          "tile_n": 128
++        },
++        "ms": 0.7673852920532227,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 256
++        },
++        "ms": 0.7680815887451172,
+         "num_stages": 0,
+         "num_warps": 0
+       }
+@@ -566,16 +566,16 @@
+     "bfloat16|([((589824, 128), (128, 1), 'torch.bfloat16'), ((128, 256), (256, 1), 'torch.bfloat16'), ((1, 589824), (589824, 1), 'torch.float32')], (False,))": [
+       {
+         "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": true,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 128
+-        },
+-        "ms": 0.14697056293487548,
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": true,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 128
++        },
++        "ms": 0.14672319889068602,
+         "num_stages": 0,
+         "num_warps": 0
+       },
+@@ -590,22 +590,22 @@
+           "tile_m": 192,
+           "tile_n": 128
+         },
+-        "ms": 0.14709248065948488,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": true,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 128
+-        },
+-        "ms": 0.14710367679595948,
++        "ms": 0.14681983947753907,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": true,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 128
++        },
++        "ms": 0.14686207771301268,
+         "num_stages": 0,
+         "num_warps": 0
+       },
+@@ -620,14 +620,14 @@
+           "tile_m": 192,
+           "tile_n": 128
+         },
+-        "ms": 0.14766304016113282,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
++        "ms": 0.14752671718597413,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
+           "is_dynamic_persistent": false,
+           "max_swizzle_size": 8,
+           "pingpong": true,
+@@ -635,7 +635,7 @@
+           "tile_m": 128,
+           "tile_n": 160
+         },
+-        "ms": 0.17325632095336913,
++        "ms": 0.17362527847290038,
+         "num_stages": 0,
+         "num_warps": 0
+       }
+@@ -652,67 +652,67 @@
+           "tile_m": 256,
+           "tile_n": 128
+         },
+-        "ms": 0.4062099266052246,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 256
+-        },
+-        "ms": 0.4069641494750976,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 256
+-        },
+-        "ms": 0.41279487609863286,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 1,
+-          "cluster_n": 2,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": false,
+-          "swap_ab": false,
+-          "tile_m": 256,
+-          "tile_n": 128
+-        },
+-        "ms": 0.41454496383666994,
+-        "num_stages": 0,
+-        "num_warps": 0
+-      },
+-      {
+-        "kwargs": {
+-          "cluster_m": 2,
+-          "cluster_n": 1,
+-          "is_dynamic_persistent": false,
+-          "max_swizzle_size": 8,
+-          "pingpong": true,
+-          "swap_ab": false,
+-          "tile_m": 128,
+-          "tile_n": 128
+-        },
+-        "ms": 0.4214854431152344,
++        "ms": 0.40774271011352536,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 256
++        },
++        "ms": 0.4078022384643555,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 256
++        },
++        "ms": 0.41317760467529296,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 1,
++          "cluster_n": 2,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": false,
++          "swap_ab": false,
++          "tile_m": 256,
++          "tile_n": 128
++        },
++        "ms": 0.41371809005737303,
++        "num_stages": 0,
++        "num_warps": 0
++      },
++      {
++        "kwargs": {
++          "cluster_m": 2,
++          "cluster_n": 1,
++          "is_dynamic_persistent": false,
++          "max_swizzle_size": 8,
++          "pingpong": true,
++          "swap_ab": false,
++          "tile_m": 128,
++          "tile_n": 128
++        },
++        "ms": 0.4213471984863281,
+         "num_stages": 0,
+         "num_warps": 0
+       }
+@@ -773,12 +773,12 @@
+   },
+   "key_scheme": 3,
+   "op": "trimul_inproj_masked_sm90_cute",
+-  "op_identity": "f0f7021ed885b289a454b8fefe518933ec1d2c763bf8ef6047b97308c8ef9d05",
++  "op_identity": "998c938247b33f7711689559fc005de9c395f82037f39234634ba1333b6c62fc",
+   "provenance": {
+-    "built_utc": "2026-09-15T09:29:35+00:00",
+-    "measurement": "cuda_graph; 12 alternating rounds; 50 replays per sample",
++    "built_utc": "2026-09-15T11:31:46+00:00",
+     "torch": "2.10.0+cu128",
+     "triton": "3.6.0"
+   },
+-  "schema": 1
++  "schema": 1,
++  "measurement_regime": "CUDA graph; 12 alternating rounds; 50 replays per sample; median; all 18 declared candidates per key"
+ }

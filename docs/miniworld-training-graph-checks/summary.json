@@ -1,0 +1,75 @@
+{
+  "results": [
+    {
+      "recycles": 1,
+      "compile": false,
+      "off_seconds": 7.500042015686631,
+      "on_seconds": 7.226464387960732,
+      "speedup": 1.037857742464168,
+      "latency_reduction_percent": 3.6476812683675752,
+      "off_ms_per_microbatch": 234.37631299020723,
+      "on_ms_per_microbatch": 225.82701212377287,
+      "off_reserved_gib": 54.08203125,
+      "on_reserved_gib": 54.01171875,
+      "off_rounds_seconds": [
+        7.500747467391193,
+        7.500042015686631,
+        7.498287143185735
+      ],
+      "on_rounds_seconds": [
+        7.226464387960732,
+        7.223930988460779,
+        7.236707418225706
+      ],
+      "capture_seconds": 0.42814500257372856,
+      "round_gradient_norm_max_relative_difference": 0.0,
+      "autotune_choices_sha256": "52d2d7d8905cd14d4f78f42c3309701110fe9e840501929b4a29f24d3f72ea76",
+      "autotune_checksum_comparison": "equal",
+      "off_file": "r1-off-shared-tuning.json",
+      "on_file": "r1-manual-shared-tuning.json"
+    },
+    {
+      "recycles": 4,
+      "compile": false,
+      "off_seconds": 14.359408304095268,
+      "on_seconds": 13.844162894412875,
+      "speedup": 1.0372175200199596,
+      "latency_reduction_percent": 3.588207806135346,
+      "off_ms_per_microbatch": 448.73150950297713,
+      "on_ms_per_microbatch": 432.63009045040235,
+      "off_reserved_gib": 54.07421875,
+      "on_reserved_gib": 54.02734375,
+      "off_rounds_seconds": [
+        14.35085630044341,
+        14.363688940182328,
+        14.359408304095268
+      ],
+      "on_rounds_seconds": [
+        13.83633004501462,
+        13.844162894412875,
+        13.860682625323534
+      ],
+      "capture_seconds": 0.6271977899596095,
+      "round_gradient_norm_max_relative_difference": 0.0,
+      "autotune_choices_sha256": "52d2d7d8905cd14d4f78f42c3309701110fe9e840501929b4a29f24d3f72ea76",
+      "autotune_checksum_comparison": "OFF uses shared disk cache; checksum instrumentation was added after OFF process started",
+      "off_file": "r4-off.json",
+      "on_file": "r4-manual.json"
+    }
+  ],
+  "compiled_attempt": {
+    "status": "failed before timing with graph off",
+    "job": 13207,
+    "exception": "BackendCompilerFailed: Cannot access data pointer of Tensor (FakeTensor / FunctionalTensor)",
+    "location": "miniworld_engine/modules/swa_atom_attention/module.py:291",
+    "cause": "Registered FlashAttention backward recomputes _flash_window_core; AOTAutograd traces through FA4 to tvm_ffi.from_dlpack",
+    "untested": [
+      "compiled manual graph recycle1",
+      "compiled off/manual recycle4"
+    ]
+  },
+  "scope": "H100 single GPU, full 21,781,312-parameter model, 296 engine module backends Triton; L384 MSA2048 atoms4096; real cached batches; random initialized weights; 32 microbatches per optimizer step; 3 measured optimizer steps; includes Adam/EMA/clip; excludes dataloader/H2D/DDP",
+  "input_sha256": "75ac907675338d38d35c6fd580c575b91d4e1da331211c241eb47345f784fed4",
+  "initial_weights_sha256": "963d33a80b7bee6e19702dbe791a91a022943a1aa3266ed169da044d6c477630",
+  "engine_identity": "c5567a40ea101160cc2b35c98bc806803442c6ef275b1d7fce4220bbee8b1862"
+}

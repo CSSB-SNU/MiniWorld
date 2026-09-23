@@ -1,0 +1,70 @@
+{
+  "job": 13210,
+  "results": [
+    {
+      "recycles": 1,
+      "compiled": true,
+      "off_seconds": 6.821912636980414,
+      "on_seconds": 6.444263933226466,
+      "speedup": 1.0586023023990065,
+      "latency_reduction_percent": 5.535818528469272,
+      "off_reserved_gib": 54.25390625,
+      "on_reserved_gib": 54.33203125,
+      "off_per_microbatch_ms": 213.18476990563795,
+      "on_per_microbatch_ms": 201.38324791332707,
+      "capture_seconds": 0.37202413380146027,
+      "off_rounds_seconds": [
+        6.821912636980414,
+        6.82067249994725,
+        6.836829856969416
+      ],
+      "on_rounds_seconds": [
+        6.444263933226466,
+        6.440515813417733,
+        6.446806138381362
+      ],
+      "autotune_choices_sha256": "52d2d7d8905cd14d4f78f42c3309701110fe9e840501929b4a29f24d3f72ea76"
+    },
+    {
+      "recycles": 4,
+      "compiled": true,
+      "off_seconds": 12.680764570832253,
+      "on_seconds": 12.155564188025892,
+      "speedup": 1.043206582161256,
+      "latency_reduction_percent": 4.141709120713466,
+      "off_reserved_gib": 54.21875,
+      "on_reserved_gib": 54.353515625,
+      "off_per_microbatch_ms": 396.2738928385079,
+      "on_per_microbatch_ms": 379.8613808758091,
+      "capture_seconds": 0.4744698703289032,
+      "off_rounds_seconds": [
+        12.680764570832253,
+        12.678868166171014,
+        12.701960738748312
+      ],
+      "on_rounds_seconds": [
+        12.15509666595608,
+        12.155564188025892,
+        12.176613355055451
+      ],
+      "autotune_choices_sha256": "52d2d7d8905cd14d4f78f42c3309701110fe9e840501929b4a29f24d3f72ea76"
+    }
+  ],
+  "scope": "full Phase1 model forward/loss/backward + GPU batch copy + grad accumulation + Adam + clip + scheduler + EMA; excludes data loading/H2D/DDP; fixed recycle; two real batches repeatedly used; random initialized weights",
+  "batch_sha256": "75ac907675338d38d35c6fd580c575b91d4e1da331211c241eb47345f784fed4",
+  "initial_weights_sha256": "963d33a80b7bee6e19702dbe791a91a022943a1aa3266ed169da044d6c477630",
+  "engine_patch": "miniworld-engine-swa-fa4-backward-compile.patch",
+  "patch_sha256": "65d6548468a2bc0a672628ea693fc35f9f1dc65c67184e0466553bde31e12d71",
+  "swa_module_sha256": "d292d0198b53d8576b0d460e9ca0f9b5a6fcd6288bf634abc038601964392f52",
+  "qualification": {
+    "numerical_compile_graph_opcheck_passed": 5,
+    "memcheck_errors": 0,
+    "cpu_passed": 8
+  },
+  "notes": [
+    "Both arms model.compile dynamic=False with Inductor cudagraphs=False; manual graph toggled independently",
+    "Fixed recycles; one GPU; no DDP or data pipeline timing",
+    "Identical scalar loss and gradient norm in matched timed rounds; not elementwise full-model gradient verification",
+    "Production manual trainer remains eager; this benchmark explicitly compiles before capture"
+  ]
+}

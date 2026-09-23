@@ -1,0 +1,19 @@
+{
+  "installed": true,
+  "patch": "miniworld-engine-trimul-backward-fusion.patch",
+  "native_identity": "c78f4bf804ddccde28beaa915f3801604e1dbdd7ded3cf85fa8c301fc50e39dc",
+  "files": [
+    "kernels/trimul_inproj/triton/bidirectional.py",
+    "autotune/axes.csv",
+    "kernels/drivers/trimul_backward.py",
+    "autotune/configs/grid/trimul_input_ln_residual_bwd_triton.csv",
+    "autotune/configs/gmprobe/trimul_input_ln_residual_bwd_triton.csv",
+    "kernels/registry.csv",
+    "autotune/configs/grid/trimul_input_dual_bwd_triton.csv",
+    "autotune/configs/gmprobe/trimul_input_dual_bwd_triton.csv",
+    "autotune/data/trimul_input_ln_residual_bwd_triton/NVIDIA H100 80GB HBM3 (sm90).json",
+    "kernels/trimul_inproj/triton/backward_fused.py",
+    "kernels/checks/trimul_backward.py",
+    "autotune/data/trimul_input_dual_bwd_triton/NVIDIA H100 80GB HBM3 (sm90).json"
+  ]
+}

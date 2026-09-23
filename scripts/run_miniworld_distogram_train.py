@@ -662,7 +662,8 @@ def train(  # noqa: PLR0912, PLR0915
     # ---- Trainer dispatch --------------------------------------------------
     # Fixed recycle (n_recycle_max == 1) -> standard torch.cuda.CUDAGraph capture
     # + manual DDP (scripts/cudagraph_trainer.py): the whole fwd+loss+bwd replays
-    # as ONE graph -> no per-microbatch launch overhead (~1.8x faster, ~96% util).
+    # as ONE graph -> reduced per-kernel CPU launch overhead. Backend-specific
+    # measurements: docs/miniworld-training-cudagraph-ab.md.
     # Random recycle (n_recycle_max > 1) -> Fabric + plain torch.compile below
     # (cudagraph can't capture the varying recycle depth). Override with
     # cfg.train.force_trainer = "cudagraph" | "fabric" (default "auto").

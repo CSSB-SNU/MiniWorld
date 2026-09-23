@@ -140,6 +140,12 @@ Each step changes exactly one thing, so the comparisons are clean:
 | 1.0.1 | **5e-3** | off | 0 | the LR raise |
 | 1.0.2 | 5e-3 | **2a: 1.0** | **2b: 1.0** | the AF3 auxiliary losses |
 
+v1.1.0 and v1.2.0 are phase-1 (distogram) data/target changes on top of the v1.0.x
+trunk recipe: [v1.1](v1.1-distogram.md) fixes the pseudo-beta targets, weights interchain
+pairs 2.0 and forces Ab-Ag crops onto the interface; [v1.2.0](v1.2-msa-sampling.md) draws
+PDB MSA depth over the full stored alignment into an 8192-row pool (AF3 SI 2.2) and
+re-draws 1024 rows from the pool on every recycle (AF3 SI 3.3).
+
 ## Trunk initialisation for phase 2a: SWA_last12
 
 Phase 2a does **not** start from the raw epoch-900 trunk. It starts from the uniform average

@@ -1,0 +1,13 @@
+# Continue the same PF16 run from epoch 800; effective batch 8 x 32 = 256.
+defaults:
+  - phase1b_distogram_v120
+  - _self_
+model:
+  trunk:
+    pairformer:
+      n_block: 16
+      n_checkpoint_segments: 16
+train:
+  comment: "v1.2.0-phase1b-distogram-medium-L768"
+  grad_accum_steps: 32
+  engine_backend: auto

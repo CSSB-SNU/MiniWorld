@@ -1,0 +1,96 @@
+{
+  "patch": "miniworld-engine-trimul-training-audit.patch",
+  "patch_sha256": "1a6d22f4a60bcaac83a265d9e374958df8486d2b856e967d42ddd278bf5d2a7f",
+  "files": {
+    "kernels/trimul_inproj/cute/output_training.py": {
+      "before": "c9e4654bf6394651f99c29f5c6f78c2444a1b44f969cadd12dae56fbb7535c5e",
+      "after": "d019b6e399dc95e68a1bf03cdda1e2a0e070811fa625d7bfc84ec1c80364c026"
+    },
+    "kernels/trimul_inproj/cute/bidir_training.py": {
+      "before": "20744bd22b7b1c574ad5be663b62cdf1981638a05c029e97281f23078954c70a",
+      "after": "f2edc4e5273c584063637c2a1e5009270a2aad56d1da447200ef2aac188f17f8"
+    },
+    "kernels/trimul_inproj/triton/bidirectional.py": {
+      "before": "66a93b084079871a3f1e750e7ec68e73289f6ea57da3b6acc11a0e002eae740f",
+      "after": "eff3373c32a096fdfe1ba125faffe1595ced000d3fdd79fe037281dff6429518"
+    },
+    "autotune/cute_config.py": {
+      "before": "90f2722e0e00e61d71f8e1605552fee33a77742dac6fd6628d2484b28d1c35a3",
+      "after": "b4a3984259c2d8c14cbb18884d00b1217576d3b72acefdfb8318abc04b330530"
+    },
+    "autotune/cache.py": {
+      "before": "245f201a28631dd52a2aebd85581fe9b475837ee3d8c6bf8741cfcd1d124797e",
+      "after": "af18cd5dfaae365f31cd82c01ad92c0f660695368ba37d5905f401eabd7275f8"
+    },
+    "autotune/native.py": {
+      "before": "ca6874559bd90dea3e85bdcedaa2155da63bf81e0694af18333540301d9d5258",
+      "after": "e061b383e95159d17e8ef511d005eadf5c91ece2cde969761019371da2fcea8d"
+    },
+    "autotune/data/layernorm_bwd_split_triton/NVIDIA H100 80GB HBM3 (sm90).json": {
+      "before": "95a592d6c6621b5f132aa116cf4ca0b0f2865e43e1eb06e4e44da8a1550c7c3d",
+      "after": "aaaa998809212347d9fc9483f443eab22e03dccc0bf429b9cab60aba54f04962"
+    },
+    "autotune/data/trimul_gemm_gate_mmajor_triton/NVIDIA H100 80GB HBM3 (sm90).json": {
+      "before": "af70cbd5edb7274efe2abf2777b49e626d17f5e00186d3f0e6df05bee877a238",
+      "after": "5fd659bb2c29da4389303e9e314ce773788c5f61dd576ee4192269419194bd93"
+    },
+    "autotune/data/layernorm_bwd_atomic_strided_triton/NVIDIA H100 80GB HBM3 (sm90).json": {
+      "before": "5c35b757466e5b8a0b38cc426b9d0a68b201b84c4bb59e884cdcca31533e34c8",
+      "after": "6aacc206562115cdbd0f47b9164cdc27637f82a2abdec1b71eb5e59a7785340b"
+    },
+    "autotune/data/layernorm_fwd_saveact_strided_triton/NVIDIA H100 80GB HBM3 (sm90).json": {
+      "before": "d50f2b02d8d3d51d38d4ebc3e77b5e2bfd6f428ce37c97d1219a17d46785cf2d",
+      "after": "7a58ddf7202c71b05c89dce212a43c716e1fe5e6770088195ed8095c152c12f5"
+    }
+  },
+  "base_patches": [
+    "miniworld-engine-wheel-cute-path.patch",
+    "miniworld-engine-cudagraph-amp.patch",
+    "miniworld-engine-complete-wiring.patch",
+    "miniworld-engine-h100-upgrade.patch",
+    "miniworld-engine-trimul-tuning.patch",
+    "miniworld-engine-trimul-packed-training.patch",
+    "miniworld-engine-triton-packed-training.patch",
+    "miniworld-engine-layernorm-mixed-dtype.patch",
+    "miniworld-engine-h100-cache-build-20260915.patch",
+    "miniworld-engine-native-tuning.patch",
+    "miniworld-engine-native-tuning-cache-compat.patch",
+    "miniworld-engine-adaln-attention-memory.patch",
+    "miniworld-engine-adaln-cache-20260916.patch",
+    "miniworld-engine-attention-compute-memory.patch",
+    "miniworld-engine-attention-compute-cache-20260916.patch",
+    "miniworld-engine-derive-grid-callback.patch",
+    "miniworld-engine-attention-dq-layout.patch",
+    "miniworld-engine-triton-cache-build-20260916.patch",
+    "miniworld-engine-trimul-output-training.patch",
+    "miniworld-engine-trimul-f567-config.patch",
+    "miniworld-engine-trimul-backward-fusion.patch"
+  ],
+  "base_patch_hashes": {
+    "miniworld-engine-wheel-cute-path.patch": "a0a3d08ecc79dc926067c50469850119264d5fa0109090be8e5f4166ca8cf507",
+    "miniworld-engine-cudagraph-amp.patch": "359cc36c6e89fca31eac6a57bbe8fcccc7dd3f09048d6cadd5d61c5862477ae9",
+    "miniworld-engine-complete-wiring.patch": "45c57a68db1d56947104bec431a7f723d266c74523f92c53bbeca66386fbbbae",
+    "miniworld-engine-h100-upgrade.patch": "5d1c0288359445187de8b23a0358542f8b8f57064fc7d061646ed27bed950206",
+    "miniworld-engine-trimul-tuning.patch": "0714e932bb8e83d96366462a06f3e9c7f8bde322f76c35fc8b0d101d4ed07b34",
+    "miniworld-engine-trimul-packed-training.patch": "55d39bd5dec67df759f15b67f23b5633fa14df5d616be5b6be803b407e27fead",
+    "miniworld-engine-triton-packed-training.patch": "ad99d8680d23e511734e6a5a688a8f923caf6d36dd66efde71ca134b8491b633",
+    "miniworld-engine-layernorm-mixed-dtype.patch": "811734df03d9f2e4a84d7823f9e38bd5000dc93a28eadb4dce81ef4024488260",
+    "miniworld-engine-h100-cache-build-20260915.patch": "003446fb1e33095be6e91a7dbd8098f3a1b183458dbaf90b14270c8848fe0457",
+    "miniworld-engine-native-tuning.patch": "7003c617b4000ea88fa922a7cf757bffd12f32f101eaee7d8228c6b4375b3e7a",
+    "miniworld-engine-native-tuning-cache-compat.patch": "a87359d5164c018fadbb4566e2f610297017b0074b840b79c1ef93d9000a9af3",
+    "miniworld-engine-adaln-attention-memory.patch": "ccfd8b68b0cb1befd9d2a0241256db7a79893404c2d9acf078b9bdf2ef1dd6a8",
+    "miniworld-engine-adaln-cache-20260916.patch": "f47e9cd120e5e0c2056caa45d881c32982bb425cf2ec6697e81c9d68d2c575a6",
+    "miniworld-engine-attention-compute-memory.patch": "4dc8d132a78c54e535470b582e691bcca1e42b141b552827eaca251bc5de3b9f",
+    "miniworld-engine-attention-compute-cache-20260916.patch": "6540dd00627c7f28fea5750f71512ff1ac3469fc383985f190bc412714e88656",
+    "miniworld-engine-derive-grid-callback.patch": "21336af93d8909a2d96fcf3c2dae3f159905fd0e92b34dfee1779e1d4d5e3d9a",
+    "miniworld-engine-attention-dq-layout.patch": "bcd51166eaf05ed41e1601983d5eaf44f07a7b2eede60bebf1fbdc54c007f0a5",
+    "miniworld-engine-triton-cache-build-20260916.patch": "09aee18beef75c4d86dd9072ec7f7c6318160437f3db72249502a3dcfd326c07",
+    "miniworld-engine-trimul-output-training.patch": "b09f4522ceabd3896e8d554275a5b7115d878ea0c8615fc5eed336b149d9b3c7",
+    "miniworld-engine-trimul-f567-config.patch": "6682e33eb5fd9199a42d4e171ae258353e95b1fbf94c006ecb21bf6ef292825b",
+    "miniworld-engine-trimul-backward-fusion.patch": "572389eadbeb9d0058604a907c8a837206c8cc33e97979c2f495e9951f2202ab"
+  },
+  "before_identity": "c78f4bf804ddccde28beaa915f3801604e1dbdd7ded3cf85fa8c301fc50e39dc",
+  "after_identity": "74b088cde6e546049a0018f7c3ff100fea6662d18928a791c0aa078d96eb97bc",
+  "run": "runs/trimul_training_audit_20260916",
+  "validation": "H100 L128/384/768 matched-mask/dropout output and all gradients; compile/CUDA graph; L384 memcheck 0 errors; 27 native cache regression tests; module benchmark and paired graph comparison. L768 LN tuning partial 384/400."
+}

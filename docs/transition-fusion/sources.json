@@ -1,0 +1,27 @@
+{
+  "date": "2026-09-17",
+  "package": "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine",
+  "scope": "source call graph; strict Triton default static compile profiled on H100 L384 D128; see AUDIT.md",
+  "sha256": {
+    "modules/transition/module.py": "044edb3f994fe275422d238b8c946e39dec8223e6395bd9c3da6406aa202ba96",
+    "modules/primitives.py": "8d28228f60e4d6a2407835e69a22f5f4d4e3171b5df5c8ada8403b02cf10c942",
+    "modules/dispatch.py": "9b735e9258d647a664168a947b642679a9e4961274584181e1fe789e1581210b",
+    "settings.py": "d395c65618a326b080ccbb705ebccedef0b5a506b9ad785d6339eee4dae5fdc7",
+    "kernels/transition/interface.py": "8526ea8e0a85c6f5122d9a742d7be797238c7cf0fe79a5c6f38b413774715db3",
+    "kernels/transition/triton/main.py": "46020b3a621eb5d371fff3e7da64800c1291aa4bdc7ff5395a650b4719948cdc",
+    "kernels/transition/triton/fused.py": "c660264b187d75bb227948c3b0ccd13e8062d9242641c12adce78b274c00246f",
+    "kernels/transition/triton/residual.py": "8a9053fd57ab28d895aa6f24b18715260af3aec1ab47b900724cd8939d57d628",
+    "kernels/trimul_inproj/triton/backward_fused.py": "37f92cdbcbb48bf9cb36826b06f8eec0306f312462de724393b55b2042383f15",
+    "kernels/transition/triton/fold.py": "d5d38ce52fb60108245cb6b27b162d6480251c59dc0f422563d13b7e44f6b9ad",
+    "kernels/transition/cute/fused.py": "15549ef04f19a6e645c09068089f9205b24cda9b39bc4051667d53dc81023fa9",
+    "kernels/transition/cute/gemm_transition_swiglu.py": "a59c0a773b3d6a06059e934abb15c34268c441f67a4e9815f4ccced7c07213df",
+    "kernels/transition/cute/squeeze_residual.py": "18376aafcebe445f12d34bae934659b89f1db1c87c78ae2a88431e320c3891b7",
+    "kernels/transition/cute/backward_gatebwd.py": "e7ecc7898f4f51bbb61d83f188bf8f08c3c8f781831c06df9d4106feef17e089",
+    "kernels/transition/cuda/__init__.py": "4feee00b0941b818d6a905a092aaa88a9ebbc23dbb33656f4788251b95a48ecd",
+    "kernels/transition/cuda/transition_b2b_kernel.cu": "dc19126efb932f9f7b5a21574cc7257ed36b4b843047e2919636465c0dd40023",
+    "kernels/transition/cuda/transition_gatebwd_kernel.cu": "b8dfbd55dc132cca47bdd12071e7605c995683d2b01ab71057074d917d80a2b9",
+    "kernels/layernorm/triton/main.py": "2d0ce5d56e5be70ae7760e2cf7cd4a2220b573b0f65adfbb67501a0e63f4f606",
+    "kernels/layernorm/cuda/__init__.py": "832ec51e17307bc00d61d3dc136b2c64331d5a120afffca676a78c24d294f01b",
+    "kernels/layernorm_linear/triton/stats.py": "2f483ec1e9b2cf5900a4bdee88da5f02e5c12c4658963d79187c61bc39f29467"
+  }
+}

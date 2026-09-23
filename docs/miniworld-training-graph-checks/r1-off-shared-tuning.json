@@ -1,0 +1,723 @@
+{
+  "graph": "off",
+  "recycles": 1,
+  "compile": false,
+  "engine_backend": "triton",
+  "device": "NVIDIA H100 80GB HBM3",
+  "torch_version": "2.10.0+cu128",
+  "engine_identity": "c5567a40ea101160cc2b35c98bc806803442c6ef275b1d7fce4220bbee8b1862",
+  "initial_weights_sha256": "963d33a80b7bee6e19702dbe791a91a022943a1aa3266ed169da044d6c477630",
+  "batch_sha256": "75ac907675338d38d35c6fd580c575b91d4e1da331211c241eb47345f784fed4",
+  "batch_shapes": {
+    "msa": {
+      "aligned_sequences": [
+        1,
+        2048,
+        384
+      ],
+      "mask": [
+        1,
+        2048
+      ],
+      "has_deletion": [
+        1,
+        2048,
+        384
+      ],
+      "deletion_value": [
+        1,
+        2048,
+        384
+      ],
+      "profile": [
+        1,
+        384,
+        32
+      ],
+      "deletion_mean": [
+        1,
+        384
+      ]
+    },
+    "structure": {
+      "atom_pos": [
+        1,
+        4096,
+        3
+      ],
+      "atom_pos_mask": [
+        1,
+        4096
+      ],
+      "atom_mask": [
+        1,
+        4096
+      ],
+      "token_bond": [
+        1,
+        0,
+        2
+      ],
+      "token_contacts": [
+        1,
+        18,
+        3
+      ],
+      "token_mask": [
+        1,
+        384
+      ],
+      "atom_bond": [
+        1,
+        2947,
+        6
+      ],
+      "token_bond_feat": [
+        1,
+        384,
+        384
+      ],
+      "atom_is_rep": [
+        1,
+        4096
+      ],
+      "bond_atom_pairs": [
+        1,
+        0,
+        2
+      ],
+      "token_frame_atoms": [
+        1,
+        384,
+        3
+      ],
+      "token_frame_mask": [
+        1,
+        384
+      ]
+    },
+    "scheme": {
+      "token_residue_idx": [
+        1,
+        384
+      ],
+      "token_idx": [
+        1,
+        384
+      ],
+      "token_asym_id": [
+        1,
+        384
+      ],
+      "token_entity_id": [
+        1,
+        384
+      ],
+      "token_sym_id": [
+        1,
+        384
+      ],
+      "atom_to_token_idx_map": [
+        1,
+        4096
+      ],
+      "atom_to_chain_id": [
+        1,
+        4096
+      ]
+    },
+    "template": {
+      "mask": [
+        1,
+        4
+      ],
+      "ids": [
+        1,
+        4,
+        384
+      ],
+      "res_type": [
+        1,
+        4,
+        384
+      ],
+      "cb_xyz": [
+        1,
+        4,
+        384,
+        3
+      ],
+      "cb_mask": [
+        1,
+        4,
+        384
+      ],
+      "bb_xyz": [
+        1,
+        4,
+        384,
+        3,
+        3
+      ],
+      "bb_mask": [
+        1,
+        4,
+        384
+      ]
+    }
+  },
+  "config": {
+    "data": {
+      "train_db": {
+        "items_path": null,
+        "resources_path": null,
+        "ccd_preprocessed_path": "/home/psk6950/data/CCD/preprocessed_CCD.lmdb",
+        "resources_index_path": "/home/psk6950/data/BioMol/metadata/resources_20210930.lmdb",
+        "resources_base": "/home/psk6950/data/BioMol/",
+        "train_item_path": "/home/psk6950/data/filtering/edge_node/train_item_20210930.tsv",
+        "catalog_cache_path": "/home/psk6950/data/BioMolDB_20260224/catalog_trainitem_no_disordered_bioai_unified.arrow",
+        "source_weights": {
+          "pdb": 0.5,
+          "disordered_pdb": 0.02,
+          "protein_monomer": 0.495,
+          "short_protein_monomer": 0.005
+        },
+        "default_source_weight": 1.0,
+        "sample_with_replacement": true,
+        "manifest_validation": "paths",
+        "pdb": {
+          "cif_db_path": "/home/psk6950/data/BioMol/lmdb/pdb/cif/cif_pdb_attached_train_20210930_res9_chain300.lmdb",
+          "a3m_db_path": "/home/psk6950/data/BioMol/lmdb/pdb/msa/a3m_d16k.lmdb",
+          "a3m_rna_db_path": "/home/psk6950/data/BioMol/lmdb/pdb/msa/msa_rna_pdb_d2k_shard0.lmdb",
+          "template_db_path": "/home/psk6950/data/BioMol/lmdb/pdb/template/template.lmdb",
+          "edge_id_to_bias_path": "/home/psk6950/data/BioMol/metadata/train_20210930_edge_node_reldate.tsv",
+          "load_all_msa": false,
+          "fingerprint_embedding_path": null,
+          "ccd_preprocessed_path": "/home/psk6950/data/CCD/preprocessed_CCD.lmdb"
+        },
+        "distillation_sources": [
+          {
+            "name": "protein_monomer",
+            "cif_db_path": "/home/psk6950/data/BioMol/lmdb/distillation_long/cif/cif_long_attached.lmdb",
+            "a3m_db_paths": [
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard0.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard1.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard2.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard3.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard4.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard5.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard6.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard7.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard8.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard9.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard10.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard11.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard12.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard13.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard14.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard15.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard16.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard17.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard18.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard19.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard20.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard21.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard22.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard23.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard24.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard25.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard26.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard27.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard28.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard29.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard30.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard31.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard32.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard33.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard34.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard35.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard36.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard37.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard38.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard39.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard40.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard41.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard42.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard43.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard44.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard45.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard46.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard47.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard48.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard49.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard50.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard51.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard52.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard53.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard54.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard55.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard56.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard57.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard58.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard59.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard60.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard61.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard62.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard63.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard64.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard65.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard66.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard67.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard68.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard69.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard70.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard71.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard72.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard73.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard74.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard75.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard76.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard77.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard78.lmdb",
+              "/home/psk6950/data/BioMol/lmdb/distillation_long/msa/msa_long_d2k_seqid_shard79.lmdb"
+            ],
+            "template_db_path": "/home/psk6950/data/BioMol/lmdb/distillation_long/template/template_topn_long.lmdb",
+            "weight": 1.0,
+            "max_items": null,
+            "assembly_id": "1",
+            "model_id": "1",
+            "alt_id": ".",
+            "chain_ids": [
+              "1"
+            ],
+            "lookup_mode": "record_id"
+          },
+          {
+            "name": "short_protein_monomer",
+            "cif_db_path": "/home/psk6950/data/BioMol/lmdb/distillation_short/cif/cif_short_attached.lmdb",
+            "a3m_db_paths": [
+              "/home/psk6950/data/BioMol/lmdb/distillation_short/msa/msa_short_d2k_seqid.lmdb"
+            ],
+            "template_db_path": "/home/psk6950/data/BioMol/lmdb/distillation_short/template/template_topn_short.lmdb",
+            "weight": 1.0,
+            "max_items": null,
+            "assembly_id": "1",
+            "model_id": "1",
+            "alt_id": ".",
+            "chain_ids": [
+              "1"
+            ],
+            "lookup_mode": "record_id"
+          },
+          {
+            "name": "disordered_pdb",
+            "cif_db_path": "/home/psk6950/data/BioMol/lmdb/distillation_disordered/cif/cif_disordered_attached.lmdb",
+            "a3m_db_paths": [
+              "/home/psk6950/data/BioMol/lmdb/distillation_disordered/msa/msa_disordered_d2k.lmdb"
+            ],
+            "template_db_path": "/home/psk6950/data/BioMol/lmdb/distillation_disordered/template/template_disordered.lmdb",
+            "weight": 1.0,
+            "max_items": null,
+            "assembly_id": "1",
+            "model_id": "1",
+            "alt_id": ".",
+            "chain_ids": [
+              "1"
+            ],
+            "lookup_mode": "record_id"
+          }
+        ]
+      },
+      "crop": {
+        "max_tokens": 384,
+        "max_atoms": 4096,
+        "min_segment_size": 1,
+        "max_segment_size": 41,
+        "monomer_only": false,
+        "remain_invalid_tokens": false,
+        "bucket_msa_size": 128,
+        "bucket_token_size": 128,
+        "bucket_atom_size": 1024,
+        "chain_crop_prob": 0.5
+      },
+      "msa": {
+        "max_msa_depth": 2048,
+        "missing_policy": "query",
+        "pairing_mode": "no_pairing",
+        "sample_depth": "uniform"
+      },
+      "tokenizer": {
+        "level": "atom",
+        "dynamic_config": null,
+        "seed": 42
+      },
+      "sampler": {
+        "protein_protein": 25.0,
+        "protein_ligand": 25.0,
+        "protein_dna": 10.0,
+        "protein_rna": 10.0,
+        "antibody_protein": 15.0,
+        "dna_dna": 5.0,
+        "rna_rna": 5.0,
+        "dna_rna": 0.5,
+        "antibody_antibody": 0.5,
+        "antibody_ligand": 1.0,
+        "na_ligand": 1.0,
+        "etc_interface": 1.0,
+        "sole": 1.0
+      }
+    },
+    "train": {
+      "comment": "v1.1.0-phase1a-distogram-large-L384",
+      "name": "MiniWorld-Distogram",
+      "run_dir": "runs/v1.1.0/phase1a/large_distogram_L384",
+      "engine_backend": "triton",
+      "overfitting": false,
+      "overfitting_dir": null,
+      "train_item": 25600,
+      "valid_item": 640,
+      "num_batch": 1,
+      "num_epoch": 800,
+      "optimizer": "Adam",
+      "max_lr": 0.0018,
+      "min_lr": 0.0001,
+      "weight_decay": 0.01,
+      "warmup_steps": 1000,
+      "decay_steps": 50000,
+      "decay_factor": 0.95,
+      "compile": true,
+      "force_trainer": "auto",
+      "compile_mode": null,
+      "ddp_find_unused": true,
+      "save_freq": 5,
+      "eval_freq": 20000,
+      "grad_clip_max_norm": 1.0,
+      "grad_accum_steps": 32,
+      "num_workers": 4,
+      "prefetch_factor": 4,
+      "seed": 0,
+      "use_ema": true,
+      "ema_decay": 0.999,
+      "bucket_msa_multiple": 2048,
+      "bucket_token_multiple": 384,
+      "bucket_atom_multiple": 4096,
+      "verbose": false,
+      "use_wandb": true,
+      "wandb_project": "MiniWorld"
+    },
+    "model": {
+      "shared": {
+        "d_single": 384,
+        "d_single_atom": 128,
+        "d_single_token": 768,
+        "d_single_token_input": 449,
+        "d_pair": 128,
+        "d_pair_template": 128,
+        "d_pair_atom": 16,
+        "d_contact": 3,
+        "d_time": 256,
+        "r_max": 32,
+        "s_max": 2,
+        "dgram_bins_template": 39,
+        "relpos_bins": 32,
+        "noise_freq": 256,
+        "num_res_class": 32,
+        "n_distogram_bins": 96,
+        "implementation": "miniworld_engine",
+        "use_checkpoint": false
+      },
+      "input_feat_embbeder": {
+        "d_single": 128,
+        "d_cond": 128,
+        "d_pair": 16,
+        "n_head": 4,
+        "use_qk_norm": false,
+        "implementation": "miniworld_engine",
+        "n_block": 3,
+        "n_checkpoint_segments": null
+      },
+      "atom_swa": {
+        "enabled": true,
+        "swa_window_size": 1000000,
+        "backend": "flash",
+        "expansion_ratio": 2,
+        "n_spatial_rope_pairs_per_axis": 2,
+        "n_uid_rope_pairs": 10,
+        "spatial_rope_base_frequency": 20.0,
+        "uid_rope_base_frequency": 10000.0
+      },
+      "trunk": {
+        "pairformer": {
+          "d_pair": 128,
+          "p_drop": 0.25,
+          "implementation": "miniworld_engine",
+          "n_block": 48,
+          "n_checkpoint_segments": null,
+          "use_single": false,
+          "d_single": 384,
+          "n_head_attention": 16,
+          "use_qk_norm": false
+        },
+        "msa_module": {
+          "d_msa": 64,
+          "d_pair": 128,
+          "d_single_token_input": 449,
+          "d_hidden_msa": 32,
+          "p_drop": 0.25,
+          "p_drop_msa": 0.15,
+          "mask_interchain": false,
+          "implementation": "miniworld_engine",
+          "num_res_class": 32,
+          "n_block": 4,
+          "n_checkpoint_segments": null
+        },
+        "n_recycle_max": 4,
+        "use_template": true,
+        "template_embedder": {
+          "num_channels": 64,
+          "n_block": 2,
+          "n_checkpoint_segments": null,
+          "dropout_prob": 0.25,
+          "out_init": "default",
+          "implementation": "MINIWORLD_ENGINE"
+        }
+      }
+    },
+    "loss": {
+      "distogram_loss": 1.0,
+      "distogram_cb_target": true,
+      "distogram_interchain_weight": 2.0
+    }
+  },
+  "parameter_count": 21781312,
+  "backend_counts": {
+    "triton": 296
+  },
+  "grad_accum": 32,
+  "preparation_seconds": 14.639305137097836,
+  "capture_seconds": 0.0,
+  "autotune_choices": [
+    [
+      "miniworld_engine.kernels.gated_projection.triton.main._sigmul_bwd",
+      "(4096, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_E: 512, num_warps: 2, num_ctas: 1, num_stages: 2, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.gated_projection.triton.main._sigmul_fwd",
+      "(4096, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_E: 512, num_warps: 1, num_ctas: 1, num_stages: 1, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.layernorm.triton.main.layer_norm_bwd_dx_fused",
+      "(2473901425434, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32')",
+      "BLOCK_K: 128, BLOCK_M1: 16, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.layernorm.triton.main.layer_norm_bwd_dx_fused",
+      "(2473901687578, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32')",
+      "BLOCK_K: 64, BLOCK_M1: 64, num_warps: 2, num_ctas: 1, num_stages: 1, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.layernorm.triton.main.layer_norm_bwd_dx_fused",
+      "(9895604912922, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32')",
+      "BLOCK_K: 128, BLOCK_M1: 16, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.layernorm.triton.main.layer_norm_fwd_fused",
+      "(2473901425434, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32')",
+      "BLOCK_K: 128, BLOCK_M1: 16, num_warps: 4, num_ctas: 1, num_stages: 4, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.layernorm.triton.main.layer_norm_fwd_fused",
+      "(2473901687578, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32')",
+      "BLOCK_K: 128, BLOCK_M1: 16, num_warps: 2, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.layernorm.triton.main.layer_norm_fwd_fused",
+      "(9895604912922, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32')",
+      "BLOCK_K: 128, BLOCK_M1: 16, num_warps: 4, num_ctas: 1, num_stages: 4, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.layernorm_linear.triton.te_style._ln_bwd_kernel",
+      "(2473901687578, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.bfloat16', 'torch.float32', 'torch.float32')",
+      "BLOCK_M1: 32, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.layernorm_linear.triton.te_style._ln_bwd_kernel",
+      "(2473902211866, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.bfloat16', 'torch.float32', 'torch.float32')",
+      "BLOCK_M1: 32, num_warps: 4, num_ctas: 1, num_stages: 4, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.layernorm_linear.triton.te_style._ln_mat_kernel",
+      "(2473901687578, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32')",
+      "BLOCK_K: 128, BLOCK_M1: 8, num_warps: 1, num_ctas: 1, num_stages: 2, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.layernorm_linear.triton.te_style._ln_mat_kernel",
+      "(2473902211866, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32')",
+      "BLOCK_K: 256, BLOCK_M1: 32, num_warps: 8, num_ctas: 1, num_stages: 6, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.rmsnorm.triton.main.rmsnorm_adamod_bwd_kernel",
+      "(281477124721674, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.float32')",
+      "BLOCK_N: 128, BLOCK_K: 128, BLOCK_M1: 16, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.rmsnorm.triton.main.rmsnorm_adamod_fwd_kernel",
+      "(281477124721674, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.bfloat16')",
+      "BLOCK_N: 128, BLOCK_K: 32, BLOCK_M1: 32, num_warps: 4, num_ctas: 1, num_stages: 4, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.rmsnorm.triton.main.rmsnorm_bwd_kernel",
+      "(68720001818, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.bfloat16', 'torch.bfloat16', 'torch.float32')",
+      "BLOCK_K: 128, BLOCK_M1: 16, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.rmsnorm.triton.main.rmsnorm_fwd_kernel",
+      "(68720001818, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.float32')",
+      "BLOCK_K: 64, BLOCK_M1: 8, num_warps: 4, num_ctas: 1, num_stages: 4, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.rope.triton.qk_norm.qk_norm_rope_bwd_kernel",
+      "(1125900443781205, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_M1: 4, num_warps: 4, num_ctas: 1, num_stages: 1, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.rope.triton.qk_norm.qk_norm_rope_fwd_kernel",
+      "(1125900443781205, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_M1: 32, num_warps: 4, num_ctas: 1, num_stages: 1, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.transition.triton.fused._transition_expand_gatebwd_kernel",
+      "(10133100236376230, False, True, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K: 32, BLOCK_M1: 32, BLOCK_N: 128, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.transition.triton.fused._transition_expand_gatebwd_kernel",
+      "(10133101311166630, False, True, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K: 64, BLOCK_M1: 64, BLOCK_N: 32, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.transition.triton.fused._transition_expand_gatebwd_kernel",
+      "(281477125245094, False, True, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K: 32, BLOCK_M1: 64, BLOCK_N: 64, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.transition.triton.fused._transition_expand_gatebwd_kernel",
+      "(40532397721127078, False, True, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K: 32, BLOCK_M1: 32, BLOCK_N: 128, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.transition.triton.main.transition_fwd_kernel",
+      "(10133100236376230, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K: 64, BLOCK_M1: 64, BLOCK_N: 128, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.transition.triton.main.transition_fwd_kernel",
+      "(10133101311166630, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K: 64, BLOCK_M1: 128, BLOCK_N: 64, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.transition.triton.main.transition_fwd_kernel",
+      "(281477125245094, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K: 32, BLOCK_M1: 64, BLOCK_N: 128, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 4, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.transition.triton.main.transition_fwd_kernel",
+      "(40532397721127078, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K: 32, BLOCK_M1: 64, BLOCK_N: 128, GROUP_M: 4, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.back_fused._dconcat_kernel",
+      "(6442977796, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_E: 128, num_warps: 1, num_ctas: 1, num_stages: 5, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.back_fused._dconcat_kernel",
+      "(6443502084, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_E: 512, num_warps: 2, num_ctas: 1, num_stages: 1, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.backward_fused._input_dual_bwd_kernel",
+      "(108090797693599897, 147456, 64, 1, 1, 147456, 1, 64, 64, 1, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_M1: 64, BLOCK_N: 64, BLOCK_K: 64, GROUP_M: 1, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.backward_fused._input_dual_bwd_kernel",
+      "(108095204330307737, 147456, 128, 1, 1, 147456, 1, 128, 128, 1, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_M1: 64, BLOCK_N: 128, BLOCK_K: 64, GROUP_M: 1, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.backward_fused._ln_bwd_residual_kernel",
+      "(2473901425434, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32')",
+      "BLOCK_K: 64, BLOCK_M1: 128, num_warps: 4, num_ctas: 1, num_stages: 1, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.backward_fused._ln_bwd_residual_kernel",
+      "(2473901687578, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.bfloat16', 'torch.bfloat16', 'torch.float32', 'torch.float32', 'torch.float32', 'torch.float32')",
+      "BLOCK_K: 128, BLOCK_M1: 32, num_warps: 2, num_ctas: 1, num_stages: 1, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.bidirectional._bidir_front_kernel",
+      "(26390426815878, True, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K_D: 32, BLOCK_K_H2: 32, BLOCK_M1: 128, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.bidirectional._bidir_front_kernel",
+      "(26392574561670, True, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K_D: 64, BLOCK_K_H2: 64, BLOCK_M1: 64, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.gate_elem._gate_elem_bwd_ew_kernel",
+      "(6442713882, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K: 64, BLOCK_M1: 32, num_warps: 4, num_ctas: 1, num_stages: 2, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.gate_elem._gate_elem_bwd_ew_kernel",
+      "(6442976026, False, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_K: 64, BLOCK_M1: 128, num_warps: 16, num_ctas: 1, num_stages: 2, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.output_fused._output_f567_kernel",
+      "(108090791251148953, 147456, 384, 128, 1, 64, 1, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_M1: 64, BLOCK_N: 32, BLOCK_K: 64, GROUP_M: 4, num_warps: 8, num_ctas: 1, num_stages: 2, maxnreg: None"
+    ],
+    [
+      "miniworld_engine.kernels.trimul_inproj.triton.output_fused._output_f567_kernel",
+      "(108095191445405849, 147456, 384, 256, 1, 128, 1, 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16', 'torch.bfloat16')",
+      "BLOCK_M1: 64, BLOCK_N: 64, BLOCK_K: 64, GROUP_M: 4, num_warps: 8, num_ctas: 1, num_stages: 3, maxnreg: None"
+    ]
+  ],
+  "autotune_choices_sha256": "52d2d7d8905cd14d4f78f42c3309701110fe9e840501929b4a29f24d3f72ea76",
+  "peak_allocated_including_preparation_gib": 52.79446315765381,
+  "device_used_gib": 54.88555908203125,
+  "peak_allocated_gib": 52.79446315765381,
+  "peak_reserved_gib": 54.08203125,
+  "warmup_loss": 4.5625,
+  "warmup_grad_norm": 209.66168212890625,
+  "rounds": [
+    {
+      "round": 0,
+      "wall_seconds": 7.500747467391193,
+      "cuda_seconds": 7.5006259765625,
+      "loss": 4.5625,
+      "grad_norm": 209.66168212890625
+    },
+    {
+      "round": 1,
+      "wall_seconds": 7.500042015686631,
+      "cuda_seconds": 7.4999423828125,
+      "loss": 4.5625,
+      "grad_norm": 209.6616973876953
+    },
+    {
+      "round": 2,
+      "wall_seconds": 7.498287143185735,
+      "cuda_seconds": 7.4981044921875,
+      "loss": 4.5625,
+      "grad_norm": 210.05735778808594
+    }
+  ],
+  "median_step_seconds": 7.500042015686631,
+  "scope": "full Phase1 model forward/loss/backward + GPU batch copy + grad accumulation + Adam + clip + scheduler + EMA; excludes data loading/H2D/DDP; fixed recycle; two real batches repeatedly used; random initialized weights"
+}

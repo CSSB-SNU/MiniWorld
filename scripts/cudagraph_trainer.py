@@ -4,7 +4,9 @@ Dispatched from ``run_miniworld_distogram_train.train`` when the model runs a
 FIXED recycle count (``n_recycle_max == 1``). Unlike the Fabric + plain-compile
 path (used for random recycle), this captures the whole fwd+loss+bwd as ONE
 standard ``torch.cuda.CUDAGraph`` and replays it — eliminating per-microbatch
-kernel-launch overhead (measured 8-GPU: 71% -> ~96-100% GPU util, ~1.8x faster).
+kernel-launch overhead. The benefit depends on the backend and workload: the
+current strict-Triton single-GPU L384 audit measured about 1.04x, excluding DDP
+and data loading. See docs/miniworld-training-cudagraph-ab.md.
 
 Why a separate loop (not Fabric):
   * Manual CUDA-graph capture of fwd+loss+bwd needs a static, hook-free backward.
@@ -60,6 +62,9 @@ def _load_static(dst, src) -> None:
 
 def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) -> None:
     """Manual-DDP + CUDA-graph training loop for the fixed-recycle model."""
+    from miniworld.training.engine_backend import configure_engine_backend, configure_fused_msa_train
+    configure_engine_backend(cfg.train.engine_backend)
+    configure_fused_msa_train(getattr(cfg.train, "fused_msa_train", False))
     rank = int(os.environ.get("RANK", "0"))
     world = int(os.environ.get("WORLD_SIZE", "1"))
     local = int(os.environ.get("LOCAL_RANK", "0"))
@@ -136,6 +141,8 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
     # CB/pseudo-beta distogram target (cfg.loss.distogram_cb_target). Default off keeps the
     # legacy shortest-inter-atom-distance target.
     _use_cb = cfg.loss.distogram_cb_target
+    if _use_cb and static.structure.atom_is_rep is None:
+        raise ValueError("Representative-atom distogram requires atom_is_rep features.")
     if is_zero:
         log.info("[cudagraph] distogram target = %s",
                  "CB/pseudo-beta (rep atom)" if _use_cb else "shortest inter-atom")
@@ -148,7 +155,9 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
                 sequence=static.sequence, structure=static.structure, template=static.template)
             loss = w * cal_atom_distogram_loss(
                 logit, static.structure.atom_pos, static.structure.atom_pos_mask,
-                static.scheme.atom_to_token_idx_map, rep_atom_mask=rep)
+                static.scheme.atom_to_token_idx_map, rep_atom_mask=rep,
+                token_asym_id=static.scheme.token_asym_id,
+                interchain_weight=cfg.loss.distogram_interchain_weight)
         loss.backward()
         return loss
 

@@ -5,17 +5,18 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import torch
+from miniworld_engine.modules import LayerNorm
 from pydantic import BaseModel
 from team_gm.modules import DiffusionTransformer
+from team_gm.modules.blocks._engine_impl import to_engine_impl
 from team_gm.modules.primitives import (
     Linear,
 )
-from miniworld_engine.modules import LayerNorm
-from team_gm.modules.blocks._engine_impl import to_engine_impl
 from torch import nn
 
 from miniworld.configs import SharedConfig
 from miniworld.configs.models import AtomSWAConfig
+from miniworld.data.features import MSAFeatures
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_feature_embedder_esmfold2_style import (
     InputFeatureEmbedderESMFold2Style,
@@ -25,6 +26,7 @@ from miniworld.modules.mini_pairformer import MiniPairformer
 from miniworld.modules.msa_util import (
     init_msa,
     init_token_single_msa,
+    subsample_msa_rows,
 )
 from miniworld.modules.template_embedder_af3 import AF3TemplateEmbedder
 
@@ -32,7 +34,6 @@ if TYPE_CHECKING:
     from jaxtyping import Float
 
     from miniworld.data.features import (
-        MSAFeatures,
         ReferenceFeatures,
         SchemeFeatures,
         SequenceFeatures,
@@ -83,6 +84,10 @@ class MiniSWAModel(nn.Module):
         pairformer: MiniPairformer.Config
         msa_module: MiniMSAModule.Config
         n_recycle_max: int = 4
+        # v1.2.0: rows the MSA module sees PER RECYCLE, drawn anew each iteration from
+        # the pool the dataloader supplied (AF3 SI 3.3 / OpenFold3: 1024). None keeps
+        # the legacy behaviour -- the whole pool, embedded once, shared by every cycle.
+        msa_subsample_per_recycle: int | None = None
         # AF3-style template stack (adds to the pair rep before the MSA module).
         use_template: bool = False
         template_embedder: TemplateEmbedderConfig = TemplateEmbedderConfig()
@@ -231,17 +236,41 @@ class MiniSWAModel(nn.Module):
             scheme,
             structure,
         )
-        msa_feat, msa_mask = init_msa(
-            msa,
-            num_res_class=self.config.shared.num_res_class,
-            dtype=torch.bfloat16,
-        )
+        if self.config.trunk.msa_subsample_per_recycle is None:
+            # legacy: embed the whole pool once, every recycle reuses it
+            msa_feat, msa_mask = init_msa(
+                msa,
+                num_res_class=self.config.shared.num_res_class,
+                dtype=torch.bfloat16,
+            )
+        else:
+            # v1.2.0: hand the raw pool to the recycle loop; each ``_trunk_step``
+            # draws its own rows and embeds only those (see ``_msa_for_step``).
+            msa_feat, msa_mask = msa, None
         return (
             token_pair_init.to(torch.bfloat16),
             token_single_input.to(torch.bfloat16),
             msa_feat,
             msa_mask,
             structure.token_mask,
+        )
+
+    def _msa_for_step(self, msa_feat, msa_mask):
+        """Resolve what the MSA module sees in THIS recycle.
+
+        Legacy path: ``msa_feat`` is the embedded pool from ``_embed`` -> pass through.
+        v1.2.0 path: ``msa_feat`` is the raw :class:`MSAFeatures` pool -> draw
+        ``trunk.msa_subsample_per_recycle`` rows (valid first, query kept, fresh rows
+        on every call and every CUDA-graph replay) and embed just those. Static
+        output shape either way.
+        """
+        if not isinstance(msa_feat, MSAFeatures):
+            return msa_feat, msa_mask
+        subset = subsample_msa_rows(msa_feat, self.config.trunk.msa_subsample_per_recycle)
+        return init_msa(
+            subset,
+            num_res_class=self.config.shared.num_res_class,
+            dtype=torch.bfloat16,
         )
 
     def _trunk_step(
@@ -262,6 +291,7 @@ class MiniSWAModel(nn.Module):
         count: replay under no_grad ``n_recycle-1`` times, then once with grad.
         """
         token_pair = token_pair_init_bf16 + self.add_pair_recycle(token_pair)
+        msa_feat, msa_mask = self._msa_for_step(msa_feat, msa_mask)
 
         # AF3 trunk order: template → MSA → Pairformer.
         if self.use_template:

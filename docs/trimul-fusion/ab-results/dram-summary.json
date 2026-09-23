@@ -1,0 +1,67 @@
+{
+  "method": "ncu kernel replay, cache-control none, one warm execution per variant, no latency measurement; counter snapshot is not a theoretical bound",
+  "length": 768,
+  "data": {
+    "baseline": {
+      "read_bytes": 1208428288,
+      "write_bytes": 906911488,
+      "kernels": {
+        "0": {
+          "name": "_ln_mat_kernel",
+          "read_bytes": 302029568,
+          "write_bytes": 301743616
+        },
+        "1": {
+          "name": "nvjet_tst_128x256_64x4_1x2_h_bz_coopA_TNN",
+          "read_bytes": 302094080,
+          "write_bytes": 152225024
+        },
+        "2": {
+          "name": "nvjet_tst_128x256_64x4_1x2_h_bz_coopA_NNN",
+          "read_bytes": 151057152,
+          "write_bytes": 147083776
+        },
+        "3": {
+          "name": "_gate_mul_train_kernel",
+          "read_bytes": 453247488,
+          "write_bytes": 305859072
+        }
+      },
+      "total_MiB": 2017.34521484375
+    },
+    "A": {
+      "read_bytes": 906421504,
+      "write_bytes": 759344384,
+      "kernels": {
+        "4": {
+          "name": "_ln_mat_kernel",
+          "read_bytes": 302015744,
+          "write_bytes": 302590720
+        },
+        "5": {
+          "name": "_f567",
+          "read_bytes": 604405760,
+          "write_bytes": 456753664
+        }
+      },
+      "total_MiB": 1588.59814453125
+    },
+    "B": {
+      "read_bytes": 755362560,
+      "write_bytes": 760056832,
+      "kernels": {
+        "6": {
+          "name": "_f45",
+          "read_bytes": 302110720,
+          "write_bytes": 451660032
+        },
+        "7": {
+          "name": "_f567",
+          "read_bytes": 453251840,
+          "write_bytes": 308396800
+        }
+      },
+      "total_MiB": 1445.216552734375
+    }
+  }
+}

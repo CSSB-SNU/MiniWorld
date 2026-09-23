@@ -1,0 +1,380 @@
+{
+  "date": "2026-09-18",
+  "kind": "static source, git history, and historical benchmark audit; no new GPU measurement",
+  "engine": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine",
+  "source_commit": "59bdb335064caee8ec75bafe3bbafa655955a7b8",
+  "scope": "General Transition; all current source files and notes under kernels/transition, related dispatch/config/LN, selected historical commits. ConditionedTransition excluded. Remote-only SM100 variants reviewed through notes, not their absent source. Cache completeness not verified.",
+  "counts": {
+    "source": 25,
+    "historical_note": 25,
+    "related_source": 6
+  },
+  "files": [
+    {
+      "path": "src/miniworld_engine/kernels/transition/__init__.py",
+      "kind": "source",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cuda/__init__.py",
+      "kind": "source",
+      "sha256": "4c6afe5de1269decffbb6ade80f50881a8f6bafade16ddb94d8e4d7e4ccbd0ba"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cuda/setup.py",
+      "kind": "source",
+      "sha256": "0e8a67608d7165fe36df5cba1bf06361704dd1cc5578b5e3b5e9b6b8301333ba"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cuda/transition_b2b_kernel.cu",
+      "kind": "source",
+      "sha256": "dc19126efb932f9f7b5a21574cc7257ed36b4b843047e2919636465c0dd40023"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cuda/transition_b2b_sm100_kernel.cu",
+      "kind": "source",
+      "sha256": "9ed500bd58b9e572a9c3a652c59fc57a04f624aece7d4b16712a624f7b91ae06"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cuda/transition_cuda.cpp",
+      "kind": "source",
+      "sha256": "a17ffffee718e96c8a261df621dca76369c2f7665bc922750b18509e8e2d4e0e"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cuda/transition_cuda_kernel.cu",
+      "kind": "source",
+      "sha256": "6d74bc430dd1c0e826832eb92adbf7a606ace5c6c66b58f7eba77722087bd8fc"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cuda/transition_expand_gate_kernel.cu",
+      "kind": "source",
+      "sha256": "343ede2f4bf894601b273d260061edd0c8b53d8796b358af95e2c4f285ad6cb4"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cuda/transition_gatebwd_kernel.cu",
+      "kind": "source",
+      "sha256": "b8dfbd55dc132cca47bdd12071e7605c995683d2b01ab71057074d917d80a2b9"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cute/__init__.py",
+      "kind": "source",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cute/b2b_fwd_sm100.py",
+      "kind": "source",
+      "sha256": "67e4b6f766eb2c167970c9e1f1811c202e72beab9b4342a476c1bcfdb3c118e5"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cute/backward_gatebwd.py",
+      "kind": "source",
+      "sha256": "e7ecc7898f4f51bbb61d83f188bf8f08c3c8f781831c06df9d4106feef17e089"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cute/dab_lnbwd.py",
+      "kind": "source",
+      "sha256": "45bed546e8f4c6b48a5ea3e7467ab4df0f6e118dcd8a8dccf180ecf744c9e299"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cute/fused.py",
+      "kind": "source",
+      "sha256": "15549ef04f19a6e645c09068089f9205b24cda9b39bc4051667d53dc81023fa9"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cute/gatebwd_sm100.py",
+      "kind": "source",
+      "sha256": "12db5b2b39dcf3340b437fdb77d6bdffa61128ebbe08250eace934e7f8eef892"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cute/gemm_transition_swiglu.py",
+      "kind": "source",
+      "sha256": "a59c0a773b3d6a06059e934abb15c34268c441f67a4e9815f4ccced7c07213df"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/cute/squeeze_residual.py",
+      "kind": "source",
+      "sha256": "069267854da1268e98614b39c0886a89018f52e358f85d73217dac25cae628df"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/interface.py",
+      "kind": "source",
+      "sha256": "8526ea8e0a85c6f5122d9a742d7be797238c7cf0fe79a5c6f38b413774715db3"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/highdim-and-split.md",
+      "kind": "historical_note",
+      "sha256": "d5259971e9dbce68bca1e8d51cc3967118d74d5f7908b3cdcce503512ef3c9c7"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/module-integration.md",
+      "kind": "historical_note",
+      "sha256": "7af27900cf2571952b88f2d0b7b5d56b2bf499521365ac3e79824f0f741415e2"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v0-baseline.md",
+      "kind": "historical_note",
+      "sha256": "8c7c82825ffe48ec3b73bb4a0e3657e4322909ddcc5c68dd9f132c1aea781fba"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v1.md",
+      "kind": "historical_note",
+      "sha256": "3ac989af0312160693e5bd8e696f3e46ea7f4c3df927096874f9c001389d7aca"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v10.md",
+      "kind": "historical_note",
+      "sha256": "bf348c22311c6865d798ef3daf5ef10a74df4a03f6bdf53c9e90892046eedf1f"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v11.md",
+      "kind": "historical_note",
+      "sha256": "f9a4c3dd3bde30f15fd75e6639db720c45523787c86ea11a7ec4b3b61e33d3c1"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v12.md",
+      "kind": "historical_note",
+      "sha256": "53be791dc9aff0456d7c33486fcbd61346ccc1af56657f636b18ef19a254f20e"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v13.md",
+      "kind": "historical_note",
+      "sha256": "7612cb978e1824424a8d5beb0766977090e7e23b89070102e13b38b19a8acd2c"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v14.md",
+      "kind": "historical_note",
+      "sha256": "8fcacbd3eb70200a66c7ed112e0e34b0f1f6c1fd5e583319df4d41f89b413611"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v15.md",
+      "kind": "historical_note",
+      "sha256": "99fccacc05aaecee0fdfc4fcb9b87852f526c07e85fa8e5078f140c48e31b03f"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v16.md",
+      "kind": "historical_note",
+      "sha256": "3de06d62160693376a0dc3de76e15a097db781ba5d289383a4c4687a0c4c4945"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v17.md",
+      "kind": "historical_note",
+      "sha256": "336ec14cafe230455ce94af020a91e761a651a727eca97ec5dfdba52db7f7310"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v2.md",
+      "kind": "historical_note",
+      "sha256": "627a916dcd535454197873389e849937220905645b74878a64fb99d44c9970c8"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v3.md",
+      "kind": "historical_note",
+      "sha256": "fdc74295b0a273417c320d7b06d827924c962ac1230910721c6496abef83e7f3"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v4.md",
+      "kind": "historical_note",
+      "sha256": "e4cdcf9d13c0898207bd3a095e4cfca3a2ca014b2d865062bb8b541210984400"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v5.md",
+      "kind": "historical_note",
+      "sha256": "ca76ea0a233cde42f44f0d9bd54c79d546612132e73879b1074ba4c1ef9fa1be"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v6.md",
+      "kind": "historical_note",
+      "sha256": "50c81bac74c4daa7f65b9fac2af17d9658bfc13a7e9cd89dc4cbef3423ab587b"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v7.md",
+      "kind": "historical_note",
+      "sha256": "8840fd5d3ac7e4174b54169f2d8b3d3245325930d5b7487099f24cb212b45003"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v8.md",
+      "kind": "historical_note",
+      "sha256": "934031c74115c90d1953d839e4a07b003185ee47bea26ff3d6930730cbcffa9d"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b/v9.md",
+      "kind": "historical_note",
+      "sha256": "e6001f0782d247421dec48609e9e3c8da94a7352862d05d51da37e43156b4936"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b_sm100/v1.md",
+      "kind": "historical_note",
+      "sha256": "9e5de108ef7b68d44583fe348cda938445c6205a304bfcd68a738e82e0a0d7c7"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b_sm100/v2.md",
+      "kind": "historical_note",
+      "sha256": "ba109e7a9376cd1225d12d7fd980b3636b25d28e6e16c0551c6778841c25cf13"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_b2b_sm100/v3.md",
+      "kind": "historical_note",
+      "sha256": "e6d9b999e3c51cf7b052f2c5f19694420a9e49dbd22c78b51b6b8aae9a8be543"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_split/v1.md",
+      "kind": "historical_note",
+      "sha256": "a394a6afa48e4e028f6ccba3e53f9b0d909bcb6a3938185eb3c6bb313b32bbbe"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/notes/transition_split/v2.md",
+      "kind": "historical_note",
+      "sha256": "30a7332730d78df5dc64555e478e9fb8994d1b30efab4972baefd95042b773be"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/reference.py",
+      "kind": "source",
+      "sha256": "bba13a56a188dbbbd68e25300d060b23d4d362be0543f21c70b2ea098538f32e"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/triton/__init__.py",
+      "kind": "source",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/triton/fold.py",
+      "kind": "source",
+      "sha256": "d5d38ce52fb60108245cb6b27b162d6480251c59dc0f422563d13b7e44f6b9ad"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/triton/fused.py",
+      "kind": "source",
+      "sha256": "c5738eb92cc754420d77d5ff697d7deca9cc9bb5845e1292b280eb8813a70ff7"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/triton/main.py",
+      "kind": "source",
+      "sha256": "46020b3a621eb5d371fff3e7da64800c1291aa4bdc7ff5395a650b4719948cdc"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/triton/residual.py",
+      "kind": "source",
+      "sha256": "8a9053fd57ab28d895aa6f24b18715260af3aec1ab47b900724cd8939d57d628"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/transition/whole_op.py",
+      "kind": "source",
+      "sha256": "2bd8894773a5ec9a1ca7a0c30f31db2e125a87bccf6a369ca3d9a7f954050bc4"
+    },
+    {
+      "path": "src/miniworld_engine/modules/transition/module.py",
+      "kind": "related_source",
+      "sha256": "cd8013f89af079b6850463152725d0cb3db3102889d8c98aca3a2408a76c6ddf"
+    },
+    {
+      "path": "src/miniworld_engine/settings.py",
+      "kind": "related_source",
+      "sha256": "aaa7e4a9a7e7569d7905982ae06f309bae148f717dbb899fd545cb807a8a68f5"
+    },
+    {
+      "path": "src/miniworld_engine/ops/__init__.py",
+      "kind": "related_source",
+      "sha256": "4473be9048a8de4c205a6a7e7abeca799ad5c680cf50436aa4c0e77c1e70f8bd"
+    },
+    {
+      "path": "src/miniworld_engine/autotune/hopper_cuda_config.py",
+      "kind": "related_source",
+      "sha256": "95cf09842d7601ca109d01c546720c893b87fca8a3a370127df048b8743ddbbf"
+    },
+    {
+      "path": "src/miniworld_engine/autotune/cute_config.py",
+      "kind": "related_source",
+      "sha256": "b4a3984259c2d8c14cbb18884d00b1217576d3b72acefdfb8318abc04b330530"
+    },
+    {
+      "path": "src/miniworld_engine/kernels/trimul_inproj/triton/backward_fused.py",
+      "kind": "related_source",
+      "sha256": "229846a3c021451cb0d24f400a640b807d47afc4d2ee16796139611fc13b2840"
+    }
+  ],
+  "historical_commits": {
+    "ea5aa3f2": {
+      "sha": "ea5aa3f2a23d7703599df1dd72cef0c59e3d28c2",
+      "date": "2026-07-06",
+      "subject": "perf(cuda): transition_b2b v14 — gamma/beta register-load, drop LN-param smem stage (1.29x)"
+    },
+    "3ae6c43d": {
+      "sha": "3ae6c43da3e0a56137b905e532fbea3a6897112b",
+      "date": "2026-07-06",
+      "subject": "feat(transition): hand-CUDA fused b2b forward beats Triton 1.29x + inference/training integration"
+    },
+    "b2ce8134": {
+      "sha": "b2ce813445a2c218731af7ff466efb6e7cda9e71",
+      "date": "2026-07-07",
+      "subject": "feat(transition): CUDA b2b d=256 high-dim generalization + inference dispatch"
+    },
+    "8faf4952": {
+      "sha": "8faf4952da3599407992ca4199f37b16582ee797",
+      "date": "2026-07-31",
+      "subject": "feat(transition): fuse post-transition residual add into the squeeze epilogue"
+    },
+    "2101ee25": {
+      "sha": "2101ee257b83e1396c34d3d27cb4f9de7f6144bd",
+      "date": "2026-07-31",
+      "subject": "perf(transition): sm90 WGMMA fused expand + gate-backward kernel (d>=256)"
+    },
+    "02039d19": {
+      "sha": "02039d19624b5b74fb44b039a89fc310d2fd75a4",
+      "date": "2026-08-04",
+      "subject": "feat(cute): FIX B — free dgrad/dab tile_m (brute-force the pingpong atom-1x1 family)"
+    },
+    "621ad70c": {
+      "sha": "621ad70ccf0176ddc2adbc21f9d540509041a909",
+      "date": "2026-08-04",
+      "subject": "feat(cute): dgrad/dab — make cluster_m a swept knob (measured, not guessed)"
+    },
+    "79cca4eb": {
+      "sha": "79cca4eb3c143c9bff549280f094cef8cc933b46",
+      "date": "2026-09-03",
+      "subject": "fix(transition): make the b2b covering fast-path reachable again (4.17->2.03ms)"
+    },
+    "f306ab55": {
+      "sha": "f306ab55771bac4ce1441b59f848c998016a2e54",
+      "date": "2026-09-03",
+      "subject": "fix(transition): decouple BLOCK_N from BLOCK_K_ND to reach the July covering config"
+    },
+    "c65fe203": {
+      "sha": "c65fe2030ec0787c4d484f907011e595cafbb09d",
+      "date": "2026-09-15",
+      "subject": "feat(h100): preserve native autotuning and memory fault diagnostics"
+    },
+    "7db83df1": {
+      "sha": "7db83df12d050fa32d6a9ba03aa2cf477f4e54c3",
+      "date": "2026-09-17",
+      "subject": "feat: fuse Triton Transition residual forward and backward"
+    },
+    "fbe2d6ad": {
+      "sha": "fbe2d6add1caa072f0a95dbf55ef7e63d9eb4e2a",
+      "date": "2026-09-17",
+      "subject": "perf: enable Triton Transition residual fusion by default"
+    },
+    "09196265": {
+      "sha": "091962652c7185484999c153df316cc8cfd9a774",
+      "date": "2026-09-17",
+      "subject": "perf(norm): relax gradient atomics and restore Transition cache widths"
+    }
+  },
+  "benchmark_documents": [
+    {
+      "path": "docs/transition-performance-recheck.md",
+      "sha256": "39332c75317a256ee0c15592df0d44d2a11484827fdd5bdf2199238e642602db"
+    },
+    {
+      "path": "docs/transition-triton-comparison.md",
+      "sha256": "15ef8cc8be7f8491a377295e59d87d01fa201f8eb5fe2d3fb0d52d0a02c8a90a"
+    },
+    {
+      "path": "docs/transition-fusion/RESIDUAL.md",
+      "sha256": "f0d4a1ffb7cf4cccdc5948a7177990b697654bfe53e9cb6b0d9e278438f03530"
+    },
+    {
+      "path": "docs/transition-fusion/AUDIT.md",
+      "sha256": "048b121114b9266ea11cd5a4264e0e19e8da41c5caa1943cf901b597611b22bb"
+    }
+  ],
+  "classification_document": "IMPLEMENTATIONS.md"
+}

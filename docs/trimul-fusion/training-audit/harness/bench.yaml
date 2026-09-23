@@ -1,0 +1,46 @@
+# Single-bench config (hydra). Override on the CLI, e.g.
+#   python benchmarks/runners/bench.py target=transition level=module implementations=[pytorch,triton]
+#   python benchmarks/runners/bench.py target=triangle_multiplication level=module mode=inference
+d_single: 384
+d_pair: 128
+d_single_token: 768
+d_single_atom: 128
+d_pair_atom: 16
+
+n_layers: 1
+n_augment: 48
+mask_prob: 0.0
+min_seq_len: 384
+max_seq_len: 1024
+seq_len_step: 128
+min_d_pair: 128
+max_d_pair: 512
+d_pair_step: 128
+d_pair_values:
+  - 128
+  - 256
+  - 512
+sweep_axis: seq_len   # seq_len | d_pair
+sweep_seq_len: 384
+# Which op to bench, and in which namespace. `level: module` targets (this file's set) are
+# the folders under benchmarks/modules/:
+#   triangle_multiplication | triangle_multiplication_bidirectional | attention_pair_bias |
+#   triangle_attention | transition | conditioned_transition | adaptive_layernorm |
+#   augmented_attention_token | augmented_attention_atom
+# `level: kernel` targets are the folders under benchmarks/kernels/ (same key, other
+# namespace: `triangle_attention` exists at both levels).
+target: triangle_multiplication_bidirectional
+level: module
+implementations:
+  - pytorch
+  - miniworld
+# miniworld auto-routes to the triton path on A100 (sm_80) and the cute path on Hopper+
+# (see modules/dispatch.py). TriangleMultiplication also accepts, explicitly:
+#   triton | dtv1 | triton_pytorch_ln | triton_ln | cute
+mode: inference        # inference | training
+metric: time           # time | memory
+compile: true
+cudagraph: disabled
+allow_tf32: true
+precision: "bf16-mixed"
+name_suffix: ""

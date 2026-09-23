@@ -1,0 +1,79 @@
+{
+  "length": 384,
+  "implementation": "triton",
+  "comparisons": {
+    "dropout": {
+      "pytorch_bf16": {
+        "output": 0.0033828411251306534,
+        "input_grad": 0.005111506674438715,
+        "ln_pair.weight.grad": 0.007688185200095177,
+        "ln_pair.bias.grad": 0.007318095304071903,
+        "to_left.weight.grad": 0.006136409472674131,
+        "to_left_gate.weight.grad": 0.006129219196736813,
+        "to_right.weight.grad": 0.006104231346398592,
+        "to_right_gate.weight.grad": 0.0060812728479504585,
+        "ln_out.weight.grad": 0.005900925491005182,
+        "ln_out.bias.grad": 0.0036122414749115705,
+        "to_gate.weight.grad": 0.006511906161904335,
+        "to_out.weight.grad": 0.006125262472778559
+      },
+      "pytorch_fp32": {
+        "output": 0.003351188264787197,
+        "input_grad": 0.004917635582387447,
+        "ln_pair.weight.grad": 0.006497330963611603,
+        "ln_pair.bias.grad": 0.007272948045283556,
+        "to_left.weight.grad": 0.006064969580620527,
+        "to_left_gate.weight.grad": 0.006784343626350164,
+        "to_right.weight.grad": 0.006030391901731491,
+        "to_right_gate.weight.grad": 0.006662655156105757,
+        "ln_out.weight.grad": 0.005540634039789438,
+        "ln_out.bias.grad": 0.003299398347735405,
+        "to_gate.weight.grad": 0.006451230496168137,
+        "to_out.weight.grad": 0.005729088559746742
+      }
+    },
+    "zero_scale": {
+      "pytorch_bf16": {
+        "output": 0.0,
+        "input_grad": 0.0,
+        "ln_pair.weight.grad": 0.0,
+        "ln_pair.bias.grad": 0.0,
+        "to_left.weight.grad": 0.0,
+        "to_left_gate.weight.grad": 0.0,
+        "to_right.weight.grad": 0.0,
+        "to_right_gate.weight.grad": 0.0,
+        "ln_out.weight.grad": 0.0,
+        "ln_out.bias.grad": 0.0,
+        "to_gate.weight.grad": 0.0,
+        "to_out.weight.grad": 0.0
+      },
+      "pytorch_fp32": {
+        "output": 0.0,
+        "input_grad": 0.0,
+        "ln_pair.weight.grad": 0.0,
+        "ln_pair.bias.grad": 0.0,
+        "to_left.weight.grad": 0.0,
+        "to_left_gate.weight.grad": 0.0,
+        "to_right.weight.grad": 0.0,
+        "to_right_gate.weight.grad": 0.0,
+        "ln_out.weight.grad": 0.0,
+        "ln_out.bias.grad": 0.0,
+        "to_gate.weight.grad": 0.0,
+        "to_out.weight.grad": 0.0
+      }
+    }
+  },
+  "complete": true,
+  "output_norm_cache": [
+    {
+      "kernel": "_ln_mat_kernel",
+      "shape_key": 2148533018,
+      "candidates": 16
+    },
+    {
+      "kernel": "_ln_bwd_kernel",
+      "shape_key": 2148533018,
+      "candidates": 9
+    }
+  ]
+}

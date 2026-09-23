@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-17",
+  "scope": "installed source wiring, not runtime profiling",
+  "package": "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine",
+  "sha256": {
+    "kernels/trimul_inproj/triton/contract.py": "4ad1ca9bff52c6d17e8aee25eb8880f035eb71a6fdc2c4747f2e0310246d901d",
+    "modules/triangle_multiplication/module.py": "eb08e332e5e17d23b1bee52afe29d4fda9f4990f4715cba794e74c2877d83d62",
+    "modules/triangle_multiplication/bidirectional.py": "89fff19abe731bcafbdfe02ad2a562fc9f45a978eb7b88e8a644f7b0e721c9e8",
+    "modules/dispatch.py": "9b735e9258d647a664168a947b642679a9e4961274584181e1fe789e1581210b",
+    "kernels/trimul_inproj/triton/unidirectional.py": "fba4abf7ca501b8a5f9242631761a736ed9d65524597b97037a1357f43bfcd9f",
+    "kernels/trimul_inproj/triton/bidirectional.py": "7da6421a9b22d5a1ef5589cda288a0f243c1878ced208f074c65b9f4c00c48b5",
+    "kernels/trimul_inproj/triton/back.py": "7e32e2036e1f575fa19cbc81df34e9ffab5bab04e3f6f6c4be75b3995458c0f4",
+    "kernels/trimul_inproj/triton/gate_elem.py": "4b92a71d22123f24025212fb6c0866071f8b0ab456b9e60e3eddca7aa963dbae",
+    "kernels/tm1/cute/launch.py": "97a0e758597f1b7646099b662c6c47a1cd7da5688fe4d9f865c97eaf8d2be3be",
+    "kernels/trimul_inproj/cute/masked_front.py": "f1e1607fca61d48975f22cf4747038ef68ad70890691c7852054a7cb30598ba5",
+    "kernels/layernorm/triton/transpose.py": "92ef07d30dede557d43ced1bd4aa50014fa2f1b3d4a9b636de01a3e78631319f",
+    "kernels/layernorm/triton/main.py": "fea093f09cabd07ba545d918c2e5474af03db42b5a06ab8c6dd93cc6f7835ca8",
+    "kernels/trimul_inproj/triton/backward_fused.py": "37f92cdbcbb48bf9cb36826b06f8eec0306f312462de724393b55b2042383f15"
+  }
+}

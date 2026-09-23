@@ -1,0 +1,8 @@
+{
+  "installed": true,
+  "patch": "miniworld-engine-swa-fa4-backward-compile.patch",
+  "native_identity": "c5567a40ea101160cc2b35c98bc806803442c6ef275b1d7fce4220bbee8b1862",
+  "files": [
+    "modules/swa_atom_attention/module.py"
+  ]
+}

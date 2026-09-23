@@ -1,0 +1,76 @@
+digraph G {
+graph [rankdir=TB,compound=true,newrank=true,bgcolor="white",pad="0.25",nodesep="0.20",ranksep="0.32",fontname="sans-serif",fontsize=16,label="Triton 기준 · Forward · L768 · BF16 B1 D=h=128\n기준: 8c7d8b39 · 동일 융합 / 저장값 · H100 경로는 개발 checkout의 선택 옵션\n전체 학습 FWD+BWD: 6.286 → 6.119 ms (1.027×) · compile + CUDA graph · dropout=0.25/RNG 포함\n청색 Triton / 녹색 CuTe TMA+WGMMA / 보라 cuBLAS / 노랑 HBM · 색상 외곽선 = 커널 경계\n아래 config는 실측 후보이며 shape 하드코딩이나 전체 cache 완료를 뜻하지 않음",labelloc=t];
+node [shape=box,style="rounded,filled",fillcolor="white",color="#b6c4cf",fontname="sans-serif",fontsize=11,margin="0.10,0.07"];
+edge [color="#566d7b",arrowsize=0.65,fontname="sans-serif",fontsize=9];
+pair [label="pair",shape=oval,color="#88989d",fillcolor="#f5f7f8"];
+mask [label="pair mask",shape=oval,color="#88989d",fillcolor="#f5f7f8"];
+ds [label="dropout scale\n난수/scale 생성은 별도",shape=oval,color="#88989d",fillcolor="#f5f7f8"];
+subgraph cluster_ln { label="F1 · layer_norm_fwd_fused\nTriton · 1 kernel"; color="#2868ba"; fillcolor="#eef5ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+ln0 [label="μ = mean(pair), rstd = rsqrt(var + ε)",shape=box,color="#2868ba",fillcolor="white"];
+ln1 [label="x_n = (pair − μ) × rstd × γin + βin",shape=box,color="#2868ba",fillcolor="white"];
+ln0 -> ln1 [label=""];
+}
+pair -> ln0 [label="",lhead=cluster_ln];
+xn [label="x_n [M,128] · HBM",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+ln1 -> xn [label=""];
+subgraph cluster_front { label="F2 · _bidir_front_kernel\nTriton · 1 kernel"; color="#2868ba"; fillcolor="#eef5ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+front0 [label="4 projections: pL=x_n·WL, gL=x_n·WLg\npR=x_n·WR, gR=x_n·WRg",shape=box,color="#2868ba",fillcolor="white"];
+front1 [label="σ(gL), σ(gR)",shape=box,color="#2868ba",fillcolor="white"];
+front2 [label="left = BF16(pL × σ(gL)) × mask\nright = BF16(pR × σ(gR)) × mask",shape=box,color="#2868ba",fillcolor="white"];
+front0 -> front1 [label=""];
+front1 -> front2 [label=""];
+}
+xn -> front0 [label="",lhead=cluster_front];
+mask -> front2 [label="",style=dashed,color="#84929a",constraint=false];
+lr [label="left / right [256,L,L] · HBM",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+pre [label="raw pL,gL,pR,gR · HBM\nbackward용 저장",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+front2 -> lr [label=""];
+front0 -> pre [label="store",style=dashed,color="#84929a",constraint=false];
+{rank=same;lr;pre;}
+subgraph cluster_co { label="F3a · cuBLAS bmm\n별도 GEMM 호출"; color="#8655ad"; fillcolor="#f7f0ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+co0 [label="tri[:h] = left[:h] @ right[:h]ᵀ",shape=box,color="#8655ad",fillcolor="white"];
+}
+subgraph cluster_ci { label="F3b · cuBLAS bmm\n별도 GEMM 호출"; color="#8655ad"; fillcolor="#f7f0ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+ci0 [label="tri[h:] = left[h:]ᵀ @ right[h:]",shape=box,color="#8655ad",fillcolor="white"];
+}
+lr -> co0 [label="",lhead=cluster_co];
+lr -> ci0 [label="",lhead=cluster_ci];
+tri [label="tri [256,L,L] · HBM\n두 GEMM이 최종 buffer의 다른 slice에 직접 기록\ncat kernel 없음",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+co0 -> tri [label=""];
+ci0 -> tri [label=""];
+subgraph cluster_lo { label="F4 · _ln_mat_kernel\nTriton · 1 kernel"; color="#2868ba"; fillcolor="#eef5ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+lo0 [label="μout, rstdout 계산",shape=box,color="#2868ba",fillcolor="white"];
+lo1 [label="xhat = (tri − μout) × rstdout",shape=box,color="#2868ba",fillcolor="white"];
+lo2 [label="xn_out = xhat × γout + βout",shape=box,color="#2868ba",fillcolor="white"];
+lo0 -> lo1 [label=""];
+lo1 -> lo2 [label=""];
+}
+tri -> lo0 [label="",lhead=cluster_lo];
+norm [label="xn_out [M,256] · HBM\nμout, rstdout도 저장",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+lo2 -> norm [label=""];
+subgraph cluster_f567 { label="F5 + F6 + F7 · _output_f567_kernel\nTriton · 1 kernel\nCSV: M 16/32/64/128 · N 32/64/128/256 · K 16/32/64/128\nGROUP_M 1/2/4/8 · warps 1/2/4/8 · stages 2/3/4\nKP/KG 길이 독립 · 물리 K 타일 공유"; color="#2868ba"; fillcolor="#eef5ff"; style="rounded,filled"; penwidth=2; fontsize=11; fontname="monospace"; margin=12;
+f5670 [label="proj = xn_out @ Wpᵀ",shape=box,color="#2868ba",fillcolor="white"];
+f5671 [label="glogit = x_n @ Wg",shape=box,color="#2868ba",fillcolor="white"];
+f5672 [label="gate = sigmoid(BF16(glogit))",shape=box,color="#2868ba",fillcolor="white"];
+f5673 [label="v = BF16(proj) × gate",shape=box,color="#2868ba",fillcolor="white"];
+f5674 [label="v = v × dropout_scale",shape=box,color="#2868ba",fillcolor="white"];
+f5675 [label="y = pair + v",shape=box,color="#2868ba",fillcolor="white"];
+f5671 -> f5672 [label=""];
+f5670 -> f5673 [label=""];
+f5672 -> f5673 [label=""];
+f5673 -> f5674 [label=""];
+f5674 -> f5675 [label=""];
+}
+norm -> f5670 [label="",lhead=cluster_f567];
+xn -> f5671 [label="x_n 재사용",style=dashed,color="#84929a",constraint=false];
+ds -> f5674 [label="",style=dashed,color="#84929a",constraint=false];
+pair -> f5675 [label="residual",style=dashed,color="#84929a",constraint=false];
+saved [label="proj / gate [M,128] · HBM\nbackward용 store만 · fwd 재읽기 없음",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+f5670 -> saved [label="proj 저장",style=dashed,color="#84929a",constraint=false];
+f5672 -> saved [label="BF16 gate 저장",style=dashed,color="#84929a",constraint=false];
+y [label="y [M,128] · HBM",shape=cylinder,color="#b78b43",fillcolor="#fff7df"];
+f5675 -> y [label=""];
+note [label="glogit HBM buffer 제거\n중간 proj의 fwd HBM 재읽기 제거",shape=note,color="#b6c4cf",fillcolor="white"];
+{rank=same;saved;y;}
+y -> note [style=invis];
+}

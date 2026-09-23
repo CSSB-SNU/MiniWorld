@@ -1,0 +1,290 @@
+{
+  "length": 768,
+  "complete": true,
+  "cache": [
+    {
+      "bucket": "([((589824, 256), (256, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((128, 256), (256, 1), 'torch.bfloat16'), ((128, 128), (128, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((768, 128), (128, 1), 'torch.bfloat16'), ((128,), (1,), 'torch.bfloat16')], (768, 232448))",
+      "selected": {
+        "kwargs": {
+          "group_m": 1,
+          "tile_k": 128,
+          "tile_m": 64,
+          "tile_n": 64
+        },
+        "num_stages": 0,
+        "num_warps": 0
+      }
+    },
+    {
+      "bucket": "([((589824, 256), (256, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((128, 256), (256, 1), 'torch.bfloat16'), ((128, 128), (128, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((768, 128), (128, 1), 'torch.bfloat16'), ((128,), (1,), 'torch.bfloat16')], (768, 232448))",
+      "selected": {
+        "kwargs": {
+          "group_m": 1,
+          "tile_k": 128,
+          "tile_m": 64,
+          "tile_n": 64
+        },
+        "num_stages": 0,
+        "num_warps": 0
+      }
+    },
+    {
+      "bucket": "([((589824, 256), (256, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((128, 256), (256, 1), 'torch.bfloat16'), ((128, 128), (128, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((768, 128), (128, 1), 'torch.bfloat16'), ((128,), (1,), 'torch.bfloat16')], (768, 232448))",
+      "selected": {
+        "kwargs": {
+          "group_m": 1,
+          "tile_k": 128,
+          "tile_m": 64,
+          "tile_n": 64
+        },
+        "num_stages": 0,
+        "num_warps": 0
+      }
+    },
+    {
+      "bucket": "([((589824, 256), (256, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((128, 256), (256, 1), 'torch.bfloat16'), ((128, 128), (128, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((768, 128), (128, 1), 'torch.bfloat16'), ((128,), (1,), 'torch.bfloat16')], (768, 232448))",
+      "selected": {
+        "kwargs": {
+          "group_m": 1,
+          "tile_k": 128,
+          "tile_m": 64,
+          "tile_n": 64
+        },
+        "num_stages": 0,
+        "num_warps": 0
+      }
+    },
+    {
+      "bucket": "([((589824, 256), (256, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((128, 256), (256, 1), 'torch.bfloat16'), ((128, 128), (128, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((768, 128), (128, 1), 'torch.bfloat16'), ((128,), (1,), 'torch.bfloat16')], (768, 232448))",
+      "selected": {
+        "kwargs": {
+          "group_m": 1,
+          "tile_k": 128,
+          "tile_m": 64,
+          "tile_n": 64
+        },
+        "num_stages": 0,
+        "num_warps": 0
+      }
+    },
+    {
+      "bucket": "([((589824, 256), (256, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((128, 256), (256, 1), 'torch.bfloat16'), ((128, 128), (128, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((768, 128), (128, 1), 'torch.bfloat16'), ((128,), (1,), 'torch.bfloat16')], (768, 232448))",
+      "selected": {
+        "kwargs": {
+          "group_m": 1,
+          "tile_k": 128,
+          "tile_m": 64,
+          "tile_n": 64
+        },
+        "num_stages": 0,
+        "num_warps": 0
+      }
+    },
+    {
+      "bucket": "([((589824, 256), (256, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((128, 256), (256, 1), 'torch.bfloat16'), ((128, 128), (128, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((768, 128), (128, 1), 'torch.bfloat16'), ((128,), (1,), 'torch.bfloat16')], (768, 232448))",
+      "selected": {
+        "kwargs": {
+          "group_m": 1,
+          "tile_k": 128,
+          "tile_m": 64,
+          "tile_n": 64
+        },
+        "num_stages": 0,
+        "num_warps": 0
+      }
+    },
+    {
+      "bucket": "([((589824, 256), (256, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((128, 256), (256, 1), 'torch.bfloat16'), ((128, 128), (128, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((768, 128), (128, 1), 'torch.bfloat16'), ((128,), (1,), 'torch.bfloat16')], (768, 232448))",
+      "selected": {
+        "kwargs": {
+          "group_m": 1,
+          "tile_k": 128,
+          "tile_m": 64,
+          "tile_n": 64
+        },
+        "num_stages": 0,
+        "num_warps": 0
+      }
+    },
+    {
+      "bucket": "([((589824, 256), (256, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((128, 256), (256, 1), 'torch.bfloat16'), ((128, 128), (128, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((768, 128), (128, 1), 'torch.bfloat16'), ((128,), (1,), 'torch.bfloat16')], (768, 232448))",
+      "selected": {
+        "kwargs": {
+          "group_m": 1,
+          "tile_k": 128,
+          "tile_m": 64,
+          "tile_n": 64
+        },
+        "num_stages": 0,
+        "num_warps": 0
+      }
+    },
+    {
+      "bucket": "([((589824, 256), (256, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((128, 256), (256, 1), 'torch.bfloat16'), ((128, 128), (128, 1), 'torch.bfloat16'), ((589824, 128), (128, 1), 'torch.bfloat16'), ((768, 128), (128, 1), 'torch.bfloat16'), ((128,), (1,), 'torch.bfloat16')], (768, 232448))",
+      "selected": {
+        "kwargs": {
+          "group_m": 1,
+          "tile_k": 128,
+          "tile_m": 64,
+          "tile_n": 64
+        },
+        "num_stages": 0,
+        "num_warps": 0
+      }
+    }
+  ],
+  "output_and_gradient_errors": {
+    "h100_split": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "h100_f567": [
+      3.7644269923475804e-06,
+      0.0,
+      8.810899316813448e-07,
+      1.0200194537901552e-06,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "cuda_kernels": [
+    "## Call CompiledFxGraph fiwm2ew6ulywgqtvm5rsueg2o2dn7gnle5gu5rckyl57rbtzvzvu ##",
+    "_ln_mat_kernel",
+    "kernel_cutlass_kernel_miniworld_enginekernelstrimul_inprojcutemasked_frontMaskedGatedSm90_object_at__TiledMMA_ThrLayoutVMNK128211112800_PermutationMNK____MMAAtom_ThrID1281_ShapeMNK6412816_0",
+    "kernel_cutlass_kernel_miniworld_enginekernelstrimul_inprojcuteoutput_f567F567Sm90_object_at__CopyAtom_ThrID10_TVLayoutSrc1409601_TVLayoutDst1409601_Valuetypebf16_tensor00o5898241281110_Co_0",
+    "kernel_cutlass_kernel_quackgemm_default_epiGemmDefaultSm90_object_at__TiledMMA_ThrLayoutVMNK1281111000_PermutationMNK____MMAAtom_ThrID1281_ShapeMNK6419216_TVLayoutA12864160164_TVLayoutB12_0",
+    "kernel_cutlass_kernel_quackgemm_default_epiGemmDefaultSm90_object_at__TiledMMA_ThrLayoutVMNK128211112800_PermutationMNK____MMAAtom_ThrID1281_ShapeMNK6412816_TVLayoutA12864160164_TVLayoutB_0",
+    "layer_norm_fwd_fused",
+    "triton_per_fused__to_copy_clone_mul_sum_t_trimul_output_f567_sm90_unsqueeze_view_5",
+    "triton_poi_fused__to_copy_bitwise_and_unsqueeze_view_1",
+    "triton_poi_fused__to_copy_clone_mul_t_trimul_output_f567_sm90_unsqueeze_view_6",
+    "triton_poi_fused_cat_clone_copy_slice_t_0",
+    "triton_poi_fused_layernorm_linear_materialize_ones_like_t_view_zeros_like_3",
+    "triton_poi_fused_layernorm_linear_materialize_ones_like_t_view_zeros_like_4",
+    "triton_poi_fused_ones_2",
+    "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})",
+    "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)"
+  ],
+  "whole_forward": {
+    "h100_split": {
+      "ms": 2.013038953145345,
+      "samples_ms": [
+        2.034496053059896,
+        2.011355717976888,
+        2.012283706665039,
+        2.0151135762532553,
+        2.0119487762451174,
+        2.0129770914713543,
+        2.0137962341308593,
+        2.013100814819336,
+        2.0119168599446615,
+        2.0148821512858075,
+        2.0145355224609376,
+        2.012869389851888
+      ]
+    },
+    "h100_f567": {
+      "ms": 2.232044855753581,
+      "samples_ms": [
+        2.2156244913736978,
+        2.204218546549479,
+        2.2339243570963543,
+        2.2333300272623697,
+        2.2308639526367187,
+        2.2364298502604165,
+        2.238267771402995,
+        2.2307764689127603,
+        2.232227325439453,
+        2.234051259358724,
+        2.2317792256673177,
+        2.2318623860677085
+      ]
+    }
+  },
+  "tail_errors": {
+    "split": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "triton": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "cute": [
+      7.8003740782151e-06,
+      0.0,
+      0.0
+    ]
+  },
+  "tail_forward": {
+    "split": {
+      "ms": 0.7302997271219889,
+      "samples_ms": [
+        0.7324458440144856,
+        0.730836296081543,
+        0.7312639872233073,
+        0.7305034637451172,
+        0.7298943837483723,
+        0.7301589330037435,
+        0.7302261352539062,
+        0.7303029378255208,
+        0.7306559880574545,
+        0.730296516418457,
+        0.7299615859985351,
+        0.7300074895222982
+      ]
+    },
+    "triton": {
+      "ms": 0.6252874692281087,
+      "samples_ms": [
+        0.629088020324707,
+        0.6271167755126953,
+        0.626742426554362,
+        0.6267264048258464,
+        0.625278917948405,
+        0.6252735773722331,
+        0.625002670288086,
+        0.6250346501668295,
+        0.6252960205078125,
+        0.6251189549763997,
+        0.6251306533813477,
+        0.6261088053385416
+      ]
+    },
+    "cute": {
+      "ms": 0.9505237261454265,
+      "samples_ms": [
+        0.9691359837849934,
+        0.963154157002767,
+        0.9580586751302084,
+        0.9574165344238281,
+        0.9489365259806315,
+        0.9505119959513346,
+        0.9500906626383464,
+        0.9490474700927735,
+        0.9503829320271809,
+        0.9505354563395182,
+        0.9503573099772136,
+        0.9509162902832031
+      ]
+    }
+  }
+}

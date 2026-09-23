@@ -57,6 +57,7 @@ class Client(DiffusionClient):
         decay_steps: int = int(5e4)
         decay_factor: float = 0.95
         compile: bool = False
+        engine_backend: Literal["auto", "triton"] = "auto"
         trunk_compile_mode: str = ""
         # DIFFUSION-STEP SEAM: reverse steps for the frozen rollout in predict_structure.
         # Open decision (inline count / precompute); change here.
@@ -104,6 +105,8 @@ class Client(DiffusionClient):
         loss: Client.LossConfig
 
     def __init__(self, config: Config) -> None:
+        from miniworld.training.engine_backend import configure_engine_backend
+        configure_engine_backend(config.train.engine_backend)
         # Bypass DiffusionClient.__init__ (which registers a DiffusionModel); replicate its
         # setup but register the ConfidenceModel instead.
         from team_gm import BaseClient

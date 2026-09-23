@@ -1,0 +1,20 @@
+========= COMPUTE-SANITIZER
+.                                                                        [100%]
+=============================== warnings summary ===============================
+.pixi/envs/cu128/lib/python3.10/site-packages/torchmetrics/utilities/imports.py:24
+.pixi/envs/cu128/lib/python3.10/site-packages/torchmetrics/utilities/imports.py:24
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torchmetrics/utilities/imports.py:24: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+    _PYTHON_LOWER_3_8 = LooseVersion(_PYTHON_VERSION) < LooseVersion("3.8")
+
+tests/test_distogram_v110.py: 14 warnings
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_distogram_v110.py::test_cuda_compile_capture_replay_updates_coordinates_masks_and_chains
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/graph.py:865: UserWarning: The AccumulateGrad node's stream does not match the stream of the node that produced the incoming gradient. This may incur unnecessary synchronization and break CUDA graph capture if the AccumulateGrad node's stream is the default stream. This mismatch is caused by an AccumulateGrad node created prior to the current iteration being kept alive. This can happen if the autograd graph is still being kept alive by tensors such as the loss, or if you are using DDP, which will stash a reference to the node. To resolve the mismatch, delete all references to the autograd graph or ensure that DDP initialization is performed under the same stream as subsequent forwards. If the mismatch is intentional, you can use torch.autograd.graph.set_warn_on_accumulate_grad_stream_mismatch(False) to suppress this warning. (Triggered internally at /pytorch/torch/csrc/autograd/input_buffer.cpp:240.)
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /home/psk6950/MiniWorld/runs/v110_distogram_checks/gpu.xml -
+1 passed, 19 deselected, 17 warnings in 9.34s
+========= ERROR SUMMARY: 0 errors

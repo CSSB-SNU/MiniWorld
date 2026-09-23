@@ -1,0 +1,12 @@
+{
+  "src/miniworld/data/features/convert.py": "0a6a57ddef9e3fb72a279658abf47d82a2ce828b3a6d2a0006cb907258e71624",
+  "src/miniworld/loss/auxiliary.py": "c1d327a697a8ab41fd33fee5d9f74e4b8b265f07933e92c1e1dcc39a4434d326",
+  "src/miniworld/utils/structure/distance.py": "cb947a807a76084be9caa1ddcf6616e6b923af85bdd0427c6909bdb3eda2a347",
+  "src/miniworld/models/distogram_only/client.py": "b0dd609e3c13403f2f7b2affb39ae0d010416ef525e906cdfdfd997be5570ca4",
+  "scripts/cudagraph_trainer.py": "08ed0e855a20020f50ccb095bfb06188cef2f8116d537dbb795dd7b10f3ee089",
+  "configs/miniworld/phase1a_distogram_v110.yaml": "bab6502ec7d6afcdfc5aed8b9aaa48f836a8e2bbdb257b86746d16f5c39e724c",
+  "configs/miniworld/phase1b_distogram_v110.yaml": "fd4a0f270d76519322d66ef53a55691948bdf62d97ecaf9324543bace131a7a7",
+  "tests/test_distogram_v110.py": "a063da2806c253239a168d0ae2618e9fa32abf0cb1ea7eee9688cab88a6b6a45",
+  "CROPPING.svg": "6951cd96a8f300c1bcbee0254f884000f017ae2d9aba8da2ea47f9db8ed5e9f9",
+  "docs/cropping-current.dot": "b7407ff97346a5c552ed1b58811cc7d812b9e7adadd851e40175c071e2506ba3"
+}

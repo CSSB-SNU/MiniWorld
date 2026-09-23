@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="9.338" timestamp="2026-09-16T21:45:07.280276+09:00" hostname="node02"><testcase classname="tests.test_distogram_v110" name="test_cuda_compile_capture_replay_updates_coordinates_masks_and_chains" time="6.775" /></testsuite></testsuites>

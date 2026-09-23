@@ -1,0 +1,45 @@
+commit eebedbbc066b4a2b5484755399c84cf29d954776
+Author:     SanggeunParrk <psk6950@snu.ac.kr>
+AuthorDate: Tue Aug 4 22:58:30 2026 +0900
+Commit:     SanggeunParrk <psk6950@snu.ac.kr>
+CommitDate: Tue Aug 4 22:58:30 2026 +0900
+
+    fix(tm2/cute): un-deadlock from-scratch dual-A GEMM + make tile_m autotunable; drop legacy cuequiv
+    
+    The from-scratch tm2 CuTeDSL kernel (tm2_dual_from_scratch) deadlocked at
+    runtime and had never actually run — it hung in every attempt (never in the
+    cos=1.0 verified set). Root cause: a tiled-TMA cute.copy auto-elects a single
+    lane internally, so wrapping the load/store copies in an outer elect_one()
+    makes cp.async.bulk.tensor never signal the mbarrier's transaction bytes → the
+    load barrier never flips → the kernel spins forever (compile itself is ~0.5s;
+    the "compile hang" was a misdiagnosed runtime deadlock). Fix: issue the TMA
+    copies under `if warp_idx == 0:` but OUTSIDE elect_one() (cute.copy auto-elects);
+    only the one-shot mbarrier_arrive_and_expect_tx stays elected — matching quack's
+    rmsnorm / gemm_sm90 producer idiom.
+    
+    With the deadlock fixed, generalize the M dimension to multi-atom: tile_m is a
+    pure performance knob in {64,128,192,256} = tile_m//64 stacked m64 WGMMA
+    warpgroups (tile_m=64 is the single-atom subset). Verified cos=1.0 at
+    tile_m 64/128/192 (1/2/3 warpgroups); tile_m=256 exceeds sm90 SMEM
+    (263168 > 232448 B) for K=N=128 and is dropped by the sweep + guarded in the
+    interface — a measured hardware bound, not an artificial constant.
+    
+    Wire tile_m into the brute-force autotune: cute_config.tm2_candidates() +
+    a tm2_dual_fwd capture case + interface resolve (bucketed by M|k, with a
+    divisibility/SMEM guard that falls back to the largest valid divisor on a
+    non-dividing or oversized cached pick — config stays performance-only). The
+    sweep-picked tile_m beats the largest-divisor heuristic (e.g. L=384: tm64
+    0.0556ms vs tm192 0.0630ms).
+    
+    Delete the legacy cuequiv tm2 path: module._forward_cute now delegates
+    unconditionally to the cuequiv-free _forward_cute_free (drops the
+    MINIWORLD_TRIMUL_CUEQUIV_FREE gate); remove the cuequiv wrapper
+    kernels/tm2/cute/tm2_cute.py; repoint the bench "tm2_cute" backend to the
+    from-scratch kernel. cuequivariance is now a comparison-only baseline
+    (pyproject [baselines]); the from-scratch kernel is faster than it anyway
+    (tm2 tile_m=64 0.0556ms vs cuequiv 0.0583ms at L=384, both cos=1.0).
+    
+    Also add the previously-untracked autotune infra (buckets.py, grids.py) that
+    the shipped triton/cute kernels + capture already import.
+    
+    Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
