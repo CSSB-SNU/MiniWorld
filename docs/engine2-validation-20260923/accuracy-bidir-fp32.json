@@ -1,0 +1,90 @@
+[
+  {
+    "length": 384,
+    "width": 64,
+    "zero_gamma": false,
+    "dropout": 0.25,
+    "reference": "PyTorch FP32, same BF16-quantized weights/input/dy and identical dropout mask",
+    "errors": {
+      "output": 0.003079390851780772,
+      "dx": 0.00429817009717226,
+      "ln_pair.weight": 0.005701788235455751,
+      "ln_pair.bias": 0.004551682621240616,
+      "to_left.weight": 0.005418368615210056,
+      "to_left_gate.weight": 0.005942188668996096,
+      "to_right.weight": 0.0053574140183627605,
+      "to_right_gate.weight": 0.005867187865078449,
+      "ln_out.weight": 0.004345571622252464,
+      "ln_out.bias": 0.003145927097648382,
+      "to_gate.weight": 0.005638257600367069,
+      "to_out.weight": 0.005152363795787096
+    },
+    "finite": true
+  },
+  {
+    "length": 384,
+    "width": 128,
+    "zero_gamma": false,
+    "dropout": 0.25,
+    "reference": "PyTorch FP32, same BF16-quantized weights/input/dy and identical dropout mask",
+    "errors": {
+      "output": 0.0030312668532133102,
+      "dx": 0.004455185029655695,
+      "ln_pair.weight": 0.005347902420908213,
+      "ln_pair.bias": 0.004519336391240358,
+      "to_left.weight": 0.0054140035063028336,
+      "to_left_gate.weight": 0.005913260392844677,
+      "to_right.weight": 0.0054299840703606606,
+      "to_right_gate.weight": 0.005920004099607468,
+      "ln_out.weight": 0.00504519697278738,
+      "ln_out.bias": 0.0028201276436448097,
+      "to_gate.weight": 0.005605426151305437,
+      "to_out.weight": 0.005119061563163996
+    },
+    "finite": true
+  },
+  {
+    "length": 768,
+    "width": 128,
+    "zero_gamma": false,
+    "dropout": 0.25,
+    "reference": "PyTorch FP32, same BF16-quantized weights/input/dy and identical dropout mask",
+    "errors": {
+      "output": 0.003019321709871292,
+      "dx": 0.004437998868525028,
+      "ln_pair.weight": 0.0051975492388010025,
+      "ln_pair.bias": 0.004271246958523989,
+      "to_left.weight": 0.005446752533316612,
+      "to_left_gate.weight": 0.005895806010812521,
+      "to_right.weight": 0.005378382746130228,
+      "to_right_gate.weight": 0.005900372751057148,
+      "ln_out.weight": 0.004387578461319208,
+      "ln_out.bias": 0.003663803217932582,
+      "to_gate.weight": 0.005733708385378122,
+      "to_out.weight": 0.005068998783826828
+    },
+    "finite": true
+  },
+  {
+    "length": 384,
+    "width": 128,
+    "zero_gamma": true,
+    "dropout": 0.25,
+    "reference": "PyTorch FP32, same BF16-quantized weights/input/dy and identical dropout mask",
+    "errors": {
+      "output": 0.002680269768461585,
+      "dx": 0.003967558033764362,
+      "ln_pair.weight": 0.0050706276670098305,
+      "ln_pair.bias": 0.004681047983467579,
+      "to_left.weight": 0.005433567799627781,
+      "to_left_gate.weight": 0.0058343973942101,
+      "to_right.weight": 0.005384393502026796,
+      "to_right_gate.weight": 0.005793777760118246,
+      "ln_out.weight": 0.0048951986245810986,
+      "ln_out.bias": 0.0031728800386190414,
+      "to_gate.weight": 0.005481419153511524,
+      "to_out.weight": 0.0050706262700259686
+    },
+    "finite": true
+  }
+]

@@ -64,3 +64,8 @@ shared-memory alignment failure and L8192 attention training memory.
 - [Technical report draft and build instructions](docs/paper/README.md)
 
 Generated FoldBench results live under `eval_results/` and are excluded from Git.
+
+## TriMul update (2026-09-17)
+
+[Kernel changes, validation, and reinstall instructions](docs/trimul-release-20260917.md).
+[Inference kernel wiring](TRIMUL_INFERENCE.svg) · [Wiring details](docs/trimul-fusion/inference.md).

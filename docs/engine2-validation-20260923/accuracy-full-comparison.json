@@ -1,0 +1,536 @@
+{
+  "rows": [
+    {
+      "step": 0,
+      "loss_native": 0.8609053492546082,
+      "loss_triton": 0.8613514304161072,
+      "loss_relative_error": 0.0005178852042812858,
+      "gradients": {
+        "relative_l2": 0.02950988889657918,
+        "cosine": 0.9996217376839872,
+        "worst": [
+          {
+            "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+            "relative_l2": 1.2918948273617752,
+            "reference_norm": 6.905776920479695e-08,
+            "actual_norm": 5.1165916273435685e-08
+          },
+          {
+            "name": "msa_module.blocks.2.msa_pair_weighted_averaging.ln_pair.bias",
+            "relative_l2": 1.1314268186372018,
+            "reference_norm": 2.1325979470337382e-07,
+            "actual_norm": 1.6900220207256437e-07
+          },
+          {
+            "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.bias",
+            "relative_l2": 1.1259752382114712,
+            "reference_norm": 2.5850361022338293e-07,
+            "actual_norm": 1.1543435877776815e-07
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.attn.out_proj.weight",
+            "relative_l2": 0.11683259245322374,
+            "reference_norm": 9.731964232842606e-06,
+            "actual_norm": 1.077125672370062e-05
+          },
+          {
+            "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_msa.weight",
+            "relative_l2": 0.10686680214974346,
+            "reference_norm": 0.0001081049000276243,
+            "actual_norm": 0.00010436611181766862
+          },
+          {
+            "name": "msa_module.blocks.3.tri_multi.ln_pair.weight",
+            "relative_l2": 0.10223101331709712,
+            "reference_norm": 9.16048978319392e-05,
+            "actual_norm": 8.944601457983038e-05
+          },
+          {
+            "name": "pairformer_blocks.blocks.1.tri_multi.ln_pair.weight",
+            "relative_l2": 0.09360777868777505,
+            "reference_norm": 0.0002207474656510363,
+            "actual_norm": 0.00023793896475682942
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.adaln_modulation.1.weight",
+            "relative_l2": 0.08124526617974734,
+            "reference_norm": 3.2233846642035547e-05,
+            "actual_norm": 3.2005619946632444e-05
+          },
+          {
+            "name": "pairformer_blocks.blocks.4.tri_multi.ln_pair.weight",
+            "relative_l2": 0.07369969807838549,
+            "reference_norm": 0.00013991199771664497,
+            "actual_norm": 0.00014253388704138522
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.attn.Wqkv.weight",
+            "relative_l2": 0.07324497585358243,
+            "reference_norm": 5.910940843449688e-06,
+            "actual_norm": 6.245612227189346e-06
+          },
+          {
+            "name": "msa_module.blocks.0.tri_multi.ln_pair.weight",
+            "relative_l2": 0.07252866650506085,
+            "reference_norm": 0.00034908614197160697,
+            "actual_norm": 0.000369456225767671
+          },
+          {
+            "name": "pairformer_blocks.blocks.0.tri_multi.ln_pair.weight",
+            "relative_l2": 0.06930422499661819,
+            "reference_norm": 0.00016273396519866205,
+            "actual_norm": 0.00016910408127717455
+          }
+        ],
+        "count": 436
+      },
+      "updates": {
+        "relative_l2": 0.035692424027972666,
+        "cosine": 0.9993629949521465,
+        "worst": [
+          {
+            "name": "msa_module.blocks.1.outer_product_mean.to_out.bias",
+            "relative_l2": 0.08344545700543345,
+            "reference_norm": 0.00292575094871975,
+            "actual_norm": 0.0028950310325812304
+          },
+          {
+            "name": "add_pair_recycle.1.weight",
+            "relative_l2": 0.06685983598736618,
+            "reference_norm": 0.04047618072365061,
+            "actual_norm": 0.04047417887796666
+          },
+          {
+            "name": "msa_module.blocks.2.msa_pair_weighted_averaging.to_out.weight",
+            "relative_l2": 0.06307299105349552,
+            "reference_norm": 0.03933598625384646,
+            "actual_norm": 0.039413435903110916
+          },
+          {
+            "name": "msa_module.blocks.0.tri_multi.to_left.weight",
+            "relative_l2": 0.0563293014239159,
+            "reference_norm": 0.0518644511889692,
+            "actual_norm": 0.05181559899596764
+          },
+          {
+            "name": "msa_module.blocks.1.transition_msa.expand_a.weight",
+            "relative_l2": 0.05596468520393871,
+            "reference_norm": 0.03984765934698734,
+            "actual_norm": 0.03979046041836889
+          },
+          {
+            "name": "pairformer_blocks.blocks.13.tri_multi.to_gate.weight",
+            "relative_l2": 0.05486584463630828,
+            "reference_norm": 0.03520316067154961,
+            "actual_norm": 0.035214319881111844
+          },
+          {
+            "name": "pairformer_blocks.blocks.4.tri_multi.to_right.weight",
+            "relative_l2": 0.05450914667510077,
+            "reference_norm": 0.057641385945260595,
+            "actual_norm": 0.05766084601012526
+          },
+          {
+            "name": "pairformer_blocks.blocks.10.tri_multi.to_right.weight",
+            "relative_l2": 0.05411533260402345,
+            "reference_norm": 0.047660673143366354,
+            "actual_norm": 0.047616126414016885
+          },
+          {
+            "name": "pairformer_blocks.blocks.6.tri_multi.to_right.weight",
+            "relative_l2": 0.052928304846975104,
+            "reference_norm": 0.05460011576672021,
+            "actual_norm": 0.054598254373078074
+          },
+          {
+            "name": "pairformer_blocks.blocks.0.tri_multi.to_left.weight",
+            "relative_l2": 0.052729891165647275,
+            "reference_norm": 0.05760508547589625,
+            "actual_norm": 0.05758398319641988
+          },
+          {
+            "name": "msa_module.blocks.2.tri_multi.to_right.weight",
+            "relative_l2": 0.051642240293587466,
+            "reference_norm": 0.057097458946532786,
+            "actual_norm": 0.0571159038255964
+          },
+          {
+            "name": "pairformer_blocks.blocks.8.tri_multi.to_gate.weight",
+            "relative_l2": 0.05061494857317081,
+            "reference_norm": 0.04160625796168989,
+            "actual_norm": 0.0416174877158426
+          }
+        ],
+        "count": 436
+      },
+      "logits": {
+        "relative_l2": 0.006376941066357707,
+        "cosine": 0.9999797037926462,
+        "worst": [
+          {
+            "name": "logits",
+            "relative_l2": 0.006376941066357707,
+            "reference_norm": 39612.200140865694,
+            "actual_norm": 39618.46842067472
+          }
+        ],
+        "count": 1
+      }
+    },
+    {
+      "step": 1,
+      "loss_native": 0.8884390592575073,
+      "loss_triton": 0.8890745639801025,
+      "loss_relative_error": 0.0007147935036520035,
+      "gradients": {
+        "relative_l2": 0.012197073274963836,
+        "cosine": 0.9999379870967292,
+        "worst": [
+          {
+            "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+            "relative_l2": 1.612739096820872,
+            "reference_norm": 8.419206458769917e-08,
+            "actual_norm": 9.80038551109241e-08
+          },
+          {
+            "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.bias",
+            "relative_l2": 1.6087153691508003,
+            "reference_norm": 2.7666057757027236e-07,
+            "actual_norm": 2.735715725674527e-07
+          },
+          {
+            "name": "msa_module.blocks.2.msa_pair_weighted_averaging.ln_pair.bias",
+            "relative_l2": 1.477522111660347,
+            "reference_norm": 2.0845531964052612e-07,
+            "actual_norm": 1.6484595579295388e-07
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.attn.gate_proj.weight",
+            "relative_l2": 0.07082006856665993,
+            "reference_norm": 2.08754474908922e-06,
+            "actual_norm": 2.1806854942331118e-06
+          },
+          {
+            "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+            "relative_l2": 0.062059542587257426,
+            "reference_norm": 0.00035190846780103397,
+            "actual_norm": 0.00034985572680527335
+          },
+          {
+            "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_msa.bias",
+            "relative_l2": 0.05692403402043931,
+            "reference_norm": 0.00015636187698112305,
+            "actual_norm": 0.00015275549484692878
+          },
+          {
+            "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_bias.weight",
+            "relative_l2": 0.05368475392355067,
+            "reference_norm": 0.00017822165549005246,
+            "actual_norm": 0.00017845757061300967
+          },
+          {
+            "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.weight",
+            "relative_l2": 0.05358474484818481,
+            "reference_norm": 2.5020478482140405e-05,
+            "actual_norm": 2.491119533102275e-05
+          },
+          {
+            "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_msa.weight",
+            "relative_l2": 0.04894239637910744,
+            "reference_norm": 0.00012142061221629385,
+            "actual_norm": 0.00012047761979713612
+          },
+          {
+            "name": "msa_module.blocks.0.transition_msa.ln_in.bias",
+            "relative_l2": 0.04782490778036306,
+            "reference_norm": 0.0002647601822554715,
+            "actual_norm": 0.0002650194906803693
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.attn.gate_proj.weight",
+            "relative_l2": 0.04704032028979472,
+            "reference_norm": 6.115590796638094e-06,
+            "actual_norm": 5.974006821624396e-06
+          },
+          {
+            "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_gate.weight",
+            "relative_l2": 0.043300832058935625,
+            "reference_norm": 0.0003187804296246858,
+            "actual_norm": 0.00031628048776236414
+          }
+        ],
+        "count": 436
+      },
+      "updates": {
+        "relative_l2": 0.04728480827353818,
+        "cosine": 0.9988821403185107,
+        "worst": [
+          {
+            "name": "add_pair_recycle.1.weight",
+            "relative_l2": 0.08262765127910165,
+            "reference_norm": 0.03624541547576212,
+            "actual_norm": 0.036242500592557084
+          },
+          {
+            "name": "pairformer_blocks.blocks.12.tri_multi.to_right_gate.weight",
+            "relative_l2": 0.08152340700204758,
+            "reference_norm": 0.04131085573365643,
+            "actual_norm": 0.04132982659757983
+          },
+          {
+            "name": "msa_module.blocks.2.outer_product_mean.to_right.weight",
+            "relative_l2": 0.07712703693045102,
+            "reference_norm": 0.012762223492073314,
+            "actual_norm": 0.012721836940995246
+          },
+          {
+            "name": "msa_module.blocks.0.tri_multi.to_right.weight",
+            "relative_l2": 0.07261581073952177,
+            "reference_norm": 0.04720068087495879,
+            "actual_norm": 0.047220651948513506
+          },
+          {
+            "name": "msa_module.blocks.2.outer_product_mean.to_left.weight",
+            "relative_l2": 0.07014503192013355,
+            "reference_norm": 0.01392204798070239,
+            "actual_norm": 0.013956256456993965
+          },
+          {
+            "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.bias",
+            "relative_l2": 0.06868786167531253,
+            "reference_norm": 0.003719419453837203,
+            "actual_norm": 0.003611926243772706
+          },
+          {
+            "name": "msa_module.blocks.0.outer_product_mean.to_left.weight",
+            "relative_l2": 0.06835043633776189,
+            "reference_norm": 0.01429850616393518,
+            "actual_norm": 0.01433218975056173
+          },
+          {
+            "name": "pairformer_blocks.blocks.3.transition_pair.squeeze.weight",
+            "relative_l2": 0.06775658741503215,
+            "reference_norm": 0.07387833578224008,
+            "actual_norm": 0.07387627464532517
+          },
+          {
+            "name": "msa_module.blocks.0.tri_multi.to_gate.weight",
+            "relative_l2": 0.06586729291958698,
+            "reference_norm": 0.03978400431694325,
+            "actual_norm": 0.03977834906417935
+          },
+          {
+            "name": "pairformer_blocks.blocks.1.tri_multi.to_gate.weight",
+            "relative_l2": 0.06540440355214146,
+            "reference_norm": 0.04215073733246617,
+            "actual_norm": 0.04213479964675276
+          },
+          {
+            "name": "pairformer_blocks.blocks.5.transition_pair.squeeze.weight",
+            "relative_l2": 0.06503075000350382,
+            "reference_norm": 0.07143375657837428,
+            "actual_norm": 0.07142787639245707
+          },
+          {
+            "name": "msa_module.blocks.0.transition_msa.expand_b.weight",
+            "relative_l2": 0.0648433795549857,
+            "reference_norm": 0.03729973455573044,
+            "actual_norm": 0.03728629902306832
+          }
+        ],
+        "count": 436
+      },
+      "logits": {
+        "relative_l2": 0.006293117744960129,
+        "cosine": 0.9999802583396997,
+        "worst": [
+          {
+            "name": "logits",
+            "relative_l2": 0.006293117744960129,
+            "reference_norm": 39936.07532044179,
+            "actual_norm": 39946.822251588426
+          }
+        ],
+        "count": 1
+      }
+    },
+    {
+      "step": 2,
+      "loss_native": 0.9130080342292786,
+      "loss_triton": 0.9132099151611328,
+      "loss_relative_error": 0.00022106738932923964,
+      "gradients": {
+        "relative_l2": 0.010130979013493507,
+        "cosine": 0.9999527102634019,
+        "worst": [
+          {
+            "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.bias",
+            "relative_l2": 1.558620858328123,
+            "reference_norm": 2.516461989380929e-07,
+            "actual_norm": 2.3200788714193046e-07
+          },
+          {
+            "name": "msa_module.blocks.2.msa_pair_weighted_averaging.ln_pair.bias",
+            "relative_l2": 1.314620045602843,
+            "reference_norm": 1.7001854941130264e-07,
+            "actual_norm": 1.4881006803885584e-07
+          },
+          {
+            "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+            "relative_l2": 1.2390835442490389,
+            "reference_norm": 8.304725366544386e-08,
+            "actual_norm": 4.2816228048906674e-08
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.ffn.w_up.weight",
+            "relative_l2": 0.1261065499661549,
+            "reference_norm": 1.6913908916443964e-13,
+            "actual_norm": 1.7216472794722304e-13
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.attn.out_proj.weight",
+            "relative_l2": 0.11590222644110156,
+            "reference_norm": 2.3517105881633223e-05,
+            "actual_norm": 2.537452165314537e-05
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.attn.Wqkv.weight",
+            "relative_l2": 0.09710976919151995,
+            "reference_norm": 9.26556311912014e-06,
+            "actual_norm": 9.724859799702412e-06
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.adaln_modulation.1.weight",
+            "relative_l2": 0.08276619950903821,
+            "reference_norm": 8.438766636048292e-05,
+            "actual_norm": 9.024192430092436e-05
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.adaln_modulation.1.weight",
+            "relative_l2": 0.08037759875473778,
+            "reference_norm": 1.7932676126046624e-05,
+            "actual_norm": 1.9272748224960035e-05
+          },
+          {
+            "name": "temp_embedder.proj_pb_mask.weight",
+            "relative_l2": 0.0767259812550667,
+            "reference_norm": 1.7768558496097066e-05,
+            "actual_norm": 1.7437394284906027e-05
+          },
+          {
+            "name": "temp_embedder.proj_bb_mask.weight",
+            "relative_l2": 0.0767259812550667,
+            "reference_norm": 1.7768558496097066e-05,
+            "actual_norm": 1.7437394284906027e-05
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.ffn.w_up.weight",
+            "relative_l2": 0.07423977246103834,
+            "reference_norm": 4.161321949486008e-15,
+            "actual_norm": 4.424470973075582e-15
+          },
+          {
+            "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.ffn.w_down.weight",
+            "relative_l2": 0.07264706354342208,
+            "reference_norm": 9.257356435714661e-05,
+            "actual_norm": 9.843300147773426e-05
+          }
+        ],
+        "count": 436
+      },
+      "updates": {
+        "relative_l2": 0.059237393091400595,
+        "cosine": 0.9982453547645322,
+        "worst": [
+          {
+            "name": "add_pair_recycle.1.weight",
+            "relative_l2": 0.10824877788955177,
+            "reference_norm": 0.03261423832871972,
+            "actual_norm": 0.03261505929491117
+          },
+          {
+            "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.bias",
+            "relative_l2": 0.1040327512765823,
+            "reference_norm": 0.0034628874393269364,
+            "actual_norm": 0.003295790264332479
+          },
+          {
+            "name": "add_pair_recycle.1.bias",
+            "relative_l2": 0.09535353387737229,
+            "reference_norm": 0.0025604121875111062,
+            "actual_norm": 0.0025252507160004978
+          },
+          {
+            "name": "msa_module.blocks.2.outer_product_mean.to_left.weight",
+            "relative_l2": 0.09244606917857626,
+            "reference_norm": 0.012475188084732653,
+            "actual_norm": 0.012454168693011882
+          },
+          {
+            "name": "msa_module.blocks.2.transition_msa.expand_a.weight",
+            "relative_l2": 0.08716255509013966,
+            "reference_norm": 0.032343065034597746,
+            "actual_norm": 0.03233345503389616
+          },
+          {
+            "name": "pairformer_blocks.blocks.5.transition_pair.expand_a.weight",
+            "relative_l2": 0.08653574823695043,
+            "reference_norm": 0.06401912191717386,
+            "actual_norm": 0.06407931691507408
+          },
+          {
+            "name": "pairformer_blocks.blocks.10.tri_multi.to_right.weight",
+            "relative_l2": 0.08318093835198455,
+            "reference_norm": 0.0362803308845302,
+            "actual_norm": 0.03626611644731557
+          },
+          {
+            "name": "msa_module.blocks.0.tri_multi.to_left_gate.weight",
+            "relative_l2": 0.08261469706380681,
+            "reference_norm": 0.04263395364482609,
+            "actual_norm": 0.04261138764005828
+          },
+          {
+            "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_gate.weight",
+            "relative_l2": 0.08158965308333667,
+            "reference_norm": 0.017953322230011816,
+            "actual_norm": 0.01795169215677419
+          },
+          {
+            "name": "pairformer_blocks.blocks.10.transition_pair.expand_b.weight",
+            "relative_l2": 0.08099406789204293,
+            "reference_norm": 0.05017261316566639,
+            "actual_norm": 0.05016818352474868
+          },
+          {
+            "name": "pairformer_blocks.blocks.7.tri_multi.to_left.weight",
+            "relative_l2": 0.08024895836954755,
+            "reference_norm": 0.04315985911603061,
+            "actual_norm": 0.04320030379310293
+          },
+          {
+            "name": "pairformer_blocks.blocks.8.transition_pair.expand_b.weight",
+            "relative_l2": 0.07979573035735389,
+            "reference_norm": 0.05557084644055212,
+            "actual_norm": 0.05555276870981301
+          }
+        ],
+        "count": 436
+      },
+      "logits": {
+        "relative_l2": 0.0072006099442851225,
+        "cosine": 0.999974150416286,
+        "worst": [
+          {
+            "name": "logits",
+            "relative_l2": 0.0072006099442851225,
+            "reference_norm": 40391.46682159488,
+            "actual_norm": 40410.207027433054
+          }
+        ],
+        "count": 1
+      }
+    }
+  ],
+  "scope": "PF16 L384 MSA1024 atom4096 recycle4, checkpoint445 and restored Adam, 3 steps, dropout OFF, latest vs current engine forced Triton with native OPM/PWA disabled. Not a long-term convergence validation."
+}

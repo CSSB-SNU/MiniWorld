@@ -51,4 +51,4 @@ Weight interleave/transpose/cast, mask 준비, 소규모 메타데이터 및 할
 
 ## Triton 양방향 cat 제거 검증
 
-설치본 검사 7건 통과: 기존 출력과 bitwise 일치, static fullgraph compile, CUDA graph 재생, contraction의 ATen `bmm` 2회 / `cat` 0회. [검증 및 구간 벤치 결과](../../runs/trimul_inference_nocat_20260917/REPORT.md).
+설치본 검사 7건 통과: 기존 출력과 bitwise 일치, static fullgraph compile, CUDA graph 재생, contraction의 ATen `bmm` 2회 / `cat` 0회. [검증 및 구간 벤치 결과](https://github.com/SanggeunParrk/miniworld-engine/blob/b06857c0/docs/records/trimul-inference-nocat-20260917/REPORT.md).
