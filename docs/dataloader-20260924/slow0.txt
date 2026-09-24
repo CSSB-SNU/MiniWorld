@@ -1,0 +1,61 @@
+         263661 function calls (240779 primitive calls) in 0.726 seconds
+
+   Ordered by: cumulative time
+   List reduced from 476 to 55 due to restriction <55>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.727    0.727 preprocess.py:84(process)
+        6    0.009    0.001    0.697    0.116 profile_loader.py:22(call)
+       16    0.002    0.000    0.443    0.028 utils.py:56(load_bytes)
+        1    0.010    0.010    0.344    0.344 load.py:220(load_cifmol)
+       16    0.212    0.013    0.212    0.013 {method 'read' of 'zstandard.backend_c.ZstdDecompressionReader' objects}
+  2319/16    0.041    0.000    0.165    0.010 utils.py:59(_reconstruct_data)
+        1    0.000    0.000    0.160    0.160 loading.py:100(load_record_msa)
+     1345    0.005    0.000    0.123    0.000 _npyio_impl.py:308(load)
+     1345    0.041    0.000    0.116    0.000 format.py:762(read_array)
+        1    0.001    0.001    0.091    0.091 loading.py:216(load_record_templates)
+        9    0.001    0.000    0.088    0.010 loading.py:145(_load_template_by_key)
+        9    0.000    0.000    0.081    0.009 loading.py:78(_load_a3m_from_paths)
+        1    0.000    0.000    0.072    0.072 msa.py:173(__init__)
+        1    0.051    0.051    0.072    0.072 msa.py:328(_prepare_MSA)
+       16    0.000    0.000    0.062    0.004 __init__.py:299(loads)
+       16    0.000    0.000    0.062    0.004 decoder.py:332(decode)
+       16    0.062    0.004    0.062    0.004 decoder.py:343(raw_decode)
+        1    0.000    0.000    0.044    0.044 preprocess.py:281(get_crop_indices)
+     1345    0.006    0.000    0.043    0.000 format.py:604(_read_array_header)
+       48    0.000    0.000    0.042    0.001 view.py:256(extract)
+     1345    0.003    0.000    0.031    0.000 ast.py:54(literal_eval)
+        1    0.000    0.000    0.031    0.031 convert.py:575(make_batch)
+     6353    0.005    0.000    0.029    0.000 format.py:971(_read_bytes)
+        1    0.005    0.005    0.027    0.027 crop.py:8(crop_spatial_segment_token)
+      144    0.000    0.000    0.023    0.000 view.py:158(get_container)
+      144    0.000    0.000    0.023    0.000 container.py:66(crop)
+     7698    0.023    0.000    0.023    0.000 {method 'read' of '_io.BytesIO' objects}
+       38    0.000    0.000    0.022    0.001 biomol.py:111(from_dict)
+      587    0.021    0.000    0.021    0.000 {built-in method numpy.array}
+      144    0.000    0.000    0.020    0.000 container.py:75(<dictcomp>)
+       86    0.002    0.000    0.019    0.000 feature.py:248(crop)
+10877/1345    0.016    0.000    0.017    0.000 ast.py:84(_convert)
+        1    0.000    0.000    0.016    0.016 preprocess.py:258(_sample_msa)
+        1    0.000    0.000    0.016    0.016 msa.py:737(sample_msa)
+       38    0.000    0.000    0.016    0.000 index.py:271(from_dict)
+      178    0.000    0.000    0.016    0.000 _arraysetops_impl.py:1015(isin)
+      178    0.013    0.000    0.016    0.000 _arraysetops_impl.py:862(_in1d)
+        1    0.016    0.016    0.016    0.016 convert.py:90(to_msa_features)
+        1    0.000    0.000    0.015    0.015 msa.py:642(sample)
+        1    0.012    0.012    0.015    0.015 msa.py:585(_subsample_no_pairing)
+        1    0.000    0.000    0.015    0.015 utils.py:14(remove_terminal_oxygen)
+      729    0.000    0.000    0.014    0.000 fromnumeric.py:51(_wrapfunc)
+       18    0.004    0.000    0.014    0.001 msa.py:22(__init__)
+      989    0.005    0.000    0.014    0.000 view.py:53(__init__)
+     1345    0.001    0.000    0.012    0.000 ast.py:33(parse)
+      608    0.011    0.000    0.011    0.000 {method 'argsort' of 'numpy.ndarray' objects}
+     1345    0.011    0.000    0.011    0.000 {built-in method builtins.compile}
+      312    0.000    0.000    0.011    0.000 fromnumeric.py:1130(argsort)
+50478/39437    0.004    0.000    0.009    0.000 {built-in method builtins.len}
+3911/3910    0.008    0.000    0.008    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+        2    0.001    0.000    0.008    0.004 msa.py:219(_test_uniqueness)
+       18    0.008    0.000    0.008    0.000 msa.py:224(<listcomp>)
+     1023    0.000    0.000    0.008    0.000 feature.py:181(crop)
+        1    0.000    0.000    0.008    0.008 tokenizer.py:80(tokenize)
+        1    0.003    0.003    0.008    0.008 tokenizer.py:18(atom_tokenize)

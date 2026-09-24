@@ -1,0 +1,11 @@
+{
+  "epoch": 472,
+  "global_step": 47200,
+  "optimizer_states": 436,
+  "ema_parameters": 436,
+  "ema_dtypes": [
+    "torch.float32"
+  ],
+  "checkpoint": "runs/v1.2.0/phase1a/medium_launch_20260917_130505/training/2026-09-17/131543_v1.2.0-phase1a-medium-PF16-L384-triton-4xh100/checkpoints/last.pt",
+  "mtime": 1790208340.752113
+}

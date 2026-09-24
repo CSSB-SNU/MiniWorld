@@ -1,0 +1,5507 @@
+{
+  "rank": 6,
+  "records": [
+    {
+      "region": "callbacks",
+      "cpu_ms": 33.95115491002798,
+      "micro": 0,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 250.57407934218645,
+      "micro": 0,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.354518286883831,
+      "micro": 1,
+      "gpu_ms": 12.094528198242188
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07674470543861389,
+      "micro": 1,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.016187317669391632,
+      "micro": 1,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 63.5517118498683,
+      "micro": 1,
+      "gpu_ms": 63.52102279663086
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 41.46547615528107,
+      "micro": 1,
+      "gpu_ms": 48.674591064453125
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21221768110990524,
+      "micro": 1,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07399730384349823,
+      "micro": 1,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 441.7401300743222,
+      "micro": 1,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.47913483530283,
+      "micro": 2,
+      "gpu_ms": 12.344415664672852
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05459412932395935,
+      "micro": 2,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 53.450300358235836,
+      "micro": 2,
+      "gpu_ms": 53.427711486816406
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 40.64545035362244,
+      "micro": 2,
+      "gpu_ms": 47.66227340698242
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.20669866353273392,
+      "micro": 2,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07335841655731201,
+      "micro": 2,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08458085358142853,
+      "micro": 2,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.685406185686588,
+      "micro": 3,
+      "gpu_ms": 13.56272029876709
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06476417183876038,
+      "micro": 3,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 84.46303848177195,
+      "micro": 3,
+      "gpu_ms": 84.44012451171875
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 39.47111126035452,
+      "micro": 3,
+      "gpu_ms": 47.91126251220703
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.20120013505220413,
+      "micro": 3,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07837731391191483,
+      "micro": 3,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07856730371713638,
+      "micro": 3,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.546431437134743,
+      "micro": 4,
+      "gpu_ms": 13.441887855529785
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.058555975556373596,
+      "micro": 4,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.123088344931602,
+      "micro": 4,
+      "gpu_ms": 29.101696014404297
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.40892016887665,
+      "micro": 4,
+      "gpu_ms": 47.63273620605469
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2127932384610176,
+      "micro": 4,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08268095552921295,
+      "micro": 4,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.09561516344547272,
+      "micro": 4,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.058699667453766,
+      "micro": 5,
+      "gpu_ms": 12.952192306518555
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.054445117712020874,
+      "micro": 5,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 83.76546576619148,
+      "micro": 5,
+      "gpu_ms": 83.74393463134766
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.193600088357925,
+      "micro": 5,
+      "gpu_ms": 47.60172653198242
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2086283639073372,
+      "micro": 5,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07304362952709198,
+      "micro": 5,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 39.72505126148462,
+      "micro": 5,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.795137241482735,
+      "micro": 6,
+      "gpu_ms": 12.678208351135254
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05492754280567169,
+      "micro": 6,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 7299.886408261955,
+      "micro": 6,
+      "gpu_ms": 7299.84716796875
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 246.71531561762094,
+      "micro": 6,
+      "gpu_ms": 250.89334106445312
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.1439237967133522,
+      "micro": 6,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05041901022195816,
+      "micro": 6,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07076933979988098,
+      "micro": 6,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.808077804744244,
+      "micro": 7,
+      "gpu_ms": 11.695008277893066
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.02865958958864212,
+      "micro": 7,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 44.85339019447565,
+      "micro": 7,
+      "gpu_ms": 44.83318328857422
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.815132945775986,
+      "micro": 7,
+      "gpu_ms": 47.50483322143555
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2277269959449768,
+      "micro": 7,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0686468556523323,
+      "micro": 7,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07999781519174576,
+      "micro": 7,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.226290069520473,
+      "micro": 8,
+      "gpu_ms": 12.175904273986816
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.03569852560758591,
+      "micro": 8,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 77.33252551406622,
+      "micro": 8,
+      "gpu_ms": 77.16146850585938
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 35.85053235292435,
+      "micro": 8,
+      "gpu_ms": 47.872833251953125
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2289656549692154,
+      "micro": 8,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07094256579875946,
+      "micro": 8,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.09690038859844208,
+      "micro": 8,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.228191830217838,
+      "micro": 9,
+      "gpu_ms": 12.17852783203125
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.03899820148944855,
+      "micro": 9,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 27.454350143671036,
+      "micro": 9,
+      "gpu_ms": 27.433887481689453
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 35.69192625582218,
+      "micro": 9,
+      "gpu_ms": 47.7243537902832
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21650642156600952,
+      "micro": 9,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0685257837176323,
+      "micro": 9,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 12.407972477376461,
+      "micro": 9,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.417847290635109,
+      "micro": 10,
+      "gpu_ms": 12.334015846252441
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.047511421144008636,
+      "micro": 10,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 80.87256364524364,
+      "micro": 10,
+      "gpu_ms": 80.85088348388672
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.28342133015394,
+      "micro": 10,
+      "gpu_ms": 48.236385345458984
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.22599566727876663,
+      "micro": 10,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07259100675582886,
+      "micro": 10,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06735417991876602,
+      "micro": 10,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.240985408425331,
+      "micro": 11,
+      "gpu_ms": 12.178655624389648
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.03621913492679596,
+      "micro": 11,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 60.534619726240635,
+      "micro": 11,
+      "gpu_ms": 60.50953674316406
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 35.527986474335194,
+      "micro": 11,
+      "gpu_ms": 47.78022384643555
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.18179696053266525,
+      "micro": 11,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06180163472890854,
+      "micro": 11,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 5.546004511415958,
+      "micro": 11,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.967920698225498,
+      "micro": 12,
+      "gpu_ms": 11.919808387756348
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.03746990114450455,
+      "micro": 12,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 44.150191359221935,
+      "micro": 12,
+      "gpu_ms": 44.12966537475586
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 35.64495500177145,
+      "micro": 12,
+      "gpu_ms": 48.02604675292969
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2182014286518097,
+      "micro": 12,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0723227858543396,
+      "micro": 12,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07336586713790894,
+      "micro": 12,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.976876296103,
+      "micro": 13,
+      "gpu_ms": 11.93126392364502
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.038545578718185425,
+      "micro": 13,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 61.77946366369724,
+      "micro": 13,
+      "gpu_ms": 61.758689880371094
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 35.86516622453928,
+      "micro": 13,
+      "gpu_ms": 47.72915267944336
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24069193750619888,
+      "micro": 13,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07375702261924744,
+      "micro": 13,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 18.072004429996014,
+      "micro": 13,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.358136475086212,
+      "micro": 14,
+      "gpu_ms": 12.302495956420898
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0394526869058609,
+      "micro": 14,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 62.68696766346693,
+      "micro": 14,
+      "gpu_ms": 62.6662712097168
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.115547969937325,
+      "micro": 14,
+      "gpu_ms": 48.599422454833984
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21241046488285065,
+      "micro": 14,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0684419646859169,
+      "micro": 14,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06475299596786499,
+      "micro": 14,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.867230758070946,
+      "micro": 15,
+      "gpu_ms": 11.823871612548828
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.03638025373220444,
+      "micro": 15,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 3346.99643868953,
+      "micro": 15,
+      "gpu_ms": 3346.9755859375
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 31.350627541542053,
+      "micro": 15,
+      "gpu_ms": 35.979713439941406
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.19961688667535782,
+      "micro": 15,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06885826587677002,
+      "micro": 15,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 5.44359628111124,
+      "micro": 15,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.101872824132442,
+      "micro": 16,
+      "gpu_ms": 12.043456077575684
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0474853441119194,
+      "micro": 16,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 81.28136396408081,
+      "micro": 16,
+      "gpu_ms": 81.25971221923828
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 74.38727840781212,
+      "micro": 16,
+      "gpu_ms": 74.3670425415039
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.296776182949543,
+      "micro": 16,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07395632565021515,
+      "micro": 16,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08280854672193527,
+      "micro": 16,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.409679427742958,
+      "micro": 17,
+      "gpu_ms": 11.351008415222168
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04369951784610748,
+      "micro": 17,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 27.571693994104862,
+      "micro": 17,
+      "gpu_ms": 27.520320892333984
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 35.73965933173895,
+      "micro": 17,
+      "gpu_ms": 47.83603286743164
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23682601749897003,
+      "micro": 17,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0725574791431427,
+      "micro": 17,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 18.52015871554613,
+      "micro": 17,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.35156413167715,
+      "micro": 18,
+      "gpu_ms": 12.264063835144043
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04458148032426834,
+      "micro": 18,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 68.31144168972969,
+      "micro": 18,
+      "gpu_ms": 68.28975677490234
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.486164666712284,
+      "micro": 18,
+      "gpu_ms": 48.088191986083984
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2211257815361023,
+      "micro": 18,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07087923586368561,
+      "micro": 18,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08104834705591202,
+      "micro": 18,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.043442577123642,
+      "micro": 19,
+      "gpu_ms": 11.9999361038208
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.03807526081800461,
+      "micro": 19,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 27.90237870067358,
+      "micro": 19,
+      "gpu_ms": 27.880159378051758
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.33856028318405,
+      "micro": 19,
+      "gpu_ms": 47.6519660949707
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23795012384653091,
+      "micro": 19,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07575564086437225,
+      "micro": 19,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 5.416100844740868,
+      "micro": 19,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.486926279962063,
+      "micro": 20,
+      "gpu_ms": 12.402400016784668
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.052209943532943726,
+      "micro": 20,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.835120767354965,
+      "micro": 20,
+      "gpu_ms": 46.81305694580078
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 49.102114513516426,
+      "micro": 20,
+      "gpu_ms": 49.08204650878906
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24988222867250443,
+      "micro": 20,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06884057074785233,
+      "micro": 20,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.070950947701931,
+      "micro": 20,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.331336572766304,
+      "micro": 21,
+      "gpu_ms": 11.255935668945312
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05157105624675751,
+      "micro": 21,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 81.18493296205997,
+      "micro": 21,
+      "gpu_ms": 81.1640625
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 66.69374741613865,
+      "micro": 21,
+      "gpu_ms": 66.67388916015625
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.29301829636096954,
+      "micro": 21,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07274281233549118,
+      "micro": 21,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 18.706652335822582,
+      "micro": 21,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.813902296125889,
+      "micro": 22,
+      "gpu_ms": 11.720576286315918
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05173590034246445,
+      "micro": 22,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 82.60893262922764,
+      "micro": 22,
+      "gpu_ms": 82.58704376220703
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.6509353518486,
+      "micro": 22,
+      "gpu_ms": 47.492576599121094
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2763774245977402,
+      "micro": 22,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08271820843219757,
+      "micro": 22,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07295794785022736,
+      "micro": 22,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.70396076142788,
+      "micro": 23,
+      "gpu_ms": 12.625984191894531
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05186162889003754,
+      "micro": 23,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.724497340619564,
+      "micro": 23,
+      "gpu_ms": 46.70320129394531
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.89663391560316,
+      "micro": 23,
+      "gpu_ms": 47.367584228515625
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.271085649728775,
+      "micro": 23,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07110368460416794,
+      "micro": 23,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 9.078694507479668,
+      "micro": 23,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.624721974134445,
+      "micro": 24,
+      "gpu_ms": 12.558591842651367
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04646088927984238,
+      "micro": 24,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 80.7782830670476,
+      "micro": 24,
+      "gpu_ms": 80.75654602050781
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 80.1333012059331,
+      "micro": 24,
+      "gpu_ms": 80.1131820678711
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2909218892455101,
+      "micro": 24,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07361359894275665,
+      "micro": 24,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07298123091459274,
+      "micro": 24,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.274502612650394,
+      "micro": 25,
+      "gpu_ms": 11.224479675292969
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.041659921407699585,
+      "micro": 25,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.38321977108717,
+      "micro": 25,
+      "gpu_ms": 46.36070251464844
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.36829664558172,
+      "micro": 25,
+      "gpu_ms": 47.7487678527832
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.3035934641957283,
+      "micro": 25,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07829070091247559,
+      "micro": 25,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 21.55308797955513,
+      "micro": 25,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.640818022191525,
+      "micro": 26,
+      "gpu_ms": 12.530112266540527
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05127955228090286,
+      "micro": 26,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 51.349605433642864,
+      "micro": 26,
+      "gpu_ms": 51.32624053955078
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.84192819148302,
+      "micro": 26,
+      "gpu_ms": 48.452545166015625
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2681119367480278,
+      "micro": 26,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.074068084359169,
+      "micro": 26,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.0696694478392601,
+      "micro": 26,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.714195996522903,
+      "micro": 27,
+      "gpu_ms": 12.663616180419922
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04215724766254425,
+      "micro": 27,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.04251217842102,
+      "micro": 27,
+      "gpu_ms": 29.01148796081543
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 41.276901960372925,
+      "micro": 27,
+      "gpu_ms": 47.64691162109375
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.3081420436501503,
+      "micro": 27,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07858127355575562,
+      "micro": 27,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 5.440156906843185,
+      "micro": 27,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.757531367242336,
+      "micro": 28,
+      "gpu_ms": 12.663359642028809
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.051179900765419006,
+      "micro": 28,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 64.16452955454588,
+      "micro": 28,
+      "gpu_ms": 64.1424331665039
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 72.59344030171633,
+      "micro": 28,
+      "gpu_ms": 72.57273864746094
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2694008871912956,
+      "micro": 28,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07292814552783966,
+      "micro": 28,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07001124322414398,
+      "micro": 28,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.422143317759037,
+      "micro": 29,
+      "gpu_ms": 11.332351684570312
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.045496970415115356,
+      "micro": 29,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 80.27458935976028,
+      "micro": 29,
+      "gpu_ms": 80.24998474121094
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.33720427751541,
+      "micro": 29,
+      "gpu_ms": 47.65647888183594
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.29738899320364,
+      "micro": 29,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07762666791677475,
+      "micro": 29,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 18.191395327448845,
+      "micro": 29,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.916836887598038,
+      "micro": 30,
+      "gpu_ms": 12.818143844604492
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05478411912918091,
+      "micro": 30,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 63.76007478684187,
+      "micro": 30,
+      "gpu_ms": 63.737857818603516
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.399234250187874,
+      "micro": 30,
+      "gpu_ms": 48.35295867919922
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.30122511088848114,
+      "micro": 30,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08059665560722351,
+      "micro": 30,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07110368460416794,
+      "micro": 30,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.755468487739563,
+      "micro": 31,
+      "gpu_ms": 12.685440063476562
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05317945033311844,
+      "micro": 31,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 28.351509012281895,
+      "micro": 31,
+      "gpu_ms": 28.297760009765625
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.75071336328983,
+      "micro": 31,
+      "gpu_ms": 48.013118743896484
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.27118343859910965,
+      "micro": 31,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08264370262622833,
+      "micro": 31,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 5.401849746704102,
+      "micro": 31,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.351605109870434,
+      "micro": 32,
+      "gpu_ms": 12.275424003601074
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.044529326260089874,
+      "micro": 32,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 28.33715546876192,
+      "micro": 32,
+      "gpu_ms": 28.316064834594727
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 41.663216426968575,
+      "micro": 32,
+      "gpu_ms": 50.62966537475586
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23521669209003448,
+      "micro": 32,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07102824747562408,
+      "micro": 32,
+      "gpu_ms": null
+    },
+    {
+      "region": "optimizer",
+      "cpu_ms": 42.72218327969313,
+      "micro": 32,
+      "gpu_ms": 34.0489616394043
+    },
+    {
+      "region": "ema",
+      "cpu_ms": 7.433013990521431,
+      "micro": 32,
+      "gpu_ms": 40.251808166503906
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 7.4723707512021065,
+      "micro": 32,
+      "gpu_ms": null
+    },
+    {
+      "region": "step_wall",
+      "cpu_ms": 15472.691091708839,
+      "micro": 32,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.17548631876707077,
+      "micro": 32,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.732331477105618,
+      "micro": 33,
+      "gpu_ms": 11.66806411743164
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04491675645112991,
+      "micro": 33,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.014455057680606842,
+      "micro": 33,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 85.73970664292574,
+      "micro": 33,
+      "gpu_ms": 85.71635437011719
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.72607708722353,
+      "micro": 33,
+      "gpu_ms": 47.385536193847656
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.22581126540899277,
+      "micro": 33,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06859190762042999,
+      "micro": 33,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 19.674104638397694,
+      "micro": 33,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.78622618317604,
+      "micro": 34,
+      "gpu_ms": 11.684672355651855
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06513483822345734,
+      "micro": 34,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.995063312351704,
+      "micro": 34,
+      "gpu_ms": 46.97385787963867
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 51.62257608026266,
+      "micro": 34,
+      "gpu_ms": 51.60163116455078
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.1916065812110901,
+      "micro": 34,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08699949830770493,
+      "micro": 34,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07505342364311218,
+      "micro": 34,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.010023929178715,
+      "micro": 35,
+      "gpu_ms": 11.883232116699219
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0501144677400589,
+      "micro": 35,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 48.61851409077644,
+      "micro": 35,
+      "gpu_ms": 48.59718322753906
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.53092435747385,
+      "micro": 35,
+      "gpu_ms": 47.534912109375
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23168325424194336,
+      "micro": 35,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07577426731586456,
+      "micro": 35,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 15.120784752070904,
+      "micro": 35,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.810390442609787,
+      "micro": 36,
+      "gpu_ms": 12.712608337402344
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.052605755627155304,
+      "micro": 36,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.888917692005634,
+      "micro": 36,
+      "gpu_ms": 29.866943359375
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.084699772298336,
+      "micro": 36,
+      "gpu_ms": 48.040382385253906
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2235202118754387,
+      "micro": 36,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07198844105005264,
+      "micro": 36,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07072184234857559,
+      "micro": 36,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.918990105390549,
+      "micro": 37,
+      "gpu_ms": 12.822624206542969
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04847720265388489,
+      "micro": 37,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 47.73905128240585,
+      "micro": 37,
+      "gpu_ms": 47.71750259399414
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.26156537979841,
+      "micro": 37,
+      "gpu_ms": 47.462303161621094
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24733692407608032,
+      "micro": 37,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07527414709329605,
+      "micro": 37,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 20.18632832914591,
+      "micro": 37,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.07733915746212,
+      "micro": 38,
+      "gpu_ms": 12.977248191833496
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.053802505135536194,
+      "micro": 38,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 47.01061639934778,
+      "micro": 38,
+      "gpu_ms": 46.988609313964844
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 30.46709205955267,
+      "micro": 38,
+      "gpu_ms": 36.026527404785156
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.18311664462089539,
+      "micro": 38,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07386412471532822,
+      "micro": 38,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06827712059020996,
+      "micro": 38,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.347077950835228,
+      "micro": 39,
+      "gpu_ms": 12.24828815460205
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05007348954677582,
+      "micro": 39,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 65.62376860529184,
+      "micro": 39,
+      "gpu_ms": 65.5999984741211
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.3800957351923,
+      "micro": 39,
+      "gpu_ms": 47.32038497924805
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24799630045890808,
+      "micro": 39,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07712282240390778,
+      "micro": 39,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 15.676193870604038,
+      "micro": 39,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.554225511848927,
+      "micro": 40,
+      "gpu_ms": 12.451007843017578
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05316641181707382,
+      "micro": 40,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.35309614241123,
+      "micro": 40,
+      "gpu_ms": 46.33174514770508
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.34076675027609,
+      "micro": 40,
+      "gpu_ms": 48.030494689941406
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21259021013975143,
+      "micro": 40,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07377658039331436,
+      "micro": 40,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07032696157693863,
+      "micro": 40,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.331917114555836,
+      "micro": 41,
+      "gpu_ms": 13.249024391174316
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05210377275943756,
+      "micro": 41,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 65.0855852290988,
+      "micro": 41,
+      "gpu_ms": 65.06419372558594
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 40.23653734475374,
+      "micro": 41,
+      "gpu_ms": 48.01375961303711
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.26550423353910446,
+      "micro": 41,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07193814963102341,
+      "micro": 41,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 25.697235949337482,
+      "micro": 41,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.483628630638123,
+      "micro": 42,
+      "gpu_ms": 13.37292766571045
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05583465099334717,
+      "micro": 42,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 64.78109490126371,
+      "micro": 42,
+      "gpu_ms": 64.7594223022461
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.408243864774704,
+      "micro": 42,
+      "gpu_ms": 47.936641693115234
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2132980152964592,
+      "micro": 42,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07022731006145477,
+      "micro": 42,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.0673225149512291,
+      "micro": 42,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.63903547078371,
+      "micro": 43,
+      "gpu_ms": 12.562368392944336
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.047715380787849426,
+      "micro": 43,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 47.06074111163616,
+      "micro": 43,
+      "gpu_ms": 47.0384635925293
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 31.39624185860157,
+      "micro": 43,
+      "gpu_ms": 36.26559829711914
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.20608119666576385,
+      "micro": 43,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07532164454460144,
+      "micro": 43,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 5.819521844387054,
+      "micro": 43,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.750538066029549,
+      "micro": 44,
+      "gpu_ms": 12.65999984741211
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04963576793670654,
+      "micro": 44,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 63.68205416947603,
+      "micro": 44,
+      "gpu_ms": 63.66070556640625
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.379627883434296,
+      "micro": 44,
+      "gpu_ms": 47.739967346191406
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.19997823983430862,
+      "micro": 44,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07219146937131882,
+      "micro": 44,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07065851241350174,
+      "micro": 44,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.941358610987663,
+      "micro": 45,
+      "gpu_ms": 12.858464241027832
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05107000470161438,
+      "micro": 45,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.236771166324615,
+      "micro": 45,
+      "gpu_ms": 29.214752197265625
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.613943219184875,
+      "micro": 45,
+      "gpu_ms": 47.679935455322266
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23285765200853348,
+      "micro": 45,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07617566734552383,
+      "micro": 45,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 20.706603303551674,
+      "micro": 45,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.351320289075375,
+      "micro": 46,
+      "gpu_ms": 13.2423677444458
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.056712888181209564,
+      "micro": 46,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 83.42138212174177,
+      "micro": 46,
+      "gpu_ms": 83.39830780029297
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 57.20933247357607,
+      "micro": 46,
+      "gpu_ms": 57.18787384033203
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24092849344015121,
+      "micro": 46,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07614493370056152,
+      "micro": 46,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07269717752933502,
+      "micro": 46,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.231333181262016,
+      "micro": 47,
+      "gpu_ms": 12.148032188415527
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.049398280680179596,
+      "micro": 47,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 64.18618839234114,
+      "micro": 47,
+      "gpu_ms": 64.1646728515625
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.846643313765526,
+      "micro": 47,
+      "gpu_ms": 47.5366096496582
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.26975013315677643,
+      "micro": 47,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07975473999977112,
+      "micro": 47,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 5.800647661089897,
+      "micro": 47,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.50575389713049,
+      "micro": 48,
+      "gpu_ms": 12.409343719482422
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.053787603974342346,
+      "micro": 48,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.48871719837189,
+      "micro": 48,
+      "gpu_ms": 46.46745681762695
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.832123063504696,
+      "micro": 48,
+      "gpu_ms": 48.17571258544922
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2082083374261856,
+      "micro": 48,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07188599556684494,
+      "micro": 48,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.0692000612616539,
+      "micro": 48,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.193722650408745,
+      "micro": 49,
+      "gpu_ms": 12.132255554199219
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04363898187875748,
+      "micro": 49,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 80.83147928118706,
+      "micro": 49,
+      "gpu_ms": 80.81043243408203
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.314558401703835,
+      "micro": 49,
+      "gpu_ms": 47.335391998291016
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24321489036083221,
+      "micro": 49,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08842162787914276,
+      "micro": 49,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 19.336874596774578,
+      "micro": 49,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.855473905801773,
+      "micro": 50,
+      "gpu_ms": 12.759103775024414
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05112960934638977,
+      "micro": 50,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.41962330788374,
+      "micro": 50,
+      "gpu_ms": 46.37356948852539
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 49.954186193645,
+      "micro": 50,
+      "gpu_ms": 49.93299102783203
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.22035837173461914,
+      "micro": 50,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0755181536078453,
+      "micro": 50,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07235351949930191,
+      "micro": 50,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.698279529809952,
+      "micro": 51,
+      "gpu_ms": 11.619327545166016
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04600454121828079,
+      "micro": 51,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 67.60177109390497,
+      "micro": 51,
+      "gpu_ms": 67.58252716064453
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.84731309860945,
+      "micro": 51,
+      "gpu_ms": 47.4284782409668
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.22108014672994614,
+      "micro": 51,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0784657895565033,
+      "micro": 51,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 6.17565680295229,
+      "micro": 51,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.190968729555607,
+      "micro": 52,
+      "gpu_ms": 12.12390422821045
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04462059587240219,
+      "micro": 52,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 80.16038592904806,
+      "micro": 52,
+      "gpu_ms": 80.13750457763672
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.05885726958513,
+      "micro": 52,
+      "gpu_ms": 47.75263977050781
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.18960703164339066,
+      "micro": 52,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06751995533704758,
+      "micro": 52,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08454732596874237,
+      "micro": 52,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.630274519324303,
+      "micro": 53,
+      "gpu_ms": 12.581631660461426
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.049252063035964966,
+      "micro": 53,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 59.40094403922558,
+      "micro": 53,
+      "gpu_ms": 59.37945556640625
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 30.916497111320496,
+      "micro": 53,
+      "gpu_ms": 35.887935638427734
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2002287656068802,
+      "micro": 53,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07533282041549683,
+      "micro": 53,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 49.840292893350124,
+      "micro": 53,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.762410566210747,
+      "micro": 54,
+      "gpu_ms": 12.664192199707031
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05133170634508133,
+      "micro": 54,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 28.24906911700964,
+      "micro": 54,
+      "gpu_ms": 28.220640182495117
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 52.29834280908108,
+      "micro": 54,
+      "gpu_ms": 52.27862548828125
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21301209926605225,
+      "micro": 54,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07425900548696518,
+      "micro": 54,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08559878915548325,
+      "micro": 54,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.555648408830166,
+      "micro": 55,
+      "gpu_ms": 11.479424476623535
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04532560706138611,
+      "micro": 55,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 28.70913129299879,
+      "micro": 55,
+      "gpu_ms": 28.688703536987305
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 74.85724054276943,
+      "micro": 55,
+      "gpu_ms": 74.83660888671875
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21003000438213348,
+      "micro": 55,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0714324414730072,
+      "micro": 55,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07237959653139114,
+      "micro": 55,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.84462197124958,
+      "micro": 56,
+      "gpu_ms": 11.769280433654785
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04531443119049072,
+      "micro": 56,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 80.44186979532242,
+      "micro": 56,
+      "gpu_ms": 80.4194564819336
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.787389777600765,
+      "micro": 56,
+      "gpu_ms": 47.553279876708984
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.1994660124182701,
+      "micro": 56,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.070241279900074,
+      "micro": 56,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07134955376386642,
+      "micro": 56,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.714645825326443,
+      "micro": 57,
+      "gpu_ms": 12.651935577392578
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.047196634113788605,
+      "micro": 57,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.310503974556923,
+      "micro": 57,
+      "gpu_ms": 29.28611183166504
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.47112397104502,
+      "micro": 57,
+      "gpu_ms": 47.644256591796875
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24517904967069626,
+      "micro": 57,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07220357656478882,
+      "micro": 57,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 38.76890987157822,
+      "micro": 57,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.104711659252644,
+      "micro": 58,
+      "gpu_ms": 12.998144149780273
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05723629146814346,
+      "micro": 58,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 80.56425582617521,
+      "micro": 58,
+      "gpu_ms": 80.54121398925781
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 51.00902263075113,
+      "micro": 58,
+      "gpu_ms": 55.901344299316406
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.19707810133695602,
+      "micro": 58,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07195398211479187,
+      "micro": 58,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06928574293851852,
+      "micro": 58,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.362253852188587,
+      "micro": 59,
+      "gpu_ms": 12.303808212280273
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05009770393371582,
+      "micro": 59,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 67.95071717351675,
+      "micro": 59,
+      "gpu_ms": 67.9300765991211
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 39.27346598356962,
+      "micro": 59,
+      "gpu_ms": 47.695838928222656
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23942254483699799,
+      "micro": 59,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07063988596200943,
+      "micro": 59,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.10389089584350586,
+      "micro": 59,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.478725053369999,
+      "micro": 60,
+      "gpu_ms": 12.411999702453613
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04488229751586914,
+      "micro": 60,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 81.40745107084513,
+      "micro": 60,
+      "gpu_ms": 81.38633728027344
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.76313441246748,
+      "micro": 60,
+      "gpu_ms": 47.355934143066406
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2170819789171219,
+      "micro": 60,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07107481360435486,
+      "micro": 60,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.09433552622795105,
+      "micro": 60,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.613150291144848,
+      "micro": 61,
+      "gpu_ms": 12.540703773498535
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04855543375015259,
+      "micro": 61,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.547431498765945,
+      "micro": 61,
+      "gpu_ms": 46.525665283203125
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.61746734380722,
+      "micro": 61,
+      "gpu_ms": 47.55961608886719
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.26974547654390335,
+      "micro": 61,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07650908082723618,
+      "micro": 61,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 104.79176044464111,
+      "micro": 61,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.636647559702396,
+      "micro": 62,
+      "gpu_ms": 12.526464462280273
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05215965211391449,
+      "micro": 62,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 47.36053291708231,
+      "micro": 62,
+      "gpu_ms": 47.33990478515625
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 81.15789201110601,
+      "micro": 62,
+      "gpu_ms": 81.13683319091797
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.242491252720356,
+      "micro": 62,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07061939686536789,
+      "micro": 62,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06923917680978775,
+      "micro": 62,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.702470481395721,
+      "micro": 63,
+      "gpu_ms": 11.62070369720459
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05099736154079437,
+      "micro": 63,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 28.82319502532482,
+      "micro": 63,
+      "gpu_ms": 28.801855087280273
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.14726958423853,
+      "micro": 63,
+      "gpu_ms": 47.996673583984375
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2191700041294098,
+      "micro": 63,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07446296513080597,
+      "micro": 63,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07194653153419495,
+      "micro": 63,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.606254778802395,
+      "micro": 64,
+      "gpu_ms": 12.540575981140137
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05020666867494583,
+      "micro": 64,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 81.26004040241241,
+      "micro": 64,
+      "gpu_ms": 81.2389144897461
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 41.77630785852671,
+      "micro": 64,
+      "gpu_ms": 10467.548828125
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24055037647485733,
+      "micro": 64,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07162988185882568,
+      "micro": 64,
+      "gpu_ms": null
+    },
+    {
+      "region": "optimizer",
+      "cpu_ms": 10437.353419139981,
+      "micro": 64,
+      "gpu_ms": 11.871487617492676
+    },
+    {
+      "region": "ema",
+      "cpu_ms": 7.602691650390625,
+      "micro": 64,
+      "gpu_ms": 14.687775611877441
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 7.672794163227081,
+      "micro": 64,
+      "gpu_ms": null
+    },
+    {
+      "region": "step_wall",
+      "cpu_ms": 14847.085147164762,
+      "micro": 64,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.1702895388007164,
+      "micro": 64,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.397253721952438,
+      "micro": 65,
+      "gpu_ms": 11.354111671447754
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04093162715435028,
+      "micro": 65,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.014302320778369904,
+      "micro": 65,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 53.35761606693268,
+      "micro": 65,
+      "gpu_ms": 53.336830139160156
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.8277450799942,
+      "micro": 65,
+      "gpu_ms": 47.89388656616211
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.22231414914131165,
+      "micro": 65,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07988046854734421,
+      "micro": 65,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 26.457631029188633,
+      "micro": 65,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 22.787907160818577,
+      "micro": 66,
+      "gpu_ms": 22.63702392578125
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.1294827088713646,
+      "micro": 66,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 148.47540855407715,
+      "micro": 66,
+      "gpu_ms": 148.4021453857422
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.20441663265228,
+      "micro": 66,
+      "gpu_ms": 47.493343353271484
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2328772097826004,
+      "micro": 66,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.09295344352722168,
+      "micro": 66,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.20870380103588104,
+      "micro": 66,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.750949710607529,
+      "micro": 67,
+      "gpu_ms": 12.666080474853516
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.059565529227256775,
+      "micro": 67,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 48.39162528514862,
+      "micro": 67,
+      "gpu_ms": 48.36489486694336
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.673598155379295,
+      "micro": 67,
+      "gpu_ms": 47.554080963134766
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21833553910255432,
+      "micro": 67,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07862597703933716,
+      "micro": 67,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.09900424629449844,
+      "micro": 67,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.510017491877079,
+      "micro": 68,
+      "gpu_ms": 12.42579174041748
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05652010440826416,
+      "micro": 68,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 60.091303661465645,
+      "micro": 68,
+      "gpu_ms": 60.06752014160156
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 31.92012943327427,
+      "micro": 68,
+      "gpu_ms": 36.06163024902344
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.20038150250911713,
+      "micro": 68,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08188001811504364,
+      "micro": 68,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07457565516233444,
+      "micro": 68,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.948550283908844,
+      "micro": 69,
+      "gpu_ms": 12.849151611328125
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05188118666410446,
+      "micro": 69,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 81.21014479547739,
+      "micro": 69,
+      "gpu_ms": 81.18656158447266
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.53468859940767,
+      "micro": 69,
+      "gpu_ms": 47.588958740234375
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24174433201551437,
+      "micro": 69,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08613243699073792,
+      "micro": 69,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 44.72562950104475,
+      "micro": 69,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.074971735477448,
+      "micro": 70,
+      "gpu_ms": 12.970527648925781
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.057347118854522705,
+      "micro": 70,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 64.54464141279459,
+      "micro": 70,
+      "gpu_ms": 64.51423645019531
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 58.956836350262165,
+      "micro": 70,
+      "gpu_ms": 58.93667221069336
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21308008581399918,
+      "micro": 70,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07080100476741791,
+      "micro": 70,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07217284291982651,
+      "micro": 70,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.232694774866104,
+      "micro": 71,
+      "gpu_ms": 12.137280464172363
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.047517940402030945,
+      "micro": 71,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 30.185362324118614,
+      "micro": 71,
+      "gpu_ms": 30.161760330200195
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.48119156807661,
+      "micro": 71,
+      "gpu_ms": 47.7608642578125
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23089535534381866,
+      "micro": 71,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07612258195877075,
+      "micro": 71,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07382873445749283,
+      "micro": 71,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.055100105702877,
+      "micro": 72,
+      "gpu_ms": 12.990880012512207
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04674214869737625,
+      "micro": 72,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.737649485468864,
+      "micro": 72,
+      "gpu_ms": 29.71552085876465
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.873366847634315,
+      "micro": 72,
+      "gpu_ms": 47.95014572143555
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2314271405339241,
+      "micro": 72,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07294397801160812,
+      "micro": 72,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08172821253538132,
+      "micro": 72,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.444083578884602,
+      "micro": 73,
+      "gpu_ms": 12.384960174560547
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04125293344259262,
+      "micro": 73,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 83.64848978817463,
+      "micro": 73,
+      "gpu_ms": 83.62745666503906
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.61542495340109,
+      "micro": 73,
+      "gpu_ms": 47.98515319824219
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.08071120828390121,
+      "micro": 73,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07927138358354568,
+      "micro": 73,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 28.357493691146374,
+      "micro": 73,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.70650140941143,
+      "micro": 74,
+      "gpu_ms": 12.60812759399414
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05427561700344086,
+      "micro": 74,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 49.01100415736437,
+      "micro": 74,
+      "gpu_ms": 48.989376068115234
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 45.462170615792274,
+      "micro": 74,
+      "gpu_ms": 50.03257751464844
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21454785019159317,
+      "micro": 74,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08396431803703308,
+      "micro": 74,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07514283061027527,
+      "micro": 74,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.66967598348856,
+      "micro": 75,
+      "gpu_ms": 12.604607582092285
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04477798938751221,
+      "micro": 75,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.958062805235386,
+      "micro": 75,
+      "gpu_ms": 29.936447143554688
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.103995844721794,
+      "micro": 75,
+      "gpu_ms": 48.00796890258789
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2367226406931877,
+      "micro": 75,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08257012814283371,
+      "micro": 75,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07552653551101685,
+      "micro": 75,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.255560770630836,
+      "micro": 76,
+      "gpu_ms": 13.177248001098633
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05026813596487045,
+      "micro": 76,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 82.32695329934359,
+      "micro": 76,
+      "gpu_ms": 82.3031997680664
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.62002382427454,
+      "micro": 76,
+      "gpu_ms": 47.776832580566406
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23932568728923798,
+      "micro": 76,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.09791925549507141,
+      "micro": 76,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07944833487272263,
+      "micro": 76,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.060318306088448,
+      "micro": 77,
+      "gpu_ms": 12.997568130493164
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04997383803129196,
+      "micro": 77,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 47.832755371928215,
+      "micro": 77,
+      "gpu_ms": 47.797855377197266
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.36553248018026,
+      "micro": 77,
+      "gpu_ms": 47.524192810058594
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.25795865803956985,
+      "micro": 77,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0744704157114029,
+      "micro": 77,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 41.67806915938854,
+      "micro": 77,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.943760491907597,
+      "micro": 78,
+      "gpu_ms": 12.83619213104248
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.048833899199962616,
+      "micro": 78,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.8610730022192,
+      "micro": 78,
+      "gpu_ms": 46.8397102355957
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.46801598370075,
+      "micro": 78,
+      "gpu_ms": 47.88115310668945
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.19587576389312744,
+      "micro": 78,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06981100887060165,
+      "micro": 78,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08229631930589676,
+      "micro": 78,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.453312054276466,
+      "micro": 79,
+      "gpu_ms": 12.386015892028809
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04607066512107849,
+      "micro": 79,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 64.16016072034836,
+      "micro": 79,
+      "gpu_ms": 64.1376953125
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.12635410577059,
+      "micro": 79,
+      "gpu_ms": 47.52809524536133
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2420712262392044,
+      "micro": 79,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07556378841400146,
+      "micro": 79,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08597783744335175,
+      "micro": 79,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.754635885357857,
+      "micro": 80,
+      "gpu_ms": 12.677536010742188
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04706159234046936,
+      "micro": 80,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 63.36774956434965,
+      "micro": 80,
+      "gpu_ms": 63.345951080322266
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.71115729957819,
+      "micro": 80,
+      "gpu_ms": 47.87209701538086
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2079373225569725,
+      "micro": 80,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0730445608496666,
+      "micro": 80,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.14789775013923645,
+      "micro": 80,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.526074424386024,
+      "micro": 81,
+      "gpu_ms": 12.466912269592285
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04624202847480774,
+      "micro": 81,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 63.71834874153137,
+      "micro": 81,
+      "gpu_ms": 63.697792053222656
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 58.07856749743223,
+      "micro": 81,
+      "gpu_ms": 58.059200286865234
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.22788532078266144,
+      "micro": 81,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07303338497877121,
+      "micro": 81,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 32.18336310237646,
+      "micro": 81,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.13938184082508,
+      "micro": 82,
+      "gpu_ms": 12.036800384521484
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.051254406571388245,
+      "micro": 82,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 47.647418454289436,
+      "micro": 82,
+      "gpu_ms": 47.62579345703125
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 44.728836975991726,
+      "micro": 82,
+      "gpu_ms": 50.32128143310547
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.20714756101369858,
+      "micro": 82,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08506141602993011,
+      "micro": 82,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07315725088119507,
+      "micro": 82,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.065114617347717,
+      "micro": 83,
+      "gpu_ms": 12.986847877502441
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05802139639854431,
+      "micro": 83,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 80.97430225461721,
+      "micro": 83,
+      "gpu_ms": 80.95043182373047
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.36353665590286,
+      "micro": 83,
+      "gpu_ms": 47.88159942626953
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.20719412714242935,
+      "micro": 83,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07227994501590729,
+      "micro": 83,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06901100277900696,
+      "micro": 83,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.62549590319395,
+      "micro": 84,
+      "gpu_ms": 12.578207969665527
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04301872104406357,
+      "micro": 84,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.16136848926544,
+      "micro": 84,
+      "gpu_ms": 46.140480041503906
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.728620529174805,
+      "micro": 84,
+      "gpu_ms": 47.90224075317383
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2047419548034668,
+      "micro": 84,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07321871817111969,
+      "micro": 84,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.0698976218700409,
+      "micro": 84,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.791767716407776,
+      "micro": 85,
+      "gpu_ms": 12.740032196044922
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05213543772697449,
+      "micro": 85,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 81.38126414269209,
+      "micro": 85,
+      "gpu_ms": 81.24121856689453
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.618404254317284,
+      "micro": 85,
+      "gpu_ms": 47.37855911254883
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23537501692771912,
+      "micro": 85,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07344037294387817,
+      "micro": 85,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 23.872550576925278,
+      "micro": 85,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.644975446164608,
+      "micro": 86,
+      "gpu_ms": 12.544544219970703
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05143601447343826,
+      "micro": 86,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 79.95639182627201,
+      "micro": 86,
+      "gpu_ms": 79.93526458740234
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 39.69991113990545,
+      "micro": 86,
+      "gpu_ms": 47.88230514526367
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21931622177362442,
+      "micro": 86,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0730808824300766,
+      "micro": 86,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08751824498176575,
+      "micro": 86,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.48315442353487,
+      "micro": 87,
+      "gpu_ms": 12.418463706970215
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0420641154050827,
+      "micro": 87,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 28.329751454293728,
+      "micro": 87,
+      "gpu_ms": 28.309343338012695
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.995794624090195,
+      "micro": 87,
+      "gpu_ms": 47.55302429199219
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21912436932325363,
+      "micro": 87,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0716792419552803,
+      "micro": 87,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06941240280866623,
+      "micro": 87,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.486159801483154,
+      "micro": 88,
+      "gpu_ms": 12.412128448486328
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04625599831342697,
+      "micro": 88,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 64.39725402742624,
+      "micro": 88,
+      "gpu_ms": 64.37385559082031
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.33017574995756,
+      "micro": 88,
+      "gpu_ms": 47.482177734375
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24709850549697876,
+      "micro": 88,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07505156099796295,
+      "micro": 88,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07311161607503891,
+      "micro": 88,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.663455680012703,
+      "micro": 89,
+      "gpu_ms": 12.579903602600098
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05190353840589523,
+      "micro": 89,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 63.48162144422531,
+      "micro": 89,
+      "gpu_ms": 63.451297760009766
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.77097614854574,
+      "micro": 89,
+      "gpu_ms": 47.59564971923828
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23274961858987808,
+      "micro": 89,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08015148341655731,
+      "micro": 89,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 30.329886823892593,
+      "micro": 89,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.281727209687233,
+      "micro": 90,
+      "gpu_ms": 13.177408218383789
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05311891436576843,
+      "micro": 90,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 65.07435068488121,
+      "micro": 90,
+      "gpu_ms": 65.05315399169922
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.77778148651123,
+      "micro": 90,
+      "gpu_ms": 47.858497619628906
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.234152190387249,
+      "micro": 90,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07678661495447159,
+      "micro": 90,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06936304271221161,
+      "micro": 90,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.094628229737282,
+      "micro": 91,
+      "gpu_ms": 13.018464088439941
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.045563094317913055,
+      "micro": 91,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 64.23512101173401,
+      "micro": 91,
+      "gpu_ms": 64.2129898071289
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.90286260098219,
+      "micro": 91,
+      "gpu_ms": 47.577632904052734
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23198407143354416,
+      "micro": 91,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07931981235742569,
+      "micro": 91,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.069483183324337,
+      "micro": 91,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.200014665722847,
+      "micro": 92,
+      "gpu_ms": 12.149760246276855
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04612002521753311,
+      "micro": 92,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 48.28770738095045,
+      "micro": 92,
+      "gpu_ms": 48.25795364379883
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 31.234974041581154,
+      "micro": 92,
+      "gpu_ms": 36.481502532958984
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.1946873962879181,
+      "micro": 92,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08445326238870621,
+      "micro": 92,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.09656045585870743,
+      "micro": 92,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.314045801758766,
+      "micro": 93,
+      "gpu_ms": 12.24556827545166
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04093814641237259,
+      "micro": 93,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 62.59272340685129,
+      "micro": 93,
+      "gpu_ms": 62.56233596801758
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 50.80254841595888,
+      "micro": 93,
+      "gpu_ms": 50.782047271728516
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.1839781180024147,
+      "micro": 93,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06667431443929672,
+      "micro": 93,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 36.91449947655201,
+      "micro": 93,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.932874098420143,
+      "micro": 94,
+      "gpu_ms": 11.824735641479492
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05324278026819229,
+      "micro": 94,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 28.745710849761963,
+      "micro": 94,
+      "gpu_ms": 28.717119216918945
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.89891488850117,
+      "micro": 94,
+      "gpu_ms": 47.75980758666992
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21837279200553894,
+      "micro": 94,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08358433842658997,
+      "micro": 94,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08328817784786224,
+      "micro": 94,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.534794561564922,
+      "micro": 95,
+      "gpu_ms": 13.424575805664062
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.057697296142578125,
+      "micro": 95,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 81.34750556200743,
+      "micro": 95,
+      "gpu_ms": 81.32256317138672
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.924662068486214,
+      "micro": 95,
+      "gpu_ms": 47.69401550292969
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.19131042063236237,
+      "micro": 95,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08106697350740433,
+      "micro": 95,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06795302033424377,
+      "micro": 95,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.189812026917934,
+      "micro": 96,
+      "gpu_ms": 12.1310396194458
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.045863911509513855,
+      "micro": 96,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 80.07271308451891,
+      "micro": 96,
+      "gpu_ms": 80.04956817626953
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 42.40658041089773,
+      "micro": 96,
+      "gpu_ms": 284.4534606933594
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21602772176265717,
+      "micro": 96,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07194932550191879,
+      "micro": 96,
+      "gpu_ms": null
+    },
+    {
+      "region": "optimizer",
+      "cpu_ms": 250.89355930685997,
+      "micro": 96,
+      "gpu_ms": 9.128064155578613
+    },
+    {
+      "region": "ema",
+      "cpu_ms": 7.218361832201481,
+      "micro": 96,
+      "gpu_ms": 14.352352142333984
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 7.253824733197689,
+      "micro": 96,
+      "gpu_ms": null
+    },
+    {
+      "region": "step_wall",
+      "cpu_ms": 4677.994919940829,
+      "micro": 96,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.09950157254934311,
+      "micro": 96,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.428600177168846,
+      "micro": 97,
+      "gpu_ms": 11.371392250061035
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.03630109131336212,
+      "micro": 97,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.013300217688083649,
+      "micro": 97,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 115.4438853263855,
+      "micro": 97,
+      "gpu_ms": 115.4202880859375
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.582329638302326,
+      "micro": 97,
+      "gpu_ms": 48.16966247558594
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2082260325551033,
+      "micro": 97,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06933603435754776,
+      "micro": 97,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 27.50805765390396,
+      "micro": 97,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.768412940204144,
+      "micro": 98,
+      "gpu_ms": 12.653663635253906
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05575176328420639,
+      "micro": 98,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 83.88611674308777,
+      "micro": 98,
+      "gpu_ms": 83.86396789550781
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 84.57263186573982,
+      "micro": 98,
+      "gpu_ms": 84.55104064941406
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2391831949353218,
+      "micro": 98,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07797218859195709,
+      "micro": 98,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.0716550275683403,
+      "micro": 98,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.03147042542696,
+      "micro": 99,
+      "gpu_ms": 11.933664321899414
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.055820681154727936,
+      "micro": 99,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 82.67500437796116,
+      "micro": 99,
+      "gpu_ms": 82.64608001708984
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.46323753148317,
+      "micro": 99,
+      "gpu_ms": 48.05721664428711
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23766327649354935,
+      "micro": 99,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07455796003341675,
+      "micro": 99,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07104873657226562,
+      "micro": 99,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.512704357504845,
+      "micro": 100,
+      "gpu_ms": 12.445631980895996
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04769023507833481,
+      "micro": 100,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 23.380554281175137,
+      "micro": 100,
+      "gpu_ms": 23.35919952392578
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 31.64483793079853,
+      "micro": 100,
+      "gpu_ms": 36.718910217285156
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.20832102745771408,
+      "micro": 100,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07277540862560272,
+      "micro": 100,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07241684943437576,
+      "micro": 100,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.305022217333317,
+      "micro": 101,
+      "gpu_ms": 12.246975898742676
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04538148641586304,
+      "micro": 101,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.99995554983616,
+      "micro": 101,
+      "gpu_ms": 46.97532653808594
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 66.14144705235958,
+      "micro": 101,
+      "gpu_ms": 66.11087799072266
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2710912376642227,
+      "micro": 101,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.09617581963539124,
+      "micro": 101,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 14.05590120702982,
+      "micro": 101,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.9132399559021,
+      "micro": 102,
+      "gpu_ms": 11.810336112976074
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.054008327424526215,
+      "micro": 102,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 48.07491134852171,
+      "micro": 102,
+      "gpu_ms": 48.05311965942383
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.218528032302856,
+      "micro": 102,
+      "gpu_ms": 48.02220916748047
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.26921462267637253,
+      "micro": 102,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08059199899435043,
+      "micro": 102,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08363928645849228,
+      "micro": 102,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.557721860706806,
+      "micro": 103,
+      "gpu_ms": 13.462719917297363
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04921015352010727,
+      "micro": 103,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 48.15416410565376,
+      "micro": 103,
+      "gpu_ms": 48.1300163269043
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.937426172196865,
+      "micro": 103,
+      "gpu_ms": 47.95353698730469
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.271528959274292,
+      "micro": 103,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07867347449064255,
+      "micro": 103,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.0772625207901001,
+      "micro": 103,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.566152960062027,
+      "micro": 104,
+      "gpu_ms": 12.47599983215332
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05830544978380203,
+      "micro": 104,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.7487061470747,
+      "micro": 104,
+      "gpu_ms": 29.715744018554688
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.234357722103596,
+      "micro": 104,
+      "gpu_ms": 47.68921661376953
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.265282578766346,
+      "micro": 104,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08433032780885696,
+      "micro": 104,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08073728531599045,
+      "micro": 104,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.55563011020422,
+      "micro": 105,
+      "gpu_ms": 13.465536117553711
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05391798913478851,
+      "micro": 105,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 47.63323348015547,
+      "micro": 105,
+      "gpu_ms": 47.6102409362793
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 49.921234138309956,
+      "micro": 105,
+      "gpu_ms": 49.89990234375
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2656280994415283,
+      "micro": 105,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07687509059906006,
+      "micro": 105,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 45.96668854355812,
+      "micro": 105,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.735351756215096,
+      "micro": 106,
+      "gpu_ms": 11.631711959838867
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05145557224750519,
+      "micro": 106,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 59.27219055593014,
+      "micro": 106,
+      "gpu_ms": 59.25065612792969
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 30.880908481776714,
+      "micro": 106,
+      "gpu_ms": 36.17292785644531
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.19130297005176544,
+      "micro": 106,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08830241858959198,
+      "micro": 106,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06899889558553696,
+      "micro": 106,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.568220496177673,
+      "micro": 107,
+      "gpu_ms": 12.503711700439453
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04765857011079788,
+      "micro": 107,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.37990427017212,
+      "micro": 107,
+      "gpu_ms": 29.359647750854492
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.276506423950195,
+      "micro": 107,
+      "gpu_ms": 47.77347183227539
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.230385921895504,
+      "micro": 107,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07055047899484634,
+      "micro": 107,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06965082138776779,
+      "micro": 107,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.226757757365704,
+      "micro": 108,
+      "gpu_ms": 13.152480125427246
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.054047442972660065,
+      "micro": 108,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.039406217634678,
+      "micro": 108,
+      "gpu_ms": 29.004255294799805
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.40062564611435,
+      "micro": 108,
+      "gpu_ms": 47.27695846557617
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2422155812382698,
+      "micro": 108,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08444208651781082,
+      "micro": 108,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07118657231330872,
+      "micro": 108,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.063592836260796,
+      "micro": 109,
+      "gpu_ms": 12.984160423278809
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.049979425966739655,
+      "micro": 109,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.642966575920582,
+      "micro": 109,
+      "gpu_ms": 29.60793685913086
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 48.79341460764408,
+      "micro": 109,
+      "gpu_ms": 48.77231979370117
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24655181914567947,
+      "micro": 109,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08459575474262238,
+      "micro": 109,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 46.241688542068005,
+      "micro": 109,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.758485808968544,
+      "micro": 110,
+      "gpu_ms": 11.65385627746582
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04976615309715271,
+      "micro": 110,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 64.45373967289925,
+      "micro": 110,
+      "gpu_ms": 64.43315124511719
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 83.02698843181133,
+      "micro": 110,
+      "gpu_ms": 83.00678253173828
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2711256965994835,
+      "micro": 110,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07993075996637344,
+      "micro": 110,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07576867938041687,
+      "micro": 110,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 11.767094023525715,
+      "micro": 111,
+      "gpu_ms": 11.667296409606934
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04944950342178345,
+      "micro": 111,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 64.80330415070057,
+      "micro": 111,
+      "gpu_ms": 64.77267456054688
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 74.63233638554811,
+      "micro": 111,
+      "gpu_ms": 74.60374450683594
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.23429375141859055,
+      "micro": 111,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.087713822722435,
+      "micro": 111,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.09314808994531631,
+      "micro": 111,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.186864390969276,
+      "micro": 112,
+      "gpu_ms": 12.083456039428711
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05226396024227142,
+      "micro": 112,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.36766669154167,
+      "micro": 112,
+      "gpu_ms": 29.33990478515625
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.437785252928734,
+      "micro": 112,
+      "gpu_ms": 47.88751983642578
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.20451843738555908,
+      "micro": 112,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06927456706762314,
+      "micro": 112,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08165929466485977,
+      "micro": 112,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.44155690073967,
+      "micro": 113,
+      "gpu_ms": 12.385503768920898
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04584621638059616,
+      "micro": 113,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 81.34209364652634,
+      "micro": 113,
+      "gpu_ms": 81.28262329101562
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.72555647790432,
+      "micro": 113,
+      "gpu_ms": 47.814239501953125
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21295715123414993,
+      "micro": 113,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07651280611753464,
+      "micro": 113,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 25.11642500758171,
+      "micro": 113,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.660142034292221,
+      "micro": 114,
+      "gpu_ms": 12.558624267578125
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.048335641622543335,
+      "micro": 114,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 80.44323325157166,
+      "micro": 114,
+      "gpu_ms": 80.38249969482422
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.3879624530673,
+      "micro": 114,
+      "gpu_ms": 47.73583984375
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.20306464284658432,
+      "micro": 114,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07740594446659088,
+      "micro": 114,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06776396185159683,
+      "micro": 114,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.361599132418633,
+      "micro": 115,
+      "gpu_ms": 12.26921558380127
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04362035542726517,
+      "micro": 115,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 28.73854525387287,
+      "micro": 115,
+      "gpu_ms": 28.710912704467773
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.380944006145,
+      "micro": 115,
+      "gpu_ms": 47.57001495361328
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.22919010370969772,
+      "micro": 115,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07193814963102341,
+      "micro": 115,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06887316703796387,
+      "micro": 115,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.560059316456318,
+      "micro": 116,
+      "gpu_ms": 12.491616249084473
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04890561103820801,
+      "micro": 116,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.64582572877407,
+      "micro": 116,
+      "gpu_ms": 46.61695861816406
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.6333286985755,
+      "micro": 116,
+      "gpu_ms": 47.356510162353516
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2439236268401146,
+      "micro": 116,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06992090493440628,
+      "micro": 116,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08664000779390335,
+      "micro": 116,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.717629946768284,
+      "micro": 117,
+      "gpu_ms": 13.650208473205566
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05327537655830383,
+      "micro": 117,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.49747070670128,
+      "micro": 117,
+      "gpu_ms": 29.472415924072266
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.27117087692022,
+      "micro": 117,
+      "gpu_ms": 47.574527740478516
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.26608631014823914,
+      "micro": 117,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07724948227405548,
+      "micro": 117,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 50.73708388954401,
+      "micro": 117,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.413788586854935,
+      "micro": 118,
+      "gpu_ms": 12.30031967163086
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0510532408952713,
+      "micro": 118,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.43093329668045,
+      "micro": 118,
+      "gpu_ms": 29.409696578979492
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.384819239377975,
+      "micro": 118,
+      "gpu_ms": 47.82825469970703
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.20752009004354477,
+      "micro": 118,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07115770131349564,
+      "micro": 118,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07161032408475876,
+      "micro": 118,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.877858243882656,
+      "micro": 119,
+      "gpu_ms": 12.805952072143555
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05082506686449051,
+      "micro": 119,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 63.33536747843027,
+      "micro": 119,
+      "gpu_ms": 63.280479431152344
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.97990346699953,
+      "micro": 119,
+      "gpu_ms": 47.81740951538086
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2312520518898964,
+      "micro": 119,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0741342082619667,
+      "micro": 119,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07265433669090271,
+      "micro": 119,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.536386959254742,
+      "micro": 120,
+      "gpu_ms": 12.467647552490234
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04835706204175949,
+      "micro": 120,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 46.87456972897053,
+      "micro": 120,
+      "gpu_ms": 46.840736389160156
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 36.99132427573204,
+      "micro": 120,
+      "gpu_ms": 47.86627197265625
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.26185810565948486,
+      "micro": 120,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.08357223123311996,
+      "micro": 120,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07208529859781265,
+      "micro": 120,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.812658213078976,
+      "micro": 121,
+      "gpu_ms": 12.730624198913574
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05095824599266052,
+      "micro": 121,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 28.565218672156334,
+      "micro": 121,
+      "gpu_ms": 28.530912399291992
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.5578673556447,
+      "micro": 121,
+      "gpu_ms": 47.85935974121094
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24744030088186264,
+      "micro": 121,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07549114525318146,
+      "micro": 121,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 22.85641059279442,
+      "micro": 121,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.453071005642414,
+      "micro": 122,
+      "gpu_ms": 13.34447956085205
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.06283633410930634,
+      "micro": 122,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 35.564977675676346,
+      "micro": 122,
+      "gpu_ms": 35.54227066040039
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 30.581857077777386,
+      "micro": 122,
+      "gpu_ms": 36.324161529541016
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.21006911993026733,
+      "micro": 122,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07920153439044952,
+      "micro": 122,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.08135847747325897,
+      "micro": 122,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.888845056295395,
+      "micro": 123,
+      "gpu_ms": 12.81164836883545
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05787517875432968,
+      "micro": 123,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 81.98516443371773,
+      "micro": 123,
+      "gpu_ms": 81.94319915771484
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.35691122710705,
+      "micro": 123,
+      "gpu_ms": 47.42316818237305
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2637933939695358,
+      "micro": 123,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07074698805809021,
+      "micro": 123,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07118005305528641,
+      "micro": 123,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.36396748572588,
+      "micro": 124,
+      "gpu_ms": 12.300928115844727
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.04708860069513321,
+      "micro": 124,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 33.9500829577446,
+      "micro": 124,
+      "gpu_ms": 33.928672790527344
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 29.682750813663006,
+      "micro": 124,
+      "gpu_ms": 36.04857635498047
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2033822238445282,
+      "micro": 124,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07918570190668106,
+      "micro": 124,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 5.707246251404285,
+      "micro": 124,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 13.02076131105423,
+      "micro": 125,
+      "gpu_ms": 12.906496047973633
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05859043449163437,
+      "micro": 125,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.151503928005695,
+      "micro": 125,
+      "gpu_ms": 29.127424240112305
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 37.209673784673214,
+      "micro": 125,
+      "gpu_ms": 47.62876892089844
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2320101484656334,
+      "micro": 125,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07466692477464676,
+      "micro": 125,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 54.15210500359535,
+      "micro": 125,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.700912542641163,
+      "micro": 126,
+      "gpu_ms": 12.591008186340332
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05717668682336807,
+      "micro": 126,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 29.652439057826996,
+      "micro": 126,
+      "gpu_ms": 29.603904724121094
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 38.62458933144808,
+      "micro": 126,
+      "gpu_ms": 47.98774337768555
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.24406611919403076,
+      "micro": 126,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07376540452241898,
+      "micro": 126,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.06929785013198853,
+      "micro": 126,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.694314122200012,
+      "micro": 127,
+      "gpu_ms": 12.607999801635742
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.05286838859319687,
+      "micro": 127,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 34.54155661165714,
+      "micro": 127,
+      "gpu_ms": 34.50636672973633
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 30.268307775259018,
+      "micro": 127,
+      "gpu_ms": 36.3985595703125
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.1978101208806038,
+      "micro": 127,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.07808487862348557,
+      "micro": 127,
+      "gpu_ms": null
+    },
+    {
+      "region": "data_next",
+      "cpu_ms": 0.07446762174367905,
+      "micro": 127,
+      "gpu_ms": null
+    },
+    {
+      "region": "batch_to",
+      "cpu_ms": 12.541117146611214,
+      "micro": 128,
+      "gpu_ms": 12.475135803222656
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.045629218220710754,
+      "micro": 128,
+      "gpu_ms": null
+    },
+    {
+      "region": "forward_loss_item",
+      "cpu_ms": 64.28942829370499,
+      "micro": 128,
+      "gpu_ms": 64.26937866210938
+    },
+    {
+      "region": "backward",
+      "cpu_ms": 42.94531233608723,
+      "micro": 128,
+      "gpu_ms": 11542.552734375
+    },
+    {
+      "region": "autograd_release",
+      "cpu_ms": 0.2651093527674675,
+      "micro": 128,
+      "gpu_ms": null
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 0.0881655141711235,
+      "micro": 128,
+      "gpu_ms": null
+    },
+    {
+      "region": "optimizer",
+      "cpu_ms": 11511.63689699024,
+      "micro": 128,
+      "gpu_ms": 12.355487823486328
+    },
+    {
+      "region": "ema",
+      "cpu_ms": 7.566038519144058,
+      "micro": 128,
+      "gpu_ms": 14.20854377746582
+    },
+    {
+      "region": "callbacks",
+      "cpu_ms": 7.613110356032848,
+      "micro": 128,
+      "gpu_ms": null
+    },
+    {
+      "region": "step_wall",
+      "cpu_ms": 15642.493057064712,
+      "micro": 128,
+      "gpu_ms": null
+    }
+  ]
+}

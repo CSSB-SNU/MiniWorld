@@ -1,0 +1,15 @@
+{
+  "scope": "Eight GPUs; two cached real batches per rank with H2D and optimizer, no DataLoader. Not production throughput.",
+  "grad_accumulation": 32,
+  "effective_batch": 256,
+  "max_gradient_relative_l2": 9.628354746382684e-05,
+  "step_ms": [
+    2915.639122016728,
+    2983.230009675026,
+    3032.1850096806884,
+    2722.630061209202
+  ],
+  "median_step_ms": 2949.434565845877,
+  "validation_cases": 16,
+  "loss_max_abs_error": 0.0
+}

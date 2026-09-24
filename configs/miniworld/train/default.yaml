@@ -5,7 +5,9 @@ run_dir: "runs/distogram_swa_af3_mix/"
 # with disordered_pdb weight = 0. compile:True + the memoization in
 # 92a3978 (input_embedder/_gen_bond_feature, swa_rope_attention/_attend_flash,
 # distance/get_shortest_distances) puts the whole fwd + loss + bwd chain
-# under a single CUDA graph capture.
+# into reusable compiled regions. Random-recycle auto mode still uses Fabric.
+# Explicit resume with +train.force_trainer=random_cudagraph uses one CUDA graph
+# per recycle count and requires --ckpt plus MW_RESUME_RUN_SUBDIR.
 
 num_batch: 1
 num_epoch: 1000

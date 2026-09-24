@@ -2,7 +2,36 @@
 
 from __future__ import annotations
 
+from dataclasses import fields, is_dataclass, replace
+
+import torch
+
 from miniworld.data.features import Batch
+
+
+def _pad_like(value, prototype):
+    """Pad directly to an empty batch's schema, without materializing its data."""
+    if isinstance(value, torch.Tensor):
+        if not isinstance(prototype, torch.Tensor) or value.ndim != prototype.ndim:
+            raise ValueError("Incompatible tensor schema while padding a batch")
+        shape = (value.shape[0], *(max(a, b) for a, b in zip(value.shape[1:], prototype.shape[1:], strict=True)))
+        # The former dummy/cat path also promoted dtypes against Batch.empty.
+        dtype = torch.promote_types(value.dtype, prototype.dtype)
+        if tuple(value.shape) == shape and value.dtype == dtype:
+            return value
+        output = value.new_zeros(shape, dtype=dtype)
+        output[tuple(slice(0, size) for size in value.shape)].copy_(value)
+        return output
+    if is_dataclass(value):
+        return replace(value, **{
+            field.name: _pad_like(getattr(value, field.name), getattr(prototype, field.name))
+            for field in fields(value)
+        })
+    if isinstance(value, list):
+        return value[:]
+    if value is None and prototype is None:
+        return None
+    raise ValueError("Incompatible field schema while padding a batch")
 
 
 def _ceil_to_multiple(value: int, multiple: int) -> int:
@@ -18,8 +47,9 @@ def bucketed_collate(
 ) -> Batch:
     """Collate a list of Batches with shape bucketing.
 
-    Collates the batch normally, then pads dimensions to bucket boundaries by
-    collating with a dummy empty batch of the bucketed size and discarding it.
+    Collates the batch normally, then pads directly to the bucket boundaries.
+    An empty meta-device batch provides shapes/dtypes without allocating dummy
+    data or retaining a discarded extra batch in the returned tensor storage.
     """
     batch = Batch.collate_fn(batch_list)
 
@@ -61,11 +91,11 @@ def bucketed_collate(
     ):
         return batch
 
-    dummy = Batch.empty(
-        n_temp=bucketed_template,
-        msa_depth=bucketed_msa,
-        n_tokens=bucketed_tokens,
-        n_atoms=bucketed_atoms,
-    )
-    padded = Batch.collate_fn([batch, dummy])
-    return padded[0 : batch.batch_size]
+    with torch.device("meta"):
+        prototype = Batch.empty(
+            n_temp=bucketed_template,
+            msa_depth=bucketed_msa,
+            n_tokens=bucketed_tokens,
+            n_atoms=bucketed_atoms,
+        )
+    return _pad_like(batch, prototype)

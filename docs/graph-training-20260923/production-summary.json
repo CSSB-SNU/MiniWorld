@@ -1,0 +1,644 @@
+{
+  "job": 16917,
+  "phase1b_job": 16916,
+  "rows": [
+    {
+      "step": 47101,
+      "loss": 1.57202,
+      "ms_per_microbatch": 92.484375
+    },
+    {
+      "step": 47102,
+      "loss": 1.570709,
+      "ms_per_microbatch": 93.759375
+    },
+    {
+      "step": 47103,
+      "loss": 1.478829,
+      "ms_per_microbatch": 94.6625
+    },
+    {
+      "step": 47104,
+      "loss": 1.584589,
+      "ms_per_microbatch": 86.44375
+    },
+    {
+      "step": 47105,
+      "loss": 1.608544,
+      "ms_per_microbatch": 88.31875
+    },
+    {
+      "step": 47106,
+      "loss": 1.630109,
+      "ms_per_microbatch": 94.325
+    },
+    {
+      "step": 47107,
+      "loss": 1.677685,
+      "ms_per_microbatch": 88.328125
+    },
+    {
+      "step": 47108,
+      "loss": 1.598415,
+      "ms_per_microbatch": 92.040625
+    },
+    {
+      "step": 47109,
+      "loss": 1.555642,
+      "ms_per_microbatch": 94.81875
+    },
+    {
+      "step": 47110,
+      "loss": 1.539568,
+      "ms_per_microbatch": 96.2875
+    },
+    {
+      "step": 47111,
+      "loss": 1.616389,
+      "ms_per_microbatch": 118.690625
+    },
+    {
+      "step": 47112,
+      "loss": 1.653282,
+      "ms_per_microbatch": 117.746875
+    },
+    {
+      "step": 47113,
+      "loss": 1.588089,
+      "ms_per_microbatch": 104.16875
+    },
+    {
+      "step": 47114,
+      "loss": 1.564065,
+      "ms_per_microbatch": 100.690625
+    },
+    {
+      "step": 47115,
+      "loss": 1.504485,
+      "ms_per_microbatch": 128.021875
+    },
+    {
+      "step": 47116,
+      "loss": 1.580367,
+      "ms_per_microbatch": 97.996875
+    },
+    {
+      "step": 47117,
+      "loss": 1.613184,
+      "ms_per_microbatch": 124.134375
+    },
+    {
+      "step": 47118,
+      "loss": 1.498049,
+      "ms_per_microbatch": 104.3875
+    },
+    {
+      "step": 47119,
+      "loss": 1.610305,
+      "ms_per_microbatch": 108.796875
+    },
+    {
+      "step": 47120,
+      "loss": 1.468599,
+      "ms_per_microbatch": 104.709375
+    },
+    {
+      "step": 47121,
+      "loss": 1.623498,
+      "ms_per_microbatch": 124.11875
+    },
+    {
+      "step": 47122,
+      "loss": 1.554407,
+      "ms_per_microbatch": 115.965625
+    },
+    {
+      "step": 47123,
+      "loss": 1.54283,
+      "ms_per_microbatch": 100.703125
+    },
+    {
+      "step": 47124,
+      "loss": 1.58014,
+      "ms_per_microbatch": 120.325
+    },
+    {
+      "step": 47125,
+      "loss": 1.650882,
+      "ms_per_microbatch": 94.10625
+    },
+    {
+      "step": 47126,
+      "loss": 1.604595,
+      "ms_per_microbatch": 96.484375
+    },
+    {
+      "step": 47127,
+      "loss": 1.613342,
+      "ms_per_microbatch": 131.60625
+    },
+    {
+      "step": 47128,
+      "loss": 1.619928,
+      "ms_per_microbatch": 100.85
+    },
+    {
+      "step": 47129,
+      "loss": 1.544213,
+      "ms_per_microbatch": 118.515625
+    },
+    {
+      "step": 47130,
+      "loss": 1.550633,
+      "ms_per_microbatch": 93.634375
+    },
+    {
+      "step": 47131,
+      "loss": 1.559714,
+      "ms_per_microbatch": 110.240625
+    },
+    {
+      "step": 47132,
+      "loss": 1.630209,
+      "ms_per_microbatch": 124.7625
+    },
+    {
+      "step": 47133,
+      "loss": 1.584178,
+      "ms_per_microbatch": 125.70625
+    },
+    {
+      "step": 47134,
+      "loss": 1.563472,
+      "ms_per_microbatch": 92.31875
+    },
+    {
+      "step": 47135,
+      "loss": 1.712626,
+      "ms_per_microbatch": 130.196875
+    },
+    {
+      "step": 47136,
+      "loss": 1.540188,
+      "ms_per_microbatch": 118.021875
+    },
+    {
+      "step": 47137,
+      "loss": 1.649262,
+      "ms_per_microbatch": 119.440625
+    },
+    {
+      "step": 47138,
+      "loss": 1.574333,
+      "ms_per_microbatch": 112.85
+    },
+    {
+      "step": 47139,
+      "loss": 1.623008,
+      "ms_per_microbatch": 97.16875
+    },
+    {
+      "step": 47140,
+      "loss": 1.599635,
+      "ms_per_microbatch": 95.975
+    },
+    {
+      "step": 47141,
+      "loss": 1.575586,
+      "ms_per_microbatch": 125.39375
+    },
+    {
+      "step": 47142,
+      "loss": 1.50679,
+      "ms_per_microbatch": 99.490625
+    },
+    {
+      "step": 47143,
+      "loss": 1.530177,
+      "ms_per_microbatch": 113.478125
+    },
+    {
+      "step": 47144,
+      "loss": 1.549914,
+      "ms_per_microbatch": 86.934375
+    },
+    {
+      "step": 47145,
+      "loss": 1.642991,
+      "ms_per_microbatch": 137.53125
+    },
+    {
+      "step": 47146,
+      "loss": 1.586607,
+      "ms_per_microbatch": 105.49375
+    },
+    {
+      "step": 47147,
+      "loss": 1.563005,
+      "ms_per_microbatch": 114.828125
+    },
+    {
+      "step": 47148,
+      "loss": 1.74921,
+      "ms_per_microbatch": 86.734375
+    },
+    {
+      "step": 47149,
+      "loss": 1.648258,
+      "ms_per_microbatch": 124.390625
+    },
+    {
+      "step": 47150,
+      "loss": 1.622961,
+      "ms_per_microbatch": 106.778125
+    },
+    {
+      "step": 47151,
+      "loss": 1.660358,
+      "ms_per_microbatch": 92.575
+    },
+    {
+      "step": 47152,
+      "loss": 1.637626,
+      "ms_per_microbatch": 112.565625
+    },
+    {
+      "step": 47153,
+      "loss": 1.616274,
+      "ms_per_microbatch": 100.95
+    },
+    {
+      "step": 47154,
+      "loss": 1.548042,
+      "ms_per_microbatch": 103.403125
+    },
+    {
+      "step": 47155,
+      "loss": 1.563432,
+      "ms_per_microbatch": 106.0125
+    },
+    {
+      "step": 47156,
+      "loss": 1.554415,
+      "ms_per_microbatch": 96.565625
+    },
+    {
+      "step": 47157,
+      "loss": 1.655254,
+      "ms_per_microbatch": 105.21875
+    },
+    {
+      "step": 47158,
+      "loss": 1.634327,
+      "ms_per_microbatch": 98.228125
+    },
+    {
+      "step": 47159,
+      "loss": 1.572194,
+      "ms_per_microbatch": 135.234375
+    },
+    {
+      "step": 47160,
+      "loss": 1.67793,
+      "ms_per_microbatch": 95.43125
+    },
+    {
+      "step": 47161,
+      "loss": 1.546759,
+      "ms_per_microbatch": 111.678125
+    },
+    {
+      "step": 47162,
+      "loss": 1.556723,
+      "ms_per_microbatch": 133.45625
+    },
+    {
+      "step": 47163,
+      "loss": 1.63601,
+      "ms_per_microbatch": 116.640625
+    },
+    {
+      "step": 47164,
+      "loss": 1.575136,
+      "ms_per_microbatch": 93.5625
+    },
+    {
+      "step": 47165,
+      "loss": 1.580987,
+      "ms_per_microbatch": 87.578125
+    },
+    {
+      "step": 47166,
+      "loss": 1.617174,
+      "ms_per_microbatch": 120.896875
+    },
+    {
+      "step": 47167,
+      "loss": 1.608479,
+      "ms_per_microbatch": 106.18125
+    },
+    {
+      "step": 47168,
+      "loss": 1.624,
+      "ms_per_microbatch": 110.790625
+    },
+    {
+      "step": 47169,
+      "loss": 1.524714,
+      "ms_per_microbatch": 133.6625
+    },
+    {
+      "step": 47170,
+      "loss": 1.553019,
+      "ms_per_microbatch": 91.521875
+    },
+    {
+      "step": 47171,
+      "loss": 1.576239,
+      "ms_per_microbatch": 105.603125
+    },
+    {
+      "step": 47172,
+      "loss": 1.578671,
+      "ms_per_microbatch": 150.14375
+    },
+    {
+      "step": 47173,
+      "loss": 1.619252,
+      "ms_per_microbatch": 98.471875
+    },
+    {
+      "step": 47174,
+      "loss": 1.615531,
+      "ms_per_microbatch": 121.796875
+    },
+    {
+      "step": 47175,
+      "loss": 1.52149,
+      "ms_per_microbatch": 94.090625
+    },
+    {
+      "step": 47176,
+      "loss": 1.620575,
+      "ms_per_microbatch": 96.1625
+    },
+    {
+      "step": 47177,
+      "loss": 1.608107,
+      "ms_per_microbatch": 100.146875
+    },
+    {
+      "step": 47178,
+      "loss": 1.513032,
+      "ms_per_microbatch": 126.790625
+    },
+    {
+      "step": 47179,
+      "loss": 1.523372,
+      "ms_per_microbatch": 89.315625
+    },
+    {
+      "step": 47180,
+      "loss": 1.684143,
+      "ms_per_microbatch": 103.890625
+    },
+    {
+      "step": 47181,
+      "loss": 1.527035,
+      "ms_per_microbatch": 114.584375
+    },
+    {
+      "step": 47182,
+      "loss": 1.608589,
+      "ms_per_microbatch": 119.309375
+    },
+    {
+      "step": 47183,
+      "loss": 1.611117,
+      "ms_per_microbatch": 137.790625
+    },
+    {
+      "step": 47184,
+      "loss": 1.659428,
+      "ms_per_microbatch": 92.403125
+    },
+    {
+      "step": 47185,
+      "loss": 1.589792,
+      "ms_per_microbatch": 114.6375
+    },
+    {
+      "step": 47186,
+      "loss": 1.626966,
+      "ms_per_microbatch": 100.725
+    },
+    {
+      "step": 47187,
+      "loss": 1.637447,
+      "ms_per_microbatch": 115.575
+    },
+    {
+      "step": 47188,
+      "loss": 1.618993,
+      "ms_per_microbatch": 101.778125
+    },
+    {
+      "step": 47189,
+      "loss": 1.584857,
+      "ms_per_microbatch": 96.75625
+    },
+    {
+      "step": 47190,
+      "loss": 1.544111,
+      "ms_per_microbatch": 94.425
+    },
+    {
+      "step": 47191,
+      "loss": 1.485296,
+      "ms_per_microbatch": 112.853125
+    },
+    {
+      "step": 47192,
+      "loss": 1.503724,
+      "ms_per_microbatch": 105.384375
+    },
+    {
+      "step": 47193,
+      "loss": 1.618647,
+      "ms_per_microbatch": 130.1125
+    },
+    {
+      "step": 47194,
+      "loss": 1.630667,
+      "ms_per_microbatch": 117.6
+    },
+    {
+      "step": 47195,
+      "loss": 1.624128,
+      "ms_per_microbatch": 91.24375
+    },
+    {
+      "step": 47196,
+      "loss": 1.652055,
+      "ms_per_microbatch": 120.95
+    },
+    {
+      "step": 47197,
+      "loss": 1.589431,
+      "ms_per_microbatch": 114.53125
+    },
+    {
+      "step": 47198,
+      "loss": 1.591111,
+      "ms_per_microbatch": 91.271875
+    },
+    {
+      "step": 47199,
+      "loss": 1.581391,
+      "ms_per_microbatch": 108.378125
+    },
+    {
+      "step": 47200,
+      "loss": 1.616752,
+      "ms_per_microbatch": 88.996875
+    },
+    {
+      "step": 47201,
+      "loss": 1.609621,
+      "ms_per_microbatch": 267.05625
+    },
+    {
+      "step": 47202,
+      "loss": 1.682007,
+      "ms_per_microbatch": 124.74375
+    },
+    {
+      "step": 47203,
+      "loss": 1.598515,
+      "ms_per_microbatch": 202.15625
+    },
+    {
+      "step": 47204,
+      "loss": 1.622223,
+      "ms_per_microbatch": 128.465625
+    },
+    {
+      "step": 47205,
+      "loss": 1.596024,
+      "ms_per_microbatch": 228.1125
+    },
+    {
+      "step": 47206,
+      "loss": 1.676237,
+      "ms_per_microbatch": 90.5
+    },
+    {
+      "step": 47207,
+      "loss": 1.603092,
+      "ms_per_microbatch": 105.165625
+    },
+    {
+      "step": 47208,
+      "loss": 1.584846,
+      "ms_per_microbatch": 145.159375
+    },
+    {
+      "step": 47209,
+      "loss": 1.628718,
+      "ms_per_microbatch": 124.2875
+    },
+    {
+      "step": 47210,
+      "loss": 1.569264,
+      "ms_per_microbatch": 95.284375
+    },
+    {
+      "step": 47211,
+      "loss": 1.579218,
+      "ms_per_microbatch": 118.603125
+    },
+    {
+      "step": 47212,
+      "loss": 1.583518,
+      "ms_per_microbatch": 93.365625
+    },
+    {
+      "step": 47213,
+      "loss": 1.572922,
+      "ms_per_microbatch": 95.415625
+    },
+    {
+      "step": 47214,
+      "loss": 1.543694,
+      "ms_per_microbatch": 109.3125
+    },
+    {
+      "step": 47215,
+      "loss": 1.604537,
+      "ms_per_microbatch": 134.553125
+    },
+    {
+      "step": 47216,
+      "loss": 1.610287,
+      "ms_per_microbatch": 106.903125
+    },
+    {
+      "step": 47217,
+      "loss": 1.563857,
+      "ms_per_microbatch": 114.375
+    },
+    {
+      "step": 47218,
+      "loss": 1.680222,
+      "ms_per_microbatch": 104.859375
+    },
+    {
+      "step": 47219,
+      "loss": 1.618204,
+      "ms_per_microbatch": 115.146875
+    },
+    {
+      "step": 47220,
+      "loss": 1.561257,
+      "ms_per_microbatch": 101.409375
+    },
+    {
+      "step": 47221,
+      "loss": 1.580917,
+      "ms_per_microbatch": 96.4375
+    },
+    {
+      "step": 47222,
+      "loss": 1.617639,
+      "ms_per_microbatch": 97.7875
+    },
+    {
+      "step": 47223,
+      "loss": 1.60166,
+      "ms_per_microbatch": 156.915625
+    },
+    {
+      "step": 47224,
+      "loss": 1.593567,
+      "ms_per_microbatch": 103.634375
+    },
+    {
+      "step": 47225,
+      "loss": 1.572043,
+      "ms_per_microbatch": 96.81875
+    }
+  ],
+  "samples": 125,
+  "units": "ms per microbatch (optimizer step wall time / 32)",
+  "mean_ms_per_microbatch": 111.65002540650407,
+  "speedup_vs_previous_8gpu": 1.4708348645878013,
+  "completed_epoch": {
+    "epoch": 472,
+    "optimizer_updates": 100,
+    "microbatches_per_rank": 3200,
+    "ms_per_microbatch": 107.7721875,
+    "previous_ms_per_microbatch": 164.21875,
+    "saved_ms_per_microbatch": 56.4465625,
+    "speedup": 1.523758158847801
+  }
+}

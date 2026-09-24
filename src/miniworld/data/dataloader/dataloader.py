@@ -175,9 +175,40 @@ class _LazyArrowCatalog:
     access pattern, so per-index decode cost is negligible next to the model step.
     """
 
-    def __init__(self, table: object) -> None:
+    def __init__(self, table: object, *, path: Path | None = None) -> None:
         self._t = table
         self._c = {name: table.column(name) for name in table.schema.names}
+        self._path = path.resolve() if path is not None else None
+        self._file_identity = self._identity(self._path) if self._path is not None else None
+
+    @staticmethod
+    def _identity(path: Path) -> tuple[int, int, int]:
+        stat = path.stat()
+        return stat.st_ino, stat.st_size, stat.st_mtime_ns
+
+    def __getstate__(self) -> dict:
+        # Arrow's default pickle serializes buffers, even when the table was
+        # memory-mapped. Send only the file identity to spawn workers instead.
+        if self._path is not None:
+            return {"path": self._path, "identity": self._file_identity}
+        return {"table": self._t}
+
+    def __setstate__(self, state: dict) -> None:
+        if "path" not in state:
+            self.__init__(state["table"])
+            return
+        import pyarrow as pa
+
+        path = state["path"]
+        if self._identity(path) != state["identity"]:
+            msg = f"Catalog changed while starting a data worker: {path}"
+            raise RuntimeError(msg)
+        source = pa.memory_map(str(path), "r")
+        table = pa.ipc.open_file(source).read_all()
+        self.__init__(table, path=path)
+        if self._file_identity != state["identity"]:
+            msg = f"Catalog changed while opening a data worker: {path}"
+            raise RuntimeError(msg)
 
     def __len__(self) -> int:
         return self._t.num_rows
@@ -228,7 +259,7 @@ def _load_catalog_arrow(
     meta = table.schema.metadata or {}
     is_raw = meta.get(b"weight_kind") == b"raw"
     fingerprint = (meta.get(b"build_fingerprint") or b"").decode()
-    return _LazyArrowCatalog(table), weights, sources, is_raw, fingerprint
+    return _LazyArrowCatalog(table, path=path), weights, sources, is_raw, fingerprint
 
 
 class BioMolData(torch.utils.data.Dataset):

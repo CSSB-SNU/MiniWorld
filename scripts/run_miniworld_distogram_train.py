@@ -664,11 +664,19 @@ def train(  # noqa: PLR0912, PLR0915
     # + manual DDP (scripts/cudagraph_trainer.py): the whole fwd+loss+bwd replays
     # as ONE graph -> reduced per-kernel CPU launch overhead. Backend-specific
     # measurements: docs/miniworld-training-cudagraph-ab.md.
-    # Random recycle (n_recycle_max > 1) -> Fabric + plain torch.compile below
-    # (cudagraph can't capture the varying recycle depth). Override with
-    # cfg.train.force_trainer = "cudagraph" | "fabric" (default "auto").
+    # Random recycle defaults to Fabric. Explicit random_cudagraph continuation
+    # captures one graph per recycle count and chooses between them outside CUDA.
+    # force_trainer: auto | cudagraph (legacy fixed path) | random_cudagraph | fabric.
     n_recycle_max = getattr(getattr(cfg.model, "trunk", None), "n_recycle_max", None)
     _force = cfg.train.force_trainer
+    if _force == "random_cudagraph":
+        # Explicit full-state continuation: preserve the existing run/log identity.
+        from random_recycle_graph_trainer import train as train_random_graph
+        existing_run = os.environ.get("MW_RESUME_RUN_SUBDIR")
+        if ckpt is None or not existing_run:
+            raise ValueError("random_cudagraph requires --ckpt and MW_RESUME_RUN_SUBDIR")
+        train_random_graph(cfg, ckpt, Path(existing_run))
+        return
     use_cudagraph = _force == "cudagraph" or (_force == "auto" and n_recycle_max == 1)
     if use_cudagraph:
         _run_cudagraph_path(cfg, job_name, ckpt)

@@ -1,0 +1,5742 @@
+{
+  "graph": [
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+      "relative_l2": 0.04236546531319618,
+      "reference_norm": 1.7437711221646168e-06,
+      "difference_norm": 7.387567535488415e-08,
+      "max_abs": 1.5224884464259958e-08,
+      "reference_max": 4.1528849692440417e-07
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.bias",
+      "relative_l2": 0.014590918086469173,
+      "reference_norm": 4.0690251807973254e-06,
+      "difference_norm": 5.9370812266479334e-08,
+      "max_abs": 1.5415480447700247e-08,
+      "reference_max": 1.1578517842281144e-06
+    },
+    {
+      "name": "temp_embedder.proj_aatype_j.weight",
+      "relative_l2": 0.0019507295219227672,
+      "reference_norm": 0.0017439817311242223,
+      "difference_norm": 3.4020365546894027e-06,
+      "max_abs": 1.9073486328125e-06,
+      "reference_max": 0.000331878662109375
+    },
+    {
+      "name": "temp_embedder.proj_unit_vec.weight",
+      "relative_l2": 0.0014853705652058125,
+      "reference_norm": 0.0012118327431380749,
+      "difference_norm": 1.8000207546720048e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.0003299713134765625
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_gate.weight",
+      "relative_l2": 0.0012180320918560028,
+      "reference_norm": 0.001357800210826099,
+      "difference_norm": 1.65384426509263e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.00013446807861328125
+    },
+    {
+      "name": "temp_embedder.proj_aatype_i.weight",
+      "relative_l2": 0.001158750499598682,
+      "reference_norm": 0.0016544567188248038,
+      "difference_norm": 1.9171025087416638e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.0004405975341796875
+    },
+    {
+      "name": "temp_embedder.proj_dgram.weight",
+      "relative_l2": 0.001150605850853026,
+      "reference_norm": 0.0011512984056025743,
+      "difference_norm": 1.3246907428765553e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.000240325927734375
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_out.weight",
+      "relative_l2": 0.0010016929591074586,
+      "reference_norm": 0.0027776481583714485,
+      "difference_norm": 2.7823505206470145e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.0003147125244140625
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0009698908543214202,
+      "reference_norm": 0.001273475238122046,
+      "difference_norm": 1.235132003785111e-06,
+      "max_abs": 2.384185791015625e-07,
+      "reference_max": 0.0001430511474609375
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_right.weight",
+      "relative_l2": 0.0009677455527707934,
+      "reference_norm": 0.0019011072581633925,
+      "difference_norm": 1.839788069446513e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.00019359588623046875
+    },
+    {
+      "name": "temp_embedder.proj_query.weight",
+      "relative_l2": 0.0009627946419641376,
+      "reference_norm": 0.0054390826262533665,
+      "difference_norm": 5.2367195166880265e-06,
+      "max_abs": 1.9073486328125e-06,
+      "reference_max": 0.000640869140625
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_left.weight",
+      "relative_l2": 0.0009440897847525775,
+      "reference_norm": 0.002246349584311247,
+      "difference_norm": 2.120755652867956e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.0003185272216796875
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.expand_b.weight",
+      "relative_l2": 0.0009141993941739202,
+      "reference_norm": 0.0032921480014920235,
+      "difference_norm": 3.0096796308498597e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.0002765655517578125
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.expand_a.weight",
+      "relative_l2": 0.0009116267319768667,
+      "reference_norm": 0.003434038022533059,
+      "difference_norm": 3.130560799036175e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.0003032684326171875
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.000902465486433357,
+      "reference_norm": 0.0009896298870444298,
+      "difference_norm": 8.931068009587761e-07,
+      "max_abs": 2.384185791015625e-07,
+      "reference_max": 0.0001201629638671875
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_left.weight",
+      "relative_l2": 0.0008854272309690714,
+      "reference_norm": 0.0028197388164699078,
+      "difference_norm": 2.4966734599729534e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.00042724609375
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_gate.weight",
+      "relative_l2": 0.0008449458400718868,
+      "reference_norm": 0.0012456399854272604,
+      "difference_norm": 1.0524983053983306e-06,
+      "max_abs": 2.384185791015625e-07,
+      "reference_max": 0.00013446807861328125
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_right.weight",
+      "relative_l2": 0.0008074812358245254,
+      "reference_norm": 0.0025380582083016634,
+      "difference_norm": 2.0494344425969757e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.0002613067626953125
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0007871457492001355,
+      "reference_norm": 0.002545315772294998,
+      "difference_norm": 2.0035345187352505e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.000400543212890625
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.squeeze.weight",
+      "relative_l2": 0.0007757556159049273,
+      "reference_norm": 0.0042323456145823,
+      "difference_norm": 3.2832658689585514e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.00083160400390625
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_bias.weight",
+      "relative_l2": 0.0007432617712765932,
+      "reference_norm": 0.01107045728713274,
+      "difference_norm": 8.228247679653578e-06,
+      "max_abs": 7.62939453125e-06,
+      "reference_max": 0.00150299072265625
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_out.weight",
+      "relative_l2": 0.0007196549559012055,
+      "reference_norm": 0.0026164408773183823,
+      "difference_norm": 1.8829346117854584e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.000751495361328125
+    },
+    {
+      "name": "msa_module.single_to_msa.weight",
+      "relative_l2": 0.0006689688307233155,
+      "reference_norm": 0.05229854956269264,
+      "difference_norm": 3.498610021779314e-05,
+      "max_abs": 1.52587890625e-05,
+      "reference_max": 0.0078125
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.transition_pair.expand_b.weight",
+      "relative_l2": 0.0006649297429248691,
+      "reference_norm": 0.0026671893429011106,
+      "difference_norm": 1.7734935227053938e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.00018596649169921875
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.transition_pair.expand_a.weight",
+      "relative_l2": 0.0006546018412336707,
+      "reference_norm": 0.0028421941678971052,
+      "difference_norm": 1.8605055629450362e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.0002117156982421875
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.transition_pair.squeeze.weight",
+      "relative_l2": 0.0005470922333188355,
+      "reference_norm": 0.008770273067057133,
+      "difference_norm": 4.798148438567296e-06,
+      "max_abs": 1.9073486328125e-06,
+      "reference_max": 0.000957489013671875
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0005394803010858595,
+      "reference_norm": 0.0024624455254524946,
+      "difference_norm": 1.3284408169056405e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.0003662109375
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.to_left.weight",
+      "relative_l2": 0.00043265949352644384,
+      "reference_norm": 0.01792830601334572,
+      "difference_norm": 7.75685202825116e-06,
+      "max_abs": 3.814697265625e-06,
+      "reference_max": 0.00164031982421875
+    },
+    {
+      "name": "msa_module.blocks.0.transition_msa.expand_a.weight",
+      "relative_l2": 0.00038819367182441056,
+      "reference_norm": 0.027094895020127296,
+      "difference_norm": 1.0518067028897349e-05,
+      "max_abs": 3.814697265625e-06,
+      "reference_max": 0.00159454345703125
+    },
+    {
+      "name": "msa_module.embed_msa.weight",
+      "relative_l2": 0.00037312088534235954,
+      "reference_norm": 0.035513993352651596,
+      "difference_norm": 1.325101220572833e-05,
+      "max_abs": 7.62939453125e-06,
+      "reference_max": 0.00531005859375
+    },
+    {
+      "name": "msa_module.blocks.0.transition_msa.squeeze.weight",
+      "relative_l2": 0.00033641012851148844,
+      "reference_norm": 0.04329287260770798,
+      "difference_norm": 1.4564160665031523e-05,
+      "max_abs": 7.62939453125e-06,
+      "reference_max": 0.00372314453125
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.to_out.weight",
+      "relative_l2": 0.00032565667061135173,
+      "reference_norm": 0.016364479437470436,
+      "difference_norm": 5.329201940185158e-06,
+      "max_abs": 3.814697265625e-06,
+      "reference_max": 0.0010833740234375
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_out.weight",
+      "relative_l2": 0.00031571235740557313,
+      "reference_norm": 0.0072449371218681335,
+      "difference_norm": 2.2873161924508167e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.000537872314453125
+    },
+    {
+      "name": "msa_module.blocks.0.transition_msa.expand_b.weight",
+      "relative_l2": 0.00030731383594684303,
+      "reference_norm": 0.024171365424990654,
+      "difference_norm": 7.428195203829091e-06,
+      "max_abs": 3.814697265625e-06,
+      "reference_max": 0.0015716552734375
+    },
+    {
+      "name": "temp_embedder.proj_out.weight",
+      "relative_l2": 0.00030523177701979876,
+      "reference_norm": 0.01386739406734705,
+      "difference_norm": 4.232769242662471e-06,
+      "max_abs": 1.9073486328125e-06,
+      "reference_max": 0.000713348388671875
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.to_out.weight",
+      "relative_l2": 0.00029313977574929595,
+      "reference_norm": 0.013881189748644829,
+      "difference_norm": 4.0691288631933276e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.0003185272216796875
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+      "relative_l2": 0.00022708864707965404,
+      "reference_norm": 0.021197693422436714,
+      "difference_norm": 4.813755367649719e-06,
+      "max_abs": 1.9073486328125e-06,
+      "reference_max": 0.002838134765625
+    },
+    {
+      "name": "temp_embedder.ln_query.weight",
+      "relative_l2": 0.0002192700485466048,
+      "reference_norm": 0.002382009057328105,
+      "difference_norm": 5.223032530921046e-07,
+      "max_abs": 1.73225998878479e-07,
+      "reference_max": 0.0010292408987879753
+    },
+    {
+      "name": "temp_embedder.proj_bb_mask.weight",
+      "relative_l2": 0.00020791139104403555,
+      "reference_norm": 0.0022934633307158947,
+      "difference_norm": 4.76837158203125e-07,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.00077056884765625
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_gate.weight",
+      "relative_l2": 0.00019899525796063244,
+      "reference_norm": 0.01363583654165268,
+      "difference_norm": 2.7134667561767856e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.0016326904296875
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.to_gate.weight",
+      "relative_l2": 0.0001952302409335971,
+      "reference_norm": 0.007115643005818129,
+      "difference_norm": 1.3891886965211597e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.0004863739013671875
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_gate.weight",
+      "relative_l2": 0.0001875378075055778,
+      "reference_norm": 0.006537226494401693,
+      "difference_norm": 1.2259771438039024e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.000335693359375
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.ln_in.weight",
+      "relative_l2": 0.00018708153220359236,
+      "reference_norm": 0.002935996511951089,
+      "difference_norm": 5.492707373377925e-07,
+      "max_abs": 2.3475149646401405e-07,
+      "reference_max": 0.0011095989029854536
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.to_out.weight",
+      "relative_l2": 0.00018021924188360572,
+      "reference_norm": 0.01849321834743023,
+      "difference_norm": 3.332833784952527e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.0004177093505859375
+    },
+    {
+      "name": "add_pair_recycle.1.weight",
+      "relative_l2": 0.00017590333300177008,
+      "reference_norm": 0.05022398754954338,
+      "difference_norm": 8.834566870064009e-06,
+      "max_abs": 7.62939453125e-06,
+      "reference_max": 0.0052490234375
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.to_right.weight",
+      "relative_l2": 0.00017496052896603942,
+      "reference_norm": 0.018534714356064796,
+      "difference_norm": 3.2428433769382536e-06,
+      "max_abs": 1.9073486328125e-06,
+      "reference_max": 0.0018768310546875
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.ln_out.weight",
+      "relative_l2": 0.00017236999701708555,
+      "reference_norm": 0.0015480731381103396,
+      "difference_norm": 2.6684136855692486e-07,
+      "max_abs": 1.5590921975672245e-07,
+      "reference_max": 0.0009001544676721096
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.ln_out.bias",
+      "relative_l2": 0.00017047599249053746,
+      "reference_norm": 0.002196876797825098,
+      "difference_norm": 3.74514740997256e-07,
+      "max_abs": 9.387440513819456e-08,
+      "reference_max": 0.0005488331662490964
+    },
+    {
+      "name": "msa_module.blocks.0.transition_pair.expand_a.weight",
+      "relative_l2": 0.00016382204194087535,
+      "reference_norm": 0.019428307190537453,
+      "difference_norm": 3.1827848943066783e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.00061798095703125
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.to_bias.weight",
+      "relative_l2": 0.00016299737035296857,
+      "reference_norm": 0.024256372824311256,
+      "difference_norm": 3.953724899474764e-06,
+      "max_abs": 3.814697265625e-06,
+      "reference_max": 0.006072998046875
+    },
+    {
+      "name": "temp_embedder.ln_query.bias",
+      "relative_l2": 0.00016072306607384235,
+      "reference_norm": 0.006466195918619633,
+      "difference_norm": 1.0392668627901003e-06,
+      "max_abs": 2.1228333935141563e-07,
+      "reference_max": 0.001458439975976944
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.00016018617316149175,
+      "reference_norm": 0.007933945395052433,
+      "difference_norm": 1.2709083421214018e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.0006256103515625
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.attn.gate_proj.weight",
+      "relative_l2": 0.00015828937466721982,
+      "reference_norm": 8.473634807160124e-05,
+      "difference_norm": 1.3412863708595069e-08,
+      "max_abs": 1.025910023599863e-08,
+      "reference_max": 4.368422378320247e-05
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.to_value.weight",
+      "relative_l2": 0.00015472265658900142,
+      "reference_norm": 0.017576826736330986,
+      "difference_norm": 2.7195333132112864e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.00112152099609375
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.ln_pair.weight",
+      "relative_l2": 0.00015253091987688094,
+      "reference_norm": 0.0010372980032116175,
+      "difference_norm": 1.5822001842025202e-07,
+      "max_abs": 5.2299583330750465e-08,
+      "reference_max": 0.0003309473395347595
+    },
+    {
+      "name": "msa_module.blocks.0.transition_pair.expand_b.weight",
+      "relative_l2": 0.00014805742830503732,
+      "reference_norm": 0.022313129156827927,
+      "difference_norm": 3.303624680484063e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.00115203857421875
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.to_right.weight",
+      "relative_l2": 0.0001471449650125578,
+      "reference_norm": 0.018965091556310654,
+      "difference_norm": 2.7906178274861304e-06,
+      "max_abs": 1.9073486328125e-06,
+      "reference_max": 0.0020294189453125
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.ln_in.bias",
+      "relative_l2": 0.00013523042434826493,
+      "reference_norm": 0.0035649084020406008,
+      "difference_norm": 4.820840899810719e-07,
+      "max_abs": 1.6408739611506462e-07,
+      "reference_max": 0.001253790222108364
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.to_left.weight",
+      "relative_l2": 0.0001344270713161677,
+      "reference_norm": 0.021938104182481766,
+      "difference_norm": 2.9490749966498697e-06,
+      "max_abs": 1.9073486328125e-06,
+      "reference_max": 0.00225830078125
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0001335462584393099,
+      "reference_norm": 0.00349330878816545,
+      "difference_norm": 4.6651831553390366e-07,
+      "max_abs": 1.555308699607849e-07,
+      "reference_max": 0.0009978675516322255
+    },
+    {
+      "name": "msa_module.blocks.0.transition_pair.squeeze.weight",
+      "relative_l2": 0.00012927714851684868,
+      "reference_norm": 0.025819668546319008,
+      "difference_norm": 3.3378933039784897e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.0012359619140625
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_right.weight",
+      "relative_l2": 0.00012599870387930423,
+      "reference_norm": 0.014387606643140316,
+      "difference_norm": 1.8128198462363798e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.001190185546875
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.ln_out.bias",
+      "relative_l2": 0.00011221142631256953,
+      "reference_norm": 0.0006667263805866241,
+      "difference_norm": 7.481431651967796e-08,
+      "max_abs": 1.8422724679112434e-08,
+      "reference_max": 0.00014856080815661699
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.ln_pair.weight",
+      "relative_l2": 0.00011170725338160992,
+      "reference_norm": 0.0011183671886101365,
+      "difference_norm": 1.2492972700783866e-07,
+      "max_abs": 5.203764885663986e-08,
+      "reference_max": 0.0005514271906577051
+    },
+    {
+      "name": "temp_embedder.proj_pb_mask.weight",
+      "relative_l2": 0.00010379645391367376,
+      "reference_norm": 0.002296981867402792,
+      "difference_norm": 2.384185791015625e-07,
+      "max_abs": 2.384185791015625e-07,
+      "reference_max": 0.000774383544921875
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_left.weight",
+      "relative_l2": 9.306881111115217e-05,
+      "reference_norm": 0.014935696497559547,
+      "difference_norm": 1.3900474868933088e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.00099945068359375
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_left_gate.weight",
+      "relative_l2": 9.024244354804978e-05,
+      "reference_norm": 0.008643792942166328,
+      "difference_norm": 7.800369985488942e-07,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.000701904296875
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.ln_pair.bias",
+      "relative_l2": 8.643341425340623e-05,
+      "reference_norm": 0.0015868169721215963,
+      "difference_norm": 1.3715400370983843e-07,
+      "max_abs": 4.079629434272647e-08,
+      "reference_max": 0.0004944539396092296
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_out.weight",
+      "relative_l2": 8.633219113107771e-05,
+      "reference_norm": 0.01372163649648428,
+      "difference_norm": 1.184618895422318e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.00101470947265625
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.attn.gate_proj.weight",
+      "relative_l2": 8.607039490016177e-05,
+      "reference_norm": 1.4756708878849167e-05,
+      "difference_norm": 1.2701157903194371e-09,
+      "max_abs": 7.294147508218884e-10,
+      "reference_max": 7.204010216810275e-06
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.transition_pair.ln_in.weight",
+      "relative_l2": 7.092671876307577e-05,
+      "reference_norm": 0.0015958520816639066,
+      "difference_norm": 1.1318854831188219e-07,
+      "max_abs": 6.2515027821064e-08,
+      "reference_max": 0.0005417218198999763
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.transition_pair.ln_in.bias",
+      "relative_l2": 6.969675450818613e-05,
+      "reference_norm": 0.0015354236820712686,
+      "difference_norm": 1.0701404562496464e-07,
+      "max_abs": 4.016328603029251e-08,
+      "reference_max": 0.0004808853263966739
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.ln_out.weight",
+      "relative_l2": 6.47009292151779e-05,
+      "reference_norm": 0.0012109557865187526,
+      "difference_norm": 7.83499629619655e-08,
+      "max_abs": 2.3603206500411034e-08,
+      "reference_max": 0.0009261856903322041
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.attn.out_proj.weight",
+      "relative_l2": 5.8986061048926786e-05,
+      "reference_norm": 0.0008398111676797271,
+      "difference_norm": 4.953715304623074e-08,
+      "max_abs": 1.5104888007044792e-08,
+      "reference_max": 0.0002235937863588333
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.to_atom_single_cond.weight",
+      "relative_l2": 5.815653275931254e-05,
+      "reference_norm": 0.0023856242187321186,
+      "difference_norm": 1.3873963666810596e-07,
+      "max_abs": 4.4587068259716034e-08,
+      "reference_max": 0.0005501776468008757
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.weight",
+      "relative_l2": 5.7280107284896076e-05,
+      "reference_norm": 0.0015480566071346402,
+      "difference_norm": 8.867284861935332e-08,
+      "max_abs": 4.289904609322548e-08,
+      "reference_max": 0.00046126445522531867
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.attn.Wqkv.weight",
+      "relative_l2": 5.4134015954332426e-05,
+      "reference_norm": 0.0007001634221524,
+      "difference_norm": 3.7902658789334964e-08,
+      "max_abs": 1.1481461115181446e-08,
+      "reference_max": 0.00020748685346916318
+    },
+    {
+      "name": "temp_embedder.ln_out.weight",
+      "relative_l2": 5.045956640969962e-05,
+      "reference_norm": 0.004704606719315052,
+      "difference_norm": 2.3739241328257776e-07,
+      "max_abs": 1.1874362826347351e-07,
+      "reference_max": 0.0020494868513196707
+    },
+    {
+      "name": "temp_embedder.ln_out.bias",
+      "relative_l2": 4.760058072861284e-05,
+      "reference_norm": 0.00823341216892004,
+      "difference_norm": 3.919151936315757e-07,
+      "max_abs": 1.2700911611318588e-07,
+      "reference_max": 0.002936123637482524
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.attn.Wqkv.weight",
+      "relative_l2": 4.372986950329505e-05,
+      "reference_norm": 0.0008679987513460219,
+      "difference_norm": 3.795747360868518e-08,
+      "max_abs": 1.4086253941059113e-08,
+      "reference_max": 0.0002983066951856017
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.adaln_modulation.1.weight",
+      "relative_l2": 3.303682751720771e-05,
+      "reference_norm": 0.0006498675793409348,
+      "difference_norm": 2.1469562128118014e-08,
+      "max_abs": 3.296008799225092e-09,
+      "reference_max": 0.00010311047662980855
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.ln_msa.bias",
+      "relative_l2": 3.170708805555478e-05,
+      "reference_norm": 0.03446906432509422,
+      "difference_norm": 1.0929136351478519e-06,
+      "max_abs": 3.46451997756958e-07,
+      "reference_max": 0.012347916141152382
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.attn.gate_proj.weight",
+      "relative_l2": 2.520921225368511e-05,
+      "reference_norm": 0.00025873997947201133,
+      "difference_norm": 6.522630879857161e-09,
+      "max_abs": 3.055902197957039e-09,
+      "reference_max": 0.00014519460091833025
+    },
+    {
+      "name": "input_feature_embedder.to_token_pair_left.weight",
+      "relative_l2": 2.5191151507897303e-05,
+      "reference_norm": 0.017398972064256668,
+      "difference_norm": 4.383001339647308e-07,
+      "max_abs": 3.608874976634979e-08,
+      "reference_max": 0.00260387035086751
+    },
+    {
+      "name": "input_feature_embedder.to_token_pair_right.weight",
+      "relative_l2": 2.5102302970481105e-05,
+      "reference_norm": 0.01834687404334545,
+      "difference_norm": 4.605487902153982e-07,
+      "max_abs": 4.0890881791710854e-08,
+      "reference_max": 0.0029172138310968876
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.ln_msa.weight",
+      "relative_l2": 2.3720642275293358e-05,
+      "reference_norm": 0.031371477991342545,
+      "difference_norm": 7.441516345352284e-07,
+      "max_abs": 2.812594175338745e-07,
+      "reference_max": 0.011707793921232224
+    },
+    {
+      "name": "add_pair_recycle.0.bias",
+      "relative_l2": 2.2635917048319243e-05,
+      "reference_norm": 0.041729528456926346,
+      "difference_norm": 9.445861337553652e-07,
+      "max_abs": 1.9790604710578918e-07,
+      "reference_max": 0.009076900780200958
+    },
+    {
+      "name": "msa_module.blocks.0.transition_msa.ln_in.weight",
+      "relative_l2": 2.2524249288835563e-05,
+      "reference_norm": 0.019289527088403702,
+      "difference_norm": 4.3448210362839745e-07,
+      "max_abs": 1.7741695046424866e-07,
+      "reference_max": 0.007561121601611376
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.ffn.w_up.weight",
+      "relative_l2": 2.200739436375443e-05,
+      "reference_norm": 0.015345393680036068,
+      "difference_norm": 3.3771212315514276e-07,
+      "max_abs": 2.430751919746399e-07,
+      "reference_max": 0.011469757184386253
+    },
+    {
+      "name": "msa_module.blocks.0.transition_msa.ln_in.bias",
+      "relative_l2": 2.178263275709469e-05,
+      "reference_norm": 0.020357970148324966,
+      "difference_norm": 4.4345020455693884e-07,
+      "max_abs": 1.3131648302078247e-07,
+      "reference_max": 0.006912904791533947
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_msa.bias",
+      "relative_l2": 2.1756113710580394e-05,
+      "reference_norm": 0.009404067881405354,
+      "difference_norm": 2.045959632823724e-07,
+      "max_abs": 6.257323548197746e-08,
+      "reference_max": 0.0027156935539096594
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_msa.weight",
+      "relative_l2": 2.1723677491536364e-05,
+      "reference_norm": 0.01029504369944334,
+      "difference_norm": 2.2364621088399872e-07,
+      "max_abs": 1.916196197271347e-07,
+      "reference_max": 0.0051948376931250095
+    },
+    {
+      "name": "input_feature_embedder.relative_position_embedder.embed_rel_pos.weight",
+      "relative_l2": 2.065024818875827e-05,
+      "reference_norm": 0.0348999984562397,
+      "difference_norm": 7.206936061265878e-07,
+      "max_abs": 1.0564690455794334e-07,
+      "reference_max": 0.005056897643953562
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.weight",
+      "relative_l2": 2.0064970158273354e-05,
+      "reference_norm": 0.004808280151337385,
+      "difference_norm": 9.647799714684879e-08,
+      "max_abs": 4.8050424084067345e-08,
+      "reference_max": 0.0012808192986994982
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.ln_pair.weight",
+      "relative_l2": 1.9526691175997257e-05,
+      "reference_norm": 0.008736434392631054,
+      "difference_norm": 1.7059365120530856e-07,
+      "max_abs": 1.5972182154655457e-07,
+      "reference_max": 0.004959212150424719
+    },
+    {
+      "name": "input_feature_embedder.add_token_bond.weight",
+      "relative_l2": 1.8922693925560452e-05,
+      "reference_norm": 0.018905777484178543,
+      "difference_norm": 3.577482345917815e-07,
+      "max_abs": 1.0256189852952957e-07,
+      "reference_max": 0.0050758360885083675
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.adaln_modulation.1.weight",
+      "relative_l2": 1.869948573585134e-05,
+      "reference_norm": 0.004291348159313202,
+      "difference_norm": 8.024600361977718e-08,
+      "max_abs": 2.126034814864397e-08,
+      "reference_max": 0.0006612555589526892
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.ffn.w_down.weight",
+      "relative_l2": 1.7304124412476085e-05,
+      "reference_norm": 0.009614964947104454,
+      "difference_norm": 1.6637854116652306e-07,
+      "max_abs": 1.6391277313232422e-07,
+      "reference_max": 0.008668755181133747
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.attn.Wqkv.weight",
+      "relative_l2": 1.5870353308855556e-05,
+      "reference_norm": 0.0007819963502697647,
+      "difference_norm": 1.2410557914677156e-08,
+      "max_abs": 3.5433913581073284e-09,
+      "reference_max": 0.00022353488020598888
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_msa.weight",
+      "relative_l2": 1.50870400830172e-05,
+      "reference_norm": 0.007850675843656063,
+      "difference_norm": 1.1844345948475166e-07,
+      "max_abs": 4.036701284348965e-08,
+      "reference_max": 0.003243998158723116
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.attn.out_proj.weight",
+      "relative_l2": 1.4226585335563868e-05,
+      "reference_norm": 0.001933516119606793,
+      "difference_norm": 2.7507331523679568e-08,
+      "max_abs": 8.119968697428703e-09,
+      "reference_max": 0.0005369972786866128
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_msa.bias",
+      "relative_l2": 1.3865809705748688e-05,
+      "reference_norm": 0.018349211663007736,
+      "difference_norm": 2.544266806125961e-07,
+      "max_abs": 8.242204785346985e-08,
+      "reference_max": 0.005503097549080849
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_single_rep_to_token_single.0.weight",
+      "relative_l2": 1.3018772733630612e-05,
+      "reference_norm": 0.08926007896661758,
+      "difference_norm": 1.1620567192949238e-06,
+      "max_abs": 7.636845111846924e-07,
+      "reference_max": 0.062054771929979324
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.attn.out_proj.weight",
+      "relative_l2": 1.063467061612755e-05,
+      "reference_norm": 0.0009956019930541515,
+      "difference_norm": 1.0587899446079518e-08,
+      "max_abs": 2.9685907065868378e-09,
+      "reference_max": 0.00031305677839554846
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.adaln_modulation.1.weight",
+      "relative_l2": 1.0517383088881616e-05,
+      "reference_norm": 0.0008515841327607632,
+      "difference_norm": 8.956436481355468e-09,
+      "max_abs": 1.280568540096283e-09,
+      "reference_max": 0.00015977099246811122
+    },
+    {
+      "name": "msa_module.blocks.0.transition_pair.ln_in.weight",
+      "relative_l2": 8.43794896354666e-06,
+      "reference_norm": 0.02808302268385887,
+      "difference_norm": 2.369631033616315e-07,
+      "max_abs": 1.1920928955078125e-07,
+      "reference_max": 0.017098918557167053
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.ln_pair.bias",
+      "relative_l2": 8.243819138442632e-06,
+      "reference_norm": 0.01730978488922119,
+      "difference_norm": 1.426987381591971e-07,
+      "max_abs": 3.259629011154175e-08,
+      "reference_max": 0.0037230863235890865
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.ln_out.bias",
+      "relative_l2": 8.179477845260408e-06,
+      "reference_norm": 0.02641969360411167,
+      "difference_norm": 2.1609930911381525e-07,
+      "max_abs": 4.6333298087120056e-08,
+      "reference_max": 0.00492881191894412
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.ln_msa.bias",
+      "relative_l2": 7.958302376209758e-06,
+      "reference_norm": 0.0429832860827446,
+      "difference_norm": 3.4207400290142687e-07,
+      "max_abs": 1.0896474123001099e-07,
+      "reference_max": 0.012796586379408836
+    },
+    {
+      "name": "msa_module.blocks.0.transition_pair.ln_in.bias",
+      "relative_l2": 6.062453849153826e-06,
+      "reference_norm": 0.04584105685353279,
+      "difference_norm": 2.7790929379989393e-07,
+      "max_abs": 6.798654794692993e-08,
+      "reference_max": 0.014042413793504238
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.ln_out.weight",
+      "relative_l2": 5.856230927747674e-06,
+      "reference_norm": 0.009628904052078724,
+      "difference_norm": 5.638908717742197e-08,
+      "max_abs": 4.190951585769653e-08,
+      "reference_max": 0.00585077702999115
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.ln_msa.weight",
+      "relative_l2": 5.0249022933712695e-06,
+      "reference_norm": 0.045518528670072556,
+      "difference_norm": 2.2872615090818726e-07,
+      "max_abs": 8.940696716308594e-08,
+      "reference_max": 0.0291367806494236
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.ln_msa.weight",
+      "relative_l2": 2.641940284320299e-07,
+      "reference_norm": 0.013765169307589531,
+      "difference_norm": 3.636675405260803e-09,
+      "max_abs": 2.7939677238464355e-09,
+      "reference_max": 0.008945360779762268
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.ln_msa.bias",
+      "relative_l2": 2.1624785517815326e-07,
+      "reference_norm": 0.01196170225739479,
+      "difference_norm": 2.5866924158179927e-09,
+      "max_abs": 9.313225746154785e-10,
+      "reference_max": 0.004038778133690357
+    },
+    {
+      "name": "add_pair_recycle.0.weight",
+      "relative_l2": 1.1543406941427747e-07,
+      "reference_norm": 0.07409562170505524,
+      "difference_norm": 8.553159069890626e-09,
+      "max_abs": 7.450580596923828e-09,
+      "reference_max": 0.06739643216133118
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.ffn.w_up.weight",
+      "relative_l2": 8.229704917539493e-09,
+      "reference_norm": 5.944830131637824e-12,
+      "difference_norm": 8.229704617584798e-17,
+      "max_abs": 2.1358782797964437e-17,
+      "reference_max": 1.4856255331832657e-12
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.ffn.w_down.weight",
+      "relative_l2": 1.7808520214046553e-09,
+      "reference_norm": 2.5906603251524274e-12,
+      "difference_norm": 1.7808520300164392e-17,
+      "max_abs": 1.2793585635328952e-17,
+      "reference_max": 1.46464351064024e-12
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.ffn.w_up.weight",
+      "relative_l2": 1.4907547418729905e-10,
+      "reference_norm": 6.27517074490002e-15,
+      "difference_norm": 1.4907547227128405e-18,
+      "max_abs": 4.396100996249819e-19,
+      "reference_max": 1.825301791224393e-15
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.ffn.w_down.weight",
+      "relative_l2": 1.3465554192515494e-11,
+      "reference_norm": 4.586912637673387e-16,
+      "difference_norm": 1.3465554284537683e-19,
+      "max_abs": 9.296186596115946e-20,
+      "reference_max": 3.010332595229122e-16
+    },
+    {
+      "name": "add_pair_recycle.1.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.018911320716142654,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005096435546875
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.to_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.018907399848103523,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005126953125
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.to_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.012504463084042072,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0036468505859375
+    },
+    {
+      "name": "msa_module.blocks.1.transition_msa.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.014170483686029911,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.006659296341240406
+    },
+    {
+      "name": "msa_module.blocks.1.transition_msa.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01624695397913456,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005544109269976616
+    },
+    {
+      "name": "msa_module.blocks.1.transition_msa.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.017719853669404984,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00115966796875
+    },
+    {
+      "name": "msa_module.blocks.1.transition_msa.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01721291057765484,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00154876708984375
+    },
+    {
+      "name": "msa_module.blocks.1.transition_msa.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.040779996663331985,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0032806396484375
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011043081060051918,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.007748463191092014
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.015967583283782005,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003791737835854292
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.012375707738101482,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00075531005859375
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.0061055319383740425,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00042724609375
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.012811422348022461,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00084686279296875
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.006176108028739691,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000492095947265625
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.009236601181328297,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.006496391724795103
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.019681204110383987,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004125382751226425
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008739964105188847,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00060272216796875
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01892840676009655,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00250244140625
+    },
+    {
+      "name": "msa_module.blocks.1.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.024796409532427788,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.014750741422176361
+    },
+    {
+      "name": "msa_module.blocks.1.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03275813162326813,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.011548025533556938
+    },
+    {
+      "name": "msa_module.blocks.1.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.017573999240994453,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00064849853515625
+    },
+    {
+      "name": "msa_module.blocks.1.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.017972595989704132,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00089263916015625
+    },
+    {
+      "name": "msa_module.blocks.1.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023118605837225914,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00150299072265625
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.ln_msa.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.026684565469622612,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.01658971980214119
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.ln_msa.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.038073647767305374,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.010776459239423275
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.024200771003961563,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002105712890625
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03094327822327614,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0033111572265625
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.024529989808797836,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000743865966796875
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.to_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.010488012805581093,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002838134765625
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.to_value.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.016067104414105415,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00099945068359375
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.004357026889920235,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0010459435870870948
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 2.2014917249180144e-06,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 5.002850684832083e-07
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.to_bias.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.018337083980441093,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0024566650390625
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008056395687162876,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000732421875
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011555581353604794,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00069427490234375
+    },
+    {
+      "name": "msa_module.blocks.2.transition_msa.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.012722191400825977,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.007593683898448944
+    },
+    {
+      "name": "msa_module.blocks.2.transition_msa.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.017038511112332344,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004795464687049389
+    },
+    {
+      "name": "msa_module.blocks.2.transition_msa.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01598849892616272,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00115966796875
+    },
+    {
+      "name": "msa_module.blocks.2.transition_msa.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.014795912429690361,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000885009765625
+    },
+    {
+      "name": "msa_module.blocks.2.transition_msa.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.0499005950987339,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0059814453125
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.009804475121200085,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005730072036385536
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.014937895350158215,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0037455542478710413
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.015795785933732986,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000957489013671875
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.00851006805896759,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0005950927734375
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.015060053206980228,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00131988525390625
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.00852555874735117,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000759124755859375
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.0053468793630599976,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002037618076428771
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01996387541294098,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004006541334092617
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.006467530969530344,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00054931640625
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.015537676401436329,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0009918212890625
+    },
+    {
+      "name": "msa_module.blocks.2.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.04948945716023445,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.04116315394639969
+    },
+    {
+      "name": "msa_module.blocks.2.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.04017148166894913,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.010453657247126102
+    },
+    {
+      "name": "msa_module.blocks.2.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023282893002033234,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000858306884765625
+    },
+    {
+      "name": "msa_module.blocks.2.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022587331011891365,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00101470947265625
+    },
+    {
+      "name": "msa_module.blocks.2.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.0248884130269289,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0013885498046875
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.ln_msa.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.035355109721422195,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.023587334901094437
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.ln_msa.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.050981976091861725,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.013491816818714142
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02291013114154339,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00396728515625
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.031905535608530045,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00323486328125
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.021068772301077843,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000614166259765625
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.to_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.009331728331744671,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002655029296875
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.013818453066051006,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.011869410052895546
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01944923773407936,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005140452645719051
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.018594618886709213,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0012664794921875
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.009901604615151882,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00079345703125
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.018198341131210327,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0011444091796875
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011357580311596394,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0010528564453125
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.019734228029847145,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.012620614841580391
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.024139180779457092,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005458003841340542
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008190665394067764,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00063323974609375
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.018299385905265808,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00168609619140625
+    },
+    {
+      "name": "msa_module.blocks.3.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.09484156221151352,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.09146030247211456
+    },
+    {
+      "name": "msa_module.blocks.3.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.04365266114473343,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.010201187804341316
+    },
+    {
+      "name": "msa_module.blocks.3.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.025598542764782906,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00146484375
+    },
+    {
+      "name": "msa_module.blocks.3.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.0260174460709095,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00130462646484375
+    },
+    {
+      "name": "msa_module.blocks.3.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02937898598611355,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003173828125
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011713854037225246,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.008930372074246407
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.016421178355813026,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005062622483819723
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.018737535923719406,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0011444091796875
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011885518208146095,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0014190673828125
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.019872397184371948,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00118255615234375
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.0112315583974123,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000614166259765625
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011506043374538422,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00527450256049633
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.017324868589639664,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002904024440795183
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008534700609743595,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0004711151123046875
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023065418004989624,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002716064453125
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.04226766526699066,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.03786514326930046
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.032960593700408936,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.009130097925662994
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023410934954881668,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00098419189453125
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.0248063076287508,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0012359619140625
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02568277157843113,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0016632080078125
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01332064252346754,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.01094024907797575
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.013818791136145592,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003161689732223749
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.020088203251361847,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0020904541015625
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011363038793206215,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0008544921875
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022150453180074692,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0029296875
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01194383017718792,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000896453857421875
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.00927556212991476,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0031214768532663584
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.013691944070160389,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002226240234449506
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008170293644070625,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00052642822265625
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.020530423149466515,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00173187255859375
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.021962465718388557,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.013984252698719501
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.029774293303489685,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.007444866932928562
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023332171142101288,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000957489013671875
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.024860886856913567,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0015106201171875
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.026036079972982407,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0019073486328125
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011327513493597507,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005602219607681036
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01441142801195383,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003478236496448517
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.021024666726589203,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00225830078125
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.014514541253447533,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001373291015625
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023625748232007027,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001983642578125
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.014529342763125896,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00116729736328125
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.016710039228200912,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.009812737815082073
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.013812687247991562,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0022800746373832226
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.010528615675866604,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000720977783203125
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03749535605311394,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0047607421875
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.029429396614432335,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.026540616527199745
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.025939516723155975,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.006780280731618404
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.020284172147512436,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000591278076171875
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02234773151576519,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0022125244140625
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02147177793085575,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0007476806640625
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02083873562514782,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.016694696620106697
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.019920378923416138,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004880357068032026
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02411956712603569,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001922607421875
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.013858187943696976,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00103759765625
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02849189005792141,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0021820068359375
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01697438769042492,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001678466796875
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.012496748939156532,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005338176619261503
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.012029459699988365,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0022887501399964094
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008299763314425945,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000499725341796875
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.025212004780769348,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0023040771484375
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.033955372869968414,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.03116307035088539
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.027868196368217468,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.009470632299780846
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02213260717689991,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00213623046875
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022384680807590485,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001434326171875
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022117868065834045,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001251220703125
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01642865687608719,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.014852751977741718
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.016795853152871132,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004758212715387344
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02699340507388115,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002716064453125
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.014619913883507252,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0012969970703125
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.024440785869956017,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0019378662109375
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01504568848758936,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001220703125
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.00859508104622364,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0036088263150304556
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.00977475754916668,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0019961046054959297
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.007234763354063034,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00043487548828125
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02420974150300026,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0015869140625
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011330903507769108,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004769071936607361
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022834137082099915,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.006926944479346275
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.021389659494161606,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00122833251953125
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023735854774713516,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00122833251953125
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022611167281866074,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000926971435546875
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.019378559663891792,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.016463477164506912
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022419020533561707,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00526148546487093
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02424614317715168,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003662109375
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.014291505329310894,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00128173828125
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.024226147681474686,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00154876708984375
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.015488173812627792,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00136566162109375
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008871296420693398,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003427225863561034
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01186688058078289,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0021107890643179417
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008200866170227528,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00064849853515625
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02490304782986641,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0014190673828125
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01764588989317417,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.012580696493387222
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.021312614902853966,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005086914636194706
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.021053504198789597,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0011138916015625
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023425132036209106,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00127410888671875
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022497547790408134,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0011138916015625
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.020552892237901688,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.01858271285891533
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02350807934999466,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0054093338549137115
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.025991065427660942,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002197265625
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.014893606305122375,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00153350830078125
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.025877563282847404,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0034637451171875
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01490937639027834,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00124359130859375
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.007561494596302509,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003192201955243945
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008942889980971813,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0018697581253945827
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008746271952986717,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000553131103515625
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.027326224371790886,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0019073486328125
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01450394093990326,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.008312467485666275
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.025732289999723434,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00646253302693367
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02165098860859871,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00159454345703125
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.0239734947681427,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001190185546875
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022418810054659843,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0011138916015625
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.00963268056511879,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0031923018395900726
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023070458322763443,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.006788210943341255
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.024812478572130203,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001708984375
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.013614019379019737,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00127410888671875
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.028378469869494438,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003021240234375
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.016364581882953644,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0019378662109375
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.009098077192902565,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.006019524298608303
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.007078142371028662,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0011877071810886264
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.007964358665049076,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0006103515625
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02640983834862709,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00144195556640625
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02595304325222969,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.02384774573147297
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.025656016543507576,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.006131261587142944
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023150300607085228,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00182342529296875
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02667868882417679,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0020904541015625
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023555617779493332,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000949859619140625
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011624830774962902,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.007125853560864925
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.024966148659586906,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005578570067882538
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03096841089427471,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003662109375
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.017005760222673416,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002197265625
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03279826417565346,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003265380859375
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.019024856388568878,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0024261474609375
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.006904111243784428,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0023620480205863714
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.00933839287608862,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001882636919617653
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008189200423657894,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0010223388671875
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.027964727953076363,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0023651123046875
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.014442924410104752,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.009109901264309883
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022668391466140747,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005268735345453024
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.021926814690232277,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00122833251953125
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02662423998117447,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002288818359375
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02275911532342434,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000888824462890625
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03144603222608566,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.028917022049427032
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.027484580874443054,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.006124710198491812
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.028732361271977425,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00262451171875
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.017567439004778862,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0025177001953125
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03323826193809509,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004119873046875
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.017900271341204643,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001434326171875
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.006393342278897762,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00303218187764287
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.010224420577287674,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0020458719227463007
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.006621490232646465,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000659942626953125
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.029669322073459625,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00164794921875
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.012991395778954029,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.007405681535601616
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02950267679989338,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.007441981695592403
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.020145056769251823,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00165557861328125
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.026369350031018257,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0023193359375
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.021761726588010788,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.000797271728515625
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.017898783087730408,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.013557638972997665
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023439960554242134,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004762551747262478
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.031213728711009026,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004852294921875
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01687229610979557,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0018157958984375
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03388547897338867,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0028076171875
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.018192386254668236,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0016937255859375
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.006674129515886307,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003121625632047653
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008556187152862549,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0015028659254312515
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.006755573209375143,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00078582763671875
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.0297084953635931,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001739501953125
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.0235175509005785,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0213005393743515
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.029376788064837456,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.007092620711773634
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022420471534132957,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002532958984375
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02799634076654911,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0022430419921875
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02278677374124527,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00106048583984375
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.021743513643741608,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.018275221809744835
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02479122392833233,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0061648935079574585
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.033134039491415024,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0037078857421875
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.018046587705612183,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00159454345703125
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.038212042301893234,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0059814453125
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02075669728219509,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0023651123046875
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.005190815310925245,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001863214885815978
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011099440976977348,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002461525611579418
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.0070006586611270905,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00141143798828125
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.027940889820456505,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0018310546875
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.013496194034814835,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.009643091820180416
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02292824722826481,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005309752654284239
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02196481078863144,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002471923828125
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02943555824458599,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0029296875
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02283036708831787,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0009613037109375
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011304888874292374,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004975056741386652
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02577156573534012,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.007272667251527309
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03523014858365059,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0079345703125
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.018429098650813103,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003326416015625
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.047381218522787094,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0172119140625
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02612672559916973,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00799560546875
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.007265908177942038,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005193236283957958
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.008679816499352455,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.002569257514551282
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.006221315357834101,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00141143798828125
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.027102407068014145,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0022735595703125
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.012080753222107887,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.007861892692744732
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022878117859363556,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005903515033423901
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02421158365905285,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00701904296875
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02765311487019062,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00372314453125
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.022694367915391922,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00150299072265625
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.019475610926747322,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.014798760414123535
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.020728308707475662,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005276819691061974
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.031968336552381516,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.009765625
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.019164491444826126,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00396728515625
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03970920294523239,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0120849609375
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.020167147740721703,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003753662109375
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.005326074082404375,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00266242865473032
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.006193080917000771,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.001984410686418414
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.005771194584667683,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0009002685546875
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023779550567269325,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0020294189453125
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.017680533230304718,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.015345029532909393
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.015415139496326447,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0055630821734666824
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01895846426486969,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0027618408203125
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.025511447340250015,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0029754638671875
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02213168889284134,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00164794921875
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.015225177630782127,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.012048620730638504
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01960272341966629,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0051783048547804356
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.024140989407896996,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004791259765625
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.014541925862431526,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0037841796875
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.04626037925481796,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0213623046875
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.025125574320554733,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00701904296875
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.004887310788035393,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0027563506737351418
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.006399335339665413,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0017008837312459946
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.006293770391494036,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0018157958984375
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02132156863808632,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0020294189453125
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01616772636771202,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00974548514932394
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02029787003993988,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.008800414390861988
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.023014510050415993,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.003143310546875
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03790488839149475,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.01031494140625
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.035466086119413376,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.004852294921875
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.011137304827570915,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.006116848438978195
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.02539690025150776,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.006522566080093384
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.050269439816474915,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.01611328125
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.025555016472935677,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00628662109375
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.04900417476892471,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.009521484375
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03041299246251583,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.010498046875
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.010904211550951004,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.005458356812596321
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.01407110970467329,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0025549698621034622
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.005317826755344868,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00194549560546875
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.021166078746318817,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0026092529296875
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.03917713090777397,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.023195838555693626
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "reference_norm": 0.04787736386060715,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.014847155660390854
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.033365000039339066,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.00555419921875
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.04915186017751694,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.013916015625
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 0.08876362442970276,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 0.0120849609375
+    },
+    {
+      "name": "distogram_head.linear.weight",
+      "relative_l2": 0.0,
+      "reference_norm": 2.0244569778442383,
+      "difference_norm": 0.0,
+      "max_abs": 0.0,
+      "reference_max": 1.9017846584320068
+    }
+  ],
+  "ordinary_repeat": [
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.to_atom_single_cond.weight",
+      "relative_l2": 5.820644582854584e-05,
+      "max_abs": 4.5693013817071915e-08
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.adaln_modulation.1.weight",
+      "relative_l2": 1.0218756870017387e-05,
+      "max_abs": 1.2514647096395493e-09
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.attn.Wqkv.weight",
+      "relative_l2": 1.588791565154679e-05,
+      "max_abs": 3.5652192309498787e-09
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.attn.out_proj.weight",
+      "relative_l2": 1.0683002074074466e-05,
+      "max_abs": 2.990418579429388e-09
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.attn.gate_proj.weight",
+      "relative_l2": 2.5177128918585368e-05,
+      "max_abs": 3.0631781555712223e-09
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.ffn.w_up.weight",
+      "relative_l2": 8.700370202063823e-09,
+      "max_abs": 2.3418766925686896e-17
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.0.ffn.w_down.weight",
+      "relative_l2": 1.7056970280648898e-09,
+      "max_abs": 1.2034644114589099e-17
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.adaln_modulation.1.weight",
+      "relative_l2": 1.843913378252182e-05,
+      "max_abs": 2.117303665727377e-08
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.attn.Wqkv.weight",
+      "relative_l2": 5.413757753558457e-05,
+      "max_abs": 1.1481461115181446e-08
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.attn.out_proj.weight",
+      "relative_l2": 1.4195286894391757e-05,
+      "max_abs": 8.119968697428703e-09
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.attn.gate_proj.weight",
+      "relative_l2": 8.607147174188867e-05,
+      "max_abs": 7.294147508218884e-10
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.ffn.w_up.weight",
+      "relative_l2": 2.161810152756516e-05,
+      "max_abs": 2.39349901676178e-07
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.1.ffn.w_down.weight",
+      "relative_l2": 1.701764267636463e-05,
+      "max_abs": 1.6111880540847778e-07
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.adaln_modulation.1.weight",
+      "relative_l2": 3.3108924981206656e-05,
+      "max_abs": 3.3105607144534588e-09
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.attn.Wqkv.weight",
+      "relative_l2": 4.364069536677562e-05,
+      "max_abs": 1.4086253941059113e-08
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.attn.out_proj.weight",
+      "relative_l2": 5.8986061048926786e-05,
+      "max_abs": 1.5104888007044792e-08
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.attn.gate_proj.weight",
+      "relative_l2": 0.00015828937466721982,
+      "max_abs": 1.025910023599863e-08
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.ffn.w_up.weight",
+      "relative_l2": 1.4907547418729905e-10,
+      "max_abs": 4.396100996249819e-19
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_transformer.blocks.2.ffn.w_down.weight",
+      "relative_l2": 1.3465554192515494e-11,
+      "max_abs": 9.296186596115946e-20
+    },
+    {
+      "name": "input_feature_embedder.atom_attention_encoder.atom_single_rep_to_token_single.0.weight",
+      "relative_l2": 1.3018772733630612e-05,
+      "max_abs": 7.636845111846924e-07
+    },
+    {
+      "name": "input_feature_embedder.to_token_pair_left.weight",
+      "relative_l2": 2.5191151507897303e-05,
+      "max_abs": 3.608874976634979e-08
+    },
+    {
+      "name": "input_feature_embedder.to_token_pair_right.weight",
+      "relative_l2": 2.5102302970481105e-05,
+      "max_abs": 4.0890881791710854e-08
+    },
+    {
+      "name": "input_feature_embedder.relative_position_embedder.embed_rel_pos.weight",
+      "relative_l2": 2.065024818875827e-05,
+      "max_abs": 1.0564690455794334e-07
+    },
+    {
+      "name": "input_feature_embedder.add_token_bond.weight",
+      "relative_l2": 1.8922693925560452e-05,
+      "max_abs": 1.0256189852952957e-07
+    },
+    {
+      "name": "add_pair_recycle.0.weight",
+      "relative_l2": 3.636912282445337e-08,
+      "max_abs": 1.862645149230957e-09
+    },
+    {
+      "name": "add_pair_recycle.0.bias",
+      "relative_l2": 2.2645588614977896e-05,
+      "max_abs": 1.9837170839309692e-07
+    },
+    {
+      "name": "add_pair_recycle.1.weight",
+      "relative_l2": 0.00017590333300177008,
+      "max_abs": 7.62939453125e-06
+    },
+    {
+      "name": "add_pair_recycle.1.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "temp_embedder.ln_query.weight",
+      "relative_l2": 0.00021929775539319962,
+      "max_abs": 1.7380807548761368e-07
+    },
+    {
+      "name": "temp_embedder.ln_query.bias",
+      "relative_l2": 0.00016071778372861445,
+      "max_abs": 2.1245796233415604e-07
+    },
+    {
+      "name": "temp_embedder.proj_query.weight",
+      "relative_l2": 0.0009627946419641376,
+      "max_abs": 1.9073486328125e-06
+    },
+    {
+      "name": "temp_embedder.proj_dgram.weight",
+      "relative_l2": 0.001150605850853026,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "temp_embedder.proj_pb_mask.weight",
+      "relative_l2": 0.00010379645391367376,
+      "max_abs": 2.384185791015625e-07
+    },
+    {
+      "name": "temp_embedder.proj_aatype_i.weight",
+      "relative_l2": 0.001158750499598682,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.proj_aatype_j.weight",
+      "relative_l2": 0.0019507295219227672,
+      "max_abs": 1.9073486328125e-06
+    },
+    {
+      "name": "temp_embedder.proj_unit_vec.weight",
+      "relative_l2": 0.0014853705652058125,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.proj_bb_mask.weight",
+      "relative_l2": 0.00020791139104403555,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.ln_pair.weight",
+      "relative_l2": 0.00015257045743055642,
+      "max_abs": 5.2299583330750465e-08
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.ln_pair.bias",
+      "relative_l2": 0.00013351658708415926,
+      "max_abs": 1.5555997379124165e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_left.weight",
+      "relative_l2": 0.0009440897847525775,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0009698908543214202,
+      "max_abs": 2.384185791015625e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_right.weight",
+      "relative_l2": 0.0009677455527707934,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.000902465486433357,
+      "max_abs": 2.384185791015625e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.ln_out.weight",
+      "relative_l2": 0.0001722967717796564,
+      "max_abs": 1.5590921975672245e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.ln_out.bias",
+      "relative_l2": 0.00017049572488758713,
+      "max_abs": 9.38161974772811e-08
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_gate.weight",
+      "relative_l2": 0.0012180320918560028,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_out.weight",
+      "relative_l2": 0.0010016929591074586,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.ln_in.weight",
+      "relative_l2": 0.00018708153220359236,
+      "max_abs": 2.3475149646401405e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.ln_in.bias",
+      "relative_l2": 0.00013523042434826493,
+      "max_abs": 1.6408739611506462e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.expand_a.weight",
+      "relative_l2": 0.0009116267319768667,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.expand_b.weight",
+      "relative_l2": 0.0009141993941739202,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.squeeze.weight",
+      "relative_l2": 0.0007757556159049273,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.ln_pair.weight",
+      "relative_l2": 0.00011168401397299021,
+      "max_abs": 5.200854502618313e-08
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.ln_pair.bias",
+      "relative_l2": 8.643148612463847e-05,
+      "max_abs": 4.0810846257954836e-08
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_left.weight",
+      "relative_l2": 0.0008854272309690714,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0007871457492001355,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_right.weight",
+      "relative_l2": 0.0008074812358245254,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0005394803010858595,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.ln_out.weight",
+      "relative_l2": 6.469224172178656e-05,
+      "max_abs": 2.3603206500411034e-08
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.ln_out.bias",
+      "relative_l2": 0.00011223089677514508,
+      "max_abs": 1.84372765943408e-08
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_gate.weight",
+      "relative_l2": 0.0008449458400718868,
+      "max_abs": 2.384185791015625e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_out.weight",
+      "relative_l2": 0.0007196549559012055,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.transition_pair.ln_in.weight",
+      "relative_l2": 7.092671876307577e-05,
+      "max_abs": 6.2515027821064e-08
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.transition_pair.ln_in.bias",
+      "relative_l2": 6.969675450818613e-05,
+      "max_abs": 4.016328603029251e-08
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.transition_pair.expand_a.weight",
+      "relative_l2": 0.0006546018412336707,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.transition_pair.expand_b.weight",
+      "relative_l2": 0.0006649297429248691,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.transition_pair.squeeze.weight",
+      "relative_l2": 0.0005470922333188355,
+      "max_abs": 1.9073486328125e-06
+    },
+    {
+      "name": "temp_embedder.ln_out.weight",
+      "relative_l2": 5.047653030487709e-05,
+      "max_abs": 1.1897645890712738e-07
+    },
+    {
+      "name": "temp_embedder.ln_out.bias",
+      "relative_l2": 4.765040648635477e-05,
+      "max_abs": 1.2759119272232056e-07
+    },
+    {
+      "name": "temp_embedder.proj_out.weight",
+      "relative_l2": 0.00030523177701979876,
+      "max_abs": 1.9073486328125e-06
+    },
+    {
+      "name": "msa_module.embed_msa.weight",
+      "relative_l2": 0.00037312088534235954,
+      "max_abs": 7.62939453125e-06
+    },
+    {
+      "name": "msa_module.single_to_msa.weight",
+      "relative_l2": 0.0006689688307233155,
+      "max_abs": 1.52587890625e-05
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.ln_msa.weight",
+      "relative_l2": 2.3720642275293358e-05,
+      "max_abs": 2.812594175338745e-07
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.ln_msa.bias",
+      "relative_l2": 3.170708805555478e-05,
+      "max_abs": 3.46451997756958e-07
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.to_left.weight",
+      "relative_l2": 0.00043265949352644384,
+      "max_abs": 3.814697265625e-06
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.to_right.weight",
+      "relative_l2": 0.0001471449650125578,
+      "max_abs": 1.9073486328125e-06
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.to_out.weight",
+      "relative_l2": 0.00029313977574929595,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "msa_module.blocks.0.outer_product_mean.to_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_msa.weight",
+      "relative_l2": 1.512404196546413e-05,
+      "max_abs": 4.041066858917475e-08
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_msa.bias",
+      "relative_l2": 2.173369466618169e-05,
+      "max_abs": 6.26896508038044e-08
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+      "relative_l2": 0.00022708864707965404,
+      "max_abs": 1.9073486328125e-06
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.weight",
+      "relative_l2": 5.7280107284896076e-05,
+      "max_abs": 4.289904609322548e-08
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+      "relative_l2": 0.04236546531319618,
+      "max_abs": 1.5224884464259958e-08
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_bias.weight",
+      "relative_l2": 0.0007432617712765932,
+      "max_abs": 7.62939453125e-06
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_gate.weight",
+      "relative_l2": 0.00019899525796063244,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_out.weight",
+      "relative_l2": 0.00031571235740557313,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "msa_module.blocks.0.transition_msa.ln_in.weight",
+      "relative_l2": 2.2524249288835563e-05,
+      "max_abs": 1.7741695046424866e-07
+    },
+    {
+      "name": "msa_module.blocks.0.transition_msa.ln_in.bias",
+      "relative_l2": 2.178263275709469e-05,
+      "max_abs": 1.3131648302078247e-07
+    },
+    {
+      "name": "msa_module.blocks.0.transition_msa.expand_a.weight",
+      "relative_l2": 0.00038819367182441056,
+      "max_abs": 3.814697265625e-06
+    },
+    {
+      "name": "msa_module.blocks.0.transition_msa.expand_b.weight",
+      "relative_l2": 0.00030731383594684303,
+      "max_abs": 3.814697265625e-06
+    },
+    {
+      "name": "msa_module.blocks.0.transition_msa.squeeze.weight",
+      "relative_l2": 0.00033641012851148844,
+      "max_abs": 7.62939453125e-06
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.ln_pair.weight",
+      "relative_l2": 1.9526691175997257e-05,
+      "max_abs": 1.5972182154655457e-07
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.ln_pair.bias",
+      "relative_l2": 8.243819138442632e-06,
+      "max_abs": 3.259629011154175e-08
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_left.weight",
+      "relative_l2": 9.306881111115217e-05,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_left_gate.weight",
+      "relative_l2": 9.024244354804978e-05,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_right.weight",
+      "relative_l2": 0.00012599870387930423,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.00016018617316149175,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.ln_out.weight",
+      "relative_l2": 5.856230927747674e-06,
+      "max_abs": 4.190951585769653e-08
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.ln_out.bias",
+      "relative_l2": 8.179477845260408e-06,
+      "max_abs": 4.6333298087120056e-08
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_gate.weight",
+      "relative_l2": 0.0001875378075055778,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "msa_module.blocks.0.tri_multi.to_out.weight",
+      "relative_l2": 8.633219113107771e-05,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "msa_module.blocks.0.transition_pair.ln_in.weight",
+      "relative_l2": 8.43794896354666e-06,
+      "max_abs": 1.1920928955078125e-07
+    },
+    {
+      "name": "msa_module.blocks.0.transition_pair.ln_in.bias",
+      "relative_l2": 6.062453849153826e-06,
+      "max_abs": 6.798654794692993e-08
+    },
+    {
+      "name": "msa_module.blocks.0.transition_pair.expand_a.weight",
+      "relative_l2": 0.00016382204194087535,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "msa_module.blocks.0.transition_pair.expand_b.weight",
+      "relative_l2": 0.00014805742830503732,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "msa_module.blocks.0.transition_pair.squeeze.weight",
+      "relative_l2": 0.00012927714851684868,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.ln_msa.weight",
+      "relative_l2": 5.0249022933712695e-06,
+      "max_abs": 8.940696716308594e-08
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.ln_msa.bias",
+      "relative_l2": 7.958302376209758e-06,
+      "max_abs": 1.0896474123001099e-07
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.to_left.weight",
+      "relative_l2": 0.0001344270713161677,
+      "max_abs": 1.9073486328125e-06
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.to_right.weight",
+      "relative_l2": 0.00017496052896603942,
+      "max_abs": 1.9073486328125e-06
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.to_out.weight",
+      "relative_l2": 0.00018021924188360572,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "msa_module.blocks.1.outer_product_mean.to_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_msa.weight",
+      "relative_l2": 2.1850464690942317e-05,
+      "max_abs": 1.932494342327118e-07
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_msa.bias",
+      "relative_l2": 1.3846779438608792e-05,
+      "max_abs": 8.195638656616211e-08
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.to_value.weight",
+      "relative_l2": 0.00015472265658900142,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.weight",
+      "relative_l2": 2.0064970158273354e-05,
+      "max_abs": 4.8050424084067345e-08
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.bias",
+      "relative_l2": 0.014590918086469173,
+      "max_abs": 1.5415480447700247e-08
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.to_bias.weight",
+      "relative_l2": 0.00016299737035296857,
+      "max_abs": 3.814697265625e-06
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.to_gate.weight",
+      "relative_l2": 0.0001952302409335971,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.to_out.weight",
+      "relative_l2": 0.00032565667061135173,
+      "max_abs": 3.814697265625e-06
+    },
+    {
+      "name": "msa_module.blocks.1.transition_msa.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.transition_msa.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.transition_msa.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.transition_msa.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.transition_msa.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.1.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.ln_msa.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.ln_msa.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.outer_product_mean.to_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.ln_msa.weight",
+      "relative_l2": 1.2608118993284734e-07,
+      "max_abs": 9.313225746154785e-10
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.ln_msa.bias",
+      "relative_l2": 1.5576610223888565e-07,
+      "max_abs": 6.984919309616089e-10
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.to_value.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.to_bias.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.msa_pair_weighted_averaging.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.transition_msa.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.transition_msa.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.transition_msa.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.transition_msa.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.transition_msa.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.2.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.ln_msa.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.ln_msa.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.outer_product_mean.to_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "msa_module.blocks.3.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.0.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.1.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.2.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.3.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.4.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.5.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.6.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.7.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.8.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.9.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.10.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.11.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.12.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.13.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.14.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.ln_pair.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.ln_pair.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_right.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.ln_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.ln_out.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_gate.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.tri_multi.to_out.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.transition_pair.ln_in.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.transition_pair.ln_in.bias",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.transition_pair.expand_a.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.transition_pair.expand_b.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "pairformer_blocks.blocks.15.transition_pair.squeeze.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    },
+    {
+      "name": "distogram_head.linear.weight",
+      "relative_l2": 0.0,
+      "max_abs": 0.0
+    }
+  ],
+  "expected_losses": [
+    3.1105339527130127,
+    1.1049689054489136,
+    3.2115745544433594,
+    3.0841586589813232,
+    1.1240278482437134,
+    3.235887050628662,
+    3.0616254806518555,
+    1.0831049680709839,
+    3.243011951446533,
+    3.1047959327697754,
+    1.0930463075637817,
+    3.1362252235412598,
+    3.087249279022217,
+    1.1229459047317505,
+    3.203751564025879,
+    3.1172232627868652,
+    1.232995867729187,
+    3.1987287998199463,
+    3.0252013206481934,
+    1.1200135946273804,
+    3.2091779708862305,
+    3.1332852840423584,
+    1.1208956241607666,
+    3.1903772354125977,
+    3.0844881534576416,
+    1.11954927444458,
+    3.260366678237915,
+    3.0112080574035645,
+    1.209862232208252,
+    3.260873317718506,
+    3.0332891941070557,
+    1.1270519495010376
+  ],
+  "repeated_losses": [
+    3.1105339527130127,
+    1.1049689054489136,
+    3.2115745544433594,
+    3.0841586589813232,
+    1.1240278482437134,
+    3.235887050628662,
+    3.0616254806518555,
+    1.0831049680709839,
+    3.243011951446533,
+    3.1047959327697754,
+    1.0930463075637817,
+    3.1362252235412598,
+    3.087249279022217,
+    1.1229459047317505,
+    3.203751564025879,
+    3.1172232627868652,
+    1.232995867729187,
+    3.1987287998199463,
+    3.0252013206481934,
+    1.1200135946273804,
+    3.2091779708862305,
+    3.1332852840423584,
+    1.1208956241607666,
+    3.1903772354125977,
+    3.0844881534576416,
+    1.11954927444458,
+    3.260366678237915,
+    3.0112080574035645,
+    1.209862232208252,
+    3.260873317718506,
+    3.0332891941070557,
+    1.1270519495010376
+  ]
+}

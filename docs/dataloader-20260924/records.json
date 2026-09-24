@@ -1,0 +1,2178 @@
+[
+  {
+    "rank": 0,
+    "index": 18697110,
+    "seed": 20260924,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 589.7832987830043,
+    "stages": {
+      "load_cifmol": 9.548967704176903,
+      "get_crop_indices": 30.6313494220376,
+      "load_record_msa": 88.71157001703978,
+      "_sample_msa": 0.5781529471278191,
+      "load_record_templates": 313.6079078540206,
+      "make_batch": 19.234931096434593,
+      "collate": 107.55388624966145
+    }
+  },
+  {
+    "rank": 0,
+    "index": 7955289,
+    "seed": 20260925,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 494.6168502792716,
+    "stages": {
+      "load_cifmol": 190.51496218889952,
+      "get_crop_indices": 22.26309012621641,
+      "load_record_msa": 74.5397787541151,
+      "_sample_msa": 2.8312141075730324,
+      "load_record_templates": 82.2410099208355,
+      "make_batch": 16.32044557482004,
+      "collate": 83.43666885048151
+    }
+  },
+  {
+    "rank": 0,
+    "index": 24322976,
+    "seed": 20260926,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 180.4399322718382,
+    "stages": {
+      "load_cifmol": 2.3791342973709106,
+      "get_crop_indices": 3.7875203415751457,
+      "load_record_msa": 31.93235956132412,
+      "_sample_msa": 1.4123106375336647,
+      "load_record_templates": 16.601158306002617,
+      "make_batch": 16.4233036339283,
+      "collate": 94.40066199749708
+    }
+  },
+  {
+    "rank": 0,
+    "index": 9212735,
+    "seed": 20260927,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 504.0180580690503,
+    "stages": {
+      "load_cifmol": 107.05326218158007,
+      "get_crop_indices": 41.26840736716986,
+      "load_record_msa": 191.94110855460167,
+      "_sample_msa": 2.9453542083501816,
+      "load_record_templates": 1.7899880185723305,
+      "make_batch": 15.011451207101345,
+      "collate": 109.11472700536251
+    }
+  },
+  {
+    "rank": 0,
+    "index": 16101519,
+    "seed": 20260928,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 179.67252992093563,
+    "stages": {
+      "load_cifmol": 2.274296246469021,
+      "get_crop_indices": 3.7234295159578323,
+      "load_record_msa": 22.328420542180538,
+      "_sample_msa": 0.9392797946929932,
+      "load_record_templates": 15.5405905097723,
+      "make_batch": 13.289776630699635,
+      "collate": 102.78589371591806
+    }
+  },
+  {
+    "rank": 0,
+    "index": 9083689,
+    "seed": 20260929,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 620.0278010219336,
+    "stages": {
+      "load_cifmol": 23.975908756256104,
+      "get_crop_indices": 10.265227407217026,
+      "load_record_msa": 339.5425835624337,
+      "_sample_msa": 30.663705430924892,
+      "load_record_templates": 32.69206080585718,
+      "make_batch": 38.09776995331049,
+      "collate": 117.6476264372468
+    }
+  },
+  {
+    "rank": 0,
+    "index": 9656972,
+    "seed": 20260930,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 230.23792263120413,
+    "stages": {
+      "load_cifmol": 3.5883551463484764,
+      "get_crop_indices": 6.372896023094654,
+      "load_record_msa": 52.1148731932044,
+      "_sample_msa": 0.973135232925415,
+      "load_record_templates": 21.3942751288414,
+      "make_batch": 19.702588208019733,
+      "collate": 109.86544750630856
+    }
+  },
+  {
+    "rank": 0,
+    "index": 6356865,
+    "seed": 20260931,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 490.6131708994508,
+    "stages": {
+      "load_cifmol": 8.501552045345306,
+      "get_crop_indices": 4.645121283829212,
+      "load_record_msa": 199.73343424499035,
+      "_sample_msa": 30.497257597744465,
+      "load_record_templates": 29.886850155889988,
+      "make_batch": 44.381970539689064,
+      "collate": 142.83367805182934
+    }
+  },
+  {
+    "rank": 0,
+    "index": 6304386,
+    "seed": 20260932,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 274.14833568036556,
+    "stages": {
+      "load_cifmol": 13.3513817563653,
+      "get_crop_indices": 11.775871738791466,
+      "load_record_msa": 89.89074360579252,
+      "_sample_msa": 2.592019736766815,
+      "load_record_templates": 2.0613986998796463,
+      "make_batch": 19.684462808072567,
+      "collate": 103.60934305936098
+    }
+  },
+  {
+    "rank": 0,
+    "index": 22608231,
+    "seed": 20260933,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 206.4969353377819,
+    "stages": {
+      "load_cifmol": 2.3154495283961296,
+      "get_crop_indices": 4.170108586549759,
+      "load_record_msa": 31.69553354382515,
+      "_sample_msa": 0.8367700502276421,
+      "load_record_templates": 14.894049614667892,
+      "make_batch": 13.364250771701336,
+      "collate": 115.03022536635399
+    }
+  },
+  {
+    "rank": 0,
+    "index": 5867880,
+    "seed": 20260934,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 479.64880242943764,
+    "stages": {
+      "load_cifmol": 122.79017083346844,
+      "get_crop_indices": 123.63234348595142,
+      "load_record_msa": 68.30383278429508,
+      "_sample_msa": 7.030806504189968,
+      "load_record_templates": 0.8346289396286011,
+      "make_batch": 21.815761923789978,
+      "collate": 111.88884638249874
+    }
+  },
+  {
+    "rank": 0,
+    "index": 8476923,
+    "seed": 20260935,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 269.7215424850583,
+    "stages": {
+      "load_cifmol": 11.393745429813862,
+      "get_crop_indices": 8.808283135294914,
+      "load_record_msa": 73.29847570508718,
+      "_sample_msa": 7.708991877734661,
+      "load_record_templates": 26.730415411293507,
+      "make_batch": 23.074629716575146,
+      "collate": 92.42764208465815
+    }
+  },
+  {
+    "rank": 0,
+    "index": 19245339,
+    "seed": 20260936,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 151.5648253262043,
+    "stages": {
+      "load_cifmol": 2.3661088198423386,
+      "get_crop_indices": 5.457730032503605,
+      "load_record_msa": 23.661145940423012,
+      "_sample_msa": 0.8477680385112762,
+      "load_record_templates": 15.469135716557503,
+      "make_batch": 12.307507917284966,
+      "collate": 79.7041142359376
+    }
+  },
+  {
+    "rank": 0,
+    "index": 26044097,
+    "seed": 20260937,
+    "source": "disordered_pdb",
+    "success": true,
+    "total_ms": 200.0564355403185,
+    "stages": {
+      "load_cifmol": 24.911686778068542,
+      "get_crop_indices": 4.5805079862475395,
+      "load_record_msa": 48.53476583957672,
+      "_sample_msa": 0.15177763998508453,
+      "load_record_templates": 5.463273264467716,
+      "make_batch": 14.750720001757145,
+      "collate": 83.85059796273708
+    }
+  },
+  {
+    "rank": 0,
+    "index": 4856960,
+    "seed": 20260938,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 384.8332455381751,
+    "stages": {
+      "load_cifmol": 8.274444378912449,
+      "get_crop_indices": 30.536050908267498,
+      "load_record_msa": 139.03991226106882,
+      "_sample_msa": 13.829551637172699,
+      "load_record_templates": 9.732602164149284,
+      "make_batch": 23.37871678173542,
+      "collate": 123.29177930951118
+    }
+  },
+  {
+    "rank": 0,
+    "index": 6666147,
+    "seed": 20260939,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 693.2571893557906,
+    "stages": {
+      "load_cifmol": 15.46677015721798,
+      "get_crop_indices": 48.44552464783192,
+      "load_record_msa": 379.3064132332802,
+      "_sample_msa": 30.21270874887705,
+      "load_record_templates": 48.1454785913229,
+      "make_batch": 38.76580763608217,
+      "collate": 111.61511670798063
+    }
+  },
+  {
+    "rank": 0,
+    "index": 12756541,
+    "seed": 20260940,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 185.34569814801216,
+    "stages": {
+      "load_cifmol": 2.3127226158976555,
+      "get_crop_indices": 3.421144559979439,
+      "load_record_msa": 22.6179463788867,
+      "_sample_msa": 1.2941770255565643,
+      "load_record_templates": 16.016378067433834,
+      "make_batch": 14.076937921345234,
+      "collate": 110.0835744291544
+    }
+  },
+  {
+    "rank": 0,
+    "index": 6748024,
+    "seed": 20260941,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 652.6390286162496,
+    "stages": {
+      "load_cifmol": 103.39551512151957,
+      "get_crop_indices": 133.53050593286753,
+      "load_record_msa": 192.1748984605074,
+      "_sample_msa": 10.748414322733879,
+      "load_record_templates": 34.40661169588566,
+      "make_batch": 25.241242721676826,
+      "collate": 107.11797140538692
+    }
+  },
+  {
+    "rank": 0,
+    "index": 4340384,
+    "seed": 20260942,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 289.3588514998555,
+    "stages": {
+      "load_cifmol": 6.262554787099361,
+      "get_crop_indices": 2.8697773814201355,
+      "load_record_msa": 137.288604862988,
+      "_sample_msa": 4.7531733289361,
+      "load_record_templates": 5.442090332508087,
+      "make_batch": 16.1057747900486,
+      "collate": 95.40744870901108
+    }
+  },
+  {
+    "rank": 0,
+    "index": 8795120,
+    "seed": 20260943,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 844.653906300664,
+    "stages": {
+      "load_cifmol": 22.75441214442253,
+      "get_crop_indices": 92.24675223231316,
+      "load_record_msa": 471.59153688699007,
+      "_sample_msa": 20.22126130759716,
+      "load_record_templates": 58.59863944351673,
+      "make_batch": 39.004672318696976,
+      "collate": 120.90922333300114
+    }
+  },
+  {
+    "rank": 0,
+    "index": 11770065,
+    "seed": 20260944,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 208.19958299398422,
+    "stages": {
+      "load_cifmol": 2.5639012455940247,
+      "get_crop_indices": 5.198249593377113,
+      "load_record_msa": 25.599571876227856,
+      "_sample_msa": 0.315680168569088,
+      "load_record_templates": 21.010291762650013,
+      "make_batch": 10.90055052191019,
+      "collate": 108.65435283631086
+    }
+  },
+  {
+    "rank": 0,
+    "index": 2373061,
+    "seed": 20260945,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 526.0111587122083,
+    "stages": {
+      "load_cifmol": 8.165077306330204,
+      "get_crop_indices": 26.792021468281746,
+      "load_record_msa": 289.7025514394045,
+      "_sample_msa": 21.74017857760191,
+      "load_record_templates": 34.89441052079201,
+      "make_batch": 30.142501927912235,
+      "collate": 99.23647809773684
+    }
+  },
+  {
+    "rank": 0,
+    "index": 6582339,
+    "seed": 20260946,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 394.6896642446518,
+    "stages": {
+      "load_cifmol": 23.806639946997166,
+      "get_crop_indices": 11.423023417592049,
+      "load_record_msa": 261.659387499094,
+      "_sample_msa": 5.571537651121616,
+      "load_record_templates": 1.5311045572161674,
+      "make_batch": 17.794246785342693,
+      "collate": 59.06076915562153
+    }
+  },
+  {
+    "rank": 0,
+    "index": 10204499,
+    "seed": 20260947,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 147.32392504811287,
+    "stages": {
+      "load_cifmol": 2.7980366721749306,
+      "get_crop_indices": 3.8843145594000816,
+      "load_record_msa": 29.10297643393278,
+      "_sample_msa": 1.341301016509533,
+      "load_record_templates": 18.509448505938053,
+      "make_batch": 18.18949542939663,
+      "collate": 59.13739651441574
+    }
+  },
+  {
+    "rank": 0,
+    "index": 21138704,
+    "seed": 20260948,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 195.73527202010155,
+    "stages": {
+      "load_cifmol": 4.373050294816494,
+      "get_crop_indices": 6.675866432487965,
+      "load_record_msa": 41.421571746468544,
+      "_sample_msa": 0.27697719633579254,
+      "load_record_templates": 24.83648806810379,
+      "make_batch": 15.983346849679947,
+      "collate": 86.65038924664259
+    }
+  },
+  {
+    "rank": 0,
+    "index": 9379911,
+    "seed": 20260949,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 396.7349901795387,
+    "stages": {
+      "load_cifmol": 14.02010302990675,
+      "get_crop_indices": 4.121037200093269,
+      "load_record_msa": 163.17693889141083,
+      "_sample_msa": 30.201583169400692,
+      "load_record_templates": 0.8686082437634468,
+      "make_batch": 40.675247088074684,
+      "collate": 120.39847206324339
+    }
+  },
+  {
+    "rank": 0,
+    "index": 8617928,
+    "seed": 20260950,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 343.9933191984892,
+    "stages": {
+      "load_cifmol": 10.97023393958807,
+      "get_crop_indices": 8.804687298834324,
+      "load_record_msa": 143.43046490103006,
+      "_sample_msa": 18.547402694821358,
+      "load_record_templates": 18.401365727186203,
+      "make_batch": 34.30225420743227,
+      "collate": 82.68304355442524
+    }
+  },
+  {
+    "rank": 0,
+    "index": 18776392,
+    "seed": 20260951,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 180.0042325630784,
+    "stages": {
+      "load_cifmol": 2.8900299221277237,
+      "get_crop_indices": 3.6645177751779556,
+      "load_record_msa": 27.55362167954445,
+      "_sample_msa": 1.3409126549959183,
+      "load_record_templates": 17.823065631091595,
+      "make_batch": 15.84265474230051,
+      "collate": 98.82606752216816
+    }
+  },
+  {
+    "rank": 0,
+    "index": 9255173,
+    "seed": 20260952,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 283.46895705908537,
+    "stages": {
+      "load_cifmol": 38.55305816978216,
+      "get_crop_indices": 18.456225283443928,
+      "load_record_msa": 76.8196489661932,
+      "_sample_msa": 8.758170530200005,
+      "load_record_templates": 11.542643420398235,
+      "make_batch": 24.60841555148363,
+      "collate": 79.56900354474783
+    }
+  },
+  {
+    "rank": 0,
+    "index": 4328978,
+    "seed": 20260953,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 481.6762236878276,
+    "stages": {
+      "load_cifmol": 15.792104415595531,
+      "get_crop_indices": 14.024151489138603,
+      "load_record_msa": 215.04991315305233,
+      "_sample_msa": 15.651000663638115,
+      "load_record_templates": 48.0069424957037,
+      "make_batch": 32.85119589418173,
+      "collate": 115.17626885324717
+    }
+  },
+  {
+    "rank": 0,
+    "index": 9234642,
+    "seed": 20260954,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 718.3860093355179,
+    "stages": {
+      "load_cifmol": 378.82798444479704,
+      "get_crop_indices": 40.18662218004465,
+      "load_record_msa": 83.45120493322611,
+      "_sample_msa": 11.592102237045765,
+      "load_record_templates": 35.56523285806179,
+      "make_batch": 35.782041028141975,
+      "collate": 97.51544054597616
+    }
+  },
+  {
+    "rank": 0,
+    "index": 5541029,
+    "seed": 20260955,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 352.7069091796875,
+    "stages": {
+      "load_cifmol": 22.067188285291195,
+      "get_crop_indices": 9.91548877209425,
+      "load_record_msa": 109.66082382947206,
+      "_sample_msa": 3.818356432020664,
+      "load_record_templates": 57.981278747320175,
+      "make_batch": 19.415701739490032,
+      "collate": 110.83980556577444
+    }
+  },
+  {
+    "rank": 2,
+    "index": 7264884,
+    "seed": 20262924,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 316.95626862347126,
+    "stages": {
+      "load_cifmol": 10.265608318150043,
+      "get_crop_indices": 5.774329416453838,
+      "load_record_msa": 110.14347244054079,
+      "_sample_msa": 17.35369674861431,
+      "load_record_templates": 28.261499479413033,
+      "make_batch": 31.90414607524872,
+      "collate": 87.57822960615158
+    }
+  },
+  {
+    "rank": 2,
+    "index": 6124056,
+    "seed": 20262925,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 278.9972210302949,
+    "stages": {
+      "load_cifmol": 4.7165462747216225,
+      "get_crop_indices": 4.6239374205470085,
+      "load_record_msa": 139.0553368255496,
+      "_sample_msa": 6.286616437137127,
+      "load_record_templates": 22.931774146854877,
+      "make_batch": 17.874675802886486,
+      "collate": 73.54825362563133
+    }
+  },
+  {
+    "rank": 2,
+    "index": 7605862,
+    "seed": 20262926,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 393.9090631902218,
+    "stages": {
+      "load_cifmol": 8.225811645388603,
+      "get_crop_indices": 12.930233031511307,
+      "load_record_msa": 145.2766340225935,
+      "_sample_msa": 19.990461878478527,
+      "load_record_templates": 41.598533280193806,
+      "make_batch": 30.713612213730812,
+      "collate": 111.68072558939457
+    }
+  },
+  {
+    "rank": 2,
+    "index": 11069031,
+    "seed": 20262927,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 147.63852581381798,
+    "stages": {
+      "load_cifmol": 2.168644219636917,
+      "get_crop_indices": 5.322092212736607,
+      "load_record_msa": 18.91138404607773,
+      "_sample_msa": 0.18156599253416061,
+      "load_record_templates": 14.657252468168736,
+      "make_batch": 8.63474328070879,
+      "collate": 88.42172101140022
+    }
+  },
+  {
+    "rank": 2,
+    "index": 17920237,
+    "seed": 20262928,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 169.68437749892473,
+    "stages": {
+      "load_cifmol": 2.257063053548336,
+      "get_crop_indices": 3.6504510790109634,
+      "load_record_msa": 19.806873984634876,
+      "_sample_msa": 0.6056688725948334,
+      "load_record_templates": 14.53863549977541,
+      "make_batch": 11.45253237336874,
+      "collate": 103.69488503783941
+    }
+  },
+  {
+    "rank": 2,
+    "index": 24147272,
+    "seed": 20262929,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 163.4407313540578,
+    "stages": {
+      "load_cifmol": 2.367347478866577,
+      "get_crop_indices": 2.9189512133598328,
+      "load_record_msa": 23.057151585817337,
+      "_sample_msa": 0.3923531621694565,
+      "load_record_templates": 15.237882733345032,
+      "make_batch": 10.686329565942287,
+      "collate": 96.72640729695559
+    }
+  },
+  {
+    "rank": 2,
+    "index": 16317031,
+    "seed": 20262930,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 161.51217557489872,
+    "stages": {
+      "load_cifmol": 2.2661006078124046,
+      "get_crop_indices": 11.08653750270605,
+      "load_record_msa": 25.28806496411562,
+      "_sample_msa": 0.872553326189518,
+      "load_record_templates": 15.308075584471226,
+      "make_batch": 12.365292757749557,
+      "collate": 82.3482358828187
+    }
+  },
+  {
+    "rank": 2,
+    "index": 8357522,
+    "seed": 20262931,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 468.73796451836824,
+    "stages": {
+      "load_cifmol": 16.797724179923534,
+      "get_crop_indices": 16.650638543069363,
+      "load_record_msa": 198.4838768839836,
+      "_sample_msa": 18.743501976132393,
+      "load_record_templates": 23.174178786575794,
+      "make_batch": 39.36894331127405,
+      "collate": 133.29676073044538
+    }
+  },
+  {
+    "rank": 2,
+    "index": 9412640,
+    "seed": 20262932,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 394.51830089092255,
+    "stages": {
+      "load_cifmol": 44.71141844987869,
+      "get_crop_indices": 12.31651846319437,
+      "load_record_msa": 138.46276700496674,
+      "_sample_msa": 8.500754833221436,
+      "load_record_templates": 30.22175282239914,
+      "make_batch": 31.622065231204033,
+      "collate": 109.83276087790728
+    }
+  },
+  {
+    "rank": 2,
+    "index": 11810255,
+    "seed": 20262933,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 189.97348006814718,
+    "stages": {
+      "load_cifmol": 3.614552319049835,
+      "get_crop_indices": 5.387785844504833,
+      "load_record_msa": 45.73156125843525,
+      "_sample_msa": 1.7150705680251122,
+      "load_record_templates": 21.13512624055147,
+      "make_batch": 21.40466496348381,
+      "collate": 77.5509038940072
+    }
+  },
+  {
+    "rank": 2,
+    "index": 5848371,
+    "seed": 20262934,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 580.1357505843043,
+    "stages": {
+      "load_cifmol": 102.66985651105642,
+      "get_crop_indices": 37.526306696236134,
+      "load_record_msa": 94.15499493479729,
+      "_sample_msa": 11.17272675037384,
+      "load_record_templates": 174.83099270612,
+      "make_batch": 30.548809096217155,
+      "collate": 101.25450231134892
+    }
+  },
+  {
+    "rank": 2,
+    "index": 8101747,
+    "seed": 20262935,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 348.91402348876,
+    "stages": {
+      "load_cifmol": 9.80844534933567,
+      "get_crop_indices": 35.903897136449814,
+      "load_record_msa": 109.06668473035097,
+      "_sample_msa": 5.093911662697792,
+      "load_record_templates": 23.040536791086197,
+      "make_batch": 21.065550856292248,
+      "collate": 117.0930340886116
+    }
+  },
+  {
+    "rank": 2,
+    "index": 14029735,
+    "seed": 20262936,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 192.29135569185019,
+    "stages": {
+      "load_cifmol": 2.5227339938282967,
+      "get_crop_indices": 2.8485776856541634,
+      "load_record_msa": 31.42742160707712,
+      "_sample_msa": 0.8728159591555595,
+      "load_record_templates": 18.864295445382595,
+      "make_batch": 12.243134900927544,
+      "collate": 106.87032528221607
+    }
+  },
+  {
+    "rank": 2,
+    "index": 4651966,
+    "seed": 20262937,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 393.48223712295294,
+    "stages": {
+      "load_cifmol": 10.135091841220856,
+      "get_crop_indices": 18.961412832140923,
+      "load_record_msa": 190.2765966951847,
+      "_sample_msa": 13.392472639679909,
+      "load_record_templates": 39.358836598694324,
+      "make_batch": 26.86354238539934,
+      "collate": 72.62447942048311
+    }
+  },
+  {
+    "rank": 2,
+    "index": 8726206,
+    "seed": 20262938,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 354.5565605163574,
+    "stages": {
+      "load_cifmol": 3.8008317351341248,
+      "get_crop_indices": 12.004230171442032,
+      "load_record_msa": 166.03191290050745,
+      "_sample_msa": 17.225710675120354,
+      "load_record_templates": 22.643864154815674,
+      "make_batch": 29.13055382668972,
+      "collate": 86.62687428295612
+    }
+  },
+  {
+    "rank": 2,
+    "index": 22258135,
+    "seed": 20262939,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 132.32237100601196,
+    "stages": {
+      "load_cifmol": 3.039207309484482,
+      "get_crop_indices": 4.6874890103936195,
+      "load_record_msa": 23.72619416564703,
+      "_sample_msa": 0.29298383742570877,
+      "load_record_templates": 17.724609933793545,
+      "make_batch": 14.404676854610443,
+      "collate": 57.94529523700476
+    }
+  },
+  {
+    "rank": 2,
+    "index": 10740683,
+    "seed": 20262940,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 140.01993369311094,
+    "stages": {
+      "load_cifmol": 3.2568275928497314,
+      "get_crop_indices": 5.220859311521053,
+      "load_record_msa": 25.094639509916306,
+      "_sample_msa": 0.21436437964439392,
+      "load_record_templates": 18.652386032044888,
+      "make_batch": 13.219424523413181,
+      "collate": 64.01210278272629
+    }
+  },
+  {
+    "rank": 2,
+    "index": 9029077,
+    "seed": 20262941,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 461.2683290615678,
+    "stages": {
+      "load_cifmol": 96.99805546551943,
+      "get_crop_indices": 32.22915157675743,
+      "load_record_msa": 105.98270129412413,
+      "_sample_msa": 8.340694010257721,
+      "load_record_templates": 65.17853029072285,
+      "make_batch": 30.526993796229362,
+      "collate": 93.86076778173447
+    }
+  },
+  {
+    "rank": 2,
+    "index": 8860673,
+    "seed": 20262942,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 631.2899673357606,
+    "stages": {
+      "load_cifmol": 130.29810693114996,
+      "get_crop_indices": 29.244917444884777,
+      "load_record_msa": 211.02711837738752,
+      "_sample_msa": 22.30007853358984,
+      "load_record_templates": 17.414052970707417,
+      "make_batch": 49.66865014284849,
+      "collate": 138.31628113985062
+    }
+  },
+  {
+    "rank": 2,
+    "index": 9407080,
+    "seed": 20262943,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 519.8930203914642,
+    "stages": {
+      "load_cifmol": 83.21508672088385,
+      "get_crop_indices": 32.61111211031675,
+      "load_record_msa": 164.02061097323895,
+      "_sample_msa": 13.913122937083244,
+      "load_record_templates": 61.15003116428852,
+      "make_batch": 21.156182512640953,
+      "collate": 103.80369611084461
+    }
+  },
+  {
+    "rank": 2,
+    "index": 14139185,
+    "seed": 20262944,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 208.865687251091,
+    "stages": {
+      "load_cifmol": 2.945072017610073,
+      "get_crop_indices": 4.435817711055279,
+      "load_record_msa": 41.01794585585594,
+      "_sample_msa": 1.2078853324055672,
+      "load_record_templates": 19.062325358390808,
+      "make_batch": 17.15272944420576,
+      "collate": 102.34192572534084
+    }
+  },
+  {
+    "rank": 2,
+    "index": 14424192,
+    "seed": 20262945,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 214.25244584679604,
+    "stages": {
+      "load_cifmol": 3.51032055914402,
+      "get_crop_indices": 5.102179944515228,
+      "load_record_msa": 47.26728703826666,
+      "_sample_msa": 1.3104751706123352,
+      "load_record_templates": 21.498484537005424,
+      "make_batch": 20.711053162813187,
+      "collate": 99.89455621689558
+    }
+  },
+  {
+    "rank": 2,
+    "index": 9016375,
+    "seed": 20262946,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 496.24821450561285,
+    "stages": {
+      "load_cifmol": 55.11943623423576,
+      "get_crop_indices": 37.441374734044075,
+      "load_record_msa": 240.8648980781436,
+      "_sample_msa": 5.341671407222748,
+      "load_record_templates": 35.96257511526346,
+      "make_batch": 18.44039186835289,
+      "collate": 81.93176425993443
+    }
+  },
+  {
+    "rank": 2,
+    "index": 15838788,
+    "seed": 20262947,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 147.87703938782215,
+    "stages": {
+      "load_cifmol": 2.521546557545662,
+      "get_crop_indices": 3.2474687322974205,
+      "load_record_msa": 27.00361516326666,
+      "_sample_msa": 1.0888222604990005,
+      "load_record_templates": 16.251884400844574,
+      "make_batch": 14.326523058116436,
+      "collate": 69.60132159292698
+    }
+  },
+  {
+    "rank": 2,
+    "index": 9364404,
+    "seed": 20262948,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 431.607136502862,
+    "stages": {
+      "load_cifmol": 23.112899623811245,
+      "get_crop_indices": 36.56420577317476,
+      "load_record_msa": 149.54118337482214,
+      "_sample_msa": 15.738929621875286,
+      "load_record_templates": 28.65173388272524,
+      "make_batch": 34.40635930746794,
+      "collate": 115.8480104058981
+    }
+  },
+  {
+    "rank": 2,
+    "index": 24694097,
+    "seed": 20262949,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 214.94889445602894,
+    "stages": {
+      "load_cifmol": 2.8815390542149544,
+      "get_crop_indices": 4.264626652002335,
+      "load_record_msa": 46.00908886641264,
+      "_sample_msa": 0.9811278432607651,
+      "load_record_templates": 18.38111598044634,
+      "make_batch": 16.89780969172716,
+      "collate": 107.56677202880383
+    }
+  },
+  {
+    "rank": 2,
+    "index": 26076835,
+    "seed": 20262950,
+    "source": "disordered_pdb",
+    "success": true,
+    "total_ms": 225.47724470496178,
+    "stages": {
+      "load_cifmol": 3.6898283287882805,
+      "get_crop_indices": 13.544933870434761,
+      "load_record_msa": 61.77172251045704,
+      "_sample_msa": 1.8490320071578026,
+      "load_record_templates": 3.670318052172661,
+      "make_batch": 18.853492103517056,
+      "collate": 106.96295090019703
+    }
+  },
+  {
+    "rank": 2,
+    "index": 5425595,
+    "seed": 20262951,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 689.8210681974888,
+    "stages": {
+      "load_cifmol": 47.04470280557871,
+      "get_crop_indices": 29.17573321610689,
+      "load_record_msa": 319.96975746005774,
+      "_sample_msa": 7.83175602555275,
+      "load_record_templates": 134.20263212174177,
+      "make_batch": 20.295524969697,
+      "collate": 92.36446395516396
+    }
+  },
+  {
+    "rank": 2,
+    "index": 20208095,
+    "seed": 20262952,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 202.24712137132883,
+    "stages": {
+      "load_cifmol": 3.3787470310926437,
+      "get_crop_indices": 4.399956203997135,
+      "load_record_msa": 42.280999943614006,
+      "_sample_msa": 0.36502163857221603,
+      "load_record_templates": 22.333775646984577,
+      "make_batch": 15.579636208713055,
+      "collate": 98.28206151723862
+    }
+  },
+  {
+    "rank": 2,
+    "index": 9235111,
+    "seed": 20262953,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 1028.0543537810445,
+    "stages": {
+      "load_cifmol": 445.92796731740236,
+      "get_crop_indices": 43.57035830616951,
+      "load_record_msa": 256.00481033325195,
+      "_sample_msa": 27.33254712074995,
+      "load_record_templates": 60.36772578954697,
+      "make_batch": 36.921896040439606,
+      "collate": 113.06182388216257
+    }
+  },
+  {
+    "rank": 2,
+    "index": 4494513,
+    "seed": 20262954,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 269.9460303410888,
+    "stages": {
+      "load_cifmol": 3.761828877031803,
+      "get_crop_indices": 5.036026239395142,
+      "load_record_msa": 93.02261658012867,
+      "_sample_msa": 4.289006814360619,
+      "load_record_templates": 17.818961292505264,
+      "make_batch": 20.548785105347633,
+      "collate": 99.03746005147696
+    }
+  },
+  {
+    "rank": 2,
+    "index": 22091885,
+    "seed": 20262955,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 183.11377801001072,
+    "stages": {
+      "load_cifmol": 2.7033528313040733,
+      "get_crop_indices": 4.320061765611172,
+      "load_record_msa": 25.75820218771696,
+      "_sample_msa": 0.22313185036182404,
+      "load_record_templates": 18.67510937154293,
+      "make_batch": 14.243533834815025,
+      "collate": 98.03120419383049
+    }
+  },
+  {
+    "rank": 3,
+    "index": 24882854,
+    "seed": 20263924,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 190.14614820480347,
+    "stages": {
+      "load_cifmol": 2.444906160235405,
+      "get_crop_indices": 12.509129010140896,
+      "load_record_msa": 34.85160879790783,
+      "_sample_msa": 0.7010055705904961,
+      "load_record_templates": 16.676914878189564,
+      "make_batch": 12.487133033573627,
+      "collate": 99.35395140200853
+    }
+  },
+  {
+    "rank": 3,
+    "index": 8665542,
+    "seed": 20263925,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 346.4783150702715,
+    "stages": {
+      "load_cifmol": 71.72088231891394,
+      "get_crop_indices": 24.90613702684641,
+      "load_record_msa": 95.48583254218102,
+      "_sample_msa": 9.85189713537693,
+      "load_record_templates": 0.7580621168017387,
+      "make_batch": 23.07911589741707,
+      "collate": 95.21382953971624
+    }
+  },
+  {
+    "rank": 3,
+    "index": 9162337,
+    "seed": 20263926,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 131.6207954660058,
+    "stages": {
+      "load_cifmol": 1.904485747218132,
+      "get_crop_indices": 1.5259059146046638,
+      "load_record_msa": 15.009154565632343,
+      "_sample_msa": 0.1512821763753891,
+      "load_record_templates": 1.101987436413765,
+      "make_batch": 6.204680539667606,
+      "collate": 92.1209892258048
+    }
+  },
+  {
+    "rank": 3,
+    "index": 16307558,
+    "seed": 20263927,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 184.67010743916035,
+    "stages": {
+      "load_cifmol": 3.0717402696609497,
+      "get_crop_indices": 6.0875630006194115,
+      "load_record_msa": 34.01785157620907,
+      "_sample_msa": 1.9068699330091476,
+      "load_record_templates": 21.239046938717365,
+      "make_batch": 21.35882619768381,
+      "collate": 76.59160066395998
+    }
+  },
+  {
+    "rank": 3,
+    "index": 17310218,
+    "seed": 20263928,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 171.88800778239965,
+    "stages": {
+      "load_cifmol": 2.8943223878741264,
+      "get_crop_indices": 3.7281541153788567,
+      "load_record_msa": 31.384591944515705,
+      "_sample_msa": 0.6597237661480904,
+      "load_record_templates": 18.497390672564507,
+      "make_batch": 15.71585051715374,
+      "collate": 85.60196962207556
+    }
+  },
+  {
+    "rank": 3,
+    "index": 17712671,
+    "seed": 20263929,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 187.40468844771385,
+    "stages": {
+      "load_cifmol": 2.637983299791813,
+      "get_crop_indices": 3.628494217991829,
+      "load_record_msa": 35.24521924555302,
+      "_sample_msa": 1.7216820269823074,
+      "load_record_templates": 19.203031435608864,
+      "make_batch": 19.210562109947205,
+      "collate": 87.86226715892553
+    }
+  },
+  {
+    "rank": 3,
+    "index": 15274111,
+    "seed": 20263930,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 209.6530618146062,
+    "stages": {
+      "load_cifmol": 4.779095761477947,
+      "get_crop_indices": 23.282520473003387,
+      "load_record_msa": 39.39205966889858,
+      "_sample_msa": 1.667393371462822,
+      "load_record_templates": 26.54993813484907,
+      "make_batch": 21.461141295731068,
+      "collate": 77.08937488496304
+    }
+  },
+  {
+    "rank": 3,
+    "index": 3468856,
+    "seed": 20263931,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 441.08042400330305,
+    "stages": {
+      "load_cifmol": 12.513524852693081,
+      "get_crop_indices": 6.425848230719566,
+      "load_record_msa": 205.30135836452246,
+      "_sample_msa": 23.489832878112793,
+      "load_record_templates": 44.70469243824482,
+      "make_batch": 30.85580188781023,
+      "collate": 99.89338647574186
+    }
+  },
+  {
+    "rank": 3,
+    "index": 8924046,
+    "seed": 20263932,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 387.23810855299234,
+    "stages": {
+      "load_cifmol": 27.66318339854479,
+      "get_crop_indices": 16.387823037803173,
+      "load_record_msa": 140.49821626394987,
+      "_sample_msa": 19.42175067961216,
+      "load_record_templates": 36.449749022722244,
+      "make_batch": 30.545342713594437,
+      "collate": 94.01033725589514
+    }
+  },
+  {
+    "rank": 3,
+    "index": 25216182,
+    "seed": 20263933,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 147.10968267172575,
+    "stages": {
+      "load_cifmol": 2.313092350959778,
+      "get_crop_indices": 3.1623290851712227,
+      "load_record_msa": 27.92199421674013,
+      "_sample_msa": 0.5714641883969307,
+      "load_record_templates": 16.705216839909554,
+      "make_batch": 12.22367025911808,
+      "collate": 71.80991768836975
+    }
+  },
+  {
+    "rank": 3,
+    "index": 8059302,
+    "seed": 20263934,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 696.6078262776136,
+    "stages": {
+      "load_cifmol": 226.46696213632822,
+      "get_crop_indices": 242.88725014775991,
+      "load_record_msa": 93.74648611992598,
+      "_sample_msa": 3.196932375431061,
+      "load_record_templates": 0.912967137992382,
+      "make_batch": 15.017608180642128,
+      "collate": 92.90252067148685
+    }
+  },
+  {
+    "rank": 3,
+    "index": 11033721,
+    "seed": 20263935,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 151.97678934782743,
+    "stages": {
+      "load_cifmol": 4.185909405350685,
+      "get_crop_indices": 4.530224017798901,
+      "load_record_msa": 26.81316528469324,
+      "_sample_msa": 0.34635234624147415,
+      "load_record_templates": 11.263242922723293,
+      "make_batch": 15.474597923457623,
+      "collate": 72.7594867348671
+    }
+  },
+  {
+    "rank": 3,
+    "index": 6869873,
+    "seed": 20263936,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 483.03856886923313,
+    "stages": {
+      "load_cifmol": 35.831996239721775,
+      "get_crop_indices": 10.842246003448963,
+      "load_record_msa": 233.0274824053049,
+      "_sample_msa": 20.087904296815395,
+      "load_record_templates": 20.0522867962718,
+      "make_batch": 31.95844776928425,
+      "collate": 100.80416779965162
+    }
+  },
+  {
+    "rank": 3,
+    "index": 23428699,
+    "seed": 20263937,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 161.65722534060478,
+    "stages": {
+      "load_cifmol": 3.030870109796524,
+      "get_crop_indices": 4.301334731280804,
+      "load_record_msa": 31.342267990112305,
+      "_sample_msa": 0.9679561480879784,
+      "load_record_templates": 17.106573097407818,
+      "make_batch": 16.09181798994541,
+      "collate": 75.42171981185675
+    }
+  },
+  {
+    "rank": 3,
+    "index": 15103755,
+    "seed": 20263938,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 205.73274325579405,
+    "stages": {
+      "load_cifmol": 4.5055486261844635,
+      "get_crop_indices": 7.233078591525555,
+      "load_record_msa": 50.07127672433853,
+      "_sample_msa": 0.28402265161275864,
+      "load_record_templates": 18.31931248307228,
+      "make_batch": 16.092166304588318,
+      "collate": 92.61169750243425
+    }
+  },
+  {
+    "rank": 3,
+    "index": 9166091,
+    "seed": 20263939,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 434.4765981659293,
+    "stages": {
+      "load_cifmol": 3.8802800700068474,
+      "get_crop_indices": 5.184509791433811,
+      "load_record_msa": 169.6631694212556,
+      "_sample_msa": 38.07251341640949,
+      "load_record_templates": 35.48806440085173,
+      "make_batch": 36.165609024465084,
+      "collate": 117.71652568131685
+    }
+  },
+  {
+    "rank": 3,
+    "index": 22387917,
+    "seed": 20263940,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 168.17736811935902,
+    "stages": {
+      "load_cifmol": 2.5848988443613052,
+      "get_crop_indices": 3.342702053487301,
+      "load_record_msa": 60.48847548663616,
+      "_sample_msa": 0.6980821490287781,
+      "load_record_templates": 15.196462161839008,
+      "make_batch": 12.4046104028821,
+      "collate": 61.412934213876724
+    }
+  },
+  {
+    "rank": 3,
+    "index": 21411877,
+    "seed": 20263941,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 160.13217996805906,
+    "stages": {
+      "load_cifmol": 2.4272436276078224,
+      "get_crop_indices": 6.319467909634113,
+      "load_record_msa": 18.734035082161427,
+      "_sample_msa": 0.31439773738384247,
+      "load_record_templates": 20.77455446124077,
+      "make_batch": 10.5777308344841,
+      "collate": 87.60351222008467
+    }
+  },
+  {
+    "rank": 3,
+    "index": 4384720,
+    "seed": 20263942,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 160.8951659873128,
+    "stages": {
+      "load_cifmol": 5.178714171051979,
+      "get_crop_indices": 1.7602602019906044,
+      "load_record_msa": 30.458896420896053,
+      "_sample_msa": 0.1637544482946396,
+      "load_record_templates": 1.2451298534870148,
+      "make_batch": 7.417550310492516,
+      "collate": 94.93433590978384
+    }
+  },
+  {
+    "rank": 3,
+    "index": 7980193,
+    "seed": 20263943,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 235.03519594669342,
+    "stages": {
+      "load_cifmol": 14.589780010282993,
+      "get_crop_indices": 9.543029591441154,
+      "load_record_msa": 76.55933499336243,
+      "_sample_msa": 0.7728096097707748,
+      "load_record_templates": 19.992646761238575,
+      "make_batch": 14.389525167644024,
+      "collate": 80.7248754426837
+    }
+  },
+  {
+    "rank": 3,
+    "index": 8470317,
+    "seed": 20263944,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 555.228897370398,
+    "stages": {
+      "load_cifmol": 40.496859699487686,
+      "get_crop_indices": 16.741805709898472,
+      "load_record_msa": 263.38881254196167,
+      "_sample_msa": 34.07060448080301,
+      "load_record_templates": 71.2018171325326,
+      "make_batch": 37.4693414196372,
+      "collate": 71.7606209218502
+    }
+  },
+  {
+    "rank": 3,
+    "index": 19665342,
+    "seed": 20263945,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 183.41002706438303,
+    "stages": {
+      "load_cifmol": 3.301638178527355,
+      "get_crop_indices": 19.663337618112564,
+      "load_record_msa": 35.8181893825531,
+      "_sample_msa": 0.7016155868768692,
+      "load_record_templates": 21.47594280540943,
+      "make_batch": 17.49207079410553,
+      "collate": 73.16220179200172
+    }
+  },
+  {
+    "rank": 3,
+    "index": 6645510,
+    "seed": 20263946,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 176.53710395097733,
+    "stages": {
+      "load_cifmol": 14.87620733678341,
+      "get_crop_indices": 2.4950988590717316,
+      "load_record_msa": 41.25259816646576,
+      "_sample_msa": 2.6091700419783592,
+      "load_record_templates": 13.414808548986912,
+      "make_batch": 11.450965888798237,
+      "collate": 78.90161592513323
+    }
+  },
+  {
+    "rank": 3,
+    "index": 22080158,
+    "seed": 20263947,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 153.78848556429148,
+    "stages": {
+      "load_cifmol": 2.585161477327347,
+      "get_crop_indices": 3.269464708864689,
+      "load_record_msa": 30.401572585105896,
+      "_sample_msa": 1.6269469633698463,
+      "load_record_templates": 17.443801276385784,
+      "make_batch": 15.662840567529202,
+      "collate": 67.2489907592535
+    }
+  },
+  {
+    "rank": 3,
+    "index": 16937135,
+    "seed": 20263948,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 198.5687045380473,
+    "stages": {
+      "load_cifmol": 5.320864729583263,
+      "get_crop_indices": 11.310329660773277,
+      "load_record_msa": 40.46461544930935,
+      "_sample_msa": 0.4057176411151886,
+      "load_record_templates": 34.86388176679611,
+      "make_batch": 14.518213458359241,
+      "collate": 78.90691980719566
+    }
+  },
+  {
+    "rank": 3,
+    "index": 7882669,
+    "seed": 20263949,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 337.4469047412276,
+    "stages": {
+      "load_cifmol": 2.6829782873392105,
+      "get_crop_indices": 3.669213503599167,
+      "load_record_msa": 131.74912426620722,
+      "_sample_msa": 26.212004013359547,
+      "load_record_templates": 26.32473222911358,
+      "make_batch": 31.24644234776497,
+      "collate": 99.57797639071941
+    }
+  },
+  {
+    "rank": 3,
+    "index": 9111612,
+    "seed": 20263950,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 420.848342590034,
+    "stages": {
+      "load_cifmol": 11.226877570152283,
+      "get_crop_indices": 5.716277286410332,
+      "load_record_msa": 169.09900307655334,
+      "_sample_msa": 25.577864609658718,
+      "load_record_templates": 50.653702579438686,
+      "make_batch": 31.104801222682,
+      "collate": 100.580426864326
+    }
+  },
+  {
+    "rank": 3,
+    "index": 12475725,
+    "seed": 20263951,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 183.54118801653385,
+    "stages": {
+      "load_cifmol": 3.2902974635362625,
+      "get_crop_indices": 10.891297832131386,
+      "load_record_msa": 42.01151616871357,
+      "_sample_msa": 0.2415115013718605,
+      "load_record_templates": 19.36490088701248,
+      "make_batch": 14.80792835354805,
+      "collate": 80.71515616029501
+    }
+  },
+  {
+    "rank": 3,
+    "index": 10233022,
+    "seed": 20263952,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 172.43854142725468,
+    "stages": {
+      "load_cifmol": 2.5740480050444603,
+      "get_crop_indices": 13.338268734514713,
+      "load_record_msa": 35.68589594215155,
+      "_sample_msa": 0.8055586367845535,
+      "load_record_templates": 16.875486820936203,
+      "make_batch": 13.675072230398655,
+      "collate": 77.0958662033081
+    }
+  },
+  {
+    "rank": 3,
+    "index": 23290426,
+    "seed": 20263953,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 128.8556009531021,
+    "stages": {
+      "load_cifmol": 2.286023460328579,
+      "get_crop_indices": 6.178972311317921,
+      "load_record_msa": 22.419942542910576,
+      "_sample_msa": 0.33423304557800293,
+      "load_record_templates": 15.133760869503021,
+      "make_batch": 11.13959588110447,
+      "collate": 62.81988974660635
+    }
+  },
+  {
+    "rank": 3,
+    "index": 10331674,
+    "seed": 20263954,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 125.84950216114521,
+    "stages": {
+      "load_cifmol": 2.4390770122408867,
+      "get_crop_indices": 4.211799241602421,
+      "load_record_msa": 22.5046593695879,
+      "_sample_msa": 0.5457503721117973,
+      "load_record_templates": 16.26489870250225,
+      "make_batch": 12.472943402826786,
+      "collate": 58.546571992337704
+    }
+  },
+  {
+    "rank": 3,
+    "index": 3712194,
+    "seed": 20263955,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 239.10609260201454,
+    "stages": {
+      "load_cifmol": 11.681800708174706,
+      "get_crop_indices": 25.107627734541893,
+      "load_record_msa": 74.37888346612453,
+      "_sample_msa": 1.1274134740233421,
+      "load_record_templates": 10.634703561663628,
+      "make_batch": 14.40667174756527,
+      "collate": 82.03509170562029
+    }
+  },
+  {
+    "rank": 4,
+    "index": 22302287,
+    "seed": 20264924,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 138.55664804577827,
+    "stages": {
+      "load_cifmol": 2.75323074311018,
+      "get_crop_indices": 4.879350773990154,
+      "load_record_msa": 28.0375387519598,
+      "_sample_msa": 1.3794926926493645,
+      "load_record_templates": 18.8171723857522,
+      "make_batch": 17.538689076900482,
+      "collate": 57.47316312044859
+    }
+  },
+  {
+    "rank": 4,
+    "index": 10952920,
+    "seed": 20264925,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 187.1947655454278,
+    "stages": {
+      "load_cifmol": 2.402392216026783,
+      "get_crop_indices": 28.655411675572395,
+      "load_record_msa": 46.21337912976742,
+      "_sample_msa": 1.30538921803236,
+      "load_record_templates": 18.547402694821358,
+      "make_batch": 17.52619445323944,
+      "collate": 62.89060600101948
+    }
+  },
+  {
+    "rank": 4,
+    "index": 5413217,
+    "seed": 20264926,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 313.34859784692526,
+    "stages": {
+      "load_cifmol": 14.150712639093399,
+      "get_crop_indices": 9.560818783938885,
+      "load_record_msa": 151.29452291876078,
+      "_sample_msa": 9.103404358029366,
+      "load_record_templates": 26.6809007152915,
+      "make_batch": 21.732146851718426,
+      "collate": 67.93912034481764
+    }
+  },
+  {
+    "rank": 4,
+    "index": 23830509,
+    "seed": 20264927,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 132.7185481786728,
+    "stages": {
+      "load_cifmol": 2.3339716717600822,
+      "get_crop_indices": 3.313133493065834,
+      "load_record_msa": 19.690758548676968,
+      "_sample_msa": 0.8483147248625755,
+      "load_record_templates": 15.42817521840334,
+      "make_batch": 11.781269684433937,
+      "collate": 69.28322277963161
+    }
+  },
+  {
+    "rank": 4,
+    "index": 11798944,
+    "seed": 20264928,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 146.06622513383627,
+    "stages": {
+      "load_cifmol": 2.657311037182808,
+      "get_crop_indices": 6.090781651437283,
+      "load_record_msa": 28.639494441449642,
+      "_sample_msa": 0.35740993916988373,
+      "load_record_templates": 17.228896729648113,
+      "make_batch": 13.467744924128056,
+      "collate": 67.13883858174086
+    }
+  },
+  {
+    "rank": 4,
+    "index": 16501182,
+    "seed": 20264929,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 170.61387561261654,
+    "stages": {
+      "load_cifmol": 3.162495791912079,
+      "get_crop_indices": 9.34534426778555,
+      "load_record_msa": 34.12431012839079,
+      "_sample_msa": 1.318373717367649,
+      "load_record_templates": 19.3937374278903,
+      "make_batch": 18.41763872653246,
+      "collate": 72.55669310688972
+    }
+  },
+  {
+    "rank": 4,
+    "index": 9165953,
+    "seed": 20264930,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 350.05937330424786,
+    "stages": {
+      "load_cifmol": 20.00220026820898,
+      "get_crop_indices": 14.082814566791058,
+      "load_record_msa": 209.52203683555126,
+      "_sample_msa": 1.0583391413092613,
+      "load_record_templates": 1.176641322672367,
+      "make_batch": 16.15526992827654,
+      "collate": 69.34617925435305
+    }
+  },
+  {
+    "rank": 4,
+    "index": 11257467,
+    "seed": 20264931,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 120.81029824912548,
+    "stages": {
+      "load_cifmol": 2.4381931871175766,
+      "get_crop_indices": 2.657896839082241,
+      "load_record_msa": 24.092040956020355,
+      "_sample_msa": 0.19159354269504547,
+      "load_record_templates": 15.608695335686207,
+      "make_batch": 9.133286774158478,
+      "collate": 59.02407597750425
+    }
+  },
+  {
+    "rank": 4,
+    "index": 17332854,
+    "seed": 20264932,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 159.64750293642282,
+    "stages": {
+      "load_cifmol": 3.321927972137928,
+      "get_crop_indices": 4.861289635300636,
+      "load_record_msa": 36.15098912268877,
+      "_sample_msa": 0.4820004105567932,
+      "load_record_templates": 20.965215750038624,
+      "make_batch": 16.21755864471197,
+      "collate": 65.86463190615177
+    }
+  },
+  {
+    "rank": 4,
+    "index": 7778446,
+    "seed": 20264933,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 340.94104543328285,
+    "stages": {
+      "load_cifmol": 6.792067550122738,
+      "get_crop_indices": 3.447125665843487,
+      "load_record_msa": 165.6319173052907,
+      "_sample_msa": 22.32530154287815,
+      "load_record_templates": 25.84740426391363,
+      "make_batch": 32.32612367719412,
+      "collate": 70.05384750664234
+    }
+  },
+  {
+    "rank": 4,
+    "index": 15922795,
+    "seed": 20264934,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 131.88258279114962,
+    "stages": {
+      "load_cifmol": 2.2582747042179108,
+      "get_crop_indices": 2.5647180154919624,
+      "load_record_msa": 24.368811398744583,
+      "_sample_msa": 0.40231551975011826,
+      "load_record_templates": 14.941545203328133,
+      "make_batch": 10.311798192560673,
+      "collate": 69.60119027644396
+    }
+  },
+  {
+    "rank": 4,
+    "index": 25187528,
+    "seed": 20264935,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 175.6123211234808,
+    "stages": {
+      "load_cifmol": 4.4177221134305,
+      "get_crop_indices": 8.491265587508678,
+      "load_record_msa": 45.10324075818062,
+      "_sample_msa": 1.599128358066082,
+      "load_record_templates": 25.547511875629425,
+      "make_batch": 19.06190998852253,
+      "collate": 60.34880969673395
+    }
+  },
+  {
+    "rank": 4,
+    "index": 25474175,
+    "seed": 20264936,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 160.52695363759995,
+    "stages": {
+      "load_cifmol": 2.373962663114071,
+      "get_crop_indices": 5.373409949243069,
+      "load_record_msa": 28.05062849074602,
+      "_sample_msa": 0.42756181210279465,
+      "load_record_templates": 16.166480258107185,
+      "make_batch": 12.894853949546814,
+      "collate": 81.46258350461721
+    }
+  },
+  {
+    "rank": 4,
+    "index": 14757084,
+    "seed": 20264937,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 125.02539716660976,
+    "stages": {
+      "load_cifmol": 2.69106961786747,
+      "get_crop_indices": 4.584229551255703,
+      "load_record_msa": 20.183918997645378,
+      "_sample_msa": 0.17507001757621765,
+      "load_record_templates": 16.671148128807545,
+      "make_batch": 12.178225442767143,
+      "collate": 58.919032104313374
+    }
+  },
+  {
+    "rank": 4,
+    "index": 8129604,
+    "seed": 20264938,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 226.2321263551712,
+    "stages": {
+      "load_cifmol": 10.23756992071867,
+      "get_crop_indices": 4.472964443266392,
+      "load_record_msa": 56.51289131492376,
+      "_sample_msa": 8.10004211962223,
+      "load_record_templates": 20.028699189424515,
+      "make_batch": 23.587031289935112,
+      "collate": 88.61555252224207
+    }
+  },
+  {
+    "rank": 4,
+    "index": 8172638,
+    "seed": 20264939,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 269.78378742933273,
+    "stages": {
+      "load_cifmol": 20.20094357430935,
+      "get_crop_indices": 13.94323818385601,
+      "load_record_msa": 71.43090199679136,
+      "_sample_msa": 4.254783503711224,
+      "load_record_templates": 59.634122997522354,
+      "make_batch": 17.389288172125816,
+      "collate": 66.11878890544176
+    }
+  },
+  {
+    "rank": 4,
+    "index": 21023266,
+    "seed": 20264940,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 141.0054313018918,
+    "stages": {
+      "load_cifmol": 2.294236794114113,
+      "get_crop_indices": 23.133148439228535,
+      "load_record_msa": 21.09258808195591,
+      "_sample_msa": 0.5993032827973366,
+      "load_record_templates": 15.113122761249542,
+      "make_batch": 11.59264612942934,
+      "collate": 59.03352424502373
+    }
+  },
+  {
+    "rank": 4,
+    "index": 17611425,
+    "seed": 20264941,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 141.22786466032267,
+    "stages": {
+      "load_cifmol": 2.949090674519539,
+      "get_crop_indices": 7.185483351349831,
+      "load_record_msa": 30.230850912630558,
+      "_sample_msa": 0.6596706807613373,
+      "load_record_templates": 19.218764267861843,
+      "make_batch": 15.562881715595722,
+      "collate": 56.43250420689583
+    }
+  },
+  {
+    "rank": 4,
+    "index": 9097844,
+    "seed": 20264942,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 263.21019791066647,
+    "stages": {
+      "load_cifmol": 9.248162619769573,
+      "get_crop_indices": 4.650487564504147,
+      "load_record_msa": 105.98092805594206,
+      "_sample_msa": 9.659534320235252,
+      "load_record_templates": 26.84142906218767,
+      "make_batch": 25.949410162866116,
+      "collate": 68.56907717883587
+    }
+  },
+  {
+    "rank": 4,
+    "index": 3572868,
+    "seed": 20264943,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 461.74000203609467,
+    "stages": {
+      "load_cifmol": 4.390955902636051,
+      "get_crop_indices": 7.64238927513361,
+      "load_record_msa": 217.4024609848857,
+      "_sample_msa": 32.92370866984129,
+      "load_record_templates": 26.223665103316307,
+      "make_batch": 44.88334897905588,
+      "collate": 103.9099795743823
+    }
+  },
+  {
+    "rank": 4,
+    "index": 25877792,
+    "seed": 20264944,
+    "source": "short_protein_monomer",
+    "success": true,
+    "total_ms": 139.49183095246553,
+    "stages": {
+      "load_cifmol": 2.71758995950222,
+      "get_crop_indices": 4.753644578158855,
+      "load_record_msa": 20.892378874123096,
+      "_sample_msa": 0.7092170417308807,
+      "load_record_templates": 14.551429077982903,
+      "make_batch": 10.176308453083038,
+      "collate": 77.05789525061846
+    }
+  },
+  {
+    "rank": 4,
+    "index": 11959447,
+    "seed": 20264945,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 176.84483993798494,
+    "stages": {
+      "load_cifmol": 3.7004882469773293,
+      "get_crop_indices": 11.073741130530834,
+      "load_record_msa": 35.53884569555521,
+      "_sample_msa": 1.582309603691101,
+      "load_record_templates": 24.739529006183147,
+      "make_batch": 19.08127497881651,
+      "collate": 69.78825572878122
+    }
+  },
+  {
+    "rank": 4,
+    "index": 12434105,
+    "seed": 20264946,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 158.4358448162675,
+    "stages": {
+      "load_cifmol": 3.3096913248300552,
+      "get_crop_indices": 5.177410319447517,
+      "load_record_msa": 31.516402028501034,
+      "_sample_msa": 1.2348080053925514,
+      "load_record_templates": 21.359196864068508,
+      "make_batch": 17.60962139815092,
+      "collate": 67.86892097443342
+    }
+  },
+  {
+    "rank": 4,
+    "index": 9156915,
+    "seed": 20264947,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 309.67884324491024,
+    "stages": {
+      "load_cifmol": 6.280441768467426,
+      "get_crop_indices": 7.651531137526035,
+      "load_record_msa": 100.76716914772987,
+      "_sample_msa": 24.313068948686123,
+      "load_record_templates": 34.889282658696175,
+      "make_batch": 36.78994905203581,
+      "collate": 85.17694473266602
+    }
+  },
+  {
+    "rank": 4,
+    "index": 17412203,
+    "seed": 20264948,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 159.99839082360268,
+    "stages": {
+      "load_cifmol": 3.8909045979380608,
+      "get_crop_indices": 4.540066234767437,
+      "load_record_msa": 33.807662315666676,
+      "_sample_msa": 0.6368858739733696,
+      "load_record_templates": 21.818785928189754,
+      "make_batch": 16.11870899796486,
+      "collate": 67.38294195383787
+    }
+  },
+  {
+    "rank": 4,
+    "index": 12716644,
+    "seed": 20264949,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 146.98846824467182,
+    "stages": {
+      "load_cifmol": 3.464486449956894,
+      "get_crop_indices": 4.5883795246481895,
+      "load_record_msa": 28.786000795662403,
+      "_sample_msa": 0.33876020461320877,
+      "load_record_templates": 20.730034448206425,
+      "make_batch": 14.819873496890068,
+      "collate": 64.33560233563185
+    }
+  },
+  {
+    "rank": 4,
+    "index": 6682066,
+    "seed": 20264950,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 199.84169863164425,
+    "stages": {
+      "load_cifmol": 8.111088536679745,
+      "get_crop_indices": 11.369161307811737,
+      "load_record_msa": 40.77782481908798,
+      "_sample_msa": 0.20766817033290863,
+      "load_record_templates": 28.845337219536304,
+      "make_batch": 14.170581474900246,
+      "collate": 75.5543652921915
+    }
+  },
+  {
+    "rank": 4,
+    "index": 18799401,
+    "seed": 20264951,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 135.28658542782068,
+    "stages": {
+      "load_cifmol": 3.14510241150856,
+      "get_crop_indices": 7.02890008687973,
+      "load_record_msa": 21.638978272676468,
+      "_sample_msa": 0.7263282313942909,
+      "load_record_templates": 14.986257068812847,
+      "make_batch": 12.156919576227665,
+      "collate": 63.423577696084976
+    }
+  },
+  {
+    "rank": 4,
+    "index": 4499159,
+    "seed": 20264952,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 285.21483577787876,
+    "stages": {
+      "load_cifmol": 2.405310980975628,
+      "get_crop_indices": 8.916974999010563,
+      "load_record_msa": 129.88529168069363,
+      "_sample_msa": 16.960960812866688,
+      "load_record_templates": 0.9240694344043732,
+      "make_batch": 28.014041483402252,
+      "collate": 87.37399894744158
+    }
+  },
+  {
+    "rank": 4,
+    "index": 11275586,
+    "seed": 20264953,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 122.82039690762758,
+    "stages": {
+      "load_cifmol": 2.475714311003685,
+      "get_crop_indices": 3.0298708006739616,
+      "load_record_msa": 25.09341575205326,
+      "_sample_msa": 0.19877776503562927,
+      "load_record_templates": 16.33794791996479,
+      "make_batch": 11.699613183736801,
+      "collate": 55.91853708028793
+    }
+  },
+  {
+    "rank": 4,
+    "index": 8548706,
+    "seed": 20264954,
+    "source": "pdb",
+    "success": true,
+    "total_ms": 234.91092026233673,
+    "stages": {
+      "load_cifmol": 11.079327203333378,
+      "get_crop_indices": 5.759674124419689,
+      "load_record_msa": 63.54276929050684,
+      "_sample_msa": 8.715464733541012,
+      "load_record_templates": 18.103908747434616,
+      "make_batch": 23.931407369673252,
+      "collate": 90.75785242021084
+    }
+  },
+  {
+    "rank": 4,
+    "index": 24517891,
+    "seed": 20264955,
+    "source": "protein_monomer",
+    "success": true,
+    "total_ms": 176.2564880773425,
+    "stages": {
+      "load_cifmol": 2.393992617726326,
+      "get_crop_indices": 3.224726766347885,
+      "load_record_msa": 45.76912522315979,
+      "_sample_msa": 0.5613686516880989,
+      "load_record_templates": 15.876870602369308,
+      "make_batch": 11.734622530639172,
+      "collate": 80.468675121665
+    }
+  }
+]

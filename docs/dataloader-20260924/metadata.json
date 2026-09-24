@@ -1,0 +1,7 @@
+{
+  "init_ms": 11431.304932571948,
+  "items": 26120438,
+  "arrow_nbytes": 8746562841,
+  "weights_bytes": 208963504,
+  "dataset_class": "<class 'miniworld.data.dataloader.dataloader._LazyArrowCatalog'>"
+}

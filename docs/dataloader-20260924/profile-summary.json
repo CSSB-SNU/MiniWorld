@@ -1,0 +1,16 @@
+{
+  "samples": 128,
+  "successful": 128,
+  "mean_total_ms": 292.4584090287681,
+  "max_total_ms": 1028.0543537810445,
+  "stage_mean_ms": {
+    "load_cifmol": 23.901789012597874,
+    "get_crop_indices": 15.584460175887216,
+    "load_record_msa": 92.04196954669897,
+    "_sample_msa": 7.014890143182129,
+    "load_record_templates": 26.9879062398104,
+    "make_batch": 20.562043340760283,
+    "collate": 88.1235330743948
+  },
+  "units": "CPU wall milliseconds per sample, one worker; not additive to GPU execution latency"
+}

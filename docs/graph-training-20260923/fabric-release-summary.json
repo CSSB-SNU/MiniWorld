@@ -1,0 +1,360 @@
+{
+  "units": "CPU wall ms per microbatch; nested EMA removed from callbacks; not GPU-compute durations",
+  "steady_steps": "3 only; step4 excluded as outlier",
+  "ranks": [
+    {
+      "rank": 0,
+      "ms_per_microbatch": {
+        "data_next": 9.988449615775608,
+        "batch_to": 13.091281696688384,
+        "forward_loss_item": 220.35380051238462,
+        "backward": 54.495666205184534,
+        "autograd_release": 0.2394562616245821,
+        "optimizer": 3.498449004837312,
+        "ema": 0.47516869381070137,
+        "callbacks_excluding_ema": 0.12629112461581826,
+        "unattributed": 15.237135623465292,
+        "wall": 317.50569873838685
+      },
+      "steps": [
+        {
+          "data_next": 8.691772585734725,
+          "batch_to": 12.976518250070512,
+          "forward_loss_item": 62.663004850037396,
+          "backward": 39.127650030422956,
+          "autograd_release": 0.22426445502787828,
+          "optimizer": 6.306599912932143,
+          "ema": 0.45651281834580004,
+          "callbacks_excluding_ema": 0.12692459858953953,
+          "unattributed": 15.615965443430468,
+          "wall": 146.18921294459142
+        },
+        {
+          "data_next": 11.28512664581649,
+          "batch_to": 13.206045143306255,
+          "forward_loss_item": 378.04459617473185,
+          "backward": 69.86368237994611,
+          "autograd_release": 0.25464806822128594,
+          "optimizer": 0.690298096742481,
+          "ema": 0.4938245692756027,
+          "callbacks_excluding_ema": 0.125657650642097,
+          "unattributed": 14.858305803500116,
+          "wall": 488.8221845321823
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "ms_per_microbatch": {
+        "data_next": 11.605792577029206,
+        "batch_to": 14.33699973858893,
+        "forward_loss_item": 56.79413910547737,
+        "backward": 40.91049553244375,
+        "autograd_release": 0.23861958470661193,
+        "optimizer": 174.4858197926078,
+        "ema": 0.22204882407095283,
+        "callbacks_excluding_ema": 0.13107998529449105,
+        "unattributed": 18.782701590680517,
+        "wall": 317.5076967308996
+      },
+      "steps": [
+        {
+          "data_next": 10.721503756940365,
+          "batch_to": 13.403468357864767,
+          "forward_loss_item": 59.94331301189959,
+          "backward": 40.339018538361415,
+          "autograd_release": 0.23629114730283618,
+          "optimizer": 3.634649998275563,
+          "ema": 0.2148222120013088,
+          "callbacks_excluding_ema": 0.1247095933649689,
+          "unattributed": 17.569273186381906,
+          "wall": 146.18704980239272
+        },
+        {
+          "data_next": 12.490081397118047,
+          "batch_to": 15.270531119313091,
+          "forward_loss_item": 53.64496519905515,
+          "backward": 41.48197252652608,
+          "autograd_release": 0.24094802211038768,
+          "optimizer": 345.33698958694004,
+          "ema": 0.22927543614059687,
+          "callbacks_excluding_ema": 0.1374503772240132,
+          "unattributed": 19.99612999497913,
+          "wall": 488.8283436594065
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "ms_per_microbatch": {
+        "data_next": 9.535050150589086,
+        "batch_to": 12.516688118921593,
+        "forward_loss_item": 54.915196931688115,
+        "backward": 37.163290282478556,
+        "autograd_release": 0.23377603793051094,
+        "optimizer": 187.49982175359037,
+        "ema": 0.22945558885112405,
+        "callbacks_excluding_ema": 0.1267013285541907,
+        "unattributed": 15.287837086361833,
+        "wall": 317.5078172789654
+      },
+      "steps": [
+        {
+          "data_next": 9.4548863125965,
+          "batch_to": 12.4970929173287,
+          "forward_loss_item": 60.010853165294975,
+          "backward": 37.23875479772687,
+          "autograd_release": 0.23544573923572898,
+          "optimizer": 10.976304765790701,
+          "ema": 0.22679971880279481,
+          "callbacks_excluding_ema": 0.12519993470050395,
+          "unattributed": 15.428396640345454,
+          "wall": 146.19373399182223
+        },
+        {
+          "data_next": 9.615213988581672,
+          "batch_to": 12.536283320514485,
+          "forward_loss_item": 49.819540698081255,
+          "backward": 37.08782576723024,
+          "autograd_release": 0.2321063366252929,
+          "optimizer": 364.02333874139003,
+          "ema": 0.23211145889945328,
+          "callbacks_excluding_ema": 0.12820272240787745,
+          "unattributed": 15.147277532378212,
+          "wall": 488.8219005661085
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "ms_per_microbatch": {
+        "data_next": 10.462233884027228,
+        "batch_to": 14.399923500604928,
+        "forward_loss_item": 58.10525127162691,
+        "backward": 42.448326843441464,
+        "autograd_release": 0.228763950872235,
+        "optimizer": 172.93614703521598,
+        "ema": 0.22049457766115665,
+        "callbacks_excluding_ema": 0.1336458371952176,
+        "unattributed": 18.572615837911144,
+        "wall": 317.50740273855627
+      },
+      "steps": [
+        {
+          "data_next": 9.05091452295892,
+          "batch_to": 13.764864561380818,
+          "forward_loss_item": 61.660585284698755,
+          "backward": 38.527423079358414,
+          "autograd_release": 0.21931843366473913,
+          "optimizer": 4.391255264636129,
+          "ema": 0.21197364549152553,
+          "callbacks_excluding_ema": 0.12880403664894402,
+          "unattributed": 18.231819005450234,
+          "wall": 146.18695783428848
+        },
+        {
+          "data_next": 11.873553245095536,
+          "batch_to": 15.034982439829037,
+          "forward_loss_item": 54.54991725855507,
+          "backward": 46.369230607524514,
+          "autograd_release": 0.23820946807973087,
+          "optimizer": 341.48103880579583,
+          "ema": 0.22901550983078778,
+          "callbacks_excluding_ema": 0.1384876377414912,
+          "unattributed": 18.913412670372054,
+          "wall": 488.82784764282405
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "ms_per_microbatch": {
+        "data_next": 9.14413966529537,
+        "batch_to": 13.535401420085691,
+        "forward_loss_item": 55.60413558850996,
+        "backward": 41.15371438092552,
+        "autograd_release": 0.31982254586182535,
+        "optimizer": 179.67440609936602,
+        "ema": 0.21701317746192217,
+        "callbacks_excluding_ema": 0.12623501243069768,
+        "unattributed": 17.734220949932933,
+        "wall": 317.50908883986995
+      },
+      "steps": [
+        {
+          "data_next": 8.897542487829924,
+          "batch_to": 13.619350909721106,
+          "forward_loss_item": 59.803699725307524,
+          "backward": 38.77425650716759,
+          "autograd_release": 0.2952456125058234,
+          "optimizer": 6.835218664491549,
+          "ema": 0.21036021644249558,
+          "callbacks_excluding_ema": 0.12357509694993496,
+          "unattributed": 17.63137977104634,
+          "wall": 146.1906289914623
+        },
+        {
+          "data_next": 9.390736842760816,
+          "batch_to": 13.451451930450276,
+          "forward_loss_item": 51.4045714517124,
+          "backward": 43.53317225468345,
+          "autograd_release": 0.3443994792178273,
+          "optimizer": 352.5135935342405,
+          "ema": 0.22366613848134875,
+          "callbacks_excluding_ema": 0.1288949279114604,
+          "unattributed": 17.837062128819525,
+          "wall": 488.8275486882776
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "ms_per_microbatch": {
+        "data_next": 8.551309467293322,
+        "batch_to": 14.135180361336097,
+        "forward_loss_item": 59.98318588535767,
+        "backward": 40.05717688414734,
+        "autograd_release": 0.23383012739941478,
+        "optimizer": 175.71402101020794,
+        "ema": 0.2213551924796775,
+        "callbacks_excluding_ema": 0.13211053737904876,
+        "unattributed": 18.4790282510221,
+        "wall": 317.5071977166226
+      },
+      "steps": [
+        {
+          "data_next": 8.462215395411476,
+          "batch_to": 13.787046482320875,
+          "forward_loss_item": 64.76001234841533,
+          "backward": 39.97919929679483,
+          "autograd_release": 0.22467435337603092,
+          "optimizer": 0.6018326384946704,
+          "ema": 0.21200216724537313,
+          "callbacks_excluding_ema": 0.1229688641615212,
+          "unattributed": 18.03682604804635,
+          "wall": 146.18677759426646
+        },
+        {
+          "data_next": 8.640403539175168,
+          "batch_to": 14.48331424035132,
+          "forward_loss_item": 55.20635942230001,
+          "backward": 40.135154471499845,
+          "autograd_release": 0.24298590142279863,
+          "optimizer": 350.8262093819212,
+          "ema": 0.23070821771398187,
+          "callbacks_excluding_ema": 0.14125221059657633,
+          "unattributed": 18.92123045399785,
+          "wall": 488.82761783897877
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "ms_per_microbatch": {
+        "data_next": 8.762010678765364,
+        "batch_to": 12.781386874848977,
+        "forward_loss_item": 55.39886989572551,
+        "backward": 40.91179171518888,
+        "autograd_release": 0.22677214292343706,
+        "optimizer": 183.78953837964218,
+        "ema": 0.23100625548977405,
+        "callbacks_excluding_ema": 0.13118515198584646,
+        "unattributed": 15.27506354614161,
+        "wall": 317.5076246407116
+      },
+      "steps": [
+        {
+          "data_next": 8.333577250596136,
+          "batch_to": 12.969336559763178,
+          "forward_loss_item": 61.54886103468016,
+          "backward": 39.50649360194802,
+          "autograd_release": 0.21679222118109465,
+          "optimizer": 7.840423728339374,
+          "ema": 0.22557380725629628,
+          "callbacks_excluding_ema": 0.1313728280365467,
+          "unattributed": 15.414910216350108,
+          "wall": 146.18734124815091
+        },
+        {
+          "data_next": 9.190444106934592,
+          "batch_to": 12.593437189934775,
+          "forward_loss_item": 49.248878756770864,
+          "backward": 42.317089828429744,
+          "autograd_release": 0.23675206466577947,
+          "optimizer": 359.738653030945,
+          "ema": 0.23643870372325182,
+          "callbacks_excluding_ema": 0.1309974759351462,
+          "unattributed": 15.13521687593311,
+          "wall": 488.82790803327225
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "ms_per_microbatch": {
+        "data_next": 10.355750244343653,
+        "batch_to": 13.446789351291955,
+        "forward_loss_item": 55.32768866396509,
+        "backward": 42.353588782134466,
+        "autograd_release": 0.2323719672858715,
+        "optimizer": 177.4819705315167,
+        "ema": 0.21759675291832536,
+        "callbacks_excluding_ema": 0.133721754536964,
+        "unattributed": 17.957940144697204,
+        "wall": 317.50741819269024
+      },
+      "steps": [
+        {
+          "data_next": 9.833595366217196,
+          "batch_to": 13.145332282874733,
+          "forward_loss_item": 60.73043783544563,
+          "backward": 44.080653809942305,
+          "autograd_release": 0.2159193390980363,
+          "optimizer": 0.8508307801093906,
+          "ema": 0.2106559695675969,
+          "callbacks_excluding_ema": 0.13197711086831987,
+          "unattributed": 16.988280462101102,
+          "wall": 146.1876829562243
+        },
+        {
+          "data_next": 10.87790512247011,
+          "batch_to": 13.748246419709176,
+          "forward_loss_item": 49.924939492484555,
+          "backward": 40.62652375432663,
+          "autograd_release": 0.24882459547370672,
+          "optimizer": 354.113110282924,
+          "ema": 0.22453753626905382,
+          "callbacks_excluding_ema": 0.13546639820560813,
+          "unattributed": 18.927599827293307,
+          "wall": 488.82715342915617
+        }
+      ]
+    }
+  ],
+  "excluded_step": 4,
+  "exclusion_reason": "rank0 micro111 forward 10491.44ms plus backward1088.18ms; input-dependent compilation/runtime outlier propagated to all other ranks as optimizer wait. This is not steady compute throughput.",
+  "all_steps_3_4_mean_including_outlier": {
+    "data_next": 9.800592035389855,
+    "batch_to": 13.530456382795819,
+    "forward_loss_item": 77.0602834818419,
+    "backward": 42.436756328243064,
+    "autograd_release": 0.24417657732556108,
+    "optimizer": 156.88502170087304,
+    "ema": 0.25426738284295425,
+    "callbacks_excluding_ema": 0.13012134149903432,
+    "unattributed": 17.16581787877658,
+    "wall": 317.5074931095878
+  },
+  "mean": {
+    "data_next": 9.180750959785655,
+    "batch_to": 13.270376290165586,
+    "forward_loss_item": 61.39009590697242,
+    "backward": 39.6966812077153,
+    "autograd_release": 0.23349391267402098,
+    "optimizer": 5.17963946913369,
+    "ema": 0.2460875693941489,
+    "callbacks_excluding_ema": 0.1269415079150349,
+    "unattributed": 16.864606346643995,
+    "wall": 146.18867317039985
+  }
+}

@@ -1,0 +1,139 @@
+{
+  "context": "Mixed empty/nonempty template batches, 8 GPUs, 32 accumulated backwards; same RNG replay. Before Adam.",
+  "graph_top": [
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+      "relative_l2": 0.004342793487012386,
+      "reference_norm": 1.7405589005647926e-06,
+      "difference_norm": 7.55888773795732e-09,
+      "max_abs": 1.7590338075024192e-09,
+      "reference_max": 3.961813774822076e-07
+    },
+    {
+      "name": "temp_embedder.proj_aatype_j.weight",
+      "relative_l2": 0.00045836501521989703,
+      "reference_norm": 0.0018573071574792266,
+      "difference_norm": 8.513246143593278e-07,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.00024127960205078125
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_out.weight",
+      "relative_l2": 0.0004275338433217257,
+      "reference_norm": 0.0024157450534403324,
+      "difference_norm": 1.0328127473258064e-06,
+      "max_abs": 2.384185791015625e-07,
+      "reference_max": 0.00018024444580078125
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_gate.weight",
+      "relative_l2": 0.000407842657295987,
+      "reference_norm": 0.0015656452160328627,
+      "difference_norm": 6.385369033523602e-07,
+      "max_abs": 2.384185791015625e-07,
+      "reference_max": 0.000141143798828125
+    },
+    {
+      "name": "temp_embedder.proj_dgram.weight",
+      "relative_l2": 0.0003994088328909129,
+      "reference_norm": 0.0017610583454370499,
+      "difference_norm": 7.033822839730419e-07,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.000202178955078125
+    },
+    {
+      "name": "temp_embedder.proj_aatype_i.weight",
+      "relative_l2": 0.00038508401485159993,
+      "reference_norm": 0.0017681937897577882,
+      "difference_norm": 6.809031560806034e-07,
+      "max_abs": 2.384185791015625e-07,
+      "reference_max": 0.00023746490478515625
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_right.weight",
+      "relative_l2": 0.00038230145582929254,
+      "reference_norm": 0.001762850908562541,
+      "difference_norm": 6.739404625477619e-07,
+      "max_abs": 2.384185791015625e-07,
+      "reference_max": 0.00016117095947265625
+    },
+    {
+      "name": "temp_embedder.proj_query.weight",
+      "relative_l2": 0.00034484409843571484,
+      "reference_norm": 0.006536200176924467,
+      "difference_norm": 2.2539700239576632e-06,
+      "max_abs": 9.5367431640625e-07,
+      "reference_max": 0.0004825592041015625
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_left.weight",
+      "relative_l2": 0.0003337727684993297,
+      "reference_norm": 0.0026068768929690123,
+      "difference_norm": 8.701045430825616e-07,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.000347137451171875
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.expand_a.weight",
+      "relative_l2": 0.00032532165641896427,
+      "reference_norm": 0.0041391560807824135,
+      "difference_norm": 1.3465571555570932e-06,
+      "max_abs": 4.76837158203125e-07,
+      "reference_max": 0.00037384033203125
+    }
+  ],
+  "ordinary_repeat_top": [
+    {
+      "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+      "relative_l2": 0.017020341008901596,
+      "max_abs": 6.6144281163360574e-09
+    },
+    {
+      "name": "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.bias",
+      "relative_l2": 0.0020311076659709215,
+      "max_abs": 1.4572094642062439e-09
+    },
+    {
+      "name": "temp_embedder.proj_pb_mask.weight",
+      "relative_l2": 0.001607835409231484,
+      "max_abs": 3.814697265625e-06
+    },
+    {
+      "name": "temp_embedder.proj_dgram.weight",
+      "relative_l2": 0.00116833858191967,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.0009933464461937547,
+      "max_abs": 5.960464477539062e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.tri_multi.to_right_gate.weight",
+      "relative_l2": 0.0009434709791094065,
+      "max_abs": 4.76837158203125e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.1.tri_multi.to_left_gate.weight",
+      "relative_l2": 0.000918227422516793,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.proj_aatype_i.weight",
+      "relative_l2": 0.0009140453767031431,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.proj_aatype_j.weight",
+      "relative_l2": 0.000863059249240905,
+      "max_abs": 9.5367431640625e-07
+    },
+    {
+      "name": "temp_embedder.template_pairformer.blocks.0.transition_pair.expand_b.weight",
+      "relative_l2": 0.000795877305790782,
+      "max_abs": 9.5367431640625e-07
+    }
+  ],
+  "loss_max_difference": 0.0,
+  "validation_policy": "Per-parameter relative L2 < 1e-3, or max absolute difference <= 1e-8 only when reference max <= 1e-6. No general relative tolerance relaxation."
+}

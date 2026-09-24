@@ -1,0 +1,9 @@
+{
+  "epoch": 472,
+  "optimizer_updates": 100,
+  "microbatches_per_rank": 3200,
+  "ms_per_microbatch": 107.7721875,
+  "previous_ms_per_microbatch": 164.21875,
+  "saved_ms_per_microbatch": 56.4465625,
+  "speedup": 1.523758158847801
+}

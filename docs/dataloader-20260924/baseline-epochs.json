@@ -1,0 +1,32 @@
+{
+  "epochs": [
+    {
+      "epoch": 472,
+      "ms_per_microbatch": 107.7721875
+    },
+    {
+      "epoch": 473,
+      "ms_per_microbatch": 116.7684375
+    },
+    {
+      "epoch": 474,
+      "ms_per_microbatch": 116.4603125
+    },
+    {
+      "epoch": 475,
+      "ms_per_microbatch": 108.110625
+    },
+    {
+      "epoch": 476,
+      "ms_per_microbatch": 112.6003125
+    },
+    {
+      "epoch": 477,
+      "ms_per_microbatch": 108.0896875
+    }
+  ],
+  "mean_ms_per_microbatch": 111.63359375,
+  "workers": 4,
+  "prefetch_factor": 8,
+  "job": 16917
+}

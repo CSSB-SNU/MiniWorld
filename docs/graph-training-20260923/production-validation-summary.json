@@ -1,0 +1,6 @@
+{
+  "cases": 16,
+  "max_gradient_relative_l2": 1.013959899864858e-05,
+  "losses_identical": true,
+  "job": 16917
+}

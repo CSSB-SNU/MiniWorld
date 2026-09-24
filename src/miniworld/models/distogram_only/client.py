@@ -71,7 +71,7 @@ class Client(BaseClient):
         compile: bool = False
         # Trainer dispatch (was MW_FORCE_CUDAGRAPH / MW_FORCE_FABRIC): "auto" picks
         # CUDA-graph for fixed recycle (n_recycle_max==1) else Fabric; force either.
-        force_trainer: Literal["auto", "cudagraph", "fabric"] = "auto"
+        force_trainer: Literal["auto", "cudagraph", "random_cudagraph", "fabric"] = "auto"
         # torch.compile mode for the Fabric path (was MW_COMPILE_MODE); None = default.
         compile_mode: str | None = None
         # DDP find_unused_parameters (was MW_DDP_FIND_UNUSED); recycle skips some params
