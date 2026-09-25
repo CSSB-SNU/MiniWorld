@@ -50,6 +50,14 @@ from miniworld.training import trainable_parameters
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
 torch.set_float32_matmul_precision("medium")
+# AdaLN training forward. For the token width the engine defaults to its fused Triton GEMM + gate (chosen on an A6000);
+# on H100 in fp32 that Triton TF32 GEMM runs at ~54 TF/s, 5x its bf16 speed. MINIWORLD_ADALN_FWD=cublas routes it to
+# the cuBLAS GEMM + epilogue instead: v1 token DiT fwd + bwd -8.4 % a block at L384, -6.6 % at L768 (A = 48, fp32,
+# matmul "medium"), and closer to an fp32 reference (output 1.9e-3 vs 2.8e-3). Unset = the engine's own choice.
+_ADALN_FWD = os.environ.get("MINIWORLD_ADALN_FWD", "")
+if _ADALN_FWD:
+    from miniworld_engine.kernels.adaln.triton import training as _adaln_training
+    _adaln_training.set_forward_mode(_ADALN_FWD)
 torch.autograd.set_detect_anomaly(False)
 
 
