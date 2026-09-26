@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2800" height="2338" viewBox="0 0 2800 2338" role="img" aria-labelledby="title desc"><title id="title">Token DiT attention  TRAINING BACKWARD  |  HBM 입력 → 커널 → HBM 출력</title><desc id="desc">L768 · A=48 · bf16 코어 · H100 실측 bwd 1,507 µs (dQ+dbias 951 + dK/dV 556) · 엔진 bf16 bwd ~3,977 µs, Anthropic은 backward 없음</desc><defs><marker id="read" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#2879ad"/></marker><marker id="write" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#b36b19"/></marker></defs><rect width="2800" height="2338" fill="#f8fafc"/>
+<rect x="0" y="0" width="2800" height="218" fill="#133343"/>
+<text x="40" y="60" font-family="Noto Sans CJK KR, sans-serif" font-size="36" fill="#ffffff" font-weight="700">Token DiT attention  TRAINING BACKWARD  |  HBM 입력 → 커널 → HBM 출력</text>
+<text x="40" y="103" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#cce0e7">L768 · A=48 · bf16 코어 · H100 실측 bwd 1,507 µs (dQ+dbias 951 + dK/dV 556) · 엔진 bf16 bwd ~3,977 µs, Anthropic은 backward 없음</text>
+<text x="40" y="145" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">세 가지 축약의 축이 다르다: dK·dV는 query 축, dQ는 key 축, dbias는 샘플 축 (bias를 48 샘플이 공유).</text>
+<text x="40" y="181" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">dbias를 샘플마다 L2 atomic으로 더하면 ~680 µs. dQ 커널의 워프그룹 3개를 서로 다른 샘플로 두고 smem에서 먼저 합쳐 atomic을 1/3로 줄였다.</text>
+<text x="40" y="217" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">저장은 bf16 q/k/v · bias, fp32 O · LSE만. 점수 [48,16,768,768]는 fwd·bwd 어디에서도 HBM에 나가지 않는다 (재계산).</text>
+<text x="40" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#2879ad" font-weight="700">HBM READ · 어디서 온 무엇을 읽는가</text>
+<text x="690" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#12856e" font-weight="700">KERNEL · 계산과 그 PyTorch 대응</text>
+<text x="2160" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#b36b19" font-weight="700">HBM WRITE · 무엇을 어디로 넘기는가</text>
+<text x="40" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#2879ad">파랑 화살표: 읽기</text>
+<text x="690" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#52707e">왼쪽: 설명·수식 / 오른쪽: 같은 일을 하는 PyTorch 문장</text>
+<text x="2160" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#b36b19">주황: 쓰기</text>
+<text x="40" y="382" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">saved tensors · forward가 남긴 것 (체크포인트 재계산 때만)</text>
+<rect x="40" y="400" width="570" height="268" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="400" width="1390" height="268" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="400" width="600" height="268" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 400 V668" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">q_s, k_b, v_b: BF16 각 56.6 MB</text>
+<text x="58" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">bb: BF16 18.9 MB</text>
+<text x="58" y="535" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">O: FP32 113 MB (gate 입력과 공유)</text>
+<text x="58" y="566" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">LSE: FP32 2.4 MB</text>
+<text x="708" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">P는 저장하지 않는다 — [48,16,768,768] bf16이면 906 MB</text>
+<text x="708" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">LSE가 있으면 P = 2^(S − LSE)로 정규화까지 끝난 값을 바로</text>
+<text x="708" y="535" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  재계산한다</text>
+<text x="708" y="566" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">fp32 q/k/v는 남지 않는다 (RMSNorm·Linear backward는 입력만</text>
+<text x="708" y="597" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  저장)</text>
+<text x="708" y="628" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">no_grad에서는 아무것도 남지 않는다 (실측 0.0 MB)</text>
+<text x="1432" y="473" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">ctx.save_for_backward(qs, kb, vb, bb, km, o, lse)</text>
+<text x="1432" y="501" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37"># P, dP, dS: 저장 안 함 -&gt; 커널 안에서 재계산</text>
+<text x="2178" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">L768 fwd+bwd peak 6.59 GB</text>
+<text x="2178" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">(엔진 bf16 코어 8.50 GB — 샘플별 dbias 1.8 GB)</text>
+<path d="M 612 534.0 L 678 534.0" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 534.0 L 2148 534.0" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="712" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">prep_do (Triton) · 미측정</text>
+<rect x="40" y="730" width="570" height="175" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="730" width="1390" height="175" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="730" width="600" height="175" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 730 V905" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="765" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="765" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="765" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="765" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="803" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dO: FP32 [36,864, 768] 113 MB</text>
+<text x="58" y="834" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">O: FP32 113 MB</text>
+<text x="708" y="803" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">한 패스로 dO를 bf16으로 바꾸고, head별 행 합 D를 같이 낸다</text>
+<text x="708" y="834" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="865" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">D[a,h,i] = Σ_d dO[a,i,h,d] · O[a,i,h,d]</text>
+<text x="1432" y="803" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dob = do.bfloat16()</text>
+<text x="1432" y="831" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">D = (do * o).view(A,L,16,48).sum(-1).transpose(1,2)</text>
+<text x="2178" y="803" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dO_b: BF16 56.6 MB</text>
+<text x="2178" y="834" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">D: FP32 [48,16,768] 2.4 MB</text>
+<text x="2178" y="865" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ attn_dqb, attn_dkv</text>
+<path d="M 612 817.5 L 678 817.5" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 817.5 L 2148 817.5" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="949" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">attn_dqb (CUDA, attn_dqb.cu) · 951 µs · dQ + dbias</text>
+<rect x="40" y="967" width="570" height="516" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="967" width="1390" height="516" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="967" width="600" height="516" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 967 V1483" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="1002" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="1002" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="1002" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="1002" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="1040" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">q_s, dO_b: CTA당 샘플 3개 × 64행</text>
+<text x="58" y="1071" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">k_b, v_b: 샘플 3개분 key 블록 스트림</text>
+<text x="58" y="1102" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">bb: 64 query × 64 key 타일 (3 샘플이 공유)</text>
+<text x="58" y="1133" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">LSE, D</text>
+<text x="708" y="1040" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">CTA = (샘플 3개, head, query 64행) · 워프그룹 w = 샘플</text>
+<text x="708" y="1071" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  a0+w</text>
+<text x="708" y="1102" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">각 워프그룹이 자기 샘플의 K/V로 key 블록을 돌고 bias 타일은</text>
+<text x="708" y="1133" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  셋이 공유</text>
+<text x="708" y="1164" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">key 블록마다: S 재계산(bias−LSE seed) → P = 2^S → dP =</text>
+<text x="708" y="1195" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  dO Vᵀ → dS</text>
+<text x="708" y="1226" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dQ += dS K (레지스터 누산)</text>
+<text x="708" y="1257" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dS(fp32)를 smem 교환 버퍼에 → named barrier → 담당</text>
+<text x="708" y="1288" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  워프그룹이 3개를 합쳐 L2 red</text>
+<text x="708" y="1319" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ atomic 수 1/3 (샘플별 atomic 1,262 µs 경로보다 bwd 합</text>
+<text x="708" y="1350" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  −200 µs)</text>
+<text x="708" y="1381" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="1412" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">P = 2^(S − LSE),  dS = P ⊙ (dP − D)</text>
+<text x="708" y="1443" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dQ = dS K / √48,   dbias += Σ_{3 샘플} dS</text>
+<text x="1432" y="1040" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">p  = torch.exp2(s2 - lse[..., None])</text>
+<text x="1432" y="1068" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dp = do @ v.transpose(-1,-2)</text>
+<text x="1432" y="1096" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">ds = p * (dp - D[..., None])</text>
+<text x="1432" y="1124" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dq = ds @ k / sqrt(48)</text>
+<text x="1432" y="1152" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dbias = ds.sum(0)          # 샘플 축 축약</text>
+<text x="2178" y="1040" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dQ: FP32 [36,864, 768] 113 MB</text>
+<text x="2178" y="1071" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dbias: FP32 [16,768,768] 37.7 MB</text>
+<text x="2178" y="1102" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  (red.global.add)</text>
+<text x="2178" y="1133" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ RMSNorm backward / hoist backward</text>
+<path d="M 612 1225.0 L 678 1225.0" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 1225.0 L 2148 1225.0" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="1527" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">attn_dkv (CUDA, attn_dkv.cu, DBIAS=0) · 556 µs · pattern floor 431 µs → 77 %</text>
+<rect x="40" y="1545" width="570" height="361" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="1545" width="1390" height="361" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="1545" width="600" height="361" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 1545 V1906" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="1580" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="1580" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="1580" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="1580" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="1618" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">k_b, v_b: 128 key → 레지스터에 한 번</text>
+<text x="58" y="1649" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">q_s, dO_b: query 블록 64개씩 스트림</text>
+<text x="58" y="1680" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">bb: [64 query × 64 key] × 2 워프그룹</text>
+<text x="58" y="1711" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">LSE, D</text>
+<text x="708" y="1618" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">CTA = (샘플, head, key 128개) · 워프그룹마다 key 64개가 M</text>
+<text x="708" y="1649" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  차원</text>
+<text x="708" y="1680" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">Sᵀ = K Qᵀ를 key가 행인 채로 계산 — P·dS가 그대로 dV·dK의 A</text>
+<text x="708" y="1711" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  피연산자</text>
+<text x="708" y="1742" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">bias 타일은 ldmatrix.trans로 전치해 Sᵀ 누산기에 seed</text>
+<text x="708" y="1773" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">슬롯은 1 KB 정렬 (128B swizzle 요구 — 어긋나면 값이 틀린다)</text>
+<text x="708" y="1804" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="1835" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">Pᵀ = 2^(Sᵀ − LSE),  dSᵀ = Pᵀ ⊙ (dPᵀ − D)</text>
+<text x="708" y="1866" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dV = Pᵀ dO,   dK = dSᵀ Q / √48</text>
+<text x="1432" y="1618" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dv = p.transpose(-1,-2) @ do</text>
+<text x="1432" y="1646" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dk = ds.transpose(-1,-2) @ q / sqrt(48)</text>
+<text x="2178" y="1618" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dK, dV: FP32 [36,864, 768] 각 113 MB</text>
+<text x="2178" y="1649" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ RMSNorm(k) backward, to_value backward</text>
+<path d="M 612 1725.5 L 678 1725.5" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 1725.5 L 2148 1725.5" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="1950" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">hoist backward · 한 스텝에 한 번 · GEMM 2 + LN backward 1</text>
+<rect x="40" y="1968" width="570" height="268" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="1968" width="1390" height="268" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="1968" width="600" height="268" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 1968 V2236" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="2003" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="2003" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="2003" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="2003" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="2041" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dbias × 24블록 → [384, 589,824] FP32 906 MB</text>
+<text x="58" y="2072" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  (cat)</text>
+<text x="58" y="2103" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">pair 302 MB</text>
+<text x="58" y="2134" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">γ_b, W_b</text>
+<text x="708" y="2041" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">24블록의 dbias를 한 번에 모아 GEMM 두 개로 끝낸다</text>
+<text x="708" y="2072" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">γ를 weight에 접었으므로 product rule로 풀어낸다</text>
+<text x="708" y="2103" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="2134" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dLN0 = gᵀ Wf,   dWf = g · LN0</text>
+<text x="708" y="2165" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dW_b = dWf_b ⊙ γ_b,   dγ_b = Σ_h dWf_b ⊙ W_b</text>
+<text x="708" y="2196" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dpair = LN0_bwd(dLN0)</text>
+<text x="1432" y="2041" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">g    = cat(dbias_list, 0)       # [384, L*L]</text>
+<text x="1432" y="2069" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dln0 = g.t() @ wf</text>
+<text x="1432" y="2097" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dwf  = g @ ln0</text>
+<text x="1432" y="2125" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dW_b     = dwf_b * gamma_b</text>
+<text x="1432" y="2153" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">dgamma_b = (dwf_b * W_b).sum(0)</text>
+<text x="2178" y="2041" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dpair: FP32 302 MB</text>
+<text x="2178" y="2072" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">dγ_b, dW_b × 24</text>
+<path d="M 612 2102.0 L 678 2102.0" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 2102.0 L 2148 2102.0" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+</svg>

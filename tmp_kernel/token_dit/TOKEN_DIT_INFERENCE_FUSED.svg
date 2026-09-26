@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2800" height="2333" viewBox="0 0 2800 2333" role="img" aria-labelledby="title desc"><title id="title">Token DiT  INFERENCE (fused v6)  |  한 블록 · HBM 입력 → 커널 → HBM 출력</title><desc id="desc">L768 · S=5 샘플 · bf16 · 블록 147.8 µs (엔진 1,673.6 / Anthropic 조합 301.9 / Anthropic+hoist 232.0) · 24블록 = 샘플링 한 스텝</desc><defs><marker id="read" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#2879ad"/></marker><marker id="write" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#b36b19"/></marker></defs><rect width="2800" height="2333" fill="#f8fafc"/>
+<rect x="0" y="0" width="2800" height="218" fill="#133343"/>
+<text x="40" y="60" font-family="Noto Sans CJK KR, sans-serif" font-size="36" fill="#ffffff" font-weight="700">Token DiT  INFERENCE (fused v6)  |  한 블록 · HBM 입력 → 커널 → HBM 출력</text>
+<text x="40" y="103" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#cce0e7">L768 · S=5 샘플 · bf16 · 블록 147.8 µs (엔진 1,673.6 / Anthropic 조합 301.9 / Anthropic+hoist 232.0) · 24블록 = 샘플링 한 스텝</text>
+<text x="40" y="145" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">블록당 커널 6개: GEMM 4 + 어텐션 코어 1 + row 패스 2(잔차·gate·다음 AdaLN 융합). 모두 PDL로 이어져 앞 커널 꼬리와 겹친다.</text>
+<text x="40" y="181" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">pair bias와 conditioning은 샘플·블록과 무관한 부분을 스텝마다 한 번만 계산한다 (hoist 74.8 µs / 샘플).</text>
+<text x="40" y="217" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">커널별 시간은 단독 do_bench(L2 비움) — 한 스텝 안에서는 L2 재사용으로 더 짧다 (코어 45.6 → 40.8 µs).</text>
+<text x="40" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#2879ad" font-weight="700">HBM READ · 어디서 온 무엇을 읽는가</text>
+<text x="690" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#12856e" font-weight="700">KERNEL · 계산과 그 PyTorch 대응</text>
+<text x="2160" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#b36b19" font-weight="700">HBM WRITE · 무엇을 어디로 넘기는가</text>
+<text x="40" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#2879ad">파랑 화살표: 읽기</text>
+<text x="690" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#52707e">왼쪽: 설명·수식 / 오른쪽: 같은 일을 하는 PyTorch 문장</text>
+<text x="2160" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#b36b19">주황: 쓰기</text>
+<text x="40" y="382" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">스텝마다 한 번 · pair-bias hoist + conditioning</text>
+<rect x="40" y="400" width="570" height="330" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="400" width="1390" height="330" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="400" width="600" height="330" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 400 V730" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">pair: [768,768,128]</text>
+<text x="58" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">cond: [768,384] (샘플 공통)</text>
+<text x="58" y="535" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">24블록의 γ_b⊙W_b, conditioning weight</text>
+<text x="708" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">pair bias: 24블록 전부를 GEMM 하나로, head-major bf16,</text>
+<text x="708" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  log2(e)까지 접어서</text>
+<text x="708" y="535" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">conditioning: 샘플 5개가 같은 cond를 쓰므로 행 L개만 계산해</text>
+<text x="708" y="566" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  row-modulo로 읽는다</text>
+<text x="708" y="597" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">sigmoid는 row 커널이 읽으면서 적용 (메모리 바운드라 공짜)</text>
+<text x="708" y="628" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="659" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">B = Wf · LN0(pair)ᵀ · log2e,   g1, g2 = LN(cond) W1,</text>
+<text x="708" y="690" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  cond W2</text>
+<text x="1432" y="473" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">bias = (wf @ ln0.t() * LOG2E).bfloat16()</text>
+<text x="1432" y="501" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">g1 = layer_norm(c) @ W1.T + b1   # [L, 24*4*768]</text>
+<text x="1432" y="529" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">g2 = c @ W2.T + b2               # [L, 24*2*768]</text>
+<text x="2178" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">bias: BF16 [384,768,768] 453 MB</text>
+<text x="2178" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">g1, g2: [768, 24×6×768]</text>
+<text x="2178" y="535" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ 모든 블록</text>
+<path d="M 612 565.0 L 678 565.0" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 565.0 L 2148 565.0" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="774" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">q|k|v|g GEMM (quack) · 32.8 µs · floor 25.3 → 77 %</text>
+<rect x="40" y="792" width="570" height="206" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="792" width="1390" height="206" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="792" width="600" height="206" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 792 V998" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="827" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="827" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="827" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="827" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="865" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">xa: BF16 [3,840, 768] 5.9 MB (AdaLN 적용된</text>
+<text x="58" y="896" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  입력)</text>
+<text x="58" y="927" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">W_qkvg: BF16 [3,072, 768] 4.7 MB</text>
+<text x="708" y="865" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">네 projection을 GEMM 하나로 — 출력 [M, 4·768]에서</text>
+<text x="708" y="896" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  q/k/v/g가 열 구간</text>
+<text x="708" y="927" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="958" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">[q|k|v|g] = xa · [Wq; Wk; Wv; Wg]ᵀ + b</text>
+<text x="1432" y="865" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">qkvg = xa @ W_qkvg.t() + b_qkvg   # [3840, 3072]</text>
+<text x="2178" y="865" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">qkvg: BF16 [3,840, 3,072] 23.6 MB</text>
+<text x="2178" y="896" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ 코어</text>
+<path d="M 612 895.0 L 678 895.0" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 895.0 L 2148 895.0" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="1042" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">어텐션 코어 (CUDA sm_90a, attn_core.cu) · 45.6 µs (Anthropic apb_views 57.2)</text>
+<rect x="40" y="1060" width="570" height="361" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="1060" width="1390" height="361" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="1060" width="600" height="361" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 1060 V1421" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="1095" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="1095" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="1095" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="1095" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="1133" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">qkvg 23.6 MB (q, k, v, g 열 구간)</text>
+<text x="58" y="1164" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">bias_b: BF16 [16,768,768] 18.9 MB</text>
+<text x="708" y="1133" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">CTA = (샘플, head, query 128행) · 48열 TMA 박스 · q는</text>
+<text x="708" y="1164" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  레지스터</text>
+<text x="708" y="1195" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">bias를 누산기에 seed → QKᵀ wgmma 누산 → 추론은 running max</text>
+<text x="708" y="1226" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  없음 (logit 범위 안전)</text>
+<text x="708" y="1257" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">ex2 → P → PV wgmma → epilogue에서 σ(g)를 곱해 q 자리에</text>
+<text x="708" y="1288" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  덮어쓴다</text>
+<text x="708" y="1319" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">LSE도, fp32 O도 없다 — backward가 없으니 저장할 것도 없다</text>
+<text x="708" y="1350" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="1381" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">o = softmax(q kᵀ + b) v,   out = σ(g) ⊙ o</text>
+<text x="1432" y="1133" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">s = q @ k.transpose(-1,-2) + bias   # 이미 log2 단위</text>
+<text x="1432" y="1161" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">o = torch.softmax(s, -1) @ v</text>
+<text x="1432" y="1189" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">qkvg[:, :768] = torch.sigmoid(g) * o</text>
+<text x="2178" y="1133" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">gated o: qkvg의 q 열 구간에 덮어쓰기 5.9 MB</text>
+<text x="2178" y="1164" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ Wo GEMM</text>
+<path d="M 612 1240.5 L 678 1240.5" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 1240.5 L 2148 1240.5" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="1465" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">Wo GEMM (quack) · 16.0 µs</text>
+<rect x="40" y="1483" width="570" height="150" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="1483" width="1390" height="150" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="1483" width="600" height="150" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 1483 V1633" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="1518" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="1518" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="1518" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="1518" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="1556" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">gated o 5.9 MB</text>
+<text x="58" y="1587" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">Wo: BF16 [768,768] 1.2 MB</text>
+<text x="708" y="1556" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="1587" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">y = (σ(g) ⊙ o) Wo</text>
+<text x="1432" y="1556" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">y = qkvg[:, :768] @ Wo.t()</text>
+<text x="2178" y="1556" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">y: BF16 [3,840, 768] 5.9 MB</text>
+<text x="2178" y="1587" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ resgate+AdaLN</text>
+<path d="M 612 1558.0 L 678 1558.0" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 1558.0 L 2148 1558.0" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="1677" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">resgate + AdaLN rows (Triton) · 2회 합 20.6 µs · 스텝 안에서는 HBM roof 101 %</text>
+<rect x="40" y="1695" width="570" height="237" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="1695" width="1390" height="237" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="1695" width="600" height="237" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 1695 V1932" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="1730" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="1730" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="1730" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="1730" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="1768" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">x: FP32 잔차 [3,840, 768] 11.8 MB</text>
+<text x="58" y="1799" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">y 5.9 MB</text>
+<text x="58" y="1830" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">g2(gate), g1(다음 AdaLN scale/shift)</text>
+<text x="708" y="1768" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">잔차 갱신과 다음 서브층의 AdaLN을 한 패스에 — x를 한 번 읽고</text>
+<text x="708" y="1799" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  한 번 쓴다</text>
+<text x="708" y="1830" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">fp32 잔차 스트림 유지 (정확도 4.4e-3, 엔진 bf16 1.1e-2)</text>
+<text x="708" y="1861" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="1892" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">x ← x + σ(gate) ⊙ y,   xa = LN(x) ⊙ (1+scale) + shift</text>
+<text x="1432" y="1768" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">x  = x + torch.sigmoid(gate) * y.float()</text>
+<text x="1432" y="1796" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">xa = layer_norm(x) * (1 + scale) + shift</text>
+<text x="1432" y="1824" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">xa = xa.bfloat16()</text>
+<text x="2178" y="1768" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">x: FP32 11.8 MB</text>
+<text x="2178" y="1799" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">xa: BF16 5.9 MB</text>
+<text x="2178" y="1830" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ 다음 GEMM</text>
+<path d="M 612 1813.5 L 678 1813.5" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 1813.5 L 2148 1813.5" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="1976" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">expand + SwiGLU GEMM (quack gemm_act) · 33.3 µs · 76 % → squeeze GEMM (cuBLAS) · 20.9 µs</text>
+<rect x="40" y="1994" width="570" height="237" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="1994" width="1390" height="237" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="1994" width="600" height="237" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 1994 V2231" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="2029" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="2029" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="2029" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="2029" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="2067" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">xa 5.9 MB</text>
+<text x="58" y="2098" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">W_ab: BF16 [3,072, 768] 4.7 MB</text>
+<text x="58" y="2129" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">Ws: BF16 [768, 1,536] 2.4 MB</text>
+<text x="708" y="2067" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">SwiGLU를 expand GEMM의 epilogue에서 — [M, 3072] 중간값이</text>
+<text x="708" y="2098" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  HBM에 안 나간다</text>
+<text x="708" y="2129" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="2160" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">h = silu(xa Waᵀ) ⊙ (xa Wbᵀ),   y = h Wsᵀ</text>
+<text x="708" y="2191" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ 다시 resgate + AdaLN(다음 블록의 AdaLN까지)</text>
+<text x="1432" y="2067" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">a, b = (xa @ W_ab.t()).chunk(2, -1)</text>
+<text x="1432" y="2095" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">h = F.silu(a) * b          # [3840, 1536]</text>
+<text x="1432" y="2123" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">y = h @ Ws.t()</text>
+<text x="2178" y="2067" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">h: BF16 [3,840, 1,536] 11.8 MB</text>
+<text x="2178" y="2098" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">y: BF16 5.9 MB</text>
+<text x="2178" y="2129" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ resgate + AdaLN → 다음 블록</text>
+<path d="M 612 2112.5 L 678 2112.5" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 2112.5 L 2148 2112.5" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+</svg>

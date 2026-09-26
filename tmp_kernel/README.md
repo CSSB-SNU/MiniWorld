@@ -12,6 +12,8 @@
 | | [BACKWARD](msa_opm/MSA_OPM_BACKWARD.svg) | **설계 (P2)** · 시간 미측정 |
 | **MSAPairWeightedAveraging** | [FORWARD](msa_pwa/MSA_PWA_FORWARD.svg) | 측정 (H100 0.736 ms) |
 | | [BACKWARD](msa_pwa/MSA_PWA_BACKWARD.svg) | **설계 (P3)** · 시간 미측정 |
+| **Token DiT attention** (학습 · bf16 코어) | [TRAIN FORWARD](token_dit/TOKEN_DIT_ATTN_TRAIN_FORWARD.svg) · [TRAIN BACKWARD](token_dit/TOKEN_DIT_ATTN_TRAIN_BACKWARD.svg) | 측정 (L768 A48: fwd 334 µs, bwd 1,507 µs) |
+| **Token DiT 추론 블록** (fused v6) | [INFERENCE](token_dit/TOKEN_DIT_INFERENCE_FUSED.svg) | 측정 (L768 S5: 147.8 µs/블록) |
 | **Cropping** (커널 아님, 데이터 경로) | [전체 그림](cropping/CROPPING.svg) | — |
 
 backward 두 장은 머리띠가 자주색이다. **측정값이 아니라 설계**라는 뜻이고, FLOP과 트래픽만 근거로 적었다.
@@ -30,6 +32,7 @@ backward 두 장은 머리띠가 자주색이다. **측정값이 아니라 설�
 ## 다시 만들기
 
     python tmp_kernel/generate_msa_svg.py          # msa_opm/, msa_pwa/ 네 장
+    python tmp_kernel/generate_token_dit_svg.py    # token_dit/ 세 장
     dot -Tsvg docs/cropping-current.dot -o cropping/CROPPING.svg
 
 TriMul·Transition 그림은 각 fusion 문서(`docs/trimul-fusion/`, `docs/transition-fusion/`)가 출처다.

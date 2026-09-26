@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2800" height="2008" viewBox="0 0 2800 2008" role="img" aria-labelledby="title desc"><title id="title">Token DiT attention  TRAINING FORWARD  |  HBM 입력 → 커널 → HBM 출력</title><desc id="desc">L768 · A=48 augment · 16 heads × 48 · fp32 모델, 어텐션 코어만 bf16 (fp32 누산) · H100 실측</desc><defs><marker id="read" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#2879ad"/></marker><marker id="write" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#b36b19"/></marker></defs><rect width="2800" height="2008" fill="#f8fafc"/>
+<rect x="0" y="0" width="2800" height="218" fill="#133343"/>
+<text x="40" y="60" font-family="Noto Sans CJK KR, sans-serif" font-size="36" fill="#ffffff" font-weight="700">Token DiT attention  TRAINING FORWARD  |  HBM 입력 → 커널 → HBM 출력</text>
+<text x="40" y="103" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#cce0e7">L768 · A=48 augment · 16 heads × 48 · fp32 모델, 어텐션 코어만 bf16 (fp32 누산) · H100 실측</text>
+<text x="40" y="145" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">pair bias는 24블록 전부를 한 GEMM으로 먼저 만든다 (hoist). 블록마다 LayerNorm + Linear를 반복하지 않는다.</text>
+<text x="40" y="181" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">코어는 bias를 누산기 초기값으로 넣고(seed) QKᵀ wgmma가 그 위에 누산한다 — bias 덧셈이 사라진다. exp는 전부 ex2 한 번.</text>
+<text x="40" y="217" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#dfecf0">코어 334 µs = 수학 뺀 같은 데이터 이동의 실측 하한 273 µs의 82 %. 엔진 bf16 코어 fwd 658.8 µs, Anthropic은 학습 fwd 없음.</text>
+<text x="40" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#2879ad" font-weight="700">HBM READ · 어디서 온 무엇을 읽는가</text>
+<text x="690" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#12856e" font-weight="700">KERNEL · 계산과 그 PyTorch 대응</text>
+<text x="2160" y="340" font-family="Noto Sans CJK KR, sans-serif" font-size="25" fill="#b36b19" font-weight="700">HBM WRITE · 무엇을 어디로 넘기는가</text>
+<text x="40" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#2879ad">파랑 화살표: 읽기</text>
+<text x="690" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#52707e">왼쪽: 설명·수식 / 오른쪽: 같은 일을 하는 PyTorch 문장</text>
+<text x="2160" y="372" font-family="Noto Sans CJK KR, sans-serif" font-size="18" fill="#b36b19">주황: 쓰기</text>
+<text x="40" y="382" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">pair-bias hoist · 한 스텝에 한 번 · team-gm pair_bias_all(head_major=True)</text>
+<rect x="40" y="400" width="570" height="299" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="400" width="1390" height="299" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="400" width="600" height="299" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 400 V699" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="435" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">pair: FP32 [1,768,768,128] 302 MB</text>
+<text x="58" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">γ_b (ln_pair), W_b (to_bias) × 24블록</text>
+<text x="58" y="535" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">각 [128], [16,128]</text>
+<text x="708" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">ln_pair에는 offset이 없어서 LN_b(pair) = LN0(pair) ⊙ γ_b</text>
+<text x="708" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ bias_b = LN0(pair) · (γ_b ⊙ W_b)ᵀ, 24블록 모두 같은</text>
+<text x="708" y="535" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  LN0</text>
+<text x="708" y="566" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">γ를 weight 쪽에 접어 넣고 24 × 16 = 384행을 쌓아 GEMM 하나</text>
+<text x="708" y="597" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">출력을 head-major로 내서 코어가 permute 없이 읽는다</text>
+<text x="708" y="628" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="659" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">B = Wf · LN0(pair)ᵀ,   Wf = [γ_1⊙W_1; … ; γ_24⊙W_24]</text>
+<text x="1432" y="473" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">ln0 = layer_norm(pair.reshape(-1,128), (128,))</text>
+<text x="1432" y="501" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">wf  = cat([w * g for g, w in zip(G, W)])</text>
+<text x="1432" y="529" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">B   = wf @ ln0.t()                   # [384, L*L]</text>
+<text x="1432" y="557" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">bias_b = B[16*b:16*(b+1)].view(16,1,L,L)</text>
+<text x="1432" y="585" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37"># 블록마다: layer_norm + Linear 24번 -&gt; 0번</text>
+<text x="2178" y="473" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">B: FP32 [384, 589,824] 906 MB</text>
+<text x="2178" y="504" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">블록 b는 16행짜리 view (복사 없음)</text>
+<text x="2178" y="535" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ bias_prep</text>
+<path d="M 612 549.5 L 678 549.5" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 549.5 L 2148 549.5" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="743" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">prep_qkv (Triton) · 85 µs</text>
+<rect x="40" y="761" width="570" height="299" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="761" width="1390" height="299" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="761" width="600" height="299" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 761 V1060" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="796" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="796" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="796" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="796" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="834" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">q (qk_norm 뒤): FP32 [48,1,768,16,48] 113 MB</text>
+<text x="58" y="865" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">k: FP32 113 MB</text>
+<text x="58" y="896" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">v: FP32 113 MB</text>
+<text x="708" y="834" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">한 패스로 세 텐서를 bf16으로 변환</text>
+<text x="708" y="865" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">q에는 log2(e)/√48을 같이 곱한다 — 코어의 점수가 곧 log2</text>
+<text x="708" y="896" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  단위라서</text>
+<text x="708" y="927" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">softmax의 exp가 전부 ex2 하나로 끝난다</text>
+<text x="708" y="958" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="989" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">q_s = bf16(q · log2e / √48),   k_b = bf16(k),   v_b =</text>
+<text x="708" y="1020" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  bf16(v)</text>
+<text x="1432" y="834" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">qs = (q * (LOG2E / sqrt(48))).bfloat16()</text>
+<text x="1432" y="862" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">kb = k.bfloat16();  vb = v.bfloat16()</text>
+<text x="1432" y="890" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37"># 모두 [A*L, 768] 행 레이아웃 그대로</text>
+<text x="2178" y="834" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">q_s, k_b, v_b: BF16 [36,864, 768] 각 56.6 MB</text>
+<text x="2178" y="865" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ attn_fwd, backward용 저장</text>
+<path d="M 612 910.5 L 678 910.5" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 910.5 L 2148 910.5" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="1104" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">bias_prep (Triton) · 미측정</text>
+<rect x="40" y="1122" width="570" height="206" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="1122" width="1390" height="206" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="1122" width="600" height="206" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 1122 V1328" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="1157" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="1157" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="1157" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="1157" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="1195" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">bias_b: FP32 [16,768,768] 37.7 MB (hoist</text>
+<text x="58" y="1226" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  view)</text>
+<text x="708" y="1195" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">log2(e)를 곱해 bf16으로 — 코어가 bias를 변환 없이 누산기에</text>
+<text x="708" y="1226" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  넣을 수 있게</text>
+<text x="708" y="1257" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="1288" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">b_b = bf16(bias · log2e)</text>
+<text x="1432" y="1195" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">bb = (bias.view(16, L, L) * LOG2E).bfloat16()</text>
+<text x="2178" y="1195" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">bb: BF16 [16,768,768] 18.9 MB</text>
+<text x="2178" y="1226" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ attn_fwd, backward용 저장</text>
+<path d="M 612 1225.0 L 678 1225.0" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 1225.0 L 2148 1225.0" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+<text x="40" y="1372" font-family="Noto Sans CJK KR, sans-serif" font-size="21" fill="#52707e" font-weight="700">attn_fwd (CUDA sm_90a, attn_fwd.cu) · 334 µs · pattern floor 273 µs → 82 %</text>
+<rect x="40" y="1390" width="570" height="516" rx="12" fill="#eef6fc" stroke="#2879ad" stroke-width="2"/>
+<rect x="690" y="1390" width="1390" height="516" rx="12" fill="#effaf5" stroke="#12856e" stroke-width="2"/>
+<rect x="2160" y="1390" width="600" height="516" rx="12" fill="#fff7e7" stroke="#b36b19" stroke-width="2"/>
+<path d="M1410 1390 V1906" stroke="#12856e" stroke-width="1.5"/>
+<text x="58" y="1425" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#2879ad" font-weight="700">HBM READ</text>
+<text x="708" y="1425" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">KERNEL · tile 내부</text>
+<text x="1432" y="1425" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#12856e" font-weight="700">PyTorch · 수학적 대응</text>
+<text x="2178" y="1425" font-family="Noto Sans CJK KR, sans-serif" font-size="23" fill="#b36b19" font-weight="700">HBM WRITE</text>
+<text x="58" y="1463" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">q_s 56.6 MB (CTA당 한 번)</text>
+<text x="58" y="1494" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">k_b, v_b 각 56.6 MB (query 타일 6개가 재사용</text>
+<text x="58" y="1525" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  → L2)</text>
+<text x="58" y="1556" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">bb 18.9 MB (48 샘플이 같은 타일 → L2)</text>
+<text x="58" y="1587" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">key mask (있을 때)</text>
+<text x="708" y="1463" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">CTA = (샘플, head, query 128행), 샘플이 grid의 가장 빠른 축</text>
+<text x="708" y="1494" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ 같은 bias 타일을 쓰는 48개 CTA가 동시에 떠서 bias는</text>
+<text x="708" y="1525" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  L2에서 읽힌다</text>
+<text x="708" y="1556" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">TMA 3개(K, V, bias) → 3단 ring · q는 레지스터에 한 번</text>
+<text x="708" y="1587" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">q/k/v 박스는 48열 — 이웃 head 16열을 더 읽지 않는다 (−25 %</text>
+<text x="708" y="1618" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  바이트)</text>
+<text x="708" y="1649" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">key 블록 64개마다: bias를 누산기에 seed → QKᵀ wgmma가 그</text>
+<text x="708" y="1680" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  위에 누산</text>
+<text x="708" y="1711" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">lazy max: 행 최댓값이 8(log2) 넘게 오를 때만 누산기를</text>
+<text x="708" y="1742" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">  rescale</text>
+<text x="708" y="1773" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">ex2 → P(bf16) → PV wgmma (A=레지스터, B=V smem)</text>
+<text x="708" y="1804" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">── 수식 ──</text>
+<text x="708" y="1835" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">S = q_s k_bᵀ + b_b (+ mask),   m = 행 max,   P = 2^(S−m)</text>
+<text x="708" y="1866" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">O = P v / Σ P,   LSE = m + log2 Σ P   (log2 단위)</text>
+<text x="1432" y="1463" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">s = (q @ k.transpose(-1,-2)) / sqrt(48) + bias</text>
+<text x="1432" y="1491" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">if mask is not None:</text>
+<text x="1432" y="1519" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">    s = s.masked_fill(~mask, finfo.min)</text>
+<text x="1432" y="1547" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">lse = torch.logsumexp(s, -1)</text>
+<text x="1432" y="1575" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37">o = torch.softmax(s, -1) @ v</text>
+<text x="1432" y="1603" xml:space="preserve" font-family="DejaVu Sans Mono, monospace" font-size="20" fill="#173d37"># [48,16,768,768] 점수는 HBM에 안 나간다</text>
+<text x="2178" y="1463" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">O: FP32 [36,864, 768] 113 MB</text>
+<text x="2178" y="1494" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">LSE: FP32 [48,16,768] 2.4 MB</text>
+<text x="2178" y="1525" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ gate · to_out (fp32)</text>
+<text x="2178" y="1556" font-family="Noto Sans CJK KR, sans-serif" font-size="22" fill="#163746">→ backward용 저장 (O는 gate가 잡은 것과 공유)</text>
+<path d="M 612 1648.0 L 678 1648.0" fill="none" stroke="#2879ad" stroke-width="3" marker-end="url(#read)"/>
+<path d="M 2082 1648.0 L 2148 1648.0" fill="none" stroke="#b36b19" stroke-width="3" marker-end="url(#write)"/>
+</svg>
