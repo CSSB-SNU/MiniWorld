@@ -1,0 +1,41 @@
+{
+  "model_version": "1.3.0",
+  "base_miniworld": "e7869b3de4d69ee93e75a640488d56eebc7217de",
+  "engine_base": "55304541ff28dbc914137d80ef6929f689ae1d9d",
+  "engine_patch": "D64 Transition input-role named barrier before in_free; separate binary suffix",
+  "files": {
+    "src/miniworld/modules/distogram_diffusion.py": "d0c0b4730be6d0925f7661660c2e05b9b87da089105584f55ac0420eea67c907",
+    "src/miniworld/models/distogram_only/model_mini_swa.py": "29431c94fc69499007a7e280575a51c6d20041d9bb46c7d9bcdb5b2f655c5a1e",
+    "src/miniworld/models/distogram_only/client.py": "44b837b77a26c4ce0f5c44d7ed63b46282a606629af11862666f4b6cce0848d5",
+    "src/miniworld/loss/auxiliary.py": "3d9eb1c134f7f65c35251aafd81da93c7c5f5011bce202a61430154ee08f9fd1",
+    "scripts/run_miniworld_distogram_train.py": "6b113c79dc5807cfd4729fcec60dda6b2307bbc15037d7a1a9730660d59de467",
+    "scripts/check_distogram_diffusion_v130.py": "2772936fb1b2337b0beca60d8dc3894c33bbdcd6a82cf79991b2d6b517590f61",
+    "scripts/measure_distogram_sigma_data.py": "faf9253aa948070fc12eec5f57e03a2173264a8e1fb0bc2233b451b08aeb168c",
+    "scripts/bioai_v130_runtime.sh": "8d3296cfb6931b9e111be2904fcc0a4521f0c56c9dfa76be208e45f87fd8ed0e",
+    "tests/test_distogram_diffusion_v130.py": "f94d332f6d92ab428ff8924ca6eabc47385b61ea05db5957865f551f31379e72",
+    "configs/miniworld/distogram_diffusion_medium_v130_bioai.yaml": "28af0a24240fd93c8261023984290d73b1981fa302e7ca4a2d19d25e678f1527",
+    "configs/miniworld/distogram_diffusion_medium_v130_bioai_L768.yaml": "32275db43d27c1b762ec78f6b175e57e1a6c769e5662e7c75a225691b2256809",
+    "submits/v130_bioai_smoke.sbatch": "46ad29281bd3dfe624467aca7997cc758346bf5ebc39a84bb1d404a70d760316",
+    "submits/v130_bioai_data_check.sbatch": "540b7bc5b224ba24172f6b3732ebddd8e59b1d2fab84825a8a2c4917f595f382",
+    "submits/v130_bioai_train.sbatch": "3862fe1243254b088729d59acc21dd11af8417dc250e99f9670a91616e952da6",
+    "tests/test_distogram_diffusion_model_v130.py": "1e246e59e84ed7f36799399332968f6548669fc36b5a8bf77487b4bdd1234f36",
+    "docs/v1.3-distogram-diffusion.md": "a5b1468d1092915adf8aaffcf622adbb4c61f33ff1ce3a82e537de399d2ff38b"
+  },
+  "validation": {
+    "cpu_local": "111 passed, 2 skipped + 1 complete-model test passed",
+    "cpu_bioai": "111 passed, 2 skipped + 1 complete-model test passed",
+    "gpu_unit": "35 passed, BioAI 272548",
+    "gpu_model_job": 272548,
+    "data_job": 272547,
+    "gpu_model_job_state": "COMPLETED 0:0; four ranks; three updates; target-free sampling passed",
+    "gpu_model_bucket": {
+      "tokens": 384,
+      "atoms": 4096,
+      "msa_pool": 8192,
+      "msa_subset": 1024,
+      "pairformer_blocks": 16
+    }
+  },
+  "long_training_submitted": false,
+  "bioai_deployment_sha256_match": true
+}

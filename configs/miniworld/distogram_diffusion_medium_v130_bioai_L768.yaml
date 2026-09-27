@@ -1,0 +1,19 @@
+# Continue the same v1.3 run/checkpoint at L768; no intermediate training buckets.
+defaults:
+  - distogram_diffusion_medium_v130_bioai
+  - _self_
+model:
+  trunk:
+    msa_module:
+      n_checkpoint_segments: 4
+    pairformer:
+      n_checkpoint_segments: 16
+data:
+  crop:
+    max_tokens: 768
+    max_atoms: 8192
+train:
+  comment: v1.3.0-distogram-diffusion-PF16-L768
+  num_epoch: 1000
+  bucket_token_multiple: 768
+  bucket_atom_multiple: 8192

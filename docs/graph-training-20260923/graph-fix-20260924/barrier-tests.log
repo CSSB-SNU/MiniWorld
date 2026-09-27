@@ -1,0 +1,48 @@
+........                                                                 [100%]
+=============================== warnings summary ===============================
+tests/numerics/test_transition_wide_sm90a_gpu.py::test_is_no_less_accurate_than_the_triton_path[lead0-64]
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/nn/modules/module.py:1787: UserWarning: Transition: the 'triton' fast path is bf16-only but got torch.float32; falling back to the PyTorch reference (slower). Cast inputs to torch.bfloat16 to use the fused kernels.
+    return forward_call(*args, **kwargs)
+
+tests/numerics/test_transition_wide_sm90a_gpu.py::test_is_no_less_accurate_than_the_triton_path[lead0-64]
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/autograd/graph.py:865: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at /pytorch/aten/src/ATen/cuda/CublasHandlePool.cpp:330.)
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+
+tests/numerics/test_transition_wide_sm90a_gpu.py::test_is_no_less_accurate_than_the_triton_path[lead0-64]
+  /home/psk6950/MiniWorld/runs/graph-fix-20260924/transition-input-barrier/engine/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_fwd_saveact_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=4295230234). Falling back to a heuristic 24 of 800 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/numerics/test_transition_wide_sm90a_gpu.py::test_is_no_less_accurate_than_the_triton_path[lead0-64]
+  /home/psk6950/MiniWorld/runs/graph-fix-20260924/transition-input-barrier/engine/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache for op 'transition_expand_swiglu_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/numerics/test_transition_wide_sm90a_gpu.py::test_is_no_less_accurate_than_the_triton_path[lead0-64]
+  /home/psk6950/MiniWorld/runs/graph-fix-20260924/transition-input-barrier/engine/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache for op 'transition_squeeze_residual_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16). Falling back to a heuristic 24 of 1296 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/numerics/test_transition_wide_sm90a_gpu.py::test_is_no_less_accurate_than_the_triton_path[lead0-64]
+  /home/psk6950/MiniWorld/runs/graph-fix-20260924/transition-input-barrier/engine/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache for op 'transition_bwd_swiglu_recompute_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16). Falling back to a heuristic 24 of 1080 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/numerics/test_transition_wide_sm90a_gpu.py::test_is_no_less_accurate_than_the_triton_path[lead0-64]
+  /home/psk6950/MiniWorld/runs/graph-fix-20260924/transition-input-barrier/engine/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_input_ln_residual_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=4295230234). Falling back to a heuristic 24 of 38 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/numerics/test_transition_wide_sm90a_gpu.py::test_is_no_less_accurate_than_the_triton_path[lead1-64]
+  /home/psk6950/MiniWorld/runs/graph-fix-20260924/transition-input-barrier/engine/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_fwd_saveact_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=17180132122). Falling back to a heuristic 24 of 800 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/numerics/test_transition_wide_sm90a_gpu.py::test_is_no_less_accurate_than_the_triton_path[lead1-64]
+  /home/psk6950/MiniWorld/runs/graph-fix-20260924/transition-input-barrier/engine/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_input_ln_residual_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=17180132122). Falling back to a heuristic 24 of 38 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/numerics/test_transition_wide_sm90a_gpu.py::test_agrees_with_the_triton_path_to_bf16[64]
+  /home/psk6950/MiniWorld/runs/graph-fix-20260924/transition-input-barrier/engine/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_fwd_saveact_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=8590197530). Falling back to a heuristic 24 of 800 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+tests/numerics/test_transition_wide_sm90a_gpu.py::test_agrees_with_the_triton_path_to_bf16[64]
+  /home/psk6950/MiniWorld/runs/graph-fix-20260924/transition-input-barrier/engine/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_input_ln_residual_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|HAS_ROWSCALE=0,shape_key=8590197530). Falling back to a heuristic 24 of 38 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+    hit = _cached_subset(self, cfgs, nargs, meta)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+8 passed, 24 deselected, 11 warnings in 6.02s

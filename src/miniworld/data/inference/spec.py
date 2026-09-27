@@ -377,7 +377,7 @@ class InferenceSpec(BaseModel):
     template_db: Path | None = None
     template: dict[str, str] = Field(default_factory=dict)
     template_offset: dict[str, int] = Field(default_factory=dict)
-    template_n: int = 4
+    template_n: int = Field(default=4, ge=0)
     cif_db: Path | None = None
     complex_templates: list[ComplexTemplateSpec] = Field(default_factory=list)
     diffusion_groups: list[list[int]] = Field(default_factory=list)

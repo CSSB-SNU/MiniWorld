@@ -10,15 +10,15 @@ import numpy as np
 from miniworld.data.io import load_raw_data
 from miniworld.data.mols import CCDMol, FragmentedCCDMol
 from miniworld.data.pipeline import fragment_ccdmol_all_merges
+from miniworld.data.reference import resolve_reference
 
 
 @dataclass(frozen=True)
 class CCDResidue:
     """Per-residue topology pulled from a single CCD entry.
 
-    Atom positions are taken from the canonical CCD model; they are used as
-    the model's reference (``ReferenceFeatures.pos``) regardless of whether a
-    real GT structure is available.
+    Atom positions use complete CCD model coordinates or an RDKit-generated
+    reference for an incomplete component. Unresolved coordinates are masked.
     """
 
     chemcomp_id: str
@@ -26,6 +26,7 @@ class CCDResidue:
     atom_elements: np.ndarray    # (n_atoms,) object/str
     atom_charges: np.ndarray     # (n_atoms,) float
     atom_xyz: np.ndarray         # (n_atoms, 3) float
+    atom_mask: np.ndarray | None = None  # Missing coordinates are never valid padding.
 
     @property
     def n_atoms(self) -> int:
@@ -79,12 +80,7 @@ def _ccdmol_to_residue(chemcomp_id: str, ccdmol: CCDMol) -> CCDResidue:
     atom_ids = np.asarray(ccdmol.atoms.id.value)
     atom_elements = np.asarray(ccdmol.atoms.element.value)
 
-    raw_xyz = np.asarray(ccdmol.atoms.model_xyz.value, dtype=object)
-    missing = (raw_xyz == "?") | (raw_xyz == ".")
-    raw_xyz[missing] = 0.0
-    atom_xyz = raw_xyz.astype(np.float32, copy=False)
-    if np.isnan(atom_xyz).any():
-        atom_xyz = np.nan_to_num(atom_xyz, nan=0.0)
+    reference = resolve_reference(ccdmol, chemcomp_id)
 
     raw_charge = np.asarray(ccdmol.atoms.charge.value)
     atom_charges = np.array(
@@ -97,5 +93,6 @@ def _ccdmol_to_residue(chemcomp_id: str, ccdmol: CCDMol) -> CCDResidue:
         atom_ids=atom_ids,
         atom_elements=atom_elements,
         atom_charges=atom_charges,
-        atom_xyz=atom_xyz,
+        atom_xyz=reference.pos,
+        atom_mask=reference.mask,
     )

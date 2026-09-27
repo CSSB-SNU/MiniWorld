@@ -29,9 +29,10 @@ from miniworld.data.features.features import (
     StructureFeatures,
     TemplateFeatures,
 )
-from miniworld.data.features.convert import to_template_features
+from miniworld.data.features.convert import to_template_features, _build_atom_is_rep, _build_token_frame_atoms
 from miniworld.data.io.load import load_a3m, load_template
 from miniworld.data.pipeline import ComplexMSA, MSA, ProteinTemplate, sample_msa
+from miniworld.data.reference import augment_reference
 from miniworld.utils.structure.se3 import SE3_oper
 
 from .a3m import parse_a3m_file
@@ -265,7 +266,10 @@ def build_inference_batch(
     ref_pos, ref_element, ref_charge = _build_reference_arrays(expansions, rng)
     reference = ReferenceFeatures.from_sample(
         pos=torch.from_numpy(ref_pos.astype(np.float32)),
-        mask=torch.ones(total_atoms, dtype=torch.bool),
+        mask=torch.from_numpy(np.concatenate([
+            res.atom_mask if res.atom_mask is not None else np.isfinite(res.atom_xyz).all(axis=1)
+            for exp in expansions for res in exp.residues
+        ])),
         element=torch.from_numpy(ref_element.astype(np.int64)),
         charge=torch.from_numpy(ref_charge.astype(np.float32)),
         space_uid=torch.from_numpy(atom_to_residue.astype(np.int64)),
@@ -345,12 +349,11 @@ def build_inference_batch(
         _bi, _bj = _bi[_keep], _bj[_keep]
         token_bond_feat[_bi, _bj] = True
         token_bond_feat[_bj, _bi] = True
-    # ``atom_pos_mask`` marks atoms whose positions should be denoised by the
-    # diffusion solver and emitted to the CIF output. For inference we want
-    # every atom predicted, so set it to all-True (no GT, but all valid).
+    # No experimental coordinates exist in an inference input. Solvers/output
+    # writers use atom_mask (existence), not atom_pos_mask (observed ground truth).
     structure = StructureFeatures.from_sample(
         atom_pos=torch.zeros(total_atoms, 3, dtype=torch.float32),
-        atom_pos_mask=torch.ones(total_atoms, dtype=torch.bool),
+        atom_pos_mask=torch.zeros(total_atoms, dtype=torch.bool),
         atom_mask=torch.ones(total_atoms, dtype=torch.bool),
         atom_bond=torch.zeros(0, 6, dtype=torch.long),
         token_contacts=token_contacts,
@@ -367,14 +370,9 @@ def build_inference_batch(
         rng=rng,
     )
     if template is None:
-        template = TemplateFeatures.from_sample(
-            mask=torch.zeros(1, dtype=torch.bool),
-            ids=torch.zeros(1, total_tokens, dtype=torch.long),
-            res_type=torch.zeros(1, total_tokens, dtype=torch.long),
-            cb_xyz=torch.zeros(1, total_tokens, 3, dtype=torch.float32),
-            cb_mask=torch.zeros(1, total_tokens, dtype=torch.bool),
-            bb_xyz=torch.zeros(1, total_tokens, 3, 3, dtype=torch.float32),
-            bb_mask=torch.zeros(1, total_tokens, dtype=torch.bool),
+        template = to_template_features(
+            ProteinTemplate.empty(total_tokens).padded(n_templates=spec.template_n),
+            np.arange(total_tokens),
         )
 
     # --- Chain ---
@@ -402,6 +400,17 @@ def build_inference_batch(
                 atom_ids[atom_cursor] = str(atom_id)
                 atom_cursor += 1
 
+    proxy = SimpleNamespace(
+        atoms=SimpleNamespace(id=atom_ids),
+        residues=SimpleNamespace(chem_comp_id=SimpleNamespace(value=chem_comp_ids)),
+        index_table=SimpleNamespace(atom_to_res=atom_to_residue),
+    )
+    selection = dict(cifmol=proxy, atom_to_token_idx_map=atom_to_token_idx_map,
+                     atom_pos_mask=np.ones(total_atoms, dtype=bool), n_tokens=total_tokens)
+    structure.atom_is_rep = torch.from_numpy(_build_atom_is_rep(**selection)).unsqueeze(0)
+    frames, frame_mask = _build_token_frame_atoms(**selection)
+    structure.token_frame_atoms = torch.from_numpy(frames).unsqueeze(0)
+    structure.token_frame_mask = torch.from_numpy(frame_mask).unsqueeze(0)
     name = spec.name or "inference"
     return Batch(
         name=[name],
@@ -636,8 +645,10 @@ def _build_reference_arrays(
         for res in exp.residues:
             R, T = Rs[res_global], Ts[res_global]
             xyz = res.atom_xyz.astype(np.float32, copy=False)
-            xyz_centered = xyz - xyz.mean(axis=0, keepdims=True)
-            ref_pos[atom_cursor:atom_cursor + res.n_atoms] = xyz_centered @ R + T
+            valid = res.atom_mask if res.atom_mask is not None else np.isfinite(xyz).all(axis=1)
+            ref_pos[atom_cursor:atom_cursor + res.n_atoms] = augment_reference(
+                np.where(valid[:, None], xyz, 0.0), valid, R, T,
+            )
             ref_element_str[atom_cursor:atom_cursor + res.n_atoms] = res.atom_elements
             ref_charge[atom_cursor:atom_cursor + res.n_atoms] = res.atom_charges
             atom_cursor += res.n_atoms
@@ -687,7 +698,7 @@ def _build_single_chain_template_layers(
             env_path=spec.template_db,
             crop_indices=None,  # no crop in inference
             n_templates=spec.template_n,
-            rng=rng,
+            rng=None,  # Keep database ranking at inference; only training samples templates.
         )
         # ``load_template`` returns a template at the cluster's canonical
         # length; on length mismatch fall back to an empty slot so the rest
@@ -743,6 +754,7 @@ def _build_template_features(
     merged = ProteinTemplate.concat(per_chain_combined)
     if merged.slot_num == 0:
         return None
+    merged = merged.padded(n_templates=max(spec.template_n, merged.slot_num))
     return to_template_features(merged, token_to_residue_idx_map)
 
 
@@ -776,6 +788,7 @@ def _strip_terminal_atoms(
                 atom_elements=r.atom_elements[keep],
                 atom_charges=r.atom_charges[keep],
                 atom_xyz=r.atom_xyz[keep],
+                atom_mask=r.atom_mask[keep] if r.atom_mask is not None else None,
             ),
         )
     return stripped, masks

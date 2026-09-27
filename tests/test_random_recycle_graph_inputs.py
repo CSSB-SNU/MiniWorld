@@ -85,3 +85,63 @@ def test_empty_template_updates_presence_and_clears_static_slots():
     m.copy_static(dst, src)
     assert dst.template._graph_present
     torch.testing.assert_close(dst.template.data, src.template.data)
+
+
+def test_workspace_configured_before_cuda_init(monkeypatch):
+    monkeypatch.delenv("CUBLAS_WORKSPACE_CONFIG", raising=False)
+    monkeypatch.setattr(torch.cuda, "is_initialized", lambda: False)
+    m.configure_graph_cublas()
+    assert m.os.environ["CUBLAS_WORKSPACE_CONFIG"] == ":4096:8"
+
+
+def test_workspace_missing_after_cuda_init_is_rejected(monkeypatch):
+    monkeypatch.delenv("CUBLAS_WORKSPACE_CONFIG", raising=False)
+    monkeypatch.setattr(torch.cuda, "is_initialized", lambda: True)
+    with pytest.raises(RuntimeError, match="before initializing CUDA"):
+        m.configure_graph_cublas()
+
+
+@pytest.mark.parametrize("setting", [":4096:8", ":16:8"])
+def test_explicit_reproducible_workspace_is_preserved(monkeypatch, setting):
+    monkeypatch.setenv("CUBLAS_WORKSPACE_CONFIG", setting)
+    m.configure_graph_cublas()
+    assert m.os.environ["CUBLAS_WORKSPACE_CONFIG"] == setting
+
+
+def test_mixed_workspace_configuration_is_rejected(monkeypatch):
+    monkeypatch.setenv("CUBLAS_WORKSPACE_CONFIG", ":16:8:4096:2")
+    with pytest.raises(ValueError, match="reproducible"):
+        m.configure_graph_cublas()
+
+
+def diffusion_config(recycles=1, cb=True):
+    return SimpleNamespace(
+        model=SimpleNamespace(trunk=SimpleNamespace(diffusion=object(), n_recycle_max=recycles)),
+        loss=SimpleNamespace(distogram_loss=0.25, distogram_cb_target=cb,
+                             distogram_interchain_weight=2.0),
+    )
+
+
+def test_diffusion_graph_uses_model_loss_and_passes_interface_weight(monkeypatch):
+    monkeypatch.delenv("MW_GRAPH_AMP", raising=False)
+    graph = object.__new__(m.RecycleGraphs)
+    graph.batch = batch(0)
+    graph.loss_fn, graph.forward_kwargs = m.graph_objective(diffusion_config())
+    graph.ga = 4
+    weight = torch.tensor(3.0, requires_grad=True)
+
+    def forward(**kwargs):
+        assert kwargs["interchain_weight"] == 2.0
+        return weight.square(), {"sigma_mean": torch.tensor(7.0)}
+
+    graph.model = forward
+    loss = graph._compute_on_stream()
+    torch.testing.assert_close(loss, torch.tensor(2.25))
+    torch.testing.assert_close(weight.grad, torch.tensor(0.375))
+    assert graph.last_metrics["sigma_mean"] == 7
+
+
+@pytest.mark.parametrize("recycles,cb", [(4, True), (1, False)])
+def test_invalid_diffusion_graph_policy_rejected(recycles, cb):
+    with pytest.raises(ValueError, match="one trunk pass"):
+        m.graph_objective(diffusion_config(recycles, cb))

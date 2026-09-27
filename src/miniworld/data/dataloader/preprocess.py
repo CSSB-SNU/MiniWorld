@@ -186,6 +186,7 @@ class Preprocessor:
             atom_to_token_idx_map=atom_to_token_idx_map,
             token_to_residue_idx_map=token_to_residue_idx_map,
             rng=rng,
+            ccd_mols=self.fragmented_ccd_mols,
         )
 
     # -- feature-key resolution (compat records) --------------------------

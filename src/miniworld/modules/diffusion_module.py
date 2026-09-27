@@ -709,8 +709,18 @@ def _scatter_atom_to_token(
     return token_single_rep / count.unsqueeze(0).unsqueeze(-1).clamp(min=1.0)
 
 
+def _call_atom_transformer(transformer, q, c, attn_params, c_base):
+    """SWA atom transformers accept the augment-invariant conditioning (fused path); other block styles do not."""
+    if isinstance(transformer, SWAAtomTransformer):
+        return transformer(q, c, attn_params, c_base)
+    return transformer(q, c, attn_params)
+
+
 class SWAAtomAttentionEncoder(nn.Module):
     """ESMFold2 SWAAtomEncoder (Algorithm 6): atoms -> tokens, no atom pair."""
+
+    def _run_atom_transformer(self, q, c, attn_params, c_base):
+        return _call_atom_transformer(self.atom_transformer, q, c, attn_params, c_base)
 
     def __init__(
         self,
@@ -813,7 +823,7 @@ class SWAAtomAttentionEncoder(nn.Module):
         d = atom_single_rep.shape[-1]
         q = atom_single_rep.reshape(num_aug * batch_size, atom_length, d)
         c = atom_single_cond.reshape(num_aug * batch_size, atom_length, d)
-        q = self.atom_transformer(q, c, attn_params)
+        q = self._run_atom_transformer(q, c, attn_params, atom_single_cond[0])
         atom_single_rep = q.reshape(num_aug, batch_size, atom_length, d)
 
         token_single_rep = _scatter_atom_to_token(
@@ -828,6 +838,9 @@ class SWAAtomAttentionEncoder(nn.Module):
 
 class SWAAtomAttentionDecoder(nn.Module):
     """ESMFold2 SWAAtomDecoder (Algorithm 7): tokens -> atoms, no atom pair."""
+
+    def _run_atom_transformer(self, q, c, attn_params, c_base):
+        return _call_atom_transformer(self.atom_transformer, q, c, attn_params, c_base)
 
     def __init__(
         self,
@@ -884,7 +897,8 @@ class SWAAtomAttentionDecoder(nn.Module):
         d = atom_single_rep.shape[-1]
         q = atom_single_rep.reshape(num_aug * batch_size, atom_length, d)
         c = atom_single_cond.reshape(num_aug * batch_size, atom_length, d)
-        q = self.atom_transformer(q, c, attn_params)
+        c_base = atom_single_cond[0] if atom_single_cond.stride(0) == 0 else None   # the encoder's augment-expanded view
+        q = self._run_atom_transformer(q, c, attn_params, c_base)
         atom_single_rep = q.reshape(num_aug, batch_size, atom_length, d)
         return self.final_denoising(atom_single_rep)
 

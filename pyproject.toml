@@ -2,7 +2,7 @@
 authors = [{ name = "Sanggeun Park", email = "psk6950@snu.ac.kr" }]
 name = "miniworld"
 requires-python = ">= 3.10"
-version = "1.0.0"
+version = "2.0.0.dev0"
 dependencies = [
   "torch>=2.8.0,<3",
   "wandb>=0.21.0",
@@ -16,6 +16,7 @@ dependencies = [
   "biomol>=1.0.0",
   "cuequivariance-torch>=0.9.0,<0.10",
   "pyyaml>=6,<7",
+  "rdkit>=2024.3,<2027",
 ]
 
 [build-system]

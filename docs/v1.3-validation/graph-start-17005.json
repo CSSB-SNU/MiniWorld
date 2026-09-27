@@ -1,0 +1,39 @@
+{
+  "passed": true,
+  "fresh_step": 2,
+  "resumed_step": 4,
+  "world_size": 8,
+  "same_wandb_id": "setfsj7w",
+  "run_dir": "/home/psk6950/MiniWorld/runs/v1.3.0/graph_start_cssb_20260924/job-17005/2026-09-24/215508_e240e008",
+  "optimizer_scheduler_ema_rng_passed": true,
+  "wandb_mode": "offline",
+  "job": 17005,
+  "server": "CSSB node02",
+  "cpu_local": "36 passed, 1 GPU-only skipped",
+  "cpu_bioai": "36 passed, 1 GPU-only skipped",
+  "v130_long_training_submitted": false,
+  "training_resume": {
+    "old_job": 16997,
+    "test_job": 17005,
+    "resume_job": 17006,
+    "phase1b_job": 16977,
+    "epoch": 589,
+    "global_step": 58900,
+    "wandb_id": "tapgki9e",
+    "verified_running_step": 58904,
+    "resume_gradient_preflight": "passed"
+  },
+  "files": {
+    "scripts/random_recycle_graph_trainer.py": "983d7f0285712d7cd9ff44bb7604ac91c2b0880ee2faf32ff979597035a4c314",
+    "scripts/run_miniworld_distogram_train.py": "7f3474c1af2ca72951cd06467fb9d8ab001b63ddd7eaa219f372bd7234b1e4cc",
+    "scripts/bioai_v130_runtime.sh": "8d3296cfb6931b9e111be2904fcc0a4521f0c56c9dfa76be208e45f87fd8ed0e",
+    "scripts/check_distogram_diffusion_graph_v130.py": "31553aa05f49efed3f9c36215880e84ad9c8861ef10d0e82b68754d270a1f136",
+    "configs/miniworld/distogram_diffusion_medium_v130_bioai.yaml": "fd3eb2ad319490497b7294db3a22c20337b778044a96a5a794fec508fa0764de",
+    "submits/v130_bioai_train.sbatch": "48b2eeef105ad143068cb4d57c4f4bf8ef796e0cd86c80b7c65bdbfcad409e8d",
+    "tests/test_diffusion_graph_start.py": "a864543a148db49d98887a79d32e0e034f819658f976e2408a102f627278ad68",
+    "tests/test_random_recycle_graph_inputs.py": "64693e71cd507eb5bbf947e3eb4aaf1eacf773f5bf36a9d92df4319378b3a1c5",
+    "tests/test_distogram_diffusion_v130.py": "ab2b5b38bad6fd1f02ccb5b8d1fc6f2667ebf39fa5ff3cfdfb1df8d1c6237a1b"
+  },
+  "job_state": "COMPLETED 0:0; elapsed 00:04:44",
+  "bioai_deployed_sha256_verified": true
+}

@@ -260,4 +260,5 @@ def load_record_templates(
         )
         templates_list.append(templates)
         template_id += 1
-    return ProteinTemplate.concat(templates_list)
+    merged = ProteinTemplate.concat(templates_list)
+    return merged.padded(n_templates=max(n_templates, merged.slot_num))

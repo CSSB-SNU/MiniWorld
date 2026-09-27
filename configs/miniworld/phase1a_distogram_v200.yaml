@@ -1,0 +1,8 @@
+# MiniWorld v2 correctness consolidation; preserves v1.2 interface upweight policy.
+defaults:
+  - phase1a_distogram_v120
+  - _self_
+
+train:
+  comment: "v2.0.0-phase1a-distogram"
+  run_dir: "runs/v2.0.0/phase1a/large_distogram_L384"

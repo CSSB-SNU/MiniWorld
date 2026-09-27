@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "compile": true,
+  "rows": [
+    {
+      "step": 0,
+      "loss": 1.4826648235321045,
+      "fwd_bwd_ms": 786630.3125,
+      "gradient_tensors": 433,
+      "diffusion_loss": 1.4826648235321045,
+      "bin_rmse": 3.0126686096191406,
+      "sigma_mean": 3.0724053382873535
+    },
+    {
+      "step": 1,
+      "loss": 0.9714136123657227,
+      "fwd_bwd_ms": 130.591064453125,
+      "gradient_tensors": 433,
+      "diffusion_loss": 0.9714136123657227,
+      "bin_rmse": 12.115506172180176,
+      "sigma_mean": 22.628835678100586
+    },
+    {
+      "step": 2,
+      "loss": 0.9412641525268555,
+      "fwd_bwd_ms": 92.44608306884766,
+      "gradient_tensors": 433,
+      "diffusion_loss": 0.9412641525268555,
+      "bin_rmse": 11.941977500915527,
+      "sigma_mean": 22.603662490844727
+    }
+  ],
+  "peak_memory_bytes": 13620587520,
+  "sampling_passed": true,
+  "torch": "2.10.0+cu128",
+  "world_size": 4,
+  "rank": 1
+}

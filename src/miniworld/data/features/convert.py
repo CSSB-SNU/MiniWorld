@@ -8,6 +8,7 @@ import torch
 from jaxtyping import Int
 
 from miniworld.data.constants import CANONICAL_CHEMCOMPS, AtomMapping, EntityMapping
+from miniworld.data.reference import augment_reference, map_reference, parse_coordinates, resolve_reference
 from miniworld.data.pipeline.template import ProteinTemplate
 from miniworld.utils.structure import SE3_oper
 
@@ -133,16 +134,12 @@ def to_template_features(
 def to_reference_features(
     cifmol: CIFMolAttached,
     rng: np.random.Generator | None = None,
+    ccd_mols=None,
 ) -> ReferenceFeatures:
     """Convert CIFMol to ReferenceFeatures."""
     cropped_residue_len = len(cifmol.residues)
-    ref_pos = cifmol.atoms.model_xyz.value
-    ref_pos = np.array(ref_pos, dtype=object)
-
-    mask = (ref_pos == "?") | (ref_pos == ".")
-    ref_pos[mask] = 0.0
-    ref_pos = ref_pos.astype(np.float32, copy=False)
-    ref_mask = ~np.isnan(ref_pos).any(axis=1)
+    parsed = parse_coordinates(cifmol.atoms.model_xyz.value)
+    ref_pos, ref_mask = parsed.pos, parsed.mask
     ref_element = cifmol.atoms.element.value
     ref_charge = cifmol.atoms.charge.value
     ref_charge = np.array(
@@ -155,10 +152,26 @@ def to_reference_features(
 
     Rs, Ts = SE3_oper(cropped_residue_len, rng=rng)
     random_ref_pos = []
+    resolved_components = {}
     for ii, atom_indices in enumerate(res_to_atoms):
         R, T = Rs[ii], Ts[ii]
         _ref_pos = ref_pos[atom_indices]
-        _ref_pos = (_ref_pos - _ref_pos.mean(axis=0)) @ R + T  # random SE(3) operation
+        if ccd_mols is not None:
+            component = str(cifmol.residues.chem_comp_id.value[ii])
+            if component in ccd_mols:
+                # Level zero retains the complete CCD topology even after the
+                # training CIF has been cropped and terminal atoms removed.
+                if component not in resolved_components:
+                    full = ccd_mols[component][0]
+                    resolved_components[component] = (full, resolve_reference(full, component))
+                full, reference = resolved_components[component]
+                # Check the full component even when cropping removed every
+                # missing atom: inference regenerates that same full component.
+                if reference.source == "rdkit" or not ref_mask[atom_indices].all():
+                    resolved = map_reference(full, reference, cifmol.atoms.id.value[atom_indices])
+                    _ref_pos = resolved.pos
+                    ref_mask[atom_indices] = resolved.mask
+        _ref_pos = augment_reference(_ref_pos, ref_mask[atom_indices], R, T)
         random_ref_pos.append(_ref_pos)
     ref_pos = np.vstack(random_ref_pos)
     ref_element = AtomMapping().atom_to_index(ref_element)  # convert str to int
@@ -232,11 +245,12 @@ def to_structure_features(
         token_bond_feat[bj, bi] = True
 
     # Chemical pseudo-beta for canonical polymer tokens; one atom per noncanonical
-    # token. Missing designated atoms stay masked instead of changing the target.
+    # token. Store chemical identity independently of observed GT validity; losses
+    # intersect this with atom_pos_mask, inference uses atom_mask.
     atom_is_rep = _build_atom_is_rep(
         cifmol=cifmol,
         atom_to_token_idx_map=atom_to_token_idx_map,
-        atom_pos_mask=atom_pos_mask,
+        atom_pos_mask=atom_mask,
         n_tokens=cropped_token_len,
     )
 
@@ -255,7 +269,7 @@ def to_structure_features(
     token_frame_atoms, token_frame_mask = _build_token_frame_atoms(
         cifmol=cifmol,
         atom_to_token_idx_map=atom_to_token_idx_map,
-        atom_pos_mask=atom_pos_mask,
+        atom_pos_mask=atom_mask,
         n_tokens=cropped_token_len,
     )
 
@@ -579,6 +593,7 @@ def make_batch(
     atom_to_token_idx_map: np.ndarray,
     token_to_residue_idx_map: np.ndarray,
     rng: np.random.Generator | None = None,
+    ccd_mols=None,
 ) -> Batch:
     """Make features from cifmol and MSA."""
     if rng is None:
@@ -588,7 +603,7 @@ def make_batch(
 
     scheme = to_scheme_features(cifmol, token_to_residue_idx_map, atom_to_token_idx_map)
     sequence = SequenceFeatures(token_type=msa_token.aligned_sequences[:, 0])
-    reference = to_reference_features(cifmol, rng)
+    reference = to_reference_features(cifmol, rng, ccd_mols=ccd_mols)
     structure = to_structure_features(
         cifmol,
         atom_to_token_idx_map,

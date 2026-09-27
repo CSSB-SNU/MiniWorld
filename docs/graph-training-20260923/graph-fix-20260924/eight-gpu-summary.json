@@ -1,0 +1,122 @@
+[
+  {
+    "rank": "validation-rank0",
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 0.0008497375529259443,
+        "losses_exact": true
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 1.646084820094984e-05,
+        "losses_exact": true
+      }
+    ]
+  },
+  {
+    "rank": "validation-rank1",
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 0.0008497375529259443,
+        "losses_exact": true
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 1.646084820094984e-05,
+        "losses_exact": true
+      }
+    ]
+  },
+  {
+    "rank": "validation-rank2",
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 0.0008497375529259443,
+        "losses_exact": true
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 1.646084820094984e-05,
+        "losses_exact": true
+      }
+    ]
+  },
+  {
+    "rank": "validation-rank3",
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 0.0008497375529259443,
+        "losses_exact": true
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 1.646084820094984e-05,
+        "losses_exact": true
+      }
+    ]
+  },
+  {
+    "rank": "validation-rank4",
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 0.0008497375529259443,
+        "losses_exact": true
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 1.646084820094984e-05,
+        "losses_exact": true
+      }
+    ]
+  },
+  {
+    "rank": "validation-rank5",
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 0.0008497375529259443,
+        "losses_exact": true
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 1.646084820094984e-05,
+        "losses_exact": true
+      }
+    ]
+  },
+  {
+    "rank": "validation-rank6",
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 0.0008497375529259443,
+        "losses_exact": true
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 1.646084820094984e-05,
+        "losses_exact": true
+      }
+    ]
+  },
+  {
+    "rank": "validation-rank7",
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 0.0008497375529259443,
+        "losses_exact": true
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 1.646084820094984e-05,
+        "losses_exact": true
+      }
+    ]
+  }
+]

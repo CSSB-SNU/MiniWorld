@@ -481,11 +481,14 @@ class Client(BaseClient):
 
     def validation_step(self, batch: Batch) -> dict[str, float]:
         """Measure inference quality (best-of-N) on a single-item batch."""
-        if batch.shape[0] != 1:
-            msg = "Batch size for validation must be 1."
-            raise ValueError(msg)
-        batch = batch.duplicate(self.config.train.eval_sample_num)
-        output = self.inference(batch, timesteps=self.config.train.eval_timesteps)
+        if batch.shape[0] > 1:
+            # Native trunk kernels require B=1. Aggregate per-complex best-of-N.
+            values = [self.validation_step(batch[i]) for i in range(batch.shape[0])]
+            return {key: sum(v[key] for v in values) / len(values) for key in values[0]}
+        output = self.inference(
+            batch, timesteps=self.config.train.eval_timesteps,
+            n_samples=self.config.train.eval_sample_num,
+        )
         return self.test_inference_quality(batch, output)
 
     def training_epoch(self, dataloader: DataLoader) -> Generator[Any, None, None]:
@@ -538,20 +541,11 @@ class Client(BaseClient):
         from miniworld.loss import metrics
 
         batch = batch.to(device=self.device)
-        max_lddt, min_rmsd = 0.0, float("inf")
-        lddt = metrics.cal_atom_lddt(
-            output.atom_pos_pred[0],
-            batch.structure.atom_pos[0],
-            batch.structure.atom_pos_mask[0],  # resolved atoms only (not all-True atom_mask)
-        )
-        max_lddt = max(max_lddt, lddt)
-        rmsd = metrics.cal_aligned_rmsd(
-            output.atom_pos_pred[0],
-            batch.structure.atom_pos[0],
-            batch.structure.atom_pos_mask[0],  # resolved atoms only
-        )
-        min_rmsd = min(min_rmsd, rmsd)
-        return {"best_rmsd": min_rmsd, "best_lddt": max_lddt}
+        scores = [(
+            metrics.cal_aligned_rmsd(pred, batch.structure.atom_pos[0], batch.structure.atom_pos_mask[0]),
+            metrics.cal_atom_lddt(pred, batch.structure.atom_pos[0], batch.structure.atom_pos_mask[0]),
+        ) for pred in output.atom_pos_pred]
+        return {"best_rmsd": min(r for r, _ in scores), "best_lddt": max(lddt for _, lddt in scores)}
 
     @torch.no_grad()
     def inference(

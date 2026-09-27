@@ -1,0 +1,108 @@
+{
+  "single-base": {
+    "passed": false,
+    "stage": "after_optimizer",
+    "worst_gradients": [
+      [
+        "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+        0.02958673983812332
+      ],
+      [
+        "temp_embedder.proj_unit_vec.weight",
+        0.0014763246290385723
+      ],
+      [
+        "temp_embedder.proj_aatype_i.weight",
+        0.0012790769105777144
+      ]
+    ]
+  },
+  "single-workspace": {
+    "passed": true,
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 3.555747389327735e-05
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 5.291342404234456e-06
+      }
+    ]
+  },
+  "single-stream": {
+    "passed": true,
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 1.735257114887645e-06
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 3.698678938235389e-06
+      }
+    ]
+  },
+  "micro-base": {
+    "passed": false,
+    "stage": "after_optimizer",
+    "worst_gradients": [
+      [
+        "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+        0.05752507224678993
+      ],
+      [
+        "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.bias",
+        0.00932237133383751
+      ],
+      [
+        "msa_module.single_to_msa.weight",
+        0.0010074543533846736
+      ]
+    ]
+  },
+  "micro-no-autograd-threads": {
+    "passed": false,
+    "stage": "after_optimizer",
+    "worst_gradients": [
+      [
+        "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+        0.08733361214399338
+      ],
+      [
+        "msa_module.blocks.1.msa_pair_weighted_averaging.ln_pair.bias",
+        0.007913230918347836
+      ],
+      [
+        "msa_module.blocks.0.msa_pair_weighted_averaging.to_out.weight",
+        0.0009266471024602652
+      ]
+    ]
+  },
+  "micro-no-bf16-reduce": {
+    "passed": true,
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 1.8048135643766727e-06
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 5.931962277827552e-06
+      }
+    ]
+  },
+  "micro-deterministic": {
+    "passed": true,
+    "stages": [
+      {
+        "stage": "initial",
+        "max_gradient_relative_l2": 3.5595116059994325e-05
+      },
+      {
+        "stage": "after_optimizer",
+        "max_gradient_relative_l2": 1.2151973351137713e-05
+      }
+    ]
+  }
+}
