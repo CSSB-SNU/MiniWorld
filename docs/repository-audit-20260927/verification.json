@@ -1,0 +1,47 @@
+{
+  "python_ast_count": 48,
+  "python_ast_errors": [],
+  "gpu_tests_run": false,
+  "benchmarks_run": false,
+  "preserved_files_checked": 1102,
+  "preservation_mismatches": [],
+  "norm_manifest": {
+    "files": 12,
+    "mismatches": []
+  },
+  "triattn_checkpoint18246": {
+    "files": 48,
+    "mismatches": []
+  },
+  "diff_checks": [
+    {
+      "label": "miniworld",
+      "exit": 2,
+      "output": "docs/graph-training-20260923/graph-fix-20260924/engine-d64-buffer-barrier.patch:39: trailing whitespace.\n+ \ndocs/graph-training-20260923/graph-fix-20260924/engine-d64-buffer-barrier.patch:40: trailing whitespace.\n+ \n"
+    },
+    {
+      "label": "team-gm",
+      "exit": 2,
+      "output": "src/team_gm/modules/blocks/swa_cuda/gen/wgmma_bf16.inc:159: new blank line at EOF.\n"
+    },
+    {
+      "label": "engine-release",
+      "exit": 0,
+      "output": ""
+    }
+  ],
+  "note": "Existing code was organized without runtime changes; GPU results are historical evidence. File hashes compare against the pre-cleanup snapshot.",
+  "diff_check_interpretation": "Full diff-check found whitespace only in a preserved patch artifact (2 context lines) and a generated WGMMA include (blank final line). App code excluding patch artifacts and team-gm excluding generated .inc pass; engine release passes unchanged.",
+  "research_snapshot": {
+    "branch": "research/h100-experiments-20260927",
+    "file_count": 6664,
+    "missing_from_tree": []
+  },
+  "selected_trimul_snapshot_matches": {
+    "runs/trimul_d256_bwd_sol90_stage2_20260923/d256_pool_checkpoint.py": true,
+    "runs/trimul_d256_bwd_sol90_stage2_20260923/wide_checkpoint23.py": true,
+    "runs/trimul_d256_bwd_sol90_stage2_20260923/wide_checkpoint24.py": true,
+    "runs/trimul_d256_bwd_sol90_stage2_20260923/qualified_speedups.json": true
+  },
+  "canonical_engine_research_ref_matches": true
+}

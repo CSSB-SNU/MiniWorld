@@ -1,0 +1,292 @@
+{
+  "time_utc": "2026-09-27T01:08:05.045072Z",
+  "scope": "Explicit MiniWorld/engine worktrees, local dependencies, discovered research engine repositories, pinned external references",
+  "note": "Snapshot before the final audit-document commit. Main MiniWorld has only the pending report/README changes. All other project worktrees are clean. External Anthropic partial clone was checked for tracked changes only.",
+  "worktree_count": 28,
+  "git_repository_count": 11,
+  "worktrees": [
+    {
+      "path": "/home/psk6950/MiniWorld",
+      "common_dir": "/home/psk6950/MiniWorld/.git",
+      "head": "1f065f84da3389adfa885cb96cc3efafef8dd37d",
+      "branch": "integrate/miniworld-dev-20260927",
+      "status": "?? REPOSITORIES.md\n?? docs/repository-audit-20260927/",
+      "remote": "origin\tgit@github.com:CSSB-SNU/MiniWorld.git (fetch)\norigin\tgit@github.com:CSSB-SNU/MiniWorld.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld-engine-migration",
+      "common_dir": "/home/psk6950/MiniWorld/.git",
+      "head": "ece87165c4ebb40c361285c039e490b1ef61bf0c",
+      "branch": "archive/engine-migration-20260927",
+      "status": "",
+      "remote": "origin\tgit@github.com:CSSB-SNU/MiniWorld.git (fetch)\norigin\tgit@github.com:CSSB-SNU/MiniWorld.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld-old",
+      "common_dir": "/home/psk6950/MiniWorld/.git",
+      "head": "d3f79e2416e69dc829e92179f4898d6177ac6c86",
+      "branch": "archive/oldcode-repro-20260927",
+      "status": "",
+      "remote": "origin\tgit@github.com:CSSB-SNU/MiniWorld.git (fetch)\norigin\tgit@github.com:CSSB-SNU/MiniWorld.git (push)"
+    },
+    {
+      "path": "/home/psk6950/miniworld-engine",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "ce47f42bcba3df876b173323cea70a461d0b174f",
+      "branch": "archive/engine-old-main-20260927",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/.engine-release-2.0.0",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "017afd5b0c81f887928c89cc18cd106b87860acb",
+      "branch": "integrate/h100-dev-20260927",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/.engine-v2-proof",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "ecd9256405c87f27e8b55ada5735164a853910fc",
+      "branch": "archive/v2-proof-cache-20260927",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/ext/engine-main",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "091962652c7185484999c153df316cc8cfd9a774",
+      "branch": "",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/miniworld-engine-dit",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "e512d8c2eeb8e79266a9a48a9b1b88b841de709e",
+      "branch": "research/token-dit-fused",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/miniworld-engine-dit2",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "6ad576908b3a4b461145e3eacb8616399cfcb7c3",
+      "branch": "research/token-dit-overlap-evidence-20260927",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/miniworld-engine-k1k3",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "af7a98477188857deb7506d42d48fa0dc65a48ca",
+      "branch": "archive/trimul-k1k3-local-20260927",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/miniworld-engine-msa",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "b47de812e8a82bc7ca1204e8db7bbbb6ffd5d42c",
+      "branch": "research/msa-inference",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/miniworld-engine-tbwd",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "2254765abe9f7e9c8ab33a064cdac9a7cd22cdcc",
+      "branch": "archive/transition-workspace-20260927",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/miniworld-engine-tdt",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "fac86f90edbbd30c291ba65286d8d61c34d21e35",
+      "branch": "feat/token-dit-train-core",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/mwk-prefusion",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "403d382c4d9ef720d8ba9fc45f5fa5b1212de991",
+      "branch": "",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/tmp/claude-1019/-home-psk6950-MiniWorld/4b4d8989-664e-4f61-a593-8fd3e64e40f8/scratchpad/engine-main",
+      "common_dir": "/home/psk6950/miniworld-engine/.git",
+      "head": "091962652c7185484999c153df316cc8cfd9a774",
+      "branch": "",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/libs/team-gm",
+      "common_dir": "/home/psk6950/MiniWorld/.git/modules/libs/team-gm",
+      "head": "066ae8189562f2e9cf863a75ff1e6285f03a25b8",
+      "branch": "integrate/miniworld-dev-20260927",
+      "status": "",
+      "remote": "origin\tgit@github.com:CSSB-SNU/team-gm.git (fetch)\norigin\tgit@github.com:CSSB-SNU/team-gm.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/libs/structcooker",
+      "common_dir": "/home/psk6950/MiniWorld/.git/modules/libs/structcooker",
+      "head": "2b1543e50075f8d9081282e7b3529ca041d993a9",
+      "branch": "",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/StructCooker.git (fetch)\norigin\tgit@github.com:SanggeunParrk/StructCooker.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/libs/datacooker",
+      "common_dir": "/home/psk6950/MiniWorld/.git/modules/libs/datacooker",
+      "head": "3c215c81a64dfd5ab06c32cfa1b468aeaad044f9",
+      "branch": "MiniWorld",
+      "status": "",
+      "remote": "origin\tgit@github.com:CSSB-SNU/DataCooker.git (fetch)\norigin\tgit@github.com:CSSB-SNU/DataCooker.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/libs/foldbench",
+      "common_dir": "/home/psk6950/MiniWorld/.git/modules/libs/foldbench",
+      "head": "f5010fdd6f6c5a8455b8c076b990f62484e4e2be",
+      "branch": "integrate/miniworld-eval-20260927",
+      "status": "",
+      "remote": "origin\thttps://github.com/BEAM-Labs/FoldBench.git (fetch)\norigin\thttps://github.com/BEAM-Labs/FoldBench.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/libs/kmer_fast_align",
+      "common_dir": "/home/psk6950/MiniWorld/.git/modules/libs/kmer_fast_align",
+      "head": "af22949618d01f12a514bcb280271f1409f918d5",
+      "branch": "archive/local-build-20260927",
+      "status": "",
+      "remote": "origin\tgit@github.com:CSSB-SNU/KmerFastAlign.git (fetch)\norigin\tgit@github.com:CSSB-SNU/KmerFastAlign.git (push)"
+    },
+    {
+      "path": "/tmp/team-gm-exp-miniworld-publish",
+      "common_dir": "/home/psk6950/MiniWorld/.git/modules/libs/team-gm",
+      "head": "1ffa8b81201b0b953346cf844b9bc2eafcfe3b7a",
+      "branch": "archive/incomplete-publish-worktree-20260927",
+      "status": "",
+      "remote": "origin\tgit@github.com:CSSB-SNU/team-gm.git (fetch)\norigin\tgit@github.com:CSSB-SNU/team-gm.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_unidirectional_20260917/engine",
+      "common_dir": "/home/psk6950/MiniWorld/runs/engine_main_publish_20260917/.git",
+      "head": "b06857c09e874021a3cea8928eacf9b40f8e1816",
+      "branch": "perf/unidirectional-trimul-fusion",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/transition_triton_audit_20260917/engine",
+      "common_dir": "/home/psk6950/MiniWorld/runs/transition_triton_audit_20260917/engine/.git",
+      "head": "fbe2d6add1caa072f0a95dbf55ef7e63d9eb4e2a",
+      "branch": "perf/transition-triton-audit",
+      "status": "",
+      "remote": "origin\t/home/psk6950/MiniWorld/runs/trimul_unidirectional_20260917/engine (fetch)\norigin\t/home/psk6950/MiniWorld/runs/trimul_unidirectional_20260917/engine (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine",
+      "common_dir": "/home/psk6950/MiniWorld/runs/transition_triton_audit_20260917/engine/.git",
+      "head": "ecaac5b44dcf343ad577b8352e08318dbc9fac16",
+      "branch": "integrate/h100-research-runtime-20260927",
+      "status": "",
+      "remote": "origin\t/home/psk6950/MiniWorld/runs/trimul_unidirectional_20260917/engine (fetch)\norigin\t/home/psk6950/MiniWorld/runs/trimul_unidirectional_20260917/engine (push)",
+      "status_scope": "Full status clean; confirmed separately after refreshing the index."
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_sm90_15pct_20260917/baseline-engine",
+      "common_dir": "/home/psk6950/MiniWorld/runs/transition_triton_audit_20260917/engine/.git",
+      "head": "600c8c4c1f1549e0dae82b9ad82e66c0955f9f23",
+      "branch": "",
+      "status": "",
+      "remote": "origin\t/home/psk6950/MiniWorld/runs/trimul_unidirectional_20260917/engine (fetch)\norigin\t/home/psk6950/MiniWorld/runs/trimul_unidirectional_20260917/engine (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/engine_main_publish_20260917",
+      "common_dir": "/home/psk6950/MiniWorld/runs/engine_main_publish_20260917/.git",
+      "head": "4d28918d16730370b57762acb518a725daaaa6b9",
+      "branch": "integrate/local-engine-patches",
+      "status": "",
+      "remote": "origin\tgit@github.com:SanggeunParrk/miniworld-engine.git (fetch)\norigin\tgit@github.com:SanggeunParrk/miniworld-engine.git (push)"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/anthropic_adoption_20260919/upstream",
+      "common_dir": "/home/psk6950/MiniWorld/runs/anthropic_adoption_20260919/upstream/.git",
+      "head": "f4f62fa6592ae4938d49b1757bea0cfeff9f468e",
+      "branch": "",
+      "status": "",
+      "remote": "origin\thttps://github.com/anthropics/uplifting-biomolecular-modeling.git (fetch) [blob:none]\norigin\thttps://github.com/anthropics/uplifting-biomolecular-modeling.git (push)",
+      "status_scope": "Tracked files only: clean. Full status tries to fetch missing promisor objects; omitted for this external partial clone."
+    },
+    {
+      "path": "/home/psk6950/miniworld-engine/third_party/ct_cutlass_workbench/cutlass",
+      "common_dir": "/home/psk6950/miniworld-engine/third_party/ct_cutlass_workbench/cutlass/.git",
+      "head": "bf9da7b76c766d7ee7d536afc77880a4ef1f1156",
+      "branch": "",
+      "status": "",
+      "remote": "origin\thttps://github.com/NVIDIA/cutlass (fetch)\norigin\thttps://github.com/NVIDIA/cutlass (push)"
+    }
+  ],
+  "repositories": {
+    "/home/psk6950/MiniWorld/.git": {
+      "representative": "/home/psk6950/MiniWorld",
+      "refs": "archive/engine-migration-20260927|ece87165c4ebb40c361285c039e490b1ef61bf0c||\narchive/oldcode-repro-20260927|d3f79e2416e69dc829e92179f4898d6177ac6c86||\narchive/pre-cleanup-20260927/miniworld|27b0abe6db44b1210c29f24bb720b7e3fc9ce13b||\narchive/pre-cleanup-20260927/mw-engine-migration|bfe80f8fb353ae098a897285e45dfc6ff089c80b||\narchive/pre-cleanup-20260927/mw-old-repro|85f13de872019170d0227763e33ab4d7862a950e||\ndocs/h100-graph-validation-20260924|5b4357a181399d27c12cecdd2534ebf47870253b||\nfeat/distogram-diffusion-v1.3|efca47f5c974e0034ecaa79875dbcc9c4b5ad225||\nfix/v2-data-loss-consistency|15ccef06ff69e6f338495040e1dea2e5a92a85b6||\nintegrate/miniworld-dev-20260927|1f065f84da3389adfa885cb96cc3efafef8dd37d||\nmain|27b0abe6db44b1210c29f24bb720b7e3fc9ce13b|origin/main|[ahead 2]\nresearch/h100-experiments-20260927|df0d94b51d7de0e57210d29dde43e29192b0f164||\nresearch/swa-atom-fusion|20ea6ca6c764d333f9ff40e035db3ba2eeab1a8b||",
+      "registered_worktrees": "worktree /home/psk6950/MiniWorld\nHEAD 1f065f84da3389adfa885cb96cc3efafef8dd37d\nbranch refs/heads/integrate/miniworld-dev-20260927\n\nworktree /home/psk6950/MiniWorld-engine-migration\nHEAD ece87165c4ebb40c361285c039e490b1ef61bf0c\nbranch refs/heads/archive/engine-migration-20260927\n\nworktree /home/psk6950/MiniWorld-old\nHEAD d3f79e2416e69dc829e92179f4898d6177ac6c86\nbranch refs/heads/archive/oldcode-repro-20260927"
+    },
+    "/home/psk6950/miniworld-engine/.git": {
+      "representative": "/home/psk6950/miniworld-engine",
+      "refs": "archive/engine-h100-cache-20260927|f0014282684d8e9495b03033dd59a7a4f77c0e53||\narchive/engine-old-main-20260927|ce47f42bcba3df876b173323cea70a461d0b174f||\narchive/engine-wheel-fix-20260927|61294df387ccdcbc2fd7b5052dbf997458c24f8b||\narchive/h100-legacy-runtime-20260927|9b980af88a648f9e3325210c7555330c76eea628||\narchive/pre-cleanup-20260927/engine-dit2|516b62c21e86198ba39a16c338de0c0670de4fae||\narchive/pre-cleanup-20260927/engine-k1k3|37d61f816645f61564ddedda375bbf97cee31ec8||\narchive/pre-cleanup-20260927/engine-old-main|b4c3f6c34ea54d1f4053c68a9424a8193c617c4c||\narchive/pre-cleanup-20260927/engine-release|55304541ff28dbc914137d80ef6929f689ae1d9d||\narchive/pre-cleanup-20260927/engine-tbwd|971992df6950a77c7db11c9f6ded4234e8d34627||\narchive/pre-cleanup-20260927/engine-v2-proof|3e81f15cbae1dedb3b180626881665c38f791cfb||\narchive/transition-tuning-20260927|bb6045527db25a0f083dfe5a3e657b4ee1a65ce1||\narchive/transition-workspace-20260927|2254765abe9f7e9c8ab33a064cdac9a7cd22cdcc||\narchive/trimul-k1k3-local-20260927|af7a98477188857deb7506d42d48fa0dc65a48ca||\narchive/v2-proof-cache-20260927|ecd9256405c87f27e8b55ada5735164a853910fc||\nfeat/autotune-cache-builder|25743ad8178e35b820d3c4b096653261b76e29cc||\nfeat/cute-autotune-sweep|eebedbbc066b4a2b5484755399c84cf29d954776||\nfeat/token-dit-train-core|fac86f90edbbd30c291ba65286d8d61c34d21e35|origin/main|[ahead 2]\nfix/transition-d64-input-barrier|0043b98037be7e3e6fb36e595b962f6bb4bdddf8||\nintegrate/h100-dev-20260927|017afd5b0c81f887928c89cc18cd106b87860acb||\nintegrate/h100-research-runtime-20260927|ecaac5b44dcf343ad577b8352e08318dbc9fac16||\nmain|b4c3f6c34ea54d1f4053c68a9424a8193c617c4c|origin/main|[behind 145]\nperf/triton-norm-h100|c26be24503ba413cae9f0228085b297f183d9a2d||\nrelease/2.0.0|55304541ff28dbc914137d80ef6929f689ae1d9d|origin/main|[ahead 1, behind 2]\nresearch/msa-inference|b47de812e8a82bc7ca1204e8db7bbbb6ffd5d42c||\nresearch/native-norm-h100|a96ea5f7bcdd6a5f955c4d9fceec1c58dad9b51a||\nresearch/token-dit-fused|e512d8c2eeb8e79266a9a48a9b1b88b841de709e||\nresearch/token-dit-overlap|516b62c21e86198ba39a16c338de0c0670de4fae||\nresearch/token-dit-overlap-evidence-20260927|6ad576908b3a4b461145e3eacb8616399cfcb7c3||\nresearch/transition-backward-fused|971992df6950a77c7db11c9f6ded4234e8d34627|origin/main|[behind 24]\nresearch/transition-local-20260927|9d49491b5a89aec03ed57c4c506dd139777c4ace||\nresearch/triattn-installed-20260927|aa054b12d43e26d8b9abc0dd04e187b529f8aee6||\nresearch/trimul-k1k3-inference|37d61f816645f61564ddedda375bbf97cee31ec8|origin/main|[behind 39]\nresearch/trimul-local-20260927|cf697a1719fc5f04f1714ad2f2876b6fe460e67b||\ntmp/autotune-bucket-cap-512|73458b542500c5b103eefbc5b16c29bc45dbfd4a|origin/tmp/autotune-bucket-cap-512|[gone]",
+      "registered_worktrees": "worktree /home/psk6950/miniworld-engine\nHEAD ce47f42bcba3df876b173323cea70a461d0b174f\nbranch refs/heads/archive/engine-old-main-20260927\n\nworktree /home/psk6950/MiniWorld/.engine-release-2.0.0\nHEAD 017afd5b0c81f887928c89cc18cd106b87860acb\nbranch refs/heads/integrate/h100-dev-20260927\n\nworktree /home/psk6950/MiniWorld/.engine-v2-proof\nHEAD ecd9256405c87f27e8b55ada5735164a853910fc\nbranch refs/heads/archive/v2-proof-cache-20260927\n\nworktree /home/psk6950/ext/engine-main\nHEAD 091962652c7185484999c153df316cc8cfd9a774\ndetached\n\nworktree /home/psk6950/miniworld-engine-dit\nHEAD e512d8c2eeb8e79266a9a48a9b1b88b841de709e\nbranch refs/heads/research/token-dit-fused\n\nworktree /home/psk6950/miniworld-engine-dit2\nHEAD 6ad576908b3a4b461145e3eacb8616399cfcb7c3\nbranch refs/heads/research/token-dit-overlap-evidence-20260927\n\nworktree /home/psk6950/miniworld-engine-k1k3\nHEAD af7a98477188857deb7506d42d48fa0dc65a48ca\nbranch refs/heads/archive/trimul-k1k3-local-20260927\n\nworktree /home/psk6950/miniworld-engine-msa\nHEAD b47de812e8a82bc7ca1204e8db7bbbb6ffd5d42c\nbranch refs/heads/research/msa-inference\n\nworktree /home/psk6950/miniworld-engine-tbwd\nHEAD 2254765abe9f7e9c8ab33a064cdac9a7cd22cdcc\nbranch refs/heads/archive/transition-workspace-20260927\n\nworktree /home/psk6950/miniworld-engine-tdt\nHEAD fac86f90edbbd30c291ba65286d8d61c34d21e35\nbranch refs/heads/feat/token-dit-train-core\n\nworktree /home/psk6950/mwk-prefusion\nHEAD 403d382c4d9ef720d8ba9fc45f5fa5b1212de991\ndetached\n\nworktree /tmp/claude-1019/-home-psk6950-MiniWorld/4b4d8989-664e-4f61-a593-8fd3e64e40f8/scratchpad/engine-main\nHEAD 091962652c7185484999c153df316cc8cfd9a774\ndetached"
+    },
+    "/home/psk6950/MiniWorld/.git/modules/libs/team-gm": {
+      "representative": "/home/psk6950/MiniWorld/libs/team-gm",
+      "refs": "BioMol|0d464536aebb3c203baf1229665e6c222ef97fa4|origin/BioMol|[gone]\narchive/incomplete-publish-worktree-20260927|1ffa8b81201b0b953346cf844b9bc2eafcfe3b7a||\narchive/pre-cleanup-20260927/team-gm|ba3c07f4909cfac369bf456d16614fe5a304902f||\narchive/pre-cleanup-20260927/team-gm-incomplete-publish|aaf9356ccb8286bfb6d94b749c9269bc638f3bd0||\nexp/af3-refactor|a8891f56ec9d80073d2edede5c2990fdac6b1f64|origin/exp/af3-refactor|[gone]\nexp/miniworld|ba3c07f4909cfac369bf456d16614fe5a304902f|origin/exp/miniworld|[ahead 6]\nfeat/miniworld-engine-wiring-20260915|5d3f4a5b44c77bcc67958561ebd780773a95b001||\nfix/diffusion-valid-atom-loss|c9f5a51dca653217fbfb4a5801fbdec8f8d59935||\nintegrate/miniworld-dev-20260927|066ae8189562f2e9cf863a75ff1e6285f03a25b8||\nintegrate/miniworld-engine-wiring|aaf9356ccb8286bfb6d94b749c9269bc638f3bd0|origin/exp/miniworld|[behind 8]\nmain|735d476ab2aa510355c4270a231c1ad04941efa9|origin/main|[behind 62]\npsk_add_BioMol|dbe63e3a02a606155e202e9abf13029e8ba56092|origin/psk_add_BioMol|[gone]\nresearch/swa-fused-h100|14f2c7396cbcd8b3c7b427a024a4a592b75f7c4d||",
+      "registered_worktrees": "worktree /home/psk6950/MiniWorld/.git/modules/libs/team-gm\nHEAD 066ae8189562f2e9cf863a75ff1e6285f03a25b8\nbranch refs/heads/integrate/miniworld-dev-20260927\n\nworktree /tmp/team-gm-exp-miniworld-publish\nHEAD 1ffa8b81201b0b953346cf844b9bc2eafcfe3b7a\nbranch refs/heads/archive/incomplete-publish-worktree-20260927"
+    },
+    "/home/psk6950/MiniWorld/.git/modules/libs/structcooker": {
+      "representative": "/home/psk6950/MiniWorld/libs/structcooker",
+      "refs": "main|2b1543e50075f8d9081282e7b3529ca041d993a9|origin/main|",
+      "registered_worktrees": "worktree /home/psk6950/MiniWorld/.git/modules/libs/structcooker\nHEAD 2b1543e50075f8d9081282e7b3529ca041d993a9\ndetached"
+    },
+    "/home/psk6950/MiniWorld/.git/modules/libs/datacooker": {
+      "representative": "/home/psk6950/MiniWorld/libs/datacooker",
+      "refs": "MiniWorld|3c215c81a64dfd5ab06c32cfa1b468aeaad044f9||\nmain|1186cd6fa0c59779869b3a76c958c8503940ef5c|origin/main|[behind 30]",
+      "registered_worktrees": "worktree /home/psk6950/MiniWorld/.git/modules/libs/datacooker\nHEAD 3c215c81a64dfd5ab06c32cfa1b468aeaad044f9\nbranch refs/heads/MiniWorld"
+    },
+    "/home/psk6950/MiniWorld/.git/modules/libs/foldbench": {
+      "representative": "/home/psk6950/MiniWorld/libs/foldbench",
+      "refs": "archive/local-target-selection-20260927|ce463f50af018d98a030b16b4210ab6de3335807||\narchive/pre-cleanup-20260927/foldbench|90a6033fed4fcb74d4f1304e932fd93b52d48a6c||\nfeat/miniworld-evaluation|af25c944b9ddeb36f3548d3e680483df8d5d9fa3||\nintegrate/miniworld-eval-20260927|f5010fdd6f6c5a8455b8c076b990f62484e4e2be||\nmain|90a6033fed4fcb74d4f1304e932fd93b52d48a6c|origin/main|",
+      "registered_worktrees": "worktree /home/psk6950/MiniWorld/.git/modules/libs/foldbench\nHEAD f5010fdd6f6c5a8455b8c076b990f62484e4e2be\nbranch refs/heads/integrate/miniworld-eval-20260927"
+    },
+    "/home/psk6950/MiniWorld/.git/modules/libs/kmer_fast_align": {
+      "representative": "/home/psk6950/MiniWorld/libs/kmer_fast_align",
+      "refs": "archive/local-build-20260927|af22949618d01f12a514bcb280271f1409f918d5||\narchive/pre-cleanup-20260927/kmer-local-build|72a5cd922a649eebd551e920f6beeedd39694e18||\nmain|72a5cd922a649eebd551e920f6beeedd39694e18|origin/main|",
+      "registered_worktrees": "worktree /home/psk6950/MiniWorld/.git/modules/libs/kmer_fast_align\nHEAD af22949618d01f12a514bcb280271f1409f918d5\nbranch refs/heads/archive/local-build-20260927"
+    },
+    "/home/psk6950/MiniWorld/runs/engine_main_publish_20260917/.git": {
+      "representative": "/home/psk6950/MiniWorld/runs/trimul_unidirectional_20260917/engine",
+      "refs": "integrate/local-engine-patches|4d28918d16730370b57762acb518a725daaaa6b9||\nmain|b4c3f6c34ea54d1f4053c68a9424a8193c617c4c|origin/main|[behind 88]\nperf/unidirectional-trimul-fusion|b06857c09e874021a3cea8928eacf9b40f8e1816||",
+      "registered_worktrees": "worktree /home/psk6950/MiniWorld/runs/engine_main_publish_20260917\nHEAD 4d28918d16730370b57762acb518a725daaaa6b9\nbranch refs/heads/integrate/local-engine-patches\n\nworktree /home/psk6950/MiniWorld/runs/trimul_unidirectional_20260917/engine\nHEAD b06857c09e874021a3cea8928eacf9b40f8e1816\nbranch refs/heads/perf/unidirectional-trimul-fusion"
+    },
+    "/home/psk6950/MiniWorld/runs/transition_triton_audit_20260917/engine/.git": {
+      "representative": "/home/psk6950/MiniWorld/runs/transition_triton_audit_20260917/engine",
+      "refs": "archive/h100-legacy-runtime-20260927|9b980af88a648f9e3325210c7555330c76eea628||\narchive/pre-cleanup-20260927/engine-triattn-installed|59bdb335064caee8ec75bafe3bbafa655955a7b8||\nintegrate/h100-research-runtime-20260927|ecaac5b44dcf343ad577b8352e08318dbc9fac16||\nperf/transition-triton-audit|fbe2d6add1caa072f0a95dbf55ef7e63d9eb4e2a||\nperf/trimul-sm90-parity|59bdb335064caee8ec75bafe3bbafa655955a7b8||\nperf/unidirectional-trimul-fusion|b06857c09e874021a3cea8928eacf9b40f8e1816|origin/perf/unidirectional-trimul-fusion|\nresearch/triattn-installed-20260927|aa054b12d43e26d8b9abc0dd04e187b529f8aee6||",
+      "registered_worktrees": "worktree /home/psk6950/MiniWorld/runs/transition_triton_audit_20260917/engine\nHEAD fbe2d6add1caa072f0a95dbf55ef7e63d9eb4e2a\nbranch refs/heads/perf/transition-triton-audit\n\nworktree /home/psk6950/MiniWorld/runs/trimul_sm90_15pct_20260917/baseline-engine\nHEAD 600c8c4c1f1549e0dae82b9ad82e66c0955f9f23\ndetached\n\nworktree /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine\nHEAD ecaac5b44dcf343ad577b8352e08318dbc9fac16\nbranch refs/heads/integrate/h100-research-runtime-20260927"
+    },
+    "/home/psk6950/MiniWorld/runs/anthropic_adoption_20260919/upstream/.git": {
+      "representative": "/home/psk6950/MiniWorld/runs/anthropic_adoption_20260919/upstream",
+      "refs": "main|f4f62fa6592ae4938d49b1757bea0cfeff9f468e|origin/main|",
+      "registered_worktrees": "worktree /home/psk6950/MiniWorld/runs/anthropic_adoption_20260919/upstream\nHEAD f4f62fa6592ae4938d49b1757bea0cfeff9f468e\ndetached"
+    },
+    "/home/psk6950/miniworld-engine/third_party/ct_cutlass_workbench/cutlass/.git": {
+      "representative": "/home/psk6950/miniworld-engine/third_party/ct_cutlass_workbench/cutlass",
+      "refs": "",
+      "registered_worktrees": "worktree /home/psk6950/miniworld-engine/third_party/ct_cutlass_workbench/cutlass\nHEAD bf9da7b76c766d7ee7d536afc77880a4ef1f1156\ndetached"
+    }
+  }
+}

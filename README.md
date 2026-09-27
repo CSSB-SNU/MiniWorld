@@ -1,5 +1,7 @@
 # MiniWorld
 
+[Repository map, development branches, kernel status, and transfer checklist (2026-09-27)](REPOSITORIES.md).
+
 ## Training pipeline
 
 v1.1 work: [distogram fixes and interchain weighting](docs/v1.1-distogram.md),
@@ -13,14 +15,15 @@ configuration names, crop sizes, checkpoint handoffs, and version variants.
 
 ## Engine setup
 
-**Kernel development direction (2026-09-19):** We developed our own inference
-kernels, but recognize Anthropic's biomolecular inference optimization results
-as substantially stronger than our effort. We are building on that work and
-extending it with high-performance training support in miniworld-engine.
-See [the acknowledgment and development direction](tmp_kernel/KERNEL_PROGRESS.md#개발-방향-전환--anthropic의-추론-최적화를-계승).
+**Kernel development (2026-09-27):** Our H100 inference and training kernels are
+developed in miniworld-engine. The [repository map](REPOSITORIES.md) identifies
+the current development worktrees, installed research runtime, and remaining
+validation work. Upstream attribution and the earlier development direction are
+recorded in [the historical kernel report](tmp_kernel/KERNEL_PROGRESS.md#개발-방향-전환--anthropic의-추론-최적화를-계승).
 
 [Anthropic inference integration and H100 profiling results](tmp_kernel/ANTHROPIC_INFERENCE.md)
-cover the first shared-kernel campaign; training development is deferred.
+cover the first shared-kernel campaign. These historical records predate the
+current training kernels.
 The [interactive HTML dashboard](tmp_kernel/ANTHROPIC_STATUS.html) shows wiring, timings,
 NCU bottlenecks, and remaining integration work.
 
