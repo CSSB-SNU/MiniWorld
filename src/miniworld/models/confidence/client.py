@@ -95,6 +95,7 @@ class Client(DiffusionClient):
         plddt_loss: float = 1.0
         pde_loss: float = 1.0
         pae_loss: float = 0.0
+        align_symmetry_targets: bool = True
 
     class Config(BaseModel):
         """Configuration for the phase 3 client."""
@@ -193,36 +194,41 @@ class Client(DiffusionClient):
         cfg = self.config.model.confidence
 
         with torch.no_grad():
+            gt_pos = structure.atom_pos
+            if self.config.loss.align_symmetry_targets:
+                from miniworld.loss.symmetry import align_confidence_targets
+                gt_pos, atom_pos_mask = align_confidence_targets(batch, x_pred)
             # Representative positions (predicted + ground truth).
             if atom_is_rep is None:
                 msg = "structure.atom_is_rep is required for PDE/PAE targets."
                 raise ValueError(msg)
             pred_rep_pos, tok_valid = conf.representative_positions(
-                x_pred, atom_pos_mask, atom_to_token, atom_is_rep, token_num,
+                x_pred, atom_mask.bool(), atom_to_token, atom_is_rep, token_num,
             )
-            gt_rep_pos, _ = conf.representative_positions(
-                structure.atom_pos, atom_pos_mask, atom_to_token, atom_is_rep, token_num,
+            gt_rep_pos, gt_tok_valid = conf.representative_positions(
+                gt_pos, atom_pos_mask, atom_to_token, atom_is_rep, token_num,
             )
             pred_rep_dist = conf.pred_rep_distance(
                 pred_rep_pos, tok_valid, cfg.dist_min, cfg.dist_max,
             )
+            tok_valid = tok_valid & gt_tok_valid
             # Per-atom molecule-type masks (AF3 §4.3.1): entity_type ints
             # RNA=3, DNA=4, NA=5, LIGAND=6, BRANCHED=7 -> gather chain->atom.
             et = batch.chain.entity_type  # [B, L_chain]
             a2c = scheme.atom_to_chain_id  # [B, L_atom]
             atom_is_nuc = torch.gather(
                 ((et == 3) | (et == 4) | (et == 5)), 1, a2c,
-            )[0]  # [L_atom]
+            )  # [B, L_atom]
             atom_is_ligand = torch.gather(
                 ((et == 6) | (et == 7)), 1, a2c,
-            )[0]  # [L_atom]
+            )  # [B, L_atom]
             # pLDDT (per-atom lDDT vs GT): NA neighbors 30 Å, ligand polymer-only.
             lddt, atom_valid = conf.per_atom_lddt(
-                x_pred, structure.atom_pos[0], atom_mask[0],
+                x_pred, gt_pos, atom_pos_mask,
                 atom_is_nuc=atom_is_nuc, atom_is_ligand=atom_is_ligand,
             )
             plddt_bins = conf.plddt_target_bins(lddt, cfg.n_plddt_bins)
-            plddt_mask = atom_valid.unsqueeze(0).expand(n, -1)
+            plddt_mask = atom_valid.expand(n, -1)
             # PDE (representative distance error).
             pde_bins, pde_mask = conf.pde_target_bins(
                 pred_rep_pos, gt_rep_pos, tok_valid, cfg.n_pde_bins, cfg.pde_max,
@@ -234,14 +240,19 @@ class Client(DiffusionClient):
             tfm = structure.token_frame_mask
             pae = None
             if self.config.loss.pae_loss > 0 and tfa is not None and tfm is not None:
-                fa = tfa[0].clamp(min=0).reshape(-1)  # [L*3] atom indices
-
                 def _gather_frame(pos: torch.Tensor) -> torch.Tensor:
                     # pos [M, L_atom, 3] -> frame atoms [M, L, 3, 3]
-                    return pos[:, fa, :].reshape(pos.shape[0], token_num, 3, 3)
+                    fa = tfa.clamp(min=0).reshape(tfa.shape[0], -1)
+                    index = fa.expand(pos.shape[0], -1)[..., None].expand(-1, -1, 3)
+                    return torch.gather(pos, 1, index).reshape(pos.shape[0], token_num, 3, 3)
 
-                pred_frame = conf.token_frames(_gather_frame(x_pred), tfm[0])
-                gt_frame = conf.token_frames(_gather_frame(structure.atom_pos), tfm[0])
+                pred_frame = conf.token_frames(_gather_frame(x_pred), tfm)
+                frame_observed = torch.gather(
+                    atom_pos_mask, 1, tfa.clamp(min=0).reshape(tfa.shape[0], -1),
+                ).reshape(tfa.shape[0], token_num, 3).all(dim=-1)
+                gt_frame = conf.token_frames(
+                    _gather_frame(gt_pos), tfm & frame_observed,
+                )
                 pae = conf.pae_target_bins(
                     pred_rep_pos, gt_rep_pos, tok_valid,
                     pred_frame, gt_frame, cfg.n_pae_bins, cfg.pae_max,
@@ -319,7 +330,7 @@ class Client(DiffusionClient):
             msg = "structure.atom_is_rep is required for confidence inference."
             raise ValueError(msg)
         rep_pos, tok_valid = conf.representative_positions(
-            x_pred, structure.atom_pos_mask.bool(), atom_to_token,
+            x_pred, structure.atom_mask.bool(), atom_to_token,
             structure.atom_is_rep, int(token_mask.shape[1]),
         )
         cfg = raw_model.config.confidence
@@ -338,10 +349,10 @@ class Client(DiffusionClient):
         )
 
     def validation_step(self, batch: Batch) -> dict[str, float]:
-        """Confidence loss on a single-item validation batch."""
-        if batch.shape[0] != 1:
-            msg = "Batch size for validation must be 1."
-            raise ValueError(msg)
+        """Confidence loss, processing each complex through the B=1 trunk."""
+        if batch.shape[0] > 1:
+            values = [self.validation_step(batch[i]) for i in range(batch.shape[0])]
+            return {key: sum(v[key] for v in values) / len(values) for key in values[0]}
         x_pred, token_single_input, token_pair = self.predict_structure(batch)
         logits, targets, masks = self._confidence_targets_and_logits(
             batch, x_pred, token_single_input, token_pair,

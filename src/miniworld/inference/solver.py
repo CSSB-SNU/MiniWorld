@@ -131,11 +131,8 @@ def sample_trajectory(
     else:
         y = torch.randn((n_samples, n_atoms, 3), device=device) * sigma_0
 
-    atom_pos_mask = cache.batch.structure.atom_pos_mask.bool()
-    mask_for_solver = atom_pos_mask if atom_pos_mask.shape[0] == n_samples else atom_pos_mask
-    # The existing solver passes ``batch.structure.atom_pos_mask.bool()`` as the
-    # weighted-align mask; (1, L_atom) broadcasts to (n_samples, L_atom) in
-    # ``_prepare_weight``. No special handling needed.
+    # Existence mask: inference has no observed ground-truth coordinates.
+    mask_for_solver = cache.batch.structure.atom_mask.bool()
 
     chain_num = _chain_count(atom_to_combine)
     sigma_data = scheduler.config.sigma_data

@@ -1,0 +1,11 @@
+# Development config: see docs/v2-correctness.md for symmetry limits.
+defaults:
+  - phase3b_confidence
+  - _self_
+
+train:
+  comment: "v2.0.0-phase3b-confidence"
+  run_dir: "runs/v2.0.0/phase3b/large_confidence"
+
+loss:
+  align_symmetry_targets: true

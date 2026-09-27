@@ -10,7 +10,7 @@ backbone masks), projects each feature (+ the query pair) to ``num_channels``, r
 pair-only Pairformer per template, LayerNorms, then AVERAGES over the valid templates,
 applies ReLU, and projects back to ``d_pair``.
 
-Template signal is restricted to intra-chain token pairs via a multichain mask
+Template geometry is restricted to intra-chain token pairs via a multichain mask
 (AF3 ``multichain_mask_2d``). All shapes are static (no variable-length scatter), so the
 whole module is CUDA-graph capturable.
 """
@@ -182,18 +182,18 @@ class AF3TemplateEmbedder(nn.Module):
             # nan_to_num keeps everything finite; per-residue validity is still carried by
             # the pb/bb mask features, and whole-template validity by the ``mask`` multiply.
             cb = torch.nan_to_num(template.cb_xyz[:, t])  # [B, L, 3]
-            cb_mask = template.cb_mask[:, t]  # [B, L]
+            cb_mask = template.cb_mask[:, t] & template.mask[:, t, None]  # [B, L]
             res_type = template.res_type[:, t].clamp(0, self.num_res_class - 1)
             bb = torch.nan_to_num(template.bb_xyz[:, t])  # [B, L, 3, 3]
-            bb_mask = template.bb_mask[:, t]  # [B, L]
+            bb_mask = template.bb_mask[:, t] & template.mask[:, t, None]  # [B, L]
 
             dgram = _dgram_from_positions(
                 cb, self._dgram_lower, self._dgram_upper,
             ).to(dtype)
-            pb2d = (cb_mask[:, :, None] & cb_mask[:, None, :]).to(dtype)[..., None]
+            pb2d = (cb_mask[:, :, None] & cb_mask[:, None, :]).to(dtype)[..., None] * multichain
             aatype = F.one_hot(res_type, self.num_res_class).to(dtype)  # [B, L, C_res]
             unit_vec = _backbone_unit_vectors(bb).to(dtype)  # [B, L, L, 3]
-            bb2d = (bb_mask[:, :, None] & bb_mask[:, None, :]).to(dtype)[..., None]
+            bb2d = (bb_mask[:, :, None] & bb_mask[:, None, :]).to(dtype)[..., None] * multichain
 
             act = (
                 query
@@ -208,7 +208,6 @@ class AF3TemplateEmbedder(nn.Module):
                 + self.proj_unit_vec(unit_vec * bb2d)
                 + self.proj_bb_mask(bb2d)
             )
-            act = act * multichain
             act = self.template_pairformer(act, mask=token_mask)  # B=1 -> miniworld
             act = self.ln_out(act)
             # AF3 averages over a FIXED template count (every padded slot contributes the
@@ -221,4 +220,5 @@ class AF3TemplateEmbedder(nn.Module):
 
         n_temp_div = template.mask.shape[1]
         avg = summed / (1e-7 + n_temp_div)
-        return self.proj_out(F.relu(avg))
+        present = template.mask.any(dim=1)[:, None, None, None]
+        return self.proj_out(F.relu(avg)) * present

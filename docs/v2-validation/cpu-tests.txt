@@ -1,0 +1,17 @@
+.................................                                        [100%]
+=============================== warnings summary ===============================
+.pixi/envs/cu128/lib/python3.10/site-packages/torchmetrics/utilities/imports.py:24
+.pixi/envs/cu128/lib/python3.10/site-packages/torchmetrics/utilities/imports.py:24
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torchmetrics/utilities/imports.py:24: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+    _PYTHON_LOWER_3_8 = LooseVersion(_PYTHON_VERSION) < LooseVersion("3.8")
+
+tests/test_v2_correctness.py::test_best_of_n_uses_second_sample
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/cuda/__init__.py:1007: UserWarning: Can't initialize NVML
+    raw_cnt = _raw_device_count_nvml()
+
+tests/test_v2_correctness.py: 14 warnings
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+33 passed, 17 warnings in 5.98s

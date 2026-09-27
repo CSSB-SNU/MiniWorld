@@ -59,14 +59,14 @@ def representative_positions(
 # ---------------------------------------------------------------------------
 def per_atom_lddt(
     pred_atom_pos: Float[torch.Tensor, "N L_atom 3"],
-    gt_atom_pos: Float[torch.Tensor, "L_atom 3"],
-    atom_mask: Bool[torch.Tensor, "L_atom"],
-    atom_is_nuc: Bool[torch.Tensor, "L_atom"] | None = None,
-    atom_is_ligand: Bool[torch.Tensor, "L_atom"] | None = None,
+    gt_atom_pos: torch.Tensor,
+    atom_mask: torch.Tensor,
+    atom_is_nuc: torch.Tensor | None = None,
+    atom_is_ligand: torch.Tensor | None = None,
     max_distance: float = 15.0,
     nuc_max_distance: float = 30.0,
     distance_bins: tuple[float, ...] = (0.5, 1.0, 2.0, 4.0),
-) -> tuple[Float[torch.Tensor, "N L_atom"], Bool[torch.Tensor, "L_atom"]]:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """Per-atom lDDT in [0, 1] and the per-atom validity mask (>=1 valid neighbor).
 
     AF3 §4.3.1 neighbor rules:
@@ -75,6 +75,7 @@ def per_atom_lddt(
       * for a **ligand** atom i, only ligand-polymer contacts count — intra-ligand
         (ligand-ligand) neighbor pairs are excluded (``atom_is_ligand``).
     Both extra masks are optional; omitting them recovers the flat-15 Å all-atom lDDT.
+    GT and masks may be unbatched or batch-specific; validity follows GT batch axes.
     O(L_atom**2) like :func:`metrics.cal_atom_lddt`; call under ``no_grad`` on a crop.
     """
     device = pred_atom_pos.device
@@ -83,27 +84,27 @@ def per_atom_lddt(
     mask = atom_mask.to(device=device, dtype=torch.bool)
 
     pred_dist = torch.cdist(pred, pred)                # [N, L, L]
-    gt_dist = torch.cdist(gt[None], gt[None])[0]       # [L, L]
+    gt_dist = torch.cdist(gt, gt)  # [L, L] or [B, L, L]
 
-    pair_mask = mask[:, None] & mask[None, :]
+    pair_mask = mask[..., :, None] & mask[..., None, :]
     pair_mask = pair_mask & (gt_dist > 0.0)
     # Per-neighbor (column j) inclusion radius: 30 Å for NA neighbors, else 15 Å.
     if atom_is_nuc is not None:
         is_nuc = atom_is_nuc.to(device=device, dtype=torch.bool)
         radius_j = torch.where(is_nuc, gt_dist.new_tensor(nuc_max_distance),
                                gt_dist.new_tensor(max_distance))  # [L]
-        pair_mask = pair_mask & (gt_dist < radius_j[None, :])
+        pair_mask = pair_mask & (gt_dist < radius_j[..., None, :])
     else:
         pair_mask = pair_mask & (gt_dist < max_distance)
     # Ligand atom i: keep only polymer neighbors (drop ligand-ligand pairs).
     if atom_is_ligand is not None:
         is_lig = atom_is_ligand.to(device=device, dtype=torch.bool)
-        pair_mask = pair_mask & ~(is_lig[:, None] & is_lig[None, :])
+        pair_mask = pair_mask & ~(is_lig[..., :, None] & is_lig[..., None, :])
 
     delta = torch.abs(pred_dist - gt_dist)             # [N, L, L]
     bins = torch.tensor(distance_bins, dtype=torch.float32, device=device)
     cond = (delta.unsqueeze(-1) <= bins) & pair_mask.unsqueeze(-1)  # [N, L, L, K]
-    num_in_bin = cond.sum(dim=2)                        # [N, L, K]
+    num_in_bin = cond.sum(dim=-2)                       # [N, L, K]
     total = pair_mask.sum(dim=-1, keepdim=True).float() # [L, 1]
     frac = num_in_bin.float() / (total + 1e-8)          # [N, L, K]
     lddt = frac.mean(dim=-1)                            # [N, L]
@@ -158,7 +159,7 @@ def pred_rep_distance(
 # ---------------------------------------------------------------------------
 def token_frames(
     frame_atom_pos: Float[torch.Tensor, "N L 3 3"],
-    frame_valid: Bool[torch.Tensor, "L"],
+    frame_valid: torch.Tensor,
     colinear_cos: float = 0.9063,  # cos(25 deg): AF3 near-colinear invalidity
 ) -> tuple[Float[torch.Tensor, "N L 3 3"], Float[torch.Tensor, "N L 3"], Bool[torch.Tensor, "N L"]]:
     """Build per-token rigid frames (R, t) from three atoms (Gram-Schmidt).
@@ -181,7 +182,7 @@ def token_frames(
     e3 = torch.cross(e1, e2, dim=-1)
     rot = torch.stack([e1, e2, e3], dim=-1)  # [N, L, 3, 3] columns = basis
     colinear = (e1 * v2n).sum(-1).abs() > colinear_cos  # [N, L]
-    valid = frame_valid.to(dtype=torch.bool)[None, :] & ~colinear
+    valid = frame_valid.to(dtype=torch.bool) & ~colinear
     return rot, a1, valid
 
 
