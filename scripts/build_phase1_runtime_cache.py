@@ -1,4 +1,9 @@
-"""Supplement the engine matrix with MiniWorld's actual mixed-dtype training path.
+"""Historical Phase-1 cache reproduction, predating the engine v2.1 policy.
+
+This deliberately retains the old Triton-only global search and three-GPU
+L128/384/768 workload. For current development use `miniworld-engine build all`
+or `miniworld-engine build all --mode train`; see REPOSITORIES.md. Do not use
+this historical experiment as the default v2.1 cache builder.
 
 Run after build all, against an isolated engine package. Three independent GPU
 workers build L128/384/768. Only the parent merges caches; fresh processes then

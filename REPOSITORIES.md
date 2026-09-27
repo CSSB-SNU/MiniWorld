@@ -15,16 +15,50 @@ main에 포함된 로컬 브랜치 63개와 원격 브랜치 7개를 삭제했�
 | miniworld-engine | `/home/psk6950/miniworld-engine` | `main` |
 | team-gm | `MiniWorld/libs/team-gm` | `main` |
 
-`MiniWorld/.engine-release-2.0.0`은 engine main과 같은 커밋의 호환용 detached worktree다.
+`MiniWorld/.engine-release-2.0.0`은 이전 engine `3026c6bc`를 보존한 호환용 detached worktree다.
+현재 v2.1 main과는 다르며, 과거 성능 기준을 보존한다.
 기존 harness의 경로를 유지하기 위해 남겼다. 새 engine 수정은 canonical main에서 한다.
 삭제 대상 브랜치를 사용하던 과거 worktree 10개는 HEAD와 index를 유지한 채
 detached HEAD로 전환했다. 파일은 그대로이며, 최신 실행 코드는 위 경로를 기준으로 한다.
 
-MiniWorld와 team-gm의 engine pin은 모두 `3026c6bcd55bf535b73a0645fd4258b41c3cb547`이다.
-`pixi.lock`과 `uv.lock`도 engine 2.0.0 및 같은 SHA로 맞췄다. engine의 의존성과 extras는
+MiniWorld와 team-gm의 engine pin은 모두 `afd54410a0bf59a204b6ca00af38909a684cf50f`이다.
+`pixi.lock`과 `uv.lock`도 engine 2.1.0 및 같은 SHA로 맞췄다. engine의 의존성과 extras는
 이전 pin과 동일함을 비교했고 다른 패키지 버전은 바꾸지 않았다.
 `.gitmodules`의 team-gm 추적 브랜치는 main이며, 실제 재현 기준은 커밋된 gitlink다.
 현재 설치된 Pixi 환경은 재설치하지 않았다. 소스/pin 정리와 설치 환경 갱신은 별개다.
+
+## v2.1.0 튜닝 정책
+
+engine의 유지보수 소스는 canonical main 하나에서 개발한다. 기본 cache build는 실제
+module dispatch를 따르며 CUDA 경로가 선택되면 쓰이지 않는 Triton 대안을 강제 탐색하지 않는다.
+112개 Triton 커널은 커널당 최대 32개, 총 2,981개의 기본 후보를 사용한다. 전역 공간,
+smem 예측 및 기존 측정값의 유효성 검사는 유지한다. 학습 token 길이는 384/768,
+추론의 기존 shape 공간은 유지한다. atom과 MPNN edge 길이는 별개다.
+
+CUDA도 config space가 있다. 기존 native 튜너에 더해 packaged TriMul 추론의 K1/K3와
+fused Transition D128의 CTA/DW replica 탐색을 연결했다. 모든 연구 CUDA 커널의 추론
+공간이 통합 튜너로 덮였다는 뜻은 아니다. 고정/manual schedule은 별도로 명시했다.
+
+```sh
+miniworld-engine build all
+miniworld-engine build all --mode train
+miniworld-engine build all --backend native --mode eval
+miniworld-engine build all grid --include-alternatives --gpus all
+```
+
+`build trunk/diffusion/mpnn`은 기존 per-op 진단 경로다. 기본 production 정책은 `build all`
+또는 module 이름을 사용한다. config 기본 공간과 backend 대안 포함 여부는 독립된 선택이다.
+대규모 반복 학습/추론에는 특히 backward 중간 텐서의 메모리 왕복을 줄이는 GPU별 fused
+CUDA 구현을 권장한다. GPU마다 유리한 fusion이 달라 전체 F+B 측정으로 결정한다.
+
+CPU 전체 job 19676: 3,967 passed / 16 failed / 279 skipped, GPU 1,002 deselected.
+후속 검사로 새 실패 2개를 해결했다. v2.1 관련 164 passed (job 19680), registry 69 passed와
+부모 설치 계약 4 passed (job 19681). 전체 재실행 결과로 합산하지 않는다.
+남은 실패는 기존 13개와 v2.1 GPU release-manifest gate다. 새 GPU 성능·graph·sanitizer 검증,
+모든 CUDA 계열의 추론 tuning coverage는 아직이다. v2.1 release tag는 만들지 않았다.
+
+상세 정책과 검증: engine `docs/releases/2.1.0.md`, `2.1.0-cpu-validation.json`.
+현재 설치 환경은 바꾸지 않았으며 source pin과 실행 환경 버전을 혼동하지 않는다.
 
 ## main에 들어간 내용
 
@@ -48,7 +82,7 @@ DiT 실험 runner는 최신 `runner.py`와 이전 `runner_multistream.py`를 함
 [초기 보존 작업의 전체 작업본 표](docs/repository-audit-20260927/BRANCHES.md) ·
 [초기 커밋별 파일](docs/repository-audit-20260927/commits.json)
 
-## 검증 결과와 남은 문제
+## v2.1 변경 전 통합 검증 기록
 
 GPU를 요청하거나 사용하지 않았다. CPU 검사는 node02에 `--gres=none`으로 할당했다.
 
