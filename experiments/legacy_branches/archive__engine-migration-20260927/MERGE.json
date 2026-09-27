@@ -1,0 +1,15 @@
+{
+  "ref": "archive/engine-migration-20260927",
+  "tip": "ece87165c4ebb40c361285c039e490b1ef61bf0c",
+  "merge_base": "bfe80f8fb353ae098a897285e45dfc6ff089c80b",
+  "current": "70b4b5b8b2a785a402966bc7d2eb2c499fb45d39",
+  "reason": "Superseded implementation or machine-specific cache. Preserve branch contents and ancestry without rolling back the current APIs or validated fixes.",
+  "files": [
+    {
+      "status": "M",
+      "path": "pixi.lock",
+      "sha256": "23d1906930bc442ec9e0b2173d53743ce5c3d23177235db233362836648bddc8",
+      "resolution": "historical file preserved here; current implementation retained"
+    }
+  ]
+}
