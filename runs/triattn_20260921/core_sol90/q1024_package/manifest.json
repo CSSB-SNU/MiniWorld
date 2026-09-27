@@ -1,0 +1,19 @@
+{
+  "torch": "2.10.0+cu128",
+  "python_abi": "cpython-310",
+  "arch": "sm_90a",
+  "sha256": {
+    "__init__.py": "474bf5b05a25e06f00942a9259ea1317004b0c6e5e6783eb983556008f1adfb1",
+    "build_source.py": "4eaa872bf9c6642989dcfe72cd78596296bfaa08ba4ca30b5b7aeb399a2e584b",
+    "build_native.py": "fca4584a838adabf99e647e71a4df35c0519eefa8a279a81ef3ae30375197fa5",
+    "triattn_broadcast.so": "9365a4f35e018afed4adba21590ae2c1734bbccf98d1e53904ebfe2537b3e225",
+    "csrc/fa3_utils.h": "776172706a741081ba0a32058ca6d0ce94bea976a5689d0965b162eaf7f5d9cc",
+    "csrc/launch.cuh": "a92a67355e2cfe74db776e62c02feb26d50aaef20d20c54687b373256afdbb7a",
+    "csrc/m1/launch_m1.cuh": "cd59d322b197177e91c0bca474be30f150dc441b8b9844c2b872af191d79c42a",
+    "csrc/m1/m1_binding.cu": "73c21a04ce6d5a1116b789ebdfd79dd9a1f80c65fac4516dbbb49ef7adc51778",
+    "csrc/m1/triattn_m1_sm90.cuh": "2b2fbfb49777dd1665e817e0760baf5e210ec228bf6d1779b29074590891d526",
+    "csrc/prep.cu": "08d73f555e26c10720d7680b094266b8ed77105f0004684c4138f05337058367",
+    "csrc/triattn_b_binding.cu": "13a10745c7ede491ff60603cf98143ee8a51a236a4bfaa31984a1f4aea2b8d5c",
+    "csrc/triattn_b_sm90.cuh": "c7fcb6c1bb85769a33583feb0557386456a0b90e9f954a50ddbfe2859a9bc33b"
+  }
+}

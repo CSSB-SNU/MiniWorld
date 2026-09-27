@@ -1,0 +1,194 @@
+========= COMPUTE-SANITIZER
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:1480: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+CUBIN k3 3 2 False -1 /home/psk6950/MiniWorld/runs/trimul_ln_policy_v4_20260921/build/b3c1096fe2fe452f29026c432a25af246c72a76047d1c572fe0d889793369cc3.cubin ['0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 168 registers, used 1 barriers']
+BUILD f3774ba75371a399345d43d751c6cba9fb7af482cf54760b6b211612476da7f7.cubin /home/psk6950/MiniWorld/runs/trimul_ln_policy_v4_20260921/b1_fused.cu(243): warning #177-D: variable "x" was declared but never referenced
+    uint8_t* x=sm+16384+slot*49152;
+             ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 14.464 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 243 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 402.045 ms
+
+CUBIN /home/psk6950/MiniWorld/runs/trimul_split_bwd_20260921/build/d7ca96f26d834736e71bad92539274f8f63fcfd779b719e9b4eac2cc25d4cfdd.cubin {'SPLIT_ROLE': 1, 'USE_SAVED_XN': 1, 'DW_SPLITS': 16, 'PIPE_CONSUMERS': 1, 'DX_CTAS': 132, 'DW_PROD_REGS': 32, 'DW_CONS_REGS': 224, 'UCOUNT': 256, 'DX_RESIDENT': 1, 'WGRAD_SLICES': 2} ['0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 128 registers, used 16 barriers, 1024 bytes smem']
+CUBIN /home/psk6950/MiniWorld/runs/trimul_split_bwd_20260921/build/ecb1769c4aaeceab620cdad111f444c14ded5f403fff44d60b4cb4c68fb63549.cubin {'SPLIT_ROLE': 2, 'USE_SAVED_XN': 1, 'DW_SPLITS': 16, 'PIPE_CONSUMERS': 1, 'DX_CTAS': 132, 'DW_PROD_REGS': 32, 'DW_CONS_REGS': 224, 'UCOUNT': 132, 'DX_RESIDENT': 1, 'WGRAD_SLICES': 2} ['0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 180 registers, used 16 barriers, 2048 bytes smem']
+BUILD e574c64d4a08d4330c8505c37c1774460068663c3fab3d685c1c6261dfa12236.cubin /home/psk6950/MiniWorld/runs/trimul_b1_tri_opt_20260921/b1_fused.cu(264): warning #177-D: variable "x" was declared but never referenced
+    uint8_t* x=sm+16384+slot*49152;
+             ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 14.766 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 241 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 403.216 ms
+
+BUILD f4d1f6151b583dfe7c09ee7b87c86f5c22371f7a3fd8a86c4c14895ddd878f7f.cubin /home/psk6950/MiniWorld/runs/trimul_b1_sol90_selected_20260921/b1_fused.cu(281): warning #177-D: variable "x" was declared but never referenced
+    uint8_t* x=sm+16384+slot*49152;
+             ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/psk6950/MiniWorld/runs/trimul_b1_sol90_selected_20260921/b1_fused.cu(261): warning #177-D: variable "wi" was declared but never referenced
+   int wi=threadIdx.x/128,round=0,mi=0;
+       ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 14.144 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 255 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 513.850 ms
+
+BUILD 54de4760aa0004ffe7de64850f3deb2522212965e39c7a1b549eabcfb22a1753.cubin /home/psk6950/MiniWorld/runs/trimul_b1_epilogue_fixed_20260921/lowreg_stats.inc(89): warning #177-D: variable "dba0" was declared but never referenced
+      float dga=daa*xaa+dba*xba,dgb=dab*xab+dbb*xbb,dba0=daa+dba,dbb0=dab+dbb;
+                                                    ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/psk6950/MiniWorld/runs/trimul_b1_epilogue_fixed_20260921/lowreg_stats.inc(89): warning #177-D: variable "dbb0" was declared but never referenced
+      float dga=daa*xaa+dba*xba,dgb=dab*xab+dbb*xbb,dba0=daa+dba,dbb0=dab+dbb;
+                                                                 ^
+
+/home/psk6950/MiniWorld/runs/trimul_b1_epilogue_fixed_20260921/lowreg_stats.inc(75): warning #177-D: variable "tmp" was declared but never referenced
+   float* tmp=reinterpret_cast<float*>(sm+216064);
+          ^
+
+/home/psk6950/MiniWorld/runs/trimul_b1_epilogue_fixed_20260921/b1_fused.cu(296): warning #177-D: variable "x" was declared but never referenced
+    uint8_t* x=sm+16384+slot*49152;
+             ^
+
+/home/psk6950/MiniWorld/runs/trimul_b1_epilogue_fixed_20260921/b1_fused.cu(276): warning #177-D: variable "wi" was declared but never referenced
+   int wi=threadIdx.x/128,round=0,mi=0;
+       ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 14.382 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 253 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 382.286 ms
+
+BUILD 75299e244ed5730591e448f60a920df87720bfde0f0d7dbc137476f6ea6213bc.cubin /home/psk6950/MiniWorld/runs/trimul_b1_wait_folding_20260921/lowreg_stats.inc(106): warning #177-D: variable "dba0" was declared but never referenced
+      float dga=daa*xaa+dba*xba,dgb=dab*xab+dbb*xbb,dba0=daa+dba,dbb0=dab+dbb;
+                                                    ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/psk6950/MiniWorld/runs/trimul_b1_wait_folding_20260921/lowreg_stats.inc(106): warning #177-D: variable "dbb0" was declared but never referenced
+      float dga=daa*xaa+dba*xba,dgb=dab*xab+dbb*xbb,dba0=daa+dba,dbb0=dab+dbb;
+                                                                 ^
+
+/home/psk6950/MiniWorld/runs/trimul_b1_wait_folding_20260921/lowreg_stats.inc(92): warning #177-D: variable "tmp" was declared but never referenced
+   float* tmp=reinterpret_cast<float*>(sm+216064);
+          ^
+
+/home/psk6950/MiniWorld/runs/trimul_b1_wait_folding_20260921/b1_fused.cu(311): warning #177-D: variable "x" was declared but never referenced
+    uint8_t* x=sm+16384+slot*49152;
+             ^
+
+/home/psk6950/MiniWorld/runs/trimul_b1_wait_folding_20260921/b1_fused.cu(291): warning #177-D: variable "wi" was declared but never referenced
+   int wi=threadIdx.x/128,round=0,mi=0;
+       ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 14.466 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 253 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 383.798 ms
+
+BUILD 53d2f7d052b10d559a2a8671170afb2df8850e3844a64169bad1c7550004b356.cubin /home/psk6950/MiniWorld/runs/trimul_b1_gate_demote_20260922/lowreg_stats.inc(106): warning #177-D: variable "dba0" was declared but never referenced
+      float dga=daa*xaa+dba*xba,dgb=dab*xab+dbb*xbb,dba0=daa+dba,dbb0=dab+dbb;
+                                                    ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/psk6950/MiniWorld/runs/trimul_b1_gate_demote_20260922/lowreg_stats.inc(106): warning #177-D: variable "dbb0" was declared but never referenced
+      float dga=daa*xaa+dba*xba,dgb=dab*xab+dbb*xbb,dba0=daa+dba,dbb0=dab+dbb;
+                                                                 ^
+
+/home/psk6950/MiniWorld/runs/trimul_b1_gate_demote_20260922/lowreg_stats.inc(92): warning #177-D: variable "tmp" was declared but never referenced
+   float* tmp=reinterpret_cast<float*>(sm+216064);
+          ^
+
+/home/psk6950/MiniWorld/runs/trimul_b1_gate_demote_20260922/b1_fused.cu(338): warning #177-D: variable "x" was declared but never referenced
+    uint8_t* x=sm+16384+slot*49152;
+             ^
+
+/home/psk6950/MiniWorld/runs/trimul_b1_gate_demote_20260922/b1_fused.cu(318): warning #177-D: variable "wi" was declared but never referenced
+   int wi=threadIdx.x/128,round=0,mi=0;
+       ^
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 14.204 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 254 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 380.770 ms
+
+CUBIN /home/psk6950/MiniWorld/runs/trimul_ln_gradient_20260922/fixed/build/5242c0dacfd9f18fb6f13babfe6272952ffc5e24dfefd3dfdd91c89449e84a3b.cubin riable "WDX" was declared but never referenced
+  constexpr int SG=0,LN=0,XN=32768,WGATE=49152,WDX=0,SRC_SG=16384,SRC_XN=32768;
+                                               ^
+
+/home/psk6950/MiniWorld/runs/trimul_ln_gradient_20260922/fixed/joint.cu(22): warning #177-D: variable "SRC_SG" was declared but never referenced
+  constexpr int SG=0,LN=0,XN=32768,WGATE=49152,WDX=0,SRC_SG=16384,SRC_XN=32768;
+                                                     ^
+
+/home/psk6950/MiniWorld/runs/trimul_ln_gradient_20260922/fixed/joint.cu(22): warning #177-D: variable "SRC_XN" was declared but never referenced
+  constexpr int SG=0,LN=0,XN=32768,WGATE=49152,WDX=0,SRC_SG=16384,SRC_XN=32768;
+                                                                  ^
+
+ptxas info    : (C7519) warpgroup.arrive is injected in around line 3800 by compiler to allow use of registers in GMMA in function 'b7_joint'
+ptxas info    : (C7519) warpgroup.arrive is injected in around line 3123 by compiler to allow use of registers in GMMA in function 'b7_joint'
+ptxas info    : (C7519) warpgroup.arrive is injected in around line 3202 by compiler to allow use of registers in GMMA in function 'b7_joint'
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b7_joint' for 'sm_90a'
+ptxas info    : Function properties for b7_joint
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 370.102 ms
+
+CLUSTER_OCCUPANCY (<CUresult.CUDA_SUCCESS: 0>, 132) REQUESTED 260
+SANITIZER_CUBIN /home/psk6950/MiniWorld/runs/trimul_ln_gradient_20260922/fixed/build/5242c0dacfd9f18fb6f13babfe6272952ffc5e24dfefd3dfdd91c89449e84a3b.cubin f3ede2345e8c7bc907473d5e2662eac00c3e0204b3cf66062ab8f01770386c61
+PASS same-cubin repeat / poison / flag reset
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

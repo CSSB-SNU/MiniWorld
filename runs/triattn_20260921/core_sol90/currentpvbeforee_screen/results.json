@@ -1,0 +1,306 @@
+{
+  "ptx_sha256": "578e198c349035c3e1174a8a37a93ed197e7b8ea201050a6e75fd0682c5391bf",
+  "scope": "Offline compiler comparison, no runtime result",
+  "variants": [
+    {
+      "name": "ru5",
+      "options": [
+        "--register-usage-level=5"
+      ],
+      "machine_words": 7104,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    },
+    {
+      "name": "ru0",
+      "options": [
+        "--register-usage-level=0"
+      ],
+      "machine_words": 7568,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    },
+    {
+      "name": "ru1",
+      "options": [
+        "--register-usage-level=1"
+      ],
+      "machine_words": 7568,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    },
+    {
+      "name": "ru2",
+      "options": [
+        "--register-usage-level=2"
+      ],
+      "machine_words": 7568,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    },
+    {
+      "name": "ru3",
+      "options": [
+        "--register-usage-level=3"
+      ],
+      "machine_words": 7568,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    },
+    {
+      "name": "ru4",
+      "options": [
+        "--register-usage-level=4"
+      ],
+      "machine_words": 7104,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    },
+    {
+      "name": "ru6",
+      "options": [
+        "--register-usage-level=6"
+      ],
+      "machine_words": 7104,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    },
+    {
+      "name": "ru7",
+      "options": [
+        "--register-usage-level=7"
+      ],
+      "machine_words": 7104,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    },
+    {
+      "name": "ru8",
+      "options": [
+        "--register-usage-level=8"
+      ],
+      "machine_words": 7104,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    },
+    {
+      "name": "ru9",
+      "options": [
+        "--register-usage-level=9"
+      ],
+      "machine_words": 7104,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    },
+    {
+      "name": "ru10",
+      "options": [
+        "--register-usage-level=10"
+      ],
+      "machine_words": 7104,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    },
+    {
+      "name": "noexp",
+      "options": [
+        "--allow-expensive-optimizations=false"
+      ],
+      "machine_words": 7104,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 78,
+        "WARPGROUP.DEPBAR": 78,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 40
+      }
+    }
+  ]
+}

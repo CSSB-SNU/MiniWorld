@@ -1,0 +1,1927 @@
+{
+  "scope": "Explicit inference experiment; no production or training promotion",
+  "previous_selection": {
+    "384": "h4kv_local1",
+    "768": "hot6t",
+    "1024": "hot4t"
+  },
+  "pilots": [
+    {
+      "artifact": "pipeend32_c4",
+      "job": 19031,
+      "build": {
+        "module": "triattn_infer_pipeend32_c4",
+        "binary": "build/triattn_infer_pipeend32_c4.so",
+        "smem": 198656,
+        "sha256": {
+          "fused.cu": "0b1f3865217c40d32e9adff482124e336a66c136a204d1b183716f684ea1dca2",
+          "build/triattn_infer_pipeend32_c4.so": "a619d94f1471c186f4f665184e6a433b22357d9b6010cc82c2987970ebf19b61"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-pipeend32_c4-384-19031.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 310.2757294972738,
+          "candidate_us": 400.6426652272542,
+          "speedup": 0.7747172432033673,
+          "time_reduction_percent": -29.079352340876554
+        },
+        {
+          "source": "anthropic-pipeend32_c4-384-19031.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 312.0437463124593,
+          "candidate_us": 405.01812299092614,
+          "speedup": 0.7708606693026733,
+          "time_reduction_percent": -29.725129303147348
+        },
+        {
+          "source": "anthropic-pipeend32_c4-768-19031.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1583.9674631754558,
+          "candidate_us": 1969.3631490071616,
+          "speedup": 0.8042880068901522,
+          "time_reduction_percent": -24.333570988654273
+        },
+        {
+          "source": "anthropic-pipeend32_c4-768-19031.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1589.3263498942058,
+          "candidate_us": 1949.1093317667644,
+          "speedup": 0.8118209031537426,
+          "time_reduction_percent": -23.179878236101548
+        },
+        {
+          "source": "anthropic-pipeend32_c4-1024-19031.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3298.8250732421875,
+          "candidate_us": 4100.68384806315,
+          "speedup": 0.8058743410575082,
+          "time_reduction_percent": -24.088824901379844
+        },
+        {
+          "source": "anthropic-pipeend32_c4-1024-19031.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3306.1840057373047,
+          "candidate_us": 4119.53010559082,
+          "speedup": 0.8037629900629399,
+          "time_reduction_percent": -24.414785498109758
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/pipeend32_c4/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z25qkv_attention_n32_endwaitILi1024ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:100 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n32_endwaitILi768ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:100 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n32_endwaitILi384ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:100 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n32_endwaitILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:100 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n32_endwaitILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:102 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": []
+    },
+    {
+      "artifact": "pipeend64_c2",
+      "job": 19032,
+      "build": {
+        "module": "triattn_infer_pipeend64_c2",
+        "binary": "build/triattn_infer_pipeend64_c2.so",
+        "smem": 182272,
+        "sha256": {
+          "fused.cu": "806675ba811d3e264a3ae3398c34e2af57612950b15edae6da84819ebf339d9b",
+          "build/triattn_infer_pipeend64_c2.so": "2a2b76af8023e6a996e1aa58f28983ca1836b99a10b3004df51031cd4195d927"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-pipeend64_c2-384-19032.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 310.92054049173987,
+          "candidate_us": 428.03947130839026,
+          "speedup": 0.7257504249876954,
+          "time_reduction_percent": -37.788413973984845
+        },
+        {
+          "source": "anthropic-pipeend64_c2-384-19032.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 311.24000549316406,
+          "candidate_us": 430.47572771708167,
+          "speedup": 0.7227476223486327,
+          "time_reduction_percent": -38.36088408709131
+        },
+        {
+          "source": "anthropic-pipeend64_c2-768-19032.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1583.4095637003581,
+          "candidate_us": 2288.7029012044272,
+          "speedup": 0.6911740779980295,
+          "time_reduction_percent": -44.68135189567264
+        },
+        {
+          "source": "anthropic-pipeend64_c2-768-19032.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1587.9135767618814,
+          "candidate_us": 2285.841623942057,
+          "speedup": 0.6942985401186322,
+          "time_reduction_percent": -44.03026107892056
+        },
+        {
+          "source": "anthropic-pipeend64_c2-1024-19032.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3266.356786092122,
+          "candidate_us": 4617.887115478516,
+          "speedup": 0.7073193776415874,
+          "time_reduction_percent": -41.37884972617274
+        },
+        {
+          "source": "anthropic-pipeend64_c2-1024-19032.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3285.266621907552,
+          "candidate_us": 4633.712514241537,
+          "speedup": 0.7089359270157216,
+          "time_reduction_percent": -41.05647095775182
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/pipeend64_c2/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z25qkv_attention_n64_endwaitILi1024ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:138 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n64_endwaitILi768ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:138 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n64_endwaitILi384ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:138 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n64_endwaitILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:138 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n64_endwaitILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:138 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": []
+    },
+    {
+      "artifact": "pipeend64_c4",
+      "job": 19032,
+      "build": {
+        "module": "triattn_infer_pipeend64_c4",
+        "binary": "build/triattn_infer_pipeend64_c4.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "673bb92d722456097aadf65b15d523a539f5961794d58305c9416b2ac19fa300",
+          "build/triattn_infer_pipeend64_c4.so": "224e1178375fe068019ae956437d7b38ffb72d6ff56d112795b281b1e9ab8dfb"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-pipeend64_c4-384-19032.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 311.36852900187176,
+          "candidate_us": 383.8112036387125,
+          "speedup": 0.8112710444693535,
+          "time_reduction_percent": -23.263366394901077
+        },
+        {
+          "source": "anthropic-pipeend64_c4-384-19032.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 311.4933331807455,
+          "candidate_us": 384.7018559773763,
+          "speedup": 0.8096332241853892,
+          "time_reduction_percent": -23.51271787371967
+        },
+        {
+          "source": "anthropic-pipeend64_c4-768-19032.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1585.2944056193032,
+          "candidate_us": 1842.8608576456706,
+          "speedup": 0.8603426381544623,
+          "time_reduction_percent": -16.232760722532525
+        },
+        {
+          "source": "anthropic-pipeend64_c4-768-19032.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1590.6436920166016,
+          "candidate_us": 1834.6827189127603,
+          "speedup": 0.8664729732934724,
+          "time_reduction_percent": -15.410408728501945
+        },
+        {
+          "source": "anthropic-pipeend64_c4-1024-19032.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3299.229939778646,
+          "candidate_us": 3780.4112752278643,
+          "speedup": 0.8730311066439431,
+          "time_reduction_percent": -14.54345582761003
+        },
+        {
+          "source": "anthropic-pipeend64_c4-1024-19032.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3309.9205017089844,
+          "candidate_us": 3792.4410502115884,
+          "speedup": 0.8734594315570603,
+          "time_reduction_percent": -14.487286286137401
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/pipeend64_c4/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z25qkv_attention_n64_endwaitILi1024ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:8 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n64_endwaitILi768ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:8 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n64_endwaitILi384ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:8 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n64_endwaitILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:138 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_n64_endwaitILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:138 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": []
+    },
+    {
+      "artifact": "n40_hot4t",
+      "job": 19062,
+      "build": {
+        "module": "triattn_infer_n40_hot4t",
+        "binary": "build/triattn_infer_n40_hot4t.so",
+        "smem": 232448,
+        "sha256": {
+          "fused.cu": "e44995685559c3edc01a22855b598c5c8dcb97e711c8e6dbb8f57aa74bb53328",
+          "build/triattn_infer_n40_hot4t.so": "004683675dc63960086cce9c659784150df7dc5049415e0378b107cb8bb1d87a"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-n40_hot4t-384-19062.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 310.2186679840088,
+          "candidate_us": 340.41387240091956,
+          "speedup": 0.9114422782528533,
+          "time_reduction_percent": -9.716218334407678
+        },
+        {
+          "source": "anthropic-n40_hot4t-384-19062.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 312.10133234659827,
+          "candidate_us": 343.65919431050617,
+          "speedup": 0.9082584458319545,
+          "time_reduction_percent": -10.100820376518627
+        },
+        {
+          "source": "anthropic-n40_hot4t-768-19062.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1584.2725118001304,
+          "candidate_us": 1627.1717071533203,
+          "speedup": 0.9737167448593531,
+          "time_reduction_percent": -2.699271146296578
+        },
+        {
+          "source": "anthropic-n40_hot4t-768-19062.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1587.8154754638672,
+          "candidate_us": 1616.813850402832,
+          "speedup": 0.9809291706393823,
+          "time_reduction_percent": -1.9441596734438127
+        },
+        {
+          "source": "anthropic-n40_hot4t-1024-19062.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3304.1882832845054,
+          "candidate_us": 3318.8996632893877,
+          "speedup": 0.9973109476458655,
+          "time_reduction_percent": -0.2696302853670618
+        },
+        {
+          "source": "anthropic-n40_hot4t-1024-19062.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3323.200480143229,
+          "candidate_us": 3345.9279378255205,
+          "speedup": 0.9946913061016751,
+          "time_reduction_percent": -0.5337026538545286
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/n40_hot4t/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z23qkv_attention_fused_n40ILi1024ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z23qkv_attention_fused_n40ILi768ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z23qkv_attention_fused_n40ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:112 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z23qkv_attention_fused_n40ILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z23qkv_attention_fused_n40ILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": []
+    },
+    {
+      "artifact": "n40_hot6t",
+      "job": 19062,
+      "build": {
+        "module": "triattn_infer_n40_hot6t",
+        "binary": "build/triattn_infer_n40_hot6t.so",
+        "smem": 232448,
+        "sha256": {
+          "fused.cu": "5d5b3a799069c2855435fbd7a1dd1afcb1e4883f4e55d72a53a10503c0c95cc2",
+          "build/triattn_infer_n40_hot6t.so": "3e101a063a78c57c399237bad5e89edb3eab85b34082e1a09c6e7e08d43490f1"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-n40_hot6t-384-19062.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 309.16266441345215,
+          "candidate_us": 339.6639982859293,
+          "speedup": 0.9100829380508915,
+          "time_reduction_percent": -9.880095339627214
+        },
+        {
+          "source": "anthropic-n40_hot6t-384-19062.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 311.2271944681803,
+          "candidate_us": 343.13812255859375,
+          "speedup": 0.9069669574423374,
+          "time_reduction_percent": -10.25759999239857
+        },
+        {
+          "source": "anthropic-n40_hot6t-768-19062.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1584.0495427449544,
+          "candidate_us": 1599.386660257975,
+          "speedup": 0.990322358680235,
+          "time_reduction_percent": -0.9772213294933607
+        },
+        {
+          "source": "anthropic-n40_hot6t-768-19062.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1573.2255935668945,
+          "candidate_us": 1595.651690165202,
+          "speedup": 0.9869199184570243,
+          "time_reduction_percent": -1.3253437587342765
+        },
+        {
+          "source": "anthropic-n40_hot6t-1024-19062.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3306.444803873698,
+          "candidate_us": 3379.041035970052,
+          "speedup": 0.9826656765683299,
+          "time_reduction_percent": -1.7640102676838243
+        },
+        {
+          "source": "anthropic-n40_hot6t-1024-19062.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3327.60009765625,
+          "candidate_us": 3400.7242838541665,
+          "speedup": 0.9812095358268853,
+          "time_reduction_percent": -1.9150307337035377
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/n40_hot6t/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z23qkv_attention_fused_n40ILi1024ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:80 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z23qkv_attention_fused_n40ILi768ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:80 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z23qkv_attention_fused_n40ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:112 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z23qkv_attention_fused_n40ILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z23qkv_attention_fused_n40ILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": []
+    },
+    {
+      "artifact": "n40_qhalf4",
+      "job": 19075,
+      "build": {
+        "module": "triattn_infer_n40_qhalf4",
+        "binary": "build/triattn_infer_n40_qhalf4.so",
+        "smem": 232448,
+        "sha256": {
+          "fused.cu": "0b2264affb8e2fa0925704f3772ec6bd2a64a95bbffffa5dca0b33866635a114",
+          "build/triattn_infer_n40_qhalf4.so": "3f16efd1097a9cdc518d32e2203a855860cd848acdc570695b034b8321b4e71b"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-n40_qhalf4-384-19075.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 311.572790145874,
+          "candidate_us": 353.1599998474121,
+          "speedup": 0.8821946570382874,
+          "time_reduction_percent": -13.353667699281925
+        },
+        {
+          "source": "anthropic-n40_qhalf4-384-19075.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 311.516809463501,
+          "candidate_us": 353.34134101867676,
+          "speedup": 0.8811439258611911,
+          "time_reduction_percent": -13.488837708623391
+        },
+        {
+          "source": "anthropic-n40_qhalf4-768-19075.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1584.8421732584636,
+          "candidate_us": 1598.416519165039,
+          "speedup": 0.9915449322384815,
+          "time_reduction_percent": -0.8527165523836144
+        },
+        {
+          "source": "anthropic-n40_qhalf4-768-19075.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1600.2250671386719,
+          "candidate_us": 1588.1413141886394,
+          "speedup": 1.0073419069754836,
+          "time_reduction_percent": 0.7288396248228635
+        },
+        {
+          "source": "anthropic-n40_qhalf4-1024-19075.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3308.6463928222656,
+          "candidate_us": 3283.583577473958,
+          "speedup": 1.0101644233008158,
+          "time_reduction_percent": 1.0062147375575203
+        },
+        {
+          "source": "anthropic-n40_qhalf4-1024-19075.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3340.05750020345,
+          "candidate_us": 3300.0592549641924,
+          "speedup": 1.0099977782275724,
+          "time_reduction_percent": 0.9898812099485399
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/n40_qhalf4/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z30qkv_attention_qhalf_n40_qhalf4ILi1024ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z30qkv_attention_qhalf_n40_qhalf4ILi768ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z30qkv_attention_qhalf_n40_qhalf4ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:160 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z30qkv_attention_qhalf_n40_qhalf4ILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z30qkv_attention_qhalf_n40_qhalf4ILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": [
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z30qkv_attention_qhalf_n40_qhalf4ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'"
+      ]
+    },
+    {
+      "artifact": "qhalf4",
+      "job": 19075,
+      "build": {
+        "module": "triattn_infer_qhalf4",
+        "binary": "build/triattn_infer_qhalf4.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "22e464104df668ad451dc2da3a8526bb7813f018f0b92877ce3576c3beb84a66",
+          "build/triattn_infer_qhalf4.so": "22c556a76ca55dc32e0d2a9f4eb5d140f90706cb3c4002c0690f292c712738d6"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-qhalf4-384-19075.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 311.2901369730631,
+          "candidate_us": 354.73546981811523,
+          "speedup": 0.8775482933046257,
+          "time_reduction_percent": -13.953842498428436
+        },
+        {
+          "source": "anthropic-qhalf4-384-19075.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 311.1701329549154,
+          "candidate_us": 354.8288027445475,
+          "speedup": 0.8768950510720357,
+          "time_reduction_percent": -14.038732317791514
+        },
+        {
+          "source": "anthropic-qhalf4-768-19075.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1584.8405202229817,
+          "candidate_us": 1596.4735666910806,
+          "speedup": 0.9925899692936908,
+          "time_reduction_percent": -0.7465349172913749
+        },
+        {
+          "source": "anthropic-qhalf4-768-19075.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1597.9701360066733,
+          "candidate_us": 1612.9338582356772,
+          "speedup": 0.9917844874182142,
+          "time_reduction_percent": -0.8283566325152147
+        },
+        {
+          "source": "anthropic-qhalf4-1024-19075.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3317.8245544433594,
+          "candidate_us": 3269.6005503336587,
+          "speedup": 1.0157439028807809,
+          "time_reduction_percent": 1.5499874364127697
+        },
+        {
+          "source": "anthropic-qhalf4-1024-19075.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3333.7216695149737,
+          "candidate_us": 3297.599411010742,
+          "speedup": 1.0128227137747636,
+          "time_reduction_percent": 1.266037342998927
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/qhalf4/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z26qkv_attention_qhalf_qhalf4ILi1024ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z26qkv_attention_qhalf_qhalf4ILi768ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z26qkv_attention_qhalf_qhalf4ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:160 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z26qkv_attention_qhalf_qhalf4ILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z26qkv_attention_qhalf_qhalf4ILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": [
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z30qkv_attention_qhalf_n40_qhalf4ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'",
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z26qkv_attention_qhalf_qhalf4ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'"
+      ]
+    },
+    {
+      "artifact": "n40_qhalf6",
+      "job": 19076,
+      "build": {
+        "module": "triattn_infer_n40_qhalf6",
+        "binary": "build/triattn_infer_n40_qhalf6.so",
+        "smem": 232448,
+        "sha256": {
+          "fused.cu": "d5b4d0606acdb832faf9bae8f4f8c483466541fe7d403b272934227fa819a196",
+          "build/triattn_infer_n40_qhalf6.so": "d2b60a10036c51a0430bcfc50b5bab36b9f1f7dcf8c49a0c64b8488fe7f70e8d"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-n40_qhalf6-384-19076.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 310.3290716807047,
+          "candidate_us": 351.46400133768714,
+          "speedup": 0.8828443037292553,
+          "time_reduction_percent": -13.270255669755482
+        },
+        {
+          "source": "anthropic-n40_qhalf6-384-19076.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 310.1930618286133,
+          "candidate_us": 352.44213740030926,
+          "speedup": 0.8821149465233717,
+          "time_reduction_percent": -13.363910671873525
+        },
+        {
+          "source": "anthropic-n40_qhalf6-768-19076.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1580.5381139119468,
+          "candidate_us": 1630.168024698893,
+          "speedup": 0.974356750284837,
+          "time_reduction_percent": -2.631813214991996
+        },
+        {
+          "source": "anthropic-n40_qhalf6-768-19076.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1577.3248036702473,
+          "candidate_us": 1626.536496480306,
+          "speedup": 0.971317518451638,
+          "time_reduction_percent": -2.952945973226573
+        },
+        {
+          "source": "anthropic-n40_qhalf6-1024-19076.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3323.5876719156904,
+          "candidate_us": 3505.7322184244795,
+          "speedup": 0.9468461344434573,
+          "time_reduction_percent": -5.613780700259796
+        },
+        {
+          "source": "anthropic-n40_qhalf6-1024-19076.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3340.1199340820312,
+          "candidate_us": 3520.1892852783203,
+          "speedup": 0.9460304505550405,
+          "time_reduction_percent": -5.704842736647153
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/n40_qhalf6/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z30qkv_attention_qhalf_n40_qhalf6ILi1024ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:120 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z30qkv_attention_qhalf_n40_qhalf6ILi768ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:120 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z30qkv_attention_qhalf_n40_qhalf6ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:160 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z30qkv_attention_qhalf_n40_qhalf6ILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z30qkv_attention_qhalf_n40_qhalf6ILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": [
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z30qkv_attention_qhalf_n40_qhalf6ILi1024ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'",
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z30qkv_attention_qhalf_n40_qhalf6ILi768ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'",
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z30qkv_attention_qhalf_n40_qhalf6ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'"
+      ]
+    },
+    {
+      "artifact": "pack4",
+      "job": 19088,
+      "build": {
+        "module": "triattn_infer_pack4",
+        "binary": "build/triattn_infer_pack4.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "7f7568e6177d52a9e2b87083303b061a4e54188a029d1f5240585ff02e0b3002",
+          "build/triattn_infer_pack4.so": "2a839b85ecaf09b3e60bcad49af45519236485dcfcff076d3d75f15164a138f1"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-pack4-384-19088.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 311.69226964314777,
+          "candidate_us": 336.681604385376,
+          "speedup": 0.9262564046752583,
+          "time_reduction_percent": -7.961466711865373
+        },
+        {
+          "source": "anthropic-pack4-384-19088.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 311.6885344187418,
+          "candidate_us": 337.0874563852946,
+          "speedup": 0.9247471830759215,
+          "time_reduction_percent": -8.137663817884832
+        },
+        {
+          "source": "anthropic-pack4-768-19088.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1586.4490509033203,
+          "candidate_us": 1614.0373229980469,
+          "speedup": 0.9823371624060857,
+          "time_reduction_percent": -1.79804228831697
+        },
+        {
+          "source": "anthropic-pack4-768-19088.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1575.0101725260415,
+          "candidate_us": 1624.5967864990234,
+          "speedup": 0.9694651079771786,
+          "time_reduction_percent": -3.149663847782369
+        },
+        {
+          "source": "anthropic-pack4-1024-19088.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3315.118916829427,
+          "candidate_us": 3316.7285919189453,
+          "speedup": 0.9960086291557455,
+          "time_reduction_percent": -0.40073657269794616
+        },
+        {
+          "source": "anthropic-pack4-1024-19088.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3330.451202392578,
+          "candidate_us": 3345.0373331705728,
+          "speedup": 0.9971581386107248,
+          "time_reduction_percent": -0.2849960582214761
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/pack4/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z31qkv_attention_stream_pack_pack4ILi1024ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z31qkv_attention_stream_pack_pack4ILi768ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z31qkv_attention_stream_pack_pack4ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:104 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z31qkv_attention_stream_pack_pack4ILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z31qkv_attention_stream_pack_pack4ILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": [
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z31qkv_attention_stream_pack_pack4ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'"
+      ]
+    },
+    {
+      "artifact": "pack6",
+      "job": 19088,
+      "build": {
+        "module": "triattn_infer_pack6",
+        "binary": "build/triattn_infer_pack6.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "4b0a02499a7a7db0f6ede6cc73a430b866e4a1880dfa2bf1220b2ddd18e89a8b",
+          "build/triattn_infer_pack6.so": "b3fb13da4abf772f25be9452c09f92feef193683eb0d12521d549c87212669f3"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-pack6-384-19088.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 311.6704146067301,
+          "candidate_us": 337.2485319773356,
+          "speedup": 0.9256578423990807,
+          "time_reduction_percent": -8.03127831858934
+        },
+        {
+          "source": "anthropic-pack6-384-19088.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 310.7632001241048,
+          "candidate_us": 336.89066569010413,
+          "speedup": 0.9221669661526368,
+          "time_reduction_percent": -8.440232268575997
+        },
+        {
+          "source": "anthropic-pack6-768-19088.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1561.637814839681,
+          "candidate_us": 1608.4981282552083,
+          "speedup": 0.971151878847972,
+          "time_reduction_percent": -2.9705056212473213
+        },
+        {
+          "source": "anthropic-pack6-768-19088.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1577.328554789225,
+          "candidate_us": 1623.6634572347007,
+          "speedup": 0.9702962484397339,
+          "time_reduction_percent": -3.061307472643593
+        },
+        {
+          "source": "anthropic-pack6-1024-19088.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3332.8704833984375,
+          "candidate_us": 3502.3370107014975,
+          "speedup": 0.9507906561976494,
+          "time_reduction_percent": -5.175623412113239
+        },
+        {
+          "source": "anthropic-pack6-1024-19088.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3312.838363647461,
+          "candidate_us": 3516.2804921468096,
+          "speedup": 0.9442857079725193,
+          "time_reduction_percent": -5.900151993945246
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/pack6/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z31qkv_attention_stream_pack_pack6ILi1024ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:96 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z31qkv_attention_stream_pack_pack6ILi768ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:96 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z31qkv_attention_stream_pack_pack6ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:104 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z31qkv_attention_stream_pack_pack6ILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z31qkv_attention_stream_pack_pack6ILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": [
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z31qkv_attention_stream_pack_pack6ILi1024ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'",
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z31qkv_attention_stream_pack_pack6ILi768ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'",
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z31qkv_attention_stream_pack_pack6ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'"
+      ]
+    },
+    {
+      "artifact": "n40_pack4",
+      "job": 19089,
+      "build": {
+        "module": "triattn_infer_n40_pack4",
+        "binary": "build/triattn_infer_n40_pack4.so",
+        "smem": 232448,
+        "sha256": {
+          "fused.cu": "c5e85294fdb93d283b2bb4910f99deae75f8d8d514c93604f273a95db7ff2f80",
+          "build/triattn_infer_n40_pack4.so": "35672dbb8e4a73443300faac01c211ea19da3f691c759288de36383c206b15a6"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-n40_pack4-384-19089.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 310.970147450765,
+          "candidate_us": 335.68159739176434,
+          "speedup": 0.9284404460381268,
+          "time_reduction_percent": -7.7075007090906755
+        },
+        {
+          "source": "anthropic-n40_pack4-384-19089.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 313.06400299072266,
+          "candidate_us": 337.8026644388834,
+          "speedup": 0.9266577345234047,
+          "time_reduction_percent": -7.914709255010588
+        },
+        {
+          "source": "anthropic-n40_pack4-768-19089.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1582.4704488118489,
+          "candidate_us": 1615.672492980957,
+          "speedup": 0.9794439404225227,
+          "time_reduction_percent": -2.0987479455546687
+        },
+        {
+          "source": "anthropic-n40_pack4-768-19089.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1602.3632049560547,
+          "candidate_us": 1607.0207595825195,
+          "speedup": 0.9946269818494363,
+          "time_reduction_percent": -0.5402043427952252
+        },
+        {
+          "source": "anthropic-n40_pack4-1024-19089.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3302.7904510498047,
+          "candidate_us": 3307.886377970378,
+          "speedup": 0.9986178672511398,
+          "time_reduction_percent": -0.1384045683725521
+        },
+        {
+          "source": "anthropic-n40_pack4-1024-19089.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3308.3999633789062,
+          "candidate_us": 3310.438919067383,
+          "speedup": 1.0041963941574412,
+          "time_reduction_percent": 0.4178858022052756
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/n40_pack4/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z35qkv_attention_stream_pack_n40_pack4ILi1024ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z35qkv_attention_stream_pack_n40_pack4ILi768ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z35qkv_attention_stream_pack_n40_pack4ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:96 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z35qkv_attention_stream_pack_n40_pack4ILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z35qkv_attention_stream_pack_n40_pack4ILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": [
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z35qkv_attention_stream_pack_n40_pack4ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'"
+      ]
+    },
+    {
+      "artifact": "n40_pack6",
+      "job": 19089,
+      "build": {
+        "module": "triattn_infer_n40_pack6",
+        "binary": "build/triattn_infer_n40_pack6.so",
+        "smem": 232448,
+        "sha256": {
+          "fused.cu": "0aff43f01151ac07e3298a55c4962d96c7f0ac87f1637318dc5f2000b03eee33",
+          "build/triattn_infer_n40_pack6.so": "d17ec9cca44f8ceabf40bd6f1d7490ca4af9e353cc1bedab5b885676381ac27b"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-n40_pack6-384-19089.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 310.87679862976074,
+          "candidate_us": 334.5957279205322,
+          "speedup": 0.9294183189974458,
+          "time_reduction_percent": -7.5941779454799185
+        },
+        {
+          "source": "anthropic-n40_pack6-384-19089.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 312.95572916666663,
+          "candidate_us": 337.86934216817224,
+          "speedup": 0.9260328356658959,
+          "time_reduction_percent": -7.987531487575761
+        },
+        {
+          "source": "anthropic-n40_pack6-768-19089.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1592.8714752197266,
+          "candidate_us": 1601.7711639404297,
+          "speedup": 0.9921947168467147,
+          "time_reduction_percent": -0.7866684856064676
+        },
+        {
+          "source": "anthropic-n40_pack6-768-19089.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1584.346135457357,
+          "candidate_us": 1597.177569071452,
+          "speedup": 0.9909185433728358,
+          "time_reduction_percent": -0.916468531939385
+        },
+        {
+          "source": "anthropic-n40_pack6-1024-19089.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3315.770594278971,
+          "candidate_us": 3443.6693827311196,
+          "speedup": 0.9611362894295836,
+          "time_reduction_percent": -4.043517136730035
+        },
+        {
+          "source": "anthropic-n40_pack6-1024-19089.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3334.345118204753,
+          "candidate_us": 3457.338205973307,
+          "speedup": 0.9648687029407497,
+          "time_reduction_percent": -3.6410443153743532
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/n40_pack6/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z35qkv_attention_stream_pack_n40_pack6ILi1024ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:96 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z35qkv_attention_stream_pack_n40_pack6ILi768ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:96 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z35qkv_attention_stream_pack_n40_pack6ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:96 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z35qkv_attention_stream_pack_n40_pack6ILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z35qkv_attention_stream_pack_n40_pack6ILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:126 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": [
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z35qkv_attention_stream_pack_n40_pack6ILi1024ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'",
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z35qkv_attention_stream_pack_n40_pack6ILi768ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'",
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z35qkv_attention_stream_pack_n40_pack6ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'"
+      ]
+    },
+    {
+      "artifact": "split6q",
+      "job": 19100,
+      "build": {
+        "module": "triattn_infer_split6q",
+        "binary": "build/triattn_infer_split6q.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "69e110698b4f2948b2c394993f1ce96570be01a0c6f846840452a1c5301da08d",
+          "build/triattn_infer_split6q.so": "c9b038b0da8d4ead3b2ca77642e4cdb74396066fd7bf6449cde4e9b20ee39629"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-split6q-384-19100.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 309.2954794565837,
+          "candidate_us": 334.95093981424964,
+          "speedup": 0.9229552805632768,
+          "time_reduction_percent": -8.347611315436975
+        },
+        {
+          "source": "anthropic-split6q-384-19100.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 312.4565442403158,
+          "candidate_us": 340.281597773234,
+          "speedup": 0.9184581461208292,
+          "time_reduction_percent": -8.878124084757522
+        },
+        {
+          "source": "anthropic-split6q-768-19100.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1583.5344314575195,
+          "candidate_us": 1620.029322306315,
+          "speedup": 0.9775080326237264,
+          "time_reduction_percent": -2.3009496214474012
+        },
+        {
+          "source": "anthropic-split6q-768-19100.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1590.1648203531902,
+          "candidate_us": 1627.2149403889975,
+          "speedup": 0.9774281043290864,
+          "time_reduction_percent": -2.309315188599692
+        },
+        {
+          "source": "anthropic-split6q-1024-19100.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3315.6021118164062,
+          "candidate_us": 3372.0714569091797,
+          "speedup": 0.985835056211219,
+          "time_reduction_percent": -1.4368472392552123
+        },
+        {
+          "source": "anthropic-split6q-1024-19100.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3332.766469319661,
+          "candidate_us": 3378.5371144612627,
+          "speedup": 0.9834118266828802,
+          "time_reduction_percent": -1.6867982331545628
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/split6q/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z25qkv_attention_split_retryILi1024ELi6ELi1ELi6ELb1EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:88 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi1024ELi6ELi1ELi6ELb0EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:88 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi768ELi6ELi1ELi6ELb1EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:88 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi768ELi6ELi1ELi6ELb0EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:88 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi384ELi6ELi2ELi6ELb1EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:72 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi384ELi6ELi2ELi6ELb0EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:96 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi128ELi2ELi2ELi2ELb1EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:108 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi128ELi2ELi2ELi2ELb0EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:100 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi128ELi2ELi1ELi2ELb1EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:109 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi128ELi2ELi1ELi2ELb0EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:108 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": []
+    },
+    {
+      "artifact": "split4q",
+      "job": 19100,
+      "build": {
+        "module": "triattn_infer_split4q",
+        "binary": "build/triattn_infer_split4q.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "e50ca58e2e279ce32f59d754f77dd9ee2c2c6a8d99b9943564846c427ac66aac",
+          "build/triattn_infer_split4q.so": "659d77299105db1aea738feaf21834465756eee52f7042acd087f98f57e70be9"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-split4q-384-19100.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 312.4959945678711,
+          "candidate_us": 339.0378634134928,
+          "speedup": 0.9213924042848998,
+          "time_reduction_percent": -8.53139176636779
+        },
+        {
+          "source": "anthropic-split4q-384-19100.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 312.76906331380206,
+          "candidate_us": 340.012264251709,
+          "speedup": 0.9192695851843746,
+          "time_reduction_percent": -8.782017388232589
+        },
+        {
+          "source": "anthropic-split4q-768-19100.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1583.9056015014648,
+          "candidate_us": 1634.934425354004,
+          "speedup": 0.9687689369365614,
+          "time_reduction_percent": -3.2237886530711135
+        },
+        {
+          "source": "anthropic-split4q-768-19100.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1590.027173360189,
+          "candidate_us": 1641.7695999145508,
+          "speedup": 0.9684135128634688,
+          "time_reduction_percent": -3.261673522412356
+        },
+        {
+          "source": "anthropic-split4q-1024-19100.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3297.1365610758467,
+          "candidate_us": 3308.8517506917315,
+          "speedup": 0.9965872213227862,
+          "time_reduction_percent": -0.34244656204640567
+        },
+        {
+          "source": "anthropic-split4q-1024-19100.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3310.0565592447915,
+          "candidate_us": 3324.7908274332685,
+          "speedup": 0.9957218301273625,
+          "time_reduction_percent": -0.4296551248746061
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/split4q/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z25qkv_attention_split_retryILi1024ELi4ELi2ELi4ELb1EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:108 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi1024ELi4ELi2ELi4ELb0EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:100 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi768ELi4ELi2ELi4ELb1EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:108 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi768ELi4ELi2ELi4ELb0EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:100 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi384ELi6ELi2ELi6ELb1EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:72 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi384ELi6ELi2ELi6ELb0EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:96 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi128ELi2ELi2ELi2ELb1EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:108 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi128ELi2ELi2ELi2ELb0EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:100 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi128ELi2ELi1ELi2ELb1EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:109 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z25qkv_attention_split_retryILi128ELi2ELi1ELi2ELb0EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:108 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": []
+    },
+    {
+      "artifact": "qfull4v2",
+      "job": 19111,
+      "build": {
+        "module": "triattn_infer_qfull4v2",
+        "binary": "build/triattn_infer_qfull4v2.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "7beb6d02f82a52f520f0b517875a6432faeccfeb6562e93e1c3f4d6c298a607e",
+          "build/triattn_infer_qfull4v2.so": "2c0e83e97391e4861d5c4153acd86ee72d5882bedd04b5b786306f966c9c4c71"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-qfull4v2-384-19111.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 315.08800188700354,
+          "candidate_us": 376.6165415445963,
+          "speedup": 0.8357205680145887,
+          "time_reduction_percent": -19.65722016100284
+        },
+        {
+          "source": "anthropic-qfull4v2-384-19111.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 311.71414057413733,
+          "candidate_us": 371.8053340911865,
+          "speedup": 0.838499049660684,
+          "time_reduction_percent": -19.26071954460422
+        },
+        {
+          "source": "anthropic-qfull4v2-768-19111.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1588.4053548177085,
+          "candidate_us": 1574.9871571858725,
+          "speedup": 1.0067813024186583,
+          "time_reduction_percent": 0.6735626101087799
+        },
+        {
+          "source": "anthropic-qfull4v2-768-19111.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1590.6187057495117,
+          "candidate_us": 1581.67413075765,
+          "speedup": 1.0051885039379036,
+          "time_reduction_percent": 0.5161722321313067
+        },
+        {
+          "source": "anthropic-qfull4v2-1024-19111.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3338.8566335042315,
+          "candidate_us": 3247.2794850667315,
+          "speedup": 1.0310523025960963,
+          "time_reduction_percent": 3.011709737508894
+        },
+        {
+          "source": "anthropic-qfull4v2-1024-19111.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3346.7066446940107,
+          "candidate_us": 3252.8682708740234,
+          "speedup": 1.0267355741263948,
+          "time_reduction_percent": 2.6039395926398035
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/qfull4v2/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z28qkv_attention_qhalf_qfull4v2ILi1024ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z28qkv_attention_qhalf_qfull4v2ILi768ELi4ELi2ELi4EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z28qkv_attention_qhalf_qfull4v2ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:184 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z28qkv_attention_qhalf_qfull4v2ILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z28qkv_attention_qhalf_qfull4v2ILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": [
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z28qkv_attention_qhalf_qfull4v2ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'"
+      ]
+    },
+    {
+      "artifact": "qhalf6",
+      "job": 19122,
+      "build": {
+        "module": "triattn_infer_qhalf6",
+        "binary": "build/triattn_infer_qhalf6.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "4e82d8683d2c50b18347ab4e6dbbcada80a8f7de9b1c2a6b11443da292f63263",
+          "build/triattn_infer_qhalf6.so": "51948ebef3ba26205719a6a11ba00da54ae76d61e1626ac073622c35c5a79a86"
+        }
+      },
+      "measurements": [
+        {
+          "source": "anthropic-qhalf6-384-19122.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 309.70187187194824,
+          "candidate_us": 352.9775937398275,
+          "speedup": 0.8773415392881931,
+          "time_reduction_percent": -13.980696823191852
+        },
+        {
+          "source": "anthropic-qhalf6-384-19122.json",
+          "length": 384,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 311.45227750142413,
+          "candidate_us": 356.0405413309733,
+          "speedup": 0.8742171875902636,
+          "time_reduction_percent": -14.388050726439094
+        },
+        {
+          "source": "anthropic-qhalf6-768-19122.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 1593.882687886556,
+          "candidate_us": 1649.7461318969727,
+          "speedup": 0.9659981896677747,
+          "time_reduction_percent": -3.5198627384507963
+        },
+        {
+          "source": "anthropic-qhalf6-768-19122.json",
+          "length": 768,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 1574.614969889323,
+          "candidate_us": 1639.3722534179688,
+          "speedup": 0.9646615908004184,
+          "time_reduction_percent": -3.663295972037184
+        },
+        {
+          "source": "anthropic-qhalf6-1024-19122.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": false,
+          "previous": "selected",
+          "baseline_us": 3331.6287994384766,
+          "candidate_us": 3570.9381103515625,
+          "speedup": 0.9325045038426834,
+          "time_reduction_percent": -7.238087953375016
+        },
+        {
+          "source": "anthropic-qhalf6-1024-19122.json",
+          "length": 1024,
+          "kind": "paired_previous",
+          "ending": true,
+          "previous": "selected",
+          "baseline_us": 3335.0826263427734,
+          "candidate_us": 3581.351979573568,
+          "speedup": 0.9351527828742175,
+          "time_reduction_percent": -6.934398134011088
+        }
+      ],
+      "resources": "\nFatbin elf code:\n================\narch = sm_90a\ncode version = [1,7]\nhost = linux\ncompile_size = 64bit\nidentifier = /home/psk6950/MiniWorld/runs/triattn_20260921/fwd_inference/qhalf6/fused.cu\n\nResource usage:\n Common:\n  GLOBAL:30 CONSTANT[4]:240\n Function _Z26qkv_attention_qhalf_qhalf6ILi1024ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:120 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z26qkv_attention_qhalf_qhalf6ILi768ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:120 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z26qkv_attention_qhalf_qhalf6ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:80 STACK:160 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z26qkv_attention_qhalf_qhalf6ILi128ELi2ELi2ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _Z26qkv_attention_qhalf_qhalf6ILi128ELi2ELi1ELi2EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE:\n  REG:128 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1984 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "serialization_warnings": [
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z26qkv_attention_qhalf_qhalf6ILi1024ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'",
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z26qkv_attention_qhalf_qhalf6ILi768ELi6ELi1ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'",
+        "ptxas info    : (C7512) Potential Performance Loss: wgmma.mma_async instructions are serialized due to insufficient register resources for the function '_Z26qkv_attention_qhalf_qhalf6ILi384ELi6ELi2ELi6EEvN6ConfigIXT_EXT0_EXT1_EXT2_EE6ParamsE'"
+      ]
+    }
+  ],
+  "qualifications": [
+    {
+      "job": 19098,
+      "artifact": "n40_qhalf4",
+      "sanitizer_lengths": [
+        128,
+        1024
+      ],
+      "zero_error_summaries": 12,
+      "zero_race_summaries": 6,
+      "module": [
+        {
+          "length": 1024,
+          "complete": true,
+          "records_by_kind": {
+            "correctness": 10,
+            "fp64_full_module_sample": 6,
+            "paired_module": 2,
+            "changed_input_weight_mask_graph": 2,
+            "fullgraph_compile": 2,
+            "no_grad": 2
+          }
+        }
+      ],
+      "sanitizer_complete": true
+    },
+    {
+      "job": 19109,
+      "artifact": "qhalf4",
+      "sanitizer_lengths": [
+        128,
+        1024
+      ],
+      "zero_error_summaries": 12,
+      "zero_race_summaries": 6,
+      "module": [
+        {
+          "length": 1024,
+          "complete": true,
+          "records_by_kind": {
+            "correctness": 10,
+            "fp64_full_module_sample": 6,
+            "paired_module": 2,
+            "changed_input_weight_mask_graph": 2,
+            "fullgraph_compile": 2,
+            "no_grad": 2
+          }
+        }
+      ],
+      "sanitizer_complete": true
+    },
+    {
+      "job": 19134,
+      "artifact": "qfull4v2",
+      "sanitizer_lengths": [
+        128,
+        1024
+      ],
+      "zero_error_summaries": 12,
+      "zero_race_summaries": 6,
+      "module": [
+        {
+          "length": 1024,
+          "complete": true,
+          "records_by_kind": {
+            "correctness": 10,
+            "fp64_full_module_sample": 6,
+            "paired_module": 2,
+            "changed_input_weight_mask_graph": 2,
+            "fullgraph_compile": 2,
+            "no_grad": 2
+          }
+        }
+      ],
+      "sanitizer_complete": true
+    },
+    {
+      "job": 19135,
+      "artifact": "qfull4v2",
+      "sanitizer_lengths": [
+        768
+      ],
+      "zero_error_summaries": 6,
+      "zero_race_summaries": 3,
+      "module": [
+        {
+          "length": 768,
+          "complete": true,
+          "records_by_kind": {
+            "correctness": 10,
+            "fp64_full_module_sample": 6,
+            "paired_module": 2,
+            "changed_input_weight_mask_graph": 2,
+            "fullgraph_compile": 2,
+            "no_grad": 2
+          }
+        }
+      ],
+      "sanitizer_complete": true
+    }
+  ],
+  "finalists": [
+    {
+      "source": "finalist-qhalf4-n40_qhalf4-19132.json",
+      "base": "qhalf4",
+      "artifact": "n40_qhalf4",
+      "length": 1024,
+      "records": [
+        {
+          "ending": false,
+          "bitwise": true,
+          "changed_graph_bitwise": true,
+          "baseline_us": 3321.9757080078125,
+          "candidate_us": 3335.4976654052734,
+          "speedup": 0.9978001743584117,
+          "time_reduction_percent": -0.2204675543379997,
+          "speedup_median_bootstrap_95ci": [
+            0.9968860617819402,
+            0.9980713039543954
+          ],
+          "time_reduction_95ci_percent": [
+            -0.3123665118252017,
+            -0.19324231024007155
+          ]
+        },
+        {
+          "ending": true,
+          "bitwise": true,
+          "changed_graph_bitwise": true,
+          "baseline_us": 3315.226936340332,
+          "candidate_us": 3339.2120361328125,
+          "speedup": 0.9939478012887164,
+          "time_reduction_percent": -0.6089050857033484,
+          "speedup_median_bootstrap_95ci": [
+            0.9925934126361851,
+            0.9950437523865017
+          ],
+          "time_reduction_95ci_percent": [
+            -0.7461854239133148,
+            -0.4980934357520894
+          ]
+        }
+      ]
+    },
+    {
+      "source": "finalist-qhalf4-qfull4v2-19132.json",
+      "base": "qhalf4",
+      "artifact": "qfull4v2",
+      "length": 1024,
+      "records": [
+        {
+          "ending": false,
+          "bitwise": true,
+          "changed_graph_bitwise": true,
+          "baseline_us": 3318.9075469970703,
+          "candidate_us": 3275.5796432495117,
+          "speedup": 1.0134819890540776,
+          "time_reduction_percent": 1.3302642967203515,
+          "speedup_median_bootstrap_95ci": [
+            1.0117125419411641,
+            1.0150314912417313
+          ],
+          "time_reduction_95ci_percent": [
+            1.1576946470082672,
+            1.4808891518570122
+          ]
+        },
+        {
+          "ending": true,
+          "bitwise": true,
+          "changed_graph_bitwise": true,
+          "baseline_us": 3317.901611328125,
+          "candidate_us": 3274.4871139526367,
+          "speedup": 1.0125518710947028,
+          "time_reduction_percent": 1.2396274653201256,
+          "speedup_median_bootstrap_95ci": [
+            1.009596406388153,
+            1.015433271881621
+          ],
+          "time_reduction_95ci_percent": [
+            0.9505190715252576,
+            1.5198706117855343
+          ]
+        }
+      ]
+    },
+    {
+      "source": "finalist-hot6t-qfull4v2-768-19137.json",
+      "base": "hot6t",
+      "artifact": "qfull4v2",
+      "length": 768,
+      "records": [
+        {
+          "ending": false,
+          "bitwise": true,
+          "changed_graph_bitwise": true,
+          "baseline_us": 1590.5508041381836,
+          "candidate_us": 1584.034824371338,
+          "speedup": 1.0042756233795975,
+          "time_reduction_percent": 0.4257420254022648,
+          "speedup_median_bootstrap_95ci": [
+            1.0036854001169917,
+            1.0048454238300297
+          ],
+          "time_reduction_95ci_percent": [
+            0.3671867814917018,
+            0.48220589108731726
+          ]
+        },
+        {
+          "ending": true,
+          "bitwise": true,
+          "changed_graph_bitwise": true,
+          "baseline_us": 1596.6055870056152,
+          "candidate_us": 1590.7764434814453,
+          "speedup": 1.002572407054592,
+          "time_reduction_percent": 0.25658067551942443,
+          "speedup_median_bootstrap_95ci": [
+            0.9995108162756956,
+            1.0042071125462042
+          ],
+          "time_reduction_95ci_percent": [
+            -0.048942314213973326,
+            0.41894869032912396
+          ]
+        }
+      ]
+    }
+  ],
+  "profiles": [
+    {
+      "source": "coreprofile-hot4t-1024-19136.csv",
+      "artifact": "hot4t",
+      "metrics": {
+        "gpu__time_duration.sum": {
+          "value": 2.654656,
+          "unit": "ms"
+        },
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": {
+          "value": 49.263152,
+          "unit": "%"
+        },
+        "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed": {
+          "value": 7.082569,
+          "unit": "%"
+        },
+        "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 28.266375,
+          "unit": "%"
+        },
+        "sm__inst_executed_pipe_xu.avg.pct_of_peak_sustained_elapsed": {
+          "value": 45.129838,
+          "unit": "%"
+        },
+        "dram__bytes_read.sum": {
+          "value": 358.625536,
+          "unit": "Mbyte"
+        },
+        "dram__bytes_write.sum": {
+          "value": 271.668736,
+          "unit": "Mbyte"
+        }
+      }
+    },
+    {
+      "source": "coreprofile-qfull4v2-1024-19136.csv",
+      "artifact": "qfull4v2",
+      "metrics": {
+        "gpu__time_duration.sum": {
+          "value": 2.587296,
+          "unit": "ms"
+        },
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": {
+          "value": 49.585911,
+          "unit": "%"
+        },
+        "gpu__dram_throughput.avg.pct_of_peak_sustained_elapsed": {
+          "value": 7.171938,
+          "unit": "%"
+        },
+        "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 29.564506,
+          "unit": "%"
+        },
+        "sm__inst_executed_pipe_xu.avg.pct_of_peak_sustained_elapsed": {
+          "value": 47.202422,
+          "unit": "%"
+        },
+        "dram__bytes_read.sum": {
+          "value": 351.163648,
+          "unit": "Mbyte"
+        },
+        "dram__bytes_write.sum": {
+          "value": 270.883328,
+          "unit": "Mbyte"
+        }
+      }
+    }
+  ],
+  "selected": [
+    {
+      "length": 384,
+      "ending": false,
+      "source": "core-selected-anthropic-384-19157.json",
+      "anthropic": {
+        "kind": "paired_module",
+        "ending": false,
+        "release_form": "copy_plus_fused_residual",
+        "baseline_us": 460.87398529052734,
+        "candidate_us": 313.97039890289307,
+        "speedup": 1.4705848672766542,
+        "time_reduction_percent": 31.999844262515808,
+        "speedup_median_bootstrap_95ci": [
+          1.469859801785519,
+          1.4717834033940782
+        ],
+        "time_reduction_95ci_percent": [
+          31.966300542048607,
+          32.05521969510588
+        ]
+      },
+      "previous": null
+    },
+    {
+      "length": 384,
+      "ending": true,
+      "source": "core-selected-anthropic-384-19157.json",
+      "anthropic": {
+        "kind": "paired_module",
+        "ending": true,
+        "release_form": "copy_plus_fused_residual",
+        "baseline_us": 467.13998317718506,
+        "candidate_us": 316.65600538253784,
+        "speedup": 1.4759776944568062,
+        "time_reduction_percent": 32.24829861890135,
+        "speedup_median_bootstrap_95ci": [
+          1.4742877434202384,
+          1.477558919173633
+        ],
+        "time_reduction_95ci_percent": [
+          32.17063599266762,
+          32.32080379175143
+        ]
+      },
+      "previous": null
+    },
+    {
+      "length": 768,
+      "ending": false,
+      "source": "core-selected-anthropic-768-19157.json",
+      "anthropic": {
+        "kind": "paired_module",
+        "ending": false,
+        "release_form": "copy_plus_fused_residual",
+        "baseline_us": 1743.5152053833008,
+        "candidate_us": 1595.6384181976318,
+        "speedup": 1.0925960057283606,
+        "time_reduction_percent": 8.474862185372256,
+        "speedup_median_bootstrap_95ci": [
+          1.0915652468409553,
+          1.093120072275761
+        ],
+        "time_reduction_95ci_percent": [
+          8.388435515508553,
+          8.518741411626884
+        ]
+      },
+      "previous": null
+    },
+    {
+      "length": 768,
+      "ending": true,
+      "source": "core-selected-anthropic-768-19157.json",
+      "anthropic": {
+        "kind": "paired_module",
+        "ending": true,
+        "release_form": "copy_plus_fused_residual",
+        "baseline_us": 1721.8600273132324,
+        "candidate_us": 1601.5348434448242,
+        "speedup": 1.072182203565141,
+        "time_reduction_percent": 6.73227025454498,
+        "speedup_median_bootstrap_95ci": [
+          1.071265854625114,
+          1.0783702325402549
+        ],
+        "time_reduction_95ci_percent": [
+          6.6524900721355635,
+          7.267469944496019
+        ]
+      },
+      "previous": null
+    },
+    {
+      "length": 1024,
+      "ending": false,
+      "source": "core-selected-anthropic-1024-19157.json",
+      "anthropic": {
+        "kind": "paired_module",
+        "ending": false,
+        "release_form": "copy_plus_fused_residual",
+        "baseline_us": 3516.8636322021484,
+        "candidate_us": 3254.5761108398438,
+        "speedup": 1.0802686324743913,
+        "time_reduction_percent": 7.430432585137026,
+        "speedup_median_bootstrap_95ci": [
+          1.07908006254005,
+          1.0817116515636418
+        ],
+        "time_reduction_95ci_percent": [
+          7.328470359641647,
+          7.553921735568392
+        ]
+      },
+      "previous": {
+        "kind": "paired_previous",
+        "ending": false,
+        "previous": "hot4t",
+        "baseline_us": 3337.3592376708984,
+        "candidate_us": 3267.656898498535,
+        "speedup": 1.022685892169658,
+        "time_reduction_percent": 2.218265876488157,
+        "speedup_median_bootstrap_95ci": [
+          1.019540863170485,
+          1.0241645775904349
+        ],
+        "time_reduction_95ci_percent": [
+          1.9166336413156015,
+          2.359442819950597
+        ]
+      }
+    },
+    {
+      "length": 1024,
+      "ending": true,
+      "source": "core-selected-anthropic-1024-19157.json",
+      "anthropic": {
+        "kind": "paired_module",
+        "ending": true,
+        "release_form": "copy_plus_fused_residual",
+        "baseline_us": 3474.6971130371094,
+        "candidate_us": 3269.3483352661133,
+        "speedup": 1.0623963599343642,
+        "time_reduction_percent": 5.873171472294869,
+        "speedup_median_bootstrap_95ci": [
+          1.0614134330420244,
+          1.0644492564016355
+        ],
+        "time_reduction_95ci_percent": [
+          5.786004880870288,
+          6.054704441196734
+        ]
+      },
+      "previous": {
+        "kind": "paired_previous",
+        "ending": true,
+        "previous": "hot4t",
+        "baseline_us": 3349.427604675293,
+        "candidate_us": 3280.5490493774414,
+        "speedup": 1.022812266902357,
+        "time_reduction_percent": 2.2303474098374965,
+        "speedup_median_bootstrap_95ci": [
+          1.021421570567769,
+          1.0238729419938128
+        ],
+        "time_reduction_95ci_percent": [
+          2.097231073342376,
+          2.331631300591308
+        ]
+      }
+    }
+  ],
+  "qfull_native_exact": [
+    {
+      "source": "native-pair-qfull4v2-64-19134.json",
+      "length": 64,
+      "bitwise_fixtures": 8,
+      "changed_graph_bitwise": true
+    },
+    {
+      "source": "native-pair-qfull4v2-128-19134.json",
+      "length": 128,
+      "bitwise_fixtures": 8,
+      "changed_graph_bitwise": true
+    },
+    {
+      "source": "native-pair-qfull4v2-384-19134.json",
+      "length": 384,
+      "bitwise_fixtures": 8,
+      "changed_graph_bitwise": true
+    },
+    {
+      "source": "native-pair-qfull4v2-768-19134.json",
+      "length": 768,
+      "bitwise_fixtures": 8,
+      "changed_graph_bitwise": true
+    },
+    {
+      "source": "native-pair-qfull4v2-1024-19134.json",
+      "length": 1024,
+      "bitwise_fixtures": 8,
+      "changed_graph_bitwise": true
+    }
+  ],
+  "native_1024": {
+    "source": "native-pair-qfull4v2-1024-19132.json",
+    "baseline_us": 2740.2716636657715,
+    "candidate_us": 2639.196014404297,
+    "speedup": 1.0381313503958078,
+    "time_reduction_percent": 3.6730757029223238,
+    "speedup_median_bootstrap_95ci": [
+      1.0332462189815752,
+      1.041264343771422
+    ],
+    "time_reduction_95ci_percent": [
+      3.217647291692438,
+      3.962907595775722
+    ]
+  },
+  "selected_job": 19157,
+  "selection": {
+    "384": "h4kv_local1",
+    "768": "hot6t",
+    "1024": "qfull4v2"
+  },
+  "selected_module": [
+    {
+      "length": 384,
+      "records_by_kind": {
+        "correctness": 10,
+        "fp64_full_module_sample": 6,
+        "paired_module": 2,
+        "changed_input_weight_mask_graph": 2,
+        "fullgraph_compile": 2,
+        "no_grad": 2
+      }
+    },
+    {
+      "length": 768,
+      "records_by_kind": {
+        "correctness": 10,
+        "fp64_full_module_sample": 6,
+        "paired_module": 2,
+        "changed_input_weight_mask_graph": 2,
+        "fullgraph_compile": 2,
+        "no_grad": 2
+      }
+    },
+    {
+      "length": 1024,
+      "records_by_kind": {
+        "correctness": 10,
+        "fp64_full_module_sample": 6,
+        "paired_module": 2,
+        "changed_input_weight_mask_graph": 2,
+        "fullgraph_compile": 2,
+        "no_grad": 2
+      }
+    }
+  ],
+  "unchanged_training_files": 48,
+  "candidate_sha256": "5319417859d774515f783f5fd09349965ed8c57280513f489e0e3994b1bfb925",
+  "complete": true
+}

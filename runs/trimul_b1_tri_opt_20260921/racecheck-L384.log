@@ -1,0 +1,50 @@
+========= COMPUTE-SANITIZER
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:1480: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+CUBIN k3 3 2 False -1 /home/psk6950/MiniWorld/runs/trimul_ln_policy_v4_20260921/build/b3c1096fe2fe452f29026c432a25af246c72a76047d1c572fe0d889793369cc3.cubin ['0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 168 registers, used 1 barriers']
+BUILD f3774ba75371a399345d43d751c6cba9fb7af482cf54760b6b211612476da7f7.cubin /home/psk6950/MiniWorld/runs/trimul_ln_policy_v4_20260921/b1_fused.cu(243): warning #177-D: variable "x" was declared but never referenced
+    uint8_t* x=sm+16384+slot*49152;
+             ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 14.464 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 243 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 402.045 ms
+
+CUBIN /home/psk6950/MiniWorld/runs/trimul_split_bwd_20260921/build/d7ca96f26d834736e71bad92539274f8f63fcfd779b719e9b4eac2cc25d4cfdd.cubin {'SPLIT_ROLE': 1, 'USE_SAVED_XN': 1, 'DW_SPLITS': 16, 'PIPE_CONSUMERS': 1, 'DX_CTAS': 132, 'DW_PROD_REGS': 32, 'DW_CONS_REGS': 224, 'UCOUNT': 256, 'DX_RESIDENT': 1, 'WGRAD_SLICES': 2} ['0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 128 registers, used 16 barriers, 1024 bytes smem']
+CUBIN /home/psk6950/MiniWorld/runs/trimul_split_bwd_20260921/build/ecb1769c4aaeceab620cdad111f444c14ded5f403fff44d60b4cb4c68fb63549.cubin {'SPLIT_ROLE': 2, 'USE_SAVED_XN': 1, 'DW_SPLITS': 16, 'PIPE_CONSUMERS': 1, 'DX_CTAS': 132, 'DW_PROD_REGS': 32, 'DW_CONS_REGS': 224, 'UCOUNT': 132, 'DX_RESIDENT': 1, 'WGRAD_SLICES': 2} ['0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 180 registers, used 16 barriers, 2048 bytes smem']
+BUILD e574c64d4a08d4330c8505c37c1774460068663c3fab3d685c1c6261dfa12236.cubin /home/psk6950/MiniWorld/runs/trimul_b1_tri_opt_20260921/b1_fused.cu(264): warning #177-D: variable "x" was declared but never referenced
+    uint8_t* x=sm+16384+slot*49152;
+             ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 14.766 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 241 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 403.216 ms
+
+CHECK baseline True {'forward': 0.0, 'dx': 0.0, 'dWL': 0.0, 'dWLg': 0.0, 'dWR': 0.0, 'dWRg': 0.0, 'dWgate': 0.0, 'dWproj': 0.0, 'dgamma_in': 0.0, 'dbeta_in': 0.0, 'dgamma_out': 0.0, 'dbeta_out': 0.0}
+CHECK optimized True {'forward': 0.0, 'dx': 0.0, 'dWL': 0.0, 'dWLg': 0.0, 'dWR': 0.0, 'dWRg': 0.0, 'dWgate': 0.0, 'dWproj': 0.0, 'dgamma_in': 0.0, 'dbeta_in': 0.0, 'dgamma_out': 0.0, 'dbeta_out': 0.0}
+MUTATED baseline True {'forward': 0.0, 'dx': 0.0, 'dWL': 0.0, 'dWLg': 0.0, 'dWR': 0.0, 'dWRg': 0.0, 'dWgate': 0.0, 'dWproj': 0.0, 'dgamma_in': 0.0, 'dbeta_in': 0.0, 'dgamma_out': 0.0, 'dbeta_out': 0.0}
+MUTATED optimized True {'forward': 0.0, 'dx': 0.0, 'dWL': 0.0, 'dWLg': 0.0, 'dWR': 0.0, 'dWRg': 0.0, 'dWgate': 0.0, 'dWproj': 0.0, 'dgamma_in': 0.0, 'dbeta_in': 0.0, 'dgamma_out': 0.0, 'dbeta_out': 0.0}
+CHECK_ONLY_DONE
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

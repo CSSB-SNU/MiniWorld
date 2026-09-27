@@ -1,0 +1,5305 @@
+{
+  "baseline": "installed package after job 16663",
+  "baseline_snapshot": "baseline/snapshot.json",
+  "target": "Both backward cores SOL90; not achieved",
+  "pilots": {
+    "16685": [
+      {
+        "length": 64,
+        "artifact": "ds_double",
+        "kind": "bias",
+        "baseline_ms": 0.015150399506092071,
+        "candidate_ms": 0.015372800081968308,
+        "speedup": 0.9852768311261053,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "ds_double",
+        "kind": "bias",
+        "baseline_ms": 0.550062394142151,
+        "candidate_ms": 0.5542736053466797,
+        "speedup": 0.9946145484875238,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "ds_double",
+        "kind": "bias",
+        "baseline_ms": 3.5094087600708006,
+        "candidate_ms": 3.527352714538574,
+        "speedup": 0.9947686450790598,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "ds_double",
+        "kind": "bias",
+        "baseline_ms": 7.948020553588867,
+        "candidate_ms": 8.007512283325195,
+        "speedup": 0.9926639797823861,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "16686": [
+      {
+        "length": 64,
+        "artifact": "ds_double_vec4",
+        "kind": "bias",
+        "baseline_ms": 0.014375200122594833,
+        "candidate_ms": 0.01454479992389679,
+        "speedup": 0.9890418047842038,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "ds_double_vec4",
+        "kind": "bias",
+        "baseline_ms": 0.5595287799835205,
+        "candidate_ms": 0.555131196975708,
+        "speedup": 1.0055638196761767,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "ds_double_vec4",
+        "kind": "bias",
+        "baseline_ms": 3.574421501159668,
+        "candidate_ms": 3.523978424072266,
+        "speedup": 1.0142642488685814,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "ds_double_vec4",
+        "kind": "bias",
+        "baseline_ms": 8.04079360961914,
+        "candidate_ms": 7.936982345581055,
+        "speedup": 1.013237373931184,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "16695": [
+      {
+        "length": 64,
+        "artifact": "key128",
+        "kind": "dq",
+        "baseline_ms": 0.006184800155460834,
+        "candidate_ms": 0.007321599870920181,
+        "speedup": 0.8457402039675013,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "key128",
+        "kind": "dq",
+        "baseline_ms": 0.20729999542236327,
+        "candidate_ms": 0.23958879709243774,
+        "speedup": 0.8724140898887589,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "key128",
+        "kind": "dq",
+        "baseline_ms": 1.4031648159027101,
+        "candidate_ms": 1.5923543930053712,
+        "speedup": 0.8693555335985088,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "key128",
+        "kind": "dq",
+        "baseline_ms": 3.17816801071167,
+        "candidate_ms": 3.5846111297607424,
+        "speedup": 0.8984564777590152,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16701": [
+      {
+        "length": 64,
+        "artifact": "rs_double_vec4",
+        "kind": "bias",
+        "baseline_ms": 0.014234399795532225,
+        "candidate_ms": 0.014107199758291245,
+        "speedup": 1.0079493562324728,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_double_vec4",
+        "kind": "bias",
+        "baseline_ms": 0.5561920166015626,
+        "candidate_ms": 0.533897590637207,
+        "speedup": 1.0420745590067955,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_double_vec4",
+        "kind": "bias",
+        "baseline_ms": 3.574655151367187,
+        "candidate_ms": 3.3379808425903317,
+        "speedup": 1.0711066312802853,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_double_vec4",
+        "kind": "bias",
+        "baseline_ms": 8.077911376953125,
+        "candidate_ms": 7.508491134643554,
+        "speedup": 1.0744045511139053,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "16705": [
+      {
+        "length": 64,
+        "artifact": "rs3",
+        "kind": "dq",
+        "baseline_ms": 0.006112799979746342,
+        "candidate_ms": 0.006034400127828121,
+        "speedup": 1.013944119385052,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs3",
+        "kind": "dq",
+        "baseline_ms": 0.20294320583343506,
+        "candidate_ms": 0.18862879872322083,
+        "speedup": 1.0761404689812353,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs3",
+        "kind": "dq",
+        "baseline_ms": 1.389135980606079,
+        "candidate_ms": 1.2504103660583494,
+        "speedup": 1.1028945302484305,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs3",
+        "kind": "dq",
+        "baseline_ms": 3.1726903915405273,
+        "candidate_ms": 2.8611303329467774,
+        "speedup": 1.1024452636275806,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16706": [
+      {
+        "length": 64,
+        "artifact": "multicast2",
+        "kind": "dq",
+        "baseline_ms": 0.006228799931704998,
+        "candidate_ms": 0.007447199895977974,
+        "speedup": 0.8353534792568826,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "multicast2",
+        "kind": "dq",
+        "baseline_ms": 0.2006343960762024,
+        "candidate_ms": 0.24536160230636597,
+        "speedup": 0.8238937038447718,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "multicast2",
+        "kind": "dq",
+        "baseline_ms": 1.3539520263671876,
+        "candidate_ms": 1.484001636505127,
+        "speedup": 0.9120608744795892,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "multicast2",
+        "kind": "dq",
+        "baseline_ms": 3.1439743995666505,
+        "candidate_ms": 3.3047279357910155,
+        "speedup": 0.9537005364109263,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16721": [
+      {
+        "length": 64,
+        "artifact": "rs_coop",
+        "kind": "dq",
+        "baseline_ms": 0.006102399900555611,
+        "candidate_ms": 0.005859199911355972,
+        "speedup": 1.0421730884992204,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_coop",
+        "kind": "dq",
+        "baseline_ms": 0.21158720254898072,
+        "candidate_ms": 0.1870248019695282,
+        "speedup": 1.131332831182823,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_coop",
+        "kind": "dq",
+        "baseline_ms": 1.416366386413574,
+        "candidate_ms": 1.2352999687194823,
+        "speedup": 1.1360505690854392,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_coop",
+        "kind": "dq",
+        "baseline_ms": 3.173849582672119,
+        "candidate_ms": 2.843279266357422,
+        "speedup": 1.115399840077371,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16724": [
+      {
+        "length": 64,
+        "artifact": "rs_tma_store",
+        "kind": "dq",
+        "baseline_ms": 0.006138399988412857,
+        "candidate_ms": 0.0040720000863075255,
+        "speedup": 1.5071698965359162,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_tma_store",
+        "kind": "dq",
+        "baseline_ms": 0.2103567957878113,
+        "candidate_ms": 0.17526320219039915,
+        "speedup": 1.1982112231577182,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_tma_store",
+        "kind": "dq",
+        "baseline_ms": 1.4403815746307371,
+        "candidate_ms": 1.1486088275909423,
+        "speedup": 1.2577828787542897,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_tma_store",
+        "kind": "dq",
+        "baseline_ms": 3.2519968032836912,
+        "candidate_ms": 2.701362419128418,
+        "speedup": 1.1997696968334508,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16725": [
+      {
+        "length": 64,
+        "artifact": "rs_tma_store",
+        "kind": "bias",
+        "baseline_ms": 0.014466400444507598,
+        "candidate_ms": 0.009815200045704842,
+        "speedup": 1.4706986443960797,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_tma_store",
+        "kind": "bias",
+        "baseline_ms": 0.5588023900985717,
+        "candidate_ms": 0.44332559108734126,
+        "speedup": 1.2600093210806944,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_tma_store",
+        "kind": "bias",
+        "baseline_ms": 3.575632095336914,
+        "candidate_ms": 3.0922783851623534,
+        "speedup": 1.1563687847128217,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_tma_store",
+        "kind": "bias",
+        "baseline_ms": 8.07785530090332,
+        "candidate_ms": 7.108125686645508,
+        "speedup": 1.1363415894838171,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "16741": [
+      {
+        "length": 64,
+        "artifact": "rs_coop_tma",
+        "kind": "bias",
+        "baseline_ms": 0.015185600519180298,
+        "candidate_ms": 0.010869599878787994,
+        "speedup": 1.3971584664318826,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_coop_tma",
+        "kind": "bias",
+        "baseline_ms": 0.5500256061553954,
+        "candidate_ms": 0.5418519973754883,
+        "speedup": 1.0156423887640025,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_coop_tma",
+        "kind": "bias",
+        "baseline_ms": 3.5080751419067386,
+        "candidate_ms": 3.9065824508666993,
+        "speedup": 0.8981617946843452,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_coop_tma",
+        "kind": "bias",
+        "baseline_ms": 7.950573348999024,
+        "candidate_ms": 9.128760910034181,
+        "speedup": 0.8711776226272103,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "16748": [
+      {
+        "length": 64,
+        "artifact": "rs_coop_tma",
+        "kind": "dq",
+        "baseline_ms": 0.006192799843847752,
+        "candidate_ms": 0.004202399961650371,
+        "speedup": 1.4768101234746538,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_coop_tma",
+        "kind": "dq",
+        "baseline_ms": 0.201967990398407,
+        "candidate_ms": 0.15518959760665896,
+        "speedup": 1.301250116767251,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_coop_tma",
+        "kind": "dq",
+        "baseline_ms": 1.4402175903320313,
+        "candidate_ms": 1.1149151802062989,
+        "speedup": 1.2787915962457048,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_coop_tma",
+        "kind": "dq",
+        "baseline_ms": 3.2450839996337892,
+        "candidate_ms": 2.6814215660095213,
+        "speedup": 1.2074481583317853,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16749": [
+      {
+        "length": 64,
+        "artifact": "rs_r8_two",
+        "kind": "bias",
+        "baseline_ms": 0.015274400264024733,
+        "candidate_ms": 0.013272000104188919,
+        "speedup": 1.1515352327654655,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_r8_two",
+        "kind": "bias",
+        "baseline_ms": 0.5523808002471924,
+        "candidate_ms": 0.43344159126281734,
+        "speedup": 1.2744065514862326,
+        "relative_l2": [
+          0.0,
+          0.0,
+          6.31248511240301e-08
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_r8_two",
+        "kind": "bias",
+        "baseline_ms": 3.4877145767211912,
+        "candidate_ms": 2.903390407562256,
+        "speedup": 1.201151079521925,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_r8_two",
+        "kind": "bias",
+        "baseline_ms": 7.848075485229492,
+        "candidate_ms": 6.692264175415039,
+        "speedup": 1.1726219249135639,
+        "relative_l2": [
+          0.0,
+          0.0,
+          2.4667574507475365e-06
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      }
+    ],
+    "16758": [
+      {
+        "length": 64,
+        "artifact": "rs_coop_k32",
+        "kind": "dq",
+        "baseline_ms": 0.006099199876189232,
+        "candidate_ms": 0.004280799999833107,
+        "speedup": 1.4263806135316393,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_coop_k32",
+        "kind": "dq",
+        "baseline_ms": 0.21007040739059446,
+        "candidate_ms": 0.1709263980388641,
+        "speedup": 1.239753463153932,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_coop_k32",
+        "kind": "dq",
+        "baseline_ms": 1.4320135593414307,
+        "candidate_ms": 1.2087215900421144,
+        "speedup": 1.1749461076196397,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_coop_k32",
+        "kind": "dq",
+        "baseline_ms": 3.2031719207763674,
+        "candidate_ms": 2.8764647483825683,
+        "speedup": 1.1139693661441967,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16760": [
+      {
+        "length": 64,
+        "artifact": "rs_partial_tma",
+        "kind": "bias",
+        "baseline_ms": 0.015275199711322785,
+        "candidate_ms": 0.01014239974319935,
+        "speedup": 1.505519671087285,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_partial_tma",
+        "kind": "bias",
+        "baseline_ms": 0.5515928030014038,
+        "candidate_ms": 0.47160398960113525,
+        "speedup": 1.1696369528090558,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_partial_tma",
+        "kind": "bias",
+        "baseline_ms": 3.510440635681152,
+        "candidate_ms": 3.297181510925293,
+        "speedup": 1.0650878830280155,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_partial_tma",
+        "kind": "bias",
+        "baseline_ms": 7.94868049621582,
+        "candidate_ms": 7.664900970458984,
+        "speedup": 1.0371101652190264,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "16761": [
+      {
+        "length": 64,
+        "artifact": "rs_group2",
+        "kind": "dq",
+        "baseline_ms": 0.006224000081419945,
+        "candidate_ms": 0.004438399896025657,
+        "speedup": 1.4011866242212552,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_group2",
+        "kind": "dq",
+        "baseline_ms": 0.20648959875106812,
+        "candidate_ms": 0.17662880420684815,
+        "speedup": 1.1611915977438936,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_group2",
+        "kind": "dq",
+        "baseline_ms": 1.3880280017852784,
+        "candidate_ms": 1.2107367992401123,
+        "speedup": 1.155268794984138,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_group2",
+        "kind": "dq",
+        "baseline_ms": 3.1669055938720705,
+        "candidate_ms": 2.774412822723389,
+        "speedup": 1.1403319417968754,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16763": [
+      {
+        "length": 64,
+        "artifact": "rs_group4",
+        "kind": "dq",
+        "baseline_ms": 0.006011199951171875,
+        "candidate_ms": 0.005410399846732616,
+        "speedup": 1.1121964230072297,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_group4",
+        "kind": "dq",
+        "baseline_ms": 0.20582480430603028,
+        "candidate_ms": 0.21527199745178222,
+        "speedup": 0.9494241919426574,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_group4",
+        "kind": "dq",
+        "baseline_ms": 1.319975996017456,
+        "candidate_ms": 1.3795559883117676,
+        "speedup": 0.9795486052184071,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_group4",
+        "kind": "dq",
+        "baseline_ms": 3.1470335960388183,
+        "candidate_ms": 3.0069135665893554,
+        "speedup": 1.0529355456067024,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16764": [
+      {
+        "length": 64,
+        "artifact": "rs_coop_k128_2",
+        "kind": "dq",
+        "baseline_ms": 0.005943200178444385,
+        "candidate_ms": 0.005245600081980229,
+        "speedup": 1.132548513570836,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_coop_k128_2",
+        "kind": "dq",
+        "baseline_ms": 0.21129279136657714,
+        "candidate_ms": 0.20568000078201293,
+        "speedup": 1.0064800663753362,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_coop_k128_2",
+        "kind": "dq",
+        "baseline_ms": 1.376251983642578,
+        "candidate_ms": 1.4018112182617188,
+        "speedup": 0.9802213084730035,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_coop_k128_2",
+        "kind": "dq",
+        "baseline_ms": 3.163376808166504,
+        "candidate_ms": 3.185863208770752,
+        "speedup": 0.9954036278585054,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16766": [
+      {
+        "length": 64,
+        "artifact": "rs_bias_prefetch",
+        "kind": "dq",
+        "baseline_ms": 0.006142399832606315,
+        "candidate_ms": 0.0042280001565814015,
+        "speedup": 1.4556143096495924,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_bias_prefetch",
+        "kind": "dq",
+        "baseline_ms": 0.21363120079040526,
+        "candidate_ms": 0.16155039668083193,
+        "speedup": 1.3126893607923895,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_bias_prefetch",
+        "kind": "dq",
+        "baseline_ms": 1.4414463996887208,
+        "candidate_ms": 1.1457623958587646,
+        "speedup": 1.251771818710528,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_bias_prefetch",
+        "kind": "dq",
+        "baseline_ms": 3.252177619934082,
+        "candidate_ms": 2.7390855789184574,
+        "speedup": 1.1896735236369538,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16767": [
+      {
+        "length": 64,
+        "artifact": "rs_bias_prefetch",
+        "kind": "bias",
+        "baseline_ms": 0.015072000026702882,
+        "candidate_ms": 0.00992400012910366,
+        "speedup": 1.518357478793447,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_bias_prefetch",
+        "kind": "bias",
+        "baseline_ms": 0.5469552040100097,
+        "candidate_ms": 0.44475681781768794,
+        "speedup": 1.2373068342272813,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_bias_prefetch",
+        "kind": "bias",
+        "baseline_ms": 3.4820224761962892,
+        "candidate_ms": 3.069717597961426,
+        "speedup": 1.1346653797409965,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_bias_prefetch",
+        "kind": "bias",
+        "baseline_ms": 7.886291122436523,
+        "candidate_ms": 7.059635162353516,
+        "speedup": 1.1168396385051316,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "16769": [
+      {
+        "length": 64,
+        "artifact": "rs_r8_pair",
+        "kind": "bias",
+        "baseline_ms": 0.01526080071926117,
+        "candidate_ms": 0.01318800002336502,
+        "speedup": 1.1571090075835637,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_r8_pair",
+        "kind": "bias",
+        "baseline_ms": 0.548197603225708,
+        "candidate_ms": 0.4287168025970459,
+        "speedup": 1.2820995123320107,
+        "relative_l2": [
+          0.0,
+          0.0,
+          6.31248511240301e-08
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_r8_pair",
+        "kind": "bias",
+        "baseline_ms": 3.482280158996582,
+        "candidate_ms": 2.872671127319336,
+        "speedup": 1.212758921880809,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_r8_pair",
+        "kind": "bias",
+        "baseline_ms": 7.8491050720214846,
+        "candidate_ms": 6.624074935913086,
+        "speedup": 1.1848866173081216,
+        "relative_l2": [
+          0.0,
+          0.0,
+          2.4667574507475365e-06
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      }
+    ],
+    "16772": [
+      {
+        "length": 64,
+        "artifact": "rs_mma_pair",
+        "kind": "dq",
+        "baseline_ms": 0.006247999891638756,
+        "candidate_ms": 0.004220800101757049,
+        "speedup": 1.4796518060735218,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_mma_pair",
+        "kind": "dq",
+        "baseline_ms": 0.21753600835800171,
+        "candidate_ms": 0.15933119654655456,
+        "speedup": 1.319985623319154,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_mma_pair",
+        "kind": "dq",
+        "baseline_ms": 1.4502344131469727,
+        "candidate_ms": 1.1392223834991455,
+        "speedup": 1.2708170990607268,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_mma_pair",
+        "kind": "dq",
+        "baseline_ms": 3.277207946777344,
+        "candidate_ms": 2.6849191665649412,
+        "speedup": 1.214535209536388,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16774": [
+      {
+        "length": 64,
+        "artifact": "rs_mma_pair",
+        "kind": "bias",
+        "baseline_ms": 0.014255199581384659,
+        "candidate_ms": 0.009680799767374994,
+        "speedup": 1.4744939581146848,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_mma_pair",
+        "kind": "bias",
+        "baseline_ms": 0.5587415933609009,
+        "candidate_ms": 0.4416687965393067,
+        "speedup": 1.2657747493645815,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_mma_pair",
+        "kind": "bias",
+        "baseline_ms": 3.5756383895874024,
+        "candidate_ms": 3.075105667114258,
+        "speedup": 1.1628348319052555,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_mma_pair",
+        "kind": "bias",
+        "baseline_ms": 8.039870452880859,
+        "candidate_ms": 7.050863265991211,
+        "speedup": 1.140361581230931,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      }
+    ],
+    "16816": [
+      {
+        "length": 64,
+        "artifact": "rs_ldmatrix",
+        "kind": "dq",
+        "baseline_ms": 0.006092799827456474,
+        "candidate_ms": 0.0041704000905156136,
+        "speedup": 1.4620705820613877,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_ldmatrix",
+        "kind": "dq",
+        "baseline_ms": 0.20304239988327027,
+        "candidate_ms": 0.15341919660568237,
+        "speedup": 1.324873450529491,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_ldmatrix",
+        "kind": "dq",
+        "baseline_ms": 1.4529935836791994,
+        "candidate_ms": 1.0991655826568603,
+        "speedup": 1.3030072038097524,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_ldmatrix",
+        "kind": "dq",
+        "baseline_ms": 3.2733455657958985,
+        "candidate_ms": 2.628678321838379,
+        "speedup": 1.227219510111706,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16824": [
+      {
+        "length": 64,
+        "artifact": "rs_r8_parallel_tma",
+        "kind": "bias",
+        "baseline_ms": 0.013863999396562576,
+        "candidate_ms": 0.012346399948000908,
+        "speedup": 1.1224727384771804,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_r8_parallel_tma",
+        "kind": "bias",
+        "baseline_ms": 0.5575184106826783,
+        "candidate_ms": 0.41869440078735354,
+        "speedup": 1.3280760062871781,
+        "relative_l2": [
+          0.0,
+          0.0,
+          6.31248511240301e-08
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_r8_parallel_tma",
+        "kind": "bias",
+        "baseline_ms": 3.5756198883056642,
+        "candidate_ms": 2.8523216247558594,
+        "speedup": 1.253352546342108,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_r8_parallel_tma",
+        "kind": "bias",
+        "baseline_ms": 8.039655303955078,
+        "candidate_ms": 6.557736206054687,
+        "speedup": 1.2258464408092244,
+        "relative_l2": [
+          0.0,
+          0.0,
+          2.4667574507475365e-06
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      }
+    ],
+    "16825": [
+      {
+        "length": 64,
+        "artifact": "rs_r8_staged_p",
+        "kind": "bias",
+        "baseline_ms": 0.01512880027294159,
+        "candidate_ms": 0.01371999979019165,
+        "speedup": 1.1036112389118515,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_r8_staged_p",
+        "kind": "bias",
+        "baseline_ms": 0.5497648000717164,
+        "candidate_ms": 0.419923996925354,
+        "speedup": 1.3093384114116593,
+        "relative_l2": [
+          0.0,
+          0.0,
+          6.31248511240301e-08
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_r8_staged_p",
+        "kind": "bias",
+        "baseline_ms": 3.4843183517456056,
+        "candidate_ms": 2.887654399871826,
+        "speedup": 1.2063868771503203,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_r8_staged_p",
+        "kind": "bias",
+        "baseline_ms": 7.901990509033203,
+        "candidate_ms": 6.74973030090332,
+        "speedup": 1.1679055945415615,
+        "relative_l2": [
+          0.0,
+          0.0,
+          2.4667574507475365e-06
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      }
+    ],
+    "16826": [
+      {
+        "length": 64,
+        "artifact": "rs_r8_staged_coop",
+        "kind": "bias",
+        "baseline_ms": 0.015016800165176392,
+        "candidate_ms": 0.015554400533437727,
+        "speedup": 0.965118064522699,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_r8_staged_coop",
+        "kind": "bias",
+        "baseline_ms": 0.5485159873962402,
+        "candidate_ms": 0.523750400543213,
+        "speedup": 1.050088888857045,
+        "relative_l2": [
+          0.0,
+          0.0,
+          6.31248511240301e-08
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_r8_staged_coop",
+        "kind": "bias",
+        "baseline_ms": 3.5290496826171873,
+        "candidate_ms": 3.809477615356445,
+        "speedup": 0.9266522104319657,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_r8_staged_coop",
+        "kind": "bias",
+        "baseline_ms": 7.952556610107422,
+        "candidate_ms": 8.933410263061523,
+        "speedup": 0.8901432721937121,
+        "relative_l2": [
+          0.0,
+          0.0,
+          2.4667574507475365e-06
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      }
+    ],
+    "16836": [
+      {
+        "length": 64,
+        "artifact": "rs_r8_warp_release",
+        "kind": "bias",
+        "baseline_ms": 0.014870399981737137,
+        "candidate_ms": 0.012984800338745116,
+        "speedup": 1.1449253854929866,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_r8_warp_release",
+        "kind": "bias",
+        "baseline_ms": 0.5496903896331786,
+        "candidate_ms": 0.421997594833374,
+        "speedup": 1.302547217647803,
+        "relative_l2": [
+          0.0,
+          0.0,
+          6.31248511240301e-08
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_r8_warp_release",
+        "kind": "bias",
+        "baseline_ms": 3.5270000457763673,
+        "candidate_ms": 2.843833637237549,
+        "speedup": 1.2401438337939994,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_r8_warp_release",
+        "kind": "bias",
+        "baseline_ms": 7.946089553833008,
+        "candidate_ms": 6.5395854949951175,
+        "speedup": 1.2152024225786184,
+        "relative_l2": [
+          0.0,
+          0.0,
+          2.4667574507475365e-06
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      }
+    ],
+    "16838": [
+      {
+        "length": 64,
+        "artifact": "rs_warp_release",
+        "kind": "dq",
+        "baseline_ms": 0.006178400106728077,
+        "candidate_ms": 0.004287999868392944,
+        "speedup": 1.4431577409914937,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_warp_release",
+        "kind": "dq",
+        "baseline_ms": 0.20955359935760498,
+        "candidate_ms": 0.1643176019191742,
+        "speedup": 1.2587557706768895,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_warp_release",
+        "kind": "dq",
+        "baseline_ms": 1.4102871894836426,
+        "candidate_ms": 1.190065622329712,
+        "speedup": 1.1794016277688093,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_warp_release",
+        "kind": "dq",
+        "baseline_ms": 3.163939189910889,
+        "candidate_ms": 2.7801856040954593,
+        "speedup": 1.1297687220470247,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16844": [
+      {
+        "length": 64,
+        "artifact": "rs_parallel_tma",
+        "kind": "dq",
+        "baseline_ms": 0.0061344001442193985,
+        "candidate_ms": 0.0042640000581741335,
+        "speedup": 1.4398875249160068,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_parallel_tma",
+        "kind": "dq",
+        "baseline_ms": 0.2131384015083313,
+        "candidate_ms": 0.16081680059432985,
+        "speedup": 1.3232736133912801,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_parallel_tma",
+        "kind": "dq",
+        "baseline_ms": 1.4377704143524168,
+        "candidate_ms": 1.1019119739532472,
+        "speedup": 1.2733064642500542,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_parallel_tma",
+        "kind": "dq",
+        "baseline_ms": 3.2157350540161134,
+        "candidate_ms": 2.655469608306885,
+        "speedup": 1.2006272455972433,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16852": [
+      {
+        "length": 64,
+        "artifact": "rs_group4_independent",
+        "kind": "dq",
+        "baseline_ms": 0.006027200073003769,
+        "candidate_ms": 0.005065599828958512,
+        "speedup": 1.1886052107063079,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_group4_independent",
+        "kind": "dq",
+        "baseline_ms": 0.20209920406341553,
+        "candidate_ms": 0.19164639711380005,
+        "speedup": 1.0558164275804582,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_group4_independent",
+        "kind": "dq",
+        "baseline_ms": 1.3491991996765136,
+        "candidate_ms": 1.3279007911682128,
+        "speedup": 1.0182332204943847,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_group4_independent",
+        "kind": "dq",
+        "baseline_ms": 3.1595999717712404,
+        "candidate_ms": 3.0099775314331056,
+        "speedup": 1.0486588241005173,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16853": [
+      {
+        "length": 64,
+        "artifact": "rs_group2_independent",
+        "kind": "dq",
+        "baseline_ms": 0.00603600014001131,
+        "candidate_ms": 0.004171200096607208,
+        "speedup": 1.4479646766233656,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_group2_independent",
+        "kind": "dq",
+        "baseline_ms": 0.20394799709320066,
+        "candidate_ms": 0.17165600061416625,
+        "speedup": 1.1879841183772615,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_group2_independent",
+        "kind": "dq",
+        "baseline_ms": 1.3583071708679197,
+        "candidate_ms": 1.2288055896759031,
+        "speedup": 1.1080179929011125,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_group2_independent",
+        "kind": "dq",
+        "baseline_ms": 3.1012024879455566,
+        "candidate_ms": 2.8291791915893554,
+        "speedup": 1.0961492388676872,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ],
+    "16857": [
+      {
+        "length": 64,
+        "artifact": "rs8_tma",
+        "kind": "bias",
+        "baseline_ms": 0.015083199739456177,
+        "candidate_ms": 0.012883199751377106,
+        "speedup": 1.1703093913080775,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs8_tma",
+        "kind": "bias",
+        "baseline_ms": 0.5522423982620239,
+        "candidate_ms": 0.4191567897796631,
+        "speedup": 1.316041000144362,
+        "relative_l2": [
+          0.0,
+          0.0,
+          6.31248511240301e-08
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs8_tma",
+        "kind": "bias",
+        "baseline_ms": 3.530655288696289,
+        "candidate_ms": 2.7998832702636722,
+        "speedup": 1.2612396827567878,
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs8_tma",
+        "kind": "bias",
+        "baseline_ms": 7.950448989868164,
+        "candidate_ms": 6.444561767578126,
+        "speedup": 1.2338126394648707,
+        "relative_l2": [
+          0.0,
+          0.0,
+          2.4667574507475365e-06
+        ],
+        "bitwise": [
+          true,
+          true,
+          false
+        ]
+      }
+    ],
+    "16863": [
+      {
+        "length": 64,
+        "artifact": "rs_tma_ldmatrix",
+        "kind": "dq",
+        "baseline_ms": 0.006127200089395046,
+        "candidate_ms": 0.0040200000628829,
+        "speedup": 1.5275960166155613,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 384,
+        "artifact": "rs_tma_ldmatrix",
+        "kind": "dq",
+        "baseline_ms": 0.21339679956436158,
+        "candidate_ms": 0.15806080102920533,
+        "speedup": 1.3500943254942,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 768,
+        "artifact": "rs_tma_ldmatrix",
+        "kind": "dq",
+        "baseline_ms": 1.4087120056152345,
+        "candidate_ms": 1.078391981124878,
+        "speedup": 1.3038636539109656,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      },
+      {
+        "length": 1024,
+        "artifact": "rs_tma_ldmatrix",
+        "kind": "dq",
+        "baseline_ms": 3.2329944610595702,
+        "candidate_ms": 2.59560718536377,
+        "speedup": 1.2288058397611414,
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ]
+      }
+    ]
+  },
+  "paired_full": {
+    "16737": {
+      "384": {
+        "complete": true,
+        "backward_e0": {
+          "baseline_us": 1094.8053359985352,
+          "candidate_us": 952.9173215230305,
+          "speedup": 1.1483732474270627,
+          "paired_ratios": [
+            1.1491259588802392,
+            1.1476787408297022,
+            1.151376042909936,
+            1.1474295567052377,
+            1.1487703393020163,
+            1.1471466842717073,
+            1.1497589965787054,
+            1.1483223090559405,
+            1.1469863250195023,
+            1.1497498428024977,
+            1.1482570880952556,
+            1.1484241857981847
+          ],
+          "rounds_us": [
+            [
+              1095.7525889078777,
+              1095.3812917073567,
+              1095.8250681559246,
+              1093.9562479654949,
+              1093.0901845296223,
+              1093.0282592773438,
+              1094.9483235677083,
+              1095.9147135416667,
+              1094.8501586914062,
+              1094.760513305664,
+              1094.3018595377605,
+              1094.0544128417969
+            ],
+            [
+              953.5530726114908,
+              954.4319788614908,
+              951.7525355021158,
+              953.3973058064779,
+              951.530647277832,
+              952.8234481811523,
+              952.3285547892252,
+              954.3615976969401,
+              954.5450846354166,
+              952.1727879842123,
+              953.0111948649088,
+              952.6570638020834
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e0": {
+          "baseline_us": 1605.2000045776367,
+          "candidate_us": 1462.4064127604165,
+          "speedup": 1.0977004990881165,
+          "paired_ratios": [
+            1.0989796716024756,
+            1.0977559869441709,
+            1.0968221791568773,
+            1.0970208981692355,
+            1.0981319908578588,
+            1.097288653787038,
+            1.0980657968354932,
+            1.098716574028831,
+            1.0974060252186724,
+            1.0976450112320622,
+            1.098097634658299,
+            1.0969294502889637
+          ],
+          "rounds_us": [
+            [
+              1607.1103413899739,
+              1604.8853556315105,
+              1604.3647766113281,
+              1604.3348948160808,
+              1605.514653523763,
+              1605.8687845865886,
+              1606.6453297932942,
+              1604.3136596679688,
+              1603.5050710042317,
+              1606.5940856933594,
+              1606.8864186604817,
+              1603.8079579671223
+            ],
+            [
+              1462.3658498128254,
+              1461.9691212972004,
+              1462.7391815185547,
+              1462.4469757080078,
+              1462.0416005452473,
+              1463.4880065917969,
+              1463.1594340006511,
+              1460.170618693034,
+              1461.1775716145833,
+              1463.6736551920574,
+              1463.3365631103516,
+              1462.0885213216145
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "backward_e1": {
+          "baseline_us": 1158.6048126220703,
+          "candidate_us": 1006.6453297932943,
+          "speedup": 1.1506206513608435,
+          "paired_ratios": [
+            1.1510958527984414,
+            1.1506947700679875,
+            1.1512092924089,
+            1.1496650304837894,
+            1.1488992568998033,
+            1.1514535685523077,
+            1.1505465326536994,
+            1.1509819390973972,
+            1.152007961792293,
+            1.1503644941766102,
+            1.150329465992075,
+            1.1501817214785923
+          ],
+          "rounds_us": [
+            [
+              1159.7226460774739,
+              1158.7882995605469,
+              1158.2528432210286,
+              1157.1136474609375,
+              1156.5610249837239,
+              1159.0783437093098,
+              1157.3504130045574,
+              1157.572301228841,
+              1159.2554728190105,
+              1158.4213256835938,
+              1159.652328491211,
+              1159.0421040852864
+            ],
+            [
+              1007.4944178263346,
+              1007.0336023966471,
+              1006.1183929443359,
+              1006.4789454142252,
+              1006.6687901814779,
+              1006.6218694051107,
+              1005.9136072794596,
+              1005.7258605957031,
+              1006.2911987304688,
+              1007.0037206013998,
+              1008.1045150756836,
+              1007.7034632364908
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e1": {
+          "baseline_us": 1758.4831873575845,
+          "candidate_us": 1615.4794692993164,
+          "speedup": 1.088296651992894,
+          "paired_ratios": [
+            1.086873348604611,
+            1.0886647889958865,
+            1.0875661772424094,
+            1.0896519502765867,
+            1.08877256829475,
+            1.0885828194053027,
+            1.0874510197203786,
+            1.0891762645811254,
+            1.0880104845804852,
+            1.0910664158227426,
+            1.0875549542126846,
+            1.0871495382215435
+          ],
+          "rounds_us": [
+            [
+              1753.3823649088542,
+              1758.1396738688152,
+              1757.4976603190105,
+              1760.091781616211,
+              1758.8223775227864,
+              1756.6463470458984,
+              1759.3599955240886,
+              1760.7594807942708,
+              1757.7259063720703,
+              1760.4843139648438,
+              1759.0015411376953,
+              1758.1439971923828
+            ],
+            [
+              1613.2352193196614,
+              1614.950434366862,
+              1615.9914652506511,
+              1615.2788798014324,
+              1615.4176076253254,
+              1613.700230916341,
+              1617.8751627604167,
+              1616.5973663330078,
+              1615.5413309733074,
+              1613.5445912679036,
+              1617.3909505208333,
+              1617.205301920573
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        }
+      },
+      "768": {
+        "complete": true,
+        "backward_e0": {
+          "baseline_us": 6017.305501302084,
+          "candidate_us": 5313.365173339844,
+          "speedup": 1.137714130743211,
+          "paired_ratios": [
+            1.1366725165932603,
+            1.1416619521826576,
+            1.134189680330488,
+            1.1387557448931618,
+            1.0304164798049162,
+            1.0909336353238999,
+            1.1272155391300411,
+            1.1252141860662228,
+            1.1390894127760316,
+            1.1658110439308753,
+            1.182251865594899,
+            1.1395358288954343
+          ],
+          "rounds_us": [
+            [
+              5991.334533691406,
+              6028.106689453125,
+              5993.469746907552,
+              6036.6078694661455,
+              5983.4259033203125,
+              6118.297831217448,
+              6003.1829833984375,
+              5996.055603027344,
+              6006.504313151042,
+              6168.208821614583,
+              6461.450703938802,
+              6189.2222086588545
+            ],
+            [
+              5270.941670735677,
+              5280.115254720052,
+              5284.36279296875,
+              5301.055908203125,
+              5806.803385416667,
+              5608.313496907552,
+              5325.6744384765625,
+              5328.812662760417,
+              5273.075358072917,
+              5290.916442871094,
+              5465.3757731119795,
+              5431.353759765625
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e0": {
+          "baseline_us": 8570.572916666668,
+          "candidate_us": 7896.961975097656,
+          "speedup": 1.0794688245360384,
+          "paired_ratios": [
+            1.0938756096489588,
+            1.0888479549837424,
+            1.0815044210934008,
+            1.0386071665346068,
+            1.0955369658726564,
+            1.0885244846533715,
+            1.056274228376194,
+            1.0398837249716577,
+            1.0774332279786758,
+            1.0983570619094583,
+            1.06152699103602,
+            1.0701683180378077
+          ],
+          "rounds_us": [
+            [
+              8536.815388997396,
+              8585.24169921875,
+              8532.990010579428,
+              8737.064615885416,
+              8547.632853190104,
+              8516.211446126303,
+              8559.859212239584,
+              8613.249715169271,
+              8516.029866536459,
+              8661.764526367188,
+              8581.28662109375,
+              8592.44384765625
+            ],
+            [
+              7804.1920979817705,
+              7884.702046712239,
+              7889.9261474609375,
+              8412.28993733724,
+              7802.231343587239,
+              7823.628743489583,
+              8103.822835286458,
+              8282.896931966146,
+              7903.997802734375,
+              7886.109924316406,
+              8083.9080810546875,
+              8029.058329264323
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "backward_e1": {
+          "baseline_us": 6236.10356648763,
+          "candidate_us": 5526.5309651692705,
+          "speedup": 1.1252199525953963,
+          "paired_ratios": [
+            1.1470690345765815,
+            1.138833019332281,
+            1.1277272095544293,
+            1.1260686600180663,
+            1.102018221602277,
+            1.0961735382186395,
+            1.123578736348316,
+            1.1243712451727261,
+            1.1225057189470045,
+            1.189602875640083,
+            1.1465378337508882,
+            1.0900570641851106
+          ],
+          "rounds_us": [
+            [
+              6253.149922688802,
+              6279.387919108073,
+              6190.718078613281,
+              6215.008036295573,
+              6449.9135335286455,
+              6263.1764729817705,
+              6204.311625162761,
+              6219.057210286458,
+              6181.6192626953125,
+              6682.956949869792,
+              6342.681376139323,
+              6198.472595214844
+            ],
+            [
+              5451.415506998698,
+              5513.87939453125,
+              5489.552815755208,
+              5519.2087809244795,
+              5852.819315592448,
+              5713.672383626302,
+              5521.919759114583,
+              5531.142171223958,
+              5506.982421875,
+              5617.8049723307295,
+              5532.029724121094,
+              5686.374409993489
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e1": {
+          "baseline_us": 9189.424133300781,
+          "candidate_us": 8459.22571818034,
+          "speedup": 1.083821477488639,
+          "paired_ratios": [
+            1.0870258451306642,
+            1.0922701446510916,
+            1.0872707346704815,
+            1.056509807151634,
+            1.0852015757634674,
+            1.0869478922436133,
+            1.0415843379599825,
+            1.0824413792138106,
+            1.0815745067889373,
+            1.067323440571539,
+            1.0917304907414997,
+            1.0773197842862168
+          ],
+          "rounds_us": [
+            [
+              9188.836669921875,
+              9173.328653971354,
+              9204.030354817709,
+              9251.178995768229,
+              9107.620239257812,
+              9127.897135416666,
+              9220.142618815104,
+              9203.857421875,
+              9108.742268880209,
+              9190.011596679688,
+              9348.375447591146,
+              9105.856323242188
+            ],
+            [
+              8453.190612792969,
+              8398.406473795572,
+              8465.260823567709,
+              8756.358846028646,
+              8392.560831705729,
+              8397.73203531901,
+              8852.036539713541,
+              8502.869160970053,
+              8421.742757161459,
+              8610.334269205729,
+              8562.896728515625,
+              8452.324422200521
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        }
+      },
+      "1024": {
+        "complete": true,
+        "backward_e0": {
+          "baseline_us": 13172.880045572918,
+          "candidate_us": 11604.759724934896,
+          "speedup": 1.1261447315686461,
+          "paired_ratios": [
+            1.1246460138372354,
+            1.13849919743462,
+            1.229497806059083,
+            1.1101686275992124,
+            1.0990180438164505,
+            1.1063208707669545,
+            1.0964309311702027,
+            1.1108201795504649,
+            1.1276434493000569,
+            1.1487873409480038,
+            1.147936925477593,
+            1.1460130995185132
+          ],
+          "rounds_us": [
+            [
+              12885.194905598959,
+              13100.0,
+              14314.00146484375,
+              12817.179361979166,
+              13313.651529947916,
+              12968.270874023438,
+              12920.403035481771,
+              13288.535563151041,
+              12972.688802083334,
+              13529.825846354166,
+              13278.607177734375,
+              13245.760091145834
+            ],
+            [
+              11457.111612955729,
+              11506.376139322916,
+              11642.152913411459,
+              11545.254516601562,
+              12114.133707682291,
+              11721.979777018229,
+              11784.055582682291,
+              11962.814331054688,
+              11504.247029622396,
+              11777.485148111979,
+              11567.366536458334,
+              11558.122762044271
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e0": {
+          "baseline_us": 18585.197957356773,
+          "candidate_us": 17171.745808919273,
+          "speedup": 1.078939186976347,
+          "paired_ratios": [
+            1.076198834932115,
+            1.102566431634364,
+            1.074976201094321,
+            1.0573918237826612,
+            1.0671522582888504,
+            1.0694621208473205,
+            1.076976638038091,
+            1.0809017359146031,
+            1.090164697849724,
+            1.0928019607521167,
+            1.096922038774326,
+            1.0920757129888485
+          ],
+          "rounds_us": [
+            [
+              18288.763427734375,
+              18966.080729166668,
+              18360.992431640625,
+              18525.3662109375,
+              18482.021077473957,
+              18390.3076171875,
+              18635.477701822918,
+              18534.918212890625,
+              18788.95263671875,
+              18684.979248046875,
+              18791.560872395832,
+              18701.167805989582
+            ],
+            [
+              16993.851725260418,
+              17201.7578125,
+              17080.37109375,
+              17519.868977864582,
+              17319.010416666668,
+              17195.847574869793,
+              17303.511555989582,
+              17147.64404296875,
+              17234.967041015625,
+              17098.22998046875,
+              17131.172688802082,
+              17124.424235026043
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "backward_e1": {
+          "baseline_us": 13487.900797526043,
+          "candidate_us": 12035.165405273438,
+          "speedup": 1.1253527142157265,
+          "paired_ratios": [
+            1.1264151035866101,
+            1.1552790029546751,
+            1.1734195963172798,
+            1.1251981377483837,
+            1.133375247453987,
+            1.108358272203368,
+            1.0969729465522713,
+            1.1054955393961952,
+            1.1053597559735397,
+            1.1052263802006312,
+            1.125507290683069,
+            1.1330990968728836
+          ],
+          "rounds_us": [
+            [
+              13326.803588867188,
+              13689.626057942709,
+              14062.775675455729,
+              13412.386067708334,
+              13872.663370768229,
+              13319.172159830729,
+              13419.558715820312,
+              13463.494873046875,
+              13323.236083984375,
+              13616.525268554688,
+              13512.306722005209,
+              13723.004150390625
+            ],
+            [
+              11831.165568033854,
+              11849.627685546875,
+              11984.439086914062,
+              11920.021565755209,
+              12240.132649739584,
+              12017.027791341146,
+              12233.263142903646,
+              12178.696695963541,
+              12053.303019205729,
+              12320.123291015625,
+              12005.525716145834,
+              12111.036173502604
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e1": {
+          "baseline_us": 19702.764892578125,
+          "candidate_us": 18170.984903971355,
+          "speedup": 1.0788768276359346,
+          "paired_ratios": [
+            1.075101682745301,
+            1.0587536694833815,
+            1.0729405256680429,
+            1.0612116186578904,
+            1.066557905606364,
+            1.0721174790797683,
+            1.0826519725265684,
+            1.104999589663679,
+            1.1007295469430856,
+            1.1006733894346965,
+            1.0926597686281996,
+            1.085817776819444
+          ],
+          "rounds_us": [
+            [
+              19298.077392578125,
+              19570.328776041668,
+              19572.574869791668,
+              19499.2431640625,
+              19658.6181640625,
+              19416.5771484375,
+              19746.91162109375,
+              19915.232340494793,
+              19947.690836588543,
+              19925.124104817707,
+              19778.275553385418,
+              19783.30078125
+            ],
+            [
+              17950.002034505207,
+              18484.307861328125,
+              18241.994222005207,
+              18374.509684244793,
+              18431.833902994793,
+              18110.493977864582,
+              18239.390055338543,
+              18022.841389973957,
+              18122.245279947918,
+              18102.667236328125,
+              18101.03759765625,
+              18219.724527994793
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        }
+      }
+    },
+    "16759": {
+      "384": {
+        "complete": true,
+        "backward_e0": {
+          "baseline_us": 1100.365893046061,
+          "candidate_us": 934.2069307963054,
+          "speedup": 1.1767282057904462,
+          "paired_ratios": [
+            1.1840756278009288,
+            1.1729838451391603,
+            1.1738868250635917,
+            1.1745491398433465,
+            1.1701395761540123,
+            1.1773805253667067,
+            1.1779538127350793,
+            1.1756267537644278,
+            1.1784138573991312,
+            1.177680620614606,
+            1.178229467474333,
+            1.176075886214186
+          ],
+          "rounds_us": [
+            [
+              1100.7445017496746,
+              1087.4154408772786,
+              1088.5205586751301,
+              1089.4954681396484,
+              1088.1237030029297,
+              1100.2197265625,
+              1100.5845387776692,
+              1100.5120595296223,
+              1101.6981760660808,
+              1102.3316701253254,
+              1100.5781809488933,
+              1099.9188741048176
+            ],
+            [
+              929.6234766642252,
+              927.0506540934244,
+              927.2789637247721,
+              927.5861104329427,
+              929.9093246459961,
+              934.4640096028646,
+              934.3189239501953,
+              936.1066818237305,
+              934.8992029825846,
+              936.0191980997721,
+              934.0949376424154,
+              935.2448145548502
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e0": {
+          "baseline_us": 1615.400505065918,
+          "candidate_us": 1446.1301803588867,
+          "speedup": 1.1167255808293945,
+          "paired_ratios": [
+            1.1170224196194927,
+            1.1175224908129866,
+            1.1161195043852568,
+            1.1143574274368206,
+            1.1179662742213166,
+            1.11574397280928,
+            1.118380722611707,
+            1.1176845744960624,
+            1.1163211610226893,
+            1.1160960811165914,
+            1.1165925558918637,
+            1.1168586057669256
+          ],
+          "rounds_us": [
+            [
+              1615.4324849446614,
+              1616.7040506998699,
+              1616.8768564860027,
+              1614.6474202473958,
+              1616.659164428711,
+              1613.5765075683594,
+              1616.2731170654297,
+              1615.8250172932942,
+              1615.3685251871746,
+              1613.7451171875,
+              1613.9413197835286,
+              1614.402135213216
+            ],
+            [
+              1446.1952209472656,
+              1446.6859181722004,
+              1448.6592610677083,
+              1448.9493052164714,
+              1446.071497599284,
+              1446.1888631184895,
+              1445.1904296875,
+              1445.6896464029949,
+              1447.046407063802,
+              1445.8836873372395,
+              1445.4165140787761,
+              1445.4847971598308
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "backward_e1": {
+          "baseline_us": 1160.0213368733725,
+          "candidate_us": 986.6154670715332,
+          "speedup": 1.1753293552059478,
+          "paired_ratios": [
+            1.1859857771101312,
+            1.1751012727525556,
+            1.1757290762008257,
+            1.1731672796014398,
+            1.1719900737476432,
+            1.1739641445156808,
+            1.1767264444169547,
+            1.1764215521538395,
+            1.1751171068634425,
+            1.1751874235003656,
+            1.177398102246478,
+            1.17547128691153
+          ],
+          "rounds_us": [
+            [
+              1161.1072540283203,
+              1150.3082275390625,
+              1150.9503682454426,
+              1149.3610382080078,
+              1157.2586059570312,
+              1160.104497273763,
+              1160.5823516845703,
+              1160.6656392415364,
+              1160.0405375162761,
+              1160.0021362304688,
+              1162.0586395263672,
+              1159.7482045491536
+            ],
+            [
+              979.0229161580404,
+              978.9013544718424,
+              978.924814860026,
+              979.7077178955078,
+              987.4303817749023,
+              988.1941477457682,
+              986.2805048624674,
+              986.6069157918295,
+              987.170155843099,
+              987.0784123738607,
+              986.9717280069987,
+              986.6240183512369
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e1": {
+          "baseline_us": 1765.5104319254556,
+          "candidate_us": 1596.898078918457,
+          "speedup": 1.1055390514285957,
+          "paired_ratios": [
+            1.105696751145142,
+            1.1057125102335787,
+            1.1053006756676087,
+            1.1058477504017994,
+            1.1053498103609771,
+            1.1053813517120492,
+            1.1046874864372012,
+            1.1062210814204088,
+            1.1060210046133918,
+            1.1068099666018536,
+            1.1049702060735638,
+            1.104721194448286
+          ],
+          "rounds_us": [
+            [
+              1765.710957845052,
+              1766.1418914794922,
+              1765.8047993977864,
+              1764.5248413085938,
+              1765.1050567626953,
+              1764.089584350586,
+              1763.9060974121094,
+              1765.2479807535808,
+              1766.6795094807942,
+              1767.415491739909,
+              1765.6917572021484,
+              1765.329106648763
+            ],
+            [
+              1596.9215393066406,
+              1597.2885131835938,
+              1597.5786844889324,
+              1595.6309000651042,
+              1596.8746185302734,
+              1595.9103902180989,
+              1596.7466990152996,
+              1595.7461039225261,
+              1597.3290761311848,
+              1596.8554178873699,
+              1597.9541778564453,
+              1597.9860941569011
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        }
+      },
+      "768": {
+        "complete": true,
+        "backward_e0": {
+          "baseline_us": 6039.261881510416,
+          "candidate_us": 5167.790985107422,
+          "speedup": 1.1692864512210934,
+          "paired_ratios": [
+            1.1667222916481919,
+            1.1698190714799517,
+            1.176716828082983,
+            1.1722139886329883,
+            1.174397754274205,
+            1.1716710910966432,
+            1.1655589910778066,
+            1.1651349909190152,
+            1.1730255102774318,
+            1.1687538309622352,
+            1.148045026587732,
+            1.1660143333305562
+          ],
+          "rounds_us": [
+            [
+              6029.384358723958,
+              6028.3905029296875,
+              6009.143575032552,
+              6057.749430338542,
+              6049.139404296875,
+              6068.3990478515625,
+              6026.9480387369795,
+              6052.795918782552,
+              6059.0077718098955,
+              6025.531514485677,
+              5994.700622558594,
+              6050.511169433594
+            ],
+            [
+              5167.797342936198,
+              5153.267415364583,
+              5106.703186035156,
+              5167.7846272786455,
+              5150.843811035156,
+              5179.268391927083,
+              5170.8648681640625,
+              5194.9310302734375,
+              5165.2821858723955,
+              5155.518086751302,
+              5221.659851074219,
+              5189.053853352864
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e0": {
+          "baseline_us": 8581.950887044271,
+          "candidate_us": 7745.753479003906,
+          "speedup": 1.1096761048860624,
+          "paired_ratios": [
+            1.1138244825316546,
+            1.110708241019891,
+            1.1002708254141975,
+            1.117629617042857,
+            1.1150834077111853,
+            1.1059811362482943,
+            1.0959543858204381,
+            1.110396747263573,
+            1.0946439173029514,
+            1.109583996523527,
+            1.0955418771023087,
+            1.109768213248598
+          ],
+          "rounds_us": [
+            [
+              8564.9169921875,
+              8595.957438151041,
+              8519.867960611979,
+              8671.287027994791,
+              8628.138224283854,
+              8569.229125976562,
+              8501.898701985678,
+              8594.890340169271,
+              8579.033406575521,
+              8605.211385091146,
+              8503.204345703125,
+              8584.868367513021
+            ],
+            [
+              7689.646911621094,
+              7739.167785644531,
+              7743.428039550781,
+              7758.641052246094,
+              7737.6617431640625,
+              7748.078918457031,
+              7757.529703776042,
+              7740.3778076171875,
+              7837.282307942708,
+              7755.349222819011,
+              7761.6424560546875,
+              7735.7309977213545
+            ]
+          ],
+          "gradient_relative_l2": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "backward_e1": {
+          "baseline_us": 6235.610707600912,
+          "candidate_us": 5368.499247233072,
+          "speedup": 1.1620611463491977,
+          "paired_ratios": [
+            1.1587670142958584,
+            1.162675488236054,
+            1.1645650693151892,
+            1.1655131743229108,
+            1.1716999438200475,
+            1.149948769174148,
+            1.148986301085447,
+            1.1636678746311826,
+            1.1510240225804118,
+            1.1614468044623414,
+            1.1674980755975135,
+            1.1602848959000354
+          ],
+          "rounds_us": [
+            [
+              6200.1708984375,
+              6221.525573730469,
+              6203.729248046875,
+              6254.575093587239,
+              6236.448160807292,
+              6253.574625651042,
+              6192.4072265625,
+              6249.627685546875,
+              6215.8294677734375,
+              6246.775309244792,
+              6257.877095540364,
+              6234.773254394531
+            ],
+            [
+              5350.6622314453125,
+              5351.042175292969,
+              5327.0782470703125,
+              5366.370137532552,
+              5322.564188639323,
+              5438.133239746094,
+              5389.452616373698,
+              5370.628356933594,
+              5400.260416666667,
+              5378.442891438802,
+              5360.074869791667,
+              5373.484802246094
+            ]
+          ],
+          "gradient_relative_l2": [
+            4.5051433517073747e-07,
+            1.133313503487443e-06,
+            2.70452630957152e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e1": {
+          "baseline_us": 9167.521158854166,
+          "candidate_us": 8333.808135986328,
+          "speedup": 1.1015514147283856,
+          "paired_ratios": [
+            1.1031235698381703,
+            1.1035140686079334,
+            1.094939102815798,
+            1.0968355194617379,
+            1.1107970222994974,
+            1.102530832052386,
+            1.0966141259274285,
+            1.1005719974043855,
+            1.0958186188949175,
+            1.097309400275507,
+            1.109125225057276,
+            1.1031797978924733
+          ],
+          "rounds_us": [
+            [
+              9166.746012369791,
+              9169.915771484375,
+              9127.195231119791,
+              9138.630167643229,
+              9241.795857747396,
+              9198.536173502604,
+              9148.456827799479,
+              9168.296305338541,
+              9144.838460286459,
+              9151.321411132812,
+              9190.163167317709,
+              9216.403198242188
+            ],
+            [
+              8309.808858235678,
+              8309.740702311197,
+              8335.801696777344,
+              8331.814575195312,
+              8319.96815999349,
+              8343.110148111979,
+              8342.457580566406,
+              8330.482991536459,
+              8345.211791992188,
+              8339.782206217447,
+              8285.956319173178,
+              8354.398091634115
+            ]
+          ],
+          "gradient_relative_l2": [
+            4.5051433517073747e-07,
+            1.133313503487443e-06,
+            2.70452630957152e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        }
+      },
+      "1024": {
+        "complete": true,
+        "backward_e0": {
+          "baseline_us": 13045.984903971355,
+          "candidate_us": 11292.258199055988,
+          "speedup": 1.152552863047948,
+          "paired_ratios": [
+            1.145694779059018,
+            1.1470604767766706,
+            1.1837100799260283,
+            1.150555804740863,
+            1.1432222449305416,
+            1.1526824485596303,
+            1.1616478358665456,
+            1.1708888344635844,
+            1.1524232775362657,
+            1.1588711598624404,
+            1.157886052377248,
+            1.1484407987580194
+          ],
+          "rounds_us": [
+            [
+              12873.053995768229,
+              12870.342000325521,
+              13460.193888346354,
+              12950.479125976562,
+              13002.239990234375,
+              13164.981079101562,
+              13101.363118489584,
+              13150.364176432291,
+              13062.7197265625,
+              13029.250081380209,
+              13141.706339518229,
+              12984.569295247396
+            ],
+            [
+              11236.023966471354,
+              11220.281982421875,
+              11371.19140625,
+              11255.846150716146,
+              11373.326619466146,
+              11421.169026692709,
+              11278.257242838541,
+              11231.095377604166,
+              11335.001627604166,
+              11243.053181966146,
+              11349.740600585938,
+              11306.259155273438
+            ]
+          ],
+          "gradient_relative_l2": [
+            5.70514146147616e-07,
+            1.7063138102457742e-06,
+            4.971280418430979e-07,
+            0.0,
+            0.0,
+            0.0,
+            1.218492616317235e-05,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e0": {
+          "baseline_us": 18528.63566080729,
+          "candidate_us": 16818.46415201823,
+          "speedup": 1.100363459224395,
+          "paired_ratios": [
+            1.0961988044783022,
+            1.121904620429571,
+            1.0987077822169,
+            1.0944871811250483,
+            1.0946612798585902,
+            1.10349222493536,
+            1.1104773494557665,
+            1.0971107866132803,
+            1.1102083732636414,
+            1.0971558519011217,
+            1.1044958683709225,
+            1.1020191362318899
+          ],
+          "rounds_us": [
+            [
+              18269.954427083332,
+              18638.285319010418,
+              18514.190673828125,
+              18301.430257161457,
+              18571.492513020832,
+              18488.606770833332,
+              18725.0244140625,
+              18442.946370442707,
+              18749.495442708332,
+              18424.051920572918,
+              18622.658284505207,
+              18543.080647786457
+            ],
+            [
+              16666.64326985677,
+              16613.074747721355,
+              16850.877888997395,
+              16721.466064453125,
+              16965.51513671875,
+              16754.632568359375,
+              16862.139892578125,
+              16810.46854654948,
+              16888.267008463543,
+              16792.556762695312,
+              16860.776774088543,
+              16826.45975748698
+            ]
+          ],
+          "gradient_relative_l2": [
+            5.70514146147616e-07,
+            1.7063138102457742e-06,
+            4.971280418430979e-07,
+            0.0,
+            0.0,
+            0.0,
+            1.218492616317235e-05,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            true,
+            true
+          ]
+        },
+        "backward_e1": {
+          "baseline_us": 13406.418355305988,
+          "candidate_us": 11666.930135091146,
+          "speedup": 1.148845876758796,
+          "paired_ratios": [
+            1.140366555621078,
+            1.1408339492812323,
+            1.1960790762603117,
+            1.143862835365576,
+            1.1407916755545797,
+            1.1501885688530524,
+            1.1559536449072008,
+            1.1588958030612386,
+            1.1410714628708372,
+            1.1496997407274208,
+            1.1484436946611174,
+            1.1492480588564742
+          ],
+          "rounds_us": [
+            [
+              13235.054524739584,
+              13223.342895507812,
+              13983.831787109375,
+              13282.818603515625,
+              13339.654541015625,
+              13462.557983398438,
+              13432.213338216146,
+              13517.318725585938,
+              13355.472819010416,
+              13401.230875651041,
+              13509.303792317709,
+              13411.605834960938
+            ],
+            [
+              11605.965169270834,
+              11590.944417317709,
+              11691.39404296875,
+              11612.247721354166,
+              11693.330891927084,
+              11704.652913411459,
+              11620.027669270834,
+              11663.963826497396,
+              11704.326375325521,
+              11656.287638346354,
+              11763.139851888021,
+              11669.896443684896
+            ]
+          ],
+          "gradient_relative_l2": [
+            1.3693374967260752e-06,
+            2.879725570892333e-06,
+            9.559912541590165e-07,
+            0.0,
+            0.0,
+            0.0,
+            4.595035352394916e-05,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            true,
+            true
+          ]
+        },
+        "forward_backward_e1": {
+          "baseline_us": 19538.673909505207,
+          "candidate_us": 17882.8379313151,
+          "speedup": 1.0951834941025957,
+          "paired_ratios": [
+            1.0929172180177726,
+            1.1018232044135456,
+            1.0976664381839207,
+            1.0798938250667278,
+            1.1064087207264925,
+            1.0893195410524763,
+            1.1025674422558769,
+            1.0871813334541358,
+            1.0901373283114468,
+            1.0918340232794204,
+            1.1113885862238024,
+            1.0974497701874188
+          ],
+          "rounds_us": [
+            [
+              19329.3701171875,
+              19522.676595052082,
+              19554.671223958332,
+              19375.020345052082,
+              19816.392008463543,
+              19472.57080078125,
+              19736.838785807293,
+              19481.667073567707,
+              19687.347412109375,
+              19428.065999348957,
+              19882.489013671875,
+              19581.793212890625
+            ],
+            [
+              17686.033121744793,
+              17718.520100911457,
+              17814.766438802082,
+              17941.597493489582,
+              17910.552978515625,
+              17875.9033203125,
+              17900.799560546875,
+              17919.427490234375,
+              18059.511311848957,
+              17793.973795572918,
+              17889.772542317707,
+              17842.997233072918
+            ]
+          ],
+          "gradient_relative_l2": [
+            1.3693374967260752e-06,
+            2.879725570892333e-06,
+            9.559912541590165e-07,
+            0.0,
+            0.0,
+            0.0,
+            4.595035352394916e-05,
+            0.0,
+            0.0
+          ],
+          "gradient_bitwise": [
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            true,
+            true
+          ]
+        }
+      }
+    }
+  },
+  "direct": {
+    "16806": {
+      "384": {
+        "kind": "dq",
+        "artifact": "rs_bias_prefetch",
+        "length": 384,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_bias_prefetch/build/triattn_dq.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_coop_tma/build/triattn_dq.so",
+        "source_digests": {
+          "fused.cu": "130549181295f5ea5e601c520587f1cd4fc13e1ae58170e5bc07cdf3f94d9a34",
+          "build/triattn_dq.so": "5a8601127d6ec7f8d7da6b206e3f334222a9a194238e563290fa56b38ec1d040"
+        },
+        "baseline_digests": {
+          "fused.cu": "4f1acc63aa3a1999595a3ce23b94b3b7c5f1d9a86b47849f015aa6c812564695",
+          "build/triattn_dq.so": "3ee079c6a37f201bf796b47049b7f16aa4d8d03934658622654a21c295c44897"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0
+            ],
+            "bitwise": [
+              true
+            ],
+            "baseline_ms": 0.16400960087776184,
+            "candidate_ms": 0.1649847984313965,
+            "speedup": 0.9948429368510949,
+            "rounds_ms": [
+              [
+                0.1549728035926819,
+                0.155131196975708,
+                0.15519360303878785,
+                0.15526880025863649,
+                0.1552224040031433,
+                0.16402560472488403,
+                0.16399359703063965,
+                0.1718943953514099,
+                0.16732959747314452,
+                0.1672544002532959,
+                0.16890079975128175,
+                0.17229440212249755
+              ],
+              [
+                0.1553328037261963,
+                0.1551584005355835,
+                0.15521119832992553,
+                0.15522719621658326,
+                0.16283680200576783,
+                0.16533119678497316,
+                0.16511199474334717,
+                0.1648576021194458,
+                0.16818560361862184,
+                0.16813280582427978,
+                0.1733232021331787,
+                0.17330080270767212
+              ]
+            ],
+            "paired_ratios": [
+              0.9976823946720941,
+              0.9998246723362604,
+              0.9998866364584064,
+              1.000268020315172,
+              0.9532390841085492,
+              0.9921031717819889,
+              0.9932264296458535,
+              1.0426840688054269,
+              0.9949103482874884,
+              0.9947755254147015,
+              0.9744846487517647,
+              0.9941927528929443
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "768": {
+        "kind": "dq",
+        "artifact": "rs_bias_prefetch",
+        "length": 768,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_bias_prefetch/build/triattn_dq.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_coop_tma/build/triattn_dq.so",
+        "source_digests": {
+          "fused.cu": "130549181295f5ea5e601c520587f1cd4fc13e1ae58170e5bc07cdf3f94d9a34",
+          "build/triattn_dq.so": "5a8601127d6ec7f8d7da6b206e3f334222a9a194238e563290fa56b38ec1d040"
+        },
+        "baseline_digests": {
+          "fused.cu": "4f1acc63aa3a1999595a3ce23b94b3b7c5f1d9a86b47849f015aa6c812564695",
+          "build/triattn_dq.so": "3ee079c6a37f201bf796b47049b7f16aa4d8d03934658622654a21c295c44897"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0
+            ],
+            "bitwise": [
+              true
+            ],
+            "baseline_ms": 1.1645840167999268,
+            "candidate_ms": 1.1816328048706053,
+            "speedup": 0.9853309421796087,
+            "rounds_ms": [
+              [
+                1.0372447967529297,
+                1.1894304275512695,
+                1.1945679664611817,
+                1.159011173248291,
+                1.160976028442383,
+                1.1659472465515137,
+                1.1633888244628907,
+                1.1454447746276855,
+                1.165779209136963,
+                1.1664095878601075,
+                1.1663488388061523,
+                1.158561611175537
+              ],
+              [
+                1.0888784408569336,
+                1.2045120239257812,
+                1.1551312446594237,
+                1.1758848190307618,
+                1.1828495979309082,
+                1.1830032348632813,
+                1.1725024223327636,
+                1.1660032272338867,
+                1.1834367752075194,
+                1.18330717086792,
+                1.1852208137512208,
+                1.1804160118103026
+              ]
+            ],
+            "paired_ratios": [
+              0.9525808922588559,
+              0.9874790819228543,
+              1.0341404684394848,
+              0.9856502562926367,
+              0.9815077339276376,
+              0.9855824668867125,
+              0.9922272246979748,
+              0.9823684427915589,
+              0.9850794174725049,
+              0.9857200366702599,
+              0.984077249803487,
+              0.9814858487040943
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "1024": {
+        "kind": "dq",
+        "artifact": "rs_bias_prefetch",
+        "length": 1024,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_bias_prefetch/build/triattn_dq.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_coop_tma/build/triattn_dq.so",
+        "source_digests": {
+          "fused.cu": "130549181295f5ea5e601c520587f1cd4fc13e1ae58170e5bc07cdf3f94d9a34",
+          "build/triattn_dq.so": "5a8601127d6ec7f8d7da6b206e3f334222a9a194238e563290fa56b38ec1d040"
+        },
+        "baseline_digests": {
+          "fused.cu": "4f1acc63aa3a1999595a3ce23b94b3b7c5f1d9a86b47849f015aa6c812564695",
+          "build/triattn_dq.so": "3ee079c6a37f201bf796b47049b7f16aa4d8d03934658622654a21c295c44897"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0
+            ],
+            "bitwise": [
+              true
+            ],
+            "baseline_ms": 2.6650400161743164,
+            "candidate_ms": 2.7418824195861817,
+            "speedup": 0.9836665814149236,
+            "rounds_ms": [
+              [
+                2.5129743576049806,
+                2.6503856658935545,
+                2.663630485534668,
+                2.6339855194091797,
+                2.6550048828125,
+                2.646022415161133,
+                2.7567535400390626,
+                3.211257553100586,
+                3.2155601501464846,
+                2.7184288024902346,
+                2.7142160415649412,
+                2.666449546813965
+              ],
+              [
+                2.743289566040039,
+                2.7404752731323243,
+                2.690345573425293,
+                2.6819664001464845,
+                2.7089727401733397,
+                2.6847536087036135,
+                2.9267839431762694,
+                3.106955146789551,
+                3.0190736770629885,
+                2.857888031005859,
+                2.751766395568848,
+                2.7064416885375975
+              ]
+            ],
+            "paired_ratios": [
+              0.9160441495909889,
+              0.9671262834873899,
+              0.9900700162259781,
+              0.9821098128840525,
+              0.9800781098456581,
+              0.98557365062592,
+              0.9419053792700931,
+              1.0335706186228057,
+              1.0650817085307576,
+              0.9512019970682544,
+              0.9863540909343272,
+              0.9852233499457946
+            ]
+          }
+        ],
+        "complete": true
+      }
+    },
+    "16808": {
+      "384": {
+        "kind": "dq",
+        "artifact": "rs_mma_pair",
+        "length": 384,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_mma_pair/build/triattn_dq.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_coop_tma/build/triattn_dq.so",
+        "source_digests": {
+          "fused.cu": "9b0665d517c43c449aeff87dd83d332dc7501283da277627f808e5f451b9d9fc",
+          "build/triattn_dq.so": "672bf00f46d6483d70700a2335b21f3710a853ed3b5fbe6fedf3bd34f59c6773"
+        },
+        "baseline_digests": {
+          "fused.cu": "4f1acc63aa3a1999595a3ce23b94b3b7c5f1d9a86b47849f015aa6c812564695",
+          "build/triattn_dq.so": "3ee079c6a37f201bf796b47049b7f16aa4d8d03934658622654a21c295c44897"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0
+            ],
+            "bitwise": [
+              true
+            ],
+            "baseline_ms": 0.15984799861907958,
+            "candidate_ms": 0.1587231993675232,
+            "speedup": 1.000404419570344,
+            "rounds_ms": [
+              [
+                0.15482239723205565,
+                0.15483039617538452,
+                0.15504159927368164,
+                0.15497599840164183,
+                0.15495200157165528,
+                0.15719519853591918,
+                0.16250079870224,
+                0.17269279956817626,
+                0.17267520427703859,
+                0.17257119417190553,
+                0.17465280294418334,
+                0.16752480268478392
+              ],
+              [
+                0.15499520301818848,
+                0.15493119955062867,
+                0.15500479936599731,
+                0.15503840446472167,
+                0.15499839782714844,
+                0.15501919984817505,
+                0.1624079942703247,
+                0.16584320068359376,
+                0.17248640060424805,
+                0.17261600494384766,
+                0.16718080043792724,
+                0.16728639602661133
+              ]
+            ],
+            "paired_ratios": [
+              0.9988850894558812,
+              0.9993493668445315,
+              1.0002374114081296,
+              0.9995974799708801,
+              0.9997006662253057,
+              1.0140369624528787,
+              1.0005714277325586,
+              1.0413016563618462,
+              1.0010946003402537,
+              0.9997404019867294,
+              1.0446941424295333,
+              1.001425140739685
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "768": {
+        "kind": "dq",
+        "artifact": "rs_mma_pair",
+        "length": 768,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_mma_pair/build/triattn_dq.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_coop_tma/build/triattn_dq.so",
+        "source_digests": {
+          "fused.cu": "9b0665d517c43c449aeff87dd83d332dc7501283da277627f808e5f451b9d9fc",
+          "build/triattn_dq.so": "672bf00f46d6483d70700a2335b21f3710a853ed3b5fbe6fedf3bd34f59c6773"
+        },
+        "baseline_digests": {
+          "fused.cu": "4f1acc63aa3a1999595a3ce23b94b3b7c5f1d9a86b47849f015aa6c812564695",
+          "build/triattn_dq.so": "3ee079c6a37f201bf796b47049b7f16aa4d8d03934658622654a21c295c44897"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0
+            ],
+            "bitwise": [
+              true
+            ],
+            "baseline_ms": 1.1658552169799805,
+            "candidate_ms": 1.165879201889038,
+            "speedup": 0.9999808184448746,
+            "rounds_ms": [
+              [
+                1.031187152862549,
+                1.207420825958252,
+                1.2001440048217773,
+                1.1658703804016113,
+                1.165766429901123,
+                1.1657999992370605,
+                1.165886402130127,
+                1.165830421447754,
+                1.1658096313476562,
+                1.1658592224121094,
+                1.1658512115478517,
+                1.1663455963134766
+              ],
+              [
+                1.1311039924621582,
+                1.208790397644043,
+                1.200260829925537,
+                1.1311776161193847,
+                1.1656959533691407,
+                1.1523152351379395,
+                1.1659119606018067,
+                1.165771198272705,
+                1.1659520149230957,
+                1.1658880233764648,
+                1.1658703804016113,
+                1.166267204284668
+              ]
+            ],
+            "paired_ratios": [
+              0.9116643206411881,
+              0.9988669899360051,
+              0.9999026669030205,
+              1.0306695993519068,
+              1.0000604587600896,
+              1.0117023221492916,
+              0.9999780785577784,
+              1.0000508017140384,
+              0.9998778821309822,
+              0.9999752969721123,
+              0.9999835583319708,
+              1.000067216182124
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "1024": {
+        "kind": "dq",
+        "artifact": "rs_mma_pair",
+        "length": 1024,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_mma_pair/build/triattn_dq.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/dq/rs_coop_tma/build/triattn_dq.so",
+        "source_digests": {
+          "fused.cu": "9b0665d517c43c449aeff87dd83d332dc7501283da277627f808e5f451b9d9fc",
+          "build/triattn_dq.so": "672bf00f46d6483d70700a2335b21f3710a853ed3b5fbe6fedf3bd34f59c6773"
+        },
+        "baseline_digests": {
+          "fused.cu": "4f1acc63aa3a1999595a3ce23b94b3b7c5f1d9a86b47849f015aa6c812564695",
+          "build/triattn_dq.so": "3ee079c6a37f201bf796b47049b7f16aa4d8d03934658622654a21c295c44897"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0
+            ],
+            "bitwise": [
+              true
+            ],
+            "baseline_ms": 2.6888759613037108,
+            "candidate_ms": 2.6882135391235353,
+            "speedup": 1.0021687327730497,
+            "rounds_ms": [
+              [
+                2.3701343536376953,
+                2.6597232818603516,
+                2.689596748352051,
+                2.6648048400878905,
+                2.6646671295166016,
+                2.675022315979004,
+                2.775289535522461,
+                3.2126399993896486,
+                3.180790328979492,
+                2.761750411987305,
+                2.701696014404297,
+                2.688155174255371
+              ],
+              [
+                2.600209617614746,
+                2.776628875732422,
+                2.633625602722168,
+                2.648195266723633,
+                2.6631776809692385,
+                2.66495361328125,
+                2.8517887115478517,
+                3.050284767150879,
+                2.977822494506836,
+                2.861960029602051,
+                2.6881759643554686,
+                2.6882511138916017
+              ]
+            ],
+            "paired_ratios": [
+              0.9115166475739345,
+              0.9578965720288302,
+              1.021252506647881,
+              1.006272034986607,
+              1.0005592749436159,
+              1.0037781906024836,
+              0.9731750196935629,
+              1.053226254147549,
+              1.0681598163916985,
+              0.9649856683607563,
+              1.0050294512815012,
+              0.9999643115050767
+            ]
+          }
+        ],
+        "complete": true
+      }
+    },
+    "16832": {
+      "384": {
+        "kind": "bias",
+        "artifact": "rs_r8_parallel_tma",
+        "length": 384,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_tma/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_pair/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "1a24a885229feebfc59ecb8e7fbefe3cac78774654793ae78f449b1a556717af",
+          "build/triattn_bias_fusion.so": "d9ba628137c570f4e259559e10a1a6fe164a3e5a7a73d429079317c2aa3a4e6d"
+        },
+        "baseline_digests": {
+          "grouped.cu": "5b3b1169545c5764984b7e4c2ed99151df62db33d64e3030b9a8734b7c9dfa4f",
+          "build/triattn_bias_fusion.so": "c28c90805b83b71a39be51e4b7f6e28289bdb52724c097af1e9055c5e1346bc3"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 0.429693603515625,
+            "candidate_ms": 0.42029519081115724,
+            "speedup": 1.0229733168487583,
+            "rounds_ms": [
+              [
+                0.4356128215789795,
+                0.43564319610595703,
+                0.43360319137573244,
+                0.4297232151031494,
+                0.4297840118408203,
+                0.42966399192810056,
+                0.42991199493408205,
+                0.42957439422607424,
+                0.42903361320495603,
+                0.42884001731872556,
+                0.4290736198425293,
+                0.42892160415649416
+              ],
+              [
+                0.42537598609924315,
+                0.4254591941833496,
+                0.42052159309387205,
+                0.42009758949279785,
+                0.4205455780029297,
+                0.4205935955047607,
+                0.4204927921295166,
+                0.4200463771820068,
+                0.4194064140319824,
+                0.4192016124725342,
+                0.4192671775817871,
+                0.41918559074401857
+              ]
+            ],
+            "paired_ratios": [
+              1.024065381719381,
+              1.0239364951136034,
+              1.0311080298769348,
+              1.022912832282549,
+              1.0219677350592098,
+              1.021565702664717,
+              1.0224003906389534,
+              1.0226832501401122,
+              1.0229543441656557,
+              1.0229922895318608,
+              1.0233894823756606,
+              1.0232260211883595
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "768": {
+        "kind": "bias",
+        "artifact": "rs_r8_parallel_tma",
+        "length": 768,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_tma/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_pair/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "1a24a885229feebfc59ecb8e7fbefe3cac78774654793ae78f449b1a556717af",
+          "build/triattn_bias_fusion.so": "d9ba628137c570f4e259559e10a1a6fe164a3e5a7a73d429079317c2aa3a4e6d"
+        },
+        "baseline_digests": {
+          "grouped.cu": "5b3b1169545c5764984b7e4c2ed99151df62db33d64e3030b9a8734b7c9dfa4f",
+          "build/triattn_bias_fusion.so": "c28c90805b83b71a39be51e4b7f6e28289bdb52724c097af1e9055c5e1346bc3"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 2.9005016326904296,
+            "candidate_ms": 2.83477840423584,
+            "speedup": 1.0232403098025116,
+            "rounds_ms": [
+              [
+                2.9261568069458006,
+                2.8953983306884767,
+                2.8994928359985352,
+                2.8989696502685547,
+                2.902891159057617,
+                2.8997135162353516,
+                2.9007280349731444,
+                2.900574493408203,
+                2.900663948059082,
+                2.900424003601074,
+                2.9004287719726562,
+                2.90296630859375
+              ],
+              [
+                2.8473119735717773,
+                2.8319520950317383,
+                2.836974334716797,
+                2.834996795654297,
+                2.836252784729004,
+                2.834560012817383,
+                2.836708831787109,
+                2.8356016159057615,
+                2.832798385620117,
+                2.831991958618164,
+                2.833545684814453,
+                2.8341407775878906
+              ]
+            ],
+            "paired_ratios": [
+              1.027690971030167,
+              1.0224037107718191,
+              1.0220370344971694,
+              1.0225654063215592,
+              1.0234952168887796,
+              1.0229854027162437,
+              1.0225681262978632,
+              1.0229132601483892,
+              1.0239570746663318,
+              1.0241639263044733,
+              1.023604026402907,
+              1.0242844432958746
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "1024": {
+        "kind": "bias",
+        "artifact": "rs_r8_parallel_tma",
+        "length": 1024,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_tma/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_pair/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "1a24a885229feebfc59ecb8e7fbefe3cac78774654793ae78f449b1a556717af",
+          "build/triattn_bias_fusion.so": "d9ba628137c570f4e259559e10a1a6fe164a3e5a7a73d429079317c2aa3a4e6d"
+        },
+        "baseline_digests": {
+          "grouped.cu": "5b3b1169545c5764984b7e4c2ed99151df62db33d64e3030b9a8734b7c9dfa4f",
+          "build/triattn_bias_fusion.so": "c28c90805b83b71a39be51e4b7f6e28289bdb52724c097af1e9055c5e1346bc3"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 6.686087417602539,
+            "candidate_ms": 6.518337631225586,
+            "speedup": 1.0256431148719294,
+            "rounds_ms": [
+              [
+                6.705632019042969,
+                6.686617279052735,
+                6.6872093200683596,
+                6.68629150390625,
+                6.685028839111328,
+                6.685497283935547,
+                6.685883331298828,
+                6.686872100830078,
+                6.683280181884766,
+                6.688409423828125,
+                6.6846061706542965,
+                6.6848396301269535
+              ],
+              [
+                6.517753601074219,
+                6.518946838378906,
+                6.515910339355469,
+                6.517889404296875,
+                6.517974090576172,
+                6.519737243652344,
+                6.519793701171875,
+                6.519620513916015,
+                6.5162513732910154,
+                6.516957092285156,
+                6.5188957214355465,
+                6.518701171875
+              ]
+            ],
+            "paired_ratios": [
+              1.0288256398550852,
+              1.0257204798306843,
+              1.0262893397532284,
+              1.025836906575671,
+              1.0256298577155571,
+              1.0254243436642463,
+              1.025474675693665,
+              1.0256535770075983,
+              1.0256326527362607,
+              1.0263086482103643,
+              1.025420018404936,
+              1.0254864356980744
+            ]
+          }
+        ],
+        "complete": true
+      }
+    },
+    "16834": {
+      "384": {
+        "kind": "bias",
+        "artifact": "rs_r8_staged_p",
+        "length": 384,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_staged_p/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_pair/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "9635c8813f6cc3f35229f4744bc394d78900341d99c2d016d696090694e1a3b3",
+          "build/triattn_bias_fusion.so": "7b5bb0d04b37ee3e07e9c074435bcbd7742c0b6e9f38b10bc53f1b9b5a50dd83"
+        },
+        "baseline_digests": {
+          "grouped.cu": "5b3b1169545c5764984b7e4c2ed99151df62db33d64e3030b9a8734b7c9dfa4f",
+          "build/triattn_bias_fusion.so": "c28c90805b83b71a39be51e4b7f6e28289bdb52724c097af1e9055c5e1346bc3"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 0.429967212677002,
+            "candidate_ms": 0.4225127935409546,
+            "speedup": 1.0185604062771447,
+            "rounds_ms": [
+              [
+                0.43544797897338866,
+                0.43513917922973633,
+                0.4347983837127686,
+                0.4299168109893799,
+                0.43001761436462405,
+                0.43018240928649903,
+                0.42979040145874026,
+                0.4302207946777344,
+                0.4298351764678955,
+                0.42821760177612306,
+                0.4276383876800537,
+                0.42772641181945803
+              ],
+              [
+                0.42850399017333984,
+                0.42833600044250486,
+                0.42666239738464357,
+                0.42272157669067384,
+                0.4225935935974121,
+                0.42243199348449706,
+                0.4226096153259277,
+                0.42229280471801756,
+                0.42098398208618165,
+                0.4191919803619385,
+                0.41900320053100587,
+                0.41936960220336916
+              ]
+            ],
+            "paired_ratios": [
+              1.016205190521656,
+              1.0158828087767622,
+              1.0190689087625182,
+              1.0170212137147927,
+              1.0175677551190814,
+              1.0183471326072429,
+              1.0169915351482823,
+              1.0187736799470468,
+              1.0210250146284707,
+              1.0215309973401487,
+              1.0206088811209661,
+              1.0199270752390783
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "768": {
+        "kind": "bias",
+        "artifact": "rs_r8_staged_p",
+        "length": 768,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_staged_p/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_pair/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "9635c8813f6cc3f35229f4744bc394d78900341d99c2d016d696090694e1a3b3",
+          "build/triattn_bias_fusion.so": "7b5bb0d04b37ee3e07e9c074435bcbd7742c0b6e9f38b10bc53f1b9b5a50dd83"
+        },
+        "baseline_digests": {
+          "grouped.cu": "5b3b1169545c5764984b7e4c2ed99151df62db33d64e3030b9a8734b7c9dfa4f",
+          "build/triattn_bias_fusion.so": "c28c90805b83b71a39be51e4b7f6e28289bdb52724c097af1e9055c5e1346bc3"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 2.8996919631958007,
+            "candidate_ms": 2.9203615188598633,
+            "speedup": 0.9931841037922672,
+            "rounds_ms": [
+              [
+                2.9124927520751953,
+                2.8922672271728516,
+                2.900556755065918,
+                2.9003568649291993,
+                2.9007823944091795,
+                2.9019071578979494,
+                2.8994192123413085,
+                2.8987184524536134,
+                2.899964714050293,
+                2.8986431121826173,
+                2.898441505432129,
+                2.899403190612793
+              ],
+              [
+                2.931862449645996,
+                2.9063743591308593,
+                2.91870231628418,
+                2.92185115814209,
+                2.920017623901367,
+                2.920217514038086,
+                2.9548912048339844,
+                2.9191167831420897,
+                2.9215215682983398,
+                2.91803035736084,
+                2.9205055236816406,
+                2.9213024139404298
+              ]
+            ],
+            "paired_ratios": [
+              0.9933933812027438,
+              0.9951461407875115,
+              0.9937830037969193,
+              0.9926436043283745,
+              0.9934126323982635,
+              0.9937297971633569,
+              0.981227060948326,
+              0.993012156688531,
+              0.9926213605670545,
+              0.9933560508960033,
+              0.9924451372987998,
+              0.992503609614967
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "1024": {
+        "kind": "bias",
+        "artifact": "rs_r8_staged_p",
+        "length": 1024,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_staged_p/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_pair/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "9635c8813f6cc3f35229f4744bc394d78900341d99c2d016d696090694e1a3b3",
+          "build/triattn_bias_fusion.so": "7b5bb0d04b37ee3e07e9c074435bcbd7742c0b6e9f38b10bc53f1b9b5a50dd83"
+        },
+        "baseline_digests": {
+          "grouped.cu": "5b3b1169545c5764984b7e4c2ed99151df62db33d64e3030b9a8734b7c9dfa4f",
+          "build/triattn_bias_fusion.so": "c28c90805b83b71a39be51e4b7f6e28289bdb52724c097af1e9055c5e1346bc3"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 6.681632995605469,
+            "candidate_ms": 6.778518295288086,
+            "speedup": 0.9858292198941894,
+            "rounds_ms": [
+              [
+                6.70617904663086,
+                6.68090591430664,
+                6.683340454101563,
+                6.681040191650391,
+                6.680782318115234,
+                6.683124542236328,
+                6.682868957519531,
+                6.6807373046875,
+                6.681646728515625,
+                6.680551910400391,
+                6.681787109375,
+                6.681619262695312
+              ],
+              [
+                6.780693054199219,
+                6.784584045410156,
+                6.774384307861328,
+                6.7777763366699215,
+                6.784394836425781,
+                6.7784912109375,
+                6.7770942687988285,
+                6.782473754882813,
+                6.778545379638672,
+                6.775552368164062,
+                6.780944061279297,
+                6.776561737060547
+              ]
+            ],
+            "paired_ratios": [
+              0.989010856711437,
+              0.9847185722205541,
+              0.9865605714671202,
+              0.9857274509788473,
+              0.9847278171732805,
+              0.9859309888095315,
+              0.9860965027868798,
+              0.9850000967387347,
+              0.9857050966400388,
+              0.9859789353544007,
+              0.9853771169606743,
+              0.9859895802548362
+            ]
+          }
+        ],
+        "complete": true
+      }
+    },
+    "16849": {
+      "384": {
+        "kind": "bias",
+        "artifact": "rs_r8_parallel_release",
+        "length": 384,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_release/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_tma/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "fe7c0d35dfec4e6931d3b2debca3e73dec0cfdceee35ed5efb0ac15174461ace",
+          "build/triattn_bias_fusion.so": "6bbe5386bf198b54f191d2e53f8feedb1ee18a6a1e00821fea0c8b45d466d66a"
+        },
+        "baseline_digests": {
+          "grouped.cu": "1a24a885229feebfc59ecb8e7fbefe3cac78774654793ae78f449b1a556717af",
+          "build/triattn_bias_fusion.so": "d9ba628137c570f4e259559e10a1a6fe164a3e5a7a73d429079317c2aa3a4e6d"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 0.42000160217285154,
+            "candidate_ms": 0.4195215940475464,
+            "speedup": 1.0008338699706623,
+            "rounds_ms": [
+              [
+                0.42529921531677245,
+                0.4250351905822754,
+                0.42489919662475584,
+                0.4250976085662842,
+                0.42012958526611327,
+                0.4198607921600342,
+                0.42005281448364257,
+                0.41995038986206057,
+                0.4194928169250488,
+                0.41989760398864745,
+                0.41961917877197263,
+                0.41897120475769045
+              ],
+              [
+                0.4248640060424805,
+                0.4252495765686035,
+                0.4248176097869873,
+                0.4247456073760986,
+                0.4194191932678223,
+                0.4194608211517334,
+                0.4194687843322754,
+                0.41930561065673827,
+                0.41949758529663084,
+                0.4195456027984619,
+                0.41995038986206057,
+                0.4194352149963379
+              ]
+            ],
+            "paired_ratios": [
+              1.0010243495991713,
+              0.9994958584366902,
+              1.0001920514495843,
+              1.000828734150684,
+              1.0016937517636142,
+              1.0009535360351476,
+              1.0013923089707304,
+              1.0015377309268827,
+              0.9999886331369973,
+              1.0008390057906402,
+              0.9992113090067692,
+              0.998893726081985
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "768": {
+        "kind": "bias",
+        "artifact": "rs_r8_parallel_release",
+        "length": 768,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_release/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_tma/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "fe7c0d35dfec4e6931d3b2debca3e73dec0cfdceee35ed5efb0ac15174461ace",
+          "build/triattn_bias_fusion.so": "6bbe5386bf198b54f191d2e53f8feedb1ee18a6a1e00821fea0c8b45d466d66a"
+        },
+        "baseline_digests": {
+          "grouped.cu": "1a24a885229feebfc59ecb8e7fbefe3cac78774654793ae78f449b1a556717af",
+          "build/triattn_bias_fusion.so": "d9ba628137c570f4e259559e10a1a6fe164a3e5a7a73d429079317c2aa3a4e6d"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 2.8533216476440426,
+            "candidate_ms": 2.817165565490723,
+            "speedup": 1.012943286843791,
+            "rounds_ms": [
+              [
+                2.869976043701172,
+                2.8525775909423827,
+                2.8540496826171875,
+                2.8527008056640626,
+                2.8549423217773438,
+                2.854145622253418,
+                2.8530176162719725,
+                2.854310417175293,
+                2.8511823654174804,
+                2.853625679016113,
+                2.850912094116211,
+                2.8518320083618165
+              ],
+              [
+                2.825382423400879,
+                2.8165664672851562,
+                2.8161439895629883,
+                2.814985656738281,
+                2.8160751342773436,
+                2.8172367095947264,
+                2.813884735107422,
+                2.820096015930176,
+                2.819041633605957,
+                2.8176895141601563,
+                2.819228744506836,
+                2.817094421386719
+              ]
+            ],
+            "paired_ratios": [
+              1.015783215727171,
+              1.012785469143193,
+              1.013460140246622,
+              1.0133979897323817,
+              1.0138019000370082,
+              1.0131011045443892,
+              1.0139070661553082,
+              1.012132353314159,
+              1.0114012973162128,
+              1.0127537703055505,
+              1.0112383039762591,
+              1.0123309984611726
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "1024": {
+        "kind": "bias",
+        "artifact": "rs_r8_parallel_release",
+        "length": 1024,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_release/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_tma/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "fe7c0d35dfec4e6931d3b2debca3e73dec0cfdceee35ed5efb0ac15174461ace",
+          "build/triattn_bias_fusion.so": "6bbe5386bf198b54f191d2e53f8feedb1ee18a6a1e00821fea0c8b45d466d66a"
+        },
+        "baseline_digests": {
+          "grouped.cu": "1a24a885229feebfc59ecb8e7fbefe3cac78774654793ae78f449b1a556717af",
+          "build/triattn_bias_fusion.so": "d9ba628137c570f4e259559e10a1a6fe164a3e5a7a73d429079317c2aa3a4e6d"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 6.556569671630859,
+            "candidate_ms": 6.482575988769531,
+            "speedup": 1.011491732761722,
+            "rounds_ms": [
+              [
+                6.579054260253907,
+                6.557211303710938,
+                6.556958770751953,
+                6.5563713073730465,
+                6.556537628173828,
+                6.558092498779297,
+                6.556944274902344,
+                6.556356811523438,
+                6.556601715087891,
+                6.556172943115234,
+                6.556102752685547,
+                6.5561775207519535
+              ],
+              [
+                6.483929443359375,
+                6.482465362548828,
+                6.484251403808594,
+                6.481356811523438,
+                6.482295989990234,
+                6.47998046875,
+                6.481524658203125,
+                6.483252716064453,
+                6.482686614990234,
+                6.483238220214844,
+                6.485009765625,
+                6.480379486083985
+              ]
+            ],
+            "paired_ratios": [
+              1.014670859349334,
+              1.011530480609112,
+              1.0112129160970922,
+              1.0115738876952798,
+              1.011452984914332,
+              1.012054361954638,
+              1.01163609191917,
+              1.011275836167522,
+              1.0114019239996483,
+              1.011249736693768,
+              1.0109626646111451,
+              1.0116965425914852
+            ]
+          }
+        ],
+        "complete": true
+      }
+    },
+    "16869": {
+      "384": {
+        "kind": "bias",
+        "artifact": "rs8_tma_syncwarp",
+        "length": 384,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs8_tma_syncwarp/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_tma/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "21ade821d25d7e174715d9f03ae7b59de4fef2c1a9f7214aba202a80e4d52929",
+          "build/triattn_bias_fusion.so": "92494f172ccd56f37ac18aa531c6db45c2ebf0c1901cbc401429019cd6c91e1c"
+        },
+        "baseline_digests": {
+          "grouped.cu": "1a24a885229feebfc59ecb8e7fbefe3cac78774654793ae78f449b1a556717af",
+          "build/triattn_bias_fusion.so": "d9ba628137c570f4e259559e10a1a6fe164a3e5a7a73d429079317c2aa3a4e6d"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 0.42236719131469724,
+            "candidate_ms": 0.42320799827575684,
+            "speedup": 0.9987166757167623,
+            "rounds_ms": [
+              [
+                0.4236879825592041,
+                0.4224815845489502,
+                0.42268800735473633,
+                0.4227920055389404,
+                0.42275681495666506,
+                0.4223631858825684,
+                0.42237119674682616,
+                0.4150832176208496,
+                0.41443839073181155,
+                0.41434879302978517,
+                0.4142064094543457,
+                0.4147712230682373
+              ],
+              [
+                0.42334399223327634,
+                0.4232016086578369,
+                0.42321438789367677,
+                0.4232992172241211,
+                0.42331681251525877,
+                0.4232495784759521,
+                0.42325282096862793,
+                0.42234082221984864,
+                0.41459197998046876,
+                0.41469597816467285,
+                0.4148240089416504,
+                0.4148064136505127
+              ]
+            ],
+            "paired_ratios": [
+              1.0008125551141356,
+              0.9982986262477351,
+              0.9987562319382377,
+              0.9988017655961973,
+              0.9986771194952869,
+              0.9979057448879796,
+              0.9979170269443588,
+              0.9828157634375653,
+              0.9996295411969511,
+              0.9991627959923214,
+              0.9985111770919906,
+              0.9999151638424159
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "768": {
+        "kind": "bias",
+        "artifact": "rs8_tma_syncwarp",
+        "length": 768,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs8_tma_syncwarp/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_tma/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "21ade821d25d7e174715d9f03ae7b59de4fef2c1a9f7214aba202a80e4d52929",
+          "build/triattn_bias_fusion.so": "92494f172ccd56f37ac18aa531c6db45c2ebf0c1901cbc401429019cd6c91e1c"
+        },
+        "baseline_digests": {
+          "grouped.cu": "1a24a885229feebfc59ecb8e7fbefe3cac78774654793ae78f449b1a556717af",
+          "build/triattn_bias_fusion.so": "d9ba628137c570f4e259559e10a1a6fe164a3e5a7a73d429079317c2aa3a4e6d"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 2.8108759880065914,
+            "candidate_ms": 2.7753864288330075,
+            "speedup": 1.0129179489240796,
+            "rounds_ms": [
+              [
+                2.8493247985839845,
+                2.8127647399902345,
+                2.810465621948242,
+                2.809329605102539,
+                2.8086639404296876,
+                2.8097040176391603,
+                2.8102127075195313,
+                2.8084432601928713,
+                2.8133615493774413,
+                2.813960075378418,
+                2.8112863540649413,
+                2.813185691833496
+              ],
+              [
+                2.805713653564453,
+                2.7785215377807617,
+                2.775992012023926,
+                2.7740976333618166,
+                2.775387191772461,
+                2.776035118103027,
+                2.7737775802612306,
+                2.774192047119141,
+                2.774608039855957,
+                2.7763999938964843,
+                2.7744192123413085,
+                2.7753856658935545
+              ]
+            ],
+            "paired_ratios": [
+              1.015543690627205,
+              1.012324252932307,
+              1.0124184831134229,
+              1.012700335891937,
+              1.011989948197453,
+              1.0121284126834607,
+              1.013135561956222,
+              1.0123463741846201,
+              1.013967201480284,
+              1.0135283394195735,
+              1.0132882376101053,
+              1.0136197381158454
+            ]
+          }
+        ],
+        "complete": true
+      },
+      "1024": {
+        "kind": "bias",
+        "artifact": "rs8_tma_syncwarp",
+        "length": 1024,
+        "mask": "mixed",
+        "candidate": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs8_tma_syncwarp/build/triattn_bias_fusion.so",
+        "baseline": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/bias_fusion/rs_r8_parallel_tma/build/triattn_bias_fusion.so",
+        "source_digests": {
+          "grouped.cu": "21ade821d25d7e174715d9f03ae7b59de4fef2c1a9f7214aba202a80e4d52929",
+          "build/triattn_bias_fusion.so": "92494f172ccd56f37ac18aa531c6db45c2ebf0c1901cbc401429019cd6c91e1c"
+        },
+        "baseline_digests": {
+          "grouped.cu": "1a24a885229feebfc59ecb8e7fbefe3cac78774654793ae78f449b1a556717af",
+          "build/triattn_bias_fusion.so": "d9ba628137c570f4e259559e10a1a6fe164a3e5a7a73d429079317c2aa3a4e6d"
+        },
+        "records": [
+          {
+            "ending": false,
+            "relative_l2": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "bitwise": [
+              true,
+              true,
+              true
+            ],
+            "baseline_ms": 6.455093765258789,
+            "candidate_ms": 6.384503173828126,
+            "speedup": 1.0111935693323706,
+            "rounds_ms": [
+              [
+                6.5210929870605465,
+                6.454341125488281,
+                6.453179168701172,
+                6.453899383544922,
+                6.455117034912109,
+                6.454545593261718,
+                6.453717041015625,
+                6.455070495605469,
+                6.455435180664063,
+                6.459149169921875,
+                6.500787353515625,
+                6.460896301269531
+              ],
+              [
+                6.4372703552246096,
+                6.382651138305664,
+                6.382838439941406,
+                6.383307266235351,
+                6.381948852539063,
+                6.3842414855957035,
+                6.384764862060547,
+                6.383857727050781,
+                6.389822387695313,
+                6.387343978881836,
+                6.386715316772461,
+                6.386360168457031
+              ]
+            ],
+            "paired_ratios": [
+              1.0130214558672226,
+              1.0112320077706218,
+              1.0110202897067861,
+              1.0110588624932673,
+              1.0114648650535543,
+              1.0110121316407967,
+              1.0107994860335114,
+              1.0111551308941196,
+              1.0102683281299178,
+              1.0112417917803465,
+              1.0178608300331773,
+              1.0116711445716204
+            ]
+          }
+        ],
+        "complete": true
+      }
+    }
+  },
+  "rejected_racecheck": {
+    "16856": "rs8_tma: 8 errors",
+    "16866": "rs8_tma_syncwarp: 8 errors; full warpgroup barrier retained instead"
+  }
+}

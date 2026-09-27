@@ -1,0 +1,201 @@
+{
+  "jobs": {
+    "384": 19328,
+    "768": 19328,
+    "1024": 19337
+  },
+  "original_triton": {
+    "engine_commit": "59bdb335064caee8ec75bafe3bbafa655955a7b8",
+    "files": {
+      "original_triton_module.py": {
+        "git_source": "modules/triangle_attention/module.py",
+        "git_sha256": "ba72871f40c525292c4b04a4e182a0b2f3228cebd19a843a49d53fc7c52b957b",
+        "loaded_sha256": "ba72871f40c525292c4b04a4e182a0b2f3228cebd19a843a49d53fc7c52b957b"
+      },
+      "original_triton_core.py": {
+        "git_source": "kernels/triangle_attention/triton/main.py",
+        "git_sha256": "221583a8f4e5a43c580b392b460ce20e360c218f5f524b0380127fb28e45a6c1",
+        "loaded_sha256": "16a58ef044469d18e6c6429583aec8c3d23b4af243b13c0a4201ebc6b95dcfe9"
+      }
+    },
+    "adaptation": "Only two opaque custom-op registration names are prefixed to avoid reusing the installed CUDA dispatch registration. Kernel code and module are unmodified."
+  },
+  "rows": [
+    {
+      "length": 384,
+      "direction": "starting",
+      "regime": "backward",
+      "job": 19328,
+      "times_ms": {
+        "pytorch": 3.173531150817871,
+        "original_triton": 1.5545392036437988,
+        "candidate_reuse_qdo": 0.8470960140228272
+      },
+      "triton_over_latest_cuda": 1.83463483361938,
+      "pytorch_over_latest_cuda": 3.7463228928896033
+    },
+    {
+      "length": 384,
+      "direction": "ending",
+      "regime": "backward",
+      "job": 19328,
+      "times_ms": {
+        "pytorch": 3.2379886627197267,
+        "original_triton": 1.6268239974975587,
+        "candidate_reuse_qdo": 0.9020864009857178
+      },
+      "triton_over_latest_cuda": 1.802878278219997,
+      "pytorch_over_latest_cuda": 3.5892807821725037
+    },
+    {
+      "length": 768,
+      "direction": "starting",
+      "regime": "backward",
+      "job": 19328,
+      "times_ms": {
+        "pytorch": 19.37023468017578,
+        "original_triton": 8.574287796020506,
+        "candidate_reuse_qdo": 4.5703472137451175
+      },
+      "triton_over_latest_cuda": 1.864151041976198,
+      "pytorch_over_latest_cuda": 4.237000084664043
+    },
+    {
+      "length": 768,
+      "direction": "ending",
+      "regime": "backward",
+      "job": 19328,
+      "times_ms": {
+        "pytorch": 19.63514862060547,
+        "original_triton": 8.84000015258789,
+        "candidate_reuse_qdo": 4.791995239257812
+      },
+      "triton_over_latest_cuda": 1.8336565633238693,
+      "pytorch_over_latest_cuda": 4.099925967594304
+    },
+    {
+      "length": 1024,
+      "direction": "starting",
+      "regime": "backward",
+      "job": 19337,
+      "times_ms": {
+        "pytorch": 42.35899963378907,
+        "original_triton": 18.019804382324217,
+        "candidate_reuse_qdo": 9.834136199951171
+      },
+      "triton_over_latest_cuda": 1.8345964572165694,
+      "pytorch_over_latest_cuda": 4.309591284608143
+    },
+    {
+      "length": 1024,
+      "direction": "ending",
+      "regime": "backward",
+      "job": 19337,
+      "times_ms": {
+        "pytorch": 42.814842224121094,
+        "original_triton": 18.498033905029295,
+        "candidate_reuse_qdo": 10.26701126098633
+      },
+      "triton_over_latest_cuda": 1.8006384248862752,
+      "pytorch_over_latest_cuda": 4.174574988992303
+    },
+    {
+      "length": 384,
+      "direction": "starting",
+      "regime": "forward_backward",
+      "job": 19328,
+      "times_ms": {
+        "pytorch": 5.747118377685547,
+        "original_triton": 2.061132717132568,
+        "candidate_reuse_qdo": 1.2115407943725587
+      },
+      "triton_over_latest_cuda": 1.7019856123271233,
+      "pytorch_over_latest_cuda": 4.745314836829351
+    },
+    {
+      "length": 384,
+      "direction": "ending",
+      "regime": "forward_backward",
+      "job": 19328,
+      "times_ms": {
+        "pytorch": 5.908219337463379,
+        "original_triton": 2.2316623687744137,
+        "candidate_reuse_qdo": 1.3655584335327147
+      },
+      "triton_over_latest_cuda": 1.6342020913744237,
+      "pytorch_over_latest_cuda": 4.326432981134417
+    },
+    {
+      "length": 768,
+      "direction": "starting",
+      "regime": "forward_backward",
+      "job": 19328,
+      "times_ms": {
+        "pytorch": 35.71112823486328,
+        "original_triton": 11.081521606445312,
+        "candidate_reuse_qdo": 6.488457489013672
+      },
+      "triton_over_latest_cuda": 1.7127488520129497,
+      "pytorch_over_latest_cuda": 5.50781821899732
+    },
+    {
+      "length": 768,
+      "direction": "ending",
+      "regime": "forward_backward",
+      "job": 19328,
+      "times_ms": {
+        "pytorch": 36.45253143310546,
+        "original_triton": 11.775276947021485,
+        "candidate_reuse_qdo": 7.018108749389649
+      },
+      "triton_over_latest_cuda": 1.6659015377387427,
+      "pytorch_over_latest_cuda": 5.196015034572923
+    },
+    {
+      "length": 1024,
+      "direction": "starting",
+      "regime": "forward_backward",
+      "job": 19337,
+      "times_ms": {
+        "pytorch": 76.79333801269532,
+        "original_triton": 23.40198745727539,
+        "candidate_reuse_qdo": 13.676841735839844
+      },
+      "triton_over_latest_cuda": 1.7103889285706242,
+      "pytorch_over_latest_cuda": 5.618409194306592
+    },
+    {
+      "length": 1024,
+      "direction": "ending",
+      "regime": "forward_backward",
+      "job": 19337,
+      "times_ms": {
+        "pytorch": 78.03014221191407,
+        "original_triton": 24.58763198852539,
+        "candidate_reuse_qdo": 14.714556884765624
+      },
+      "triton_over_latest_cuda": 1.6700144418483023,
+      "pytorch_over_latest_cuda": 5.312282972803862
+    }
+  ],
+  "benchmark_source_sha256": {
+    "compare_triton.py": "2369ba313433d63ac72241a7015aea88f5f0e5bdb63b7f4e6e861eff52e9756a",
+    "compare_triton_three.py": "ec97e5e3845f6c6fbd3cffd231f381b706c4a6a6ee86a740cacbea0c0f3a8365"
+  },
+  "original_loader_sha256": "a8e729a44190cc429ac943016c9348f76f8d4b161395a6b21baa89b3dceac7a2",
+  "max_relative_l2": 0.01032713521271944,
+  "candidate_bitwise_installed_cuda_at_384_768": true,
+  "shared_helper_audit": {
+    "checked_scopes": [
+      "src/miniworld_engine/modules/primitives.py",
+      "src/miniworld_engine/kernels/bias_only_attention",
+      "src/miniworld_engine/kernels/layernorm",
+      "src/miniworld_engine/kernels/gated_projection"
+    ],
+    "changed_tracked_files": [
+      "src/miniworld_engine/kernels/layernorm/cuda/__init__.py",
+      "src/miniworld_engine/kernels/layernorm/cuda/layer_norm_cuda_kernel.cu"
+    ],
+    "interpretation": "Only standalone CUDA LN files differ in these shared dependencies. They are inactive for BF16 activation plus FP32 affine in this comparison; original-arm profiles must show Triton LN."
+  }
+}

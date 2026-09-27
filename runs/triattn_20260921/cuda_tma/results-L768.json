@@ -1,0 +1,110 @@
+{
+  "baseline": {
+    "length": 768,
+    "pro_us": 342.1254348754883,
+    "pro_rounds": [
+      351.27872467041016,
+      342.1254348754883,
+      341.7049789428711
+    ],
+    "block_us": 1480.3010559082031,
+    "block_rounds": [
+      1474.5475769042969,
+      1480.3010559082031,
+      1504.8947143554688
+    ],
+    "rel_rms": 0.001755434786900878,
+    "bitwise_equal": true,
+    "pieces": {
+      "q": {
+        "equal": true,
+        "max_abs": 0.0,
+        "rel_rms": 0.0
+      },
+      "k": {
+        "equal": true,
+        "max_abs": 0.0,
+        "rel_rms": 0.0
+      },
+      "v": {
+        "equal": true,
+        "max_abs": 0.0,
+        "rel_rms": 0.0
+      },
+      "g": {
+        "equal": true,
+        "max_abs": 0.0,
+        "rel_rms": 0.0
+      },
+      "bias": {
+        "equal": true,
+        "max_abs": 0.0,
+        "rel_rms": 0.0
+      }
+    },
+    "kernels": {
+      "_triatt_prologue_kernel": 343.5621999999999,
+      "void at::native::vectorized_elementwise_": 1.6447999999995773,
+      "triattn_m1::mask_words_kernel(bool const": 14.534699999999793,
+      "triattn_m1::mask_rows_kernel(unsigned in": 2.5246000000001003,
+      "void triattn_m1::stage_bias_m1_kernel<fl": 13.977900000000137,
+      "void triattn_m1::triattn_m1_kernel<triat": 864.8336999999998,
+      "triattn_m1::uniform_rows_kernel(__nv_bfl": 3.5649999999996,
+      "_triatt_epilogue_kernel_v2": 215.51070000000004
+    }
+  },
+  "cuda_tma": {
+    "length": 768,
+    "pro_us": 688.1475067138672,
+    "pro_rounds": [
+      692.0931243896484,
+      688.1475067138672,
+      688.1215667724609
+    ],
+    "block_us": 1838.3839416503906,
+    "block_rounds": [
+      1837.7389526367188,
+      1838.3839416503906,
+      1838.5807800292969
+    ],
+    "rel_rms": 0.0017554359510540962,
+    "bitwise_equal": false,
+    "pieces": {
+      "q": {
+        "equal": false,
+        "max_abs": 0.015625,
+        "rel_rms": 1.6831403627293184e-05
+      },
+      "k": {
+        "equal": false,
+        "max_abs": 0.015625,
+        "rel_rms": 1.6186728316824883e-05
+      },
+      "v": {
+        "equal": false,
+        "max_abs": 0.015625,
+        "rel_rms": 1.5912079106783494e-05
+      },
+      "g": {
+        "equal": false,
+        "max_abs": 0.015625,
+        "rel_rms": 1.646191049076151e-05
+      },
+      "bias": {
+        "equal": false,
+        "max_abs": 0.015625,
+        "rel_rms": 2.4475639293086715e-05
+      }
+    },
+    "kernels": {
+      "void ta_tma::prologue_tma<768>(ta_tma::P": 715.1923000000002,
+      "void at::native::vectorized_elementwise_": 1.6288999999997031,
+      "triattn_m1::mask_words_kernel(bool const": 14.493000000000574,
+      "triattn_m1::mask_rows_kernel(unsigned in": 2.6143000000004575,
+      "void triattn_m1::stage_bias_m1_kernel<fl": 14.06399999999985,
+      "void triattn_m1::triattn_m1_kernel<triat": 879.0266000000004,
+      "triattn_m1::uniform_rows_kernel(__nv_bfl": 3.590200000000641,
+      "_triatt_epilogue_kernel_v2": 216.45199999999977
+    }
+  }
+}

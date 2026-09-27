@@ -1,0 +1,28 @@
+[
+  {
+    "artifact": "resident6",
+    "metrics": {
+      "dram__bytes_read.sum": "177.093376",
+      "dram__bytes_write.sum": "215.709952",
+      "gpu__time_duration.sum": "1.380928",
+      "lts__t_sectors_op_read.sum": "151708795.000000",
+      "lts__t_sectors_op_write.sum": "15895510.000000",
+      "lts__throughput.avg.pct_of_peak_sustained_elapsed": "38.981969",
+      "sm__throughput.avg.pct_of_peak_sustained_elapsed": "57.402809",
+      "sm__warps_active.avg.pct_of_peak_sustained_active": "37.487298"
+    }
+  },
+  {
+    "artifact": "hot4r",
+    "metrics": {
+      "dram__bytes_read.sum": "157.554176",
+      "dram__bytes_write.sum": "141.037056",
+      "gpu__time_duration.sum": "1.675104",
+      "lts__t_sectors_op_read.sum": "153335729.000000",
+      "lts__t_sectors_op_write.sum": "7079603.000000",
+      "lts__throughput.avg.pct_of_peak_sustained_elapsed": "32.623711",
+      "sm__throughput.avg.pct_of_peak_sustained_elapsed": "60.799267",
+      "sm__warps_active.avg.pct_of_peak_sustained_active": "24.995511"
+    }
+  }
+]

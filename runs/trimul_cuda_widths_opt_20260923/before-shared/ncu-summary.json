@@ -1,0 +1,110 @@
+{
+  "256": {
+    "gpu__time_duration.sum": [
+      "2.029984",
+      "ms"
+    ],
+    "dram__throughput.avg.pct_of_peak_sustained_elapsed": [
+      null,
+      null
+    ],
+    "sm__throughput.avg.pct_of_peak_sustained_elapsed": [
+      "24.472327",
+      "%"
+    ],
+    "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": [
+      "23.987966",
+      "%"
+    ],
+    "dram__bytes_read.sum": [
+      "2.366666",
+      "Gbyte"
+    ],
+    "dram__bytes_write.sum": [
+      "830.561792",
+      "Mbyte"
+    ],
+    "smsp__warps_eligible.avg.per_cycle_active": [
+      "0.348037",
+      "warp"
+    ],
+    "smsp__issue_active.avg.pct_of_peak_sustained_active": [
+      "24.848816",
+      "%"
+    ],
+    "smsp__warp_issue_stalled_barrier_per_warp_active.pct": [
+      null,
+      null
+    ],
+    "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": [
+      null,
+      null
+    ],
+    "smsp__warp_issue_stalled_wait_per_warp_active.pct": [
+      null,
+      null
+    ],
+    "l1tex__t_sectors_pipe_lsu_mem_local_op_ld.sum": [
+      "0",
+      "sector"
+    ],
+    "l1tex__t_sectors_pipe_lsu_mem_local_op_st.sum": [
+      "0",
+      "sector"
+    ]
+  },
+  "512": {
+    "gpu__time_duration.sum": [
+      "7.301536",
+      "ms"
+    ],
+    "dram__throughput.avg.pct_of_peak_sustained_elapsed": [
+      null,
+      null
+    ],
+    "sm__throughput.avg.pct_of_peak_sustained_elapsed": [
+      "26.713158",
+      "%"
+    ],
+    "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": [
+      "26.825835",
+      "%"
+    ],
+    "dram__bytes_read.sum": [
+      "5.983138",
+      "Gbyte"
+    ],
+    "dram__bytes_write.sum": [
+      "2.053859",
+      "Gbyte"
+    ],
+    "smsp__warps_eligible.avg.per_cycle_active": [
+      "0.333377",
+      "warp"
+    ],
+    "smsp__issue_active.avg.pct_of_peak_sustained_active": [
+      "23.658805",
+      "%"
+    ],
+    "smsp__warp_issue_stalled_barrier_per_warp_active.pct": [
+      null,
+      null
+    ],
+    "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": [
+      null,
+      null
+    ],
+    "smsp__warp_issue_stalled_wait_per_warp_active.pct": [
+      null,
+      null
+    ],
+    "l1tex__t_sectors_pipe_lsu_mem_local_op_ld.sum": [
+      "202205424.000000",
+      "sector"
+    ],
+    "l1tex__t_sectors_pipe_lsu_mem_local_op_st.sum": [
+      "58952892.000000",
+      "sector"
+    ]
+  }
+}

@@ -1,0 +1,398 @@
+{
+  "scope": "Linear SASS observation, not an all-path register-hazard proof",
+  "installed_sha256": "9365a4f35e018afed4adba21590ae2c1734bbccf98d1e53904ebfe2537b3e225",
+  "observations": [
+    {
+      "pv": "/*1940*/                   HGMMA.64x40x16.F32.BF16 R44, R28, gdesc[UR24].tnspB, R44 ",
+      "qk_fence": "/*1690*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        28,
+        29,
+        30,
+        31,
+        24,
+        25,
+        26,
+        27
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*1760*/                   F2FP.BF16.F32.PACK_AB R28, R25, R24 ;",
+        "/*17a0*/                   F2FP.BF16.F32.PACK_AB R29, R27, R26 ;",
+        "/*1800*/                   F2FP.BF16.F32.PACK_AB R24, R33, R32 ;",
+        "/*1860*/                   F2FP.BF16.F32.PACK_AB R30, R6, R5 ;",
+        "/*1880*/                   F2FP.BF16.F32.PACK_AB R26, R37, R36 ;",
+        "/*18c0*/                   F2FP.BF16.F32.PACK_AB R31, R12, R11 ;",
+        "/*1910*/                   F2FP.BF16.F32.PACK_AB R25, R35, R34 ;",
+        "/*1920*/                   F2FP.BF16.F32.PACK_AB R27, R39, R38 ;"
+      ]
+    },
+    {
+      "pv": "/*22f0*/                   HGMMA.64x40x16.F32.BF16 R24, R140, gdesc[UR36].tnspB, R24 ",
+      "qk_fence": "/*2060*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        140,
+        141,
+        142,
+        143,
+        152,
+        153,
+        154,
+        155
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*2070*/                   F2FP.BF16.F32.PACK_AB R153, R107, R106 ;",
+        "/*2090*/                   F2FP.BF16.F32.PACK_AB R154, R109, R108 ;",
+        "/*20b0*/                   F2FP.BF16.F32.PACK_AB R155, R111, R110 ;"
+      ]
+    },
+    {
+      "pv": "/*24f0*/                   HGMMA.64x40x16.F32.BF16 R44, R144, gdesc[UR40].tnspB, R44 ",
+      "qk_fence": "/*2400*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*2420*/                   F2FP.BF16.F32.PACK_AB R147, R87, R86 ;",
+        "/*2460*/                   F2FP.BF16.F32.PACK_AB R149, R91, R90 ;",
+        "/*2490*/                   F2FP.BF16.F32.PACK_AB R151, R95, R94 ;"
+      ]
+    },
+    {
+      "pv": "/*29c0*/                   HGMMA.64x40x16.F32.BF16 R24, R140, gdesc[UR40].tnspB, R24 ",
+      "qk_fence": "/*2820*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        140,
+        141,
+        142,
+        143,
+        152,
+        153,
+        154,
+        155
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*2840*/                   F2FP.BF16.F32.PACK_AB R152, R121, R120 ;",
+        "/*2880*/                   F2FP.BF16.F32.PACK_AB R154, R125, R124 ;",
+        "/*28b0*/                   F2FP.BF16.F32.PACK_AB R141, R115, R114 ;",
+        "/*28e0*/                   F2FP.BF16.F32.PACK_AB R143, R119, R118 ;",
+        "/*2940*/                   F2FP.BF16.F32.PACK_AB R153, R123, R122 ;",
+        "/*2970*/                   F2FP.BF16.F32.PACK_AB R155, R127, R126 ;"
+      ]
+    },
+    {
+      "pv": "/*2c80*/                   HGMMA.64x40x16.F32.BF16 R44, R144, gdesc[UR32].tnspB, R44 ",
+      "qk_fence": "/*2a90*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*2aa0*/                   F2FP.BF16.F32.PACK_AB R144, R65, R64 ;",
+        "/*2ac0*/                   F2FP.BF16.F32.PACK_AB R146, R69, R68 ;",
+        "/*2ae0*/                   F2FP.BF16.F32.PACK_AB R148, R73, R72 ;",
+        "/*2b00*/                   F2FP.BF16.F32.PACK_AB R150, R77, R76 ;",
+        "/*2b40*/                   F2FP.BF16.F32.PACK_AB R145, R67, R66 ;",
+        "/*2bd0*/                   F2FP.BF16.F32.PACK_AB R147, R71, R70 ;",
+        "/*2c00*/                   F2FP.BF16.F32.PACK_AB R149, R75, R74 ;",
+        "/*2c40*/                   F2FP.BF16.F32.PACK_AB R151, R79, R78 ;"
+      ]
+    },
+    {
+      "pv": "/*31b0*/                   HGMMA.64x40x16.F32.BF16 R24, R140, gdesc[UR32].tnspB, R24 ",
+      "qk_fence": "/*2e70*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        140,
+        141,
+        142,
+        143,
+        152,
+        153,
+        154,
+        155
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*2f10*/                   F2FP.BF16.F32.PACK_AB R140, R97, R96 ;",
+        "/*2f30*/                   F2FP.BF16.F32.PACK_AB R141, R99, R98 ;",
+        "/*2f50*/                   F2FP.BF16.F32.PACK_AB R142, R101, R100 ;",
+        "/*2f80*/                   F2FP.BF16.F32.PACK_AB R152, R105, R104 ;",
+        "/*2fa0*/                   F2FP.BF16.F32.PACK_AB R154, R109, R108 ;",
+        "/*3070*/                   F2FP.BF16.F32.PACK_AB R143, R103, R102 ;",
+        "/*3110*/                   F2FP.BF16.F32.PACK_AB R153, R107, R106 ;",
+        "/*3160*/                   F2FP.BF16.F32.PACK_AB R155, R111, R110 ;"
+      ]
+    },
+    {
+      "pv": "/*3540*/                   HGMMA.64x40x16.F32.BF16 R44, R144, gdesc[UR32].tnspB, R44 ",
+      "qk_fence": "/*32b0*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*32d0*/                   F2FP.BF16.F32.PACK_AB R144, R81, R80 ;",
+        "/*32f0*/                   F2FP.BF16.F32.PACK_AB R146, R85, R84 ;",
+        "/*3320*/                   F2FP.BF16.F32.PACK_AB R148, R89, R88 ;",
+        "/*3350*/                   F2FP.BF16.F32.PACK_AB R150, R93, R92 ;",
+        "/*33d0*/                   F2FP.BF16.F32.PACK_AB R145, R83, R82 ;",
+        "/*3490*/                   F2FP.BF16.F32.PACK_AB R147, R87, R86 ;",
+        "/*34c0*/                   F2FP.BF16.F32.PACK_AB R149, R91, R90 ;",
+        "/*3510*/                   F2FP.BF16.F32.PACK_AB R151, R95, R94 ;"
+      ]
+    },
+    {
+      "pv": "/*3c80*/                   HGMMA.64x40x16.F32.BF16 R44, R144, gdesc[UR32].tnspB, R44 ",
+      "qk_fence": "/*3b10*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*3b20*/                   F2FP.BF16.F32.PACK_AB R144, R65, R64 ;",
+        "/*3b40*/                   F2FP.BF16.F32.PACK_AB R145, R67, R66 ;",
+        "/*3b60*/                   F2FP.BF16.F32.PACK_AB R146, R69, R68 ;",
+        "/*3b80*/                   F2FP.BF16.F32.PACK_AB R147, R71, R70 ;",
+        "/*3ba0*/                   F2FP.BF16.F32.PACK_AB R148, R73, R72 ;",
+        "/*3bc0*/                   F2FP.BF16.F32.PACK_AB R149, R75, R74 ;",
+        "/*3be0*/                   F2FP.BF16.F32.PACK_AB R150, R77, R76 ;",
+        "/*3c00*/                   F2FP.BF16.F32.PACK_AB R151, R79, R78 ;"
+      ]
+    },
+    {
+      "pv": "/*41a0*/                   HGMMA.64x40x16.F32.BF16 R24, R140, gdesc[UR40].tnspB, R24 ",
+      "qk_fence": "/*4000*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        140,
+        141,
+        142,
+        143,
+        152,
+        153,
+        154,
+        155
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*4020*/                   F2FP.BF16.F32.PACK_AB R152, R105, R104 ;",
+        "/*4060*/                   F2FP.BF16.F32.PACK_AB R154, R109, R108 ;",
+        "/*4090*/                   F2FP.BF16.F32.PACK_AB R141, R99, R98 ;",
+        "/*40c0*/                   F2FP.BF16.F32.PACK_AB R143, R103, R102 ;",
+        "/*4120*/                   F2FP.BF16.F32.PACK_AB R153, R107, R106 ;",
+        "/*4150*/                   F2FP.BF16.F32.PACK_AB R155, R111, R110 ;"
+      ]
+    },
+    {
+      "pv": "/*4450*/                   HGMMA.64x40x16.F32.BF16 R44, R144, gdesc[UR40].tnspB, R44 ",
+      "qk_fence": "/*4290*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*42a0*/                   F2FP.BF16.F32.PACK_AB R144, R81, R80 ;",
+        "/*42c0*/                   F2FP.BF16.F32.PACK_AB R146, R85, R84 ;",
+        "/*42e0*/                   F2FP.BF16.F32.PACK_AB R148, R89, R88 ;",
+        "/*4300*/                   F2FP.BF16.F32.PACK_AB R150, R93, R92 ;",
+        "/*4340*/                   F2FP.BF16.F32.PACK_AB R145, R83, R82 ;",
+        "/*43a0*/                   F2FP.BF16.F32.PACK_AB R147, R87, R86 ;",
+        "/*43d0*/                   F2FP.BF16.F32.PACK_AB R149, R91, R90 ;",
+        "/*4410*/                   F2FP.BF16.F32.PACK_AB R151, R95, R94 ;"
+      ]
+    },
+    {
+      "pv": "/*4940*/                   HGMMA.64x40x16.F32.BF16 R24, R140, gdesc[UR40].tnspB, R24 ",
+      "qk_fence": "/*47a0*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        140,
+        141,
+        142,
+        143,
+        152,
+        153,
+        154,
+        155
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*47c0*/                   F2FP.BF16.F32.PACK_AB R152, R121, R120 ;",
+        "/*4800*/                   F2FP.BF16.F32.PACK_AB R154, R125, R124 ;",
+        "/*4830*/                   F2FP.BF16.F32.PACK_AB R141, R115, R114 ;",
+        "/*4860*/                   F2FP.BF16.F32.PACK_AB R143, R119, R118 ;",
+        "/*48c0*/                   F2FP.BF16.F32.PACK_AB R153, R123, R122 ;",
+        "/*48f0*/                   F2FP.BF16.F32.PACK_AB R155, R127, R126 ;"
+      ]
+    },
+    {
+      "pv": "/*4c00*/                   HGMMA.64x40x16.F32.BF16 R44, R144, gdesc[UR32].tnspB, R44 ",
+      "qk_fence": "/*4a10*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*4a20*/                   F2FP.BF16.F32.PACK_AB R144, R65, R64 ;",
+        "/*4a40*/                   F2FP.BF16.F32.PACK_AB R146, R69, R68 ;",
+        "/*4a60*/                   F2FP.BF16.F32.PACK_AB R148, R73, R72 ;",
+        "/*4a80*/                   F2FP.BF16.F32.PACK_AB R150, R77, R76 ;",
+        "/*4ac0*/                   F2FP.BF16.F32.PACK_AB R145, R67, R66 ;",
+        "/*4b50*/                   F2FP.BF16.F32.PACK_AB R147, R71, R70 ;",
+        "/*4b80*/                   F2FP.BF16.F32.PACK_AB R149, R75, R74 ;",
+        "/*4bc0*/                   F2FP.BF16.F32.PACK_AB R151, R79, R78 ;"
+      ]
+    },
+    {
+      "pv": "/*50f0*/                   HGMMA.64x40x16.F32.BF16 R24, R140, gdesc[UR32].tnspB, R24 ",
+      "qk_fence": "/*4dd0*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        140,
+        141,
+        142,
+        143,
+        152,
+        153,
+        154,
+        155
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*4e80*/                   F2FP.BF16.F32.PACK_AB R140, R97, R96 ;",
+        "/*4ea0*/                   F2FP.BF16.F32.PACK_AB R141, R99, R98 ;",
+        "/*4ec0*/                   F2FP.BF16.F32.PACK_AB R142, R101, R100 ;",
+        "/*4ee0*/                   F2FP.BF16.F32.PACK_AB R152, R105, R104 ;",
+        "/*4f00*/                   F2FP.BF16.F32.PACK_AB R154, R109, R108 ;",
+        "/*4fe0*/                   F2FP.BF16.F32.PACK_AB R143, R103, R102 ;",
+        "/*5050*/                   F2FP.BF16.F32.PACK_AB R153, R107, R106 ;",
+        "/*50a0*/                   F2FP.BF16.F32.PACK_AB R155, R111, R110 ;"
+      ]
+    },
+    {
+      "pv": "/*5490*/                   HGMMA.64x40x16.F32.BF16 R44, R144, gdesc[UR36].tnspB, R44 ",
+      "qk_fence": "/*51f0*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*5210*/                   F2FP.BF16.F32.PACK_AB R144, R81, R80 ;",
+        "/*5230*/                   F2FP.BF16.F32.PACK_AB R146, R85, R84 ;",
+        "/*5260*/                   F2FP.BF16.F32.PACK_AB R148, R89, R88 ;",
+        "/*5290*/                   F2FP.BF16.F32.PACK_AB R150, R93, R92 ;",
+        "/*5310*/                   F2FP.BF16.F32.PACK_AB R145, R83, R82 ;",
+        "/*53e0*/                   F2FP.BF16.F32.PACK_AB R147, R87, R86 ;",
+        "/*5410*/                   F2FP.BF16.F32.PACK_AB R149, R91, R90 ;",
+        "/*5460*/                   F2FP.BF16.F32.PACK_AB R151, R95, R94 ;"
+      ]
+    },
+    {
+      "pv": "/*5bd0*/                   HGMMA.64x40x16.F32.BF16 R44, R144, gdesc[UR32].tnspB, R44 ",
+      "qk_fence": "/*59b0*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*59c0*/                   F2FP.BF16.F32.PACK_AB R144, R65, R64 ;",
+        "/*59e0*/                   F2FP.BF16.F32.PACK_AB R145, R67, R66 ;",
+        "/*5a00*/                   F2FP.BF16.F32.PACK_AB R146, R69, R68 ;",
+        "/*5a20*/                   F2FP.BF16.F32.PACK_AB R147, R71, R70 ;",
+        "/*5a40*/                   F2FP.BF16.F32.PACK_AB R148, R73, R72 ;",
+        "/*5a60*/                   F2FP.BF16.F32.PACK_AB R149, R75, R74 ;",
+        "/*5a80*/                   F2FP.BF16.F32.PACK_AB R150, R77, R76 ;",
+        "/*5aa0*/                   F2FP.BF16.F32.PACK_AB R151, R79, R78 ;"
+      ]
+    },
+    {
+      "pv": "/*7180*/                   HGMMA.64x40x16.F32.BF16 R24, R112, gdesc[UR8].tnspB, R24 ",
+      "qk_fence": "/*59b0*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        112,
+        113,
+        114,
+        115,
+        120,
+        121,
+        122,
+        123
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*70b0*/                   F2FP.BF16.F32.PACK_AB R112, R113, R112 ;",
+        "/*70d0*/                   F2FP.BF16.F32.PACK_AB R120, R121, R120 ;",
+        "/*70e0*/                   F2FP.BF16.F32.PACK_AB R113, R115, R114 ;",
+        "/*70f0*/                   F2FP.BF16.F32.PACK_AB R121, R123, R122 ;",
+        "/*7100*/                   F2FP.BF16.F32.PACK_AB R114, R117, R116 ;",
+        "/*7110*/                   F2FP.BF16.F32.PACK_AB R115, R119, R118 ;",
+        "/*7120*/                   F2FP.BF16.F32.PACK_AB R122, R125, R124 ;",
+        "/*7130*/                   F2FP.BF16.F32.PACK_AB R123, R127, R126 ;"
+      ]
+    },
+    {
+      "pv": "/*7260*/                   HGMMA.64x40x16.F32.BF16 R24, R112, gdesc[UR8].tnspB, R24 ",
+      "qk_fence": "/*59b0*/                   WARPGROUP.ARRIVE ",
+      "p_registers": [
+        112,
+        113,
+        114,
+        115,
+        120,
+        121,
+        122,
+        123
+      ],
+      "pack_writes_after_qk_fence": [
+        "/*70b0*/                   F2FP.BF16.F32.PACK_AB R112, R113, R112 ;",
+        "/*70d0*/                   F2FP.BF16.F32.PACK_AB R120, R121, R120 ;",
+        "/*70e0*/                   F2FP.BF16.F32.PACK_AB R113, R115, R114 ;",
+        "/*70f0*/                   F2FP.BF16.F32.PACK_AB R121, R123, R122 ;",
+        "/*7100*/                   F2FP.BF16.F32.PACK_AB R114, R117, R116 ;",
+        "/*7110*/                   F2FP.BF16.F32.PACK_AB R115, R119, R118 ;",
+        "/*7120*/                   F2FP.BF16.F32.PACK_AB R122, R125, R124 ;",
+        "/*7130*/                   F2FP.BF16.F32.PACK_AB R123, R127, R126 ;"
+      ]
+    }
+  ]
+}

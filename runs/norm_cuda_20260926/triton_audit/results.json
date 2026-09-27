@@ -1,0 +1,2765 @@
+{
+  "jobs": [
+    19284,
+    19293,
+    19294
+  ],
+  "source_sha256": {
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/__init__.py": "f0aaa79e879cc61b0be15d1e186d45fff780b967f3e76c8bae93d1446bd0d4c0",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/compile_native.py": "bdd642788e987a65e7765fabea3482e9c120ffa2adf412c0d310427c6496ac83",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/dispatch.py": "0631abad7d3e03b091b5f97352d3b4f804ac4714f7bbda74ed3efc91a78a5afc",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/interface.py": "b19c05485d3e48f813c6e29183b4fa42151b93db5cf15761bc78731b32c39284",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/reference.py": "9121f0d2b4f2dbdbc95321da1c4b4f8b4ed6f3f030733c94158745a850418fde",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/cuda/__init__.py": "832ec51e17307bc00d61d3dc136b2c64331d5a120afffca676a78c24d294f01b",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/cuda/setup.py": "58f04920fe29fc96537b7b288d5a80862abbb9d8c1d0c1bcd868d5519ef3fd01",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/cute/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/cute/quack_adapter.py": "66fa58d4660d18bb58095c952f242cacf3c793f9d279b5bba4f382c7bdcddcb4",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/notes/te_ln_bwd_b200/v2/exp_maxnreg.py": "68c8587faa2d81f6bac3e286ae2222232f6805db89f212c5c94d5ace7c6d4192",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/triton/__init__.py": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/triton/lowreg.py": "370b8a36daa9ce45fd95144599921057143f83c7f2679280f0ae325c5e76a0cb",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/triton/main.py": "e34bbd23e9631421a9d1ed4428248b8e7259ea843d9badbe65d8994a126f8691",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/triton/persistent.py": "c1a74dfe44d1b17d97c78aa8475b21fe1391d9fb96891b7c87243160b440bd05",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm/triton/transpose.py": "92ef07d30dede557d43ced1bd4aa50014fa2f1b3d4a9b636de01a3e78631319f",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/rmsnorm/__init__.py": "145cbf89bcfd3a67af1ba76220e7f157734b2e62d87ed4b6f14381554a71e04b",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/rmsnorm/interface.py": "c6f2ab455e43ea3a757795f3586e34f98367d38a28ee3d332b6b2a12c5cb7831",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/rmsnorm/reference.py": "d15b13c4f3e04eb4b9d7c40aadebaecfc64f678c140e829eb5659b2a32c37fc6",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/rmsnorm/triton/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/rmsnorm/triton/main.py": "53fe7bf6322e402a573ec194cc965b9adc69891d65baf7ce0bb416608a06b5b3",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/__init__.py": "9791cc18ff92036a395d70a6751db1be233bfa66957c2e75be54ccf97eb07ef9",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/autograd.py": "13d850517083f8799d504fb75896eeee47ba8d12c085776ff3747314bb9ea97d",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/interface.py": "7a3bea52caefde5d878d3e80d8bd0fb4198d530469ae0e4df20993b67520e0e6",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/reference.py": "367520aa0ff625b421279d7c4cc6ce208af21a7621cc0cf0cb10f14159f02b5a",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/cute/__init__.py": "7ab16b9b866121035309e8ac5fe31d5db61bbfff268f8475028393fdf9c0a02c",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/cute/dgrad_ln_rows.py": "fba5478f482a87c3870c7b7d2bbcc77c49f64a088bd0557b7ca56102547ec1e4",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/cute/dgrad_lnbwd.py": "f28276875cae0940cd452e7955a53816c9b65534c7d861761cdb26227f4f21df",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/cute/gemm_layernorm_linear.py": "e9ec5b07cf35f92e52213f2fd1f25f6ad45ba0dcd2ea0a4e16fa898d5630e8fb",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/cute/gemm_layernorm_linear_fused.py": "5ff67208551a2a9fa8b3569db2f9a7d34578ff3c8a05a961e814dc208b35119d",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/cute/ln_linear_sm100.py": "a8124db8e7fdd1c962984fa3485eb209c36df6f33af5f103bdd4f2000304650e",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/triton/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/triton/fused.py": "3142949b9d767adc33e5eaeeacaa5a60e3ad46da5a432cfb89b8dd1dbaf020ee",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/triton/mmajor_bwd.py": "0688a7c55758026e564c794f66acb68a54c31ab10e99898fc638a03f56967f2e",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/triton/pair_bias.py": "3ad8d9e13c4a3026e32adfe4a4f88caee94fc07d0435b20df398f0db449a2b8d",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/triton/recompute.py": "b80b0bce140f5abbc9879b6c217a12d3a28a63fa01c67851de703b0e82dec60b",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/triton/stats.py": "2f483ec1e9b2cf5900a4bdee88da5f02e5c12c4658963d79187c61bc39f29467",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/layernorm_linear/triton/te_style.py": "e8c5d02f53aa191ed67cbabf02b9bb8fff9c700fdde2ebf373d50514a1e9f971"
+  },
+  "bench": [
+    {
+      "group": 0,
+      "case": 0,
+      "M": 8192,
+      "D": 64,
+      "N": 64,
+      "dtype": "bfloat16",
+      "errors": [
+        1.009786683425773e-05,
+        6.096011020417791e-06,
+        4.801244131158455e-07,
+        1.060007335240698e-07
+      ],
+      "triton_fwd": {
+        "median_ms": 0.0025696000084280968,
+        "min_ms": 0.002540799975395203,
+        "max_ms": 0.002595200017094612
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.002764800004661083,
+        "min_ms": 0.002703999914228916,
+        "max_ms": 0.00278719998896122
+      },
+      "triton_train": {
+        "median_ms": 0.012694400548934937,
+        "min_ms": 0.012643200159072877,
+        "max_ms": 0.01276479959487915
+      },
+      "configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "warps": 4,
+          "stages": 3
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.0029920000582933427,
+        "min_ms": 0.0029311999678611755,
+        "max_ms": 0.003420799970626831
+      },
+      "cuda_train": {
+        "median_ms": 0.008108799904584884,
+        "min_ms": 0.008060800284147263,
+        "max_ms": 0.008163200318813324
+      },
+      "triton_atomic_train": {
+        "median_ms": 0.012681600451469422,
+        "min_ms": 0.012636800110340119,
+        "max_ms": 0.012751999497413635
+      },
+      "atomic_configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "warps": 4,
+          "stages": 3
+        }
+      },
+      "triton_persistent_train": {
+        "median_ms": 0.01845120042562485,
+        "min_ms": 0.01838400065898895,
+        "max_ms": 0.01852799952030182
+      },
+      "persistent_configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 32
+          },
+          "warps": 4,
+          "stages": 3
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        }
+      }
+    },
+    {
+      "group": 0,
+      "case": 1,
+      "M": 147456,
+      "D": 128,
+      "N": 128,
+      "dtype": "bfloat16",
+      "errors": [
+        1.199435610033106e-05,
+        1.813729977584444e-05,
+        8.8202176584673e-07,
+        4.6509677531503257e-07
+      ],
+      "triton_fwd": {
+        "median_ms": 0.028963199257850646,
+        "min_ms": 0.028937599062919615,
+        "max_ms": 0.029142400622367857
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.02910720109939575,
+        "min_ms": 0.028860801458358766,
+        "max_ms": 0.02921920120716095
+      },
+      "triton_train": {
+        "median_ms": 0.08276479840278625,
+        "min_ms": 0.08238080143928528,
+        "max_ms": 0.08344320058822632
+      },
+      "configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 32
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 64
+          },
+          "warps": 4,
+          "stages": 1
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.029900801181793214,
+        "min_ms": 0.029679998755455017,
+        "max_ms": 0.02998720109462738
+      },
+      "cuda_train": {
+        "median_ms": 0.07948799729347229,
+        "min_ms": 0.07934399843215942,
+        "max_ms": 0.07963200211524964
+      },
+      "triton_atomic_train": {
+        "median_ms": 0.08265920281410218,
+        "min_ms": 0.08244799971580505,
+        "max_ms": 0.08292160034179688
+      },
+      "atomic_configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 32
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 64
+          },
+          "warps": 4,
+          "stages": 1
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        }
+      },
+      "triton_persistent_train": {
+        "median_ms": 0.10029759407043456,
+        "min_ms": 0.099891197681427,
+        "max_ms": 0.10057280063629151
+      },
+      "persistent_configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 32
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 64
+          },
+          "warps": 4,
+          "stages": 1
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 64
+          },
+          "warps": 2,
+          "stages": 4
+        }
+      }
+    },
+    {
+      "group": 0,
+      "case": 2,
+      "M": 589824,
+      "D": 128,
+      "N": 128,
+      "dtype": "bfloat16",
+      "errors": [
+        1.1804161658801604e-05,
+        1.8873932276619598e-05,
+        1.6391509234381374e-06,
+        1.1743712775569293e-06
+      ],
+      "triton_fwd": {
+        "median_ms": 0.10432640314102173,
+        "min_ms": 0.10409599542617798,
+        "max_ms": 0.10472639799118041
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.10444159507751465,
+        "min_ms": 0.10427520275115967,
+        "max_ms": 0.10470080375671387
+      },
+      "triton_train": {
+        "median_ms": 0.2926399946212769,
+        "min_ms": 0.2922303915023804,
+        "max_ms": 0.2930207967758179
+      },
+      "configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 64
+          },
+          "warps": 8,
+          "stages": 2
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 64
+          },
+          "warps": 4,
+          "stages": 1
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 64
+          },
+          "warps": 2,
+          "stages": 4
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.11047680377960205,
+        "min_ms": 0.11026240587234497,
+        "max_ms": 0.11088000535964966
+      },
+      "cuda_train": {
+        "median_ms": 0.3015199899673462,
+        "min_ms": 0.30110719203948977,
+        "max_ms": 0.301910400390625
+      },
+      "triton_atomic_train": {
+        "median_ms": 0.2921567916870117,
+        "min_ms": 0.291811203956604,
+        "max_ms": 0.2925055980682373
+      },
+      "atomic_configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 64
+          },
+          "warps": 8,
+          "stages": 2
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 64
+          },
+          "warps": 4,
+          "stages": 1
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 64
+          },
+          "warps": 2,
+          "stages": 4
+        }
+      },
+      "triton_persistent_train": {
+        "median_ms": 0.3530240058898926,
+        "min_ms": 0.35249919891357423,
+        "max_ms": 0.35362560749053956
+      },
+      "persistent_configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 64
+          },
+          "warps": 8,
+          "stages": 2
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 64
+          },
+          "warps": 4,
+          "stages": 1
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 32
+          },
+          "warps": 2,
+          "stages": 4
+        }
+      }
+    },
+    {
+      "group": 0,
+      "case": 3,
+      "M": 147456,
+      "D": 384,
+      "N": 384,
+      "dtype": "bfloat16",
+      "errors": [
+        1.1247419024584815e-05,
+        1.995286947931163e-05,
+        2.5512306933705986e-07,
+        1.263537541262849e-07
+      ],
+      "triton_fwd": {
+        "median_ms": 0.07963200211524964,
+        "min_ms": 0.07945280075073242,
+        "max_ms": 0.07977280020713806
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.0795199990272522,
+        "min_ms": 0.07930880188941955,
+        "max_ms": 0.07972480058670044
+      },
+      "triton_train": {
+        "median_ms": 0.2754816055297852,
+        "min_ms": 0.27513599395751953,
+        "max_ms": 0.2758239984512329
+      },
+      "configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 64
+          },
+          "warps": 4,
+          "stages": 1
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 8
+          },
+          "warps": 2,
+          "stages": 1
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.08166720271110535,
+        "min_ms": 0.08142399787902832,
+        "max_ms": 0.0818015992641449
+      },
+      "cuda_train": {
+        "median_ms": 0.22990720272064208,
+        "min_ms": 0.22961280345916749,
+        "max_ms": 0.23019518852233886
+      },
+      "triton_atomic_train": {
+        "median_ms": 0.24766080379486083,
+        "min_ms": 0.24727680683135986,
+        "max_ms": 0.24809279441833496
+      },
+      "atomic_configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 8
+          },
+          "warps": 2,
+          "stages": 1
+        }
+      },
+      "triton_persistent_train": {
+        "median_ms": 0.27543680667877196,
+        "min_ms": 0.27520320415496824,
+        "max_ms": 0.27589120864868166
+      },
+      "persistent_configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 8
+          },
+          "warps": 2,
+          "stages": 1
+        }
+      }
+    },
+    {
+      "group": 0,
+      "case": 4,
+      "M": 8192,
+      "D": 1024,
+      "N": 1024,
+      "dtype": "bfloat16",
+      "errors": [
+        1.5319477824959904e-05,
+        1.5846313544898294e-05,
+        3.0954831231611024e-07,
+        5.762019483768199e-08
+      ],
+      "triton_fwd": {
+        "median_ms": 0.009743999689817429,
+        "min_ms": 0.009644799679517747,
+        "max_ms": 0.009824000298976898
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.010044799745082855,
+        "min_ms": 0.009964799880981446,
+        "max_ms": 0.010121600329875946
+      },
+      "triton_train": {
+        "median_ms": 0.07207679748535156,
+        "min_ms": 0.07184640169143677,
+        "max_ms": 0.07250239849090576
+      },
+      "configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 2
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.01756799966096878,
+        "min_ms": 0.017423999309539796,
+        "max_ms": 0.01769919991493225
+      },
+      "cuda_train": {
+        "median_ms": 0.06218559741973877,
+        "min_ms": 0.06194239854812622,
+        "max_ms": 0.06245120167732239
+      },
+      "triton_atomic_train": {
+        "median_ms": 0.04446719884872437,
+        "min_ms": 0.04410560131072998,
+        "max_ms": 0.044726398587226865
+      },
+      "atomic_configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 2
+        }
+      },
+      "triton_persistent_train": {
+        "median_ms": 0.07192000150680541,
+        "min_ms": 0.07167680263519287,
+        "max_ms": 0.0722432017326355
+      },
+      "persistent_configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 256,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 2
+        }
+      }
+    },
+    {
+      "group": 1,
+      "case": 0,
+      "M": 8192,
+      "D": 64,
+      "N": 64,
+      "dtype": "bfloat16",
+      "errors": [
+        2.3897233404568397e-05,
+        0.0028651233296841383,
+        4.902968271380814e-07
+      ],
+      "triton_fwd": {
+        "median_ms": 0.0021536000072956084,
+        "min_ms": 0.0021215999498963357,
+        "max_ms": 0.0022175999358296393
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.0023360000923275948,
+        "min_ms": 0.0022784000262618064,
+        "max_ms": 0.0023744000121951104
+      },
+      "triton_train": {
+        "median_ms": 0.006499200314283371,
+        "min_ms": 0.006438399851322174,
+        "max_ms": 0.006572800129652024
+      },
+      "configs": {
+        "rmsnorm_fwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 8
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "rmsnorm_bwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 32
+          },
+          "warps": 4,
+          "stages": 4
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.0028831999748945235,
+        "min_ms": 0.002812799997627735,
+        "max_ms": 0.0029343999922275543
+      },
+      "cuda_train": {
+        "median_ms": 0.0078015998005867004,
+        "min_ms": 0.007744000107049942,
+        "max_ms": 0.007840000092983246
+      }
+    },
+    {
+      "group": 1,
+      "case": 1,
+      "M": 147456,
+      "D": 128,
+      "N": 128,
+      "dtype": "bfloat16",
+      "errors": [
+        1.3161502465663943e-05,
+        0.0028366162441670895,
+        1.3216401839599712e-06
+      ],
+      "triton_fwd": {
+        "median_ms": 0.027596798539161683,
+        "min_ms": 0.027459201216697694,
+        "max_ms": 0.02773759961128235
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.027718400955200194,
+        "min_ms": 0.027529600262641906,
+        "max_ms": 0.02786880135536194
+      },
+      "triton_train": {
+        "median_ms": 0.07562239766120911,
+        "min_ms": 0.07550079822540283,
+        "max_ms": 0.07584959864616395
+      },
+      "configs": {
+        "rmsnorm_fwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        },
+        "rmsnorm_bwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 32
+          },
+          "warps": 4,
+          "stages": 4
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.028835201263427736,
+        "min_ms": 0.028537601232528687,
+        "max_ms": 0.02903040051460266
+      },
+      "cuda_train": {
+        "median_ms": 0.08336960077285767,
+        "min_ms": 0.08298239707946778,
+        "max_ms": 0.08347520232200623
+      }
+    },
+    {
+      "group": 1,
+      "case": 2,
+      "M": 589824,
+      "D": 128,
+      "N": 128,
+      "dtype": "bfloat16",
+      "errors": [
+        1.3481016139849089e-05,
+        0.002837733132764697,
+        2.589259793239762e-06
+      ],
+      "triton_fwd": {
+        "median_ms": 0.10275839567184449,
+        "min_ms": 0.10261759757995606,
+        "max_ms": 0.10295679569244384
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.10274239778518676,
+        "min_ms": 0.10268160104751586,
+        "max_ms": 0.1029695987701416
+      },
+      "triton_train": {
+        "median_ms": 0.2820255994796753,
+        "min_ms": 0.2817631959915161,
+        "max_ms": 0.28239998817443845
+      },
+      "configs": {
+        "rmsnorm_fwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 2
+        },
+        "rmsnorm_bwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 32
+          },
+          "warps": 4,
+          "stages": 4
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.10730559825897217,
+        "min_ms": 0.1071936011314392,
+        "max_ms": 0.10756160020828247
+      },
+      "cuda_train": {
+        "median_ms": 0.29700479507446287,
+        "min_ms": 0.2966399908065796,
+        "max_ms": 0.29742400646209716
+      }
+    },
+    {
+      "group": 1,
+      "case": 3,
+      "M": 147456,
+      "D": 384,
+      "N": 384,
+      "dtype": "bfloat16",
+      "errors": [
+        1.8472515876055695e-05,
+        0.0028092199936509132,
+        1.2304432175369584e-06
+      ],
+      "triton_fwd": {
+        "median_ms": 0.08706240057945251,
+        "min_ms": 0.0853056013584137,
+        "max_ms": 0.08817600011825562
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.08983680009841918,
+        "min_ms": 0.08964160084724426,
+        "max_ms": 0.09038400053977966
+      },
+      "triton_train": {
+        "median_ms": 0.25449280738830565,
+        "min_ms": 0.252892804145813,
+        "max_ms": 0.2564160108566284
+      },
+      "configs": {
+        "rmsnorm_fwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 16
+          },
+          "warps": 8,
+          "stages": 4
+        },
+        "rmsnorm_bwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 32
+          },
+          "warps": 4,
+          "stages": 3
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.08117439746856689,
+        "min_ms": 0.08093119859695434,
+        "max_ms": 0.08149440288543701
+      },
+      "cuda_train": {
+        "median_ms": 0.21032960414886476,
+        "min_ms": 0.21010239124298097,
+        "max_ms": 0.21073920726776124
+      }
+    },
+    {
+      "group": 1,
+      "case": 4,
+      "M": 8192,
+      "D": 1024,
+      "N": 1024,
+      "dtype": "bfloat16",
+      "errors": [
+        1.479985257901717e-05,
+        0.0027688906993716955,
+        4.36584628005221e-07
+      ],
+      "triton_fwd": {
+        "median_ms": 0.009852799773216247,
+        "min_ms": 0.009827200323343277,
+        "max_ms": 0.010179200023412705
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.01016639992594719,
+        "min_ms": 0.010105600208044052,
+        "max_ms": 0.01022080034017563
+      },
+      "triton_train": {
+        "median_ms": 0.05297279953956604,
+        "min_ms": 0.052832001447677614,
+        "max_ms": 0.05304960012435913
+      },
+      "configs": {
+        "rmsnorm_fwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "rmsnorm_bwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 2
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.013644799590110779,
+        "min_ms": 0.013471999764442444,
+        "max_ms": 0.013724799454212188
+      },
+      "cuda_train": {
+        "median_ms": 0.05638719797134399,
+        "min_ms": 0.056150400638580324,
+        "max_ms": 0.056435197591781616
+      }
+    },
+    {
+      "group": 2,
+      "case": 0,
+      "M": 147456,
+      "D": 128,
+      "N": 16,
+      "dtype": "bfloat16",
+      "errors": [
+        2.628420952532906e-05,
+        1.703267298580613e-05,
+        7.622842304044752e-07,
+        5.96296899857407e-07,
+        4.1523333493387327e-05,
+        0.0
+      ],
+      "triton_fwd": {
+        "median_ms": 0.021849599480628968,
+        "min_ms": 0.02176959961652756,
+        "max_ms": 0.021958400309085847
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.20439040660858154,
+        "min_ms": 0.20407359600067138,
+        "max_ms": 0.20464639663696288
+      },
+      "triton_train": {
+        "median_ms": 0.34904639720916747,
+        "min_ms": 0.3487488031387329,
+        "max_ms": 0.3494368076324463
+      },
+      "configs": {
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 64
+          },
+          "warps": 4,
+          "stages": 1
+        },
+        "_lnl_fwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 32,
+            "BLOCK_N": 32
+          },
+          "warps": 4,
+          "stages": 2
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.030963200330734252,
+        "min_ms": 0.030649599432945252,
+        "max_ms": 0.03118079900741577
+      },
+      "cuda_train": {
+        "median_ms": 0.15773439407348633,
+        "min_ms": 0.15713599920272828,
+        "max_ms": 0.15795520544052125
+      },
+      "triton_composed_fwd": {
+        "median_ms": 0.04487679898738861,
+        "min_ms": 0.04476479887962341,
+        "max_ms": 0.04524799883365631
+      },
+      "triton_composed_train": {
+        "median_ms": 0.16206400394439696,
+        "min_ms": 0.1610975980758667,
+        "max_ms": 0.16268479824066162
+      },
+      "triton_te_fwd": {
+        "median_ms": 0.04503999948501587,
+        "min_ms": 0.04475519955158234,
+        "max_ms": 0.04573439955711365
+      },
+      "triton_te_train": {
+        "median_ms": 0.1704864025115967,
+        "min_ms": 0.1700767993927002,
+        "max_ms": 0.170796799659729
+      }
+    },
+    {
+      "group": 2,
+      "case": 1,
+      "M": 8192,
+      "D": 384,
+      "N": 512,
+      "dtype": "bfloat16",
+      "errors": [
+        4.494066160987131e-05,
+        1.350755883322563e-05,
+        5.314057034411235e-07,
+        9.82214132250192e-08,
+        7.805950735928491e-05,
+        0.0
+      ],
+      "triton_fwd": {
+        "median_ms": 0.031244799494743347,
+        "min_ms": 0.031116798520088196,
+        "max_ms": 0.03133440017700195
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.05568320155143738,
+        "min_ms": 0.055529600381851195,
+        "max_ms": 0.055743998289108275
+      },
+      "triton_train": {
+        "median_ms": 0.11937919855117798,
+        "min_ms": 0.11925439834594727,
+        "max_ms": 0.11968640089035035
+      },
+      "configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 32
+          },
+          "warps": 4,
+          "stages": 5
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 4
+        },
+        "_lnl_fwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 32,
+            "BLOCK_N": 32
+          },
+          "warps": 4,
+          "stages": 3
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.013836799561977387,
+        "min_ms": 0.01374399960041046,
+        "max_ms": 0.013913600146770478
+      },
+      "cuda_train": {
+        "median_ms": 0.0695039987564087,
+        "min_ms": 0.06930239796638489,
+        "max_ms": 0.06963199973106385
+      },
+      "triton_composed_fwd": {
+        "median_ms": 0.013859200477600097,
+        "min_ms": 0.013788799941539764,
+        "max_ms": 0.013910399377346038
+      },
+      "triton_composed_train": {
+        "median_ms": 0.08703039884567261,
+        "min_ms": 0.08694080114364625,
+        "max_ms": 0.0872160017490387
+      },
+      "triton_te_fwd": {
+        "median_ms": 0.013798399269580841,
+        "min_ms": 0.013731199502944946,
+        "max_ms": 0.013900800049304963
+      },
+      "triton_te_train": {
+        "median_ms": 0.06121919751167297,
+        "min_ms": 0.06090239882469177,
+        "max_ms": 0.061363202333450315
+      }
+    },
+    {
+      "group": 2,
+      "case": 2,
+      "M": 8192,
+      "D": 64,
+      "N": 64,
+      "dtype": "bfloat16",
+      "errors": [
+        2.9957400329294614e-05,
+        8.593778147769626e-06,
+        3.393496683656849e-07,
+        6.815774611368397e-08,
+        6.996064621489495e-05,
+        0.0
+      ],
+      "triton_fwd": {
+        "median_ms": 0.003283200040459633,
+        "min_ms": 0.003267199918627739,
+        "max_ms": 0.0033695999532938003
+      },
+      "triton_train_fwd": {
+        "median_ms": 0.01770240068435669,
+        "min_ms": 0.01761920005083084,
+        "max_ms": 0.017731200158596038
+      },
+      "triton_train": {
+        "median_ms": 0.05070719718933105,
+        "min_ms": 0.05066559910774231,
+        "max_ms": 0.050774401426315306
+      },
+      "configs": {
+        "layer_norm_fwd_fused": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        },
+        "layer_norm_bwd_dx_fused": {
+          "kwargs": {
+            "BLOCK_K": 128,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 3
+        },
+        "_ln_bwd_persistent": {
+          "kwargs": {
+            "BLOCK_K": 512,
+            "BLOCK_M1": 16
+          },
+          "warps": 4,
+          "stages": 2
+        },
+        "_lnl_fwd_kernel": {
+          "kwargs": {
+            "BLOCK_K": 64,
+            "BLOCK_M1": 64,
+            "BLOCK_N": 128
+          },
+          "warps": 8,
+          "stages": 2
+        }
+      },
+      "cuda_fwd": {
+        "median_ms": 0.006035200133919716,
+        "min_ms": 0.005955199897289276,
+        "max_ms": 0.00650240033864975
+      },
+      "cuda_train": {
+        "median_ms": 0.032307198643684386,
+        "min_ms": 0.032227200269699094,
+        "max_ms": 0.032390400767326355
+      },
+      "triton_composed_fwd": {
+        "median_ms": 0.005833600088953972,
+        "min_ms": 0.005769599974155426,
+        "max_ms": 0.00591679997742176
+      },
+      "triton_composed_train": {
+        "median_ms": 0.03636159896850586,
+        "min_ms": 0.03627839982509613,
+        "max_ms": 0.03639360070228577
+      },
+      "triton_te_fwd": {
+        "median_ms": 0.00562559999525547,
+        "min_ms": 0.005571199953556061,
+        "max_ms": 0.005670399963855743
+      },
+      "triton_te_train": {
+        "median_ms": 0.02957119941711426,
+        "min_ms": 0.02949439883232117,
+        "max_ms": 0.02961600124835968
+      }
+    }
+  ],
+  "tiles": [
+    {
+      "M": 147456,
+      "D": 128,
+      "case": 1,
+      "trials": {
+        "fwd": [
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 4,
+              "stages": 3
+            },
+            "timing": {
+              "median_ms": 0.027408000826835633,
+              "min_ms": 0.027353599667549133,
+              "max_ms": 0.027532801032066345
+            },
+            "registers": 40,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.029606398940086365,
+              "min_ms": 0.029468798637390138,
+              "max_ms": 0.029654398560523987
+            },
+            "registers": 24,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.04748800098896026,
+              "min_ms": 0.04730879962444305,
+              "max_ms": 0.0475488007068634
+            },
+            "registers": 22,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.027606400847434997,
+              "min_ms": 0.02754560112953186,
+              "max_ms": 0.027695998549461365
+            },
+            "registers": 29,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.030364799499511718,
+              "min_ms": 0.030316799879074097,
+              "max_ms": 0.030483201146125793
+            },
+            "registers": 22,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.027667200565338133,
+              "min_ms": 0.02744640111923218,
+              "max_ms": 0.02794879972934723
+            },
+            "registers": 40,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.027875199913978577,
+              "min_ms": 0.02773759961128235,
+              "max_ms": 0.02807680070400238
+            },
+            "registers": 32,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.028262400627136232,
+              "min_ms": 0.028112000226974486,
+              "max_ms": 0.02847360074520111
+            },
+            "registers": 60,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.028086400032043456,
+              "min_ms": 0.028003200888633728,
+              "max_ms": 0.028204798698425293
+            },
+            "registers": 39,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.028496000170707702,
+              "min_ms": 0.028262400627136232,
+              "max_ms": 0.0287200003862381
+            },
+            "registers": 110,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.028230398893356323,
+              "min_ms": 0.028147199749946596,
+              "max_ms": 0.028624001145362853
+            },
+            "registers": 64,
+            "spills": 0
+          }
+        ],
+        "bwd": [
+          {
+            "config": {
+              "bm": 32,
+              "bk": 64,
+              "warps": 4,
+              "stages": 4
+            },
+            "timing": {
+              "median_ms": 0.04976319968700409,
+              "min_ms": 0.04965119957923889,
+              "max_ms": 0.049856001138687135
+            },
+            "registers": 96,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.1895359992980957,
+              "min_ms": 0.18948160409927367,
+              "max_ms": 0.18960959911346437
+            },
+            "registers": 32,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.18880640268325805,
+              "min_ms": 0.18875199556350708,
+              "max_ms": 0.18889280557632446
+            },
+            "registers": 29,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.10437439680099488,
+              "min_ms": 0.1041759967803955,
+              "max_ms": 0.10455679893493652
+            },
+            "registers": 40,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.18092479705810546,
+              "min_ms": 0.1807647943496704,
+              "max_ms": 0.1816159963607788
+            },
+            "registers": 32,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.06178879737854004,
+              "min_ms": 0.061667197942733766,
+              "max_ms": 0.0618399977684021
+            },
+            "registers": 56,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.1018623948097229,
+              "min_ms": 0.10173439979553223,
+              "max_ms": 0.10196479558944702
+            },
+            "registers": 48,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.04642240107059479,
+              "min_ms": 0.04621120095252991,
+              "max_ms": 0.046540799736976626
+            },
+            "registers": 96,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.059759998321533205,
+              "min_ms": 0.05962560176849365,
+              "max_ms": 0.059926402568817136
+            },
+            "registers": 64,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.04568319916725159,
+              "min_ms": 0.04530560076236725,
+              "max_ms": 0.04593279957771301
+            },
+            "registers": 200,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.05099200010299683,
+              "min_ms": 0.050614398717880246,
+              "max_ms": 0.051475197076797485
+            },
+            "registers": 112,
+            "spills": 0
+          }
+        ]
+      },
+      "winners": {
+        "fwd": {
+          "config": {
+            "bm": 16,
+            "bk": 128,
+            "warps": 4,
+            "stages": 3
+          },
+          "timing": {
+            "median_ms": 0.027408000826835633,
+            "min_ms": 0.027353599667549133,
+            "max_ms": 0.027532801032066345
+          },
+          "registers": 40,
+          "spills": 0
+        },
+        "bwd": {
+          "config": {
+            "bm": 64,
+            "bk": 128,
+            "warps": 4,
+            "stages": 1
+          },
+          "timing": {
+            "median_ms": 0.04568319916725159,
+            "min_ms": 0.04530560076236725,
+            "max_ms": 0.04593279957771301
+          },
+          "registers": 200,
+          "spills": 0
+        }
+      },
+      "baseline_train": {
+        "median_ms": 0.07587199807167053,
+        "min_ms": 0.07562559843063354,
+        "max_ms": 0.07607679963111877
+      },
+      "train": {
+        "median_ms": 0.07120640277862549,
+        "min_ms": 0.07101119756698608,
+        "max_ms": 0.07128000259399414
+      },
+      "errors": [
+        1.499544032412814e-05,
+        1.3382998076849617e-05,
+        1.0285943972121459e-06
+      ]
+    },
+    {
+      "M": 589824,
+      "D": 128,
+      "case": 2,
+      "trials": {
+        "fwd": [
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 4,
+              "stages": 2
+            },
+            "timing": {
+              "median_ms": 0.10248960256576538,
+              "min_ms": 0.10238720178604126,
+              "max_ms": 0.10273280143737792
+            },
+            "registers": 40,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.11104639768600463,
+              "min_ms": 0.11102080345153809,
+              "max_ms": 0.11110719442367553
+            },
+            "registers": 24,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.18125439882278443,
+              "min_ms": 0.18110079765319825,
+              "max_ms": 0.18148479461669922
+            },
+            "registers": 22,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.10221439599990845,
+              "min_ms": 0.10215679407119752,
+              "max_ms": 0.10245440006256104
+            },
+            "registers": 29,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.11292480230331421,
+              "min_ms": 0.11283520460128785,
+              "max_ms": 0.11308480501174926
+            },
+            "registers": 22,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.10244799852371216,
+              "min_ms": 0.10224319696426391,
+              "max_ms": 0.10255359411239624
+            },
+            "registers": 40,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.10222079753875732,
+              "min_ms": 0.10212479829788208,
+              "max_ms": 0.10239039659500122
+            },
+            "registers": 32,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.10301439762115479,
+              "min_ms": 0.10283520221710205,
+              "max_ms": 0.10317120552062989
+            },
+            "registers": 60,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.10287679433822632,
+              "min_ms": 0.10258239507675171,
+              "max_ms": 0.10296319723129273
+            },
+            "registers": 39,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.10317440032958984,
+              "min_ms": 0.10294400453567505,
+              "max_ms": 0.10337920188903808
+            },
+            "registers": 110,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.1031999945640564,
+              "min_ms": 0.10301120281219482,
+              "max_ms": 0.10338239669799805
+            },
+            "registers": 64,
+            "spills": 0
+          }
+        ],
+        "bwd": [
+          {
+            "config": {
+              "bm": 32,
+              "bk": 64,
+              "warps": 4,
+              "stages": 4
+            },
+            "timing": {
+              "median_ms": 0.1808127999305725,
+              "min_ms": 0.18061439990997313,
+              "max_ms": 0.18091520071029663
+            },
+            "registers": 96,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.7457183837890625,
+              "min_ms": 0.7455647945404053,
+              "max_ms": 0.7459936141967773
+            },
+            "registers": 32,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.7449440002441406,
+              "min_ms": 0.7434751987457275,
+              "max_ms": 0.7464735984802247
+            },
+            "registers": 29,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.40204482078552245,
+              "min_ms": 0.4017888069152832,
+              "max_ms": 0.4022496223449707
+            },
+            "registers": 40,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.7088768005371093,
+              "min_ms": 0.7088255882263184,
+              "max_ms": 0.7089791774749756
+            },
+            "registers": 32,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.23244481086730956,
+              "min_ms": 0.23204801082611085,
+              "max_ms": 0.23272640705108644
+            },
+            "registers": 56,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.39377920627593993,
+              "min_ms": 0.39372479915618896,
+              "max_ms": 0.39384639263153076
+            },
+            "registers": 48,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.1699903964996338,
+              "min_ms": 0.16984319686889648,
+              "max_ms": 0.17050880193710327
+            },
+            "registers": 96,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.21760001182556152,
+              "min_ms": 0.21654078960418702,
+              "max_ms": 0.21818559169769286
+            },
+            "registers": 64,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 128,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.15776959657669068,
+              "min_ms": 0.15744320154190064,
+              "max_ms": 0.15799360275268554
+            },
+            "registers": 200,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 128,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.1750272035598755,
+              "min_ms": 0.17462079524993895,
+              "max_ms": 0.1752832055091858
+            },
+            "registers": 112,
+            "spills": 0
+          }
+        ]
+      },
+      "winners": {
+        "fwd": {
+          "config": {
+            "bm": 8,
+            "bk": 128,
+            "warps": 4,
+            "stages": 1
+          },
+          "timing": {
+            "median_ms": 0.10221439599990845,
+            "min_ms": 0.10215679407119752,
+            "max_ms": 0.10245440006256104
+          },
+          "registers": 29,
+          "spills": 0
+        },
+        "bwd": {
+          "config": {
+            "bm": 64,
+            "bk": 128,
+            "warps": 4,
+            "stages": 1
+          },
+          "timing": {
+            "median_ms": 0.15776959657669068,
+            "min_ms": 0.15744320154190064,
+            "max_ms": 0.15799360275268554
+          },
+          "registers": 200,
+          "spills": 0
+        }
+      },
+      "baseline_train": {
+        "median_ms": 0.2814687967300415,
+        "min_ms": 0.28123838901519777,
+        "max_ms": 0.28173439502716063
+      },
+      "train": {
+        "median_ms": 0.2578687906265259,
+        "min_ms": 0.25737600326538085,
+        "max_ms": 0.2579744100570679
+      },
+      "errors": [
+        1.5431880456162617e-05,
+        1.5061166777741164e-05,
+        2.1241385184112005e-06
+      ]
+    },
+    {
+      "M": 147456,
+      "D": 384,
+      "case": 3,
+      "trials": {
+        "fwd": [
+          {
+            "config": {
+              "bm": 16,
+              "bk": 64,
+              "warps": 8,
+              "stages": 4
+            },
+            "timing": {
+              "median_ms": 0.09505280256271362,
+              "min_ms": 0.09412800073623658,
+              "max_ms": 0.09531520009040832
+            },
+            "registers": 28,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 512,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.07754560112953186,
+              "min_ms": 0.0772607982158661,
+              "max_ms": 0.07762879729270936
+            },
+            "registers": 40,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 512,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.08238720297813415,
+              "min_ms": 0.0822272002696991,
+              "max_ms": 0.08256319761276246
+            },
+            "registers": 32,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 512,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.07714239954948425,
+              "min_ms": 0.0769439995288849,
+              "max_ms": 0.0773855984210968
+            },
+            "registers": 64,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 512,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.07763199806213379,
+              "min_ms": 0.07743359804153442,
+              "max_ms": 0.07770879864692688
+            },
+            "registers": 40,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 512,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.07774080038070678,
+              "min_ms": 0.07743039727210999,
+              "max_ms": 0.0779039978981018
+            },
+            "registers": 123,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 512,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.07774080038070678,
+              "min_ms": 0.07740160226821899,
+              "max_ms": 0.07794880270957946
+            },
+            "registers": 64,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 512,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.09184319972991943,
+              "min_ms": 0.09133759737014771,
+              "max_ms": 0.09281920194625855
+            },
+            "registers": 223,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 512,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.07843520045280457,
+              "min_ms": 0.0783456027507782,
+              "max_ms": 0.07867519855499268
+            },
+            "registers": 123,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 512,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.19614399671554567,
+              "min_ms": 0.1959488034248352,
+              "max_ms": 0.1964416027069092
+            },
+            "registers": 255,
+            "spills": 220
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 512,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.10241600275039672,
+              "min_ms": 0.10164799690246581,
+              "max_ms": 0.10327680110931396
+            },
+            "registers": 226,
+            "spills": 0
+          }
+        ],
+        "bwd": [
+          {
+            "config": {
+              "bm": 32,
+              "bk": 64,
+              "warps": 4,
+              "stages": 3
+            },
+            "timing": {
+              "median_ms": 0.17185920476913452,
+              "min_ms": 0.1717471957206726,
+              "max_ms": 0.17252800464630128
+            },
+            "registers": 96,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 512,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.39967041015625,
+              "min_ms": 0.3995935916900635,
+              "max_ms": 0.3997920036315918
+            },
+            "registers": 64,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 512,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.7084544181823731,
+              "min_ms": 0.7075295925140381,
+              "max_ms": 0.7085504055023193
+            },
+            "registers": 40,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 512,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.22324159145355224,
+              "min_ms": 0.22305600643157958,
+              "max_ms": 0.22344319820404052
+            },
+            "registers": 111,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 512,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.37118399143218994,
+              "min_ms": 0.3710911989212036,
+              "max_ms": 0.3712383985519409
+            },
+            "registers": 64,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 512,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.14420479536056519,
+              "min_ms": 0.14406720399856568,
+              "max_ms": 0.14436160326004027
+            },
+            "registers": 197,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 512,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.2358560085296631,
+              "min_ms": 0.23566720485687256,
+              "max_ms": 0.2360991954803467
+            },
+            "registers": 106,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 512,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.194758403301239,
+              "min_ms": 0.19456000328063966,
+              "max_ms": 0.19504959583282472
+            },
+            "registers": 255,
+            "spills": 130
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 512,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.17739520072937012,
+              "min_ms": 0.17714879512786866,
+              "max_ms": 0.17755520343780518
+            },
+            "registers": 200,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 512,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 3.4345760345458984,
+              "min_ms": 3.4337440490722657,
+              "max_ms": 3.435852813720703
+            },
+            "registers": 32,
+            "spills": 1776
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 512,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.1878559947013855,
+              "min_ms": 0.18763840198516846,
+              "max_ms": 0.18809280395507813
+            },
+            "registers": 255,
+            "spills": 120
+          }
+        ]
+      },
+      "winners": {
+        "fwd": {
+          "config": {
+            "bm": 8,
+            "bk": 512,
+            "warps": 4,
+            "stages": 1
+          },
+          "timing": {
+            "median_ms": 0.07714239954948425,
+            "min_ms": 0.0769439995288849,
+            "max_ms": 0.0773855984210968
+          },
+          "registers": 64,
+          "spills": 0
+        },
+        "bwd": {
+          "config": {
+            "bm": 16,
+            "bk": 512,
+            "warps": 4,
+            "stages": 1
+          },
+          "timing": {
+            "median_ms": 0.14420479536056519,
+            "min_ms": 0.14406720399856568,
+            "max_ms": 0.14436160326004027
+          },
+          "registers": 197,
+          "spills": 0
+        }
+      },
+      "baseline_train": {
+        "median_ms": 0.25816318988800047,
+        "min_ms": 0.2574559926986694,
+        "max_ms": 0.2603584051132202
+      },
+      "train": {
+        "median_ms": 0.2198080062866211,
+        "min_ms": 0.21968319416046142,
+        "max_ms": 0.220086407661438
+      },
+      "errors": [
+        1.616264671611134e-05,
+        1.6205925930989906e-05,
+        1.723515765661432e-06
+      ]
+    },
+    {
+      "M": 8192,
+      "D": 1024,
+      "case": 4,
+      "trials": {
+        "fwd": [
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 4,
+              "stages": 4
+            },
+            "timing": {
+              "median_ms": 0.010288000106811523,
+              "min_ms": 0.009945599734783173,
+              "max_ms": 0.010444799810647965
+            },
+            "registers": 40,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 1024,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.008252800256013871,
+              "min_ms": 0.008198399841785432,
+              "max_ms": 0.00838399976491928
+            },
+            "registers": 56,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 1024,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.008742400258779526,
+              "min_ms": 0.008566399663686752,
+              "max_ms": 0.008899199962615966
+            },
+            "registers": 40,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 1024,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.008537600189447403,
+              "min_ms": 0.008352000266313553,
+              "max_ms": 0.008723200112581254
+            },
+            "registers": 94,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 1024,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.008595199882984161,
+              "min_ms": 0.008387199789285659,
+              "max_ms": 0.008748800307512284
+            },
+            "registers": 64,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 1024,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.010425599664449692,
+              "min_ms": 0.01029760017991066,
+              "max_ms": 0.010572800040245056
+            },
+            "registers": 168,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 1024,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.009734400361776353,
+              "min_ms": 0.009670399874448777,
+              "max_ms": 0.009804800152778625
+            },
+            "registers": 121,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 1024,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.024275200068950654,
+              "min_ms": 0.02415039986371994,
+              "max_ms": 0.02449599951505661
+            },
+            "registers": 255,
+            "spills": 166
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 1024,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.01149120032787323,
+              "min_ms": 0.01141439974308014,
+              "max_ms": 0.011664000153541566
+            },
+            "registers": 224,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 1024,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.2147200107574463,
+              "min_ms": 0.21403520107269286,
+              "max_ms": 0.21524479389190673
+            },
+            "registers": 32,
+            "spills": 1354
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 1024,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.02988159954547882,
+              "min_ms": 0.02934719920158386,
+              "max_ms": 0.030067199468612672
+            },
+            "registers": 255,
+            "spills": 214
+          }
+        ],
+        "bwd": [
+          {
+            "config": {
+              "bm": 16,
+              "bk": 128,
+              "warps": 4,
+              "stages": 2
+            },
+            "timing": {
+              "median_ms": 0.03817279934883118,
+              "min_ms": 0.03808639943599701,
+              "max_ms": 0.038217601180076596
+            },
+            "registers": 95,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 1024,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.035071998834609985,
+              "min_ms": 0.03494080007076263,
+              "max_ms": 0.03512639999389648
+            },
+            "registers": 93,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 4,
+              "bk": 1024,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.03526400029659271,
+              "min_ms": 0.035174399614334106,
+              "max_ms": 0.0354559987783432
+            },
+            "registers": 64,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 1024,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.02582719922065735,
+              "min_ms": 0.025545600056648254,
+              "max_ms": 0.025993600487709045
+            },
+            "registers": 167,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 8,
+              "bk": 1024,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.027715200185775758,
+              "min_ms": 0.02741760015487671,
+              "max_ms": 0.027753600478172304
+            },
+            "registers": 117,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 1024,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.028483200073242187,
+              "min_ms": 0.028297600150108338,
+              "max_ms": 0.028678399324417115
+            },
+            "registers": 255,
+            "spills": 56
+          },
+          {
+            "config": {
+              "bm": 16,
+              "bk": 1024,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.0262688010931015,
+              "min_ms": 0.026060798764228822,
+              "max_ms": 0.026358398795127868
+            },
+            "registers": 212,
+            "spills": 0
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 1024,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.45589442253112794,
+              "min_ms": 0.4554272174835205,
+              "max_ms": 0.4563392162322998
+            },
+            "registers": 32,
+            "spills": 1810
+          },
+          {
+            "config": {
+              "bm": 32,
+              "bk": 1024,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.039350399374961854,
+              "min_ms": 0.03903999924659729,
+              "max_ms": 0.03947199881076813
+            },
+            "registers": 255,
+            "spills": 164
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 1024,
+              "warps": 4,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.7506207942962646,
+              "min_ms": 0.7498623847961425,
+              "max_ms": 0.7510272026062011
+            },
+            "registers": 32,
+            "spills": 3034
+          },
+          {
+            "config": {
+              "bm": 64,
+              "bk": 1024,
+              "warps": 8,
+              "stages": 1
+            },
+            "timing": {
+              "median_ms": 0.414521598815918,
+              "min_ms": 0.41391677856445314,
+              "max_ms": 0.41479997634887694
+            },
+            "registers": 32,
+            "spills": 1822
+          }
+        ]
+      },
+      "winners": {
+        "fwd": {
+          "config": {
+            "bm": 4,
+            "bk": 1024,
+            "warps": 4,
+            "stages": 1
+          },
+          "timing": {
+            "median_ms": 0.008252800256013871,
+            "min_ms": 0.008198399841785432,
+            "max_ms": 0.00838399976491928
+          },
+          "registers": 56,
+          "spills": 0
+        },
+        "bwd": {
+          "config": {
+            "bm": 8,
+            "bk": 1024,
+            "warps": 4,
+            "stages": 1
+          },
+          "timing": {
+            "median_ms": 0.02582719922065735,
+            "min_ms": 0.025545600056648254,
+            "max_ms": 0.025993600487709045
+          },
+          "registers": 167,
+          "spills": 0
+        }
+      },
+      "baseline_train": {
+        "median_ms": 0.05219200253486633,
+        "min_ms": 0.051888000965118405,
+        "max_ms": 0.05240640044212341
+      },
+      "train": {
+        "median_ms": 0.03760319948196411,
+        "min_ms": 0.037196800112724304,
+        "max_ms": 0.03787199854850769
+      },
+      "errors": [
+        1.7737718735588714e-05,
+        1.2936705388710834e-05,
+        5.962849058960273e-07
+      ]
+    }
+  ]
+}

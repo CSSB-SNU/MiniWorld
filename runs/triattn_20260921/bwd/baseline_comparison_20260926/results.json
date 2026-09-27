@@ -1,0 +1,325 @@
+{
+  "job": 19305,
+  "rows": [
+    {
+      "length": 384,
+      "direction": "starting",
+      "regime": "backward",
+      "pytorch_ms": 3.1701632499694825,
+      "engine_ms": 0.8464799880981446,
+      "candidate_ms": 0.8451615810394287,
+      "pytorch_speedup": 3.7507979706454417,
+      "pytorch_speedup_ci95": [
+        3.748613964810642,
+        3.75331301202121
+      ],
+      "engine_time_reduction_pct": 0.1683888758205465,
+      "engine_time_reduction_ci95": [
+        0.12256086018760382,
+        0.18823083637500848
+      ]
+    },
+    {
+      "length": 384,
+      "direction": "ending",
+      "regime": "backward",
+      "pytorch_ms": 3.2384241104125975,
+      "engine_ms": 0.8989984035491944,
+      "candidate_ms": 0.8989039897918701,
+      "pytorch_speedup": 3.6025152833474214,
+      "pytorch_speedup_ci95": [
+        3.5983113751982256,
+        3.6042188401872983
+      ],
+      "engine_time_reduction_pct": -0.025997810691968937,
+      "engine_time_reduction_ci95": [
+        -0.09185795960306997,
+        0.0156915788103007
+      ]
+    },
+    {
+      "length": 768,
+      "direction": "starting",
+      "regime": "backward",
+      "pytorch_ms": 19.371052551269532,
+      "engine_ms": 4.555380821228027,
+      "candidate_ms": 4.635614395141602,
+      "pytorch_speedup": 4.17941372024297,
+      "pytorch_speedup_ci95": [
+        4.166066635474895,
+        4.285596835562863
+      ],
+      "engine_time_reduction_pct": -1.1823631085943642,
+      "engine_time_reduction_ci95": [
+        -2.491036393559587,
+        1.455425916177533
+      ]
+    },
+    {
+      "length": 768,
+      "direction": "ending",
+      "regime": "backward",
+      "pytorch_ms": 19.613369750976563,
+      "engine_ms": 4.786865615844727,
+      "candidate_ms": 4.845172691345215,
+      "pytorch_speedup": 4.050387266849786,
+      "pytorch_speedup_ci95": [
+        4.026767174166856,
+        4.116474138788161
+      ],
+      "engine_time_reduction_pct": -1.382994440987595,
+      "engine_time_reduction_ci95": [
+        -2.410375228907391,
+        1.8111122050411765
+      ]
+    },
+    {
+      "length": 1024,
+      "direction": "starting",
+      "regime": "backward",
+      "pytorch_ms": 42.371340942382815,
+      "engine_ms": 10.0879695892334,
+      "candidate_ms": 9.985652923583984,
+      "pytorch_speedup": 4.245100767947495,
+      "pytorch_speedup_ci95": [
+        4.228313128199658,
+        4.2786720247523835
+      ],
+      "engine_time_reduction_pct": 0.9911045846559552,
+      "engine_time_reduction_ci95": [
+        0.028484804382322704,
+        1.3751928865370688
+      ]
+    },
+    {
+      "length": 1024,
+      "direction": "ending",
+      "regime": "backward",
+      "pytorch_ms": 42.80455780029297,
+      "engine_ms": 10.347977447509766,
+      "candidate_ms": 10.374356842041017,
+      "pytorch_speedup": 4.127298528485465,
+      "pytorch_speedup_ci95": [
+        4.113112814431614,
+        4.136298382699007
+      ],
+      "engine_time_reduction_pct": -0.1139043339032253,
+      "engine_time_reduction_ci95": [
+        -0.8165678427067391,
+        0.7992362187210778
+      ]
+    },
+    {
+      "length": 384,
+      "direction": "starting",
+      "regime": "forward_backward",
+      "pytorch_ms": 5.715164756774902,
+      "engine_ms": 1.1979872226715087,
+      "candidate_ms": 1.199404811859131,
+      "pytorch_speedup": 4.766023851785782,
+      "pytorch_speedup_ci95": [
+        4.763264756644915,
+        4.775712465143617
+      ],
+      "engine_time_reduction_pct": -0.05287725965961165,
+      "engine_time_reduction_ci95": [
+        -0.10464408441914763,
+        0.01918241451553948
+      ]
+    },
+    {
+      "length": 384,
+      "direction": "ending",
+      "regime": "forward_backward",
+      "pytorch_ms": 5.906439971923828,
+      "engine_ms": 1.3595759868621826,
+      "candidate_ms": 1.3558079719543459,
+      "pytorch_speedup": 4.354142723780236,
+      "pytorch_speedup_ci95": [
+        4.346740342763922,
+        4.359525800369308
+      ],
+      "engine_time_reduction_pct": 0.07777858916751534,
+      "engine_time_reduction_ci95": [
+        -0.01968211233094319,
+        0.13591513758021145
+      ]
+    },
+    {
+      "length": 768,
+      "direction": "starting",
+      "regime": "forward_backward",
+      "pytorch_ms": 35.8143798828125,
+      "engine_ms": 6.4036462783813475,
+      "candidate_ms": 6.469430541992187,
+      "pytorch_speedup": 5.5364118211074596,
+      "pytorch_speedup_ci95": [
+        5.4566645849501985,
+        5.600315151277631
+      ],
+      "engine_time_reduction_pct": -0.904166179446364,
+      "engine_time_reduction_ci95": [
+        -2.224488341143438,
+        1.0689650298460807
+      ]
+    },
+    {
+      "length": 768,
+      "direction": "ending",
+      "regime": "forward_backward",
+      "pytorch_ms": 36.49156494140625,
+      "engine_ms": 6.985176086425781,
+      "candidate_ms": 7.044748687744141,
+      "pytorch_speedup": 5.183689650295291,
+      "pytorch_speedup_ci95": [
+        5.169173145800979,
+        5.215908201146937
+      ],
+      "engine_time_reduction_pct": -0.4447708197872213,
+      "engine_time_reduction_ci95": [
+        -1.6807337157582758,
+        0.36094951364706307
+      ]
+    },
+    {
+      "length": 1024,
+      "direction": "starting",
+      "regime": "forward_backward",
+      "pytorch_ms": 76.89224548339843,
+      "engine_ms": 13.842788696289062,
+      "candidate_ms": 13.785234069824218,
+      "pytorch_speedup": 5.583236525946925,
+      "pytorch_speedup_ci95": [
+        5.550120297625645,
+        5.610411136606463
+      ],
+      "engine_time_reduction_pct": 0.9316857187000205,
+      "engine_time_reduction_ci95": [
+        0.15941302523003742,
+        1.7094998498830782
+      ]
+    },
+    {
+      "length": 1024,
+      "direction": "ending",
+      "regime": "forward_backward",
+      "pytorch_ms": 78.07027282714844,
+      "engine_ms": 14.771412658691407,
+      "candidate_ms": 14.834246063232422,
+      "pytorch_speedup": 5.26782243858337,
+      "pytorch_speedup_ci95": [
+        5.251899069320053,
+        5.2995979765829535
+      ],
+      "engine_time_reduction_pct": -0.15189134698798124,
+      "engine_time_reduction_ci95": [
+        -1.5610315341818337,
+        1.5705308465114531
+      ]
+    }
+  ],
+  "benchmark_source_sha256": {
+    "compare.py": "076900efccb0ecf20910deca70760a2097b12185032785ef999d5bc5d5fa6ea2",
+    "compare_19305.py": "8197c0233adaed00ff5bc6e8940a589d01a77ea6497daac8596891d84da369bb"
+  },
+  "module_source_sha256": {
+    "modules/triangle_attention/module.py": "f82895b102302177abe062ecc4581325a0b79d922471d47833106a8be5f10557",
+    "modules/primitives.py": "66a93b0afe6c3d99163acd09551274a80022c16315d599625af9850cd28b4ef5",
+    "modules/functional.py": "de7b15316642b5a154261e4496c634e113286e0d045ca7b5cae0fd8621ff58f0",
+    "modules/dispatch.py": "106ab5de03fee3e496723bfb0241a12cbd6ebec73af57ee05f36d3716441e058",
+    "integrations/anthropic.py": "b792c1d7db873ac57a0bba223d1b69195edb385ac02df56c6eaae3909b511bbd"
+  },
+  "max_relative_l2": 0.010289634577929974,
+  "candidate_bitwise_engine": true,
+  "anthropic": {
+    "status": "unsupported",
+    "release": "/home/psk6950/MiniWorld/runs/triattn_20260921/oc-release/opt_core",
+    "release_source_sha256": {
+      "attn/pair_fused.py": "b9998988c5d6e354499b573894fd85db37b0ace2a2be6c0754b1019d7649f257",
+      "kernels/triattn/TRIATTN_CELLS.json": "d3f98f9627b5e5608220bf6dcd31ed2f4a335037106164cf1bb5a84c31979df3",
+      "kernels/triattn/__init__.py": "1adce34b6e5cd160c4e1d108be71d645a6c3e67e1961decb8cf9131ee89a91e0",
+      "kernels/flash_triattn.py": "9411c832db90b884160326dcba31e908d42747c25e1ecfdc8986d83d9d05c1a7"
+    },
+    "rows_backward": {
+      "k2b": false,
+      "k2": false,
+      "flash": false,
+      "cuda_sm90a": false,
+      "triattn_native": false,
+      "exact_headsplit": "the stock op's (per-head calls are ordinary library calls)",
+      "triattn_exact": false,
+      "cueq": true,
+      "ds4sci": true,
+      "sdpa": true,
+      "stock": true
+    },
+    "adapter_runtime_error": "Anthropic integration is inference-only; use torch.no_grad() or torch.inference_mode(). Training support is deferred.",
+    "note": "Backward-capable stock/cuEq/DS4Sci/SDPA rows delegate to external libraries; they are not the previously benchmarked optimized Anthropic kernel."
+  },
+  "replications": [
+    {
+      "job": 19317,
+      "length": 768,
+      "direction": "starting",
+      "regime": "backward",
+      "rounds": 48,
+      "replays": 20,
+      "pytorch_ms": 19.360626220703125,
+      "engine_ms": 4.68683032989502,
+      "candidate_ms": 4.711026382446288,
+      "engine_time_reduction_pct": -0.012735814888265029,
+      "engine_time_reduction_ci95": [
+        -1.498334492824549,
+        0.6014805936594647
+      ]
+    },
+    {
+      "job": 19317,
+      "length": 768,
+      "direction": "starting",
+      "regime": "forward_backward",
+      "rounds": 48,
+      "replays": 20,
+      "pytorch_ms": 35.68353881835938,
+      "engine_ms": 6.57193603515625,
+      "candidate_ms": 6.550062561035157,
+      "engine_time_reduction_pct": 1.0746175519122658,
+      "engine_time_reduction_ci95": [
+        -0.7936275236485102,
+        1.9462751348620966
+      ]
+    },
+    {
+      "job": 19317,
+      "length": 768,
+      "direction": "ending",
+      "regime": "backward",
+      "rounds": 48,
+      "replays": 20,
+      "pytorch_ms": 19.60905303955078,
+      "engine_ms": 4.865263938903809,
+      "candidate_ms": 4.896922492980957,
+      "engine_time_reduction_pct": -0.7879077584684313,
+      "engine_time_reduction_ci95": [
+        -1.2330611414812953,
+        0.4145011490394812
+      ]
+    },
+    {
+      "job": 19317,
+      "length": 768,
+      "direction": "ending",
+      "regime": "forward_backward",
+      "rounds": 48,
+      "replays": 20,
+      "pytorch_ms": 36.40918884277343,
+      "engine_ms": 7.085319900512696,
+      "candidate_ms": 7.107543182373046,
+      "engine_time_reduction_pct": 0.37649217445819283,
+      "engine_time_reduction_ci95": [
+        -0.7146344490518874,
+        1.7889572693307876
+      ]
+    }
+  ]
+}

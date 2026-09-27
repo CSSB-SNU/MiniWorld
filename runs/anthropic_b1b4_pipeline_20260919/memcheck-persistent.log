@@ -1,0 +1,6 @@
+========= COMPUTE-SANITIZER
+CUBIN /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/c3a55bcdedb4cd634f1275941b24fa122e2e275797a1ad7a309f5f1920be9f06.cubin
+/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_strided_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|shape_key=68720526106). Falling back to a heuristic 3 of 288 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+PASS multi-tile persistent prefetch [0.0, 5.081740710011218e-06, 1.1402453310438432e-05, 3.9428425679943757e-07, 7.55719611333916e-08, 0.0002007954753935337]
+========= ERROR SUMMARY: 0 errors

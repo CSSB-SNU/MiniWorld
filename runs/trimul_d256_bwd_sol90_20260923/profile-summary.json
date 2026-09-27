@@ -1,0 +1,170 @@
+[
+  {
+    "kernel": "mw_wide_b1_prepare",
+    "metrics": {
+      "gpu__time_duration.sum": {
+        "value": "0.786592",
+        "unit": "ms"
+      },
+      "dram__bytes_read.sum": {
+        "value": "0.336496",
+        "unit": "Gbyte"
+      },
+      "dram__bytes_write.sum": {
+        "value": "317.120256",
+        "unit": "Mbyte"
+      },
+      "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": {
+        "value": "7.542746",
+        "unit": "%"
+      }
+    }
+  },
+  {
+    "kernel": "width_b1",
+    "metrics": {
+      "gpu__time_duration.sum": {
+        "value": "1.024128",
+        "unit": "ms"
+      },
+      "dram__bytes_read.sum": {
+        "value": "1.128068",
+        "unit": "Gbyte"
+      },
+      "dram__bytes_write.sum": {
+        "value": "332.568576",
+        "unit": "Mbyte"
+      },
+      "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": {
+        "value": "9.471561",
+        "unit": "%"
+      }
+    }
+  },
+  {
+    "kernel": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+    "metrics": {
+      "gpu__time_duration.sum": {
+        "value": "0.077312",
+        "unit": "ms"
+      },
+      "dram__bytes_read.sum": {
+        "value": "0.151026",
+        "unit": "Gbyte"
+      },
+      "dram__bytes_write.sum": {
+        "value": "64.980224",
+        "unit": "Mbyte"
+      },
+      "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": {
+        "value": "40.243137",
+        "unit": "%"
+      }
+    }
+  },
+  {
+    "kernel": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NTN",
+    "metrics": {
+      "gpu__time_duration.sum": {
+        "value": "0.077184",
+        "unit": "ms"
+      },
+      "dram__bytes_read.sum": {
+        "value": "0.151026",
+        "unit": "Gbyte"
+      },
+      "dram__bytes_write.sum": {
+        "value": "64.914432",
+        "unit": "Mbyte"
+      },
+      "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": {
+        "value": "40.595852",
+        "unit": "%"
+      }
+    }
+  },
+  {
+    "kernel": "nvjet_tst_192x192_64x4_2x1_v_bz_coopB_TNN",
+    "metrics": {
+      "gpu__time_duration.sum": {
+        "value": "0.078272",
+        "unit": "ms"
+      },
+      "dram__bytes_read.sum": {
+        "value": "0.151026",
+        "unit": "Gbyte"
+      },
+      "dram__bytes_write.sum": {
+        "value": "64.137984",
+        "unit": "Mbyte"
+      },
+      "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": {
+        "value": "40.022553",
+        "unit": "%"
+      }
+    }
+  },
+  {
+    "kernel": "nvjet_tst_192x192_64x3_2x1_v_bz_coopB_NNN",
+    "metrics": {
+      "gpu__time_duration.sum": {
+        "value": "0.077760",
+        "unit": "ms"
+      },
+      "dram__bytes_read.sum": {
+        "value": "0.151031",
+        "unit": "Gbyte"
+      },
+      "dram__bytes_write.sum": {
+        "value": "64.622848",
+        "unit": "Mbyte"
+      },
+      "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": {
+        "value": "39.781179",
+        "unit": "%"
+      }
+    }
+  },
+  {
+    "kernel": "mw_d256_b7_source",
+    "metrics": {
+      "gpu__time_duration.sum": {
+        "value": "0.820576",
+        "unit": "ms"
+      },
+      "dram__bytes_read.sum": {
+        "value": "0.408759",
+        "unit": "Gbyte"
+      },
+      "dram__bytes_write.sum": {
+        "value": "601.148416",
+        "unit": "Mbyte"
+      },
+      "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": {
+        "value": "40.656918",
+        "unit": "%"
+      }
+    }
+  },
+  {
+    "kernel": "mw_d256_b7_finish",
+    "metrics": {
+      "gpu__time_duration.sum": {
+        "value": "0.716320",
+        "unit": "ms"
+      },
+      "dram__bytes_read.sum": {
+        "value": "0.926020",
+        "unit": "Gbyte"
+      },
+      "dram__bytes_write.sum": {
+        "value": "151.335424",
+        "unit": "Mbyte"
+      },
+      "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": {
+        "value": "24.745984",
+        "unit": "%"
+      }
+    }
+  }
+]

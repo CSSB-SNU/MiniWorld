@@ -1,0 +1,926 @@
+{
+  "job": 16607,
+  "cases": [
+    {
+      "length": 384,
+      "ending": false,
+      "kernel_sum_us": 1158.6614000000009,
+      "graph_us": 1159.3556722005208,
+      "profiled_graph_us": 1175.592549641927,
+      "kernels_per_backward": 22,
+      "groups_us": {
+        "dK/dV + bias partial": 497.82893333333345,
+        "dQ": 203.08719999999977,
+        "Bias final reduction": 82.06706666666699,
+        "Weight gradients (six)": 181.41453333333294,
+        "Projection/LN/residual": 104.83833333333362,
+        "Gate/output/delta": 77.33133333333329,
+        "Ending dY layout copy": 0.0,
+        "Bias mask/layout": 7.733600000001267,
+        "LN parameter reductions": 4.360399999999692
+      },
+      "weights_us": {
+        "W_out": 31.9445999999989,
+        "W_q": 33.565933333333064,
+        "W_k": 30.517466666666472,
+        "W_v": 30.370066666667118,
+        "W_gate": 30.53853333333331,
+        "W_bias": 24.47793333333405
+      },
+      "groups_percent": {
+        "dK/dV + bias partial": 42.96586848697412,
+        "dQ": 17.527743653150058,
+        "Bias final reduction": 7.082920572538875,
+        "Weight gradients (six)": 15.657251836760318,
+        "Projection/LN/residual": 9.048228700234041,
+        "Gate/output/delta": 6.674196044964752,
+        "Ending dY layout copy": 0.0,
+        "Bias mask/layout": 0.667459880859176,
+        "LN parameter reductions": 0.37633082451868066
+      },
+      "ordered_kernel_mapping": [
+        {
+          "index": 0,
+          "category": "Gate/output/delta",
+          "kernel": "gate_delta_tma(Config::Params)"
+        },
+        {
+          "index": 1,
+          "category": "dK/dV + bias partial",
+          "kernel": "void grouped_dkdv<4>(Config<4>::Params)"
+        },
+        {
+          "index": 2,
+          "category": "Bias final reduction",
+          "kernel": "reduce_bias_small(float const*, cutlass::bfloat16_t*, int, int)"
+        },
+        {
+          "index": 3,
+          "category": "dQ",
+          "kernel": "dq_tma(Config::Params)"
+        },
+        {
+          "index": 4,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT"
+        },
+        {
+          "index": 5,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 6,
+          "category": "Bias mask/layout",
+          "kernel": "memcpy128"
+        },
+        {
+          "index": 7,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 8,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 9,
+          "category": "Projection/LN/residual",
+          "kernel": "void projection_ln_residual_tma<64>(Config<64>::Params)"
+        },
+        {
+          "index": 10,
+          "category": "LN parameter reductions",
+          "kernel": "reduce_norm(float const*, float*, float*, int)"
+        },
+        {
+          "index": 11,
+          "category": "LN parameter reductions",
+          "kernel": "finish_norm(float const*, float*, float*)"
+        },
+        {
+          "index": 12,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT"
+        },
+        {
+          "index": 13,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 14,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT"
+        },
+        {
+          "index": 15,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 16,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT"
+        },
+        {
+          "index": 17,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 18,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT"
+        },
+        {
+          "index": 19,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 20,
+          "category": "Weight gradients (six)",
+          "kernel": "void cutlass::Kernel2<cutlass_80_tensorop_s16816gemm_bf16_128x64_64x3_nt_align2>(cutlass_80_tensorop_s16816gemm_bf16_128x64_64x3_nt_align2::Params)"
+        },
+        {
+          "index": 21,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, __nv_bfloat16, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, __nv_bfloat16*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        }
+      ],
+      "source": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/below80/attribution-16607-L384.json"
+    },
+    {
+      "length": 384,
+      "ending": true,
+      "kernel_sum_us": 1213.1240666666658,
+      "graph_us": 1213.4933471679688,
+      "profiled_graph_us": 1228.0469258626301,
+      "kernels_per_backward": 23,
+      "groups_us": {
+        "dK/dV + bias partial": 497.51740000000007,
+        "dQ": 202.80573333333305,
+        "Bias final reduction": 82.15260000000015,
+        "Weight gradients (six)": 181.83486666666747,
+        "Projection/LN/residual": 108.40966666666681,
+        "Gate/output/delta": 78.34699999999975,
+        "Ending dY layout copy": 49.9523333333332,
+        "Bias mask/layout": 7.603199999999438,
+        "LN parameter reductions": 4.501266666665954
+      },
+      "weights_us": {
+        "W_out": 31.88053333333398,
+        "W_q": 33.76433333333323,
+        "W_k": 30.685999999999947,
+        "W_v": 30.431933333333298,
+        "W_gate": 30.425666666666807,
+        "W_bias": 24.64640000000012
+      },
+      "groups_percent": {
+        "dK/dV + bias partial": 41.011254633422794,
+        "dQ": 16.717641575654163,
+        "Bias final reduction": 6.771986662974472,
+        "Weight gradients (six)": 14.98897529634377,
+        "Projection/LN/residual": 8.936403921533518,
+        "Gate/output/delta": 6.4582842062705055,
+        "Ending dY layout copy": 4.117660732804402,
+        "Bias mask/layout": 0.6267454590107142,
+        "LN parameter reductions": 0.37104751198566255
+      },
+      "ordered_kernel_mapping": [
+        {
+          "index": 0,
+          "category": "Ending dY layout copy",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 1,
+          "category": "Gate/output/delta",
+          "kernel": "gate_delta_tma(Config::Params)"
+        },
+        {
+          "index": 2,
+          "category": "dK/dV + bias partial",
+          "kernel": "void grouped_dkdv<4>(Config<4>::Params)"
+        },
+        {
+          "index": 3,
+          "category": "Bias final reduction",
+          "kernel": "reduce_bias_small(float const*, cutlass::bfloat16_t*, int, int)"
+        },
+        {
+          "index": 4,
+          "category": "dQ",
+          "kernel": "dq_tma(Config::Params)"
+        },
+        {
+          "index": 5,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT"
+        },
+        {
+          "index": 6,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 7,
+          "category": "Bias mask/layout",
+          "kernel": "Memcpy DtoD (Device -> Device)"
+        },
+        {
+          "index": 8,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 9,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 10,
+          "category": "Projection/LN/residual",
+          "kernel": "void projection_ln_residual_tma<64>(Config<64>::Params)"
+        },
+        {
+          "index": 11,
+          "category": "LN parameter reductions",
+          "kernel": "reduce_norm(float const*, float*, float*, int)"
+        },
+        {
+          "index": 12,
+          "category": "LN parameter reductions",
+          "kernel": "finish_norm(float const*, float*, float*)"
+        },
+        {
+          "index": 13,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT"
+        },
+        {
+          "index": 14,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 15,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT"
+        },
+        {
+          "index": 16,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 17,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT"
+        },
+        {
+          "index": 18,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 19,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x2_v_bz_splitK_NTT"
+        },
+        {
+          "index": 20,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 21,
+          "category": "Weight gradients (six)",
+          "kernel": "void cutlass::Kernel2<cutlass_80_tensorop_s16816gemm_bf16_128x64_64x3_nt_align2>(cutlass_80_tensorop_s16816gemm_bf16_128x64_64x3_nt_align2::Params)"
+        },
+        {
+          "index": 22,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, __nv_bfloat16, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, __nv_bfloat16*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        }
+      ],
+      "source": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/below80/attribution-16607-L384.json"
+    },
+    {
+      "length": 768,
+      "ending": false,
+      "kernel_sum_us": 6307.332733333336,
+      "graph_us": 6319.515482584636,
+      "profiled_graph_us": 6321.8475341796875,
+      "kernels_per_backward": 22,
+      "groups_us": {
+        "dK/dV + bias partial": 3098.027733333333,
+        "dQ": 1278.4631333333352,
+        "Bias final reduction": 584.8796666666681,
+        "Weight gradients (six)": 648.0049333333261,
+        "Projection/LN/residual": 365.24426666667176,
+        "Gate/output/delta": 308.22020000000197,
+        "Ending dY layout copy": 0.0,
+        "Bias mask/layout": 16.192000000004192,
+        "LN parameter reductions": 8.300799999995313
+      },
+      "weights_us": {
+        "W_out": 116.61660000000265,
+        "W_q": 118.39593333332937,
+        "W_k": 115.59060000000174,
+        "W_v": 115.2703999999959,
+        "W_gate": 115.00599999999591,
+        "W_bias": 67.12540000000057
+      },
+      "groups_percent": {
+        "dK/dV + bias partial": 49.11787381947851,
+        "dQ": 20.269473442820665,
+        "Bias final reduction": 9.273011134733135,
+        "Weight gradients (six)": 10.273834610131066,
+        "Projection/LN/residual": 5.790787994050304,
+        "Gate/output/delta": 4.886696374381884,
+        "Ending dY layout copy": 0.0,
+        "Bias mask/layout": 0.25671707335862953,
+        "LN parameter reductions": 0.13160555104579774
+      },
+      "ordered_kernel_mapping": [
+        {
+          "index": 0,
+          "category": "Gate/output/delta",
+          "kernel": "gate_delta_tma(Config::Params)"
+        },
+        {
+          "index": 1,
+          "category": "dK/dV + bias partial",
+          "kernel": "void grouped_dkdv<4>(Config<4>::Params)"
+        },
+        {
+          "index": 2,
+          "category": "Bias final reduction",
+          "kernel": "reduce_bias(float const*, cutlass::bfloat16_t*, int, int)"
+        },
+        {
+          "index": 3,
+          "category": "dQ",
+          "kernel": "dq_tma(Config::Params)"
+        },
+        {
+          "index": 4,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 5,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 6,
+          "category": "Bias mask/layout",
+          "kernel": "memcpy128"
+        },
+        {
+          "index": 7,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 8,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 9,
+          "category": "Projection/LN/residual",
+          "kernel": "void projection_ln_residual_tma<64>(Config<64>::Params)"
+        },
+        {
+          "index": 10,
+          "category": "LN parameter reductions",
+          "kernel": "reduce_norm(float const*, float*, float*, int)"
+        },
+        {
+          "index": 11,
+          "category": "LN parameter reductions",
+          "kernel": "finish_norm(float const*, float*, float*)"
+        },
+        {
+          "index": 12,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 13,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 14,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 15,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 16,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 17,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 18,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 19,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 20,
+          "category": "Weight gradients (six)",
+          "kernel": "void cutlass::Kernel2<cutlass_80_tensorop_s16816gemm_bf16_128x64_64x6_nt_align2>(cutlass_80_tensorop_s16816gemm_bf16_128x64_64x6_nt_align2::Params)"
+        },
+        {
+          "index": 21,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, __nv_bfloat16, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, __nv_bfloat16*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        }
+      ],
+      "source": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/below80/attribution-16607-L768.json"
+    },
+    {
+      "length": 768,
+      "ending": true,
+      "kernel_sum_us": 6676.272999999998,
+      "graph_us": 6526.165262858073,
+      "profiled_graph_us": 6691.217041015625,
+      "kernels_per_backward": 23,
+      "groups_us": {
+        "dK/dV + bias partial": 3205.565599999997,
+        "dQ": 1320.1552666666666,
+        "Bias final reduction": 587.7469333333303,
+        "Weight gradients (six)": 648.8264666666624,
+        "Projection/LN/residual": 379.68466666667075,
+        "Gate/output/delta": 309.5874666666641,
+        "Ending dY layout copy": 199.46486666666945,
+        "Bias mask/layout": 16.637866666664674,
+        "LN parameter reductions": 8.60386666667182
+      },
+      "weights_us": {
+        "W_out": 117.01559999999687,
+        "W_q": 118.80113333333381,
+        "W_k": 114.85653333333417,
+        "W_v": 115.06800000000125,
+        "W_gate": 114.79053333333285,
+        "W_bias": 68.29466666666366
+      },
+      "groups_percent": {
+        "dK/dV + bias partial": 48.01429779758853,
+        "dQ": 19.77383589117262,
+        "Bias final reduction": 8.803518569916635,
+        "Weight gradients (six)": 9.718393281201392,
+        "Projection/LN/residual": 5.687075208977686,
+        "Gate/output/delta": 4.637130127342968,
+        "Ending dY layout copy": 2.9876679199108467,
+        "Bias mask/layout": 0.24920890243201077,
+        "LN parameter reductions": 0.12887230145729245
+      },
+      "ordered_kernel_mapping": [
+        {
+          "index": 0,
+          "category": "Ending dY layout copy",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 1,
+          "category": "Gate/output/delta",
+          "kernel": "gate_delta_tma(Config::Params)"
+        },
+        {
+          "index": 2,
+          "category": "dK/dV + bias partial",
+          "kernel": "void grouped_dkdv<4>(Config<4>::Params)"
+        },
+        {
+          "index": 3,
+          "category": "Bias final reduction",
+          "kernel": "reduce_bias(float const*, cutlass::bfloat16_t*, int, int)"
+        },
+        {
+          "index": 4,
+          "category": "dQ",
+          "kernel": "dq_tma(Config::Params)"
+        },
+        {
+          "index": 5,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 6,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 7,
+          "category": "Bias mask/layout",
+          "kernel": "Memcpy DtoD (Device -> Device)"
+        },
+        {
+          "index": 8,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 9,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 10,
+          "category": "Projection/LN/residual",
+          "kernel": "void projection_ln_residual_tma<64>(Config<64>::Params)"
+        },
+        {
+          "index": 11,
+          "category": "LN parameter reductions",
+          "kernel": "reduce_norm(float const*, float*, float*, int)"
+        },
+        {
+          "index": 12,
+          "category": "LN parameter reductions",
+          "kernel": "finish_norm(float const*, float*, float*)"
+        },
+        {
+          "index": 13,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 14,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 15,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 16,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 17,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 18,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 19,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 20,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 21,
+          "category": "Weight gradients (six)",
+          "kernel": "void cutlass::Kernel2<cutlass_80_tensorop_s16816gemm_bf16_128x64_64x6_nt_align2>(cutlass_80_tensorop_s16816gemm_bf16_128x64_64x6_nt_align2::Params)"
+        },
+        {
+          "index": 22,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, __nv_bfloat16, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, __nv_bfloat16*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        }
+      ],
+      "source": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/below80/attribution-16607-L768.json"
+    },
+    {
+      "length": 1024,
+      "ending": false,
+      "kernel_sum_us": 13588.427199999971,
+      "graph_us": 13610.914103190104,
+      "profiled_graph_us": 13602.984619140625,
+      "kernels_per_backward": 22,
+      "groups_us": {
+        "dK/dV + bias partial": 6987.868399999994,
+        "dQ": 2900.8333333333335,
+        "Bias final reduction": 1359.5718666666614,
+        "Weight gradients (six)": 1119.773799999981,
+        "Projection/LN/residual": 636.7221333333272,
+        "Gate/output/delta": 546.5650666666643,
+        "Ending dY layout copy": 0.0,
+        "Bias mask/layout": 25.164933333340255,
+        "LN parameter reductions": 11.927666666669149
+      },
+      "weights_us": {
+        "W_out": 202.30006666666014,
+        "W_q": 203.94693333334482,
+        "W_k": 201.08833333332828,
+        "W_v": 201.18679999999586,
+        "W_gate": 201.04566666666074,
+        "W_bias": 110.20599999999199
+      },
+      "groups_percent": {
+        "dK/dV + bias partial": 51.42514506756167,
+        "dQ": 21.347822604026902,
+        "Bias final reduction": 10.005365938647149,
+        "Weight gradients (six)": 8.240643184959504,
+        "Projection/LN/residual": 4.685767704840252,
+        "Gate/output/delta": 4.022283510976645,
+        "Ending dY layout copy": 0.0,
+        "Bias mask/layout": 0.18519386359401704,
+        "LN parameter reductions": 0.0877781253938585
+      },
+      "ordered_kernel_mapping": [
+        {
+          "index": 0,
+          "category": "Gate/output/delta",
+          "kernel": "gate_delta_tma(Config::Params)"
+        },
+        {
+          "index": 1,
+          "category": "dK/dV + bias partial",
+          "kernel": "void grouped_dkdv<4>(Config<4>::Params)"
+        },
+        {
+          "index": 2,
+          "category": "Bias final reduction",
+          "kernel": "reduce_bias(float const*, cutlass::bfloat16_t*, int, int)"
+        },
+        {
+          "index": 3,
+          "category": "dQ",
+          "kernel": "dq_tma(Config::Params)"
+        },
+        {
+          "index": 4,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 5,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 6,
+          "category": "Bias mask/layout",
+          "kernel": "memcpy128"
+        },
+        {
+          "index": 7,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 8,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 9,
+          "category": "Projection/LN/residual",
+          "kernel": "void projection_ln_residual_tma<64>(Config<64>::Params)"
+        },
+        {
+          "index": 10,
+          "category": "LN parameter reductions",
+          "kernel": "reduce_norm(float const*, float*, float*, int)"
+        },
+        {
+          "index": 11,
+          "category": "LN parameter reductions",
+          "kernel": "finish_norm(float const*, float*, float*)"
+        },
+        {
+          "index": 12,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 13,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 14,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 15,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 16,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 17,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 18,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 19,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 20,
+          "category": "Weight gradients (six)",
+          "kernel": "void cutlass::Kernel2<cutlass_80_tensorop_s16816gemm_bf16_128x64_64x6_nt_align2>(cutlass_80_tensorop_s16816gemm_bf16_128x64_64x6_nt_align2::Params)"
+        },
+        {
+          "index": 21,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, __nv_bfloat16, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, __nv_bfloat16*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        }
+      ],
+      "source": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/below80/attribution-16607-L1024.json"
+    },
+    {
+      "length": 1024,
+      "ending": true,
+      "kernel_sum_us": 14088.453733333336,
+      "graph_us": 13945.158894856771,
+      "profiled_graph_us": 14103.603108723959,
+      "kernels_per_backward": 23,
+      "groups_us": {
+        "dK/dV + bias partial": 7076.233466666677,
+        "dQ": 2936.2260666666702,
+        "Bias final reduction": 1360.6537999999885,
+        "Weight gradients (six)": 1120.885999999989,
+        "Projection/LN/residual": 655.3678000000033,
+        "Gate/output/delta": 549.8165999999987,
+        "Ending dY layout copy": 351.56773333332967,
+        "Bias mask/layout": 25.271466666677348,
+        "LN parameter reductions": 12.430799999999968
+      },
+      "weights_us": {
+        "W_out": 202.91699999999835,
+        "W_q": 204.32699999999602,
+        "W_k": 200.91979999998583,
+        "W_v": 200.73240000000027,
+        "W_gate": 200.59120000000698,
+        "W_bias": 111.39860000000142
+      },
+      "groups_percent": {
+        "dK/dV + bias partial": 50.22718319984457,
+        "dQ": 20.841365008847976,
+        "Bias final reduction": 9.657935680909228,
+        "Weight gradients (six)": 7.956061191782661,
+        "Projection/LN/residual": 4.651807873346673,
+        "Gate/output/delta": 3.90260429147828,
+        "Ending dY layout copy": 2.49543164912072,
+        "Bias mask/layout": 0.1793771491536006,
+        "LN parameter reductions": 0.0882339555162725
+      },
+      "ordered_kernel_mapping": [
+        {
+          "index": 0,
+          "category": "Ending dY layout copy",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 1,
+          "category": "Gate/output/delta",
+          "kernel": "gate_delta_tma(Config::Params)"
+        },
+        {
+          "index": 2,
+          "category": "dK/dV + bias partial",
+          "kernel": "void grouped_dkdv<4>(Config<4>::Params)"
+        },
+        {
+          "index": 3,
+          "category": "Bias final reduction",
+          "kernel": "reduce_bias(float const*, cutlass::bfloat16_t*, int, int)"
+        },
+        {
+          "index": 4,
+          "category": "dQ",
+          "kernel": "dq_tma(Config::Params)"
+        },
+        {
+          "index": 5,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 6,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 7,
+          "category": "Bias mask/layout",
+          "kernel": "Memcpy DtoD (Device -> Device)"
+        },
+        {
+          "index": 8,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 9,
+          "category": "Bias mask/layout",
+          "kernel": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})"
+        },
+        {
+          "index": 10,
+          "category": "Projection/LN/residual",
+          "kernel": "void projection_ln_residual_tma<64>(Config<64>::Params)"
+        },
+        {
+          "index": 11,
+          "category": "LN parameter reductions",
+          "kernel": "reduce_norm(float const*, float*, float*, int)"
+        },
+        {
+          "index": 12,
+          "category": "LN parameter reductions",
+          "kernel": "finish_norm(float const*, float*, float*)"
+        },
+        {
+          "index": 13,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 14,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 15,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 16,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 17,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 18,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 19,
+          "category": "Weight gradients (six)",
+          "kernel": "nvjet_tst_64x64_64x13_2x1_v_bz_splitK_NTT"
+        },
+        {
+          "index": 20,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        },
+        {
+          "index": 21,
+          "category": "Weight gradients (six)",
+          "kernel": "void cutlass::Kernel2<cutlass_80_tensorop_s16816gemm_bf16_128x64_64x6_nt_align2>(cutlass_80_tensorop_s16816gemm_bf16_128x64_64x6_nt_align2::Params)"
+        },
+        {
+          "index": 22,
+          "category": "Weight gradients (six)",
+          "kernel": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, __nv_bfloat16, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, __nv_bfloat16*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+        }
+      ],
+      "source": "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/below80/attribution-16607-L1024.json"
+    }
+  ]
+}

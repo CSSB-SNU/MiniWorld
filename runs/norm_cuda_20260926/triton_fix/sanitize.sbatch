@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH --job-name=mw-norm-fix-sanitizer
+#SBATCH --array=0-2
+#SBATCH --partition=h100
+#SBATCH --account=cssb
+#SBATCH --qos=normal_h100
+#SBATCH --nodelist=node02
+#SBATCH --gres=gpu:h100:1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=48G
+#SBATCH --time=00:45:00
+#SBATCH --output=/home/psk6950/MiniWorld/runs/norm_cuda_20260926/triton_fix/sanitizer-%A_%a.log
+set -euo pipefail
+cd /home/psk6950/MiniWorld
+export PATH="$PWD/.pixi/envs/cu128/bin:/usr/local/cuda-12.9/bin:$PATH"
+export LD_LIBRARY_PATH="$PWD/.pixi/envs/cu128/lib:${LD_LIBRARY_PATH:-}"
+export PYTHONNOUSERSITE=1
+export CUDA_HOME=/usr/local/cuda-12.9
+export OMP_NUM_THREADS=4 MAX_JOBS=4 TORCH_CUDA_ARCH_LIST=9.0
+export PYTHONPYCACHEPREFIX="$PWD/runs/norm_cuda_20260926/pycache-audit-${SLURM_JOB_ID}"
+export PYTHONPATH="$PWD/runs/norm_cuda_20260926/triton_fix/candidate"
+export TORCH_EXTENSIONS_DIR="$PWD/runs/norm_cuda_20260926/opt/build-0"
+fix_root="$PWD/runs/norm_cuda_20260926/triton_fix"
+export CUDA_MODULE_LOADING=EAGER
+sanitizers=(memcheck racecheck synccheck)
+compute-sanitizer --tool "${sanitizers[$SLURM_ARRAY_TASK_ID]}" --error-exitcode 86 --target-processes all python -m pytest -q "$fix_root/test_linear.py" "$fix_root/test_dispatch.py" -k 'saved_stats or graph_changed or empty or rms_cache_graph or dtype_scoped or override_and_off' --disable-warnings

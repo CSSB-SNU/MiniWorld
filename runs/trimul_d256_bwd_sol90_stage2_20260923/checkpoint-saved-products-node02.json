@@ -1,0 +1,185 @@
+{
+  "checkpoint": "D256 saved products and input statistics",
+  "node": "node02",
+  "qos": "normal_h100",
+  "production_dispatch_changed": false,
+  "sol90_achieved": false,
+  "config": {
+    "GP_OFF": "1",
+    "GP_WARP": "1",
+    "DX_LN": "1",
+    "DX_WARP": "1",
+    "SAVE_NORM": "1",
+    "DX_N256": "0",
+    "DX_PIPE": "0",
+    "DX_SPLIT": "0",
+    "DX_IN_STATS": "0",
+    "DX_GAMMA_CACHE": "0",
+    "LN_THREADS": "128",
+    "LN_MINBLOCKS": "3",
+    "LN_AGG": "1",
+    "LN_CACHE": "0",
+    "LN_STATS_TMA": "0",
+    "LN_STORE_READ": "0",
+    "LN_GAMMA_SMEM": "0",
+    "DN_SLIM": "0",
+    "SAVE_EPI_THREADS": "256",
+    "SAVE_EPI_GRID": "1056",
+    "SHARED_CANDIDATE": "saved_products"
+  },
+  "entry": "selected_current.Training followed by shared_candidate.attach(plan)",
+  "lengths": {
+    "384": {
+      "benchmark": "result-checkpoint-saves-L384-17256.json",
+      "validation": "validation-saved-products-g1056-node02-L384.json",
+      "sanitizers": {
+        "memcheck": {
+          "path": "memcheck-saved-products-g1056-node02-L384.log",
+          "summary": "========= ERROR SUMMARY: 0 errors"
+        },
+        "racecheck": {
+          "path": "racecheck-saved-products-g1056-node02-L384.log",
+          "summary": "========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        },
+        "synccheck": {
+          "path": "synccheck-saved-products-g1056-node02-L384.log",
+          "summary": "========= ERROR SUMMARY: 0 errors"
+        }
+      },
+      "candidate": {
+        "name": "saved_products",
+        "output_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/2c870841f0daade846238cd32330a0fe7e23cf6c4686a961694871013d630771.cubin",
+        "saved_bytes": 150994944,
+        "epi_grid": 1056,
+        "epi_threads": 256,
+        "input_stats": {
+          "name": "input_stats_gamma",
+          "front_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/b7bdf933f003fec9d35942d2b2b3983052d55f76510f144e28f5346580e7c455.cubin",
+          "cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/f7c9cbccfc78d873ce1e6399d381b59d67c54b596a930f479525b2e0524e7121.cubin",
+          "stats_bytes": 1179648,
+          "smem": 99456,
+          "grid": 264
+        }
+      },
+      "median_us": {
+        "old_fwd": 1042.5280332565308,
+        "new_fwd": 1086.7359638214111,
+        "old_bwd": 2110.640048980713,
+        "new_bwd": 1956.8639993667603,
+        "old_full": 3145.2159881591797,
+        "new_full": 3044.8321104049683
+      },
+      "bwd_reduction_pct": 7.285754370491326,
+      "full_reduction_pct": 3.191637017366289,
+      "sol_model": {
+        "flops": 753766760448,
+        "ideal_bytes": 758362112,
+        "bound_us": 761.7652960565943,
+        "old_pct": 36.091672591187304,
+        "new_pct": 38.92786091946609,
+        "note": "Unchanged recomputing-policy comparison model; saved-products removes 6*M*D^2 executed backward FLOPs. This ratio is not measured hardware utilization."
+      },
+      "forward_error": 0.0,
+      "strict_errors": {
+        "dx": 5.342943040886894e-06,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 3.583459431411029e-07,
+        "dbeta_in": 3.5254609542789694e-07,
+        "dgamma_out": 3.9475676771871804e-07,
+        "dbeta_out": 4.527925625552598e-07
+      },
+      "max_stress_dx": 8.348726623808034e-06,
+      "max_graph_error": 4.78528249914234e-07,
+      "max_pytorch_error": 0.0065453387796878815
+    },
+    "768": {
+      "benchmark": "result-checkpoint-saves-L768-17255.json",
+      "validation": "validation-saved-products-g1056-node02-L768.json",
+      "sanitizers": {
+        "memcheck": {
+          "path": "memcheck-saved-products-g1056-node02-L768.log",
+          "summary": "========= ERROR SUMMARY: 0 errors"
+        },
+        "racecheck": {
+          "path": "racecheck-saved-products-g1056-node02-L768.log",
+          "summary": "========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        },
+        "synccheck": {
+          "path": "synccheck-saved-products-g1056-node02-L768.log",
+          "summary": "========= ERROR SUMMARY: 0 errors"
+        }
+      },
+      "candidate": {
+        "name": "saved_products",
+        "output_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/2c870841f0daade846238cd32330a0fe7e23cf6c4686a961694871013d630771.cubin",
+        "saved_bytes": 603979776,
+        "epi_grid": 1056,
+        "epi_threads": 256,
+        "input_stats": {
+          "name": "input_stats_gamma",
+          "front_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/b7bdf933f003fec9d35942d2b2b3983052d55f76510f144e28f5346580e7c455.cubin",
+          "cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/94fdff7c93105750240bfc6c0da9dab983c874779d75506d823b795dea77370b.cubin",
+          "stats_bytes": 4718592,
+          "smem": 99456,
+          "grid": 264
+        }
+      },
+      "median_us": {
+        "old_fwd": 4346.544027328491,
+        "new_fwd": 4523.98419380188,
+        "old_bwd": 8700.84810256958,
+        "new_bwd": 8136.079788208008,
+        "old_full": 12950.416088104248,
+        "new_full": 12613.088130950928
+      },
+      "bwd_reduction_pct": 6.490957061930336,
+      "full_reduction_pct": 2.604765397948694,
+      "sol_model": {
+        "flops": 3478923509760,
+        "ideal_bytes": 3024367616,
+        "bound_us": 3515.8398279535118,
+        "old_pct": 40.40801294893535,
+        "new_pct": 43.21294676889943,
+        "note": "Unchanged recomputing-policy comparison model; saved-products removes 6*M*D^2 executed backward FLOPs. This ratio is not measured hardware utilization."
+      },
+      "forward_error": 0.0,
+      "strict_errors": {
+        "dx": 6.934013981663156e-06,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 4.003856304279907e-07,
+        "dbeta_in": 3.198422007244517e-07,
+        "dgamma_out": 4.089517631200579e-07,
+        "dbeta_out": 4.2604952454894374e-07
+      },
+      "max_stress_dx": 7.401429229503265e-06,
+      "max_graph_error": 4.649269556011859e-07,
+      "max_pytorch_error": 0.006550160236656666
+    }
+  },
+  "local_source_sha256": {
+    "selected_current.py": "418fad87d1ccafe064077fa807d7745674b56400c8a0162d45fdfa5d9456c9cd",
+    "shared_candidate.py": "1ce5d8fe349743dc92994c32f737cedd892c2a7da5e4fa5e68d6f50ce457373b",
+    "saved_input_stats.py": "8b794901609a68519dc0323357a6e3534b59e93613a9cd50fe6bbb2074bcbb70",
+    "saved_products.py": "4ad5f612b2fd695b06976628a028316459049677b82504d84c3ffdf01e8edda0",
+    "saved_norm.py": "7273091dae3fe6a29d6e603fb1d659e6f72a048f08814bdfb98151d03724560d",
+    "dx_ln.py": "7adf563788381b5192dc5304f704abbdeeae474afee1d69b6690e08eb35cb9cc",
+    "dx_ln_warp.cu": "2bd41b496c7e32de704fb70b27e746ebdb4e2705d24e86e89ae5d6ecb9b97acc",
+    "ln.py": "11f73b4bb7aebb9b8133aff6ab23fa38b54df590ff0b75256ce315dd99e24a4b",
+    "ln.cu": "acea78d6ec20a380969db98829d212607d6d7f2d4b6ce7a5562eee96f87e372a",
+    "ln_aggregate.cuh": "4cec78e8c6fd1b5fde97e763368b3c6de76ddc231ab10ccd45d9bde30ab3ff9b",
+    "tma_b7.py": "377f0104ace7999b257eaa9c3fd5e5cd7cb0842ed42a1f7909bf026c03f4ac9c",
+    "warp_source.py": "2acdde39e89f8b4064bf0eb0a9495727cde6d5a91053505d76491e7a22a811ce",
+    "packed_glu.cuh": "dad76a79375706e2f306045ba70e4a17cf82fafe786b4eff31381fd0cad39cf9",
+    "hybrid_b1.py": "167c9aa5f0a442b2f2f940bbed1fa12444bd2dc8a8daab0e710417fe3c854126"
+  }
+}

@@ -1,0 +1,244 @@
+{
+  "artifact": "hot6t",
+  "length": 384,
+  "baseline": "installed TriangleAttention.eval() under inference_mode",
+  "rounds": 24,
+  "replays": 30,
+  "records": [
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "mixed",
+      "output_relative": 0.0009088340186372909,
+      "attention_relative": 0.010576037536868203
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "mixed",
+      "baseline_relative": 0.0008867275219260813,
+      "candidate_relative": 0.000970483411058633,
+      "update_rms": 0.08834543079137802
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "dense",
+      "output_relative": 0.0008846964451341388,
+      "attention_relative": 0.010798246442823777
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "one_key",
+      "output_relative": 3.3528639823502294e-05,
+      "attention_relative": 7.043288199115019e-05
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "one_key",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.5561311841011047
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "all_masked",
+      "output_relative": 0.0,
+      "attention_relative": 0.0
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "all_masked",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.0
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "none",
+      "output_relative": 0.0008846964451341388,
+      "attention_relative": 0.010798246442823777
+    },
+    {
+      "kind": "paired_module",
+      "ending": false,
+      "baseline_us": 396.8063990275065,
+      "candidate_us": 377.45065689086914,
+      "speedup": 1.0519414836673007,
+      "paired_ratios": [
+        1.0558644686588141,
+        1.0542945081208546,
+        1.0549636348224125,
+        1.054596675887588,
+        1.051460257956271,
+        1.052073089272023,
+        1.050788432188792,
+        1.0525600528038368,
+        1.0509285849915428,
+        1.0525907815607614,
+        1.0503697485995775,
+        1.050870145114136,
+        1.0507091109288724,
+        1.0518327159733698,
+        1.0509357937740698,
+        1.0528882433769693,
+        1.0523618658507556,
+        1.0520502513612313,
+        1.0516007915635468,
+        1.050455086613802,
+        1.0490803331645475,
+        1.051691276407682,
+        1.0539695421335955,
+        1.0528171724987587
+      ]
+    },
+    {
+      "kind": "changed_input_weight_mask_graph",
+      "ending": false,
+      "relative": 0.0010599937296235783
+    },
+    {
+      "kind": "fullgraph_compile",
+      "ending": false,
+      "passed": true
+    },
+    {
+      "kind": "no_grad",
+      "ending": false,
+      "passed": true
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "mixed",
+      "output_relative": 0.0009102941049608738,
+      "attention_relative": 0.010603501855287271
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "mixed",
+      "baseline_relative": 0.0009436449333710612,
+      "candidate_relative": 0.0007853857035386043,
+      "update_rms": 0.08149060606956482
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "dense",
+      "output_relative": 0.0008845877951491317,
+      "attention_relative": 0.010808386954644682
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "one_key",
+      "output_relative": 3.404749637771981e-05,
+      "attention_relative": 7.188524299864708e-05
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "one_key",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.5169594287872314
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "all_masked",
+      "output_relative": 0.0,
+      "attention_relative": 0.0
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "all_masked",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.0
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "none",
+      "output_relative": 0.0008845877951491317,
+      "attention_relative": 0.010808386954644682
+    },
+    {
+      "kind": "paired_module",
+      "ending": true,
+      "baseline_us": 493.08212598164874,
+      "candidate_us": 375.21599133809406,
+      "speedup": 1.3142202881529395,
+      "paired_ratios": [
+        1.3139653782572143,
+        1.313854568995507,
+        1.3274722564840473,
+        1.3184824939311557,
+        1.3190553797012852,
+        1.3190201489103035,
+        1.304371864918791,
+        1.3146567434059582,
+        1.3134141815242417,
+        1.3126073922251458,
+        1.3141742874654134,
+        1.3154312554444594,
+        1.314169758178261,
+        1.3148223376659025,
+        1.3126940084518484,
+        1.314646229963032,
+        1.3144200993379727,
+        1.3132304942035586,
+        1.3135493444439215,
+        1.3150501600298845,
+        1.313711999169233,
+        1.3142662888404655,
+        1.3140678077029986,
+        1.3149283165434345
+      ]
+    },
+    {
+      "kind": "changed_input_weight_mask_graph",
+      "ending": true,
+      "relative": 0.0010573699929111722
+    },
+    {
+      "kind": "fullgraph_compile",
+      "ending": true,
+      "passed": true
+    },
+    {
+      "kind": "no_grad",
+      "ending": true,
+      "passed": true
+    }
+  ],
+  "inference_front": true,
+  "build": {
+    "module": "triattn_infer_hot6t",
+    "binary": "build/triattn_infer_hot6t.so",
+    "smem": 231424,
+    "sha256": {
+      "fused.cu": "e272b66371043d66554cdb640c36df30efa040cfd58c3c20b0d1790c3a832874",
+      "build/triattn_infer_hot6t.so": "ad9425cbe15a42a5db399ae00ce14e8bd5306c317fa283ee2107c317a6fbe2f1"
+    }
+  },
+  "front_artifact": "front8",
+  "front_build": {
+    "module": "triattn_infer_front8",
+    "binary": "build/triattn_infer_front8.so",
+    "smem": 0,
+    "sha256": {
+      "fused.cu": "b65e52ab1508251d76ddb2f4d2d1a091b2e9c31df64381ef0588366ff815bb68",
+      "build/triattn_infer_front8.so": "7c2ce7a8564739dba26d68d4c9580dc181f459994454856cf158b7c59dbd499f"
+    }
+  },
+  "complete": true
+}

@@ -1,0 +1,63 @@
+{
+  "length": 768,
+  "ending": false,
+  "results": {
+    "serving": {
+      "core_rounds": [
+        874.6281433105469,
+        901.0269165039062,
+        877.655029296875
+      ],
+      "block_rounds": [
+        1321.1091613769531,
+        1376.97509765625,
+        1390.626220703125
+      ],
+      "hot_rounds": [],
+      "core_rms_fp64": 0.00028883485479432215,
+      "baseline_core_rms_fp64": 0.00028883485479432215,
+      "core_delta_rms": 0.0,
+      "block_delta_rms": 0.0,
+      "core_equal": true,
+      "kernels": {
+        "triattn_tma_pro::prologue_tma(triattn_tma_pro::Params)": 275.4360000000002,
+        "broadcast_mask_stage(bool const*, long, long, int, int, int, int*, int*, unsigned char*, int*, int*, int*, int*, int*)": 3.718400000000065,
+        "void triattn_m1::stage_bias_m1_kernel<float>(float const*, long, long, long, long, int, int, float, unsigned int const*, int, float*, int*)": 13.593599999999833,
+        "void ta_core_broadcast::triattn_m1_kernel<ta_core_broadcast::Traits<1073741824> >(ta_core_broadcast::Traits<1073741824>::Params)": 793.1374,
+        "void ta_core_broadcast::triattn_m1_kernel<ta_core_broadcast::Traits<1024> >(ta_core_broadcast::Traits<1024>::Params)": 2.9117999999999484,
+        "ta_core_broadcast::uniform_rows_kernel(__nv_bfloat16 const*, long, long, long, long, __nv_bfloat16*, long, long, long, long, unsigned char const*, int, int, int)": 3.5712000000000446,
+        "void triattn_tma_epi::epilogue_tma<768>(triattn_tma_epi::Params)": 207.0782
+      },
+      "core_us": 877.655029296875,
+      "block_us": 1376.97509765625
+    },
+    "coop2pairedp6qr2ctav4": {
+      "core_rounds": [
+        1168.6656188964844,
+        1196.3811492919922,
+        1164.0364837646484
+      ],
+      "block_rounds": [
+        1652.2239685058594,
+        1666.3107299804688,
+        1690.9213256835938
+      ],
+      "hot_rounds": [],
+      "core_rms_fp64": 0.00028883485479432215,
+      "baseline_core_rms_fp64": 0.00028883485479432215,
+      "core_delta_rms": 0.0,
+      "block_delta_rms": 0.0,
+      "core_equal": true,
+      "kernels": {
+        "triattn_tma_pro::prologue_tma(triattn_tma_pro::Params)": 276.30100000000004,
+        "ta_sol_coop2pairedp6qr2ctav4::prepare(float const*, bool const*, long, float, int, float*, int*, int*)": 19.46879999999992,
+        "void ta_sol_coop2pairedp6qr2ctav4::attention<false>(ta_sol_coop2pairedp6qr2ctav4::Params)": 1106.4527999999998,
+        "void ta_sol_coop2pairedp6qr2ctav4::attention<true>(ta_sol_coop2pairedp6qr2ctav4::Params)": 23.43680000000013,
+        "ta_sol_coop2pairedp6qr2ctav4::uniform(cutlass::bfloat16_t const*, cutlass::bfloat16_t*, int, int const*)": 3.212600000000111,
+        "void triattn_tma_epi::epilogue_tma<768>(triattn_tma_epi::Params)": 207.61000000000013
+      },
+      "core_us": 1168.6656188964844,
+      "block_us": 1666.3107299804688
+    }
+  }
+}

@@ -1,0 +1,375 @@
+{
+  "rs8_producer32": {
+    "job": 17032,
+    "records": {
+      "64": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 0.012620000541210173,
+        "candidate_ms": 0.012795200198888778,
+        "speedup": 0.9868026555787017
+      },
+      "384": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 0.4203840017318725,
+        "candidate_ms": 0.4178983926773071,
+        "speedup": 1.0061101206994234
+      },
+      "768": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 2.8538408279418945,
+        "candidate_ms": 2.831920051574707,
+        "speedup": 1.0078654376629161
+      },
+      "1024": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 6.557137680053711,
+        "candidate_ms": 6.499214172363281,
+        "speedup": 1.0089618246856324
+      }
+    },
+    "qualification": 17049,
+    "full_comparison": 17050,
+    "decision": "Installed after qualification17049 and bitwise full comparison17057"
+  },
+  "rs8_producer40": {
+    "job": 17033,
+    "records": {
+      "64": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 0.012571199983358382,
+        "candidate_ms": 0.012875199317932129,
+        "speedup": 0.9765174093341802
+      },
+      "384": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 0.4198927879333496,
+        "candidate_ms": 0.42073841094970704,
+        "speedup": 0.9980201941511717
+      },
+      "768": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 2.835796070098877,
+        "candidate_ms": 2.8174912452697756,
+        "speedup": 1.0065660486122205
+      },
+      "1024": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 6.5172279357910154,
+        "candidate_ms": 6.47903938293457,
+        "speedup": 1.0058729255467724
+      }
+    },
+    "decision": "Reject: inconsistent shape benefit and inferior to producer32"
+  },
+  "rs_softmax_overlap": {
+    "job": 17034,
+    "records": {
+      "64": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 0.00403360016644001,
+        "candidate_ms": 0.004103199951350689,
+        "speedup": 0.9854667930569059
+      },
+      "384": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 0.15392639636993408,
+        "candidate_ms": 0.15339599847793578,
+        "speedup": 1.0039676572059375
+      },
+      "768": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 1.1308224201202393,
+        "candidate_ms": 1.123576784133911,
+        "speedup": 1.0062018949935654
+      },
+      "1024": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 2.5875088691711428,
+        "candidate_ms": 2.6217040061950683,
+        "speedup": 1.006258680436397
+      }
+    },
+    "qualification": 17055,
+    "fp64": 17056,
+    "decision": "Installed after qualification17055, independent FP6417056 and bitwise full comparison17057"
+  },
+  "rs4_cluster2": {
+    "job": 17054,
+    "records": {
+      "64": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 0.012598399817943574,
+        "candidate_ms": 0.01345760002732277,
+        "speedup": 0.9367543397696263
+      },
+      "384": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 0.4191231966018677,
+        "candidate_ms": 0.6432336091995239,
+        "speedup": 0.6530879023983117
+      },
+      "768": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 2.850523281097412,
+        "candidate_ms": 4.54346809387207,
+        "speedup": 0.6273830883580558
+      },
+      "1024": {
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 6.55775032043457,
+        "candidate_ms": 10.5069278717041,
+        "speedup": 0.6240412740119217
+      }
+    },
+    "decision": "Reject: 53-60 percent more latency at target lengths"
+  },
+  "combined_current_baseline": 17057,
+  "combined_reductions": {
+    "384": {
+      "backward_e0": 0.30944024954605576,
+      "forward_backward_e0": 0.22870132010576194,
+      "backward_e1": 0.41646602212008776,
+      "forward_backward_e1": 0.19662448955951595
+    },
+    "768": {
+      "backward_e0": 0.5024818611254478,
+      "forward_backward_e0": 0.30133115129952204,
+      "backward_e1": 0.34038269942662236,
+      "forward_backward_e1": 0.2090049546300432
+    },
+    "1024": {
+      "backward_e0": 0.5950455502554908,
+      "forward_backward_e0": 0.29122347272672044,
+      "backward_e1": 0.19951585373781944,
+      "forward_backward_e1": 0.46486992747668543
+    }
+  },
+  "rs_kv_last": {
+    "job": 17075,
+    "decision": "Reject: no consistent speedup over installed pair",
+    "records": {
+      "64": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 0.004248799942433834,
+        "candidate_ms": 0.0041784001514315605,
+        "speedup": 1.0175923613459865
+      },
+      "384": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 0.15493119955062867,
+        "candidate_ms": 0.16001359820365907,
+        "speedup": 0.9954426821702024
+      },
+      "768": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 1.155290412902832,
+        "candidate_ms": 1.150263214111328,
+        "speedup": 1.0001197711401564
+      },
+      "1024": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 2.620496845245361,
+        "candidate_ms": 2.649187183380127,
+        "speedup": 0.992122667700489
+      }
+    }
+  },
+  "rs_bias_last": {
+    "job": 17076,
+    "decision": "Reject: no consistent speedup over installed pair",
+    "records": {
+      "64": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 0.00491040013730526,
+        "candidate_ms": 0.0051415998488664625,
+        "speedup": 0.9755037939363955
+      },
+      "384": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 0.1570464015007019,
+        "candidate_ms": 0.1574295997619629,
+        "speedup": 0.9989207972564889
+      },
+      "768": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 1.1444015979766844,
+        "candidate_ms": 1.14436559677124,
+        "speedup": 1.0000468359321675
+      },
+      "1024": {
+        "relative_l2": [
+          0.0
+        ],
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 2.6299967765808105,
+        "candidate_ms": 2.6661263465881344,
+        "speedup": 0.9975930321603177
+      }
+    }
+  }
+}

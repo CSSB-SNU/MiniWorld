@@ -1,0 +1,9 @@
+========= COMPUTE-SANITIZER
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:1480: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+PASS dropout25 384
+PASS dropout_zero_output 384
+PASS changed_mask_input_weights 384
+========= ERROR SUMMARY: 0 errors

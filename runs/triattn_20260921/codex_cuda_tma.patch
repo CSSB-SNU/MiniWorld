@@ -1,0 +1,621 @@
+--- a/opt_core/attn/pair_fused.py
++++ b/opt_core/attn/pair_fused.py
+@@ -1182,7 +1182,7 @@
+                 GK = _carried("fpf_glue_v2", "kernels")
+                 outs.append(GK.prologue_v4(owner, xb, cch, cfg))
+             else:                                                         # variant v3: the launch under the lever's safety net (a tuned cell that fails to BUILD -> the safe cell + ONE line)
+-                base_cfg = {k: cfg[k] for k in ("BI", "BJ", "num_warps", "num_stages", "BN", "maxnreg", "qkv_pair", "j_fast") if k in cfg}
++                base_cfg = {k: cfg[k] for k in ("BI", "BJ", "num_warps", "num_stages", "BN", "maxnreg", "qkv_pair", "j_fast", "backend") if k in cfg}
+                 outs.append(run_cell("pair_fused:prologue", row["cc"], tt, lambda c, zb=zb, xb=xb: PRO.triatt_prologue(
+                     owner, zb, ending=ending, ln_mode=("stock" if ln == "stock" else "fused"), x_ln=xb, write_x=False, cfg=c),
+                     base_cfg, dims=shape_dims("fpf", "prologue", (W.C, W.H, W.D)), key=(W.C, W.H, W.D)))
+@@ -1434,6 +1434,7 @@
+         if _env:                                                  # kernel's own env knob never reaches it
+             _v = [int(x) for x in _env.split(",")]
+             cfg.pop("starting_tile", None)  # explicit offline tile override wins for either direction
++            cfg["backend"] = "triton"
+             cfg.update(BI=_v[0], BJ=_v[1], num_warps=_v[2], num_stages=_v[3])
+             if len(_v) > 4:
+                 cfg["KVER"] = _v[4]
+@@ -1449,7 +1450,7 @@
+             u = GK.epilogue_v3(o, g, W.wo16, zz, ending=ending, residual=residual, out=out, cfg=cfg, woT16=W.woT16)
+         else:                                                             # variant v2: the launch under the lever's safety net (a tuned cell that fails to BUILD -> the safe cell + ONE line)
+             EPI = _carried("fpf_triatt_epi", "epilogue")
+-            base = {k: cfg[k] for k in ("KVER", "BI", "BJ", "num_warps", "num_stages", "EXP", "maxnreg", "starting_tile") if k in cfg}
++            base = {k: cfg[k] for k in ("KVER", "BI", "BJ", "num_warps", "num_stages", "EXP", "maxnreg", "starting_tile", "backend") if k in cfg}
+             tt = row["triton"] if row.get("triton", "*") != "*" else _stack(o.device)[1]
+             u = run_cell("pair_fused:epilogue", row["cc"], tt, lambda c: EPI.triatt_epilogue(o, g, W.wo16, zz, ending=ending, residual=residual, out=out,
+                                                                                           cfg=c, woT16=W.woT16, o_layout=o_layout),
+--- a/opt_core/kernels/fpf_triatt_pro/prologue.py
++++ b/opt_core/kernels/fpf_triatt_pro/prologue.py
+@@ -553,6 +553,10 @@
+         NI, NJ, s_zi, s_zj = z.shape[0], z.shape[1], z.stride(0), z.stride(1)
+     HD = H * D
+     cfg = cfg or pick_config(C, HD, z.device)
++    from opt_core.kernels.triattn_surround_tma import try_prologue
++    native = try_prologue(z, cch, ending=ending, ln_mode=ln_mode, write_x=write_x, fma_flags=fma_flags, cfg=cfg)
++    if native is not None:
++        return native
+     BI, BJ, W, S = cfg["BI"], cfg["BJ"], cfg["num_warps"], cfg["num_stages"]
+     BN = min(int(cfg.get("BN", _BN_CAP)), HD)
+     assert HD % BN == 0, (HD, BN)
+--- a/opt_core/kernels/fpf_triatt_epi/epilogue.py
++++ b/opt_core/kernels/fpf_triatt_epi/epilogue.py
+@@ -333,6 +333,10 @@
+     block mode (residual=True): z [.., R, Cc, c_out] bf16 is updated IN PLACE: z[.., i, j, :] += u[i,j] (ending=False) or z[.., j, i, :] += u[i,j] (ending=True, i.e. z is the
+     UN-transposed pair tensor while (i,j) index the transposed frame the ending-node attention ran in). Returns None.
+     Exactness: stock rounding points everywhere; K accumulated ascending in one fp32 chain (see module doc)."""
++    from opt_core.kernels.triattn_surround_tma import try_epilogue
++    handled, native = try_epilogue(o, g, wo16, z, ending=ending, residual=residual, out=out, o_layout=o_layout, cfg=cfg)
++    if handled:
++        return native
+     assert _HAS_TRITON, "triton unavailable"
+     o5 = _as5(o, o_layout)
+     Bo, I, H, J, D = o5.shape
+--- a/opt_core/attn/pair_fused_cells.json
++++ b/opt_core/attn/pair_fused_cells.json
+@@ -89,7 +89,7 @@
+    },
+    "status": "certified",
+    "evidence": "fpf_glue_v2 GLUE_CELLS.json v2.2 bitwise_vs_shipped=true (torch.equal vs the v3/v2/v1 kernels on real dumps 356..1493, H100)",
+-   "note": "served for ln='stock' (x_ln given in the attention frame; either node \u2014 the kernel is node-agnostic, bitwise == v3 per the GLUE certificate); ln='fused' calls take mkpf_f1 / v3"
++   "note": "served for ln='stock' (x_ln given in the attention frame; either node — the kernel is node-agnostic, bitwise == v3 per the GLUE certificate); ln='fused' calls take mkpf_f1 / v3"
+   },
+   {
+    "id": "r04",
+@@ -115,7 +115,7 @@
+    },
+    "status": "certified",
+    "evidence": "fpf_glue_v2 GLUE_CELLS.json v2.2 bitwise_vs_shipped=true (torch.equal vs the v3/v2/v1 kernels on real dumps 356..1493, H100)",
+-   "note": "served for ln='stock' (x_ln given in the attention frame; either node \u2014 the kernel is node-agnostic, bitwise == v3 per the GLUE certificate); ln='fused' calls take mkpf_f1 / v3"
++   "note": "served for ln='stock' (x_ln given in the attention frame; either node — the kernel is node-agnostic, bitwise == v3 per the GLUE certificate); ln='fused' calls take mkpf_f1 / v3"
+   },
+   {
+    "id": "r05",
+@@ -178,10 +178,11 @@
+     "num_stages": 2,
+     "BN": 64,
+     "maxnreg": 128,
+-    "j_fast": true
+-   },
+-   "status": "certified",
+-   "evidence": "H100 80GB, torch 2.10.0+cu128 / Triton 3.6.0, 2026-09-21, step33 job 13767: C128/H4/D32 bf16 forward at L384/768/1024, starting and ending. Exact torch.equal against pre-change configs for four nonzero-weight input/mask cases per direction/length (24 total), including dense/empty/irregular masks; same fp32-reference rel_rms. Three alternating timing rounds per variant, actual core census and no-fallback log check. See CODEX_REPORT.md and logs/step33-e*-L*.json. BN changes only output columns; register cap, launch order and output tiling preserve arithmetic. Prior config had qualification on torch 2.13/Triton 3.7 and torch 2.7/Triton 3.3; new settings remeasured only on the stack stated above."
++    "j_fast": true,
++    "backend": "cuda_tma"
++   },
++   "status": "certified",
++   "evidence": "H100 80GB, torch 2.10.0+cu128 / Triton 3.6.0, 2026-09-21, step33 job 13767: C128/H4/D32 bf16 forward at L384/768/1024, starting and ending. Exact torch.equal against pre-change configs for four nonzero-weight input/mask cases per direction/length (24 total), including dense/empty/irregular masks; same fp32-reference rel_rms. Three alternating timing rounds per variant, actual core census and no-fallback log check. See CODEX_REPORT.md and logs/step33-e*-L*.json. BN changes only output columns; register cap, launch order and output tiling preserve arithmetic. Prior config had qualification on torch 2.13/Triton 3.7 and torch 2.7/Triton 3.3; new settings remeasured only on the stack stated above.; 2026-09-21 CUDA/TMA H100 torch2.10+cu128 C128/H4/D32 L384/768/1024 both directions: cuda_tma/qualify-e*-L*.json; unchanged core binary and fp32-reference error; epilogue bitwise equal; prologue LN reduction differs slightly. Other shapes/stacks retain prior kernel."
+   },
+   {
+    "id": "r08",
+@@ -383,10 +384,11 @@
+     "starting_tile": [
+      1,
+      64
+-    ]
+-   },
+-   "status": "certified",
+-   "evidence": "H100 80GB, torch 2.10.0+cu128 / Triton 3.6.0, 2026-09-21, step33 job 13767: C128/H4/D32 bf16 forward at L384/768/1024, starting and ending. Exact torch.equal against pre-change configs for four nonzero-weight input/mask cases per direction/length (24 total), including dense/empty/irregular masks; same fp32-reference rel_rms. Three alternating timing rounds per variant, actual core census and no-fallback log check. See CODEX_REPORT.md and logs/step33-e*-L*.json. BN changes only output columns; register cap, launch order and output tiling preserve arithmetic. Prior config had qualification on torch 2.13/Triton 3.7 and torch 2.7/Triton 3.3; new settings remeasured only on the stack stated above."
++    ],
++    "backend": "cuda_tma"
++   },
++   "status": "certified",
++   "evidence": "H100 80GB, torch 2.10.0+cu128 / Triton 3.6.0, 2026-09-21, step33 job 13767: C128/H4/D32 bf16 forward at L384/768/1024, starting and ending. Exact torch.equal against pre-change configs for four nonzero-weight input/mask cases per direction/length (24 total), including dense/empty/irregular masks; same fp32-reference rel_rms. Three alternating timing rounds per variant, actual core census and no-fallback log check. See CODEX_REPORT.md and logs/step33-e*-L*.json. BN changes only output columns; register cap, launch order and output tiling preserve arithmetic. Prior config had qualification on torch 2.13/Triton 3.7 and torch 2.7/Triton 3.3; new settings remeasured only on the stack stated above.; 2026-09-21 CUDA/TMA H100 torch2.10+cu128 C128/H4/D32 L384/768/1024 both directions: cuda_tma/qualify-e*-L*.json; unchanged core binary and fp32-reference error; epilogue bitwise equal; prologue LN reduction differs slightly. Other shapes/stacks retain prior kernel."
+   },
+   {
+    "id": "r17",
+@@ -1191,7 +1193,7 @@
+     "EXP": "libdevice"
+    },
+    "status": "candidate",
+-   "evidence": "A100 sweep 2026-09-06 (A100-SXM4-80GB (cc 8.0, smem opt-in 166,912 B), torch 2.10.0+cu128 / triton 3.6.0): 36-cfg grid, 36 pass; this cfg: block ratio 1.0977 (same class as the 9.0 rows of this kernel on the same synthetic inputs (H100 calibration run h100-cal-1: r07/r16 ratio 1.097, pieces q,k,v,bias bitwise == the torch statements, g (gate-bias bf16 add) and the epilogue tier-2)), self-det; epilogue N=1024s 2.04 vs 5.65 ms and N=512s 0.53 vs 1.46 ms vs the torch statements (x2.8); whole block (the 8.0 prologue v3 row + flash_triattn core + this) N=1024s 12.59 vs 19.63 ms; sweep run tri-full-1 (2026-09-06) || DEMOTED (measured slower than the unfused statements on cc 8.0, torch 2.13.0+cu130 / triton 3.7.1, A100-SXM4-80GB, same process, 2 warm-up + 7 timed ABBA): impl lnl (gate_transpose row + one cuBLAS GEMM + add) beats this row in all 8 forms (o_layout ihjd|ijhd x starting|ending x block|op mode) at N 256/448/832/1216/2048 \u2014 ms fpf/lnl e.g. ihjd block starting 0.474/0.316 @256, 0.844/0.555 @448, 1.872/1.081 @832, 3.783/2.158 @1216, 8.821/5.597 @2048 (x1.50-1.75); ijhd block 1.09-1.44x; op modes 1.36-2.43x; plain torch statements slower than this row (x0.35-0.94); lnl == torch statements bitwise, this row differs from them by bf16 rounding (not bitwise). Candidate now: serves only under the candidate switch; the key is named off (slower) -> the lnl statements piece by name"
++   "evidence": "A100 sweep 2026-09-06 (A100-SXM4-80GB (cc 8.0, smem opt-in 166,912 B), torch 2.10.0+cu128 / triton 3.6.0): 36-cfg grid, 36 pass; this cfg: block ratio 1.0977 (same class as the 9.0 rows of this kernel on the same synthetic inputs (H100 calibration run h100-cal-1: r07/r16 ratio 1.097, pieces q,k,v,bias bitwise == the torch statements, g (gate-bias bf16 add) and the epilogue tier-2)), self-det; epilogue N=1024s 2.04 vs 5.65 ms and N=512s 0.53 vs 1.46 ms vs the torch statements (x2.8); whole block (the 8.0 prologue v3 row + flash_triattn core + this) N=1024s 12.59 vs 19.63 ms; sweep run tri-full-1 (2026-09-06) || DEMOTED (measured slower than the unfused statements on cc 8.0, torch 2.13.0+cu130 / triton 3.7.1, A100-SXM4-80GB, same process, 2 warm-up + 7 timed ABBA): impl lnl (gate_transpose row + one cuBLAS GEMM + add) beats this row in all 8 forms (o_layout ihjd|ijhd x starting|ending x block|op mode) at N 256/448/832/1216/2048 — ms fpf/lnl e.g. ihjd block starting 0.474/0.316 @256, 0.844/0.555 @448, 1.872/1.081 @832, 3.783/2.158 @1216, 8.821/5.597 @2048 (x1.50-1.75); ijhd block 1.09-1.44x; op modes 1.36-2.43x; plain torch statements slower than this row (x0.35-0.94); lnl == torch statements bitwise, this row differs from them by bf16 rounding (not bitwise). Candidate now: serves only under the candidate switch; the key is named off (slower) -> the lnl statements piece by name"
+   },
+   {
+    "id": "r57",
+@@ -1233,7 +1235,7 @@
+     "IL": 0
+    },
+    "status": "candidate",
+-   "evidence": "A100 sweep 2026-09-06 (A100-SXM4-80GB (cc 8.0, smem opt-in 166,912 B), torch 2.10.0+cu128 / triton 3.6.0): identity holds (ratio 1.0000; bitwise == the torch statements under ln='stock'; self-det) but the v1 kernel pads C=384 to 512 columns and only small tiles fit sm_80's 163 KB (the 9.0 cfg needs 215,040 B): fastest fitting cfg N=1024s 53.79 vs 31.92 ms = SLOWER than the torch statements (x0.59) \u2014 candidate (opt-in); the 9.0 row r25 is also slower than the torch statements on H100 (37.9 vs 14.8 ms @1024, h100-cal-1); sweep run tr-full-1 (2026-09-06)",
++   "evidence": "A100 sweep 2026-09-06 (A100-SXM4-80GB (cc 8.0, smem opt-in 166,912 B), torch 2.10.0+cu128 / triton 3.6.0): identity holds (ratio 1.0000; bitwise == the torch statements under ln='stock'; self-det) but the v1 kernel pads C=384 to 512 columns and only small tiles fit sm_80's 163 KB (the 9.0 cfg needs 215,040 B): fastest fitting cfg N=1024s 53.79 vs 31.92 ms = SLOWER than the torch statements (x0.59) — candidate (opt-in); the 9.0 row r25 is also slower than the torch statements on H100 (37.9 vs 14.8 ms @1024, h100-cal-1); sweep run tr-full-1 (2026-09-06)",
+    "off": "slower"
+   },
+   {
+@@ -1394,7 +1396,7 @@
+    "variant": "fused_transition",
+    "cfg": {},
+    "status": "certified",
+-   "evidence": "A100 sweep 2026-09-06 (A100-SXM4-80GB (cc 8.0), torch 2.10.0+cu128 / triton 3.6.0; PF.transition impl='lnl' with candidate rows): fp64-error ratio 1.00001-1.00002 vs the torch LN/Linear/SiLU/Linear statements (max |diff| 0.015625 in bf16; not bitwise \u2014 the kernel's own statement order), 3-launch self-det; N=512 0.22 vs 1.48 ms, N=1024 0.83 vs 5.72 ms vs the torch statements; tiles: the kernel's autotuner at warm-up (lnl_fused.tiles_by_arch.json carries no 8.0 key here; an 8.0 tile row, when carried, fixes them); sweep run lnl-pieces-1 (2026-09-06)"
++   "evidence": "A100 sweep 2026-09-06 (A100-SXM4-80GB (cc 8.0), torch 2.10.0+cu128 / triton 3.6.0; PF.transition impl='lnl' with candidate rows): fp64-error ratio 1.00001-1.00002 vs the torch LN/Linear/SiLU/Linear statements (max |diff| 0.015625 in bf16; not bitwise — the kernel's own statement order), 3-launch self-det; N=512 0.22 vs 1.48 ms, N=1024 0.83 vs 5.72 ms vs the torch statements; tiles: the kernel's autotuner at warm-up (lnl_fused.tiles_by_arch.json carries no 8.0 key here; an 8.0 tile row, when carried, fixes them); sweep run lnl-pieces-1 (2026-09-06)"
+   },
+   {
+    "id": "r67",
+@@ -1423,7 +1425,7 @@
+    "variant": "fused_transition",
+    "cfg": {},
+    "status": "certified",
+-   "evidence": "A100 sweep 2026-09-06 (A100-SXM4-80GB (cc 8.0), torch 2.10.0+cu128 / triton 3.6.0; PF.transition impl='lnl' with candidate rows): fp64-error ratio 1.00000-1.00000 vs the torch LN/Linear/SiLU/Linear statements (max |diff| 0.015625 in bf16; not bitwise \u2014 the kernel's own statement order), 3-launch self-det; N=512 0.75 vs 2.52 ms, N=1024 3.13 vs 9.93 ms vs the torch statements; tiles: the kernel's autotuner at warm-up (lnl_fused.tiles_by_arch.json carries no 8.0 key here; an 8.0 tile row, when carried, fixes them); sweep run lnl-pieces-1 (2026-09-06)"
++   "evidence": "A100 sweep 2026-09-06 (A100-SXM4-80GB (cc 8.0), torch 2.10.0+cu128 / triton 3.6.0; PF.transition impl='lnl' with candidate rows): fp64-error ratio 1.00000-1.00000 vs the torch LN/Linear/SiLU/Linear statements (max |diff| 0.015625 in bf16; not bitwise — the kernel's own statement order), 3-launch self-det; N=512 0.75 vs 2.52 ms, N=1024 3.13 vs 9.93 ms vs the torch statements; tiles: the kernel's autotuner at warm-up (lnl_fused.tiles_by_arch.json carries no 8.0 key here; an 8.0 tile row, when carried, fixes them); sweep run lnl-pieces-1 (2026-09-06)"
+   },
+   {
+    "id": "r69",
+@@ -1438,7 +1440,7 @@
+    "variant": "fused_transition",
+    "cfg": {},
+    "status": "certified",
+-   "evidence": "A100 sweep 2026-09-06 (A100-SXM4-80GB (cc 8.0), torch 2.10.0+cu128 / triton 3.6.0; PF.transition impl='lnl' with candidate rows): fp64-error ratio 0.99999-1.00001 vs the torch LN/Linear/SiLU/Linear statements (max |diff| 0.015625 in bf16; not bitwise \u2014 the kernel's own statement order), 3-launch self-det; N=512 0.17 vs 1.30 ms, N=1024 0.51 vs 4.25 ms vs the torch statements; tiles: the kernel's autotuner at warm-up (lnl_fused.tiles_by_arch.json carries no 8.0 key here; an 8.0 tile row, when carried, fixes them); sweep run lnl-pieces-1 (2026-09-06)"
++   "evidence": "A100 sweep 2026-09-06 (A100-SXM4-80GB (cc 8.0), torch 2.10.0+cu128 / triton 3.6.0; PF.transition impl='lnl' with candidate rows): fp64-error ratio 0.99999-1.00001 vs the torch LN/Linear/SiLU/Linear statements (max |diff| 0.015625 in bf16; not bitwise — the kernel's own statement order), 3-launch self-det; N=512 0.17 vs 1.30 ms, N=1024 0.51 vs 4.25 ms vs the torch statements; tiles: the kernel's autotuner at warm-up (lnl_fused.tiles_by_arch.json carries no 8.0 key here; an 8.0 tile row, when carried, fixes them); sweep run lnl-pieces-1 (2026-09-06)"
+   },
+   {
+    "id": "r70",
+@@ -2105,7 +2107,7 @@
+     "EXP": "libdevice"
+    },
+    "status": "candidate",
+-   "evidence": "the carried fpf_triatt_epi v2 epilogue's PINNED_CONFIG cell ((256, 8, 32, 'sm80')) the donor kit shipped for this card (bitwise within the block statement) || HELD AS CANDIDATE (opt-in under the candidate switch OPT_CORE_PF_ALLOW_CANDIDATE=1, e.g. by the kit that shipped the cell) until the same-box race against the certified rows / the stock statements on this capability is run here: a row added from a kit's own cell table does not change what the tier words serve on the certified capabilities (the land decisions stay as certified; on cc 8.0 the safe-settings record measures c_z 256 slower than stock) [card: the cc 8.0 part is the A100 (sm_80) the kit's cell names] || RACED here (NVIDIA A100-SXM4-80GB (cc 8.0), torch 2.13.0+cu130 / triton 3.7.1, table 0.5.148.3; op-level ABBA (2 warm-up + 5 timed rounds interleaved, CUDA events), bf16, key 256x8x32, pair N 400 / 800 / 1200, TF32 off), STAYS CANDIDATE: the v2 epilogue at c 256 on this capability is x0.129 / x0.129 / x0.128 vs the plain statements (15.4 vs 1.99, 55.0 vs 7.08, 123.0 vs 15.75 ms) \u2014 the measured-slower class the safe-settings record names; epilogue_v3 (r103) serves this key",
++   "evidence": "the carried fpf_triatt_epi v2 epilogue's PINNED_CONFIG cell ((256, 8, 32, 'sm80')) the donor kit shipped for this card (bitwise within the block statement) || HELD AS CANDIDATE (opt-in under the candidate switch OPT_CORE_PF_ALLOW_CANDIDATE=1, e.g. by the kit that shipped the cell) until the same-box race against the certified rows / the stock statements on this capability is run here: a row added from a kit's own cell table does not change what the tier words serve on the certified capabilities (the land decisions stay as certified; on cc 8.0 the safe-settings record measures c_z 256 slower than stock) [card: the cc 8.0 part is the A100 (sm_80) the kit's cell names] || RACED here (NVIDIA A100-SXM4-80GB (cc 8.0), torch 2.13.0+cu130 / triton 3.7.1, table 0.5.148.3; op-level ABBA (2 warm-up + 5 timed rounds interleaved, CUDA events), bf16, key 256x8x32, pair N 400 / 800 / 1200, TF32 off), STAYS CANDIDATE: the v2 epilogue at c 256 on this capability is x0.129 / x0.129 / x0.128 vs the plain statements (15.4 vs 1.99, 55.0 vs 7.08, 123.0 vs 15.75 ms) — the measured-slower class the safe-settings record names; epilogue_v3 (r103) serves this key",
+    "provenance": "lifted verbatim from the donor kit (the c_z-256, 8-head x 32 pairformer kit)'s CELLS.json epilogue pin (256, 8, 32, 'sm80') (FPF-Blackwell 2fc6f8e6 cell sweep; kit releases 0.3.4x B200/B300/RTX-PRO-6000/A100 rows, det byte-identical within the block statement on those cards); not yet re-measured for this table"
+   },
+   {
+@@ -2153,7 +2155,7 @@
+     "GLOOP": 1
+    },
+    "status": "candidate",
+-   "evidence": "fpf_glue_v2 GLUE_CELLS.json v2.2 entry sm80_t37 (prologue_v4 BN=64, 2-stage W pipeline, no warp_specialize: within sm_80's 164 KB shared memory): EXACT within the composed block statement from CELLS.json blk2_triatt_min_tokens up: --det 1 predictions byte-identical to --mode off at 400 and 956 tokens with MK-PF F1 as the statement's prologue (below the floor the unit runs the stock tri-attention statement by name) || HELD AS CANDIDATE (opt-in under the candidate switch OPT_CORE_PF_ALLOW_CANDIDATE=1, e.g. by the kit that shipped the cell) until the same-box race against the certified rows / the stock statements on this capability is run here: a row added from a kit's own cell table does not change what the tier words serve on the certified capabilities (the land decisions stay as certified; on cc 8.0 the safe-settings record measures c_z 256 slower than stock) [card: the cc 8.0 part is the A100 (sm_80) the kit's cell names] || RACED here (NVIDIA A100-SXM4-80GB (cc 8.0), torch 2.13.0+cu130 / triton 3.7.1, table 0.5.148.3; op-level ABBA (2 warm-up + 5 timed rounds interleaved, CUDA events), bf16, key 256x8x32, pair N 400 / 800 / 1200, TF32 off), STAYS CANDIDATE: prologue piece in the ln='stock' form (x_ln given) is SLOWER than the plain statements: x0.688 / x0.694 / x0.707 at N 400 / 800 / 1200 (1.14 vs 0.78, 3.39 vs 2.35, 7.55 vs 5.34 ms) and takes more memory (396 / 1584 / 3561 MiB vs 320 / 1279 / 2878); the whole block in that form (this prologue + epilogue_v3) is nevertheless x1.22-1.27 faster than the statements block because of the epilogue \u2014 a caller that wants that composition opts in through the candidate switch; numerics bf16 tolerance vs the statements (max-abs 3.1e-2, rel-RMS 2.7e-3)",
++   "evidence": "fpf_glue_v2 GLUE_CELLS.json v2.2 entry sm80_t37 (prologue_v4 BN=64, 2-stage W pipeline, no warp_specialize: within sm_80's 164 KB shared memory): EXACT within the composed block statement from CELLS.json blk2_triatt_min_tokens up: --det 1 predictions byte-identical to --mode off at 400 and 956 tokens with MK-PF F1 as the statement's prologue (below the floor the unit runs the stock tri-attention statement by name) || HELD AS CANDIDATE (opt-in under the candidate switch OPT_CORE_PF_ALLOW_CANDIDATE=1, e.g. by the kit that shipped the cell) until the same-box race against the certified rows / the stock statements on this capability is run here: a row added from a kit's own cell table does not change what the tier words serve on the certified capabilities (the land decisions stay as certified; on cc 8.0 the safe-settings record measures c_z 256 slower than stock) [card: the cc 8.0 part is the A100 (sm_80) the kit's cell names] || RACED here (NVIDIA A100-SXM4-80GB (cc 8.0), torch 2.13.0+cu130 / triton 3.7.1, table 0.5.148.3; op-level ABBA (2 warm-up + 5 timed rounds interleaved, CUDA events), bf16, key 256x8x32, pair N 400 / 800 / 1200, TF32 off), STAYS CANDIDATE: prologue piece in the ln='stock' form (x_ln given) is SLOWER than the plain statements: x0.688 / x0.694 / x0.707 at N 400 / 800 / 1200 (1.14 vs 0.78, 3.39 vs 2.35, 7.55 vs 5.34 ms) and takes more memory (396 / 1584 / 3561 MiB vs 320 / 1279 / 2878); the whole block in that form (this prologue + epilogue_v3) is nevertheless x1.22-1.27 faster than the statements block because of the epilogue — a caller that wants that composition opts in through the candidate switch; numerics bf16 tolerance vs the statements (max-abs 3.1e-2, rel-RMS 2.7e-3)",
+    "provenance": "lifted verbatim from the donor kit (the c_z-256, 8-head x 32 pairformer kit)'s former sm80 cell tables (kit release 0.3.43, A1 A100 pass: NVIDIA A100-SXM4-80GB cc 8.0, torch 2.13.0+cu130 / triton 3.7.1 / cuequivariance 0.11.1; --det 1 predictions byte-identical to --mode off end to end at 400 and 956 tokens inside the composed block statement); not yet re-measured for this table"
+   },
+   {
+--- /dev/null
++++ b/opt_core/kernels/triattn_surround_tma/__init__.py
+@@ -0,0 +1,95 @@
++"""Qualified H100 CUDA/TMA surrounds for square C128/H4/D32 attention.
++
++The prologue preserves bf16 projection rounding but has a slightly different
++fp32 LayerNorm reduction order. The epilogue preserves every bf16 rounding point.
++Other shapes, layouts, stacks and LayerNorm modes retain their existing routes.
++"""
++from pathlib import Path
++import hashlib
++import importlib.util
++import json
++import os
++import sys
++import threading
++import torch
++
++_ROOT = Path(__file__).resolve().parent
++_MODULE = None
++_LOCK = threading.RLock()
++_TABLES = {}
++_LENGTHS = (384, 768, 1024)
++
++
++def enabled(cfg, device):
++    backend = os.environ.get("FPF_TRIATT_BACKEND", (cfg or {}).get("backend", "triton"))
++    if backend != "cuda_tma" or device.type != "cuda":
++        return False
++    return (str(torch.__version__) == "2.10.0+cu128"
++            and sys.implementation.cache_tag == "cpython-310"
++            and torch.cuda.get_device_capability(device) == (9, 0))
++
++
++def _load():
++    global _MODULE
++    with _LOCK:
++        if _MODULE is None:
++            manifest = json.loads((_ROOT / "manifest.json").read_text())
++            for name, expected in manifest["sha256"].items():
++                actual = hashlib.sha256((_ROOT / name).read_bytes()).hexdigest()
++                if actual != expected:
++                    raise RuntimeError(f"CUDA/TMA artifact mismatch: {name}; rebuild the surround extension")
++            spec = importlib.util.spec_from_file_location("triattn_native_surround", _ROOT / "triattn_native_surround.so")
++            module = importlib.util.module_from_spec(spec)
++            spec.loader.exec_module(module)
++            _MODULE = module
++        return _MODULE
++
++
++def _sigmoid_table(device):
++    # A universal function table, independent of weights and input data. BF16 has
++    # only 65536 bit patterns. Compute with the same fp32 sigmoid rounding as the
++    # reference, then use paired native bf16 multiplication in the CUDA kernel.
++    with _LOCK:
++        index = device.index if device.index is not None else torch.cuda.current_device()
++        if index not in _TABLES:
++            values = torch.arange(65536, device=device, dtype=torch.int32).to(torch.int16).view(torch.bfloat16)
++            table = torch.sigmoid(values.float()).to(torch.bfloat16)
++            # One-time initialization must be visible to subsequent CUDA streams.
++            torch.cuda.synchronize(device)
++            _TABLES[index] = table
++        return _TABLES[index]
++
++
++def try_prologue(z, cache, *, ending, ln_mode, write_x, fma_flags, cfg):
++    if not enabled(cfg, z.device):
++        return None
++    if (ln_mode != "fused" or write_x or not fma_flags[2]
++            or (cache["C"], cache["H"], cache["D"]) != (128, 4, 32)
++            or z.dtype != torch.bfloat16 or not z.is_contiguous()
++            or z.dim() != 3 or z.shape[0] != z.shape[1] or z.shape[0] not in _LENGTHS
++            or cfg.get("qkv_pair", False)):
++        return None
++    length = z.shape[0]
++    q, k, v = [torch.empty((length, 4, length, 32), device=z.device, dtype=z.dtype) for _ in range(3)]
++    gate = torch.empty((length, length, 128), device=z.device, dtype=z.dtype)
++    bias = torch.empty((4, length, length), device=z.device, dtype=torch.float32)
++    _load().prologue(z, cache["wqkvg"], cache["wb"], cache["lnw"], cache["lnb"],
++                     q, k, v, gate, bias, cache["eps"], ending)
++    return q, k, v, gate, bias
++
++
++def try_epilogue(o, g, weight, z, *, ending, residual, out, o_layout, cfg):
++    if not residual or z is None or o_layout != "ihjd" or not enabled(cfg, o.device):
++        return False, None
++    target = z if out is None else out
++    length = z.shape[-2]
++    if (length not in _LENGTHS or tuple(z.shape[-3:]) != (length, length, 128)
++            or z.numel() != length * length * 128 or weight.shape != (128, 128)
++            or any(t.dtype != torch.bfloat16 or not t.is_contiguous() for t in (g, weight, z, target))
++            or o.dtype != torch.bfloat16 or o.dim() < 4
++            or tuple(o.shape[-4:]) != (length, 4, length, 32)
++            or o.numel() != length * length * 128 or o.stride(-1) != 1
++            or g.numel() != length * length * 128 or target.shape != z.shape):
++        return False, None
++    _load().epilogue(o, g, weight, z, target, _sigmoid_table(z.device), ending)
++    return True, None if out is None else out
+--- /dev/null
++++ b/opt_core/kernels/triattn_surround_tma/bindings.cpp
+@@ -0,0 +1,4 @@
++#include <torch/extension.h>
++void prologue_cuda(at::Tensor,at::Tensor,at::Tensor,at::Tensor,at::Tensor,at::Tensor,at::Tensor,at::Tensor,at::Tensor,at::Tensor,double,bool);
++void epilogue_cuda(at::Tensor,at::Tensor,at::Tensor,at::Tensor,at::Tensor,at::Tensor,bool);
++PYBIND11_MODULE(TORCH_EXTENSION_NAME,m){m.def("prologue",&prologue_cuda);m.def("epilogue",&epilogue_cuda);}
+--- /dev/null
++++ b/opt_core/kernels/triattn_surround_tma/checks.h
+@@ -0,0 +1,11 @@
++#pragma once
++#include <ATen/ATen.h>
++inline void check_bf16(at::Tensor const& t,at::Tensor const& z,int64_t count,char const* name,bool contiguous=true){
++ TORCH_CHECK(t.is_cuda() && t.device()==z.device() && t.scalar_type()==at::kBFloat16 && t.numel()==count && (!contiguous || t.is_contiguous()),name," has an unsupported device, dtype, size or stride");
++}
++inline int check_pair(at::Tensor const& z){
++ TORCH_CHECK(z.is_cuda() && z.scalar_type()==at::kBFloat16 && z.dim()>=3 && z.is_contiguous(),"contiguous CUDA bf16 pair required");
++ int64_t L=z.size(-2);
++ TORCH_CHECK((L==384 || L==768 || L==1024) && z.size(-3)==L && z.size(-1)==128 && z.numel()==L*L*128,"supported shape is one square C128 pair at L384/768/1024");
++ return int(L);
++}
+--- /dev/null
++++ b/opt_core/kernels/triattn_surround_tma/epilogue.cu
+@@ -0,0 +1,118 @@
++#include "checks.h"
++#include <ATen/cuda/CUDAContext.h>
++#include <c10/cuda/CUDAGuard.h>
++#include <c10/cuda/CUDAException.h>
++#include <cute/tensor.hpp>
++#include <cute/arch/copy_sm90_tma.hpp>
++#include <cutlass/arch/barrier.h>
++#include <cutlass/gemm/collective/builders/sm90_common.inl>
++#include <cutlass/numeric_types.h>
++namespace triattn_tma_epi {
++using namespace cute;
++constexpr int M=128;
++using Elem=cutlass::bfloat16_t;
++using SA=decltype(tile_to_shape(GMMA::Layout_K_SW128_Atom<Elem>{},Shape<Int<M>,_128>{}));
++using SW=decltype(tile_to_shape(GMMA::Layout_K_SW128_Atom<Elem>{},Shape<_128,_128>{}));
++using SO=decltype(tile_to_shape(GMMA::Layout_K_SW64_Atom<Elem>{},Shape<Int<M>,_32>{}));
++using GZ=Shape<int,int,int>;using DZ=Stride<int64_t,_1,int64_t>;
++using G2=Shape<int,int>;using D2=Stride<int64_t,_1>;
++using G4=Shape<int,int,int,int>;using D4=Stride<int64_t,_1,int64_t,int64_t>;
++using TA=decltype(make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr((Elem const*)nullptr),G2{},D2{}),SA{},Shape<Int<M>,_128>{},_1{}));
++using TZ=decltype(make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr((Elem const*)nullptr),GZ{},DZ{}),SA{},Shape<Int<M>,_128>{},_1{}));
++using TW=decltype(make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr((Elem const*)nullptr),G2{},D2{}),SW{},Shape<_128,_128>{},_1{}));
++using TO=decltype(make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr((Elem const*)nullptr),G4{},D4{}),SO{},Shape<Int<M>,_32>{},_1{}));
++using TS=decltype(make_tma_copy(SM90_TMA_STORE{},make_tensor(make_gmem_ptr((Elem*)nullptr),GZ{},DZ{}),SA{},Shape<Int<M>,_128>{},_1{}));
++using MMA=decltype(make_tiled_mma(GMMA::ss_op_selector<Elem,Elem,float,Shape<Int<M>,_128,_128>>(),Layout<Shape<_2,_1,_1>>{}));
++struct Params{TA gate;TZ z;TW weight;TO o;TS out;uint16_t const* lookup;};
++struct Shared{
++ alignas(128) Elem a[M*128],oz[M*128],w[128*128];
++ cutlass::arch::ClusterTransactionBarrier inputs,residual;
++};
++template<int L> __global__ __launch_bounds__(256,2) void epilogue_tma(CUTE_GRID_CONSTANT Params const p){
++ extern __shared__ __align__(128) unsigned char storage[];
++ auto& s=*reinterpret_cast<Shared*>(storage);
++ int tid=threadIdx.x,tile=blockIdx.x,i=tile*M/L,j=tile*M%L;
++ auto a=make_tensor(make_smem_ptr(s.a),SA{}),z=make_tensor(make_smem_ptr(s.oz),SA{});
++ auto w=make_tensor(make_smem_ptr(s.w),SW{});
++ if(tid==0){s.inputs.init(1);s.residual.init(1);cutlass::arch::fence_barrier_init();}
++ __syncthreads();
++ if(tid==0){
++  s.inputs.arrive_and_expect_tx((M*128*2+128*128)*sizeof(Elem));
++  auto gsrc=local_tile(p.gate.get_tma_tensor(make_shape(Int<L*L>{},_128{})),Shape<Int<M>,_128>{},make_coord(tile,0));
++  auto gs=p.gate.get_slice(_0{});
++  copy(p.gate.with(reinterpret_cast<uint64_t&>(s.inputs)),gs.partition_S(gsrc),gs.partition_D(a));
++  auto wsrc=p.weight.get_tma_tensor(Shape<_128,_128>{});auto ws=p.weight.get_slice(_0{});
++  copy(p.weight.with(reinterpret_cast<uint64_t&>(s.inputs)),ws.partition_S(wsrc),ws.partition_D(w));
++  #pragma unroll
++  for(int h=0;h<4;h++){
++   auto osrc=local_tile(p.o.get_tma_tensor(make_shape(Int<L>{},_32{},_4{},Int<L>{}))(_,_,h,i),Shape<Int<M>,_32>{},make_coord(j/M,0));
++   auto dst=make_tensor(make_smem_ptr(s.oz+h*M*32),SO{});auto os=p.o.get_slice(_0{});
++   copy(p.o.with(reinterpret_cast<uint64_t&>(s.inputs)),os.partition_S(osrc),os.partition_D(dst));
++  }
++ }
++ s.inputs.wait(0);asm volatile("":::"memory");
++ #pragma unroll 8
++ for(int n=tid;n<M*64;n+=M*2){
++  int row=n/64,c=(n%64)*2;
++  auto o=make_tensor(make_smem_ptr(s.oz+(c/32)*M*32),SO{});
++  uint32_t gates=*reinterpret_cast<uint32_t*>(&a(row,c));
++  uint32_t oval=*reinterpret_cast<uint32_t*>(&o(row,c%32));
++  uint32_t sigmoid=uint32_t(__ldg(p.lookup+(gates&65535))) | (uint32_t(__ldg(p.lookup+(gates>>16)))<<16);
++  uint32_t gated;
++  asm volatile("mul.rn.bf16x2 %0, %1, %2;":"=r"(gated):"r"(oval),"r"(sigmoid));
++  *reinterpret_cast<uint32_t*>(&a(row,c))=gated;
++ }
++ cutlass::arch::fence_view_async_shared();__syncthreads();
++ if(tid==0){
++  s.residual.arrive_and_expect_tx(M*128*sizeof(Elem));
++  auto src=local_tile(p.z.get_tma_tensor(make_shape(Int<L>{},_128{},Int<L>{}))(_,_,i),Shape<Int<M>,_128>{},make_coord(j/M,0));
++  auto zs=p.z.get_slice(_0{});
++  copy(p.z.with(reinterpret_cast<uint64_t&>(s.residual)),zs.partition_S(src),zs.partition_D(z));
++ }
++ MMA mma;auto tm=mma.get_slice(tid);auto ma=tm.partition_fragment_A(a);auto mb=tm.partition_fragment_B(w);
++ auto acc=partition_fragment_C(mma,Shape<Int<M>,_128>{});clear(acc);
++ warpgroup_fence_operand(acc);warpgroup_arrive();
++ #pragma unroll
++ for(int kk=0;kk<size<2>(ma);kk++)gemm(mma,ma(_,_,kk),mb(_,_,kk),acc);
++ warpgroup_commit_batch();warpgroup_wait<0>();warpgroup_fence_operand(acc);
++ s.residual.wait(0);asm volatile("":::"memory");
++ auto converted=make_tensor<Elem>(shape(acc));
++ auto s2r=make_tiled_copy_C(Copy_Atom<SM75_U32x4_LDSM_N,Elem>{},mma);
++ auto st=s2r.get_slice(tid);
++ copy(s2r,st.partition_S(z),st.retile_D(converted));
++ #pragma unroll
++ for(int n=0;n<size(acc);n++)converted(n)=Elem(__fadd_rn(float(Elem(acc(n))),float(converted(n))));
++ auto r2s=make_tiled_copy_C(Copy_Atom<SM90_U32x4_STSM_N,Elem>{},mma);
++ auto rt=r2s.get_slice(tid);
++ copy(r2s,rt.retile_S(converted),rt.partition_D(a));
++ cutlass::arch::fence_view_async_shared();__syncthreads();
++ if(tid==0){
++  auto dst=local_tile(p.out.get_tma_tensor(make_shape(Int<L>{},_128{},Int<L>{}))(_,_,i),Shape<Int<M>,_128>{},make_coord(j/M,0));auto os=p.out.get_slice(_0{});
++  copy(p.out,os.partition_S(a),os.partition_D(dst));tma_store_arrive();tma_store_wait<0>();
++ }
++}
++}
++void epilogue_cuda(at::Tensor o,at::Tensor g,at::Tensor w,at::Tensor z,at::Tensor out,at::Tensor lookup,bool ending){
++ using namespace triattn_tma_epi;
++ int L=check_pair(z);
++ check_bf16(g,z,int64_t(L)*L*128,"gate");check_bf16(out,z,int64_t(L)*L*128,"output");
++ check_bf16(w,z,128*128,"output weight");check_bf16(lookup,z,65536,"sigmoid table");
++ check_bf16(o,z,int64_t(L)*L*128,"attention output",false);
++ TORCH_CHECK(o.dim()>=4 && o.size(-4)==L && o.size(-3)==4 && o.size(-2)==L && o.size(-1)==32 && o.stride(-1)==1,"attention output must have IHJD layout");
++ c10::cuda::CUDAGuard guard(z.device());
++ auto shape=make_shape(L*L,128);auto stride=D2{128,_1{}};
++ auto load=[&](at::Tensor t){return make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr((Elem const*)t.data_ptr()),shape,stride),SA{},Shape<Int<M>,_128>{},_1{});};
++ auto tw=make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr((Elem const*)w.data_ptr()),make_shape(128,128),stride),SW{},Shape<_128,_128>{},_1{});
++ auto to=make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr((Elem const*)o.data_ptr()),make_shape(L,32,4,L),D4{o.stride(-2),_1{},o.stride(-3),o.stride(-4)}),SO{},Shape<Int<M>,_32>{},_1{});
++ auto zshape=make_shape(L,128,L);auto zstride=DZ{ending?int64_t(L)*128:128,_1{},ending?128:int64_t(L)*128};
++ auto tz=make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr((Elem const*)z.data_ptr()),zshape,zstride),SA{},Shape<Int<M>,_128>{},_1{});
++ auto ts=make_tma_copy(SM90_TMA_STORE{},make_tensor(make_gmem_ptr((Elem*)out.data_ptr()),zshape,zstride),SA{},Shape<Int<M>,_128>{},_1{});
++ Params p{load(g),tz,tw,to,ts,reinterpret_cast<uint16_t const*>(lookup.data_ptr())};
++ #define LAUNCH(LEN) do { \
++ C10_CUDA_CHECK(cudaFuncSetAttribute(epilogue_tma<LEN>,cudaFuncAttributeMaxDynamicSharedMemorySize,sizeof(Shared))); \
++ epilogue_tma<LEN><<<L*L/M,M*2,sizeof(Shared),at::cuda::getCurrentCUDAStream()>>>(p); \
++ } while(0)
++ if(L==384){LAUNCH(384);}else if(L==768){LAUNCH(768);}else if(L==1024){LAUNCH(1024);}else{TORCH_CHECK(false,"unsupported L");}
++ #undef LAUNCH
++ C10_CUDA_KERNEL_LAUNCH_CHECK();
++}
+--- /dev/null
++++ b/opt_core/kernels/triattn_surround_tma/manifest.json
+@@ -0,0 +1,12 @@
++{
++  "torch": "2.10.0+cu128",
++  "python_abi": "cpython-310",
++  "arch": "sm_90a",
++  "sha256": {
++    "prologue.cu": "009f831f08ef7be008fc46c9b2a75bb18b50639db44ba531262d2472f859db8a",
++    "epilogue.cu": "81fcff6475f07de73218a34b4e1a219105294d6910a1c411f8372619dd922d52",
++    "checks.h": "d5ecd48a32291180052dff1a0f38d1aa82b7c40f93c697d37233eae57e1db231",
++    "bindings.cpp": "b7a04bebc8d3d0ab36ada1353f26ad71f55c077a567e2fbb2ae6b48eab5b85b8",
++    "triattn_native_surround.so": "4584536f4c6c31e15b0855f63adcce27b2e6432500ce8a100a6beabd13827c58"
++  }
++}
+--- /dev/null
++++ b/opt_core/kernels/triattn_surround_tma/prologue.cu
+@@ -0,0 +1,194 @@
++#include "checks.h"
++#include <ATen/cuda/CUDAContext.h>
++#include <c10/cuda/CUDAGuard.h>
++#include <c10/cuda/CUDAException.h>
++#include <cute/tensor.hpp>
++#include <cute/arch/copy_sm90_tma.hpp>
++#include <cutlass/arch/barrier.h>
++#include <cutlass/gemm/collective/builders/sm90_common.inl>
++#include <cutlass/numeric_types.h>
++#include <cuda_bf16.h>
++
++namespace triattn_tma_pro {
++using namespace cute;
++using Elem=cutlass::bfloat16_t;
++constexpr int M=128,K=128,N=128;
++using SA=decltype(tile_to_shape(GMMA::Layout_K_SW128_Atom<Elem>{},Shape<Int<M>,Int<K>>{}));
++using SW=decltype(tile_to_shape(GMMA::Layout_K_SW128_Atom<Elem>{},Shape<Int<N>,Int<K>>{}));
++using SB=decltype(tile_to_shape(GMMA::Layout_K_SW128_Atom<Elem>{},Shape<_16,Int<K>>{}));
++using SOQ=decltype(tile_to_shape(GMMA::Layout_K_SW64_Atom<Elem>{},Shape<Int<M>,_32>{}));
++using SOQQ=decltype(tile_to_shape(GMMA::Layout_K_SW64_Atom<Elem>{},Shape<Int<M>,Int<N>>{},Step<_1,_2>{}));
++using SOG=decltype(tile_to_shape(GMMA::Layout_K_SW128_Atom<Elem>{},Shape<Int<M>,Int<N>>{}));
++using GZ=Shape<int,int,int>;using DZ=Stride<int64_t,_1,int64_t>;
++using G2=Shape<int,int>;using D2=Stride<int64_t,_1>;
++using GQ=Shape<int,int,int,int>;using DQ=Stride<int64_t,_1,int64_t,int64_t>;
++using GG=Shape<int,int,int>;using DG=Stride<int64_t,_1,int64_t>;
++using TA=decltype(make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr((Elem const*)nullptr),GZ{},DZ{}),SA{},Shape<Int<M>,Int<K>>{},_1{}));
++using TW=decltype(make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr((Elem const*)nullptr),G2{},D2{}),SW{},Shape<Int<N>,Int<K>>{},_1{}));
++using TB=decltype(make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr((Elem const*)nullptr),G2{},D2{}),SB{},Shape<_16,Int<K>>{},_1{}));
++using TQ=decltype(make_tma_copy(SM90_TMA_STORE{},make_tensor(make_gmem_ptr((Elem*)nullptr),GQ{},DQ{}),SOQ{},Shape<Int<M>,_32>{},_1{}));
++using TG=decltype(make_tma_copy(SM90_TMA_STORE{},make_tensor(make_gmem_ptr((Elem*)nullptr),GG{},DG{}),SOG{},Shape<Int<M>,Int<N>>{},_1{}));
++using MMA=decltype(make_tiled_mma(GMMA::ss_op_selector<Elem,Elem,float,Shape<Int<M>,Int<N>,Int<K>>>(),Layout<Shape<_2,_1,_1>>{}));
++using MMAB=decltype(make_tiled_mma(GMMA::ss_op_selector<Elem,Elem,float,Shape<Int<M>,_16,Int<K>>>(),Layout<Shape<_2,_1,_1>>{}));
++struct Params {TA za;TW weights;TB wb;TQ qo,ko,vo;TG go;GZ zshape;G2 wshape,bshape;GQ qshape;GG gshape;Elem const* lnw;Elem const* lnb;float* bias;float eps;int L;};
++struct Shared {
++ alignas(128) Elem a[M*K];
++ alignas(128) Elem w[1][N*K];
++ alignas(128) Elem b[16*K];
++ alignas(128) Elem out[1][M*N];
++ cutlass::arch::ClusterTransactionBarrier ready_a,ready_b,ready_w[2];
++};
++__device__ __forceinline__ float sum8(float const (&x)[8]) {
++ float a0=__fadd_rn(x[0],x[4]),a1=__fadd_rn(x[1],x[5]),a2=__fadd_rn(x[2],x[6]),a3=__fadd_rn(x[3],x[7]);
++ return __fadd_rn(__fadd_rn(a0,a2),__fadd_rn(a1,a3));
++}
++__global__ __launch_bounds__(256,2) void prologue_tma(CUTE_GRID_CONSTANT Params const p) {
++ extern __shared__ __align__(128) unsigned char storage[];
++ Shared& s=*reinterpret_cast<Shared*>(storage);
++ int tid=threadIdx.x, tile=blockIdx.x;
++ int i=(tile*M)/p.L,j=(tile*M)%p.L;
++ auto a=make_tensor(make_smem_ptr(s.a),SA{});
++ auto b=make_tensor(make_smem_ptr(s.b),SB{});
++ if(tid==0){
++  s.ready_a.init(1);s.ready_b.init(1);s.ready_w[0].init(1);s.ready_w[1].init(1);
++  cutlass::arch::fence_barrier_init();
++ }
++ __syncthreads();
++ auto load_weight=[&](int chunk,int stage){
++  auto dest=make_tensor(make_smem_ptr(s.w[stage]),SW{});
++  auto src=local_tile(p.weights.get_tma_tensor(p.wshape),Shape<Int<N>,Int<K>>{},make_coord(chunk,0));
++  auto slice=p.weights.get_slice(_0{});
++  s.ready_w[stage].arrive_and_expect_tx(N*K*sizeof(Elem));
++  copy(p.weights.with(reinterpret_cast<uint64_t&>(s.ready_w[stage])),slice.partition_S(src),slice.partition_D(dest));
++ };
++ if(tid==0){
++  auto src=local_tile(p.za.get_tma_tensor(p.zshape)(_,_,i),Shape<Int<M>,Int<K>>{},make_coord(j/M,0));
++  auto slice=p.za.get_slice(_0{});
++  s.ready_a.arrive_and_expect_tx(M*K*sizeof(Elem));
++  copy(p.za.with(reinterpret_cast<uint64_t&>(s.ready_a)),slice.partition_S(src),slice.partition_D(a));
++  auto bsrc=local_tile(p.wb.get_tma_tensor(p.bshape),Shape<_16,Int<K>>{},make_coord(0,0));
++  auto bs=p.wb.get_slice(_0{});
++  s.ready_b.arrive_and_expect_tx(16*K*sizeof(Elem));
++  copy(p.wb.with(reinterpret_cast<uint64_t&>(s.ready_b)),bs.partition_S(bsrc),bs.partition_D(b));
++  load_weight(0,0);
++ }
++ s.ready_a.wait(0);asm volatile("":::"memory");
++ // Sixteen lanes per row, eight adjacent channels per lane: match the established LN reduction layout.
++ int lane=tid%16;
++ uint4 gamma_bits=*reinterpret_cast<uint4 const*>(p.lnw+lane*8);
++ uint4 beta_bits=*reinterpret_cast<uint4 const*>(p.lnb+lane*8);
++ float gamma[8],beta[8];
++ #pragma unroll
++ for(int c=0;c<8;c++){gamma[c]=float(reinterpret_cast<Elem*>(&gamma_bits)[c]);beta[c]=float(reinterpret_cast<Elem*>(&beta_bits)[c]);}
++ #pragma unroll 2
++ for(int m=tid/16;m<M;m+=16){
++  float z[8],sq[8];
++  uint4 input_bits=*reinterpret_cast<uint4*>(&a(m,lane*8));
++  #pragma unroll
++  for(int c=0;c<8;c++)z[c]=float(reinterpret_cast<Elem*>(&input_bits)[c]);
++  float mean=sum8(z);
++  #pragma unroll
++  for(int d=8;d>0;d>>=1)mean=__fadd_rn(mean,__shfl_xor_sync(0xffffffff,mean,d,16));
++  mean=__fmul_rn(mean,1.f/128.f);
++  #pragma unroll
++  for(int c=0;c<8;c++){z[c]=__fsub_rn(z[c],mean);sq[c]=__fmul_rn(z[c],z[c]);}
++  float var=sum8(sq);
++  #pragma unroll
++  for(int d=8;d>0;d>>=1)var=__fadd_rn(var,__shfl_xor_sync(0xffffffff,var,d,16));
++  float inv=__fdividef(1.f,__fsqrt_rn(__fadd_rn(__fmul_rn(var,1.f/128.f),p.eps)));
++  uint4 output_bits;
++  #pragma unroll
++  for(int c=0;c<8;c++)reinterpret_cast<Elem*>(&output_bits)[c]=Elem(__fmaf_rn(__fmul_rn(z[c],inv),gamma[c],beta[c]));
++  *reinterpret_cast<uint4*>(&a(m,lane*8))=output_bits;
++ }
++ cutlass::arch::fence_view_async_shared();__syncthreads();
++ s.ready_b.wait(0);asm volatile("":::"memory");
++ MMAB mb;auto tb=mb.get_slice(tid);
++ auto ba=tb.partition_fragment_A(a);auto bb=tb.partition_fragment_B(b);
++ auto bc=partition_fragment_C(mb,Shape<Int<M>,_16>{});clear(bc);
++ warpgroup_fence_operand(bc);warpgroup_arrive();
++ #pragma unroll
++ for(int kk=0;kk<size<2>(ba);kk++)gemm(mb,ba(_,_,kk),bb(_,_,kk),bc);
++ warpgroup_commit_batch();warpgroup_wait<0>();warpgroup_fence_operand(bc);
++ auto bid=tb.partition_C(make_identity_tensor(Shape<Int<M>,_16>{}));
++ #pragma unroll
++ for(int n=0;n<size(bc);n++){
++  int m=get<0>(bid(n)),h=get<1>(bid(n));
++  if(h<4)p.bias[(int64_t(h)*p.L+i)*p.L+j+m]=float(Elem(bc(n)));
++ }
++ MMA mma;auto tm=mma.get_slice(tid);auto ma=tm.partition_fragment_A(a);
++ #pragma unroll
++ for(int chunk=0;chunk<4;chunk++){
++  int stage=0;
++  s.ready_w[stage].wait(chunk&1);asm volatile("":::"memory");
++  auto weight=make_tensor(make_smem_ptr(s.w[stage]),SW{});
++  auto mw=tm.partition_fragment_B(weight);
++  auto acc=partition_fragment_C(mma,Shape<Int<M>,Int<N>>{});clear(acc);
++  warpgroup_fence_operand(acc);warpgroup_arrive();
++  #pragma unroll
++  for(int kk=0;kk<size<2>(ma);kk++)gemm(mma,ma(_,_,kk),mw(_,_,kk),acc);
++  warpgroup_commit_batch();warpgroup_wait<0>();warpgroup_fence_operand(acc);
++  __syncthreads(); // Every warp has finished reading this weight stage before refill.
++  if(tid==0 && chunk+1<4)load_weight(chunk+1,stage);
++  if(tid==0 && chunk>=1)tma_store_wait<0>();
++  __syncthreads();
++  auto og=make_tensor(make_smem_ptr(s.out[stage]),SOG{});
++  auto converted=make_tensor<Elem>(shape(acc));
++  #pragma unroll
++  for(int n=0;n<size(acc);n++)converted(n)=Elem(acc(n));
++  auto r2s=make_tiled_copy_C(Copy_Atom<SM90_U32x4_STSM_N,Elem>{},mma);
++  auto thread_copy=r2s.get_slice(tid);
++  auto src=thread_copy.retile_S(converted);
++  if(chunk<3){
++   auto dst=make_tensor(make_smem_ptr(s.out[stage]),SOQQ{});
++   copy(r2s,src,thread_copy.partition_D(dst));
++  }else{
++   copy(r2s,src,thread_copy.partition_D(og));
++  }
++  cutlass::arch::fence_view_async_shared();__syncthreads();
++  if(tid==0){
++   if(chunk<3){
++    auto const& tma=chunk==0?p.qo:(chunk==1?p.ko:p.vo);
++    #pragma unroll
++    for(int h=0;h<4;h++){
++     auto src=make_tensor(make_smem_ptr(s.out[stage]+h*(M*32)),SOQ{});
++     auto global=tma.get_tma_tensor(p.qshape)(_,_,h,i);
++     auto dst=local_tile(global,Shape<Int<M>,_32>{},make_coord(j/M,0));
++     auto slice=tma.get_slice(_0{});
++     copy(tma,slice.partition_S(src),slice.partition_D(dst));
++    }
++   }else{
++    auto global=p.go.get_tma_tensor(p.gshape)(_,_,chunk-3);
++    auto dst=local_tile(global,Shape<Int<M>,Int<N>>{},make_coord(tile,0));
++    auto slice=p.go.get_slice(_0{});
++    copy(p.go,slice.partition_S(og),slice.partition_D(dst));
++   }
++   tma_store_arrive();
++  }
++ }
++ if(tid==0)tma_store_wait<0>();
++}
++} // namespace
++
++void prologue_cuda(at::Tensor z,at::Tensor w,at::Tensor wb,at::Tensor lnw,at::Tensor lnb,
++                   at::Tensor q,at::Tensor k,at::Tensor v,at::Tensor g,at::Tensor bias,double eps,bool ending){
++ using namespace triattn_tma_pro;
++ int L=check_pair(z);
++ check_bf16(w,z,512*128,"projection weight");check_bf16(wb,z,16*128,"bias weight");
++ check_bf16(lnw,z,128,"LN weight");check_bf16(lnb,z,128,"LN bias");
++ for(auto const& t:{q,k,v,g})check_bf16(t,z,int64_t(L)*L*128,"projection output");
++ TORCH_CHECK(bias.is_cuda() && bias.device()==z.device() && bias.scalar_type()==at::kFloat && bias.is_contiguous() && bias.numel()==int64_t(4)*L*L,"invalid bias output");
++ c10::cuda::CUDAGuard guard(z.device());
++ auto zp=(Elem const*)z.data_ptr();auto wp=(Elem const*)w.data_ptr();auto bp=(Elem const*)wb.data_ptr();
++ GZ zs=make_shape(L,128,L);G2 ws=make_shape(512,128),bs=make_shape(16,128);
++ GQ qs=make_shape(L,32,4,L);GG gs=make_shape(L*L,128,1);
++ auto tz=make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr(zp),zs,DZ{ending?int64_t(L)*128:128,_1{},ending?128:int64_t(L)*128}),SA{},Shape<Int<M>,Int<K>>{},_1{});
++ auto tw=make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr(wp),ws,D2{128,_1{}}),SW{},Shape<Int<N>,Int<K>>{},_1{});
++ auto tb=make_tma_copy(SM90_TMA_LOAD{},make_tensor(make_gmem_ptr(bp),bs,D2{128,_1{}}),SB{},Shape<_16,Int<K>>{},_1{});
++ auto make_q=[&](at::Tensor t){return make_tma_copy(SM90_TMA_STORE{},make_tensor(make_gmem_ptr((Elem*)t.data_ptr()),qs,DQ{32,_1{},int64_t(L)*32,int64_t(4)*L*32}),SOQ{},Shape<Int<M>,_32>{},_1{});};
++ auto tg=make_tma_copy(SM90_TMA_STORE{},make_tensor(make_gmem_ptr((Elem*)g.data_ptr()),gs,DG{128,_1{},128}),SOG{},Shape<Int<M>,Int<N>>{},_1{});
++ Params p{tz,tw,tb,make_q(q),make_q(k),make_q(v),tg,zs,ws,bs,qs,gs,(Elem const*)lnw.data_ptr(),(Elem const*)lnb.data_ptr(),bias.data_ptr<float>(),float(eps),L};
++ C10_CUDA_CHECK(cudaFuncSetAttribute(prologue_tma,cudaFuncAttributeMaxDynamicSharedMemorySize,sizeof(Shared)));
++ prologue_tma<<<L*L/M,256,sizeof(Shared),at::cuda::getCurrentCUDAStream()>>>(p);
++ C10_CUDA_KERNEL_LAUNCH_CHECK();
++}

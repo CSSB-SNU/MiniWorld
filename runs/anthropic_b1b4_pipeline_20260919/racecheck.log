@@ -1,0 +1,16 @@
+========= COMPUTE-SANITIZER
+CUBIN /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/9693fc64393181b88c1a48dc5255dfe967a942fb28f60bb92b416fc78a273ada.cubin
+/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_strided_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|shape_key=68720526106). Falling back to a heuristic 3 of 288 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+PASS {'L': 64, 'part': 1, 'errors': [0.0, 1.509873868599243e-06, 2.1807140910823364e-06, 2.749184773165325e-07, 8.290420794310194e-08, 1.88693156815134e-05], 'live_input_errors': [0.0, 1.3273406693770085e-05, 7.443044296451262e-07, 2.638240346186649e-07, 7.680932867515367e-08, 4.669139161705971e-05], 'zero_mask_exact': True, 'counters_reset': True}
+CUBIN /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/44e9ad16c606b0d78c7a5232cc3406bd2c16c44a3e5b87daa4b58cd53507661c.cubin
+PASS {'L': 64, 'part': 2, 'errors': [0.0, 1.509873868599243e-06, 2.1807140910823364e-06, 4.54074580602537e-07, 7.03122609024831e-08, 1.88693156815134e-05], 'live_input_errors': [0.0, 1.3273406693770085e-05, 7.443044296451262e-07, 5.519194132830307e-07, 6.694007481655717e-08, 4.669139161705971e-05], 'zero_mask_exact': True, 'counters_reset': True}
+CUBIN /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/39e15eee9baf6953a40bdf279e699b809f6c970c046710f3a54b75f6acdfeee4.cubin
+PASS {'L': 72, 'part': 1, 'errors': [0.0, 5.1329257075849455e-06, 1.1402453310438432e-05, 3.6234291656001005e-07, 7.873962459825634e-08, 0.0002069852052954957], 'live_input_errors': [0.0, 5.4385072871809825e-05, 8.512632120982744e-06, 6.48337731945503e-07, 8.282469821097038e-08, 6.405567546607926e-05], 'zero_mask_exact': True, 'counters_reset': True}
+CUBIN /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/8d8a80f3682fd4c59600afa8cd809d6b36be3acda529be443ff37d89812b9e32.cubin
+Traceback (most recent call last):
+  File "/home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/validate_dual.py", line 12, in <module>
+    torch.cuda.synchronize();assert torch.count_nonzero(p.workspace[-1])==0
+  File "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/cuda/__init__.py", line 1108, in synchronize
+    return torch._C._cuda_synchronize()
+KeyboardInterrupt

@@ -1,0 +1,24 @@
+========= COMPUTE-SANITIZER
+PTXAS dual_maskbits 132 2 /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/17cf90c7aa03c69fbe456e3fa7867fb620abb00a306160b07a7698b6dac6926e.cubin /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/dual_maskbits.cu(62): warning #20058-D: the #pragma unroll must precede a loop
+  #pragma unroll
+          ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'unified_reduce' for 'sm_90a'
+ptxas info    : Function properties for unified_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 15.172 ms
+ptxas info    : Compiling entry function 'dual_b1b4' for 'sm_90a'
+ptxas info    : Function properties for dual_b1b4
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 255 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 287.129 ms
+
+CHECK {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 0.00017940520774573088, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 5.537878223549342e-06, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 1.3046997082710732e-06, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 4.896417067357106e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 0.0002332182484678924, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK 20261305 {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 1.6828878870001063e-05, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 5.837055596202845e-06, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 2.365517048019683e-06, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 5.440713835014321e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 0.00017299233877565712, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK 20261306 {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 0.0002502260613255203, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 6.058242888684617e-06, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 9.922797516992432e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 4.801120780939527e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 0.00021398723765742034, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK counters_zero=true
+========= ERROR SUMMARY: 0 errors

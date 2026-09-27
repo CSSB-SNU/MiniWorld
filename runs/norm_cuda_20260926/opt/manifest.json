@@ -1,0 +1,23 @@
+{
+  "baseline_sha256": "005f768206b65474cb99ff6933d5420d67f97117569141e617a19a4304723534",
+  "sources": {
+    "src/miniworld_engine/kernels/norm_cuda/linear.cu": "677d888ee69ed491482c92bcb97762f4fb88dc469a7effa4703b91f391c799bb",
+    "src/miniworld_engine/kernels/norm_cuda/norm.cu": "a88ccf91bed7dee8cac8ec125de625fc4abbe24aa54d74f975e5f03edecc604f",
+    "src/miniworld_engine/kernels/norm_cuda/wide.cu": "5fa33c9d0e5c932ebaf7d6cb569ea0b2d830aaea930ab7db0b67984c84126135",
+    "src/miniworld_engine/kernels/norm_cuda/__init__.py": "7b269f971c0d90b0d784c0ab329a06b52f6938dad6e836c0a8f6b56c9f7cdf51",
+    "src/miniworld_engine/kernels/norm_cuda/linear.py": "cebebbfffeb8aa59db0ee9ddaccb287eb98b219fae52de6297dde48073a3f76f",
+    "src/miniworld_engine/kernels/norm_cuda/wide.py": "08ea1bc5234718cb1c27ffe626c3d9d9e66fa2f08eb51a5e361fab62c1a06067",
+    "tests/numerics/test_norm_cuda_gpu.py": "5d3669722b162ee8c36e381ff89830e26867d5b74ee03da0e398109f3a1f8d46",
+    "tests/numerics/test_norm_linear_cuda_gpu.py": "55573c95273905e4c0608949c76c00e83c2e5feecf3cf27f76df17a9c9b4d54f"
+  },
+  "jobs": {
+    "correctness_matrix": 19231,
+    "managed_tests_and_stress": 19269,
+    "norm_performance": 19230,
+    "rms_retune": 19255,
+    "linear_performance": 19242,
+    "sanitizers": 19252,
+    "ncu": 19263
+  },
+  "production_dispatch_changed": false
+}

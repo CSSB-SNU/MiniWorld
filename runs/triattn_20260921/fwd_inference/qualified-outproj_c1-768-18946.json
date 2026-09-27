@@ -1,0 +1,255 @@
+{
+  "artifact": "hot6t",
+  "length": 768,
+  "baseline": "installed TriangleAttention.eval() under inference_mode",
+  "out_artifact": "outproj_c1",
+  "selected_entry": true,
+  "rounds": 24,
+  "replays": 30,
+  "records": [
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "mixed",
+      "output_relative": 0.0008021346342312783,
+      "attention_relative": 0.011400468975583965
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "mixed",
+      "baseline_relative": 0.0005839669001345669,
+      "candidate_relative": 0.0005941090649954625,
+      "update_rms": 0.07177462428808212
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "dense",
+      "output_relative": 0.0007793029052088605,
+      "attention_relative": 0.011515860401232234
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "one_key",
+      "output_relative": 3.197874283825015e-05,
+      "attention_relative": 6.728240978423963e-05
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "one_key",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.528628408908844
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "all_masked",
+      "output_relative": 0.0,
+      "attention_relative": 0.0
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "all_masked",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.0
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "none",
+      "output_relative": 0.0007793029052088605,
+      "attention_relative": 0.011515860401232234
+    },
+    {
+      "kind": "paired_module",
+      "ending": false,
+      "baseline_us": 1947.5557327270508,
+      "candidate_us": 1621.7157363891602,
+      "speedup": 1.2045166204658246,
+      "paired_ratios": [
+        1.1714443678429194,
+        1.1966253191715823,
+        1.1845520011975192,
+        1.2026860201710765,
+        1.1860106753670836,
+        1.2063472207605728,
+        1.1866277036513428,
+        1.2477439871080886,
+        1.2316581223813867,
+        1.2164381181728403,
+        1.2259279103167764,
+        1.2197372982261674,
+        1.1823228105059351,
+        1.1775258376916515,
+        1.180180051470858,
+        1.2435748385075076,
+        1.1951519780947848,
+        1.2606231752064552,
+        1.2491998960222321,
+        1.2312003938681195,
+        1.2102990669213773,
+        1.2264597276526459,
+        1.192947268940108,
+        1.2007782637355633
+      ]
+    },
+    {
+      "kind": "changed_input_weight_mask_graph",
+      "ending": false,
+      "relative": 0.000932478026710821
+    },
+    {
+      "kind": "fullgraph_compile",
+      "ending": false,
+      "passed": true
+    },
+    {
+      "kind": "no_grad",
+      "ending": false,
+      "passed": true
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "mixed",
+      "output_relative": 0.0008019104277253092,
+      "attention_relative": 0.011389392252978046
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "mixed",
+      "baseline_relative": 0.0009511056700857016,
+      "candidate_relative": 0.0007364669877224043,
+      "update_rms": 0.07686290144920349
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "dense",
+      "output_relative": 0.0007809687000647229,
+      "attention_relative": 0.011531820272930706
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "one_key",
+      "output_relative": 3.218613092647495e-05,
+      "attention_relative": 6.734095657111144e-05
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "one_key",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.5523729920387268
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "all_masked",
+      "output_relative": 0.0,
+      "attention_relative": 0.0
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "all_masked",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.0
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "none",
+      "output_relative": 0.0007809687000647229,
+      "attention_relative": 0.011531820272930706
+    },
+    {
+      "kind": "paired_module",
+      "ending": true,
+      "baseline_us": 2325.059763590495,
+      "candidate_us": 1604.360580444336,
+      "speedup": 1.4448797670738647,
+      "paired_ratios": [
+        1.4293450010005009,
+        1.4302864753913846,
+        1.4294064709812655,
+        1.4233148399079487,
+        1.4305009732783418,
+        1.4571093982351522,
+        1.4079482676476984,
+        1.409403443526058,
+        1.4251860758997044,
+        1.4538179820031565,
+        1.4865099320507746,
+        1.4714850520654301,
+        1.443052940967675,
+        1.4557862533947061,
+        1.4311506891378858,
+        1.4583934430360352,
+        1.4467065931800545,
+        1.462737299994454,
+        1.440582722703101,
+        1.4766684796667455,
+        1.4584447627922503,
+        1.4604550729255095,
+        1.4301635438791431,
+        1.4968018553262539
+      ]
+    },
+    {
+      "kind": "changed_input_weight_mask_graph",
+      "ending": true,
+      "relative": 0.0009325680483120168
+    },
+    {
+      "kind": "fullgraph_compile",
+      "ending": true,
+      "passed": true
+    },
+    {
+      "kind": "no_grad",
+      "ending": true,
+      "passed": true
+    }
+  ],
+  "inference_front": true,
+  "build": {
+    "module": "triattn_infer_hot6t",
+    "binary": "build/triattn_infer_hot6t.so",
+    "smem": 231424,
+    "sha256": {
+      "fused.cu": "e272b66371043d66554cdb640c36df30efa040cfd58c3c20b0d1790c3a832874",
+      "build/triattn_infer_hot6t.so": "ad9425cbe15a42a5db399ae00ce14e8bd5306c317fa283ee2107c317a6fbe2f1"
+    }
+  },
+  "output_build": {
+    "module": "triattn_infer_outproj_c1",
+    "binary": "build/triattn_infer_outproj_c1.so",
+    "smem": 66560,
+    "sha256": {
+      "fused.cu": "4d0e43ce1330362f530dc3619b67875445a792202e75cbdfd15aa326cc667ab6",
+      "build/triattn_infer_outproj_c1.so": "ddc6558e893a3da29594b0273258b895474d848975d9aadb76ae9e81eec20b3c"
+    }
+  },
+  "front_artifact": "front8",
+  "front_build": {
+    "module": "triattn_infer_front8",
+    "binary": "build/triattn_infer_front8.so",
+    "smem": 0,
+    "sha256": {
+      "fused.cu": "b65e52ab1508251d76ddb2f4d2d1a091b2e9c31df64381ef0588366ff815bb68",
+      "build/triattn_infer_front8.so": "7c2ce7a8564739dba26d68d4c9580dc181f459994454856cf158b7c59dbd499f"
+    }
+  },
+  "complete": true
+}

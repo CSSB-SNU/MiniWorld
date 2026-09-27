@@ -1,0 +1,41 @@
+{
+  "job": 14280,
+  "purpose": "Synthetic instruction attribution only; not an attention performance result",
+  "results": [
+    {
+      "operation": "exp2",
+      "xu_instructions": 4325376,
+      "time_us": 35.776
+    },
+    {
+      "operation": "BF16x2 conversion",
+      "xu_instructions": 0,
+      "time_us": 11.456
+    },
+    {
+      "operation": "PRMT",
+      "xu_instructions": 0,
+      "time_us": 11.68
+    },
+    {
+      "operation": "SHR",
+      "xu_instructions": 0,
+      "time_us": 11.488
+    },
+    {
+      "operation": "LOP3",
+      "xu_instructions": 0,
+      "time_us": 11.616
+    },
+    {
+      "operation": "ADD",
+      "xu_instructions": 0,
+      "time_us": 8.672
+    },
+    {
+      "operation": "video add/min",
+      "xu_instructions": 0,
+      "time_us": 44.736
+    }
+  ]
+}

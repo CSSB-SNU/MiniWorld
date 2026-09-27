@@ -1,0 +1,38 @@
+========= COMPUTE-SANITIZER
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:1480: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+RESOURCE 1 0 ['    56 bytes stack frame, 52 bytes spill stores, 68 bytes spill loads', 'ptxas info    : Used 168 registers, used 1 barriers, 56 bytes cumulative stack size']
+CUBIN b1 /home/psk6950/MiniWorld/runs/trimul_split_bwd_20260921/build/f2ea9fb03f9c8ebdcf7f6acd4e0314ea6ec7e308d1bc6c6f40e74d79567de626.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 31 registers, used 0 barriers
+ptxas info    : Compile time = 7.683 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 255 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 613.235 ms
+
+BUILD 690cba395784023b18a9532855c5fe27fea2da2ef3a82683d1df4d647231678f.cubin /home/psk6950/MiniWorld/runs/trimul_b1_shared_20260921/b1_fused.cu(164): warning #177-D: variable "x" was declared but never referenced
+    uint8_t* x=sm+16384+slot*49152;
+             ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 14.686 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    16 bytes stack frame, 16 bytes spill stores, 16 bytes spill loads
+ptxas info    : Used 255 registers, used 16 barriers, 16 bytes cumulative stack size, 1024 bytes smem
+ptxas info    : Compile time = 456.486 ms
+
+CHECK_DONE {'dg': {'rel': 0.0, 'finite': True, 'bit_exact': True, 'limit': 0}, 'dwg': {'rel': 7.237542740767822e-05, 'finite': True, 'bit_exact': False, 'limit': 0.0005}, 'dt': {'rel': 0.0, 'finite': True, 'bit_exact': True, 'limit': 2e-05}, 'dgo': {'rel': 4.134033986247232e-07, 'finite': True, 'bit_exact': False, 'limit': 5e-06}, 'dbo': {'rel': 2.658760536178306e-07, 'finite': True, 'bit_exact': False, 'limit': 5e-06}, 'dwp': {'rel': 0.00012792418419849128, 'finite': True, 'bit_exact': False, 'limit': 0.0005}}
+========= ERROR SUMMARY: 0 errors

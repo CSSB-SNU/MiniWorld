@@ -1,0 +1,83 @@
+[
+  {
+    "job": 16307,
+    "artifact": "n64_tma",
+    "length": 384,
+    "baseline_ms": 0.08862346808115641,
+    "candidate_ms": 0.08357759714126586,
+    "reduction_pct": 5.688792228921047,
+    "all_bitwise_equal": true
+  },
+  {
+    "job": 16307,
+    "artifact": "n64_tma",
+    "length": 768,
+    "baseline_ms": 0.31756428082784016,
+    "candidate_ms": 0.31248000462849934,
+    "reduction_pct": 1.5894046252921123,
+    "all_bitwise_equal": true
+  },
+  {
+    "job": 16307,
+    "artifact": "n64_tma",
+    "length": 1024,
+    "baseline_ms": 0.5543311754862468,
+    "candidate_ms": 0.5491077423095703,
+    "reduction_pct": 0.9576863815764503,
+    "all_bitwise_equal": true
+  },
+  {
+    "job": 16312,
+    "artifact": "tile128_delta",
+    "length": 384,
+    "baseline_ms": 0.08909600178400676,
+    "candidate_ms": 0.11218453248341878,
+    "reduction_pct": -25.700311688280266,
+    "all_bitwise_equal": true
+  },
+  {
+    "job": 16312,
+    "artifact": "tile128_delta",
+    "length": 768,
+    "baseline_ms": 0.3173093318939209,
+    "candidate_ms": 0.38936638832092285,
+    "reduction_pct": -22.7151650129519,
+    "all_bitwise_equal": true
+  },
+  {
+    "job": 16312,
+    "artifact": "tile128_delta",
+    "length": 1024,
+    "baseline_ms": 0.5566282590230306,
+    "candidate_ms": 0.6801477432250977,
+    "reduction_pct": -22.211146207411538,
+    "all_bitwise_equal": true
+  },
+  {
+    "job": 16321,
+    "artifact": "n64_staged",
+    "length": 384,
+    "baseline_ms": 0.08919999996821085,
+    "candidate_ms": 0.08150560061136881,
+    "reduction_pct": 8.601493071914469,
+    "all_bitwise_equal": true
+  },
+  {
+    "job": 16321,
+    "artifact": "n64_staged",
+    "length": 768,
+    "baseline_ms": 0.3179082711537679,
+    "candidate_ms": 0.31166720390319824,
+    "reduction_pct": 1.9624638599283317,
+    "all_bitwise_equal": true
+  },
+  {
+    "job": 16321,
+    "artifact": "n64_staged",
+    "length": 1024,
+    "baseline_ms": 0.5567877133687338,
+    "candidate_ms": 0.550051212310791,
+    "reduction_pct": 1.206342185999676,
+    "all_bitwise_equal": true
+  }
+]

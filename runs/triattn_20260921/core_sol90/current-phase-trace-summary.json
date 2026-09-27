@@ -1,0 +1,166 @@
+{
+  "job": 15063,
+  "scope": "Instrumented same-CTA clocks for three sampled CTAs, with measured approximately 5% instrumentation overhead; not exact unmodified kernel fractions.",
+  "directions": [
+    {
+      "ending": false,
+      "graph": {
+        "core": {
+          "serving": {
+            "median_us": 852.3280143737793,
+            "paired_ratio": 1.0
+          },
+          "control": {
+            "median_us": 852.3159980773926,
+            "paired_ratio": 0.9994884538040318
+          },
+          "phasetrace": {
+            "median_us": 895.8439826965332,
+            "paired_ratio": 1.0510670983775277
+          }
+        },
+        "block": {
+          "serving": {
+            "median_us": 1363.810396194458,
+            "paired_ratio": 1.0
+          },
+          "control": {
+            "median_us": 1357.2279930114746,
+            "paired_ratio": 1.0022614255955673
+          },
+          "phasetrace": {
+            "median_us": 1407.5535774230957,
+            "paired_ratio": 1.0322746257702433
+          }
+        }
+      },
+      "ctas": [
+        {
+          "cta": [
+            1,
+            1,
+            0
+          ],
+          "median_total_cycles": 34067.0,
+          "fractions": {
+            "startup": 0.2555204530638272,
+            "body": 0.6656004704872117,
+            "drains": 0.022386684397864374,
+            "tail": 0.05239619167736771
+          },
+          "register_allocate_fraction": 0.006082922985005946
+        },
+        {
+          "cta": [
+            2,
+            128,
+            1
+          ],
+          "median_total_cycles": 31344.0,
+          "fractions": {
+            "startup": 0.18504342069383334,
+            "body": 0.7292927630899217,
+            "drains": 0.028394570144063533,
+            "tail": 0.05839335386965981
+          },
+          "register_allocate_fraction": 0.007754979361845206
+        },
+        {
+          "cta": [
+            5,
+            255,
+            3
+          ],
+          "median_total_cycles": 31116.5,
+          "fractions": {
+            "startup": 0.17904147467352574,
+            "body": 0.7313975445378849,
+            "drains": 0.029058731073238375,
+            "tail": 0.05997923689375329
+          },
+          "register_allocate_fraction": 0.00795446568551323
+        }
+      ]
+    },
+    {
+      "ending": true,
+      "graph": {
+        "core": {
+          "serving": {
+            "median_us": 859.3944072723389,
+            "paired_ratio": 1.0
+          },
+          "control": {
+            "median_us": 853.5904407501221,
+            "paired_ratio": 1.003657037544646
+          },
+          "phasetrace": {
+            "median_us": 905.2183628082275,
+            "paired_ratio": 1.048835942768986
+          }
+        },
+        "block": {
+          "serving": {
+            "median_us": 1378.121566772461,
+            "paired_ratio": 1.0
+          },
+          "control": {
+            "median_us": 1361.4751815795898,
+            "paired_ratio": 1.0007422125419692
+          },
+          "phasetrace": {
+            "median_us": 1411.739206314087,
+            "paired_ratio": 1.0326775170680969
+          }
+        }
+      },
+      "ctas": [
+        {
+          "cta": [
+            1,
+            1,
+            0
+          ],
+          "median_total_cycles": 33940.5,
+          "fractions": {
+            "startup": 0.2520019923764589,
+            "body": 0.6739692902248952,
+            "drains": 0.022781970164168483,
+            "tail": 0.053867634319058305
+          },
+          "register_allocate_fraction": 0.006066854927222285
+        },
+        {
+          "cta": [
+            2,
+            128,
+            1
+          ],
+          "median_total_cycles": 31454.5,
+          "fractions": {
+            "startup": 0.18632124054413607,
+            "body": 0.7294940555485756,
+            "drains": 0.028209232583842447,
+            "tail": 0.05984528218471487
+          },
+          "register_allocate_fraction": 0.007925056293338863
+        },
+        {
+          "cta": [
+            5,
+            255,
+            3
+          ],
+          "median_total_cycles": 31084.0,
+          "fractions": {
+            "startup": 0.17548150610533364,
+            "body": 0.7403106487427028,
+            "drains": 0.02864637224072604,
+            "tail": 0.05790373491642399
+          },
+          "register_allocate_fraction": 0.007871809704700439
+        }
+      ]
+    }
+  ]
+}

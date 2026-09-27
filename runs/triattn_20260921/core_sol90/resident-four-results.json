@@ -1,0 +1,355 @@
+{
+  "installed_sha256": "9365a4f35e018afed4adba21590ae2c1734bbccf98d1e53904ebfe2537b3e225",
+  "installed_changed": false,
+  "sol90_achieved": false,
+  "experiments": [
+    {
+      "name": "resident4m64s3qr",
+      "job": 14909,
+      "installed": false,
+      "compiler_clean": false,
+      "warnings": [
+        "C7512"
+      ],
+      "resources": [
+        {
+          "safe": true,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        },
+        {
+          "safe": false,
+          "stack": 184,
+          "stores": 184,
+          "loads": 184,
+          "initial_registers": 96
+        }
+      ],
+      "sass": {
+        "STL": 46,
+        "LDL": 46,
+        "HGMMA": 100,
+        "WARPGROUP.ARRIVE": 100,
+        "WARPGROUP.DEPBAR": 100,
+        "MUFU.EX2": 384,
+        "STSM": 0
+      },
+      "binary_sha256": "d8116a8d56a9cc73c6549c6b42d0a5ac79420e9ecd4d85576a12a36aa59213b0",
+      "disposition": "reject_compiler"
+    },
+    {
+      "name": "resident4m64s3qrloop6",
+      "job": 14911,
+      "installed": false,
+      "compiler_clean": false,
+      "warnings": [
+        "C7512"
+      ],
+      "resources": [
+        {
+          "safe": true,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        },
+        {
+          "safe": false,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        }
+      ],
+      "sass": {
+        "STL": 0,
+        "LDL": 0,
+        "HGMMA": 30,
+        "WARPGROUP.ARRIVE": 30,
+        "WARPGROUP.DEPBAR": 30,
+        "MUFU.EX2": 112,
+        "STSM": 0
+      },
+      "binary_sha256": "b978dcde5a1b71785e216b6904b9b2b9b27214cbbd9a462568cebb9d22c7bcb9",
+      "disposition": "reject_compiler"
+    },
+    {
+      "name": "resident4m64s2qrloop8",
+      "job": 14911,
+      "installed": false,
+      "compiler_clean": false,
+      "warnings": [
+        "C7512"
+      ],
+      "resources": [
+        {
+          "safe": true,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        },
+        {
+          "safe": false,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        }
+      ],
+      "sass": {
+        "STL": 0,
+        "LDL": 0,
+        "HGMMA": 38,
+        "WARPGROUP.ARRIVE": 38,
+        "WARPGROUP.DEPBAR": 38,
+        "MUFU.EX2": 144,
+        "STSM": 0
+      },
+      "binary_sha256": "066dc670dada913aafb9afbe0ed846fd8f160129e007c0845f098fbd3813c622",
+      "disposition": "reject_compiler"
+    },
+    {
+      "name": "resident4m64s3qrloop6dep",
+      "job": 14915,
+      "installed": false,
+      "compiler_clean": false,
+      "warnings": [
+        "C7512"
+      ],
+      "resources": [
+        {
+          "safe": true,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        },
+        {
+          "safe": false,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        }
+      ],
+      "sass": {
+        "STL": 0,
+        "LDL": 0,
+        "HGMMA": 30,
+        "WARPGROUP.ARRIVE": 30,
+        "WARPGROUP.DEPBAR": 30,
+        "MUFU.EX2": 112,
+        "STSM": 0
+      },
+      "binary_sha256": "18223a6b2f7a672ea86c07e39e2193ae04440a0a572a4048ffcbaf06f503a939",
+      "disposition": "reject_compiler"
+    },
+    {
+      "name": "resident4m64s2qrloop8dep",
+      "job": 14915,
+      "installed": false,
+      "compiler_clean": false,
+      "warnings": [
+        "C7512"
+      ],
+      "resources": [
+        {
+          "safe": true,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        },
+        {
+          "safe": false,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        }
+      ],
+      "sass": {
+        "STL": 0,
+        "LDL": 0,
+        "HGMMA": 38,
+        "WARPGROUP.ARRIVE": 38,
+        "WARPGROUP.DEPBAR": 38,
+        "MUFU.EX2": 144,
+        "STSM": 0
+      },
+      "binary_sha256": "4d06e9ab07ba9e2f2b09b111cf0e6a30b84013f6713a3080e3379a524896bdcd",
+      "disposition": "reject_compiler"
+    },
+    {
+      "name": "resident4m64s3ssloop6dep",
+      "job": 14920,
+      "installed": false,
+      "compiler_clean": false,
+      "warnings": [
+        "C7512"
+      ],
+      "resources": [
+        {
+          "safe": true,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        },
+        {
+          "safe": false,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        }
+      ],
+      "sass": {
+        "STL": 0,
+        "LDL": 0,
+        "HGMMA": 30,
+        "WARPGROUP.ARRIVE": 30,
+        "WARPGROUP.DEPBAR": 30,
+        "MUFU.EX2": 112,
+        "STSM": 0
+      },
+      "binary_sha256": "a184dc4a6f4fe6ab6b84963e9b3b138d98b9a2f7ed614ff6d2a050f7e7134334",
+      "disposition": "reject_compiler"
+    },
+    {
+      "name": "resident4m64s2ssloop8dep",
+      "job": 14920,
+      "installed": false,
+      "compiler_clean": true,
+      "warnings": [],
+      "resources": [
+        {
+          "safe": true,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        },
+        {
+          "safe": false,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        }
+      ],
+      "sass": {
+        "STL": 0,
+        "LDL": 0,
+        "HGMMA": 38,
+        "WARPGROUP.ARRIVE": 19,
+        "WARPGROUP.DEPBAR": 11,
+        "MUFU.EX2": 144,
+        "STSM": 0
+      },
+      "binary_sha256": "e8da6c0548454a7de1009f5f731e89f4431850fc88fd0d9ce43ac6bee81e157b",
+      "hot_us": 1608.1511999999998,
+      "baseline_hot_us": 795.6288000000002,
+      "hot_ratio": 2.021233017206013,
+      "core_us": 1629.7024536132812,
+      "baseline_core_us": 869.6697235107422,
+      "core_ratio": 1.8739326086165067,
+      "core_bitwise": true,
+      "block_bitwise": true,
+      "fp64_rms": 0.00028883485479432215,
+      "baseline_fp64_rms": 0.00028883485479432215,
+      "disposition": "reject_latency"
+    },
+    {
+      "name": "resident4m64hybrid8",
+      "job": 14924,
+      "installed": false,
+      "compiler_clean": true,
+      "warnings": [],
+      "resources": [
+        {
+          "safe": true,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        },
+        {
+          "safe": false,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        }
+      ],
+      "sass": {
+        "STL": 0,
+        "LDL": 0,
+        "HGMMA": 38,
+        "WARPGROUP.ARRIVE": 19,
+        "WARPGROUP.DEPBAR": 11,
+        "MUFU.EX2": 144,
+        "STSM": 0
+      },
+      "binary_sha256": "140ecab4071dc942bb4e5ec539f2168b55753ff9bd2fc286757317875a33ee1d",
+      "hot_us": 1003.3871999999999,
+      "baseline_hot_us": 791.5737999999999,
+      "hot_ratio": 1.2675851575683783,
+      "core_us": 1080.5919647216797,
+      "baseline_core_us": 868.3999633789062,
+      "core_ratio": 1.2443482384742897,
+      "core_bitwise": true,
+      "block_bitwise": true,
+      "fp64_rms": 0.00028883485479432215,
+      "baseline_fp64_rms": 0.00028883485479432215,
+      "disposition": "reject_latency"
+    },
+    {
+      "name": "resident4m64hybrid3sp",
+      "job": 14928,
+      "installed": false,
+      "compiler_clean": true,
+      "warnings": [],
+      "resources": [
+        {
+          "safe": true,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        },
+        {
+          "safe": false,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "initial_registers": 96
+        }
+      ],
+      "sass": {
+        "STL": 0,
+        "LDL": 0,
+        "HGMMA": 30,
+        "WARPGROUP.ARRIVE": 15,
+        "WARPGROUP.DEPBAR": 9,
+        "MUFU.EX2": 112,
+        "STSM": 14
+      },
+      "binary_sha256": "020e955b3ec77be7f06c1ca8c619113c9fdda86e25a481513af6ec5fbbd1b128",
+      "hot_us": 1244.9552,
+      "baseline_hot_us": 788.0504000000002,
+      "hot_ratio": 1.579791343294794,
+      "core_us": 1295.9989929199219,
+      "baseline_core_us": 886.1379241943359,
+      "core_ratio": 1.4625251414425422,
+      "core_bitwise": true,
+      "block_bitwise": true,
+      "fp64_rms": 0.00028883485479432215,
+      "baseline_fp64_rms": 0.00028883485479432215,
+      "disposition": "reject_latency"
+    }
+  ]
+}

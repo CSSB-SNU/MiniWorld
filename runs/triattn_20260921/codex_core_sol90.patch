@@ -1,0 +1,423 @@
+--- a/runs/triattn_20260921/oc/opt_core/kernels/triattn_core_broadcast/build_source.py
++++ b/runs/triattn_20260921/oc/opt_core/kernels/triattn_core_broadcast/build_source.py
+@@ -21,14 +21,11 @@
+ 
+ _HERE = os.path.dirname(os.path.abspath(__file__))
+ _EXT = None
+-FLAGS = [0, 256]
++FLAGS = [0]
+ 
+ 
+ def _all_flags():
+-    env = os.environ.get("TRIATTN_M1_FLAGS")           # dev override: "0;16;2"
+-    hot = [int(x) for x in env.split(";")] if env else list(FLAGS)
+-    base = {f & ~1024 for f in hot}
+-    return sorted(base | {(f & ~256) | 1024 for f in base})    # every hot instantiation gets its SAFE (fix-list) partner (never clustered)
++    return [0, 1024, 536870912, 1073741824]
+ 
+ 
+ def _generate_sources(build_dir: str):
+--- a/runs/triattn_20260921/oc/opt_core/kernels/triattn_core_broadcast/csrc/m1/m1_binding.cu
++++ b/runs/triattn_20260921/oc/opt_core/kernels/triattn_core_broadcast/csrc/m1/m1_binding.cu
+@@ -182,6 +182,11 @@
+          int64_t flags, c10::optional<torch::Tensor> const& trace) {
+     c10::cuda::CUDAGuard guard(q.device());
+     auto hot = table().find(int(flags)), safe = table().find((int(flags) & ~256) | 1024);   // the SAFE pass never runs clustered
++    // Shape constants and the P fence schedule were qualified at this shape.
++    if(flags==0 && q.size(1)==768 && q.size(2)==4 && q.size(3)==768 && float(scale)==0x1.6a09e6p-3f)
++        hot=table().find(1073741824);
++    if(flags==0 && q.size(1)==1024 && q.size(2)==4 && q.size(3)==1024 && float(scale)==0x1.6a09e6p-3f)
++        hot=table().find(536870912);
+     TORCH_CHECK(hot != table().end() && safe != table().end(), "no M1 kernel pair instantiated for flags=", flags);
+     TORCH_CHECK(q.scalar_type() == torch::kBFloat16 && k.scalar_type() == torch::kBFloat16 && v.scalar_type() == torch::kBFloat16, "q/k/v must be bf16");
+     TORCH_CHECK(fix.scalar_type() == torch::kInt32 && fix.is_contiguous(), "fix list must be contiguous int32");
+--- a/runs/triattn_20260921/oc/opt_core/kernels/triattn_core_broadcast/csrc/m1/triattn_m1_sm90.cuh
++++ b/runs/triattn_20260921/oc/opt_core/kernels/triattn_core_broadcast/csrc/m1/triattn_m1_sm90.cuh
+@@ -101,12 +101,12 @@
+     using AtomLayout = Layout<Shape<_1, _1, _1>>;                // every tiled MMA here is ONE warpgroup
+     using TiledMmaQK = decltype(make_tiled_mma(GMMA::ss_op_selector<Element, Element, float, Shape<_64, Int<CW>, Int<kHeadDim>>>(), AtomLayout{}));
+     // flag 1048576: Q as the REGISTER operand of the QK wgmma (loaded once per tile by LDSM; 16 registers): the tensor core reads only K from shared memory
+-    static constexpr bool kQinRegs = (kFlags_ & 1048576) != 0;
++    static constexpr bool kQinRegs = (kFlags_ & 1048576) != 0 || (kFlags_ & (1073741824 | 536870912)) != 0;
+     // flag 4194304: schedule W = two S buffers (chunk parity), QK issued one chunk ahead at the top of the body, E then pack + PV of the
+     // SAME chunk (PV the last commit), S(k+2) initialised at the end of the body into the buffer E just freed: 32 fewer live registers
+     static constexpr bool kW = (kFlags_ & 4194304) != 0;
+     using TiledMmaQKr = decltype(make_tiled_mma(GMMA::rs_op_selector<Element, Element, float, Shape<_64, Int<CW>, Int<kHeadDim>>>(), AtomLayout{}));
+-    using TiledMmaPV = decltype(make_tiled_mma(SM90_64x32x16_F32BF16BF16_RS<GMMA::Major::K, GMMA::Major::MN>{}, AtomLayout{}));   // O += P V (B = V^T view, MN-major)
++    using TiledMmaPV = decltype(make_tiled_mma(SM90::GMMA::MMA_64x40x16_F32BF16BF16_RS<GMMA::Major::K, GMMA::Major::MN>{}, AtomLayout{}));   // O += P V (B = V^T view, MN-major)
+     using TiledMmaL  = decltype(make_tiled_mma(SM90_64x8x16_F32BF16BF16_RS<GMMA::Major::K, GMMA::Major::K>{}, AtomLayout{}));     // l += P 1 (B = all-ones 8x32 tile)
+ 
+     using SmemLayoutAtomQ = decltype(cutlass::gemm::collective::detail::ss_smem_selector<GMMA::Major::K, Element, Int<kBlockM>, Int<kHeadDim>>());
+@@ -163,7 +163,7 @@
+         cute::array_aligned<Element, cute::cosize_v<SmemLayoutQ>, 1024> smem_q;
+         cute::array_aligned<Element, cute::cosize_v<SmemLayoutK>, 1024> smem_k;
+         cute::array_aligned<Element, cute::cosize_v<SmemLayoutV>, 1024> smem_v;
+-        cute::array_aligned<Element, cute::cosize_v<SmemLayoutOnes>, 128> smem_ones;
++        cute::array_aligned<Element, CW*kHeadDim, 1024> smem_ones;
+         cute::array_aligned<float, kSlotElems * kSlotsB, 1024> smem_bias;
+         typename PipeKV::SharedStorage pipe_kv;
+         typename PipeK::SharedStorage pipe_k;
+@@ -208,6 +208,8 @@
+     constexpr bool kNoProbe = (T::kFlags & 524288) == 0;         // default: blocking waits at the point of use; flag 524288 = the older early test_wait probes + ready tokens (+8 instr/chunk, measured 0.7 % slower)
+     constexpr bool kRelAlways = (T::kFlags & 262144) == 0;       // default: bias half-slot release site unconditional, its electing predicate exact (no arrival for a chunk past the range); flag = the release wrapped in a per-chunk branch (ablation)
+     constexpr bool kReplayOps = (T::kFlags & 128) != 0;          // ABLATION (timing only): replay (no traffic after the first fill) but consumers still execute every barrier probe/arrive (on completed phases)
++    constexpr bool kFast = !T::kSafe && (T::kFlags & (1073741824 | 536870912)) != 0;
++    constexpr int kShapeN = (T::kFlags & 536870912) ? 1024 : 768;
+     constexpr bool kSafe = T::kSafe;                             // the exact running-max instantiation that recomputes the CTA tiles listed by the hot pass (fix list)
+     constexpr bool kList = T::kList;
+     constexpr bool kTrace = (T::kFlags & 16) != 0, kNoBias = (T::kFlags & 1) != 0, kReplay = (T::kFlags & 2) != 0 || kReplayOps;
+@@ -230,10 +232,10 @@
+     uint32_t const self_rank = (CR > 1) ? cute::block_rank_in_cluster() : 0u;   // cluster (1, CR, 1): rank = y parity
+     uint32_t const peer_rank = self_rank ^ 1u;
+     uint16_t const b_mask = (CR > 1) ? uint16_t(3) : uint16_t(1);
+-    int const S = params.S;
++    int const S = (!kFast ? params.S : kShapeN);
+     // hot pass: this CTA's tile straight from the grid, decoded here (before the producer's register budget shrinks)
+     int const g_qtile = int(blockIdx.x), g_rg = int(blockIdx.y), g_bh = int(blockIdx.z);
+-    int const g_b = g_bh / params.H, g_h = g_bh % params.H;
++    int const g_b = g_bh / (!kFast ? params.H : 4), g_h = g_bh % (!kFast ? params.H : 4);
+ 
+     auto init_barriers = [&]() {                                 // (one elected thread) fresh pipeline state for one CTA tile
+         shared.barrier_q.init(1);
+@@ -257,7 +259,7 @@
+ 
+     if (wg_idx != 0) {
+         // the all-ones tile of the row-sum MMA
+-        for (int idx = tid - 128; idx < int(cute::cosize_v<typename T::SmemLayoutOnes>); idx += T::kNumMmaThreads) { shared.smem_ones[idx] = Element(1.f); }
++        for (int idx = tid - 128; idx < T::CW*T::kHeadDim; idx += T::kNumMmaThreads) { shared.smem_ones[idx] = Element(1.f); }
+         cutlass::arch::fence_view_async_shared();                  // generic-proxy smem writes -> visible to wgmma (async proxy)
+     }
+     if constexpr (CR > 1) { cute::cluster_arrive(); cute::cluster_wait(); } else { __syncthreads(); }   // barrier inits visible cluster-wide before any multicast / remote arrive
+@@ -266,7 +268,7 @@
+     // The hot pass runs exactly one tile (its grid position); the SAFE pass is persistent over the fix list the hot pass wrote. Producer and consumer warpgroups each run their OWN copy of the tile loop inside their role branch (the two
+     // branches never reconverge, so the register reallocation holds in every pass); between list entries all 512 threads meet at a named
+     // barrier, one thread re-initialises the pipeline barriers, and they meet again.
+-    constexpr uint32_t kBarReinit = uint32_t(cutlass::arch::ReservedNamedBarriers::FirstUserBarrier) + 4;
++    constexpr uint32_t kBarReinit = 4; // user-relative ID; CUTLASS adds its reserved offset once
+     int const* const list = params.fix;
+     int const idx0 = kList ? int(blockIdx.x) : 0;
+     auto decode = [&](int idx, int& qtile, int& rg, int& bh, int& b, int& h) __attribute__((always_inline)) -> bool {
+@@ -274,11 +276,11 @@
+             int const count = *reinterpret_cast<int const volatile*>(list);
+             if (idx >= count) { return false; }
+             qtile = list[1 + 3 * idx]; rg = list[2 + 3 * idx]; bh = list[3 + 3 * idx];
+-            b = bh / params.H; h = bh % params.H;
++            b = bh / (!kFast ? params.H : 4); h = bh % (!kFast ? params.H : 4);
+             if (idx != idx0) {                                       // fresh pipeline state for this entry
+-                cutlass::arch::NamedBarrier::sync(T::kNumThreads, kBarReinit);
++                cutlass::arch::NamedBarrier(T::kNumThreads, kBarReinit).arrive_and_wait_unaligned();
+                 if (warp_idx == 0 && lane_predicate) { init_barriers(); }
+-                cutlass::arch::NamedBarrier::sync(T::kNumThreads, kBarReinit);
++                cutlass::arch::NamedBarrier(T::kNumThreads, kBarReinit).arrive_and_wait_unaligned();
+             }
+             return true;
+         } else {
+@@ -302,10 +304,10 @@
+     auto derive = [&](int rg, int b, int& i0, int& kind3, int& kc0, int& n_tiles, int (&jb)[R], int (&je)[R], int (&f)[R], bool& dead) __attribute__((always_inline)) {
+         if constexpr(!kSafe){
+             i0=rg*R;kind3=0;dead=false;
+-            int const kcmax=4*params.n_ktiles-1;
++            int const kcmax=4*(!kFast ? params.n_ktiles : kShapeN / 128)-1;
+             kc0=0;int kc1=kcmax+1;
+             if(params.rowkind!=nullptr){
+-                dead=params.rowkind[int64_t(b)*params.N]==2;
++                dead=params.rowkind[int64_t(b)*(!kFast ? params.N : kShapeN)]==2;
+                 kc0=min(params.kcstart[b],kcmax);kc1=max(params.kcend[b],kc0+1);
+             }
+             n_tiles=(kc1-kc0+3)/4;
+@@ -315,7 +317,7 @@
+         i0 = rg * R;                                             // rows >= N (incl. cluster padding): loaded clamped, never stored
+         kind3 = 0;
+         dead = false;
+-        int const kcmax = 4 * params.n_ktiles - 1;
++        int const kcmax = 4 * (!kFast ? params.n_ktiles : kShapeN / 128) - 1;
+         kc0 = 0; int kc1 = kcmax + 1;                            // no mask: every range is the whole key axis
+         bool anyirr = false;                                     // some row sharing the stream is irregular (else every range is the whole stream: the short path below)
+         int e[R];
+@@ -325,7 +327,7 @@
+             #pragma unroll
+             for (int r = 0; r < RR; ++r) {
+                 int const i = (r < R) ? i0 + r : (rg ^ 1) * R + (r - R);
+-                int64_t const row = (int64_t)b * params.N + min(i, params.N - 1);
++                int64_t const row = (int64_t)b * (!kFast ? params.N : kShapeN) + min(i, (!kFast ? params.N : kShapeN) - 1);
+                 kd[r] = int(params.rowkind[row]); r0[r] = params.rowkc0[row]; r1[r] = params.rowkc1[row];
+             }
+             kc0 = min(params.kcstart[b], kcmax); kc1 = max(params.kcend[b], kc0 + 1);   // the batch's attended range (a fully-masked batch: 1 column of -inf)
+@@ -379,7 +381,7 @@
+                 shared.barrier_q.arrive_and_expect_tx(T::kBytesQ * R);
+                 #pragma unroll
+                 for (int r = 0; r < R; ++r) {
+-                    int const i = min(rg * R + r, params.N - 1);
++                    int const i = min(rg * R + r, (!kFast ? params.N : kShapeN) - 1);
+                     copy(params.tma_q.with(reinterpret_cast<uint64_t&>(shared.barrier_q), 0), tQgQ(_, i), tQsQ(_, r));
+                 }
+             }
+@@ -401,7 +403,7 @@
+         }
+         int const key0 = 32 * kc0;
+         if constexpr (!kMaskInKernelC) { issue_q(); }
+-        if (warp_idx_in_wg == 1 && lane_predicate) {
++        if ((warp_idx_in_wg == 1 || (kFast && warp_idx_in_wg == 2)) && lane_predicate) {
+             // ---- the K/V stream: tile j, row w -> stage (j & 1) * R + w (use = the tile's index among row w's own tiles >> 1); K waits for the K-free barrier, V for V-free
+             Tensor sK = make_tensor(make_smem_ptr(shared.smem_k.data()), typename T::SmemLayoutK{});
+             Tensor sV = make_tensor(make_smem_ptr(shared.smem_v.data()), typename T::SmemLayoutV{});
+@@ -420,25 +422,29 @@
+             for (int j = 0; j < n_tiles; ++j) {
+                 if (kReplay && j >= 2) { break; }                                  // ABLATION (timing only): first ring fill, no traffic afterwards
+                 int const set = (j & 1) * R;
++                if (!kFast || warp_idx_in_wg == 1) {
+                 #pragma unroll
+                 for (int r = 0; r < R; ++r) {
+                     if (j < jb[r] || j >= je[r]) { continue; }                      // row r does not consume this tile (outside its live range)
+                     uint32_t const kph = ((j - jb[r]) >> 1) & 1;                    // use parity of stage (set, r): counted over row r's own tiles
+-                    int const i = min(i0 + r, params.N - 1);
++                    int const i = min(i0 + r, (!kFast ? params.N : kShapeN) - 1);
+                     int const st = set + r;
+                     pipe_k.producer_wait_empty(st, kph);
+                     pipe_kv.producer_expect(st, T::kBytesK);
+                     copy(params.tma_k.with(*pipe_kv.full_barrier(st), 0), tKgK(_, j, i), tKsK(_, st));
+                 }
++                }
++                if (!kFast || warp_idx_in_wg == 2) {
+                 #pragma unroll
+                 for (int r = 0; r < R; ++r) {
+                     if (j < jb[r] || j >= je[r]) { continue; }
+                     uint32_t const kph = ((j - jb[r]) >> 1) & 1;
+-                    int const i = min(i0 + r, params.N - 1);
++                    int const i = min(i0 + r, (!kFast ? params.N : kShapeN) - 1);
+                     int const st = set + r;
+                     pipe_kv.producer_wait_empty(st, kph);
+                     pipe_kv.producer_expect(st, T::kBytesV);
+                     copy(params.tma_v.with(*pipe_kv.full_barrier(st), 0), tVgV(_, j, i), tVsV(_, st));
++                }
+                 }
+             }
+         } else if (warp_idx_in_wg == 0 && lane_predicate) {
+@@ -500,7 +506,7 @@
+     auto stamp = [&](int it, int k) __attribute__((always_inline)) {
+         if constexpr (kTrace) { if (tracer && it >= 0 && it < 32) { params.trace[(cwg * 32 + it) * 8 + k] = clock64(); } }
+     };
+-    float const scale = params.scale;
++    float const scale = (!kFast ? params.scale : 0x1.6a09e6p-3f);
+     constexpr float kLog2e = 1.4426950408889634f;
+     float const c_l2 = scale * kLog2e;                           // x (log2 units) = S * c_l2 + nm, S = q.k + bias/scale
+ 
+@@ -547,21 +553,36 @@
+     };
+     auto mk_V = [&](int zoff) {
+         Tensor sVz = make_tensor(make_smem_ptr(shared.smem_v.data() + cwg * T::kStageElemsV + zoff), typename T::SmemLayoutVt{});    // (D, BN, st) view
+-        return wg_mma_pv.partition_fragment_B(local_tile(sVz, make_shape(Int<kHeadDim>{}, Int<CW>{}), make_coord(_0{}, _)));       // (frag, 1, 2, c, st)
++        auto vmma=make_tiled_mma(SM90_64x32x16_F32BF16BF16_RS<GMMA::Major::K,GMMA::Major::MN>{});
++        auto operand=vmma.get_slice(0).partition_fragment_B(local_tile(sVz, make_shape(Int<kHeadDim>{}, Int<CW>{}), make_coord(_0{}, _)));
++        auto desc=operand.data().desc_;
++        uint32_t vaddr=cute::cast_smem_ptr_to_uint(shared.smem_v.data()+cwg*T::kStageElemsV+zoff);
++        uint32_t oneaddr=cute::cast_smem_ptr_to_uint(shared.smem_ones.data());
++        desc.bitfield.leading_byte_offset_=(oneaddr-vaddr)>>4;
++        return make_tensor(GMMA::DescriptorIterator{desc},operand.layout());       // (frag, 1, 2, c, st)
++    };
++    auto fused_v_operand = [&](auto const& operand, auto stage, auto column) __attribute__((always_inline)) {
++        constexpr int st=decltype(stage)::value, col=decltype(column)::value;
++        auto desc=operand.data().desc_;
++        // DescriptorIterator advances the V start address while leaving the
++        // N32-group stride fixed. Keep the ones tile fixed across KV stages.
++        desc.reg32_[0] -= uint32_t((st*T::kStageElemsV+col*CW*kHeadDim)/8)<<16;
++        return make_tensor(GMMA::DescriptorIterator{desc},operand.layout());
+     };
+     using OpK = decltype(mk_K(0)); using OpV = decltype(mk_V(0));
+ 
+-    Tensor cO = make_identity_tensor(make_shape(_64{}, Int<kHeadDim>{}));
++    Tensor cO = make_identity_tensor(make_shape(_64{}, _40{}));
+     Tensor tOcO = thr_mma_pv.partition_C(cO);
+     Tensor tOcO_rc = make_tensor(tOcO.data(), flash::convert_layout_acc_rowcol(tOcO.layout()));
+     using AccC = decltype(partition_fragment_C(tiled_mma_qk, make_shape(_64{}, Int<CW>{})));                  // 16 fp32
+-    using AccO = decltype(partition_fragment_C(tiled_mma_pv, make_shape(_64{}, Int<kHeadDim>{})));            // 16 fp32
++    using AccO = decltype(partition_fragment_C(tiled_mma_pv, make_shape(_64{}, _40{})));            // 16 fp32
+     using AccL = decltype(partition_fragment_C(tiled_mma_l, make_shape(_64{}, _8{})));                         // 4 fp32: rows (mi) x 2 equal columns
+-    static_assert(decltype(size(AccC{}))::value == 16 && decltype(size(AccO{}))::value == 16 && decltype(size(AccL{}))::value == 4);
++    static_assert(decltype(size(AccC{}))::value == 16 && decltype(size(AccO{}))::value == 20 && decltype(size(AccL{}))::value == 4);
+     constexpr int kNRows = 2, kNC = CW / 4, kNKB = CW / 16;      // accumulator rows / rowcol columns per thread per chunk, PV k-blocks
+     constexpr int kNColsO = kHeadDim / 4;
+     AccO acc_o[2];                                               // per q half h
+-    AccL acc_l[2];                                               // row sums per half
++    auto l_view0=make_tensor(acc_o[0].data()+16,AccL{}.layout());
++    decltype(l_view0) acc_l[2]={l_view0,make_tensor(acc_o[1].data()+16,AccL{}.layout())};                                               // row sums per half
+     AccC accC[4];                                                // S chunk k in accC[k & 3] (QK issued two chunks ahead)
+     auto p_proto = make_tensor_like<Element>(make_tensor(accC[0].data(), flash::convert_layout_acc_Aregs<typename T::TiledMmaPV>(accC[0].layout())));
+     decltype(p_proto) PCb[2];                                    // bf16 P of chunk k in PCb[k & 1]
+@@ -573,7 +594,7 @@
+     constexpr bool kMaskInKernel = kMaskInKernelC;
+     bool const irregular = kSafe && ((kind & 1) != 0) && kMaskInKernel, ragged = kSafe && ((kind == 3) || kLockstep), uniform = kSafe && kind == 2;   // kind 1: one contiguous run (mask words only on its boundary tiles), 3: ragged (words on every tile; lockstep builds treat every irregular row so)
+     bool bad = (((kind & 1) != 0) && !kMaskInKernel) || (!kSafe && params.force_fix != 0);   // this thread has a row the hot pass cannot finish: the CTA tile goes on the fix list
+-    uint32_t const* maskrow = irregular ? params.maskw + ((int64_t)b * params.N + min(i0 + cwg, params.N - 1)) * params.wpr + kc0 + 4 * jb_w : nullptr;   // word of this warpgroup's chunk column x (relative to its first tile) at maskrow[x]
++    uint32_t const* maskrow = irregular ? params.maskw + ((int64_t)b * (!kFast ? params.N : kShapeN) + min(i0 + cwg, (!kFast ? params.N : kShapeN) - 1)) * params.wpr + kc0 + 4 * jb_w : nullptr;   // word of this warpgroup's chunk column x (relative to its first tile) at maskrow[x]
+     // Which of this warpgroup's tiles apply the row's mask words: an interval row needs them only in the tile holding its first live
+     // column (tile jf01 in {0, 1} of its range; tile 0 before it is dead and takes the words too) and in its last tile; a ragged row in all.
+     // Evaluated per GENERAL period into 3 bits (tiles 2p, 2p+1, 2p+2: word_tiles), tested per chunk with a compile-time tile index
+@@ -624,7 +645,17 @@
+         constexpr int hh = decltype(hc)::value, c = decltype(cc)::value, st = decltype(stc)::value;
+         warpgroup_fence_operand(acc);
+         warpgroup_arrive();
+-        if constexpr (kQinRegs) {
++        if constexpr(kFast) {
++            tiled_mma_qkr.accumulate_ = GMMA::ScaleOut::One;
++            tiled_mma_qk.accumulate_ = GMMA::ScaleOut::One;
++            auto& tQr = hh==0?tQr0:tQr1;
++            cute::gemm(tiled_mma_qkr, tQr(_,_,0), tK(_,_,0,c,st), acc);
++            if constexpr(hh==0){
++                cute::gemm(tiled_mma_qkr, tQr(_,_,1), tK(_,_,1,c,st), acc);
++            } else {
++                cute::gemm(tiled_mma_qk, tQ(_,_,1,hh,cwg), tK(_,_,1,c,st), acc);
++            }
++        } else if constexpr(kQinRegs) {
+             tiled_mma_qkr.accumulate_ = GMMA::ScaleOut::One;
+             auto& tQr = *((hh == 0) ? &tQr0 : &tQr1);
+             #pragma unroll
+@@ -642,9 +673,14 @@
+         warpgroup_arrive();
+         tiled_mma_pv.accumulate_ = GMMA::ScaleOut::One; tiled_mma_l.accumulate_ = GMMA::ScaleOut::One;
+         #pragma unroll
+-        for (int kb = 0; kb < kNKB; ++kb) { cute::gemm(tiled_mma_pv, tP(_, _, kb), tV(_, _, kb, c, st), acc_o[hh]); }
++        for (int kb = 0; kb < kNKB; ++kb) { cute::gemm(tiled_mma_pv, tP(_, _, kb), fused_v_operand(tV(_, _, kb, c, st),Int<st>{},Int<c>{}), acc_o[hh]); }
++        warpgroup_commit_batch();
++    };
++    auto issue_pv_prefenced = [&](decltype(p_proto)& tP, OpV const& tV, auto hc, auto cc, auto stc) __attribute__((always_inline)) {   // no fence on acc_o (chained PVs)
++        constexpr int hh = decltype(hc)::value, c = decltype(cc)::value, st = decltype(stc)::value;
++        tiled_mma_pv.accumulate_ = GMMA::ScaleOut::One; tiled_mma_l.accumulate_ = GMMA::ScaleOut::One;
+         #pragma unroll
+-        for (int kb = 0; kb < kNKB; ++kb) { cute::gemm(tiled_mma_l, tP(_, _, kb), tOnes(_, _, kb), acc_l[hh]); }     // same commit group: l over the same bf16 P
++        for (int kb = 0; kb < kNKB; ++kb) { cute::gemm(tiled_mma_pv, tP(_, _, kb), fused_v_operand(tV(_, _, kb, c, st),Int<st>{},Int<c>{}), acc_o[hh]); }
+         warpgroup_commit_batch();
+     };
+     auto pack_chunk = [&](AccC& acc, decltype(p_proto)& tP) __attribute__((always_inline)) {
+@@ -723,16 +759,35 @@
+                 }
+             }
+         }
++        if constexpr(kFast){
++            #pragma unroll
++            for(int mi=0;mi<kNRows;++mi){
++                #pragma unroll
++                for(int ni=0;ni<kNC;ni+=4){
++                    asm volatile(
++                    "fma.rn.ftz.f32 %0,%0,%4,%5;\n"
++                    "fma.rn.ftz.f32 %1,%1,%4,%5;\n"
++                    "fma.rn.ftz.f32 %2,%2,%4,%5;\n"
++                    "fma.rn.ftz.f32 %3,%3,%4,%5;\n"
++                    "ex2.approx.ftz.f32 %0,%0;\n"
++                    "ex2.approx.ftz.f32 %1,%1;\n"
++                    "ex2.approx.ftz.f32 %2,%2;\n"
++                    "ex2.approx.ftz.f32 %3,%3;\n"
++                        : "+f"(s_rc(mi,ni+0)), "+f"(s_rc(mi,ni+1)), "+f"(s_rc(mi,ni+2)), "+f"(s_rc(mi,ni+3)) : "f"(c_l2), "f"(nm[hh][mi]));
++                }
++            }
++        }else{
+         #pragma unroll
+         for (int mi = 0; mi < kNRows; ++mi) {
+             #pragma unroll
+             for (int ni = 0; ni < kNC; ++ni) { s_rc(mi, ni) = ex2_approx(fmaf(s_rc(mi, ni), c_l2, nm[hh][mi])); }
+         }
++        }
+         warpgroup_fence_operand(acc);
+     };
+     // E-phase token ring: named barrier kRingBar0 + w has 256 participants = warpgroup w (sync = wait for the token) + warpgroup w-1
+     // (arrive = pass the token after its own E phase). Warpgroup 2 pre-arrives on barrier 0 once so warpgroup 0's first E can start.
+-    constexpr uint32_t kRingBar0 = uint32_t(cutlass::arch::ReservedNamedBarriers::FirstUserBarrier);
++    constexpr uint32_t kRingBar0 = 0; // user-relative IDs 0..3 map to hardware 8..11
+     auto ring_wait = [&]() __attribute__((always_inline)) { if constexpr (kRing) { cutlass::arch::NamedBarrier::sync(256, kRingBar0 + cwg); } };
+     auto ring_pass = [&]() __attribute__((always_inline)) { if constexpr (kRing) { cutlass::arch::NamedBarrier::arrive(256, kRingBar0 + (cwg == R - 1 ? 0 : cwg + 1)); } };
+     if constexpr (kRing) { if (cwg == R - 1) { cutlass::arch::NamedBarrier::arrive(256, kRingBar0); } }
+@@ -850,6 +905,7 @@
+         }
+         if constexpr ((e2 & 7) == 0) { if (!kv_tok && !kNoWait && j2 < n_w && (!kReplay || kReplayOps || j2 < 2)) { pipe_kv.wait_full(kv0 + (t2 & 1) * R, kReplayOps ? 0u : ((t2 == 2) ? (pp ^ 1u) : pp)); } }   // first chunk of tile j2 (probed by the previous body)
+         stamp(k, 2);
++        if constexpr (kFast) { pack_chunk(accC[bp], PCb[pb]); warpgroup_fence_operand(PCb[pb]); }
+         issue_qk(accC[bn], tK, Int<h2>{}, Int<c2>{}, Int<(t2 & 1) * R>{});                                 // (its operand fence completes chunk k+2's init loads) phantom past the end: stale smem, result unused
+         if constexpr (!kEarlyRel) { release2(dep2); }                                                       // half slot of chunk k+2 may be refilled
+         ring_wait();
+@@ -857,8 +913,11 @@
+         exp_chunk(accC[bq], hh, 4 * (2 * p + (e >> 3)) + ((e >> 1) & 3), kGen && irregular && (kSafe || ((wt >> (e >> 3)) & 1u)), cute::bool_constant<kSafe>{});   // (SAFE: words on every tile of an irregular row, no word-tile state)
+         ring_pass();
+         stamp(k, 4);
++        if constexpr (!kFast) {
+         pack_chunk(accC[bp], PCb[pb]);
+         issue_pv(PCb[pb], tV, Int<hp>{}, Int<cp>{}, Int<(tp & 1) * R>{});
++        }
++        if constexpr (kFast) { issue_pv_prefenced(PCb[pb], tV, Int<hp>{}, Int<cp>{}, Int<(tp & 1) * R>{}); }
+         stamp(k, 5);
+         if constexpr (h3 == 0) { if (need_b3 && !b3_ready) { pipe_b.wait_full(c3, bph3); } }               // slot c3 (both halves) holds tile j3's column: probed above, block only if it was not ready
+         init_chunk(accC[bp], Int<c3>{}, Int<h3>{});                                                         // S(k+3) <- bias (buffer of chunk k-1, packed above); released at the top of the next body
+@@ -900,9 +959,7 @@
+         if constexpr (kPV) {
+             tiled_mma_pv.accumulate_ = GMMA::ScaleOut::One; tiled_mma_l.accumulate_ = GMMA::ScaleOut::One;
+             #pragma unroll
+-            for (int kb = 0; kb < kNKB; ++kb) { cute::gemm(tiled_mma_pv, tP(_, _, kb), tV(_, _, kb, cp, stp), acc_o[hp]); }
+-            #pragma unroll
+-            for (int kb = 0; kb < kNKB; ++kb) { cute::gemm(tiled_mma_l, tP(_, _, kb), tOnes(_, _, kb), acc_l[hp]); }
++            for (int kb = 0; kb < kNKB; ++kb) { cute::gemm(tiled_mma_pv, tP(_, _, kb), fused_v_operand(tV(_, _, kb, cp, stp),Int<stp>{},Int<cp>{}), acc_o[hp]); }
+         }
+         warpgroup_commit_batch();
+     };
+@@ -954,8 +1011,6 @@
+         tiled_mma_pv.accumulate_ = GMMA::ScaleOut::One; tiled_mma_l.accumulate_ = GMMA::ScaleOut::One;
+         #pragma unroll
+         for (int kb = 0; kb < kNKB; ++kb) { cute::gemm(tiled_mma_pv, PCb[1](_, _, kb), tV0(_, _, kb, cl, stl), acc_o[1]); }
+-        #pragma unroll
+-        for (int kb = 0; kb < kNKB; ++kb) { cute::gemm(tiled_mma_l, PCb[1](_, _, kb), tOnes(_, _, kb), acc_l[1]); }
+         warpgroup_commit_batch();
+         warpgroup_wait<0>();
+         warpgroup_fence_operand(acc_o[0]); warpgroup_fence_operand(acc_o[1]); warpgroup_fence_operand(acc_l[0]); warpgroup_fence_operand(acc_l[1]);
+@@ -966,7 +1021,12 @@
+     // ---- prologue = chunks 0, 1 (column 0 of tile 0, both halves, with the seed) + PV(0), PV(1), QK(2) issued + S(3) initialised, ending DRAINED
+     shared.barrier_q.wait(0); asm volatile("" ::: "memory");
+     load_q_regs();
+-    if constexpr (kQinRegs) { warpgroup_fence_operand(tQr0); warpgroup_fence_operand(tQr1); }
++    if constexpr(kQinRegs) {
++        if constexpr(kFast) {
++            auto a1=tQr1(_,_,Int<0>{});
++            warpgroup_fence_operand(tQr0);warpgroup_fence_operand(a1);
++        } else {warpgroup_fence_operand(tQr0);warpgroup_fence_operand(tQr1);}
++    }
+     pipe_kv.wait_full(kv0, 0);
+     pipe_b.wait_full(0, 0);                                     // slot 0 (both halves)
+     init_chunk(accC[0], _0{}, _0{}); init_chunk(accC[1], _0{}, _1{});
+@@ -1000,7 +1060,7 @@
+     int p = 0; uint32_t pp = 0;
+     #pragma unroll 1
+     for (;; ++p, pp ^= 1u) {
+-        int const zo = params.zero * p;
++        int const zo = kFast ? 0 : params.zero * p;
+         OpK const tK = mk_K(zo); OpV const tV = mk_V(zo);
+         bodyW(Int<0>{}, p, pp, tK, tV);  bodyW(Int<1>{}, p, pp, tK, tV);  bodyW(Int<2>{}, p, pp, tK, tV);
+         bodyW(Int<3>{}, p, pp, tK, tV);  bodyW(Int<4>{}, p, pp, tK, tV);  bodyW(Int<5>{}, p, pp, tK, tV);
+@@ -1018,7 +1078,12 @@
+     OpK const tK0 = mk_K(0); OpV const tV0 = mk_V(0);
+     shared.barrier_q.wait(0); asm volatile("" ::: "memory");
+     load_q_regs();
+-    if constexpr (kQinRegs) { warpgroup_fence_operand(tQr0); warpgroup_fence_operand(tQr1); }
++    if constexpr(kQinRegs) {
++        if constexpr(kFast) {
++            auto a1=tQr1(_,_,Int<0>{});
++            warpgroup_fence_operand(tQr0);warpgroup_fence_operand(a1);
++        } else {warpgroup_fence_operand(tQr0);warpgroup_fence_operand(tQr1);}
++    }
+     // a tile of the CTA stream this warpgroup does not consume: observe each bias slot's fill (an empty-barrier arrival may never precede the
+     // completion of the fill it answers to, or the producer's next expect_tx would land in an unfinished phase; observing full(j) also bounds
+     // the follower to one use ahead, so its arrivals count into the phase they are meant for), then release both its halves
+@@ -1070,7 +1135,7 @@
+     //      routine in two instantiations (STEADY / GENERAL, see body); per-period state (the exact-release predicates, GENERAL's word tiles) is hoisted to its head.
+     auto period = [&](auto genc, int p, uint32_t pp) __attribute__((always_inline)) -> bool {   // -> the stream ended in this period
+         constexpr bool kGen = decltype(genc)::value;
+-        int const zo = params.zero * p;
++        int const zo = kFast ? 0 : params.zero * p;
+         OpK const tK = mk_K(zo); OpV const tV = mk_V(zo);
+         lead1 = warp_leader && (2 * p + 1 < n_w); lead2 = warp_leader && (2 * p + 2 < n_w);            // exact releases: tiles 2p+1, 2p+2 inside the range
+         if constexpr (kGen && !kSafe) { wt = word_tiles(2 * p); }
+@@ -1112,7 +1177,7 @@
+ 
+     // ---- epilogue: O / l -> bf16 -> global; rows that fail validation put the CTA tile on the fix list -------------------
+     int const i = i0 + cwg;
+-    if (i < params.N) {
++    if (i < (!kFast ? params.N : kShapeN)) {
+         Element* obase = params.out + (int64_t)b * params.so_b + (int64_t)i * params.so_n + (int64_t)h * params.so_h;
+         #pragma unroll
+         for (int hh = 0; hh < 2; ++hh) {

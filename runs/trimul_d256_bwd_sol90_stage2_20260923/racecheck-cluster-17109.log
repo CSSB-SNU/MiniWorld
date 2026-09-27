@@ -1,0 +1,44 @@
+========= COMPUTE-SANITIZER
+========= Error: Race reported between Write access at mw_d256_cluster_smoke+0x530 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:42
+=========     and Read access at read_remote(const void *, int)+0x960 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [43000 hazards]
+=========     and Read access at read_remote(const void *, int)+0xa80 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [97580 hazards]
+=========     and Read access at read_remote(const void *, int)+0xbd0 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [81348 hazards]
+=========     and Read access at read_remote(const void *, int)+0xd00 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [52912 hazards]
+=========     and Read access at read_remote(const void *, int)+0xf40 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [764 hazards]
+=========     and Read access at read_remote(const void *, int)+0x1180 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [632 hazards]
+========= 
+========= Error: Race reported between Write access at mw_d256_cluster_smoke+0x530 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:42
+=========     and Read access at read_remote(const void *, int)+0x960 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [47468 hazards]
+=========     and Read access at read_remote(const void *, int)+0xa80 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [94404 hazards]
+=========     and Read access at read_remote(const void *, int)+0xbd0 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [68344 hazards]
+=========     and Read access at read_remote(const void *, int)+0xd00 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [38248 hazards]
+========= 
+========= Error: Race reported between Write access at mw_d256_cluster_smoke+0x530 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:42
+=========     and Read access at read_remote(const void *, int)+0x960 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [46292 hazards]
+=========     and Read access at read_remote(const void *, int)+0xa80 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [95812 hazards]
+=========     and Read access at read_remote(const void *, int)+0xbd0 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [69244 hazards]
+=========     and Read access at read_remote(const void *, int)+0xd00 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [40412 hazards]
+=========     and Read access at read_remote(const void *, int)+0xe20 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [124 hazards]
+=========     and Read access at read_remote(const void *, int)+0xf40 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [376 hazards]
+=========     and Read access at read_remote(const void *, int)+0x1180 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [376 hazards]
+========= 
+========= Error: Race reported between Write access at mw_d256_cluster_smoke+0x530 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:42
+=========     and Read access at read_remote(const void *, int)+0x960 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [42956 hazards]
+=========     and Read access at read_remote(const void *, int)+0xa80 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [98604 hazards]
+=========     and Read access at read_remote(const void *, int)+0xbd0 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [80324 hazards]
+=========     and Read access at read_remote(const void *, int)+0xd00 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [51768 hazards]
+=========     and Read access at read_remote(const void *, int)+0x1180 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [124 hazards]
+========= 
+========= Error: Race reported between Write access at mw_d256_cluster_smoke+0x530 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:42
+=========     and Read access at read_remote(const void *, int)+0x960 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [47576 hazards]
+=========     and Read access at read_remote(const void *, int)+0xa80 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [102204 hazards]
+=========     and Read access at read_remote(const void *, int)+0xbd0 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [78168 hazards]
+=========     and Read access at read_remote(const void *, int)+0xd00 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [50612 hazards]
+========= 
+========= Error: Race reported between Write access at mw_d256_cluster_smoke+0x530 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:42
+=========     and Read access at read_remote(const void *, int)+0x960 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [48712 hazards]
+=========     and Read access at read_remote(const void *, int)+0xa80 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [93612 hazards]
+=========     and Read access at read_remote(const void *, int)+0xbd0 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [75604 hazards]
+=========     and Read access at read_remote(const void *, int)+0xd00 in b81f6e23a9756a49ff73f5b086e22b8537077e63e3f308e54bb98bad071d0bbf.cu:22 [45016 hazards]
+========= 
+========= RACECHECK SUMMARY: 6 hazards displayed (6 errors, 0 warnings)

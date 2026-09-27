@@ -1,0 +1,170 @@
+[
+  {
+    "kind": "core_fp64",
+    "length": 64,
+    "mask": "none",
+    "rows": 4,
+    "metrics": [
+      {
+        "baseline_relative_l2": 0.0024706987099744914,
+        "candidate_relative_l2": 0.002470711799977407
+      },
+      {
+        "baseline_relative_l2": 0.0024110047267563665,
+        "candidate_relative_l2": 0.002410996032588478
+      },
+      {
+        "baseline_relative_l2": 0.0023448354871689987,
+        "candidate_relative_l2": 0.0023448421892116877
+      },
+      {
+        "baseline_relative_l2": 0.002386055993161012,
+        "candidate_relative_l2": 0.002950448018938656
+      }
+    ]
+  },
+  {
+    "kind": "core_fp64",
+    "length": 64,
+    "mask": "mixed",
+    "rows": 4,
+    "metrics": [
+      {
+        "baseline_relative_l2": 0.002484487243375728,
+        "candidate_relative_l2": 0.002484494360106099
+      },
+      {
+        "baseline_relative_l2": 0.0024281208841914507,
+        "candidate_relative_l2": 0.002428083086897191
+      },
+      {
+        "baseline_relative_l2": 0.002346496238826536,
+        "candidate_relative_l2": 0.0023464745689643807
+      },
+      {
+        "baseline_relative_l2": 0.002420520428296861,
+        "candidate_relative_l2": 0.0029741717991107817
+      }
+    ]
+  },
+  {
+    "kind": "core_fp64",
+    "length": 64,
+    "mask": "one_key",
+    "rows": 4,
+    "metrics": [
+      {
+        "zero_reference": true,
+        "baseline_rms": 5.055551517841194e-08,
+        "candidate_rms": 5.055551517841194e-08
+      },
+      {
+        "zero_reference": true,
+        "baseline_rms": 4.9107561209296846e-08,
+        "candidate_rms": 4.9107561209296846e-08
+      },
+      {
+        "baseline_relative_l2": 0.00166333921240941,
+        "candidate_relative_l2": 0.00166333921240941
+      },
+      {
+        "zero_reference": true,
+        "baseline_rms": 2.822442361386341e-07,
+        "candidate_rms": 2.822442361386341e-07
+      }
+    ]
+  },
+  {
+    "kind": "core_fp64",
+    "length": 64,
+    "mask": "all_masked",
+    "rows": 4,
+    "metrics": {
+      "all_masked_zero": true
+    }
+  },
+  {
+    "kind": "core_fp64",
+    "length": 128,
+    "mask": "none",
+    "rows": 4,
+    "metrics": [
+      {
+        "baseline_relative_l2": 0.0024621524551328403,
+        "candidate_relative_l2": 0.0024621530395453105
+      },
+      {
+        "baseline_relative_l2": 0.00238593557804884,
+        "candidate_relative_l2": 0.0023859795231286267
+      },
+      {
+        "baseline_relative_l2": 0.002344218265988545,
+        "candidate_relative_l2": 0.002344213141798949
+      },
+      {
+        "baseline_relative_l2": 0.002387221902623959,
+        "candidate_relative_l2": 0.002915704241981796
+      }
+    ]
+  },
+  {
+    "kind": "core_fp64",
+    "length": 128,
+    "mask": "mixed",
+    "rows": 4,
+    "metrics": [
+      {
+        "baseline_relative_l2": 0.00246152565581925,
+        "candidate_relative_l2": 0.00246152621837507
+      },
+      {
+        "baseline_relative_l2": 0.0023926414226965813,
+        "candidate_relative_l2": 0.0023927104486256
+      },
+      {
+        "baseline_relative_l2": 0.002342272390711354,
+        "candidate_relative_l2": 0.0023422739454139166
+      },
+      {
+        "baseline_relative_l2": 0.0023953738297053852,
+        "candidate_relative_l2": 0.002910314910562236
+      }
+    ]
+  },
+  {
+    "kind": "core_fp64",
+    "length": 128,
+    "mask": "one_key",
+    "rows": 4,
+    "metrics": [
+      {
+        "zero_reference": true,
+        "baseline_rms": 5.1682051441423934e-08,
+        "candidate_rms": 5.1682051441423934e-08
+      },
+      {
+        "zero_reference": true,
+        "baseline_rms": 5.139776708449795e-08,
+        "candidate_rms": 5.139776708449795e-08
+      },
+      {
+        "baseline_relative_l2": 0.0016577050110928196,
+        "candidate_relative_l2": 0.0016577050110928196
+      },
+      {
+        "zero_reference": true,
+        "baseline_rms": 2.9475889936444196e-07,
+        "candidate_rms": 2.9475889936444196e-07
+      }
+    ]
+  },
+  {
+    "kind": "core_fp64",
+    "length": 128,
+    "mask": "all_masked",
+    "rows": 4,
+    "metrics": {
+      "all_masked_zero": true
+    }
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "length": 64,
+    "mode": "random",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "length": 64,
+    "mode": "mixed",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "length": 64,
+    "mode": "all_masked",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "length": 64,
+    "mode": "wide_exponents",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "length": 64,
+    "mode": "small",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "length": 64,
+    "mode": "large",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "length": 128,
+    "mode": "random",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "length": 128,
+    "mode": "mixed",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "length": 128,
+    "mode": "all_masked",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "length": 128,
+    "mode": "wide_exponents",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "length": 128,
+    "mode": "small",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  {
+    "length": 128,
+    "mode": "large",
+    "bitwise_equal": [
+      true,
+      true,
+      true,
+      true
+    ]
+  }
+]

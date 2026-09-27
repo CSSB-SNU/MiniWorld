@@ -1,0 +1,12 @@
+{
+  "torch": "2.10.0+cu128",
+  "python_abi": "cpython-310",
+  "arch": "sm_90a",
+  "sha256": {
+    "prologue.cu": "009f831f08ef7be008fc46c9b2a75bb18b50639db44ba531262d2472f859db8a",
+    "epilogue.cu": "81fcff6475f07de73218a34b4e1a219105294d6910a1c411f8372619dd922d52",
+    "checks.h": "d5ecd48a32291180052dff1a0f38d1aa82b7c40f93c697d37233eae57e1db231",
+    "bindings.cpp": "b7a04bebc8d3d0ab36ada1353f26ad71f55c077a567e2fbb2ae6b48eab5b85b8",
+    "triattn_native_surround.so": "4584536f4c6c31e15b0855f63adcce27b2e6432500ce8a100a6beabd13827c58"
+  }
+}

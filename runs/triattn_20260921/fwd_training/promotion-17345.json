@@ -1,0 +1,84 @@
+{
+  "job": "17345",
+  "artifact": "cooperative_q1_s2",
+  "baseline_artifact": "cooperative_q2",
+  "baseline_promotion": 17310,
+  "state": "complete",
+  "evidence": {
+    "artifact": "cooperative_q1_s2",
+    "qualify": 17336,
+    "bench": 17344,
+    "profile": 17337,
+    "sanitize": 17338
+  },
+  "backup": "/home/psk6950/MiniWorld/runs/triattn_20260921/fwd_training/before-17345",
+  "previous_manifest": {
+    "module_name": "triattn_training_cooperative_q2",
+    "binary": "triattn_training_cooperative_q2.so",
+    "artifact": "cooperative_q2",
+    "torch": "2.10.0+cu128",
+    "python_abi": "cpython-310",
+    "arch": "sm_90a",
+    "lengths": [
+      384,
+      768,
+      1024
+    ],
+    "query_tile": 64,
+    "key_tile": 64,
+    "threads": 128,
+    "kv_stages": 3,
+    "normalizer": "fp32_unrounded_probability_sum",
+    "lse": "fp32_base2",
+    "qualification_job": 17290,
+    "benchmark_job": 17289,
+    "profile_job": 17294,
+    "full_sanitizer_job": 17300,
+    "dispatcher": {
+      "path": "../triton/main.py",
+      "sha256": "de5673c82fe84236ff09e0f3c394faff56e2d6da2d4d025d447a0bbe6bcc22da"
+    },
+    "files": {
+      "training_forward.py": "10f00912a7010da430948af391ad634fb699004b1be34b8e0269ccc3c2d1e3a7",
+      "training_forward.cu": "cca26e9c3b192f9b0324561badf00603ce3d90cb0607d64153bff32124176de5",
+      "triattn_training_cooperative_q2.so": "64c4e6c8ad39394a645424f8bbc5e615a471705c652fe08123c408e483061b56",
+      "fa3_utils.h": "776172706a741081ba0a32058ca6d0ce94bea976a5689d0965b162eaf7f5d9cc"
+    }
+  },
+  "manifest": {
+    "module_name": "triattn_training_cooperative_q1_s2",
+    "binary": "triattn_training_cooperative_q1_s2.so",
+    "artifact": "cooperative_q1_s2",
+    "torch": "2.10.0+cu128",
+    "python_abi": "cpython-310",
+    "arch": "sm_90a",
+    "lengths": [
+      384,
+      768,
+      1024
+    ],
+    "query_tile": 64,
+    "key_tile": 64,
+    "threads": 128,
+    "kv_stages": 2,
+    "normalizer": "fp32_unrounded_probability_sum",
+    "lse": "fp32_base2",
+    "qualification_job": 17336,
+    "benchmark_job": 17344,
+    "profile_job": 17337,
+    "full_sanitizer_job": 17338,
+    "dispatcher": {
+      "path": "../triton/main.py",
+      "sha256": "de5673c82fe84236ff09e0f3c394faff56e2d6da2d4d025d447a0bbe6bcc22da"
+    },
+    "files": {
+      "training_forward.py": "10f00912a7010da430948af391ad634fb699004b1be34b8e0269ccc3c2d1e3a7",
+      "training_forward.cu": "a14575fadcc284328765a7765fea6d3d619da1bda01c414066d93e9682789bec",
+      "triattn_training_cooperative_q1_s2.so": "1ddeaccf71248be85a1471b36df7373f5e10e7662b1fdba2129db6a178b74873",
+      "fa3_utils.h": "776172706a741081ba0a32058ca6d0ce94bea976a5689d0965b162eaf7f5d9cc"
+    },
+    "baseline_promotion": 17310
+  },
+  "snapshot": "/home/psk6950/MiniWorld/runs/triattn_20260921/fwd_training/checkpoint17345",
+  "snapshot_files": 36
+}

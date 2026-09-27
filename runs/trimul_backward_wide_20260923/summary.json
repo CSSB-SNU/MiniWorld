@@ -1,0 +1,87 @@
+[
+  {
+    "D": 256,
+    "L": 384,
+    "selected": true,
+    "times_us": {
+      "old_b1": 1935.1040124893188,
+      "new_b1": 1802.7679920196533,
+      "old_backward": 4301.952123641968,
+      "new_backward": 4166.272163391113,
+      "old_full": 5238.303899765015,
+      "new_full": 5103.66415977478
+    },
+    "max_gradient_relative_l2": 0.006546471267938614,
+    "b1_reduction_pct": 6.838703222956388,
+    "backward_reduction_pct": 3.153916090911535,
+    "full_reduction_pct": 2.570292647516581
+  },
+  {
+    "D": 256,
+    "L": 768,
+    "selected": true,
+    "times_us": {
+      "old_b1": 7984.239816665649,
+      "new_b1": 7274.800062179565,
+      "old_backward": 17518.03207397461,
+      "new_backward": 16794.25621032715,
+      "old_full": 21220.49617767334,
+      "new_full": 20473.648071289062
+    },
+    "max_gradient_relative_l2": 0.006549954414367676,
+    "b1_reduction_pct": 8.88550157280168,
+    "backward_reduction_pct": 4.131604854878235,
+    "full_reduction_pct": 3.5194658038677606
+  },
+  {
+    "D": 384,
+    "L": 384,
+    "selected": true,
+    "times_us": {
+      "old_b1": 3179.759979248047,
+      "new_b1": 3038.048028945923,
+      "old_backward": 7584.975957870483,
+      "new_backward": 7471.712112426758,
+      "old_full": 9408.87975692749,
+      "new_full": 9223.632335662842
+    },
+    "max_gradient_relative_l2": 0.006524463649839163,
+    "b1_reduction_pct": 4.456687021252348,
+    "backward_reduction_pct": 1.4932657146552786,
+    "full_reduction_pct": 1.968857356565279
+  },
+  {
+    "D": 384,
+    "L": 768,
+    "selected": true,
+    "times_us": {
+      "old_b1": 13184.511661529541,
+      "new_b1": 12368.576049804688,
+      "old_backward": 31378.9119720459,
+      "new_backward": 30543.055534362793,
+      "old_full": 38496.28829956055,
+      "new_full": 37632.73620605469
+    },
+    "max_gradient_relative_l2": 0.006551883649080992,
+    "b1_reduction_pct": 6.188591831623413,
+    "backward_reduction_pct": 2.6637521352803173,
+    "full_reduction_pct": 2.2432087134897083
+  },
+  {
+    "D": 512,
+    "L": 384,
+    "selected": false,
+    "times_us": {
+      "old_b1": 4439.631938934326,
+      "new_b1": 4696.223974227905,
+      "old_backward": 11179.600238800049,
+      "new_backward": 11416.399955749512,
+      "old_full": 14025.66385269165,
+      "new_full": 14306.464195251465
+    },
+    "max_gradient_relative_l2": 0.006509392522275448,
+    "b1_reduction_pct": -5.779579001658641,
+    "backward_reduction_pct": -2.1181411847592146,
+    "full_reduction_pct": -2.0020467159985955
+  }
+]

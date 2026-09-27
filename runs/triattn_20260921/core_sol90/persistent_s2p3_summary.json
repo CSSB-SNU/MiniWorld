@@ -1,0 +1,542 @@
+[
+  {
+    "job": 14372,
+    "name": "persistkv2",
+    "installed": false,
+    "C7519_count": 4,
+    "C7512_count": 0,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "initial_results": {
+      "serving": {
+        "core_us": 880.5548858642578,
+        "block_us": 1376.9978332519531,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 813.4244
+      },
+      "persistkv2": {
+        "core_us": 1595.48828125,
+        "block_us": 2102.106170654297,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 1575.0220000000002
+      }
+    },
+    "status": "initial numerical check passed; slower; rejected"
+  },
+  {
+    "job": 14374,
+    "name": "persistkv2b4",
+    "installed": false,
+    "C7519_count": 4,
+    "C7512_count": 0,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "initial_results": {
+      "serving": {
+        "core_us": 883.7004852294922,
+        "block_us": 1381.6876220703125,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 816.9076000000002
+      },
+      "persistkv2b4": {
+        "core_us": 1244.6300506591797,
+        "block_us": 1739.7305297851562,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 1222.0584000000003
+      }
+    },
+    "status": "initial numerical check passed; slower; rejected"
+  },
+  {
+    "job": 14375,
+    "name": "persistkv2gb",
+    "installed": false,
+    "C7519_count": 2,
+    "C7512_count": 0,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "initial_results": {
+      "serving": {
+        "core_us": 881.5010833740234,
+        "block_us": 1375.2175903320312,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 813.7280000000003
+      },
+      "persistkv2gb": {
+        "core_us": 1370.9373474121094,
+        "block_us": 1869.2997741699219,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 1347.6347999999996
+      }
+    },
+    "status": "initial numerical check passed; slower; rejected"
+  },
+  {
+    "job": 14375,
+    "name": "persistkv2cp",
+    "installed": false,
+    "C7519_count": 4,
+    "C7512_count": 0,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "initial_results": {
+      "serving": {
+        "core_us": 880.9542083740234,
+        "block_us": 1356.1737060546875,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 812.1469999999997
+      },
+      "persistkv2cp": {
+        "core_us": 2974.7286987304688,
+        "block_us": 3485.5453491210938,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 2958.1418000000003
+      }
+    },
+    "status": "initial numerical check passed; slower; rejected"
+  },
+  {
+    "job": 14376,
+    "name": "m128s2p3ss",
+    "installed": false,
+    "C7519_count": 24,
+    "C7512_count": 0,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "initial_results": {
+      "serving": {
+        "core_us": 891.0643005371094,
+        "block_us": 1387.7993774414062,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 806.5591999999999
+      },
+      "m128s2p3ss": {
+        "core_us": 1010.9625244140625,
+        "block_us": 1468.42529296875,
+        "core_equal": false,
+        "core_rms_fp64": 0.00028883038126937974,
+        "core_delta_rms": 7.837030281704153e-06,
+        "hot_us": 896.5887999999999
+      }
+    },
+    "status": "initial numerical check passed; slower; rejected"
+  },
+  {
+    "job": 14376,
+    "name": "m128s2p3qr",
+    "installed": false,
+    "C7519_count": 24,
+    "C7512_count": 0,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "initial_results": {
+      "serving": {
+        "core_us": 888.8121795654297,
+        "block_us": 1386.5245056152344,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 810.4955999999999
+      },
+      "m128s2p3qr": {
+        "core_us": 993.6080169677734,
+        "block_us": 1443.1782531738281,
+        "core_equal": false,
+        "core_rms_fp64": 0.00028883038126937974,
+        "core_delta_rms": 7.837030281704153e-06,
+        "hot_us": 883.467
+      }
+    },
+    "status": "initial numerical check passed; slower; rejected"
+  },
+  {
+    "job": 14377,
+    "name": "m128s2p3sslate",
+    "installed": false,
+    "C7519_count": 24,
+    "C7512_count": 0,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "initial_results": {
+      "serving": {
+        "core_us": 896.5312194824219,
+        "block_us": 1384.0447998046875,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 812.2606
+      },
+      "m128s2p3sslate": {
+        "core_us": 1001.0079956054688,
+        "block_us": 1466.0496520996094,
+        "core_equal": false,
+        "core_rms_fp64": 0.00028883038126937974,
+        "core_delta_rms": 7.837030281704153e-06,
+        "hot_us": 902.3536000000001
+      }
+    },
+    "status": "initial numerical check passed; slower; rejected"
+  },
+  {
+    "job": 14377,
+    "name": "m128s2p3qrlate",
+    "installed": false,
+    "C7519_count": 24,
+    "C7512_count": 0,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "initial_results": {
+      "serving": {
+        "core_us": 888.2777404785156,
+        "block_us": 1385.6866455078125,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 807.4989999999998
+      },
+      "m128s2p3qrlate": {
+        "core_us": 995.8950042724609,
+        "block_us": 1453.255615234375,
+        "core_equal": false,
+        "core_rms_fp64": 0.00028883038126937974,
+        "core_delta_rms": 7.837030281704153e-06,
+        "hot_us": 880.8559999999998
+      }
+    },
+    "status": "initial numerical check passed; slower; rejected"
+  },
+  {
+    "job": 14378,
+    "name": "m128s2p3qrfull",
+    "installed": false,
+    "C7519_count": 24,
+    "C7512_count": 0,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "initial_results": {
+      "serving": {
+        "core_us": 899.4719696044922,
+        "block_us": 1400.4643249511719,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 808.4028
+      },
+      "m128s2p3qrfull": {
+        "core_us": 993.1680297851562,
+        "block_us": 1446.3133239746094,
+        "core_equal": false,
+        "core_rms_fp64": 0.00028883038126937974,
+        "core_delta_rms": 7.837030281704153e-06,
+        "hot_us": 883.7109999999999
+      }
+    },
+    "status": "initial numerical check passed; slower; rejected"
+  },
+  {
+    "job": 14378,
+    "name": "m128s2p3qrlatefull",
+    "installed": false,
+    "C7519_count": 24,
+    "C7512_count": 0,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "initial_results": {
+      "serving": {
+        "core_us": 893.7391662597656,
+        "block_us": 1405.6512451171875,
+        "core_equal": true,
+        "core_rms_fp64": 0.00028883485479432215,
+        "core_delta_rms": 0.0,
+        "hot_us": 806.1864
+      },
+      "m128s2p3qrlatefull": {
+        "core_us": 1004.9705505371094,
+        "block_us": 1450.0985717773438,
+        "core_equal": false,
+        "core_rms_fp64": 0.00028883038126937974,
+        "core_delta_rms": 7.837030281704153e-06,
+        "hot_us": 877.9399999999998
+      }
+    },
+    "status": "initial numerical check passed; slower; rejected"
+  },
+  {
+    "job": 14379,
+    "name": "m128s2p3qrn64",
+    "installed": false,
+    "C7519_count": 24,
+    "C7512_count": 1,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "status": "compiler resource screen rejected; no GPU launch"
+  },
+  {
+    "job": 14379,
+    "name": "m64s2p3qrr4",
+    "installed": false,
+    "C7519_count": 24,
+    "C7512_count": 1,
+    "spill_reports": [
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "88",
+        "116",
+        "188"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "status": "compiler resource screen rejected; no GPU launch"
+  }
+]

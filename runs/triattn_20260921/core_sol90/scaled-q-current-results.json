@@ -1,0 +1,41 @@
+{
+  "installed_changed": false,
+  "sol90_achieved": false,
+  "experiments": [
+    {
+      "name": "baseqscaledcurrentfull",
+      "job": 14934,
+      "installed": false,
+      "warnings": [
+        "C7512"
+      ],
+      "generic_and_safe_machine_words_match_installed": true,
+      "disposition": "reject_compiler"
+    },
+    {
+      "name": "baseqscaledcurrentthree",
+      "job": 14934,
+      "installed": false,
+      "warnings": [],
+      "generic_and_safe_machine_words_match_installed": true,
+      "disposition": "reject_latency",
+      "core_us": 1980.9919738769531,
+      "baseline_core_us": 872.7798461914062,
+      "fix_tiles": 2062,
+      "total_cta_tiles": 6144,
+      "fp64_rms": 0.000282642034123907,
+      "baseline_fp64_rms": 0.00028883485479432215,
+      "kernels": {
+        "triattn_tma_pro::prologue_tma(triattn_tma_pro::Params)": 276.03780000000006,
+        "broadcast_mask_stage(bool const*, long, long, int, int, int, int*, int*, unsigned char*, int*, int*, int*, int*, int*)": 3.6032000000001974,
+        "void ta_sol_baseqscaledcurrentthree::stage_bias_m1_kernel<float>(float const*, long, long, long, long, int, int, float, unsigned int const*, int, float*, int*)": 13.798400000000083,
+        "ta_sol_baseqscaledcurrentthree::prepare_scaled_qk(unsigned int const*, unsigned int const*, unsigned int*, unsigned int*, long, float, float)": 250.1435999999995,
+        "ta_sol_baseqscaledcurrentthree::prepare_scaled_bias(float const*, float*, long, float)": 11.775800000000254,
+        "void ta_sol_baseqscaledcurrentthree::triattn_m1_kernel<ta_sol_baseqscaledcurrentthree::Traits<1073741824> >(ta_sol_baseqscaledcurrentthree::Traits<1073741824>::Params)": 770.9744000000003,
+        "void ta_sol_baseqscaledcurrentthree::triattn_m1_kernel<ta_sol_baseqscaledcurrentthree::Traits<1024> >(ta_sol_baseqscaledcurrentthree::Traits<1024>::Params)": 958.8464,
+        "ta_sol_baseqscaledcurrentthree::uniform_rows_kernel(__nv_bfloat16 const*, long, long, long, long, __nv_bfloat16*, long, long, long, long, unsigned char const*, int, int, int)": 3.725000000000364,
+        "void triattn_tma_epi::epilogue_tma<768>(triattn_tma_epi::Params)": 208.0956000000001
+      }
+    }
+  ]
+}

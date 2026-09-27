@@ -1,0 +1,130 @@
+{
+  "entrypoint": "runs/trimul_training_current.py:Training",
+  "implementation": "runs/trimul_b7_joint_lncolumns_20260922/gate_policy.py:Training",
+  "policy": {
+    "keep_input_affine_xn": true,
+    "keep_tri": true,
+    "save_output_mean_rstd": true,
+    "save_output_xhat": false,
+    "save_output_affine_z": false
+  },
+  "production_ready": false,
+  "production_blocker": "Single-launch path is slower than the historical split path. Historical BF16 independent-reference issue remains; no tolerance was relaxed.",
+  "b1_implementation": {
+    "direct_dproj": true,
+    "early_raw_prefetch": true,
+    "remove_duplicate_sync": true,
+    "pair_weight_gemm": true,
+    "prefetch_dy": false,
+    "split_dnorm_prefetch": true,
+    "affine_both_warpgroups": true,
+    "pair_dnorm_gemm": true,
+    "dnorm_bf16_registers": true,
+    "param_reduction_shared": true,
+    "param_reduction_vectorized": false,
+    "dtri_store_overlaps_param_reduction": true,
+    "grid_barrier_before_gate": false,
+    "cta_barrier_before_raw_prefetch": true,
+    "defer_dgate_store_wait": true,
+    "skip_redundant_final_group_sync": true
+  },
+  "validation": "runs/trimul_b1_wait_folding_20260921/summary.json",
+  "config_by_length": {
+    "384": {
+      "count": 132,
+      "part": 2,
+      "defines": {
+        "GATE_PHASE": 1,
+        "LOWREG": 1,
+        "STREAM_LN": 1,
+        "B1_STREAM_AFFINE_UNROLL": 4,
+        "XHAT_FP32": -1,
+        "B1_DIRECT_DP": 1,
+        "B1_NO_REDUNDANT_SYNC": 1,
+        "PAIR_WP": 1,
+        "B1_EARLY_RAW": 1,
+        "B1_PREFETCH_DY": 0,
+        "B1_SPLIT_DN": 1,
+        "B1_AFFINE_BOTH": 1,
+        "B1_DTRI_STORE_C": 32,
+        "B1_DN_PAIR": 1,
+        "B1_DN_REG": 1,
+        "B1_REG_EARLY_RAW": 1,
+        "B1_PARAM_SHARED": 1,
+        "B1_PARAM_UNROLL": 4,
+        "B1_DTRI_ASYNC_EPI": 1,
+        "B1_LOCAL_GATE": 1,
+        "B1_ASYNC_WP_DN": 0,
+        "B1_DEFER_DG_STORE": 1,
+        "B1_WG_PARAM_SYNC": 0,
+        "B1_SKIP_FINAL_GROUP_SYNC": 1
+      }
+    },
+    "768": {
+      "count": 132,
+      "part": 2,
+      "defines": {
+        "GATE_PHASE": 1,
+        "LOWREG": 1,
+        "STREAM_LN": 1,
+        "B1_STREAM_AFFINE_UNROLL": 8,
+        "XHAT_FP32": -1,
+        "B1_DIRECT_DP": 1,
+        "B1_NO_REDUNDANT_SYNC": 1,
+        "PAIR_WP": 1,
+        "B1_EARLY_RAW": 1,
+        "B1_PREFETCH_DY": 0,
+        "B1_SPLIT_DN": 1,
+        "B1_AFFINE_BOTH": 1,
+        "B1_DTRI_STORE_C": 64,
+        "B1_DN_PAIR": 1,
+        "B1_DN_REG": 1,
+        "B1_REG_EARLY_RAW": 1,
+        "B1_PARAM_SHARED": 1,
+        "B1_PARAM_UNROLL": 4,
+        "B1_DTRI_ASYNC_EPI": 1,
+        "B1_LOCAL_GATE": 1,
+        "B1_ASYNC_WP_DN": 0,
+        "B1_DEFER_DG_STORE": 1,
+        "B1_WG_PARAM_SYNC": 0,
+        "B1_SKIP_FINAL_GROUP_SYNC": 1
+      }
+    }
+  },
+  "b7_implementation": {
+    "path": "runs/trimul_b7_joint_lncolumns_20260922/gate_policy.py:Training",
+    "launches": 1,
+    "cluster_ctas": 4,
+    "clusters": 30,
+    "threads_per_cta": 512,
+    "shared_bytes_per_cta": 229376,
+    "register_spill_bytes": 0,
+    "input_reads": "One logical load per pair element: xn,dleft,dright,dGate,raw x,residual. TMA multicast shares common inputs.",
+    "gp_glu_recomputations": 1,
+    "intermediate_activation_hbm_buffers": 0,
+    "dW_accumulation": "Persistent register accumulators and final FP32 gradient partial reduction in the same launch.",
+    "dX_partition": "Each CTA computes all hidden terms for a disjoint 32-column slice; LN also distributed."
+  },
+  "b7_validation": {
+    "full": [
+      "runs/trimul_b7_joint_lncolumns_20260922/full-check-L384.json",
+      "runs/trimul_b7_joint_lncolumns_20260922/full-check-L768.json"
+    ],
+    "sanitizers": [
+      "runs/trimul_b7_joint_lncolumns_20260922/sanitizer-L384.json",
+      "runs/trimul_b7_joint_lncolumns_20260922/sanitizer-L768.json"
+    ]
+  },
+  "development_constraint": {
+    "single_b7_launch_required": true,
+    "duplicate_large_input_reads_allowed": false,
+    "split_kernel_fallback": false,
+    "SoL90_achieved": false,
+    "speed_target_achieved": false
+  },
+  "b7_profile": "runs/trimul_b7_joint_lncolumns_20260922/report.json",
+  "b7_hardware_roofline_percent": {
+    "384": 11.976005643274032,
+    "768": 11.793960325143066
+  }
+}

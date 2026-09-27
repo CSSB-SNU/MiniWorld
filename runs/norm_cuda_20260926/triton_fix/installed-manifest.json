@@ -1,0 +1,14 @@
+{
+  "kernels/layernorm_linear/triton/fused.py": "2c1ba3d998c3696a05a7bc8051fa8ea2198f990f694d1b6c25dabbb0b19cf891",
+  "kernels/layernorm_linear/autograd.py": "735b2a7a91b246b44078ee75b4ed6c9f9bf816911d2a9af3c6a8be4378665cab",
+  "kernels/layernorm_linear/__init__.py": "db5984ef628d17c3e4f3309abe908889f3abc709f63d986e542e29973feab6d9",
+  "kernels/layernorm/dispatch.py": "24c67fa7ff8a104843dd13bef80796f679c0e2787a0e96010fc69140fd4b29ad",
+  "kernels/layernorm/compile_native.py": "9d6758fd40ed91cc16c9cb1a387be0ceb721ee9ed3624f981f4aaa458af87e12",
+  "kernels/drivers/layernorm_linear.py": "681417e4f5a8a9331b4ee07dc9f31fd66264a78465c4f236b7cf3c44850f6b66",
+  "autotune/configs/grid/rmsnorm_fwd_triton.csv": "9327b189b94e4c6bb6a000cfa6a15d55d4dbdeb7da47656116c9ad56161a1d2c",
+  "autotune/configs/grid/rmsnorm_bwd_triton.csv": "8f6bd7a325c67db3a8f236a7e626584b88f71f71cfe1fb5395a13c3da80d284a",
+  "autotune/data/rmsnorm_fwd_triton/NVIDIA H100 80GB HBM3 (sm90).json": "f0a38be04d0d77d7b2516b419913950b7f2d9696c9c7edf90e829d3364ba03bd",
+  "autotune/data/rmsnorm_bwd_triton/NVIDIA H100 80GB HBM3 (sm90).json": "f6a2c6e06bda0b7a9c41dede37ee1883fe51fae5c7d7bf2e678a83a8788c3a48",
+  "autotune/data/layernorm_linear_fwd_triton/NVIDIA H100 80GB HBM3 (sm90).json": "f897b164a0320e82f462f60220a75cc1b7caf993422e171bfa08a47eb2d3cd6c",
+  "autotune/data/ln_bwd_dispatch/NVIDIA_H100_80GB_HBM3_sm90_triton3.6.0.json": "fe295c258eddf7612887387630b3f18a55e0d7a6a4520164246c769fc6a8a19c"
+}

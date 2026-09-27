@@ -1,0 +1,3 @@
+#include <torch/extension.h>
+at::Tensor sol_forward_resident4m64s3qrloop6dep(at::Tensor,at::Tensor,at::Tensor,at::Tensor,c10::optional<at::Tensor>,double);
+PYBIND11_MODULE(TORCH_EXTENSION_NAME,m){m.def("forward",&sol_forward_resident4m64s3qrloop6dep);}

@@ -1,0 +1,632 @@
+{
+  "L": 768,
+  "job": "18415",
+  "candidate": {
+    "name": "saved_products",
+    "output_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/2c870841f0daade846238cd32330a0fe7e23cf6c4686a961694871013d630771.cubin",
+    "saved_bytes": 603979776,
+    "epi_grid": 1056,
+    "epi_threads": 256,
+    "input_stats": {
+      "name": "input_stats_gamma",
+      "front_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/b7bdf933f003fec9d35942d2b2b3983052d55f76510f144e28f5346580e7c455.cubin",
+      "cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/94fdff7c93105750240bfc6c0da9dab983c874779d75506d823b795dea77370b.cubin",
+      "stats_bytes": 4718592,
+      "smem": 99456,
+      "grid": 264
+    },
+    "dense_output_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/637e67ab243892cc4c601805f4143d69105e2cc746ab739bf355d98e03fb8b08.cubin",
+    "prefix_dx": {
+      "source_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/654b00e4605b9d0e33b578d5555b197d9576ddb29a906e49490a2210982ed7c5.cubin",
+      "copy_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/773f6c3f5126057a1173a100eab1aeddd81a0cc4979df4021b374b788eb1002b.cubin",
+      "input_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/db0055200c9e3662bdc496d0ed71e23cdc276c25b803ad704af3ba9a7edf7ef9.cubin",
+      "lt_index": 3,
+      "lt_algo": [
+        85899345986,
+        4294967331,
+        0,
+        844424930131969,
+        518849229225985,
+        60129542158,
+        292058693646,
+        0
+      ]
+    },
+    "lt": {
+      "proj": {
+        "index": 3,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "gate": {
+        "index": 2,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "dn": {
+        "index": 3,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "dwg": {
+        "index": 5,
+        "algo": [
+          81604378690,
+          141733920803,
+          2,
+          844424930131968,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "fw0": {
+        "index": 7,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "fw1": {
+        "index": 6,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "bc0": {
+        "index": 7,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "bc1": {
+        "index": 6,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "bc2": {
+        "index": 7,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "bc3": {
+        "index": 7,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "dwp": {
+        "index": 3,
+        "algo": [
+          90194313282,
+          68719476771,
+          2,
+          1407374883553283,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      }
+    },
+    "output_gate": {
+      "layout": "column_major_direct_dx_prefix",
+      "grid_factor": 4,
+      "dwg": {
+        "index": 5,
+        "algo": [
+          81604378690,
+          141733920803,
+          2,
+          844424930131968,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      }
+    }
+  },
+  "stress": [
+    {
+      "case": "normal",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00020835475879721344,
+        "dWproj": 0.0003491698589641601,
+        "dgamma_in": 1.4225784070731606e-06,
+        "dbeta_in": 1.093934542950592e-06,
+        "dgamma_out": 1.0621185992931714e-06,
+        "dbeta_out": 9.563923413224984e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 7.070426022437459e-07,
+        "dbeta_in": 6.272430255194195e-07,
+        "dgamma_out": 4.826931672141654e-07,
+        "dbeta_out": 4.53659879440238e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "changed",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00022844847990199924,
+        "dWproj": 0.00033057440305128694,
+        "dgamma_in": 1.3375346270549926e-06,
+        "dbeta_in": 1.0933803196166991e-06,
+        "dgamma_out": 9.360855415252445e-07,
+        "dbeta_out": 9.611246696294984e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 6.674679298157571e-07,
+        "dbeta_in": 6.278297632889007e-07,
+        "dgamma_out": 4.5322542518988485e-07,
+        "dbeta_out": 4.676820992699504e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "zero_gamma",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00024326154380105436,
+        "dWproj": 0.0003387287724763155,
+        "dgamma_in": 1.210537675433443e-06,
+        "dbeta_in": 9.410283041688672e-07,
+        "dgamma_out": 9.548865591568756e-07,
+        "dbeta_out": 9.770644737727707e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 6.297228196672222e-07,
+        "dbeta_in": 5.050226832281624e-07,
+        "dgamma_out": 4.6802045972071937e-07,
+        "dbeta_out": 4.911503310722765e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "mask_zero",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00025551076396368444,
+        "dWproj": 0.0003280949022155255,
+        "dgamma_in": 1.0950744808724266e-06,
+        "dbeta_in": 1.16524040549848e-06,
+        "dgamma_out": 0.0,
+        "dbeta_out": 7.789369647070998e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 5.7081183513219e-07,
+        "dbeta_in": 6.466199238275294e-07,
+        "dgamma_out": 0.0,
+        "dbeta_out": 4.534180391146947e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "dropout_zero",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 0.0,
+        "dbeta_in": 0.0,
+        "dgamma_out": 0.0,
+        "dbeta_out": 0.0
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 0.0,
+        "dbeta_in": 0.0,
+        "dgamma_out": 0.0,
+        "dbeta_out": 0.0
+      },
+      "passed": true
+    }
+  ],
+  "complete": true,
+  "config": {
+    "SHARED_CANDIDATE": "saved_products",
+    "SAVE_EPI_GRID": "1056",
+    "SAVE_EPI_THREADS": "256",
+    "GP_OFF": "1",
+    "GP_WARP": "1",
+    "DX_LN": "1",
+    "DX_WARP": "1",
+    "SAVE_NORM": "1",
+    "DX_N256": "0",
+    "DX_PIPE": "0",
+    "DX_SPLIT": "0",
+    "DX_IN_STATS": "0",
+    "DX_GAMMA_CACHE": "0",
+    "LN_THREADS": "128",
+    "LN_MINBLOCKS": "3",
+    "LN_AGG": "1",
+    "LN_CACHE": "0",
+    "LN_STATS_TMA": "0",
+    "LN_STORE_READ": "0",
+    "LN_GAMMA_SMEM": "0",
+    "DN_SLIM": "0"
+  },
+  "artifacts": [
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/637e67ab243892cc4c601805f4143d69105e2cc746ab739bf355d98e03fb8b08.cubin",
+      "sha256": "6d64be3b9f088d7e2f5175e9020734a53ffbb3fde1a15767c033c233b619a17c"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/b7bdf933f003fec9d35942d2b2b3983052d55f76510f144e28f5346580e7c455.cubin",
+      "sha256": "77c1c87546e2369d60bbd18294a5961e5c407461ae481d5d5d8264ce8eadfe88"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/94fdff7c93105750240bfc6c0da9dab983c874779d75506d823b795dea77370b.cubin",
+      "sha256": "0c349875633cac6d22642afeb98de0d73285dee3b6eb5e12aaccef0573cc6609"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/90c51e9d0c6f9a9df9d8d275ac10c07a504b0ba130677fd53f611754c19a85ba.cubin",
+      "sha256": "d3f17d253ebebdad5167993c9edc948e8a026978b24d2c50989c7e2da8027a1b"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/ff720ba4080e9c1bbee6a1b58dae664273e7b3f848382044e16b61aaf9d578f9.cubin",
+      "sha256": "07eaa351777c5f896ac82c7ef978b9d4186172bc4782aac4812f81b820d3a54a"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/c5174c5803de4fa40673b41b53ab83f175cdc2aa6f118499a1a28903093e5e98.cubin",
+      "sha256": "6d9f0fd9db28a6d93e3230d0068127034db83eee468243ed59e7f167227e0484"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/654b00e4605b9d0e33b578d5555b197d9576ddb29a906e49490a2210982ed7c5.cubin",
+      "sha256": "ff23614a553ea170afa19adb143f885d3c0b0d5a556a3a84c7519c127e0bc5fc"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/773f6c3f5126057a1173a100eab1aeddd81a0cc4979df4021b374b788eb1002b.cubin",
+      "sha256": "9f2575cc180efb5c6ebcb0555004587ca2f43175e143a0790a27ecda825c9bab"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/db0055200c9e3662bdc496d0ed71e23cdc276c25b803ad704af3ba9a7edf7ef9.cubin",
+      "sha256": "00d4318280ac0094c173f8473ab7f02cd8f55822bbea41ac7189ef551c10ac08"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/120b0badb5975189c465d21aac1c34a58ac9ee6e6034f80952e186139c804b1a.cubin",
+      "sha256": "ad22e9b140492b8e0693696acf61c7e5ecbf4fb4cbcc1a1e129e473760d0ee73"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/9f8e4992f9762ff61bdc829c5245492b92778e642dddbdec8ed193d12af8439b.cubin",
+      "sha256": "ab37bfca735def1c327a905e0bbc8d304bcc86b9660a6b4a4420aa4abfa64a37"
+    }
+  ],
+  "configuration": {
+    "output": [
+      "dense",
+      128,
+      1
+    ],
+    "source": "d256_saved_products",
+    "input_stats": true,
+    "input_gamma_cache": true,
+    "ln_threads": 128,
+    "ln_minblocks": 3,
+    "splits": 16,
+    "mask": "bulk",
+    "dx": "prefix_lt",
+    "input_ln": "cached_tma16_128_4",
+    "dx_lt": {
+      "index": 3,
+      "algo": [
+        85899345986,
+        4294967331,
+        0,
+        844424930131969,
+        518849229225985,
+        60129542158,
+        292058693646,
+        0
+      ]
+    },
+    "input_stats_used": false,
+    "lt": {
+      "proj": {
+        "index": 3,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "gate": {
+        "index": 2,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "dn": {
+        "index": 3,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "dwg": {
+        "index": 5,
+        "algo": [
+          81604378690,
+          141733920803,
+          2,
+          844424930131968,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "fw0": {
+        "index": 7,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "fw1": {
+        "index": 6,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "bc0": {
+        "index": 7,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "bc1": {
+        "index": 6,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "bc2": {
+        "index": 7,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "bc3": {
+        "index": 7,
+        "algo": [
+          124554051650,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "dwp": {
+        "index": 3,
+        "algo": [
+          90194313282,
+          68719476771,
+          2,
+          1407374883553283,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      }
+    },
+    "output_gate": {
+      "layout": "column_major_direct_dx_prefix",
+      "grid_factor": 4,
+      "dwg": {
+        "index": 5,
+        "algo": [
+          81604378690,
+          141733920803,
+          2,
+          844424930131968,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      }
+    },
+    "output_ln_stats": {
+      "tma": true,
+      "rows": 32,
+      "threads": 128,
+      "minblocks": 3
+    }
+  },
+  "pytorch_forward": 0.0033771188464015722,
+  "pytorch": {
+    "dx": 0.004852669779211283,
+    "dWL": 0.006024294067174196,
+    "dWLg": 0.0060372259467840195,
+    "dWR": 0.006043317262083292,
+    "dWRg": 0.0060419668443500996,
+    "dWgate": 0.006550160236656666,
+    "dWproj": 0.0061194319278001785,
+    "dgamma_in": 0.006028704345226288,
+    "dbeta_in": 0.004835848230868578,
+    "dgamma_out": 0.005779500585049391,
+    "dbeta_out": 0.0034693533089011908
+  }
+}
