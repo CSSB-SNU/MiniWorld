@@ -1,0 +1,472 @@
+{
+  "date": "2026-09-27",
+  "complete": true,
+  "counts": {
+    "deleted_local": 63,
+    "deleted_remote": 7,
+    "detached_worktrees": 10
+  },
+  "notes": [
+    "Every deleted local and remote branch tip was verified as an ancestor of the corresponding main before deletion.",
+    "Remote branches were deleted with atomic pushes and exact-SHA leases; final remote heads were read using git ls-remote.",
+    "The engine MPNN branches retain their original SHAs and now have local tracking branches.",
+    "Historical worktrees were detached by updating only HEAD metadata; commit IDs and index SHA256 values were unchanged.",
+    "The recorded main SHAs precede the MiniWorld documentation commit recording this cleanup. No source files or dependency pins changed.",
+    "FoldBench and StructCooker local main commits remain pinned; newer remote main commits were not applied."
+  ],
+  "repositories": [
+    {
+      "repo": "MiniWorld",
+      "path": "/home/psk6950/MiniWorld",
+      "main": "dc0f3d4e0212e4a7b7a115ea12c4f94326f08342",
+      "deleted_local": [
+        {
+          "branch": "archive/engine-migration-20260927",
+          "sha": "ece87165c4ebb40c361285c039e490b1ef61bf0c"
+        },
+        {
+          "branch": "archive/oldcode-repro-20260927",
+          "sha": "d3f79e2416e69dc829e92179f4898d6177ac6c86"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/miniworld",
+          "sha": "27b0abe6db44b1210c29f24bb720b7e3fc9ce13b"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/mw-engine-migration",
+          "sha": "bfe80f8fb353ae098a897285e45dfc6ff089c80b"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/mw-old-repro",
+          "sha": "85f13de872019170d0227763e33ab4d7862a950e"
+        },
+        {
+          "branch": "docs/h100-graph-validation-20260924",
+          "sha": "5b4357a181399d27c12cecdd2534ebf47870253b"
+        },
+        {
+          "branch": "feat/distogram-diffusion-v1.3",
+          "sha": "efca47f5c974e0034ecaa79875dbcc9c4b5ad225"
+        },
+        {
+          "branch": "fix/v2-data-loss-consistency",
+          "sha": "15ccef06ff69e6f338495040e1dea2e5a92a85b6"
+        },
+        {
+          "branch": "integrate/miniworld-dev-20260927",
+          "sha": "a00c4eaee65327604cdaeb9484ee7e926818eb1e"
+        },
+        {
+          "branch": "research/h100-experiments-20260927",
+          "sha": "df0d94b51d7de0e57210d29dde43e29192b0f164"
+        },
+        {
+          "branch": "research/swa-atom-fusion",
+          "sha": "20ea6ca6c764d333f9ff40e035db3ba2eeab1a8b"
+        }
+      ],
+      "deleted_remote": [],
+      "detached": [
+        {
+          "path": "/home/psk6950/MiniWorld-engine-migration",
+          "head": "ece87165c4ebb40c361285c039e490b1ef61bf0c",
+          "branch": "archive/engine-migration-20260927",
+          "index_sha256": "5917e35712b0aae99186b214aceafa040b2495af21ba4c064100545148f795b5"
+        },
+        {
+          "path": "/home/psk6950/MiniWorld-old",
+          "head": "d3f79e2416e69dc829e92179f4898d6177ac6c86",
+          "branch": "archive/oldcode-repro-20260927",
+          "index_sha256": "4284710e1110cf7839624cab736fb7f2a0546198203b9551639306fa819ca307"
+        }
+      ],
+      "remaining_local": [
+        "main dc0f3d4e0212e4a7b7a115ea12c4f94326f08342"
+      ],
+      "remaining_remote": [
+        "dc0f3d4e0212e4a7b7a115ea12c4f94326f08342\trefs/heads/main"
+      ]
+    },
+    {
+      "repo": "miniworld-engine",
+      "path": "/home/psk6950/miniworld-engine",
+      "main": "3026c6bcd55bf535b73a0645fd4258b41c3cb547",
+      "deleted_local": [
+        {
+          "branch": "archive/engine-h100-cache-20260927",
+          "sha": "f0014282684d8e9495b03033dd59a7a4f77c0e53"
+        },
+        {
+          "branch": "archive/engine-old-main-20260927",
+          "sha": "ce47f42bcba3df876b173323cea70a461d0b174f"
+        },
+        {
+          "branch": "archive/engine-wheel-fix-20260927",
+          "sha": "61294df387ccdcbc2fd7b5052dbf997458c24f8b"
+        },
+        {
+          "branch": "archive/h100-legacy-runtime-20260927",
+          "sha": "9b980af88a648f9e3325210c7555330c76eea628"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/engine-dit2",
+          "sha": "516b62c21e86198ba39a16c338de0c0670de4fae"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/engine-k1k3",
+          "sha": "37d61f816645f61564ddedda375bbf97cee31ec8"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/engine-old-main",
+          "sha": "b4c3f6c34ea54d1f4053c68a9424a8193c617c4c"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/engine-release",
+          "sha": "55304541ff28dbc914137d80ef6929f689ae1d9d"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/engine-tbwd",
+          "sha": "971992df6950a77c7db11c9f6ded4234e8d34627"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/engine-v2-proof",
+          "sha": "3e81f15cbae1dedb3b180626881665c38f791cfb"
+        },
+        {
+          "branch": "archive/transition-tuning-20260927",
+          "sha": "bb6045527db25a0f083dfe5a3e657b4ee1a65ce1"
+        },
+        {
+          "branch": "archive/transition-workspace-20260927",
+          "sha": "2254765abe9f7e9c8ab33a064cdac9a7cd22cdcc"
+        },
+        {
+          "branch": "archive/trimul-k1k3-local-20260927",
+          "sha": "af7a98477188857deb7506d42d48fa0dc65a48ca"
+        },
+        {
+          "branch": "archive/v2-proof-cache-20260927",
+          "sha": "ecd9256405c87f27e8b55ada5735164a853910fc"
+        },
+        {
+          "branch": "feat/autotune-cache-builder",
+          "sha": "25743ad8178e35b820d3c4b096653261b76e29cc"
+        },
+        {
+          "branch": "feat/cute-autotune-sweep",
+          "sha": "eebedbbc066b4a2b5484755399c84cf29d954776"
+        },
+        {
+          "branch": "feat/token-dit-train-core",
+          "sha": "fac86f90edbbd30c291ba65286d8d61c34d21e35"
+        },
+        {
+          "branch": "fix/transition-d64-input-barrier",
+          "sha": "0043b98037be7e3e6fb36e595b962f6bb4bdddf8"
+        },
+        {
+          "branch": "integrate/h100-dev-20260927",
+          "sha": "3026c6bcd55bf535b73a0645fd4258b41c3cb547"
+        },
+        {
+          "branch": "integrate/h100-research-runtime-20260927",
+          "sha": "ecaac5b44dcf343ad577b8352e08318dbc9fac16"
+        },
+        {
+          "branch": "perf/triton-norm-h100",
+          "sha": "c26be24503ba413cae9f0228085b297f183d9a2d"
+        },
+        {
+          "branch": "release/2.0.0",
+          "sha": "55304541ff28dbc914137d80ef6929f689ae1d9d"
+        },
+        {
+          "branch": "research/msa-inference",
+          "sha": "b47de812e8a82bc7ca1204e8db7bbbb6ffd5d42c"
+        },
+        {
+          "branch": "research/native-norm-h100",
+          "sha": "a96ea5f7bcdd6a5f955c4d9fceec1c58dad9b51a"
+        },
+        {
+          "branch": "research/token-dit-fused",
+          "sha": "e512d8c2eeb8e79266a9a48a9b1b88b841de709e"
+        },
+        {
+          "branch": "research/token-dit-overlap",
+          "sha": "516b62c21e86198ba39a16c338de0c0670de4fae"
+        },
+        {
+          "branch": "research/token-dit-overlap-evidence-20260927",
+          "sha": "6ad576908b3a4b461145e3eacb8616399cfcb7c3"
+        },
+        {
+          "branch": "research/transition-backward-fused",
+          "sha": "971992df6950a77c7db11c9f6ded4234e8d34627"
+        },
+        {
+          "branch": "research/transition-local-20260927",
+          "sha": "9d49491b5a89aec03ed57c4c506dd139777c4ace"
+        },
+        {
+          "branch": "research/triattn-installed-20260927",
+          "sha": "aa054b12d43e26d8b9abc0dd04e187b529f8aee6"
+        },
+        {
+          "branch": "research/trimul-k1k3-inference",
+          "sha": "37d61f816645f61564ddedda375bbf97cee31ec8"
+        },
+        {
+          "branch": "research/trimul-local-20260927",
+          "sha": "cf697a1719fc5f04f1714ad2f2876b6fe460e67b"
+        },
+        {
+          "branch": "tmp/autotune-bucket-cap-512",
+          "sha": "73458b542500c5b103eefbc5b16c29bc45dbfd4a"
+        }
+      ],
+      "deleted_remote": [
+        {
+          "branch": "cache/h100",
+          "sha": "1bc0803e3b2fef3b963fdc383e090c0adcccdb43"
+        },
+        {
+          "branch": "publish/h100-training-20260923",
+          "sha": "55304541ff28dbc914137d80ef6929f689ae1d9d"
+        },
+        {
+          "branch": "refactor/shape-key-unification",
+          "sha": "b20ab3eb36f1c53a06d60c714500b2ad0d4457c4"
+        }
+      ],
+      "detached": [
+        {
+          "path": "/home/psk6950/MiniWorld/.engine-v2-proof",
+          "head": "ecd9256405c87f27e8b55ada5735164a853910fc",
+          "branch": "archive/v2-proof-cache-20260927",
+          "index_sha256": "f63f6076d8a2fdd2c88bb780b832bb05b620ca3b847fe4e4edf26e1dbab84582"
+        },
+        {
+          "path": "/home/psk6950/miniworld-engine-dit",
+          "head": "e512d8c2eeb8e79266a9a48a9b1b88b841de709e",
+          "branch": "research/token-dit-fused",
+          "index_sha256": "2a5d56efb1e2a282c9f9f8c953f3b9ae3d540e7236c51f91616c0a96878c5a4c"
+        },
+        {
+          "path": "/home/psk6950/miniworld-engine-dit2",
+          "head": "6ad576908b3a4b461145e3eacb8616399cfcb7c3",
+          "branch": "research/token-dit-overlap-evidence-20260927",
+          "index_sha256": "189a84cebcf9ad65d144809c6b6819aaea2235ad6d2e35a4d4f02ad9f95de77b"
+        },
+        {
+          "path": "/home/psk6950/miniworld-engine-k1k3",
+          "head": "af7a98477188857deb7506d42d48fa0dc65a48ca",
+          "branch": "archive/trimul-k1k3-local-20260927",
+          "index_sha256": "ce1bdc89af0fbef0636c9df7b7b7e19646579514492ec1ad035bd17a55ffd7a9"
+        },
+        {
+          "path": "/home/psk6950/miniworld-engine-msa",
+          "head": "b47de812e8a82bc7ca1204e8db7bbbb6ffd5d42c",
+          "branch": "research/msa-inference",
+          "index_sha256": "836df9086fcaceee8b30e24be15bd1fd89d2f8f72fbf8b418df84c1141dd0c71"
+        },
+        {
+          "path": "/home/psk6950/miniworld-engine-tbwd",
+          "head": "2254765abe9f7e9c8ab33a064cdac9a7cd22cdcc",
+          "branch": "archive/transition-workspace-20260927",
+          "index_sha256": "f6c194ba3becc003ed7999d4442640f8c66a48f6dceb73791e83cbcc30fbf067"
+        },
+        {
+          "path": "/home/psk6950/miniworld-engine-tdt",
+          "head": "fac86f90edbbd30c291ba65286d8d61c34d21e35",
+          "branch": "feat/token-dit-train-core",
+          "index_sha256": "5ccc6748f1c6cd61db2094409ae05ec7d3f62d5c41c9d81e083a75b37846ca15"
+        }
+      ],
+      "remaining_local": [
+        "backup/mpnn-pre-rebase-20260913 aa5192654790d10092b2fe4962e8dcb85d5428e1",
+        "main 3026c6bcd55bf535b73a0645fd4258b41c3cb547",
+        "mpnn 73abd751f38089d8976923efe6736c77b2f5f073"
+      ],
+      "remaining_remote": [
+        "aa5192654790d10092b2fe4962e8dcb85d5428e1\trefs/heads/backup/mpnn-pre-rebase-20260913",
+        "3026c6bcd55bf535b73a0645fd4258b41c3cb547\trefs/heads/main",
+        "73abd751f38089d8976923efe6736c77b2f5f073\trefs/heads/mpnn"
+      ]
+    },
+    {
+      "repo": "team-gm",
+      "path": "/home/psk6950/MiniWorld/libs/team-gm",
+      "main": "1caa7ebabdc9c0762f0003bbeca32d5ce3002f98",
+      "deleted_local": [
+        {
+          "branch": "BioMol",
+          "sha": "0d464536aebb3c203baf1229665e6c222ef97fa4"
+        },
+        {
+          "branch": "archive/incomplete-publish-worktree-20260927",
+          "sha": "1ffa8b81201b0b953346cf844b9bc2eafcfe3b7a"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/team-gm",
+          "sha": "ba3c07f4909cfac369bf456d16614fe5a304902f"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/team-gm-incomplete-publish",
+          "sha": "aaf9356ccb8286bfb6d94b749c9269bc638f3bd0"
+        },
+        {
+          "branch": "exp/af3-refactor",
+          "sha": "a8891f56ec9d80073d2edede5c2990fdac6b1f64"
+        },
+        {
+          "branch": "exp/miniworld",
+          "sha": "ba3c07f4909cfac369bf456d16614fe5a304902f"
+        },
+        {
+          "branch": "feat/miniworld-engine-wiring-20260915",
+          "sha": "5d3f4a5b44c77bcc67958561ebd780773a95b001"
+        },
+        {
+          "branch": "fix/diffusion-valid-atom-loss",
+          "sha": "c9f5a51dca653217fbfb4a5801fbdec8f8d59935"
+        },
+        {
+          "branch": "integrate/miniworld-dev-20260927",
+          "sha": "1caa7ebabdc9c0762f0003bbeca32d5ce3002f98"
+        },
+        {
+          "branch": "integrate/miniworld-engine-wiring",
+          "sha": "aaf9356ccb8286bfb6d94b749c9269bc638f3bd0"
+        },
+        {
+          "branch": "psk_add_BioMol",
+          "sha": "dbe63e3a02a606155e202e9abf13029e8ba56092"
+        },
+        {
+          "branch": "research/swa-fused-h100",
+          "sha": "14f2c7396cbcd8b3c7b427a024a4a592b75f7c4d"
+        }
+      ],
+      "deleted_remote": [
+        {
+          "branch": "exp/miniworld",
+          "sha": "4a45ec8655996bee6bcead3469a21730359e37b9"
+        },
+        {
+          "branch": "foldforge/dense-families",
+          "sha": "52292ac40ea1ebdbe01c6cd88840774feedc1558"
+        },
+        {
+          "branch": "foldforge/msa-bucket-1024",
+          "sha": "786db730367efe42aaced3ec9e6c86a0d4a03edc"
+        },
+        {
+          "branch": "perf/trimul",
+          "sha": "3fbb02b77984fbbcf14f7a8d6163611c9ade5dee"
+        }
+      ],
+      "detached": [
+        {
+          "path": "/tmp/team-gm-exp-miniworld-publish",
+          "head": "1ffa8b81201b0b953346cf844b9bc2eafcfe3b7a",
+          "branch": "archive/incomplete-publish-worktree-20260927",
+          "index_sha256": "3e343801e4be1252d67c81b6ae0c5b9d0e607dd7de7d30c809d9e3edb5651763"
+        }
+      ],
+      "remaining_local": [
+        "main 1caa7ebabdc9c0762f0003bbeca32d5ce3002f98"
+      ],
+      "remaining_remote": [
+        "1caa7ebabdc9c0762f0003bbeca32d5ce3002f98\trefs/heads/main"
+      ]
+    },
+    {
+      "repo": "DataCooker",
+      "path": "/home/psk6950/MiniWorld/libs/datacooker",
+      "main": "74ea2bd8a6bfd14b3d6fb53953d4e7cf20c6f93b",
+      "deleted_local": [
+        {
+          "branch": "MiniWorld",
+          "sha": "dc3104d7be6d25f9e7bb8df731e3724e927f818d"
+        }
+      ],
+      "deleted_remote": [],
+      "detached": [],
+      "remaining_local": [
+        "main 74ea2bd8a6bfd14b3d6fb53953d4e7cf20c6f93b"
+      ],
+      "remaining_remote": [
+        "74ea2bd8a6bfd14b3d6fb53953d4e7cf20c6f93b\trefs/heads/main"
+      ]
+    },
+    {
+      "repo": "KmerFastAlign",
+      "path": "/home/psk6950/MiniWorld/libs/kmer_fast_align",
+      "main": "af22949618d01f12a514bcb280271f1409f918d5",
+      "deleted_local": [
+        {
+          "branch": "archive/local-build-20260927",
+          "sha": "af22949618d01f12a514bcb280271f1409f918d5"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/kmer-local-build",
+          "sha": "72a5cd922a649eebd551e920f6beeedd39694e18"
+        }
+      ],
+      "deleted_remote": [],
+      "detached": [],
+      "remaining_local": [
+        "main af22949618d01f12a514bcb280271f1409f918d5"
+      ],
+      "remaining_remote": [
+        "af22949618d01f12a514bcb280271f1409f918d5\trefs/heads/main"
+      ]
+    },
+    {
+      "repo": "FoldBench",
+      "path": "/home/psk6950/MiniWorld/libs/foldbench",
+      "main": "f5010fdd6f6c5a8455b8c076b990f62484e4e2be",
+      "deleted_local": [
+        {
+          "branch": "archive/local-target-selection-20260927",
+          "sha": "ce463f50af018d98a030b16b4210ab6de3335807"
+        },
+        {
+          "branch": "archive/pre-cleanup-20260927/foldbench",
+          "sha": "90a6033fed4fcb74d4f1304e932fd93b52d48a6c"
+        },
+        {
+          "branch": "feat/miniworld-evaluation",
+          "sha": "af25c944b9ddeb36f3548d3e680483df8d5d9fa3"
+        },
+        {
+          "branch": "integrate/miniworld-eval-20260927",
+          "sha": "f5010fdd6f6c5a8455b8c076b990f62484e4e2be"
+        }
+      ],
+      "deleted_remote": [],
+      "detached": [],
+      "remaining_local": [
+        "main f5010fdd6f6c5a8455b8c076b990f62484e4e2be"
+      ],
+      "remaining_remote": [
+        "4273f6877d82bd0b2fa476d1b2f34d121cbccc70\trefs/heads/main"
+      ]
+    },
+    {
+      "repo": "StructCooker",
+      "path": "/home/psk6950/MiniWorld/libs/structcooker",
+      "main": "2b1543e50075f8d9081282e7b3529ca041d993a9",
+      "deleted_local": [],
+      "deleted_remote": [],
+      "detached": [],
+      "remaining_local": [
+        "main 2b1543e50075f8d9081282e7b3529ca041d993a9"
+      ],
+      "remaining_remote": [
+        "8448b8cd7514a064910e758d2fcd232a50a6dc84\trefs/heads/main"
+      ]
+    }
+  ]
+}

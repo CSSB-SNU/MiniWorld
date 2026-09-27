@@ -1,8 +1,11 @@
 # MiniWorld 저장소와 개발 상태
 
 2026-09-27: MiniWorld, miniworld-engine, team-gm의 로컬·원격 작업 브랜치를 **main으로 통합**했다.
-예전 `integrate/*`, `research/*`, `archive/*` refs는 복구용으로 남겨두었으며,
-현재 코드를 조립하기 위해 별도 브랜치를 checkout할 필요는 없다.
+main에 포함된 로컬 브랜치 63개와 원격 브랜치 7개를 삭제했다.
+정리 대상 7개 저장소는 `main`을 사용하며, engine에는 `mpnn`과
+`backup/mpnn-pre-rebase-20260913`도 로컬·원격에 유지했다.
+삭제한 브랜치의 커밋은 main 이력에 남아 있고, 이름과 SHA는
+[브랜치 정리 기록](docs/repository-audit-20260927/branch-cleanup.json)에 보존했다.
 
 ## 현재 작업 경로
 
@@ -14,7 +17,8 @@
 
 `MiniWorld/.engine-release-2.0.0`은 engine main과 같은 커밋의 호환용 detached worktree다.
 기존 harness의 경로를 유지하기 위해 남겼다. 새 engine 수정은 canonical main에서 한다.
-그 외 과거 연구 worktree는 동결된 비교·복구 자료이며, 최신 실행 코드는 위 경로를 기준으로 한다.
+삭제 대상 브랜치를 사용하던 과거 worktree 10개는 HEAD와 index를 유지한 채
+detached HEAD로 전환했다. 파일은 그대로이며, 최신 실행 코드는 위 경로를 기준으로 한다.
 
 MiniWorld와 team-gm의 engine pin은 모두 `3026c6bcd55bf535b73a0645fd4258b41c3cb547`이다.
 `pixi.lock`과 `uv.lock`도 engine 2.0.0 및 같은 SHA로 맞췄다. engine의 의존성과 extras는
@@ -106,7 +110,7 @@ FoldBench의 MiniWorld adapter와 target 선택은
 [기준 revision](patches/dependencies/foldbench.json)으로 MiniWorld main에 포함했다.
 DataCooker/FoldBench/KmerFastAlign은 부모에서 무시하는 로컬 저장소이므로
 `--recurse-submodules`만으로 설치되지 않는다.
-DataCooker의 `gh-pages`는 생성된 사이트 배포 이력이므로 소스 main에 합치지 않는다.
+DataCooker의 과거 `gh-pages`는 생성된 사이트 배포 이력이므로 소스 main 통합에서 제외했다.
 
 새 서버에서는 MiniWorld main을 clone하고 `git submodule update --init --recursive`로
 정확한 team-gm/StructCooker gitlink를 복원한다. `pixi install -e cu128` 후
