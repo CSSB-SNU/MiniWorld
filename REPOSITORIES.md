@@ -25,7 +25,10 @@ MiniWorld와 team-gm의 engine pin은 모두 `afd54410a0bf59a204b6ca00af38909a68
 `pixi.lock`과 `uv.lock`도 engine 2.1.0 및 같은 SHA로 맞췄다. engine의 의존성과 extras는
 이전 pin과 동일함을 비교했고 다른 패키지 버전은 바꾸지 않았다.
 `.gitmodules`의 team-gm 추적 브랜치는 main이며, 실제 재현 기준은 커밋된 gitlink다.
-현재 설치된 Pixi 환경은 재설치하지 않았다. 소스/pin 정리와 설치 환경 갱신은 별개다.
+2026-09-27 서버 업데이트로 MiniWorld의 `cu128` 환경에는 위 SHA의 engine 2.1.0을
+설치했다. engine 개발 환경도 canonical main의 editable 2.1.0으로 갱신했다.
+다른 의존성 버전은 유지했고, 구버전 설치본과 미등록 파일은 백업했다.
+설치 경로·파일 비교·검사 결과는 [서버 설치 기록](docs/engine-install-v210-20260927.json)에 남겼다.
 
 ## v2.1.0 튜닝 정책
 
@@ -58,7 +61,7 @@ CPU 전체 job 19676: 3,967 passed / 16 failed / 279 skipped, GPU 1,002 deselect
 모든 CUDA 계열의 추론 tuning coverage는 아직이다. v2.1 release tag는 만들지 않았다.
 
 상세 정책과 검증: engine `docs/releases/2.1.0.md`, `2.1.0-cpu-validation.json`.
-현재 설치 환경은 바꾸지 않았으며 source pin과 실행 환경 버전을 혼동하지 않는다.
+위 두 설치 환경은 v2.1.0으로 갱신했다. 설치 확인은 GPU 성능·정확성 검증과 별개다.
 
 CUDA의 `default → expanded → 구조 variant` 확장 방향은
 [후속 개발 계획](docs/cuda-config-expansion-plan.md)에 기록했다. 아직 구현·실측 완료된

@@ -1,0 +1,94 @@
+{
+  "date": "2026-09-27",
+  "version": "2.1.0",
+  "source_commit": "afd54410a0bf59a204b6ca00af38909a684cf50f",
+  "environments": {
+    "cu128": {
+      "version": "2.1.0",
+      "source_commit": "afd54410a0bf59a204b6ca00af38909a684cf50f",
+      "import_path": "/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine",
+      "direct_url": {
+        "url": "file:///home/psk6950/miniworld-engine",
+        "vcs_info": {
+          "commit_id": "afd54410a0bf59a204b6ca00af38909a684cf50f",
+          "requested_revision": "afd54410a0bf59a204b6ca00af38909a684cf50f",
+          "vcs": "git"
+        }
+      },
+      "changed_packages": {
+        "miniworld-engine": [
+          "1.0.0",
+          "2.1.0"
+        ]
+      },
+      "packaged_files_compared": 1074,
+      "default_kernels": 112,
+      "default_candidates": 2981,
+      "native_ops": 21,
+      "unrecorded_package_files": [
+        "autotune/data/.merge.lock",
+        "autotune/data/trimul_inproj_masked_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/layernorm_bwd_split_cuda/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/layernorm_fwd_cuda/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/layernorm_linear_bwd_dx_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/layernorm_linear_fwd_foldstats_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/layernorm_linear_fwd_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/transition_bwd_dx_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/transition_bwd_gate_sm90_cuda/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/transition_fwd_b2b_sm90_cuda/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/transition_gate_bwd_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/transition_squeeze_residual_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/transition_swiglu_fwd_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/trimul_outproj_gemm_gate_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/trimul_output_bwd_rows_sm90_cute/NVIDIA H100 80GB HBM3 (sm90).json",
+        "autotune/data/trimul_input_dual_bwd_triton/NVIDIA H100 80GB HBM3 (sm90).json"
+      ],
+      "gpu_tested": false
+    },
+    "engine": {
+      "version": "2.1.0",
+      "source_commit": "afd54410a0bf59a204b6ca00af38909a684cf50f",
+      "import_path": "/home/psk6950/miniworld-engine/src/miniworld_engine",
+      "direct_url": {
+        "dir_info": {
+          "editable": true
+        },
+        "url": "file:///home/psk6950/miniworld-engine"
+      },
+      "changed_packages": {},
+      "packaged_files_compared": 0,
+      "default_kernels": 112,
+      "default_candidates": 2981,
+      "native_ops": 21,
+      "unrecorded_package_files": [],
+      "gpu_tested": false
+    }
+  },
+  "installation_job": 19684,
+  "verification_job": 19685,
+  "gpu_used": false,
+  "unrelated_dependency_versions_changed": false,
+  "installation_contract_tests_passed": 4,
+  "cli_help_passed": true,
+  "retired_unregistered_files": [
+    "autotune/configs/accuracy/transition_squeeze_residual_triton.csv",
+    "autotune/configs/blk128/transition_squeeze_residual_triton.csv",
+    "autotune/configs/blk16/transition_squeeze_residual_triton.csv",
+    "autotune/configs/blk32/transition_squeeze_residual_triton.csv",
+    "autotune/configs/blk64/transition_squeeze_residual_triton.csv",
+    "autotune/configs/mixed1/transition_squeeze_residual_triton.csv",
+    "autotune/configs/mixed2/transition_squeeze_residual_triton.csv",
+    "autotune/configs/warp4/transition_squeeze_residual_triton.csv",
+    "autotune/configs/warp8/transition_squeeze_residual_triton.csv",
+    "kernels/h100-retired.md",
+    "kernels/drivers/trimul_output.py",
+    "kernels/drivers/trimul_backward.py",
+    "kernels/checks/trimul_output.py",
+    "kernels/checks/trimul_backward.py"
+  ],
+  "backups": {
+    "cu128": "/home/psk6950/MiniWorld/runs/engine_install_v210_20260927/cu128/engine-before.tar",
+    "engine": "/home/psk6950/MiniWorld/runs/engine_install_v210_20260927/engine/engine-before.tar"
+  },
+  "qualification": "Installed-path and CPU checks only; no new GPU correctness, graph, sanitizer or performance qualification."
+}
