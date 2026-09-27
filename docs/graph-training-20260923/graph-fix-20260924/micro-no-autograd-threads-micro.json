@@ -1,0 +1,898 @@
+[
+  {
+    "micro": 0,
+    "recycle": 1,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 0,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 0,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 0,
+    "recycle": 1,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 1,
+    "recycle": 3,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 1,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 1,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 1,
+    "recycle": 3,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 2,
+    "recycle": 2,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 2,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 2,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 2,
+    "recycle": 2,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 3,
+    "recycle": 4,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 3,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 3,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 3,
+    "recycle": 4,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 4,
+    "recycle": 1,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 4,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 4,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 4,
+    "recycle": 1,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 5,
+    "recycle": 3,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 5,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 5,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 5,
+    "recycle": 3,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 6,
+    "recycle": 2,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 6,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 6,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 6,
+    "recycle": 2,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 7,
+    "recycle": 4,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 7,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 7,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 7,
+    "recycle": 4,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 8,
+    "recycle": 1,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 8,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 8,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 8,
+    "recycle": 1,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 9,
+    "recycle": 3,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 9,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 9,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 9,
+    "recycle": 3,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 10,
+    "recycle": 2,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 10,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 10,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 10,
+    "recycle": 2,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 11,
+    "recycle": 4,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 11,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 11,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 11,
+    "recycle": 4,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 12,
+    "recycle": 1,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 12,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 12,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 12,
+    "recycle": 1,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 13,
+    "recycle": 3,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 13,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 13,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 13,
+    "recycle": 3,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 14,
+    "recycle": 2,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 14,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 14,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 14,
+    "recycle": 2,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 15,
+    "recycle": 4,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 15,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 15,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 15,
+    "recycle": 4,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 16,
+    "recycle": 1,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 16,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 16,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 16,
+    "recycle": 1,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 17,
+    "recycle": 3,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 17,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 17,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 17,
+    "recycle": 3,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 18,
+    "recycle": 2,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 18,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 18,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 18,
+    "recycle": 2,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 19,
+    "recycle": 4,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 19,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 19,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 19,
+    "recycle": 4,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 20,
+    "recycle": 1,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 20,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 20,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 20,
+    "recycle": 1,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 21,
+    "recycle": 3,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 21,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 21,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 21,
+    "recycle": 3,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 22,
+    "recycle": 2,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 22,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 22,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 22,
+    "recycle": 2,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 23,
+    "recycle": 4,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 23,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 3.814697265625e-06,
+    "relative_l2": 0.00021683116210624576
+  },
+  {
+    "micro": 23,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 4.216545335111732e-08,
+    "relative_l2": 0.09268664568662643
+  },
+  {
+    "micro": 23,
+    "recycle": 4,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 24,
+    "recycle": 1,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 24,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 3.814697265625e-06,
+    "relative_l2": 0.00020572661014739424
+  },
+  {
+    "micro": 24,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 4.216545335111732e-08,
+    "relative_l2": 0.08685673773288727
+  },
+  {
+    "micro": 24,
+    "recycle": 1,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 25,
+    "recycle": 3,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 25,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 3.814697265625e-06,
+    "relative_l2": 0.00020975290681235492
+  },
+  {
+    "micro": 25,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 4.216545335111732e-08,
+    "relative_l2": 0.08460021764039993
+  },
+  {
+    "micro": 25,
+    "recycle": 3,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 26,
+    "recycle": 2,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 26,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 3.814697265625e-06,
+    "relative_l2": 0.0002057905658148229
+  },
+  {
+    "micro": 26,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 4.216546045654468e-08,
+    "relative_l2": 0.0862189307808876
+  },
+  {
+    "micro": 26,
+    "recycle": 2,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 27,
+    "recycle": 4,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 27,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 3.814697265625e-06,
+    "relative_l2": 0.00019985307881142944
+  },
+  {
+    "micro": 27,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 4.2165467561972036e-08,
+    "relative_l2": 0.09122214466333389
+  },
+  {
+    "micro": 27,
+    "recycle": 4,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 28,
+    "recycle": 1,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 28,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 3.814697265625e-06,
+    "relative_l2": 0.00020576246606651694
+  },
+  {
+    "micro": 28,
+    "recycle": 1,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 4.2165467561972036e-08,
+    "relative_l2": 0.09032721817493439
+  },
+  {
+    "micro": 28,
+    "recycle": 1,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 29,
+    "recycle": 3,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 29,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 3.814697265625e-06,
+    "relative_l2": 0.00019493987201713026
+  },
+  {
+    "micro": 29,
+    "recycle": 3,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 4.2165467561972036e-08,
+    "relative_l2": 0.08731251955032349
+  },
+  {
+    "micro": 29,
+    "recycle": 3,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 30,
+    "recycle": 2,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 30,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 7.62939453125e-06,
+    "relative_l2": 0.0002468230959493667
+  },
+  {
+    "micro": 30,
+    "recycle": 2,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 4.2165467561972036e-08,
+    "relative_l2": 0.08739001303911209
+  },
+  {
+    "micro": 30,
+    "recycle": 2,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 31,
+    "recycle": 4,
+    "name": "temp_embedder.proj_pb_mask.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  },
+  {
+    "micro": 31,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.to_value.weight",
+    "max_abs": 7.62939453125e-06,
+    "relative_l2": 0.0002458259114064276
+  },
+  {
+    "micro": 31,
+    "recycle": 4,
+    "name": "msa_module.blocks.0.msa_pair_weighted_averaging.ln_pair.bias",
+    "max_abs": 4.2165467561972036e-08,
+    "relative_l2": 0.08733361214399338
+  },
+  {
+    "micro": 31,
+    "recycle": 4,
+    "name": "pairformer_blocks.blocks.15.tri_multi.to_left.weight",
+    "max_abs": 0.0,
+    "relative_l2": 0.0
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "phase1a_job": 16976,
+  "phase1b_job": 16977,
+  "phase1b_dependency": "afterok:16976",
+  "world_size": 8,
+  "node": "node02",
+  "cuda_graph": true,
+  "compile": true,
+  "wandb_id": "tapgki9e",
+  "validated_ranks": 8,
+  "max_gradient_relative_l2": 7.4742788456205744e-06,
+  "losses_equal": true,
+  "observed_training_step": 47706
+}

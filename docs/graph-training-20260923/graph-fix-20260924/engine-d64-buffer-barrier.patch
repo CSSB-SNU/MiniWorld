@@ -1,0 +1,86 @@
+diff --git a/src/miniworld_engine/kernels/transition/cuda/fused_wide_sm90a.py b/src/miniworld_engine/kernels/transition/cuda/fused_wide_sm90a.py
+index f5fa16c6..8cd0a04b 100644
+--- a/src/miniworld_engine/kernels/transition/cuda/fused_wide_sm90a.py
++++ b/src/miniworld_engine/kernels/transition/cuda/fused_wide_sm90a.py
+@@ -63,8 +63,11 @@ def _ext(width: int, ctas: int):
+     """Build the extension for one channel width and SM count (both in the module name, so a second device with a
+     different multiprocessor count gets its own build rather than a silently wrong grid)."""
+     ensure_cuda_home()
++    # This change lives in an included header. Give the corrected D64 kernel
++    # its own cache identity instead of accepting a prebuilt pre-barrier binary.
++    revision = "_input_barrier_v1" if width == 64 else ""
+     return load_extension(
+-        name=f"transition_wide_sm90a_d{width}_c{ctas}",
++        name=f"transition_wide_sm90a_d{width}_c{ctas}{revision}",
+         sources=[str(_dir / "bind.cu"), *(str(_dir / s) for s in _SOURCES[width])],
+         extra_cuda_cflags=[*host_flags(), "-std=c++17", "-O3", *gencodes("90a"),
+                            f"-I{_dir.parent / 'anthropic_v5'}", f"-I{_dir}", f"-I{_dir / 'kernels'}",
+diff --git a/src/miniworld_engine/kernels/transition/cuda/wide/kernels/transition_bwd_d64.cu b/src/miniworld_engine/kernels/transition/cuda/wide/kernels/transition_bwd_d64.cu
+index 136e53d3..d8fa76b8 100644
+--- a/src/miniworld_engine/kernels/transition/cuda/wide/kernels/transition_bwd_d64.cu
++++ b/src/miniworld_engine/kernels/transition/cuda/wide/kernels/transition_bwd_d64.cu
+@@ -361,6 +361,10 @@ TMN_DEVI void input_role(const Par& p, uint8_t* sm, int cta, int tid, int wg, in
+         row[64 + col] += dbp[2 * g]; row[64 + col + 1] += dbp[2 * g + 1];
+       }
+     }
++    // Every warp must finish the scalar x/dy loads in the LN+residual
++    // epilogue before either warpgroup leader releases this input slot.
++    // A leader can otherwise refill it while another warp still reads it.
++    named_bar_sync(1, 256);
+     if (wtid == 0) mbar_arrive(in_free + buf);
+     if (tid == 0 && i + 2 < n_local) { mbar_wait(in_free + buf, (i >> 1) & 1); issue_in(i + 2); }
+   }
+diff --git a/tests/numerics/test_transition_wide_sm90a_gpu.py b/tests/numerics/test_transition_wide_sm90a_gpu.py
+index 20e2578d..d1bf4bcb 100644
+--- a/tests/numerics/test_transition_wide_sm90a_gpu.py
++++ b/tests/numerics/test_transition_wide_sm90a_gpu.py
+@@ -164,6 +164,49 @@ def test_replay_is_bit_identical(d, monkeypatch):
+             assert torch.equal(first[name], second[name]), f"D{d} {name}"
+ 
+ 
++@needs_hopper
++def test_d64_persistent_input_buffer_reuse(monkeypatch):
++    """Exercise many refills per CTA, including under Compute Sanitizer.
++
++    The small width tests have fewer tiles than input CTAs and cannot expose
++    a leader releasing the shared input slot before the other warps finish.
++    This shape is the training MSA (1024 rows x 384 tokens).
++    """
++    from miniworld_engine import settings
++
++    monkeypatch.setattr(settings, "_ACTIVE", settings.current())
++    settings.configure(engine_backend="auto", transition_residual_fusion=True,
++                       transition_fused_sm90a=True)
++    module, x, dy = _build((1, 1024, 384, 64))
++    x.requires_grad_()
++    params = [x, *module.parameters()]
++    for p in params:
++        p.grad = torch.zeros_like(p)
++
++    def step():
++        for p in params:
++            p.grad.zero_()
++        module(x).backward(dy)
++
++    stream = torch.cuda.Stream()
++    stream.wait_stream(torch.cuda.current_stream())
++    with torch.cuda.stream(stream):
++        for _ in range(3):
++            step()
++        graph = torch.cuda.CUDAGraph()
++        with torch.cuda.graph(graph, stream=stream):
++            step()
++    torch.cuda.current_stream().wait_stream(stream)
++    expected = [p.grad.clone() for p in params]
++    for i in range(30):
++        if i % 2:
++            graph.replay()
++        else:
++            step()
++        for p, reference in zip(params, expected):
++            torch.testing.assert_close(p.grad, reference, rtol=0, atol=0)
++
++
+ @needs_hopper
+ @pytest.mark.parametrize("d", [384, 512])
+ def test_saved_h_changes_nothing_but_the_kernel(d, monkeypatch):

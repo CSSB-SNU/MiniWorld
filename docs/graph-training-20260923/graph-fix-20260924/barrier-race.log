@@ -1,0 +1,7 @@
+========= COMPUTE-SANITIZER
+/home/psk6950/MiniWorld/runs/graph-fix-20260924/transition-input-barrier/race.py:52: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  rows.append(dict(i=i,out_abs=float((y.float()-refout.float()).abs().max()),errors=errors))
+eager [('x', 0.0), ('ln_in.weight', 0.0), ('ln_in.bias', 0.0), ('expand_a.weight', 0.0), ('expand_b.weight', 0.0), ('squeeze.weight', 0.0)]
+graph [('x', 0.0), ('ln_in.weight', 0.0), ('ln_in.bias', 0.0), ('expand_a.weight', 0.0), ('expand_b.weight', 0.0), ('squeeze.weight', 0.0)]
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

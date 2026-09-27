@@ -1,0 +1,52 @@
+[
+  {
+    "name": "pwa_dw_bmm",
+    "shape": [
+      8,
+      384,
+      32768,
+      384
+    ],
+    "True": {
+      "median_ms": 0.2428000047802925,
+      "kernels": [
+        "nvjet_tst_128x80_64x8_1x1_v_bz_TNT"
+      ]
+    },
+    "False": {
+      "median_ms": 0.2446720004081726,
+      "kernels": [
+        "nvjet_tst_128x80_64x8_1x1_v_bz_TNT"
+      ]
+    },
+    "max_abs": 0.0,
+    "relative_l2": 0.0,
+    "unequal_elements": 0
+  },
+  {
+    "name": "template_pb_mask_dw",
+    "shape": [
+      1,
+      64,
+      147456,
+      1
+    ],
+    "True": {
+      "median_ms": 0.047439999878406525,
+      "kernels": [
+        "nvjet_tst_64x8_64x16_1x1_v_bz_splitK_TNT",
+        "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+      ]
+    },
+    "False": {
+      "median_ms": 0.04737599939107895,
+      "kernels": [
+        "nvjet_tst_64x8_64x16_1x1_v_bz_splitK_TNT",
+        "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)"
+      ]
+    },
+    "max_abs": 0.0,
+    "relative_l2": 0.0,
+    "unequal_elements": 0
+  }
+]

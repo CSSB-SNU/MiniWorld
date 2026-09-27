@@ -1,0 +1,44 @@
+{
+  "correctness": {
+    "initial": {
+      "ranks": 8,
+      "max_gradient_relative_l2": 2.5539914076944115e-06,
+      "losses_bit_equal": true
+    },
+    "after_optimizer": {
+      "ranks": 8,
+      "max_gradient_relative_l2": 2.8018580451316666e-06,
+      "losses_bit_equal": true
+    }
+  },
+  "speed": {
+    "1": {
+      "before_ms": 64.5014419555664,
+      "after_ms": 64.40447998046875,
+      "change_percent": -0.15032528290522817
+    },
+    "2": {
+      "before_ms": 80.7636489868164,
+      "after_ms": 80.78934478759766,
+      "change_percent": 0.03181604732278576
+    },
+    "3": {
+      "before_ms": 97.09024047851562,
+      "after_ms": 96.79462432861328,
+      "change_percent": -0.30447565939211163
+    },
+    "4": {
+      "before_ms": 113.17113494873047,
+      "after_ms": 113.26553344726562,
+      "change_percent": 0.08341216917009397
+    }
+  },
+  "jobs": {
+    "stress": 16972,
+    "saved_full_model": 16973,
+    "fresh_eight_gpu": 16974,
+    "gpu_tests": 16975,
+    "phase1a": 16976,
+    "phase1b_afterok": 16977
+  }
+}

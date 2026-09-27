@@ -1,0 +1,22 @@
+{
+  "speed-on": {
+    "1": 64.397216796875,
+    "2": 80.66716766357422,
+    "3": 97.16146850585938,
+    "4": 113.04630279541016
+  },
+  "speed-off": {
+    "1": 64.5014419555664,
+    "2": 80.7636489868164,
+    "3": 97.09024047851562,
+    "4": 113.17113494873047
+  },
+  "relative_change_percent": {
+    "1": 0.16184730315311757,
+    "2": 0.11960420334151678,
+    "3": -0.07330892424650681,
+    "4": 0.11042568419616927
+  },
+  "scope": "25 measured CUDA graph fwd+bwd replays per recycle, cached same input, no loader/optimizer/NCCL; sequential on/off jobs, not production throughput",
+  "trace_result": "PWA bmm output and LN gradient matched with instrumentation, including 32 accumulated backwards before/after Adam. Instrumented execution did not reproduce the failure; this is not proof that the uninstrumented run is correct."
+}
