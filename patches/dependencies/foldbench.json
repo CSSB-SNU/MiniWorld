@@ -1,0 +1,7 @@
+{
+  "upstream": "https://github.com/BEAM-Labs/FoldBench.git",
+  "base": "90a6033fed4fcb74d4f1304e932fd93b52d48a6c",
+  "local_main": "f5010fdd6f6c5a8455b8c076b990f62484e4e2be",
+  "apply": "git apply --index /path/to/MiniWorld/patches/dependencies/foldbench-miniworld.patch",
+  "note": "MiniWorld adapter and local target selection. Third-party upstream is not a publication target for this task."
+}

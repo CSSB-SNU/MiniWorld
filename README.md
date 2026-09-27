@@ -32,7 +32,7 @@ See [backend selection and scope](docs/triton-backend-option.md), and the
 [full-model CUDA graph training comparison](docs/miniworld-training-cudagraph-ab.md).
 
 Check out the pinned submodules, install the selected Pixi environment, and
-apply the patches to the pinned `miniworld-engine` package:
+check the pinned `miniworld-engine` package:
 
 ```bash
 git submodule update --init --recursive
@@ -40,8 +40,9 @@ pixi install -e cu128
 pixi run -e cu128 engine-setup
 ```
 
-Run `engine-setup` again after reinstalling the engine dependency. It checks
-source compatibility and is safe to repeat. FlashAttention and MathDx kernel
+Run `engine-setup` again after reinstalling the engine dependency. It verifies
+the consolidated engine version, recorded Git pin and required source files.
+The old 1.x patch stack is historical and is not reapplied to main. FlashAttention and MathDx kernel
 prerequisites still need to be available for the selected GPU backend; see the
 environment comments in [pyproject.toml](pyproject.toml).
 

@@ -1,0 +1,165 @@
+=================================== FAILURES ===================================
+_____________ test_inventory_does_not_add_an_unreached_b2b_driver ______________
+tests/autotune/test_compact_search_space.py:85: in test_inventory_does_not_add_an_unreached_b2b_driver
+    rows, _ = sweep_page.collect()
+src/miniworld_engine/viz/sweep_page.py:157: in collect
+    evidence = plan.load("sm86")
+src/miniworld_engine/autotune/plan.py:52: in load
+    raise ValueError("kernel derivation is incomplete or stale; run dev derive")
+E   ValueError: kernel derivation is incomplete or stale; run dev derive
+_ test_a_dispatch_cache_is_wellformed[ln_bwd_dispatch/NVIDIA_H100_80GB_HBM3_sm90_triton3.6.0] _
+tests/autotune/test_shipped_cache_wellformed.py:128: in test_a_dispatch_cache_is_wellformed
+    assert fields[-1].isdigit(), f"{key!r}: the last field must be the shape it was tuned at"
+E   AssertionError: '1024|8192|torch.bfloat16|torch.float32': the last field must be the shape it was tuned at
+E   assert False
+E    +  where False = <built-in method isdigit of str object at 0x7f196d80d830>()
+E    +    where <built-in method isdigit of str object at 0x7f196d80d830> = 'torch.float32'.isdigit
+__________________ test_every_jit_load_goes_through_the_guard __________________
+tests/builder/test_jit_build_lock.py:113: in test_every_jit_load_goes_through_the_guard
+    assert not offenders, (
+E   AssertionError: these import torch's `load` directly and so can still hang on a leftover lock: ['kernels/triangle_attention/cuda/build_bias.py:10', 'kernels/triangle_attention/cuda/build_dq.py:10', 'kernels/triangle_attention/cuda/build_gate.py:10', 'kernels/triangle_attention/cuda/build_ln.py:10', 'kernels/triangle_attention/cuda/build_native.py:10', 'kernels/triangle_attention/cuda/build_wgrad.py:10']. Use kernels._nvcc.load_extension.
+E   assert not ['kernels/triangle_attention/cuda/build_bias.py:10', 'kernels/triangle_attention/cuda/build_dq.py:10', 'kernels/triang...d_ln.py:10', 'kernels/triangle_attention/cuda/build_native.py:10', 'kernels/triangle_attention/cuda/build_wgrad.py:10']
+__________ test_every_launcher_is_opaque_or_only_reached_through_one ___________
+tests/compile/test_compile_wrap_coverage.py:154: in test_every_launcher_is_opaque_or_only_reached_through_one
+    assert not bad, (
+E   AssertionError: these launch a kernel on a path Dynamo can reach, but are not opaque ops:
+E       kernels/trimul_inproj/cuda/_h100_pack.py:27 pack_into
+E   assert not ['kernels/trimul_inproj/cuda/_h100_pack.py:27 pack_into']
+____________________ test_op_names_start_with_their_family _____________________
+tests/compile/test_compile_wrap_coverage.py:243: in test_op_names_start_with_their_family
+    assert not bad, (
+E   AssertionError: these op names do not start with a known family; either rename them or add the family to OP_FAMILIES (and say why it is a family):
+E       backward  (kernels/norm_cuda/__init__.py)
+E       forward  (kernels/norm_cuda/__init__.py)
+E       linear_forward  (kernels/norm_cuda/linear.py)
+E       triangle_four_weight_grad_cuda  (kernels/triangle_attention/cuda/wgrad_backward.py)
+E       triangle_gate_delta_cuda  (kernels/triangle_attention/cuda/gate_backward.py)
+E       triangle_projection_dgrad_cuda  (kernels/triangle_attention/cuda/__init__.py)
+E       triangle_projection_ln_residual_cuda  (kernels/triangle_attention/cuda/ln_backward.py)
+E       triangle_q_projection_attention_cuda  (kernels/triangle_attention/cuda/q_projection_attention.py)
+E       triangle_qg_projection_attention_cuda  (kernels/triangle_attention/cuda/qg_projection_attention.py)
+E       triangle_qkv_projection_attention_cuda  (kernels/triangle_attention/cuda/qkv_projection_attention.py)
+E   assert not {'backward': 'kernels/norm_cuda/__init__.py', 'forward': 'kernels/norm_cuda/__init__.py', 'linear_forward': 'kernels/norm_cuda/linear.py', 'triangle_four_weight_grad_cuda': 'kernels/triangle_attention/cuda/wgrad_backward.py', ...}
+________________ test_nothing_bypasses_the_compile_wrap_switch _________________
+tests/compile/test_compile_wrap_coverage.py:265: in test_nothing_bypasses_the_compile_wrap_switch
+    assert not offenders, ("these register ops outside kernels._compile.opaque, so compile_wrap "
+E   AssertionError: these register ops outside kernels._compile.opaque, so compile_wrap does not reach them:
+E       kernels/augmented_attention/cuda/__init__.py
+E       kernels/norm_cuda/__init__.py
+E       kernels/norm_cuda/linear.py
+E   assert not ['kernels/augmented_attention/cuda/__init__.py', 'kernels/norm_cuda/__init__.py', 'kernels/norm_cuda/linear.py']
+________________ test_every_op_and_fake_is_written_the_same_way ________________
+tests/compile/test_fake_matches_body.py:154: in test_every_op_and_fake_is_written_the_same_way
+    assert not problems, "op/fake convention:\n  " + "\n  ".join(problems)
+E   AssertionError: op/fake convention:
+E       layernorm_linear_fwd_stats  (kernels/layernorm_linear/triton/fused.py): fake is called '_with_stats_fake', expected _layernorm_linear_triton_fwd_stats_fake
+E       layernorm_linear_fwd_stats  (kernels/layernorm_linear/triton/fused.py): the fake has no docstring
+E       triangle_projection_dgrad_cuda  (kernels/triangle_attention/cuda/__init__.py): fake is called '_fake', expected _dgrad_fake
+E       triangle_projection_dgrad_cuda  (kernels/triangle_attention/cuda/__init__.py): the fake has no docstring
+E       triangle_projection_dgrad_cuda  (kernels/triangle_attention/cuda/__init__.py): the op has no docstring
+E       triangle_attention_grouped_bwd_cuda  (kernels/triangle_attention/cuda/bias_backward.py): fake is called '_fake', expected _backward_fake
+E       triangle_attention_grouped_bwd_cuda  (kernels/triangle_attention/cuda/bias_backward.py): the fake has no docstring
+E       triangle_attention_grouped_bwd_cuda  (kernels/triangle_attention/cuda/bias_backward.py): the op has no docstring
+E       triangle_gate_delta_cuda  (kernels/triangle_attention/cuda/gate_backward.py): fake is called '_gate_fake', expected _gate_backward_fake
+E       triangle_gate_delta_cuda  (kernels/triangle_attention/cuda/gate_backward.py): the fake has no docstring
+E       triangle_gate_delta_cuda  (kernels/triangle_attention/cuda/gate_backward.py): the op has no docstring
+E       triangle_attention_precomputed_delta_cuda  (kernels/triangle_attention/cuda/gate_backward.py): fake is called '_attention_fake', expected _attention_backward_fake
+E       triangle_attention_precomputed_delta_cuda  (kernels/triangle_attention/cuda/gate_backward.py): the fake has no docstring
+E       triangle_attention_precomputed_delta_cuda  (kernels/triangle_attention/cuda/gate_backward.py): the op has no docstring
+E       triangle_projection_ln_residual_cuda  (kernels/triangle_attention/cuda/ln_backward.py): fake is called '_fake', expected _backward_fake
+E       triangle_projection_ln_residual_cuda  (kernels/triangle_attention/cuda/ln_backward.py): the fake has no docstring
+E       triangle_projection_ln_residual_cuda  (kernels/triangle_attention/cuda/ln_backward.py): the op has no docstring
+E       triangle_q_projection_attention_cuda  (kernels/triangle_attention/cuda/q_projection_attention.py): fake is called '_fake', expected _native_fake
+E       triangle_q_projection_attention_cuda  (kernels/triangle_attention/cuda/q_projection_attention.py): the fake has no docstring
+E       triangle_q_projection_attention_cuda  (kernels/triangle_attention/cuda/q_projection_attention.py): the op has no docstring
+E       triangle_qg_projection_attention_cuda  (kernels/triangle_attention/cuda/qg_projection_attention.py): fake is called '_fake', expected _native_fake
+E       triangle_qg_projection_attention_cuda  (kernels/triangle_attention/cuda/qg_projection_attention.py): the fake has no docstring
+E       triangle_qg_projection_attention_cuda  (kernels/triangle_attention/cuda/qg_projection_attention.py): the op has no docstring
+E       triangle_qkv_projection_attention_cuda  (kernels/triangle_attention/cuda/qkv_projection_attention.py): fake is called '_fake', expected _native_fake
+E       triangle_qkv_projection_attention_cuda  (kernels/triangle_attention/cuda/qkv_projection_attention.py): the fake has no docstring
+E       triangle_qkv_projection_attention_cuda  (kernels/triangle_attention/cuda/qkv_projection_attention.py): the op has no docstring
+E       triangle_four_weight_grad_cuda  (kernels/triangle_attention/cuda/wgrad_backward.py): fake is called '_fake', expected _backward_fake
+E       triangle_four_weight_grad_cuda  (kernels/triangle_attention/cuda/wgrad_backward.py): the fake has no docstring
+E       triangle_four_weight_grad_cuda  (kernels/triangle_attention/cuda/wgrad_backward.py): the op has no docstring
+E       trimul_h100_single_stream_train_fwd  (kernels/trimul_inproj/cuda/h100_single.py): the fake has no docstring
+E       trimul_h100_single_stream_train_fwd  (kernels/trimul_inproj/cuda/h100_single.py): the op has no docstring
+E       trimul_h100_single_stream_train_bwd  (kernels/trimul_inproj/cuda/h100_single.py): the fake has no docstring
+E       trimul_h100_single_stream_train_bwd  (kernels/trimul_inproj/cuda/h100_single.py): the op has no docstring
+E       trimul_h100_dropout_nograd  (kernels/trimul_inproj/cuda/h100_training.py): fake= must be a named module-level function, not a lambda
+E   assert not ["layernorm_linear_fwd_stats  (kernels/layernorm_linear/triton/fused.py): fake is called '_with_stats_fake', expected ...ed_bwd_cuda  (kernels/triangle_attention/cuda/bias_backward.py): fake is called '_fake', expected _backward_fake", ...]
+_________________ test_standalone_layernorm_cannot_select_cuda _________________
+tests/consumer_updates/test_triton_backend_option.py:45: in test_standalone_layernorm_cannot_select_cuda
+    assert _resolve_bwd_path(2, 128, x, x, w, stat, stat) == "atomic"
+src/miniworld_engine/kernels/layernorm/compile_native.py:68: in _resolve_bwd_path
+    cached = dispatch_cache.lookup(x.device, n, dispatch_cache.mbucket(m), regime=regime)
+src/miniworld_engine/kernels/layernorm/dispatch.py:88: in lookup
+    idx = device.index if device.index is not None else torch.cuda.current_device()
+../.pixi/envs/cu128/lib/python3.10/site-packages/torch/cuda/__init__.py:1094: in current_device
+    _lazy_init()
+../.pixi/envs/cu128/lib/python3.10/site-packages/torch/cuda/__init__.py:424: in _lazy_init
+    torch._C._cuda_init()
+E   RuntimeError: No CUDA GPUs are available
+_____________ test_the_only_non_family_directories_are_the_harness _____________
+tests/layout/test_kernel_layout.py:171: in test_the_only_non_family_directories_are_the_harness
+    assert not stray, (f"directories under kernels/ that are neither a family nor the harness "
+E   AssertionError: directories under kernels/ that are neither a family nor the harness (checks, drivers): norm_cuda
+E   assert not ['norm_cuda']
+______________ test_the_page_counts_the_kernels_the_build_drives _______________
+tests/layout/test_the_sweep_page_matches_the_repo.py:36: in test_the_page_counts_the_kernels_the_build_drives
+    _rows, totals = collect()
+src/miniworld_engine/viz/sweep_page.py:157: in collect
+    evidence = plan.load("sm86")
+src/miniworld_engine/autotune/plan.py:52: in load
+    raise ValueError("kernel derivation is incomplete or stale; run dev derive")
+E   ValueError: kernel derivation is incomplete or stale; run dev derive
+_________________ test_the_page_states_the_current_sweep_size __________________
+tests/layout/test_the_sweep_page_matches_the_repo.py:51: in test_the_page_states_the_current_sweep_size
+    _rows, totals = collect()
+src/miniworld_engine/viz/sweep_page.py:157: in collect
+    evidence = plan.load("sm86")
+src/miniworld_engine/autotune/plan.py:52: in load
+    raise ValueError("kernel derivation is incomplete or stale; run dev derive")
+E   ValueError: kernel derivation is incomplete or stale; run dev derive
+________________ test_every_row_the_build_drives_is_on_the_page ________________
+tests/layout/test_the_sweep_page_matches_the_repo.py:66: in test_every_row_the_build_drives_is_on_the_page
+    rows, _totals = collect()
+src/miniworld_engine/viz/sweep_page.py:157: in collect
+    evidence = plan.load("sm86")
+src/miniworld_engine/autotune/plan.py:52: in load
+    raise ValueError("kernel derivation is incomplete or stale; run dev derive")
+E   ValueError: kernel derivation is incomplete or stale; run dev derive
+______________ test_every_boolean_key_flag_is_tuned_on_both_sides ______________
+tests/registry/test_key_flags_are_built_on_both_sides.py:211: in test_every_boolean_key_flag_is_tuned_on_both_sides
+    assert not one_sided, (
+E   AssertionError: boolean key flags tuned on ONE side only, with no entry in ONE_SIDED:
+E         mpnn_edge_tail_bwd_layernorm_saveact_triton: DROPOUT=1 only
+E         mpnn_edge_tail_fwd_gemm_layernorm_saveact_triton: DROPOUT=1 only
+E     
+E     `build all` has no switch axis -- a flag value is covered only if the op's registry driver CALLS it. Either drive both values in kernels/drivers/<family>.py and rebuild the op, or add the (op, flag) to ONE_SIDED naming the launch site that pins it.
+E   assert not [('mpnn_edge_tail_bwd_layernorm_saveact_triton', 'DROPOUT'), ('mpnn_edge_tail_fwd_gemm_layernorm_saveact_triton', 'DROPOUT')]
+____________ test_no_layernorm_kernel_narrows_an_activation_to_bf16 ____________
+tests/registry/test_layernorm_is_never_bf16.py:133: in test_no_layernorm_kernel_narrows_an_activation_to_bf16
+    assert not bad, ("a layernorm kernel narrowing to bf16:\n  " + "\n  ".join(bad))
+E   AssertionError: a layernorm kernel narrowing to bf16:
+E       trimul_inproj/cuda/h100_b7.py:89: self.mask = d["mask"].bfloat16().reshape(-1)
+E       trimul_inproj/cuda/h100_single.py:60: self.mask = mask.reshape(n, n).bfloat16().contiguous()
+E       trimul_inproj/cuda/h100_single_b7.py:93: self.mask = d["mask"].bfloat16().reshape(-1)
+E   assert not ['trimul_inproj/cuda/h100_b7.py:89: self.mask = d["mask"].bfloat16().reshape(-1)', 'trimul_inproj/cuda/h100_single.py:..., n).bfloat16().contiguous()', 'trimul_inproj/cuda/h100_single_b7.py:93: self.mask = d["mask"].bfloat16().reshape(-1)']
+___________ test_no_committed_cache_is_stale_on_a_gpu_we_can_rebuild ___________
+tests/registry/test_no_stale_caches.py:55: in test_no_committed_cache_is_stale_on_a_gpu_we_can_rebuild
+    assert not stale, (
+E   AssertionError: committed autotune caches are stale against the current code -- rebuild + `dev merge` them (see `dev cache-status`):
+E       layernorm_linear_fwd_triton [NVIDIA RTX A5000 (sm86)]: kernel source/key changed (op_identity)
+E       layernorm_linear_fwd_triton [NVIDIA RTX A6000 (sm86)]: kernel source/key changed (op_identity)
+E   assert not [CacheStatus(op='layernorm_linear_fwd_triton', gpu='NVIDIA RTX A5000 (sm86)', verdict='STALE', reason='kernel source/k...', gpu='NVIDIA RTX A6000 (sm86)', verdict='STALE', reason='kernel source/key changed (op_identity)', env_matches=True)]
+_______________ test_launch_keywords_match_the_kernel_signature ________________
+tests/registry/test_registry_complete.py:320: in test_launch_keywords_match_the_kernel_signature
+    assert not bad, "launch keywords that the kernel does not accept:\n" + "\n".join(
+E   AssertionError: launch keywords that the kernel does not accept:
+E       miniworld_engine/kernels/gated_projection/triton/residual.py:42 _forward(..., enable_fp_fusion=...) -- not a parameter of _forward
+E   assert not ['miniworld_engine/kernels/gated_projection/triton/residual.py:42 _forward(..., enable_fp_fusion=...) -- not a parameter of _forward']
+_____________ test_a_launch_site_does_not_pin_what_the_tuner_owns ______________
+tests/registry/test_registry_complete.py:451: in test_a_launch_site_does_not_pin_what_the_tuner_owns
+    assert not surprising, (
+E   AssertionError: launch sites pinning num_warps/num_stages on a kernel not listed as untuned -- either it gained an autotune ladder and the launch should stop pinning, or it is a new untuned kernel and belongs in NOT_TUNED with a reason: {'_pack': 'miniworld_engine/kernels/trimul_inproj/cuda/_h100_pack.py:34'}
+E   assert not {'_pack': 'miniworld_engine/kernels/trimul_inproj/cuda/_h100_pack.py:34'}

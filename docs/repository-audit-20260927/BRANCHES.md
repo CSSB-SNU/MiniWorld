@@ -1,5 +1,9 @@
 # 전체 작업본과 로컬 브랜치
 
+이 문서는 **main 통합 전** 최초 보존 작업의 스냅샷이다. 현재 작업 경로와 main 상태는
+[REPOSITORIES.md](../../REPOSITORIES.md), 통합한 refs는
+[main-verification.json](main-verification.json)을 기준으로 한다.
+
 2026-09-27 문서 커밋 직전의 코드 스냅샷. 원격 tracking 정보는 각 저장소의 마지막 fetch 기준이다.
 MiniWorld의 마지막 보고서 커밋은 아래 코드 SHA 이후에 추가된다. `archive/*`는 복구·기록용이다.
 

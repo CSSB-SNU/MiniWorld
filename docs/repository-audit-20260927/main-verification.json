@@ -1,0 +1,113 @@
+{
+  "gpu_tests_run": false,
+  "benchmarks_run": false,
+  "environment_reinstalled": false,
+  "norm_manifest": {
+    "files": 12,
+    "changed": [
+      "kernels/layernorm/compile_native.py"
+    ],
+    "reason": "MPNN merge adds optional row_bucket to atomic/persistent backward. Default H100 branch is retained; no new GPU qualification claimed."
+  },
+  "triattn_checkpoint18246": {
+    "files": 48,
+    "changed": []
+  },
+  "research_files": {
+    "count": 6664,
+    "missing_from_head": []
+  },
+  "repositories": {
+    "MiniWorld": {
+      "head": "8ea9adadbee3963a9aac0eeb1663780a31d48157",
+      "unmerged_refs": [],
+      "refs": [
+        "archive/engine-migration-20260927 ece87165c4ebb40c361285c039e490b1ef61bf0c",
+        "archive/oldcode-repro-20260927 d3f79e2416e69dc829e92179f4898d6177ac6c86",
+        "archive/pre-cleanup-20260927/miniworld 27b0abe6db44b1210c29f24bb720b7e3fc9ce13b",
+        "archive/pre-cleanup-20260927/mw-engine-migration bfe80f8fb353ae098a897285e45dfc6ff089c80b",
+        "archive/pre-cleanup-20260927/mw-old-repro 85f13de872019170d0227763e33ab4d7862a950e",
+        "docs/h100-graph-validation-20260924 5b4357a181399d27c12cecdd2534ebf47870253b",
+        "feat/distogram-diffusion-v1.3 efca47f5c974e0034ecaa79875dbcc9c4b5ad225",
+        "fix/v2-data-loss-consistency 15ccef06ff69e6f338495040e1dea2e5a92a85b6",
+        "integrate/miniworld-dev-20260927 8ea9adadbee3963a9aac0eeb1663780a31d48157",
+        "main 27b0abe6db44b1210c29f24bb720b7e3fc9ce13b",
+        "research/h100-experiments-20260927 df0d94b51d7de0e57210d29dde43e29192b0f164",
+        "research/swa-atom-fusion 20ea6ca6c764d333f9ff40e035db3ba2eeab1a8b",
+        "origin/main e7869b3de4d69ee93e75a640488d56eebc7217de"
+      ]
+    },
+    "miniworld-engine": {
+      "head": "3026c6bcd55bf535b73a0645fd4258b41c3cb547",
+      "unmerged_refs": [],
+      "refs": [
+        "archive/engine-h100-cache-20260927 f0014282684d8e9495b03033dd59a7a4f77c0e53",
+        "archive/engine-old-main-20260927 ce47f42bcba3df876b173323cea70a461d0b174f",
+        "archive/engine-wheel-fix-20260927 61294df387ccdcbc2fd7b5052dbf997458c24f8b",
+        "archive/h100-legacy-runtime-20260927 9b980af88a648f9e3325210c7555330c76eea628",
+        "archive/pre-cleanup-20260927/engine-dit2 516b62c21e86198ba39a16c338de0c0670de4fae",
+        "archive/pre-cleanup-20260927/engine-k1k3 37d61f816645f61564ddedda375bbf97cee31ec8",
+        "archive/pre-cleanup-20260927/engine-old-main b4c3f6c34ea54d1f4053c68a9424a8193c617c4c",
+        "archive/pre-cleanup-20260927/engine-release 55304541ff28dbc914137d80ef6929f689ae1d9d",
+        "archive/pre-cleanup-20260927/engine-tbwd 971992df6950a77c7db11c9f6ded4234e8d34627",
+        "archive/pre-cleanup-20260927/engine-v2-proof 3e81f15cbae1dedb3b180626881665c38f791cfb",
+        "archive/transition-tuning-20260927 bb6045527db25a0f083dfe5a3e657b4ee1a65ce1",
+        "archive/transition-workspace-20260927 2254765abe9f7e9c8ab33a064cdac9a7cd22cdcc",
+        "archive/trimul-k1k3-local-20260927 af7a98477188857deb7506d42d48fa0dc65a48ca",
+        "archive/v2-proof-cache-20260927 ecd9256405c87f27e8b55ada5735164a853910fc",
+        "feat/autotune-cache-builder 25743ad8178e35b820d3c4b096653261b76e29cc",
+        "feat/cute-autotune-sweep eebedbbc066b4a2b5484755399c84cf29d954776",
+        "feat/token-dit-train-core fac86f90edbbd30c291ba65286d8d61c34d21e35",
+        "fix/transition-d64-input-barrier 0043b98037be7e3e6fb36e595b962f6bb4bdddf8",
+        "integrate/h100-dev-20260927 3026c6bcd55bf535b73a0645fd4258b41c3cb547",
+        "integrate/h100-research-runtime-20260927 ecaac5b44dcf343ad577b8352e08318dbc9fac16",
+        "main 3026c6bcd55bf535b73a0645fd4258b41c3cb547",
+        "perf/triton-norm-h100 c26be24503ba413cae9f0228085b297f183d9a2d",
+        "release/2.0.0 55304541ff28dbc914137d80ef6929f689ae1d9d",
+        "research/msa-inference b47de812e8a82bc7ca1204e8db7bbbb6ffd5d42c",
+        "research/native-norm-h100 a96ea5f7bcdd6a5f955c4d9fceec1c58dad9b51a",
+        "research/token-dit-fused e512d8c2eeb8e79266a9a48a9b1b88b841de709e",
+        "research/token-dit-overlap 516b62c21e86198ba39a16c338de0c0670de4fae",
+        "research/token-dit-overlap-evidence-20260927 6ad576908b3a4b461145e3eacb8616399cfcb7c3",
+        "research/transition-backward-fused 971992df6950a77c7db11c9f6ded4234e8d34627",
+        "research/transition-local-20260927 9d49491b5a89aec03ed57c4c506dd139777c4ace",
+        "research/triattn-installed-20260927 aa054b12d43e26d8b9abc0dd04e187b529f8aee6",
+        "research/trimul-k1k3-inference 37d61f816645f61564ddedda375bbf97cee31ec8",
+        "research/trimul-local-20260927 cf697a1719fc5f04f1714ad2f2876b6fe460e67b",
+        "tmp/autotune-bucket-cap-512 73458b542500c5b103eefbc5b16c29bc45dbfd4a",
+        "origin c3101759712bca6511ffc969d3220ff0f0f16df0",
+        "origin/backup/mpnn-pre-rebase-20260913 aa5192654790d10092b2fe4962e8dcb85d5428e1",
+        "origin/cache/h100 1bc0803e3b2fef3b963fdc383e090c0adcccdb43",
+        "origin/main c3101759712bca6511ffc969d3220ff0f0f16df0",
+        "origin/mpnn 73abd751f38089d8976923efe6736c77b2f5f073",
+        "origin/publish/h100-training-20260923 55304541ff28dbc914137d80ef6929f689ae1d9d",
+        "origin/refactor/shape-key-unification b20ab3eb36f1c53a06d60c714500b2ad0d4457c4"
+      ]
+    },
+    "team-gm": {
+      "head": "1caa7ebabdc9c0762f0003bbeca32d5ce3002f98",
+      "unmerged_refs": [],
+      "refs": [
+        "BioMol 0d464536aebb3c203baf1229665e6c222ef97fa4",
+        "archive/incomplete-publish-worktree-20260927 1ffa8b81201b0b953346cf844b9bc2eafcfe3b7a",
+        "archive/pre-cleanup-20260927/team-gm ba3c07f4909cfac369bf456d16614fe5a304902f",
+        "archive/pre-cleanup-20260927/team-gm-incomplete-publish aaf9356ccb8286bfb6d94b749c9269bc638f3bd0",
+        "exp/af3-refactor a8891f56ec9d80073d2edede5c2990fdac6b1f64",
+        "exp/miniworld ba3c07f4909cfac369bf456d16614fe5a304902f",
+        "feat/miniworld-engine-wiring-20260915 5d3f4a5b44c77bcc67958561ebd780773a95b001",
+        "fix/diffusion-valid-atom-loss c9f5a51dca653217fbfb4a5801fbdec8f8d59935",
+        "integrate/miniworld-dev-20260927 1caa7ebabdc9c0762f0003bbeca32d5ce3002f98",
+        "integrate/miniworld-engine-wiring aaf9356ccb8286bfb6d94b749c9269bc638f3bd0",
+        "main 1caa7ebabdc9c0762f0003bbeca32d5ce3002f98",
+        "psk_add_BioMol dbe63e3a02a606155e202e9abf13029e8ba56092",
+        "research/swa-fused-h100 14f2c7396cbcd8b3c7b427a024a4a592b75f7c4d",
+        "origin 4a0d580c686e18849aeb7c76ef617562898f63d9",
+        "origin/exp/miniworld 4a45ec8655996bee6bcead3469a21730359e37b9",
+        "origin/foldforge/dense-families 52292ac40ea1ebdbe01c6cd88840774feedc1558",
+        "origin/foldforge/msa-bucket-1024 786db730367efe42aaced3ec9e6c86a0d4a03edc",
+        "origin/main 4a0d580c686e18849aeb7c76ef617562898f63d9",
+        "origin/perf/trimul 3fbb02b77984fbbcf14f7a8d6163611c9ade5dee"
+      ]
+    }
+  }
+}
