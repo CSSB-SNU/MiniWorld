@@ -94,7 +94,7 @@ D512 `wide_checkpoint24.py`다. 공용 engine의 wide backward dispatch 통합�
 
 | 저장소 | 정리 상태 |
 |---|---|
-| DataCooker | 최신 원격 main과 MiniWorld branch 통합; 결과 소스는 원격 main과 동일 |
+| DataCooker | 최신 main과 MiniWorld branch 통합; 구형 docs_practices는 main 내 보관. 현재 runtime/API 문서 유지 |
 | KmerFastAlign | 로컬 빌드 변경 3개를 main에 보존; 다른 머신에서는 native rebuild 필요 |
 | FoldBench | 로컬 main으로 통합; 외부 BEAM-Labs upstream에는 push하지 않음 |
 | StructCooker | 기존 gitlink의 main 사용; 소스 변경 없음 |
@@ -106,6 +106,7 @@ FoldBench의 MiniWorld adapter와 target 선택은
 [기준 revision](patches/dependencies/foldbench.json)으로 MiniWorld main에 포함했다.
 DataCooker/FoldBench/KmerFastAlign은 부모에서 무시하는 로컬 저장소이므로
 `--recurse-submodules`만으로 설치되지 않는다.
+DataCooker의 `gh-pages`는 생성된 사이트 배포 이력이므로 소스 main에 합치지 않는다.
 
 새 서버에서는 MiniWorld main을 clone하고 `git submodule update --init --recursive`로
 정확한 team-gm/StructCooker gitlink를 복원한다. `pixi install -e cu128` 후
