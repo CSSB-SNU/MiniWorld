@@ -60,6 +60,10 @@ CPU 전체 job 19676: 3,967 passed / 16 failed / 279 skipped, GPU 1,002 deselect
 상세 정책과 검증: engine `docs/releases/2.1.0.md`, `2.1.0-cpu-validation.json`.
 현재 설치 환경은 바꾸지 않았으며 source pin과 실행 환경 버전을 혼동하지 않는다.
 
+CUDA의 `default → expanded → 구조 variant` 확장 방향은
+[후속 개발 계획](docs/cuda-config-expansion-plan.md)에 기록했다. 아직 구현·실측 완료된
+공간이 아니라 다음 개발 기준이다.
+
 ## main에 들어간 내용
 
 - MiniWorld: v1.3 distogram diffusion, v2 데이터/loss 일관성, SWA 연결, graph 검증 기록,
