@@ -1,4 +1,4 @@
-"""Training script for the distogram-only MiniWorld variant (no diffusion).
+"""Training script for categorical and EDM distogram MiniWorld variants.
 
 Usage:
     torchrun --nproc_per_node=1 scripts/run_miniworld_distogram_train.py train \
@@ -669,6 +669,17 @@ def train(  # noqa: PLR0912, PLR0915
     # force_trainer: auto | cudagraph (legacy fixed path) | random_cudagraph | fabric.
     n_recycle_max = getattr(getattr(cfg.model, "trunk", None), "n_recycle_max", None)
     _force = cfg.train.force_trainer
+    is_distogram_diffusion = getattr(getattr(cfg.model, "trunk", None), "diffusion", None) is not None
+    if is_distogram_diffusion:
+        torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction = False
+        if _force != "fabric":
+            # Diffusion captures one trunk pass. The shared trainer supports both
+            # fresh initialization and full-state resume; the legacy CE path is
+            # never used for this objective.
+            from random_recycle_graph_trainer import train as train_diffusion_graph
+            train_diffusion_graph(cfg, ckpt, os.environ.get("MW_RESUME_RUN_SUBDIR"),
+                                  job_name=job_name)
+            return
     if _force == "random_cudagraph":
         # Explicit full-state continuation: preserve the existing run/log identity.
         from random_recycle_graph_trainer import train as train_random_graph
@@ -717,7 +728,7 @@ def train(  # noqa: PLR0912, PLR0915
     client.logger.addHandler(file_handler)
 
     client.logger.info(
-        "[dispatch] n_recycle_max=%s -> Fabric + plain-compile trainer (random recycle)",
+        "[dispatch] n_recycle_max=%s -> Fabric + plain-compile trainer",
         n_recycle_max,
     )
 

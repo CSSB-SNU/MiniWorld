@@ -7,11 +7,14 @@ once per optimizer step in buckets. This module never changes effective batch.
 from __future__ import annotations
 
 import contextlib
+import copy
 import itertools
 import json
 import logging
 import os
+import random
 import time
+import uuid
 from dataclasses import fields, is_dataclass, replace
 from types import MethodType
 from pathlib import Path
@@ -198,10 +201,13 @@ def average_gradients(params, world):
 
 
 class RecycleGraphs:
-    def __init__(self, model, batch, loss_fn, ga, max_recycle):
+    def __init__(self, model, batch, loss_fn, ga, max_recycle, *, forward_kwargs=None):
         self.model, self.batch, self.loss_fn, self.ga = model, batch, loss_fn, ga
+        self.forward_kwargs = dict(forward_kwargs or {})
         self.graphs = {}
         self.losses = {}
+        self.metrics = {}
+        self.last_metrics = {}
         self.params = [p for p in model.parameters() if p.requires_grad]
         self.stream = torch.cuda.Stream()
         self.stream.wait_stream(torch.cuda.current_stream())
@@ -221,6 +227,7 @@ class RecycleGraphs:
                 with torch.cuda.graph(g, stream=self.stream):
                     self.losses[r] = self.compute()
                 self.graphs[r] = g
+                self.metrics[r] = self.last_metrics
                 print(
                     f"[graph] captured R{r}; allocated={torch.cuda.memory_allocated() / 2**30:.2f} GiB",
                     flush=True,
@@ -238,6 +245,18 @@ class RecycleGraphs:
                     p.grad.zero_()
 
     def compute(self):
+        # Use the capture stream for the ordinary reference too: AccumulateGrad
+        # nodes retained by captured losses belong to that stream.
+        caller = torch.cuda.current_stream()
+        if caller == self.stream:
+            return self._compute_on_stream()
+        self.stream.wait_stream(caller)
+        with torch.cuda.stream(self.stream):
+            loss = self._compute_on_stream()
+        caller.wait_stream(self.stream)
+        return loss
+
+    def _compute_on_stream(self):
         b = self.batch
         with (
             torch.autocast("cuda", dtype=torch.bfloat16)
@@ -251,7 +270,10 @@ class RecycleGraphs:
                 sequence=b.sequence,
                 structure=b.structure,
                 template=b.template,
+                **self.forward_kwargs,
             )
+            if isinstance(y, tuple) and len(y) == 2 and isinstance(y[1], dict):
+                self.last_metrics = y[1]
             loss = self.loss_fn(y, b)
         (loss / self.ga).backward()
         return loss
@@ -264,12 +286,130 @@ class RecycleGraphs:
         assert self.pointers == [p.grad.data_ptr() for p in self.params]
 
 
-def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
+def configure_graph_cublas():
+    """Fix cuBLAS workspace selection before creating any CUDA handles.
+
+    Capture uses a side stream; the ordinary reference uses the caller stream.
+    Default workspace selection can change GEMM rounding across those streams.
+    See NVIDIA cuBLAS Results Reproducibility documentation.
+    """
+    setting = os.environ.get("CUBLAS_WORKSPACE_CONFIG")
+    if setting is None:
+        if torch.cuda.is_initialized():
+            raise RuntimeError(
+                "Set CUBLAS_WORKSPACE_CONFIG=:4096:8 before initializing CUDA "
+                "for random-recycle graph training"
+            )
+        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+    elif setting not in (":4096:8", ":16:8"):
+        raise ValueError(
+            "Random-recycle graphs require CUBLAS_WORKSPACE_CONFIG=:4096:8 "
+            "or :16:8 for reproducible multi-stream cuBLAS execution"
+        )
+
+
+def graph_objective(cfg):
+    """Keep the captured objective identical to the ordinary training client."""
+    if getattr(cfg.model.trunk, "diffusion", None) is not None:
+        if cfg.model.trunk.n_recycle_max != 1 or not cfg.loss.distogram_cb_target:
+            raise ValueError("Diffusion graphs require one trunk pass and pseudo-beta targets")
+        return (
+            lambda output, batch: cfg.loss.distogram_loss * output[0],
+            {"interchain_weight": cfg.loss.distogram_interchain_weight},
+        )
+    from miniworld.loss.auxiliary import cal_atom_distogram_loss
+
+    def loss_fn(y, b):
+        return cfg.loss.distogram_loss * cal_atom_distogram_loss(
+            y, b.structure.atom_pos, b.structure.atom_pos_mask,
+            b.scheme.atom_to_token_idx_map,
+            rep_atom_mask=b.structure.atom_is_rep if cfg.loss.distogram_cb_target else None,
+            token_asym_id=b.scheme.token_asym_id,
+            interchain_weight=cfg.loss.distogram_interchain_weight,
+        )
+
+    return loss_fn, {}
+
+
+def resolve_run_directory(cfg, ckpt, run_dir, state):
+    if run_dir is not None:
+        return Path(run_dir).resolve()
+    if ckpt is not None:
+        if state.get("run_dir"):
+            return Path(state["run_dir"]).resolve()
+        checkpoint = Path(ckpt).resolve()
+        if checkpoint.parent.name == "checkpoints":
+            return checkpoint.parent.parent
+        raise ValueError("A copied checkpoint requires MW_RESUME_RUN_SUBDIR")
+    root = Path(cfg.train.run_dir).resolve()
+    if (root / "wandb_run_id.txt").exists() or (root / "latest_run.txt").exists():
+        raise ValueError(f"Existing training run in {root}; pass --ckpt to resume it")
+    return root / time.strftime("%Y-%m-%d") / f"{time.strftime('%H%M%S')}_{uuid.uuid4().hex[:8]}"
+
+
+def prepare_wandb_id(root, run_dir, state, fresh, generate_id):
+    """Persist one identity and reject accidentally mixing two training runs."""
+    paths = [Path(root) / "wandb_run_id.txt", Path(run_dir) / "wandb_run_id.txt"]
+    ids = {p.read_text().strip() for p in paths if p.exists()}
+    if state.get("wandb_run_id"):
+        ids.add(state["wandb_run_id"])
+    if "" in ids or len(ids) > 1 or (fresh and ids):
+        raise ValueError("Conflicting/existing W&B run identity; resume its checkpoint")
+    if not fresh and not ids:
+        raise ValueError("Resuming with W&B requires the original run identity")
+    run_id = next(iter(ids)) if ids else generate_id()
+    for path in paths:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(run_id + "\n")
+    return run_id
+
+
+def capture_rng_state():
+    return dict(torch=torch.get_rng_state(), cuda=torch.cuda.get_rng_state(),
+                numpy=np.random.get_state(), python=random.getstate())
+
+
+def restore_rng_state(state):
+    torch.set_rng_state(state["torch"].cpu())
+    torch.cuda.set_rng_state(state["cuda"].cpu())
+    np.random.set_state(state["numpy"])
+    random.setstate(state["python"])
+
+
+def gather_rng_states(world):
+    local = capture_rng_state()
+    if world == 1:
+        return [local]
+    states = [None] * world
+    dist.all_gather_object(states, local)
+    return states
+
+
+def save_checkpoint(run_dir, payload, archive=False):
+    directory = Path(run_dir) / "checkpoints"
+    directory.mkdir(exist_ok=True)
+    temporary = directory / "last.pt.tmp"
+    torch.save(payload, temporary)
+    os.replace(temporary, directory / "last.pt")
+    if archive:
+        torch.save(payload, directory / f"epoch={payload['epoch']:04d}.pt")
+
+
+def restore_training_state(model, optimizer, scheduler, state):
+    model.load_state_dict(state["model_state_dict"], strict=True)
+    # Adam's CPU step tensors otherwise alias the loaded checkpoint. A temporary
+    # validation update would then change the state we intend to restore.
+    optimizer.load_state_dict(copy.deepcopy(state["optimizer_state_dict"]))
+    if scheduler:
+        scheduler.load_state_dict(copy.deepcopy(state["scheduler_state_dict"]))
+
+
+def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_name=None):
+    configure_graph_cublas()
     from miniworld_engine.integrations.optimizer import align_optimizer_state_layout_
 
     from miniworld.configs import TemplateConfig
     from miniworld.data.dataloader.dataloader import BioMolData
-    from miniworld.loss.auxiliary import cal_atom_distogram_loss
     from miniworld.models.distogram_only import MiniSWAModel
     from miniworld.training.engine_backend import configure_engine_backend
     from miniworld.utils import get_step_decay_scheduler_with_warmup
@@ -291,9 +431,15 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
     )
     torch.manual_seed(cfg.train.seed or 0)
     torch.set_float32_matmul_precision("medium")
+    # Keep BF16 operands/output with FP32 GEMM partial reductions. This policy
+    # alone does not fix the D64 Transition input-buffer race; that requires
+    # the engine's input_barrier_v1 kernel (verified in the resumed snapshot).
+    torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction = False
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     model = MiniSWAModel(cfg.model).to(dev).train()
+    is_diffusion = getattr(cfg.model.trunk, "diffusion", None) is not None
+    fresh = ckpt is None
     opt = (
         torch.optim.Adam(model.parameters(), lr=cfg.train.max_lr, betas=(0.9, 0.95))
         if cfg.train.optimizer == "Adam"
@@ -305,18 +451,45 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
         decay_steps=cfg.train.decay_steps,
         decay_factor=cfg.train.decay_factor,
     )
-    state = torch.load(ckpt, map_location="cpu", weights_only=False)
+    if ckpt is None:
+        if not diagnostic_steps and not is_diffusion:
+            raise ValueError("Fresh graph initialization requires a diffusion model")
+        state = {
+            "model_state_dict": {k: v.detach().cpu().clone() for k, v in model.state_dict().items()},
+            "optimizer_state_dict": opt.state_dict(),
+            "scheduler_state_dict": sched.state_dict() if sched else None,
+            "ema_state_dict": {k: v.detach().float().cpu().clone() for k, v in model.named_parameters()}
+            if cfg.train.use_ema else {},
+            "epoch": 0, "global_step": 0,
+        }
+    else:
+        state = torch.load(ckpt, map_location="cpu", weights_only=False)
+    selection = [str(resolve_run_directory(cfg, ckpt, run_dir, state)) if rank == 0 else None]
+    if world > 1:
+        dist.broadcast_object_list(selection, src=0)
+    run_dir = Path(selection[0])
+    run_dir.mkdir(parents=True, exist_ok=True)
+    if rank == 0 and not diagnostic_steps:
+        (run_dir / "config.json").write_text(cfg.model_dump_json(indent=2) + "\n")
 
     def restore(saved_state):
-        model.load_state_dict(saved_state["model_state_dict"], strict=True)
-        opt.load_state_dict(saved_state["optimizer_state_dict"])
+        restore_training_state(model, opt, sched, saved_state)
         align_optimizer_state_layout_(opt)
-        if sched:
-            sched.load_state_dict(saved_state["scheduler_state_dict"])
 
     restore(state)
+    if is_diffusion:
+        # Weights start identically on all ranks; diffusion draws are independent.
+        torch.cuda.manual_seed((cfg.train.seed or 0) + rank)
     epoch = int(state["epoch"])
     global_step = int(state["global_step"])
+    saved_rng = state.get("rng_states")
+    if saved_rng and len(saved_rng) == world:
+        restore_rng_state(saved_rng[rank])
+    elif saved_rng:
+        torch.manual_seed((cfg.train.seed or 0) + global_step * world + rank)
+        if rank == 0:
+            log.warning("World size changed; starting independent RNG streams for %d ranks", world)
+    startup_rng = capture_rng_state()
     if rank == 0:
         print(
             f"[graph] restored epoch={epoch} step={global_step}; building loader",
@@ -389,25 +562,17 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
     if diagnostic_steps:
         Path(run_dir).mkdir(parents=True, exist_ok=True)
         torch.save([first, second], Path(run_dir) / f"input-rank{rank}.pt")
+        if os.environ.get("MW_GRAPH_REPEAT_DIAGNOSTIC_INPUTS") == "1":
+            # Short numerical/compute check; deliberately excludes loader throughput.
+            it = itertools.cycle([first, second])
     static = first.to(device=dev)
     unused_if_empty = prepare_template_graph(model, static, TemplateConfig().n_templates)
     validate_empty_template(model, static, first)
 
-    def loss_fn(y, b):
-        return cfg.loss.distogram_loss * cal_atom_distogram_loss(
-            y,
-            b.structure.atom_pos,
-            b.structure.atom_pos_mask,
-            b.scheme.atom_to_token_idx_map,
-            rep_atom_mask=b.structure.atom_is_rep
-            if cfg.loss.distogram_cb_target
-            else None,
-            token_asym_id=b.scheme.token_asym_id,
-            interchain_weight=cfg.loss.distogram_interchain_weight,
-        )
-
+    loss_fn, forward_kwargs = graph_objective(cfg)
     graphs = RecycleGraphs(
-        model, static, loss_fn, cfg.train.grad_accum_steps, cfg.model.trunk.n_recycle_max
+        model, static, loss_fn, cfg.train.grad_accum_steps, cfg.model.trunk.n_recycle_max,
+        forward_kwargs=forward_kwargs,
     )
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -424,7 +589,7 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
             handler.setFormatter(formatter)
             log.addHandler(handler)
         log.info(
-            "Resume epoch=%d step=%d world=%d accumulation=%d",
+            "Graph training epoch=%d step=%d world=%d accumulation=%d",
             epoch,
             global_step,
             world,
@@ -437,10 +602,21 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
                 torch.nn.utils.clip_grad_norm_(
                     graphs.params, cfg.train.grad_clip_max_norm
                 )
+                rates = [group["lr"] for group in opt.param_groups]
+                # Fresh warmup starts at lr=0; make a temporary nonzero decoder
+                # update so validation exercises upstream gradients. Restore all
+                # weights/Adam/scheduler state before the first training step.
+                if fresh and is_diffusion:
+                    for group in opt.param_groups:
+                        if group["lr"] == 0:
+                            group["lr"] = min(cfg.train.max_lr, 1e-4)
                 opt.step()
+                for group, rate in zip(opt.param_groups, rates):
+                    group["lr"] = rate
             rng = torch.cuda.get_rng_state()
             graphs.clear()
             expected = []
+            expected_sigma = []
             reference_times = []
             base_seq = (
                 [1, 3, 2, 4]
@@ -450,28 +626,45 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
             seq = [
                 base_seq[i % len(base_seq)] for i in range(cfg.train.grad_accum_steps)
             ]
+            # Warm every real/empty-template input and recycle combination before
+            # establishing the ordinary-execution reference. The first traversal
+            # may still specialize compiled backward paths after graph capture.
+            for i, r in enumerate(seq):
+                copy_static(static, [first, second, empty_template_batch(first)][i % 3])
+                model._forced_n_recycle = r
+                graphs.compute()
+            torch.cuda.synchronize()
+            graphs.clear()
+            torch.cuda.set_rng_state(rng)
             for i, r in enumerate(seq):
                 copy_static(static, [first, second, empty_template_batch(first)][i % 3])
                 model._forced_n_recycle = r
                 a, b = [torch.cuda.Event(enable_timing=True) for _ in range(2)]
                 a.record()
-                expected.append(float(graphs.compute().detach()))
+                loss = graphs.compute().detach()
                 b.record()
                 torch.cuda.synchronize()
+                expected.append(float(loss))
+                if "sigma_mean" in graphs.last_metrics:
+                    expected_sigma.append(float(graphs.last_metrics["sigma_mean"]))
                 reference_times.append(a.elapsed_time(b))
             average_gradients(graphs.params, world)
             reference = [p.grad.clone() for p in graphs.params]
             graphs.clear()
             torch.cuda.set_rng_state(rng)
             actual = []
+            actual_sigma = []
             graph_times = []
             for i, r in enumerate(seq):
                 copy_static(static, [first, second, empty_template_batch(first)][i % 3])
                 a, b = [torch.cuda.Event(enable_timing=True) for _ in range(2)]
                 a.record()
-                actual.append(float(graphs.replay(r).detach()))
+                loss = graphs.replay(r).detach()
                 b.record()
                 torch.cuda.synchronize()
+                actual.append(float(loss))
+                if "sigma_mean" in graphs.metrics[r]:
+                    actual_sigma.append(float(graphs.metrics[r]["sigma_mean"]))
                 graph_times.append(a.elapsed_time(b))
             average_gradients(graphs.params, world)
             errors = [
@@ -497,11 +690,15 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
                     )
                 )
             details.sort(key=lambda x: x["relative_l2"], reverse=True)
+            if fresh and is_diffusion and stage == "after_optimizer":
+                assert any(d["name"] == "diffusion.encoder.weight" and d["reference_norm"] > 0 for d in details)
+                assert any(d["name"].startswith("pairformer_blocks.") and d["reference_norm"] > 0 for d in details)
             failed_gradients = [
                 d
                 for d in details
-                if d["relative_l2"] >= 1e-3
-                and not (d["max_abs"] <= 1e-8 and d["reference_max"] <= 1e-6)
+                if not np.isfinite(d["relative_l2"])
+                or (d["relative_l2"] >= 1e-3
+                    and not (d["max_abs"] <= 1e-8 and d["reference_max"] <= 1e-6))
             ]
             if failed_gradients:
                 graph_grads = [p.grad.clone() for p in graphs.params]
@@ -541,13 +738,20 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
                 for p, g in zip(graphs.params, graph_grads):
                     p.grad.copy_(g)
                 del graph_grads
-            if not np.allclose(actual, expected, rtol=0, atol=1e-6) or failed_gradients:
+            sigma_ok = (
+                not expected_sigma
+                or (np.allclose(actual_sigma, expected_sigma, rtol=0, atol=0)
+                    and len(set(actual_sigma)) > 1)
+            )
+            if not np.allclose(actual, expected, rtol=0, atol=1e-6) or failed_gradients or not sigma_ok:
                 (run_dir / f"validation-failure-rank{rank}.json").write_text(
                     json.dumps(
                         dict(
                             stage=stage,
                             expected_losses=expected,
                             actual_losses=actual,
+                            expected_sigma=expected_sigma,
+                            actual_sigma=actual_sigma,
                             worst_gradients=worst,
                         ),
                         indent=2,
@@ -563,6 +767,8 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
                     tolerance="relative L2 < 1e-3; for near-zero gradients (max <= 1e-6), max absolute error <= 1e-8",
                     expected_losses=expected,
                     actual_losses=actual,
+                    expected_sigma=expected_sigma,
+                    actual_sigma=actual_sigma,
                     reference_compute_ms=reference_times,
                     graph_compute_ms=graph_times,
                     recycles=seq,
@@ -575,21 +781,42 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
         )
         restore(state)
         graphs.clear()
-    del state
+    restore_rng_state(startup_rng)
     if world > 1:
         dist.barrier()
     if rank == 0:
         print("[graph] validation passed; full model/Adam restored", flush=True)
     import wandb
 
+    wandb_id = state.get("wandb_run_id")
     if rank == 0 and cfg.train.use_wandb and not diagnostic_steps:
-        wandb_id = (Path(cfg.train.run_dir) / "wandb_run_id.txt").read_text().strip()
-        wandb.init(
-            project=cfg.train.wandb_project,
-            id=wandb_id,
-            resume="must",
-            config=cfg.model_dump(mode="json"),
-        )
+        wandb_id = prepare_wandb_id(cfg.train.run_dir, run_dir, state, fresh, wandb.util.generate_id)
+
+    def checkpoint_payload(rng_states):
+        return {
+            "config": cfg.model_dump(mode="json"), "run_dir": str(run_dir),
+            "wandb_run_id": wandb_id, "rng_states": rng_states,
+            "model_state_dict": model.state_dict(), "optimizer_state_dict": opt.state_dict(),
+            "scheduler_state_dict": sched.state_dict() if sched else None,
+            "ema_state_dict": ema, "epoch": epoch, "global_step": global_step,
+        }
+
+    if not diagnostic_steps:
+        initial_rng = gather_rng_states(world)
+        if rank == 0:
+            if fresh:
+                save_checkpoint(run_dir, checkpoint_payload(initial_rng))
+            root = Path(cfg.train.run_dir)
+            root.mkdir(parents=True, exist_ok=True)
+            (root / "latest_run.txt").write_text(str(run_dir) + "\n")
+            if cfg.train.use_wandb:
+                wandb.init(project=cfg.train.wandb_project, id=wandb_id,
+                           name=job_name or cfg.train.comment,
+                           resume="allow" if is_diffusion else "must",
+                           config=cfg.model_dump(mode="json"))
+        if world > 1:
+            dist.barrier()
+    del state
     ga = cfg.train.grad_accum_steps
     assert cfg.train.train_item % (world * ga * cfg.train.num_batch) == 0
     nsteps = cfg.train.train_item // (world * ga * cfg.train.num_batch)
@@ -712,6 +939,7 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
                     dist.destroy_process_group()
                 return
         epoch += 1
+        epoch_rng = gather_rng_states(world)
         if rank == 0:
             elapsed = time.perf_counter() - ep_start
             log.info("Epoch %d time=%.3fs", epoch, elapsed)
@@ -726,20 +954,10 @@ def train(cfg, ckpt, run_dir, *, diagnostic_steps=0, validate=True):
                     },
                     step=global_step,
                 )
-            d = run_dir / "checkpoints"
-            d.mkdir(exist_ok=True)
-            payload = {
-                "config": cfg.model_dump(mode="json"),
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": opt.state_dict(),
-                "scheduler_state_dict": sched.state_dict() if sched else None,
-                "ema_state_dict": ema,
-                "epoch": epoch,
-                "global_step": global_step,
-            }
-            torch.save(payload, d / "last.pt.tmp")
-            os.replace(d / "last.pt.tmp", d / "last.pt")
-            if epoch % cfg.train.save_freq == 0:
-                torch.save(payload, d / f"epoch={epoch:04d}.pt")
+            save_checkpoint(run_dir, checkpoint_payload(epoch_rng), archive=epoch % cfg.train.save_freq == 0)
         if world > 1:
             dist.barrier()
+    if rank == 0 and cfg.train.use_wandb and not diagnostic_steps:
+        wandb.finish()
+    if world > 1:
+        dist.destroy_process_group()

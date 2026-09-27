@@ -1,0 +1,25 @@
+{
+  "job_id": 272596,
+  "server": "BioAI",
+  "partition": "gpu-4farm",
+  "gpus": "4 x H100",
+  "status_at_submission": "PENDING (Resources)",
+  "result_directory": "/home/psk6950/MiniWorld/runs/v1.3.0/implementation_20260924/graph-check-272596",
+  "full_model_graph_validated": false,
+  "scope": "L384/atom4096 PF16, MSA subset1024, compile, accumulation64, interchain weight2, no recycle",
+  "files": {
+    "scripts/random_recycle_graph_trainer.py": "5fb8502df1ac6223a8ef7aceb919688b5fcbf9614f1417a5d1753f5b77e9b33f",
+    "scripts/check_distogram_diffusion_graph_v130.py": "aa23e9535b3ee5524e3a635335516b69ba9242cd00c75f21e806b688330b4543",
+    "submits/v130_bioai_graph_check.sbatch": "ff15bed968db37142d6795ca507a1b3b852f1db699a10c4c0871363a9044f68e",
+    "tests/test_random_recycle_graph_inputs.py": "64693e71cd507eb5bbf947e3eb4aaf1eacf773f5bf36a9d92df4319378b3a1c5",
+    "configs/miniworld/distogram_diffusion_medium_v130_bioai.yaml": "041e394c82207599208cbd0fe04cbb02e16afa4c5e6a7d783c4dc184f7e0589c",
+    "scripts/run_miniworld_distogram_train.py": "36b120b437f54edf6495ef4f978bf5d0c691f7e5f9f3690edcaf35390e7ff822",
+    "src/miniworld/models/distogram_only/model_mini_swa.py": "29431c94fc69499007a7e280575a51c6d20041d9bb46c7d9bcdb5b2f655c5a1e",
+    "src/miniworld/modules/distogram_diffusion.py": "d0c0b4730be6d0925f7661660c2e05b9b87da089105584f55ac0420eea67c907"
+  },
+  "cpu_validation": "29 passed, 1 GPU-only test skipped",
+  "diagnostic_lr": 0.0001,
+  "diagnostic_warmup_steps": 0,
+  "final_status": "FAILED before capture: Client.Config discarded data; checker now uses full training Config",
+  "superseded_by": "CSSB node02 job16999; both L384 and L768 passed"
+}

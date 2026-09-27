@@ -1,0 +1,13 @@
+{
+  "crop_tokens": 768,
+  "crop_atoms": 8192,
+  "num_bins": 96,
+  "seed": 130,
+  "items": 64,
+  "pairs": 8008837,
+  "pair_pooled_mean": 85.49555871845064,
+  "pair_pooled_std": 19.14406444946191,
+  "equal_structure_mean": 82.23400631797021,
+  "equal_structure_std": 21.496649982657207,
+  "fraction_overflow": 0.7146015083088842
+}

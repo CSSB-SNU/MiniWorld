@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "rank": 2,
+  "tokens": 768,
+  "atoms": 8192,
+  "accumulation": 64,
+  "interchain_weight": 2.0,
+  "diagnostic_lr": 0.0001,
+  "timing_scope": "compiled fwd+EDM loss+bwd per microbatch; excludes H2D/NCCL/optimizer",
+  "checks": [
+    {
+      "stage": "initial",
+      "max_gradient_relative_l2": 0.0,
+      "distinct_sigma": 64,
+      "compile_ms_median": 257.54750061035156,
+      "graph_ms_median": 251.81214904785156
+    },
+    {
+      "stage": "after_optimizer",
+      "max_gradient_relative_l2": 1.6069057551248989e-07,
+      "distinct_sigma": 64,
+      "compile_ms_median": 257.20550537109375,
+      "graph_ms_median": 253.17827606201172
+    }
+  ]
+}

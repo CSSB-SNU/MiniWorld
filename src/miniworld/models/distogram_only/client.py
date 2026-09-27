@@ -332,6 +332,23 @@ class Client(BaseClient):
 
     def loss_fn(self, batch: Batch) -> tuple[torch.Tensor, dict]:
         """Compute the distogram loss for a batch."""
+        # Inspect config, not wrapper attributes: Fabric/DDP/compile must execute
+        # the entire denoiser through their wrapped forward for gradient sync.
+        trunk = getattr(getattr(self.config, "model", None), "trunk", None)
+        if getattr(trunk, "diffusion", None) is not None:
+            if not self.config.loss.distogram_cb_target:
+                raise ValueError("Distogram diffusion requires the pseudo-beta target")
+            diff_loss, stats = self.model(
+                msa=batch.msa, reference=batch.reference, scheme=batch.scheme,
+                sequence=batch.sequence, structure=batch.structure, template=batch.template,
+                interchain_weight=self.config.loss.distogram_interchain_weight,
+            )
+            loss = self.config.loss.distogram_loss * diff_loss
+            return loss, {
+                **{key: value.item() for key, value in stats.items()},
+                "distogram_loss": diff_loss.item(),
+                "total_loss": loss.item(), "main_loss": loss.item(),
+            }
         distogram_logit = self.model.forward(
             msa=batch.msa,
             reference=batch.reference,

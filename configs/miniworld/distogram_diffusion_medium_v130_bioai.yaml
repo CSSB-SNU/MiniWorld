@@ -1,0 +1,55 @@
+# v1.3: PF16 trunk-as-denoiser on BioAI, retaining v1.2 data/crop/loss policy.
+defaults:
+  - phase1a_distogram_medium_v120
+  - override data: bioai_default
+  - _self_
+
+model:
+  trunk:
+    n_recycle_max: 1
+    msa_subsample_per_recycle: 1024
+    diffusion:
+      # Prior experiment: D96, L768; initial preconditioning constants, NOT a
+      # measurement of the corrected v1.3 target/crop distribution.
+      bin_center: 85.70
+      num_sampling_steps: 24
+      scheduler:
+        method: AF3
+        P_mean: -1.2
+        P_std: 1.5
+        sigma_data: 18.90
+        sigma_max: 160.0
+        sigma_min: 4.0e-4
+        rho: 7.0
+        use_time_augmentation: true
+
+data:
+  crop:
+    max_tokens: 384
+    max_atoms: 4096
+    ab_ag_interface_only: true
+    prefer_nonprotein_focus: true
+  msa:
+    sample_depth_by_source: {pdb: af3}
+    max_msa_depth_by_source: {pdb: 8192}
+
+loss:
+  distogram_cb_target: true
+  distogram_interchain_weight: 2.0
+
+train:
+  name: MiniWorld-v1.3.0-distogram-diffusion
+  comment: v1.3.0-distogram-diffusion-PF16-L384
+  run_dir: runs/v1.3.0/distogram_diffusion_PF16
+  num_epoch: 800
+  engine_backend: auto
+  fused_msa_train: true
+  # One compiled CUDA graph for fwd + EDM loss + bwd, including fresh runs.
+  force_trainer: cudagraph
+  compile: true
+  grad_accum_steps: 64  # 4 GPUs x 64 = 256
+  num_workers: 8
+  prefetch_factor: 8
+  bucket_msa_multiple: 8192
+  bucket_token_multiple: 384
+  bucket_atom_multiple: 4096

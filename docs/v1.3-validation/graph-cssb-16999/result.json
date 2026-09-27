@@ -1,0 +1,48 @@
+{
+  "job": 16999,
+  "server": "CSSB node02",
+  "gpu": "8 x H100; two independent four-rank groups",
+  "passed": true,
+  "rows": [
+    {
+      "tokens": 384,
+      "compile_ms": 70.02739334106445,
+      "graph_ms": 62.28019142150879,
+      "speedup": 1.1243927120763493,
+      "max_gradient_relative_l2": 1.6204289465804322e-07,
+      "loss_max_abs": 0.0,
+      "sigma_sequences_match": true
+    },
+    {
+      "tokens": 768,
+      "compile_ms": 258.21278381347656,
+      "graph_ms": 253.42266082763672,
+      "speedup": 1.018901715301213,
+      "max_gradient_relative_l2": 1.6069057551248989e-07,
+      "loss_max_abs": 0.0,
+      "sigma_sequences_match": true
+    }
+  ],
+  "timing_scope": "Median across four ranks x 64 microbatches after diagnostic Adam update; fwd+EDM loss+bwd, excludes H2D/all-reduce/optimizer",
+  "scope": "PF16, MSA4, MSA pool8192/subset1024, no recycling, interchain weight2.0, production dropout, accumulation64",
+  "source_directory": "/home/psk6950/MiniWorld/runs/v1.3.0/graph_cssb_20260924/job-16999",
+  "engine_snapshot": "/home/psk6950/MiniWorld/runs/v1.2.0/phase1a/medium_launch_20260917_130505/graph_barrier_resume_20260924",
+  "training_resume": {
+    "epoch": 585,
+    "global_step": 58500,
+    "original_job": 16976,
+    "resume_job": 16997,
+    "phase1b_job": 16977,
+    "wandb_id": "tapgki9e",
+    "verified_running_step": 58501,
+    "resume_gradient_preflight": "passed",
+    "phase1b_dependency": "afterok:16997",
+    "checkpoint_rollback_steps": 43
+  },
+  "source_sha256": {
+    "scripts/check_distogram_diffusion_graph_v130.py": "31553aa05f49efed3f9c36215880e84ad9c8861ef10d0e82b68754d270a1f136",
+    "scripts/random_recycle_graph_trainer.py": "5fb8502df1ac6223a8ef7aceb919688b5fcbf9614f1417a5d1753f5b77e9b33f",
+    "src/miniworld/models/distogram_only/model_mini_swa.py": "29431c94fc69499007a7e280575a51c6d20041d9bb46c7d9bcdb5b2f655c5a1e",
+    "src/miniworld/modules/distogram_diffusion.py": "d0c0b4730be6d0925f7661660c2e05b9b87da089105584f55ac0420eea67c907"
+  }
+}
