@@ -1,0 +1,43 @@
+from pathlib import Path
+import sys,os,json,gc
+THIS=Path(__file__).resolve().parent;PRE=THIS.parent/'trimul_d256_bwd_sol90_20260923'
+sys.path.insert(0,str(PRE))
+exec((PRE/'check.py').read_text().split('ap=argparse.ArgumentParser()')[0])
+sys.path.insert(0,str(THIS))
+from d256_stats_checkpoint import Training
+from d256_joint_gate_source_v2 import JointGateSourceV2
+from wide_joint_input_reduce import JointInputReduce
+os.environ.update(PREFIX_IMPL='blas',PREFIX_COPY='tma',CHECKPOINT_LN_THREADS='0')
+D=256;N=(384,768)[int(os.environ.get('SLURM_ARRAY_TASK_ID','0'))]
+leaves,dy,mask,ds,ref,triton,names=setup(D,N)
+record=dict(D=D,L=N,job=os.environ.get('SLURM_JOB_ID'),complete=False)
+path=THIS/f'result-d256-joint-gate-source-v2-L{N}-{record["job"]}.json'
+with torch.no_grad(),T.native_context(leaves[0].device):
+    plan=Training(leaves,mask,ds,dy);p=plan.p;y,g=plan();expected=[x.clone() for x in [y,*g]];gp=p.gp_all.clone()
+    part=p.floats[7].reshape(-1)[3*D*D:].as_strided((plan.b7.splits,8*D*D),(11*D*D,1));partial=part.clone()
+    old=plan.b7.source_only;oldreduce=plan.dx.reduce_only;oldrun=plan.schedule.run
+    op=JointGateSourceV2(plan);reduce=JointInputReduce(p,16,128,4,splits=plan.b7.splits)
+    def newrun(name):
+        if name!='dwg':oldrun(name)
+    def install(new):
+        plan.b7.source_only=op if new else old;plan.dx.reduce_only=reduce if new else oldreduce;plan.schedule.run=newrun if new else oldrun
+    def before():install(False);return plan()
+    def after():install(True);return plan()
+    p.dwg.fill_(float('nan'));yn,gn=after();torch.cuda.synchronize()
+    record['gp_error']=error(p.gp_all,gp);record['partial_error']=error(part,partial)
+    record['errors']={n:error(a,b) for n,a,b in zip(names,[yn,*gn],expected)}
+    record['strict']=all(v<(1e-30 if n=='y' else 2e-5 if n=='dx' else 5e-6 if n.startswith(('dgamma','dbeta')) else 5e-4) for n,v in record['errors'].items())
+    record.update(registers=op.registers,local_bytes=op.local_bytes,cubins=[str(op.cubin),str(reduce.cubin)])
+    print('CHECK',record,flush=True);path.write_text(json.dumps(record,indent=2))
+    if record['strict']:
+        def oldboth():oldrun('dwg');old()
+        record['stage_times']=paired(dict(old_source_gate=oldboth,new_source_gate=op));gc.collect()
+        def oldback():install(False);return plan.backward()
+        def newback():install(True);return plan.backward()
+        record['backward_times']=paired(dict(old_backward=oldback,new_backward=newback));gc.collect()
+        record['full_times']=paired(dict(old_full=before,new_full=after));gc.collect()
+        print('TIMES',{k:v['median_us'] for key in ('stage_times','backward_times','full_times') for k,v in record[key].items()},flush=True)
+record['complete']=True;path.write_text(json.dumps(record,indent=2))
+if int(os.environ.get('SLURM_ARRAY_TASK_ID','0'))==0:
+    import runpy
+    runpy.run_path(str(THIS/'compile_joint_gate_grid_resources.py'),run_name='__main__')

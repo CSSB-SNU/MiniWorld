@@ -1,0 +1,46 @@
+{
+  "gpu__time_duration.sum": {
+    "value": "845.728000",
+    "unit": "us"
+  },
+  "dram__bytes_read.sum": {
+    "value": "462.541824",
+    "unit": "Mbyte"
+  },
+  "dram__bytes_write.sum": {
+    "value": "145.177600",
+    "unit": "Mbyte"
+  },
+  "lts__t_sectors.sum": {
+    "value": "154928524.000000",
+    "unit": "sector"
+  },
+  "sm__throughput.avg.pct_of_peak_sustained_elapsed": {
+    "value": "57.703839",
+    "unit": "%"
+  },
+  "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_elapsed": {
+    "value": "32.718672",
+    "unit": "%"
+  },
+  "sm__warps_active.avg.pct_of_peak_sustained_active": {
+    "value": "21.262074",
+    "unit": "%"
+  },
+  "smsp__issue_active.avg.pct_of_peak_sustained_active": {
+    "value": null,
+    "unit": null
+  },
+  "launch__occupancy_limit_registers": {
+    "value": "1.000000",
+    "unit": "block"
+  },
+  "launch__occupancy_limit_shared_mem": {
+    "value": "1.000000",
+    "unit": "block"
+  },
+  "launch__shared_mem_per_block": {
+    "value": "191.488000",
+    "unit": "Kbyte/block"
+  }
+}

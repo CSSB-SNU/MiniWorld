@@ -1,0 +1,56 @@
+{
+  "baseqthreeleanplain": {
+    "resource": {
+      "stack_bytes": 0,
+      "spill_store_bytes": 0,
+      "spill_load_bytes": 0,
+      "initial_registers": 128
+    },
+    "serialization_warnings": [],
+    "sass": {
+      "STL": 0,
+      "LDL": 0,
+      "MUFU.EX2": 288,
+      "WARPGROUP.ARRIVE": 39,
+      "WARPGROUP.DEPBAR": 22,
+      "instructions": 3928
+    },
+    "initial_check": {
+      "serving": {
+        "hot_us": 795.4444000000001,
+        "core_us": 868.25439453125,
+        "core_equal": true,
+        "block_delta_rms": 0.0,
+        "core_rms_fp64": 0.00028883485479432215
+      },
+      "baseqthreeleanplain": {
+        "hot_us": 806.1936000000003,
+        "core_us": 944.4016265869141,
+        "core_equal": true,
+        "block_delta_rms": 0.0,
+        "core_rms_fp64": 0.00028883485479432215
+      }
+    },
+    "installed": false
+  },
+  "baseqthreeleanmixed": {
+    "resource": {
+      "stack_bytes": 16,
+      "spill_store_bytes": 28,
+      "spill_load_bytes": 20,
+      "initial_registers": 128
+    },
+    "serialization_warnings": [
+      "C7512"
+    ],
+    "sass": {
+      "STL": 7,
+      "LDL": 5,
+      "MUFU.EX2": 576,
+      "WARPGROUP.ARRIVE": 156,
+      "WARPGROUP.DEPBAR": 156,
+      "instructions": 6376
+    },
+    "installed": false
+  }
+}

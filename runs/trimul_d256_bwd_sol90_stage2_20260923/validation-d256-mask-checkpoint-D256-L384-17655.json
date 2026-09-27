@@ -1,0 +1,254 @@
+{
+  "L": 384,
+  "job": "17655",
+  "candidate": {
+    "name": "saved_products",
+    "output_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/2c870841f0daade846238cd32330a0fe7e23cf6c4686a961694871013d630771.cubin",
+    "saved_bytes": 150994944,
+    "epi_grid": 1056,
+    "epi_threads": 256,
+    "input_stats": {
+      "name": "input_stats_gamma",
+      "front_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/b7bdf933f003fec9d35942d2b2b3983052d55f76510f144e28f5346580e7c455.cubin",
+      "cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/f7c9cbccfc78d873ce1e6399d381b59d67c54b596a930f479525b2e0524e7121.cubin",
+      "stats_bytes": 1179648,
+      "smem": 99456,
+      "grid": 264
+    },
+    "dense_output_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/637e67ab243892cc4c601805f4143d69105e2cc746ab739bf355d98e03fb8b08.cubin",
+    "mask_source_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/7e03430b49468e86494172d77819685f2d075c4f42ee11f1448cede8402a7479.cubin"
+  },
+  "stress": [
+    {
+      "case": "normal",
+      "strict": {
+        "dx": 5.342943040886894e-06,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00017816144099924713,
+        "dWproj": 0.0002691289409995079,
+        "dgamma_in": 1.0521753210923634e-06,
+        "dbeta_in": 6.807919703533116e-07,
+        "dgamma_out": 9.342505791209987e-07,
+        "dbeta_out": 5.18998035659024e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 3.099028447195451e-07,
+        "dbeta_in": 4.236451900396787e-07,
+        "dgamma_out": 4.588260367199837e-07,
+        "dbeta_out": 4.4884578187520674e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "changed",
+      "strict": {
+        "dx": 8.348726623808034e-06,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0001552170142531395,
+        "dWproj": 0.00029395113233476877,
+        "dgamma_in": 1.0669992889233981e-06,
+        "dbeta_in": 7.656291245439206e-07,
+        "dgamma_out": 9.585452289684326e-07,
+        "dbeta_out": 6.159940539873787e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 3.783238753385376e-07,
+        "dbeta_in": 3.938274630854721e-07,
+        "dgamma_out": 4.484067801513447e-07,
+        "dbeta_out": 4.165952702805953e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "zero_gamma",
+      "strict": {
+        "dx": 8.096255442069378e-06,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00015529865049757063,
+        "dWproj": 0.0003054266853723675,
+        "dgamma_in": 1.1366870467099943e-06,
+        "dbeta_in": 7.21123967650783e-07,
+        "dgamma_out": 9.691207196738105e-07,
+        "dbeta_out": 5.686121653525333e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 3.168900093442062e-07,
+        "dbeta_in": 3.513346484851354e-07,
+        "dgamma_out": 4.4264368170843227e-07,
+        "dbeta_out": 4.822115329261578e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "mask_zero",
+      "strict": {
+        "dx": 9.133054277299379e-07,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00018431380158290267,
+        "dWproj": 0.00018911466759163886,
+        "dgamma_in": 1.252744254998106e-06,
+        "dbeta_in": 6.340056870612898e-07,
+        "dgamma_out": 0.0,
+        "dbeta_out": 5.637097615363018e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 3.563388304428372e-07,
+        "dbeta_in": 3.6413351267583494e-07,
+        "dgamma_out": 0.0,
+        "dbeta_out": 4.7590893359483744e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "dropout_zero",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 0.0,
+        "dbeta_in": 0.0,
+        "dgamma_out": 0.0,
+        "dbeta_out": 0.0
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 0.0,
+        "dbeta_in": 0.0,
+        "dgamma_out": 0.0,
+        "dbeta_out": 0.0
+      },
+      "passed": true
+    }
+  ],
+  "complete": true,
+  "config": {
+    "SHARED_CANDIDATE": "saved_products",
+    "SAVE_EPI_GRID": "1056",
+    "SAVE_EPI_THREADS": "256",
+    "GP_OFF": "1",
+    "GP_WARP": "1",
+    "DX_LN": "1",
+    "DX_WARP": "1",
+    "SAVE_NORM": "1",
+    "DX_N256": "0",
+    "DX_PIPE": "0",
+    "DX_SPLIT": "0",
+    "DX_IN_STATS": "0",
+    "DX_GAMMA_CACHE": "0",
+    "LN_THREADS": "128",
+    "LN_MINBLOCKS": "3",
+    "LN_AGG": "1",
+    "LN_CACHE": "0",
+    "LN_STATS_TMA": "0",
+    "LN_STORE_READ": "0",
+    "LN_GAMMA_SMEM": "0",
+    "DN_SLIM": "0"
+  },
+  "artifacts": [
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/637e67ab243892cc4c601805f4143d69105e2cc746ab739bf355d98e03fb8b08.cubin",
+      "sha256": "6d64be3b9f088d7e2f5175e9020734a53ffbb3fde1a15767c033c233b619a17c"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/b7bdf933f003fec9d35942d2b2b3983052d55f76510f144e28f5346580e7c455.cubin",
+      "sha256": "77c1c87546e2369d60bbd18294a5961e5c407461ae481d5d5d8264ce8eadfe88"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/f7c9cbccfc78d873ce1e6399d381b59d67c54b596a930f479525b2e0524e7121.cubin",
+      "sha256": "4fb4f287cd00d9f1ddb5cec6cd208927814afcd27213188c10f13728057dc385"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/90c51e9d0c6f9a9df9d8d275ac10c07a504b0ba130677fd53f611754c19a85ba.cubin",
+      "sha256": "d3f17d253ebebdad5167993c9edc948e8a026978b24d2c50989c7e2da8027a1b"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/95149dd52543041105a3edcf83c755e6f8ea932711f6213b3ecf5a82e9e89cbc.cubin",
+      "sha256": "597894f03a7abeae492154a337fbd8d059d5d8431bc0c99646e8ad097d191021"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/c5174c5803de4fa40673b41b53ab83f175cdc2aa6f118499a1a28903093e5e98.cubin",
+      "sha256": "6d9f0fd9db28a6d93e3230d0068127034db83eee468243ed59e7f167227e0484"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/7e03430b49468e86494172d77819685f2d075c4f42ee11f1448cede8402a7479.cubin",
+      "sha256": "e692db6e55428930366563eaf6f374d38ba556d32954f312617cb1afd5c5a8a8"
+    }
+  ],
+  "configuration": {
+    "output": [
+      "dense",
+      128,
+      1
+    ],
+    "source": "d256_saved_products",
+    "input_stats": true,
+    "input_gamma_cache": true,
+    "ln_threads": 128,
+    "ln_minblocks": 3,
+    "splits": 8,
+    "mask": "bulk"
+  },
+  "pytorch": {
+    "dx": 0.0048550995998084545,
+    "dWL": 0.00605114595964551,
+    "dWLg": 0.006037827581167221,
+    "dWR": 0.006016907282173634,
+    "dWRg": 0.006040866486728191,
+    "dWgate": 0.0065453387796878815,
+    "dWproj": 0.006109579931944609,
+    "dgamma_in": 0.006345442496240139,
+    "dbeta_in": 0.005903393495827913,
+    "dgamma_out": 0.005302130244672298,
+    "dbeta_out": 0.003568737767636776
+  }
+}

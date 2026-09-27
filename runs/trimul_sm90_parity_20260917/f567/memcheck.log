@@ -1,0 +1,65 @@
+========= COMPUTE-SANITIZER
+................                                                         [100%]
+=============================== warnings summary ===============================
+tests/numerics/test_trimul_parity_f567_gpu.py: 16 warnings
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:407: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    warpgroup.OperandMajorMode.K,
+
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles0-0-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles0-0-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles1-0-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles1-0-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles2-0-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles2-0-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles3-0-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles3-0-shape1]
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:408: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    warpgroup.OperandMajorMode.K
+
+tests/numerics/test_trimul_parity_f567_gpu.py: 32 warnings
+  <string>:10: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+
+tests/numerics/test_trimul_parity_f567_gpu.py: 32 warnings
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/nvidia_cutlass_dsl/python_packages/cutlass/base_dsl/_mlir_helpers/op.py:121: DeprecationWarning: `make_fragment` is deprecated, use `make_rmem_tensor` instead
+    res_or_list = opFunc(*args, **kwargs, loc=loc)
+
+tests/numerics/test_trimul_parity_f567_gpu.py: 16 warnings
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:205: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    warpgroup.OperandMajorMode.K,
+
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles0-0-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles0-0-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles1-0-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles1-0-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles2-0-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles2-0-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles3-0-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles3-0-shape1]
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:206: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    warpgroup.OperandMajorMode.K
+
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles0-1-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles0-1-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles1-1-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles1-1-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles2-1-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles2-1-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles3-1-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles3-1-shape1]
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:410: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    else warpgroup.OperandMajorMode.MN,
+
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles0-1-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles0-1-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles1-1-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles1-1-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles2-1-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles2-1-shape1]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles3-1-shape0]
+tests/numerics/test_trimul_parity_f567_gpu.py::test_f567_sm90_matches_triton[tiles3-1-shape1]
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:208: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    else warpgroup.OperandMajorMode.MN,
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+16 passed, 128 warnings in 17.64s
+========= ERROR SUMMARY: 0 errors

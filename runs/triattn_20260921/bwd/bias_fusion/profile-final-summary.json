@@ -1,0 +1,99 @@
+{
+  "0": {
+    "units": {
+      "dram__bytes_read.sum": "Gbyte",
+      "dram__bytes_write.sum": "Gbyte",
+      "gpu__time_duration.sum": "ms",
+      "lts__t_sectors.sum": "sector",
+      "sm__throughput.avg.pct_of_peak_sustained_elapsed": "%"
+    },
+    "kernels": [
+      {
+        "kernel": "_attn_bwd_preprocess",
+        "dram__bytes_read.sum": 0.302008,
+        "dram__bytes_write.sum": 0.019354,
+        "gpu__time_duration.sum": 0.135744,
+        "lts__t_sectors.sum": 14679074.0,
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": 34.600457
+      },
+      {
+        "kernel": "_attn_bwd_dkdv",
+        "dram__bytes_read.sum": 0.733014,
+        "dram__bytes_write.sum": 3.927956,
+        "gpu__time_duration.sum": 3.195712,
+        "lts__t_sectors.sum": 394001974.0,
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": 36.550282
+      },
+      {
+        "kernel": "_attn_bwd_dq",
+        "dram__bytes_read.sum": 0.627848,
+        "dram__bytes_write.sum": 0.169488,
+        "gpu__time_duration.sum": 1.584768,
+        "lts__t_sectors.sum": 237806380.0,
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": 58.479457
+      },
+      {
+        "kernel": "void at::reduce_kernel<128, 4, at::ReduceOp<c10::BFloat16, at::func_wrapper_t<c10::BFloat16, at::sum_functor<c10::BFloat16, float, c10::BFloat16>::operator ()(at::TensorIterator &)::[lambda(float, float) (instance 1)]>, unsigned int, c10::BFloat16, 4, 8>>(T3)",
+        "dram__bytes_read.sum": 1.812024,
+        "dram__bytes_write.sum": 0.00871,
+        "gpu__time_duration.sum": 0.580544,
+        "lts__t_sectors.sum": 85731443.0,
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": 21.246553
+      },
+      {
+        "kernel": "void at::reduce_kernel<128, 4, at::ReduceOp<c10::BFloat16, at::func_wrapper_t<c10::BFloat16, at::sum_functor<c10::BFloat16, float, c10::BFloat16>::operator ()(at::TensorIterator &)::[lambda(float, float) (instance 1)]>, unsigned int, c10::BFloat16, 4, 8>>(T3)",
+        "dram__bytes_read.sum": 1.812031,
+        "dram__bytes_write.sum": 0.013066,
+        "gpu__time_duration.sum": 0.581632,
+        "lts__t_sectors.sum": 85733875.0,
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": 21.18378
+      }
+    ],
+    "total_dram_gbytes": 9.425498999999999
+  },
+  "4": {
+    "units": {
+      "dram__bytes_read.sum": "Gbyte",
+      "dram__bytes_write.sum": "Gbyte",
+      "gpu__time_duration.sum": "ms",
+      "lts__t_sectors.sum": "sector",
+      "sm__throughput.avg.pct_of_peak_sustained_elapsed": "%"
+    },
+    "kernels": [
+      {
+        "kernel": "_attn_bwd_preprocess",
+        "dram__bytes_read.sum": 0.302013,
+        "dram__bytes_write.sum": 0.011061,
+        "gpu__time_duration.sum": 0.12944,
+        "lts__t_sectors.sum": 14664688.0,
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": 36.382082
+      },
+      {
+        "kernel": "void grouped_dkdv<4>(Config<T1>::Params)",
+        "dram__bytes_read.sum": 1.270115,
+        "dram__bytes_write.sum": 2.124477,
+        "gpu__time_duration.sum": 3.6968,
+        "lts__t_sectors.sum": 273083774.0,
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": 47.874117
+      },
+      {
+        "kernel": "reduce_bias(const float *, cutlass::bfloat16_t *, int, int)",
+        "dram__bytes_read.sum": 1.811986,
+        "dram__bytes_write.sum": 0.026338,
+        "gpu__time_duration.sum": 0.67824,
+        "lts__t_sectors.sum": 85537942.0,
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": 7.937074
+      },
+      {
+        "kernel": "_attn_bwd_dq",
+        "dram__bytes_read.sum": 0.628092,
+        "dram__bytes_write.sum": 0.169437,
+        "gpu__time_duration.sum": 1.592608,
+        "lts__t_sectors.sum": 234511462.0,
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": 63.514876
+      }
+    ],
+    "total_dram_gbytes": 6.343519
+  },
+  "dram_reduction_percent": 32.698321860731184
+}

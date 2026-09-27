@@ -1,0 +1,248 @@
+{
+  "installed_changed": false,
+  "sol90_achieved": false,
+  "job14947": "cancelled_io_stall_before_gpu",
+  "experiments": [
+    {
+      "name": "basepprobeboth",
+      "codegen": {
+        "variant": "basepprobeboth",
+        "installed_sha256": "9365a4f35e018afed4adba21590ae2c1734bbccf98d1e53904ebfe2537b3e225",
+        "binary_sha256": "567b254d9d2483ddd8fc51250333cca77f3efcb5546188e0442e4fb918bc21a8",
+        "kernels": {
+          "0": {
+            "machine_words": 7024,
+            "matches_installed": true
+          },
+          "1024": {
+            "machine_words": 13472,
+            "matches_installed": true
+          },
+          "536870912": {
+            "machine_words": 7104,
+            "matches_installed": false,
+            "ptx_bias_probes": 0,
+            "sass": {
+              "HGMMA": 78,
+              "WARPGROUP.ARRIVE": 39,
+              "WARPGROUP.DEPBAR": 22,
+              "MUFU.EX2": 288,
+              "LOP3.LUT": 40,
+              "STL": 0,
+              "LDL": 0
+            },
+            "sync_opcodes": [
+              "SYNCS.ARRIVE.TRANS64",
+              "SYNCS.ARRIVE.TRANS64.A1T0",
+              "SYNCS.EXCH.64",
+              "SYNCS.PHASECHK.TRANS64",
+              "SYNCS.PHASECHK.TRANS64.TRYWAIT"
+            ]
+          },
+          "1073741824": {
+            "machine_words": 7104,
+            "matches_installed": false,
+            "ptx_bias_probes": 0,
+            "sass": {
+              "HGMMA": 78,
+              "WARPGROUP.ARRIVE": 39,
+              "WARPGROUP.DEPBAR": 22,
+              "MUFU.EX2": 288,
+              "LOP3.LUT": 40,
+              "STL": 0,
+              "LDL": 0
+            },
+            "sync_opcodes": [
+              "SYNCS.ARRIVE.TRANS64",
+              "SYNCS.ARRIVE.TRANS64.A1T0",
+              "SYNCS.EXCH.64",
+              "SYNCS.PHASECHK.TRANS64",
+              "SYNCS.PHASECHK.TRANS64.TRYWAIT"
+            ]
+          }
+        }
+      },
+      "resources": [
+        {
+          "flag": 536870912,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "registers": 128
+        },
+        {
+          "flag": 1073741824,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "registers": 128
+        }
+      ],
+      "warnings": [],
+      "disposition": "invalid_probe_compiled_out",
+      "gpu_launched": false
+    },
+    {
+      "name": "basepprobebothv2",
+      "codegen": {
+        "variant": "basepprobebothv2",
+        "installed_sha256": "9365a4f35e018afed4adba21590ae2c1734bbccf98d1e53904ebfe2537b3e225",
+        "binary_sha256": "d6f82db2a24016b7da9235a6282215098801c8bc902041bd8fffe75746465647",
+        "kernels": {
+          "0": {
+            "machine_words": 7024,
+            "matches_installed": true
+          },
+          "1024": {
+            "machine_words": 13472,
+            "matches_installed": true
+          },
+          "536870912": {
+            "machine_words": 7904,
+            "matches_installed": false,
+            "ptx_bias_probes": 16,
+            "sass": {
+              "HGMMA": 78,
+              "WARPGROUP.ARRIVE": 78,
+              "WARPGROUP.DEPBAR": 78,
+              "MUFU.EX2": 288,
+              "LOP3.LUT": 101,
+              "STL": 0,
+              "LDL": 0
+            },
+            "sync_opcodes": [
+              "SYNCS.ARRIVE.TRANS64",
+              "SYNCS.ARRIVE.TRANS64.A1T0",
+              "SYNCS.EXCH.64",
+              "SYNCS.PHASECHK.TRANS64",
+              "SYNCS.PHASECHK.TRANS64.TRYWAIT"
+            ]
+          },
+          "1073741824": {
+            "machine_words": 7904,
+            "matches_installed": false,
+            "ptx_bias_probes": 16,
+            "sass": {
+              "HGMMA": 78,
+              "WARPGROUP.ARRIVE": 78,
+              "WARPGROUP.DEPBAR": 78,
+              "MUFU.EX2": 288,
+              "LOP3.LUT": 101,
+              "STL": 0,
+              "LDL": 0
+            },
+            "sync_opcodes": [
+              "SYNCS.ARRIVE.TRANS64",
+              "SYNCS.ARRIVE.TRANS64.A1T0",
+              "SYNCS.EXCH.64",
+              "SYNCS.PHASECHK.TRANS64",
+              "SYNCS.PHASECHK.TRANS64.TRYWAIT"
+            ]
+          }
+        }
+      },
+      "resources": [
+        {
+          "flag": 536870912,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "registers": 128
+        },
+        {
+          "flag": 1073741824,
+          "stack": 0,
+          "stores": 0,
+          "loads": 0,
+          "registers": 128
+        }
+      ],
+      "warnings": [
+        "C7512"
+      ],
+      "disposition": "reject_compiler",
+      "gpu_launched": false
+    },
+    {
+      "name": "basepprobeevenv2",
+      "codegen": {
+        "variant": "basepprobeevenv2",
+        "installed_sha256": "9365a4f35e018afed4adba21590ae2c1734bbccf98d1e53904ebfe2537b3e225",
+        "binary_sha256": "5b819c8657aef86243a5c59ea51b4c06b33f4fadabe265f4bee55327fdb772e7",
+        "kernels": {
+          "0": {
+            "machine_words": 7024,
+            "matches_installed": true
+          },
+          "1024": {
+            "machine_words": 13472,
+            "matches_installed": true
+          },
+          "536870912": {
+            "machine_words": 7824,
+            "matches_installed": false,
+            "ptx_bias_probes": 8,
+            "sass": {
+              "HGMMA": 78,
+              "WARPGROUP.ARRIVE": 78,
+              "WARPGROUP.DEPBAR": 78,
+              "MUFU.EX2": 288,
+              "LOP3.LUT": 72,
+              "STL": 96,
+              "LDL": 144
+            },
+            "sync_opcodes": [
+              "SYNCS.ARRIVE.TRANS64",
+              "SYNCS.ARRIVE.TRANS64.A1T0",
+              "SYNCS.EXCH.64",
+              "SYNCS.PHASECHK.TRANS64",
+              "SYNCS.PHASECHK.TRANS64.TRYWAIT"
+            ]
+          },
+          "1073741824": {
+            "machine_words": 7824,
+            "matches_installed": false,
+            "ptx_bias_probes": 8,
+            "sass": {
+              "HGMMA": 78,
+              "WARPGROUP.ARRIVE": 78,
+              "WARPGROUP.DEPBAR": 78,
+              "MUFU.EX2": 288,
+              "LOP3.LUT": 72,
+              "STL": 96,
+              "LDL": 144
+            },
+            "sync_opcodes": [
+              "SYNCS.ARRIVE.TRANS64",
+              "SYNCS.ARRIVE.TRANS64.A1T0",
+              "SYNCS.EXCH.64",
+              "SYNCS.PHASECHK.TRANS64",
+              "SYNCS.PHASECHK.TRANS64.TRYWAIT"
+            ]
+          }
+        }
+      },
+      "resources": [
+        {
+          "flag": 536870912,
+          "stack": 64,
+          "stores": 512,
+          "loads": 576,
+          "registers": 128
+        },
+        {
+          "flag": 1073741824,
+          "stack": 64,
+          "stores": 512,
+          "loads": 576,
+          "registers": 128
+        }
+      ],
+      "warnings": [
+        "C7520"
+      ],
+      "disposition": "reject_compiler",
+      "gpu_launched": false
+    }
+  ]
+}

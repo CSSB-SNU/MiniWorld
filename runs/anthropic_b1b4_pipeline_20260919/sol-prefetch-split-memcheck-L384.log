@@ -1,0 +1,18 @@
+========= COMPUTE-SANITIZER
+PTXAS dual_ln_prefetch 132 1 /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/dff7306bd68e1ebc63de6bbf2d6f3bfec7f2109cf08599f900e1e01f40f0d389.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'unified_reduce' for 'sm_90a'
+ptxas info    : Function properties for unified_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 9.052 ms
+ptxas info    : Compiling entry function 'dual_b1b4' for 'sm_90a'
+ptxas info    : Function properties for dual_b1b4
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 252 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 314.363 ms
+
+CHECK {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 0.00013136459165252745, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 5.537878223549342e-06, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 8.144286880451546e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 5.914511120863608e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 0.00016304962628055364, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK 20261305 {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 2.5192357497871853e-05, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 5.837055596202845e-06, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 2.0740869786095573e-06, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 5.560274871641013e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 0.0001627451420063153, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK 20261306 {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 6.060967643861659e-05, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 6.058242888684617e-06, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 9.89611066870566e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 5.029701242165174e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 0.00019441339827608317, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK counters_zero=true
+========= ERROR SUMMARY: 0 errors

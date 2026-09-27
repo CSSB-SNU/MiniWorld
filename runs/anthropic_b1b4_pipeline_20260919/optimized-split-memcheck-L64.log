@@ -1,0 +1,26 @@
+========= COMPUTE-SANITIZER
+/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'layernorm_bwd_atomic_strided_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16+float32|shape_key=68720526106). Falling back to a heuristic 3 of 288 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+PTXAS dual_optimized 132 1 /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/daeb9b24638ce01141cb74cd906a184fe5540ca4e691446f4747b1d8f8fe4238.cubin /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/dual_optimized.cu(73): warning #20058-D: the #pragma unroll must precede a loop
+  #pragma unroll
+          ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'unified_reduce' for 'sm_90a'
+ptxas info    : Function properties for unified_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 15.063 ms
+ptxas info    : Compiling entry function 'dual_b1b4' for 'sm_90a'
+ptxas info    : Function properties for dual_b1b4
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 255 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 295.475 ms
+
+CHECK {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 5.9848745877388865e-05, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 7.96871154307155e-06, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 3.1265579991668346e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 7.211458097344803e-08, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 3.152615317958407e-05, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK 20260985 {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 2.762517578958068e-05, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 7.182514764281223e-06, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 2.3328470888372976e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 6.160151144740666e-08, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 2.154315916413907e-05, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK 20260986 {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 2.5279361580032855e-05, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 9.326091117145552e-07, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 8.317845185956685e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 7.02058784440851e-08, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 7.000978712312644e-06, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK counters_zero=true
+========= ERROR SUMMARY: 0 errors

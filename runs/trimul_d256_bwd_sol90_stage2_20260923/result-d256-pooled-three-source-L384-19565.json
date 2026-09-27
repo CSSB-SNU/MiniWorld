@@ -1,0 +1,50 @@
+{
+  "D": 256,
+  "L": 384,
+  "producer": 64,
+  "consumer": 88,
+  "job": "19565",
+  "complete": true,
+  "pool_metadata": {
+    "original": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/efb05f1214355d994bcc811d19fb6a958f7057020c99b27d676905f20cbb2821.cubin",
+    "original_sha256": "129f99f6803f915a95580cac5e6c057df068f9e1831abf84d97b8d7dae9a376b",
+    "patched": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/2c88037961f9017100b4820aa0c3bebd136d52c995819774c427d253ab94b543.initial-pool.cubin",
+    "patched_sha256": "2c88037961f9017100b4820aa0c3bebd136d52c995819774c427d253ab94b543",
+    "changes": [
+      {
+        "offset": 101288,
+        "symbol": 11,
+        "old": 88,
+        "new": 80
+      }
+    ],
+    "register_bounds": {
+      "80": 1,
+      "88": 83,
+      "64": 57
+    },
+    "reachable_states": 2524,
+    "machine_code_unchanged": true
+  },
+  "cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/2c88037961f9017100b4820aa0c3bebd136d52c995819774c427d253ab94b543.initial-pool.cubin",
+  "registers": 80,
+  "local_bytes": 416,
+  "occupancy": 2,
+  "gp_error": 0.0,
+  "partial_error": 0.0,
+  "errors": {
+    "y": 0.0,
+    "dx": 0.0,
+    "dWL": 0.0,
+    "dWLg": 0.0,
+    "dWR": 0.0,
+    "dWRg": 0.0,
+    "dWgate": 0.0,
+    "dWproj": 0.0,
+    "dgamma_in": 6.716741722812003e-07,
+    "dbeta_in": 5.373355520532641e-07,
+    "dgamma_out": 5.076365141576389e-07,
+    "dbeta_out": 5.457508791550936e-07
+  },
+  "strict": true
+}

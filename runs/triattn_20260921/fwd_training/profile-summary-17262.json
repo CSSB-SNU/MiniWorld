@@ -1,0 +1,369 @@
+{
+  "job": 17262,
+  "node": "node02",
+  "qos": "normal_h100",
+  "state": "COMPLETED",
+  "exit_code": "0:0",
+  "records": [
+    {
+      "length": 768,
+      "regime": "actual_training_forward_core",
+      "starting": true,
+      "dtype": "bfloat16",
+      "heads": 4,
+      "head_dim": 32,
+      "mask": "every_seventh_key",
+      "device": "NVIDIA H100 80GB HBM3",
+      "sm_count": 132,
+      "shared_memory_per_block_optin": 232448,
+      "torch": "2.10.0+cu128",
+      "source": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/triton/main.py",
+      "source_sha256": "221583a8f4e5a43c580b392b460ce20e360c218f5f524b0380127fb28e45a6c1",
+      "operand_shapes": [
+        [
+          1,
+          4,
+          768,
+          768,
+          32
+        ],
+        [
+          1,
+          4,
+          768,
+          768,
+          32
+        ],
+        [
+          1,
+          4,
+          768,
+          768,
+          32
+        ],
+        [
+          1,
+          4,
+          768,
+          768
+        ]
+      ],
+      "operand_strides": [
+        [
+          75497472,
+          32,
+          98304,
+          128,
+          1
+        ],
+        [
+          75497472,
+          32,
+          98304,
+          128,
+          1
+        ],
+        [
+          75497472,
+          32,
+          98304,
+          128,
+          1
+        ],
+        [
+          2359296,
+          589824,
+          768,
+          1
+        ]
+      ],
+      "output_strides": [
+        [
+          75497472,
+          32,
+          98304,
+          128,
+          1
+        ],
+        [
+          2359296,
+          589824,
+          768,
+          1
+        ]
+      ],
+      "config": "BLOCK_M1: 64, BLOCK_M2: 64, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None",
+      "event_median_us": 1602.3935317993164,
+      "event_rounds_us": [
+        1618.739128112793,
+        1616.6719436645508,
+        1616.7184829711914,
+        1597.7744102478027,
+        1603.340721130371,
+        1600.7728576660156,
+        1580.399990081787,
+        1586.9312286376953,
+        1602.3935317993164
+      ],
+      "complete": true,
+      "metrics": {
+        "gpu__time_duration.sum": {
+          "value": 1.614912,
+          "unit": "ms"
+        },
+        "dram__bytes_read.sum": {
+          "value": 457.752832,
+          "unit": "Mbyte"
+        },
+        "dram__bytes_write.sum": {
+          "value": 156.100096,
+          "unit": "Mbyte"
+        },
+        "dram__cycles_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 11.339207,
+          "unit": "%"
+        },
+        "lts__throughput.avg.pct_of_peak_sustained_elapsed": {
+          "value": 49.358695,
+          "unit": "%"
+        },
+        "lts__t_sector_hit_rate.pct": {
+          "value": 88.610874,
+          "unit": "%"
+        },
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": {
+          "value": 68.831004,
+          "unit": "%"
+        },
+        "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 14.675502,
+          "unit": "%"
+        },
+        "sm__issue_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 68.831004,
+          "unit": "%"
+        },
+        "sm__pipe_alu_cycles_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 51.402476,
+          "unit": "%"
+        },
+        "sm__pipe_fma_cycles_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 29.140809,
+          "unit": "%"
+        },
+        "sm__inst_executed_pipe_xu.avg.pct_of_peak_sustained_elapsed": {
+          "value": 32.255531,
+          "unit": "%"
+        },
+        "sm__warps_active.avg.pct_of_peak_sustained_active": {
+          "value": 24.740163,
+          "unit": "%"
+        },
+        "launch__registers_per_thread": {
+          "value": 128.0,
+          "unit": "register/thread"
+        },
+        "launch__shared_mem_per_block": {
+          "value": 37.888,
+          "unit": "Kbyte/block"
+        }
+      },
+      "minimum_unique_input_bytes": 457703424,
+      "raw_bias_bytes": 4718592,
+      "logical_row_repeated_bias_bytes": 3623878656,
+      "analytical_notes": "Logical bytes are operand counts, not physical HBM or L2 transactions. Minimum input counts assume one read of Q/K/V/bias; writeback timing and cache residency affect observed counters.",
+      "bias_resident_candidate": {
+        "query_tile": 64,
+        "row_shards": 6,
+        "simultaneous_rows": 2,
+        "key_tile": 64,
+        "kv_stages": 3,
+        "grid_ctas": 288,
+        "raw_bias_smem_bytes": 98304,
+        "kv_smem_bytes": 49152,
+        "q_smem_bytes": 8192,
+        "state_notes": "Only data arrays; excludes alignment, barriers, output store staging and compiler resources. O/stats in registers."
+      }
+    },
+    {
+      "length": 1024,
+      "regime": "actual_training_forward_core",
+      "starting": true,
+      "dtype": "bfloat16",
+      "heads": 4,
+      "head_dim": 32,
+      "mask": "every_seventh_key",
+      "device": "NVIDIA H100 80GB HBM3",
+      "sm_count": 132,
+      "shared_memory_per_block_optin": 232448,
+      "torch": "2.10.0+cu128",
+      "source": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/triton/main.py",
+      "source_sha256": "221583a8f4e5a43c580b392b460ce20e360c218f5f524b0380127fb28e45a6c1",
+      "operand_shapes": [
+        [
+          1,
+          4,
+          1024,
+          1024,
+          32
+        ],
+        [
+          1,
+          4,
+          1024,
+          1024,
+          32
+        ],
+        [
+          1,
+          4,
+          1024,
+          1024,
+          32
+        ],
+        [
+          1,
+          4,
+          1024,
+          1024
+        ]
+      ],
+      "operand_strides": [
+        [
+          134217728,
+          32,
+          131072,
+          128,
+          1
+        ],
+        [
+          134217728,
+          32,
+          131072,
+          128,
+          1
+        ],
+        [
+          134217728,
+          32,
+          131072,
+          128,
+          1
+        ],
+        [
+          4194304,
+          1048576,
+          1024,
+          1
+        ]
+      ],
+      "output_strides": [
+        [
+          134217728,
+          32,
+          131072,
+          128,
+          1
+        ],
+        [
+          4194304,
+          1048576,
+          1024,
+          1
+        ]
+      ],
+      "config": "BLOCK_M1: 64, BLOCK_M2: 64, num_warps: 4, num_ctas: 1, num_stages: 4, maxnreg: None",
+      "event_median_us": 3695.8431243896484,
+      "event_rounds_us": [
+        3703.2047271728516,
+        3704.2911529541016,
+        3695.355224609375,
+        3695.8145141601562,
+        3695.7408905029297,
+        3695.5535888671875,
+        3696.0304260253906,
+        3695.8431243896484,
+        3695.876693725586
+      ],
+      "complete": true,
+      "metrics": {
+        "gpu__time_duration.sum": {
+          "value": 3.759424,
+          "unit": "ms"
+        },
+        "dram__bytes_read.sum": {
+          "value": 814.439936,
+          "unit": "Mbyte"
+        },
+        "dram__bytes_write.sum": {
+          "value": 281.661184,
+          "unit": "Mbyte"
+        },
+        "dram__cycles_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 8.697346,
+          "unit": "%"
+        },
+        "lts__throughput.avg.pct_of_peak_sustained_elapsed": {
+          "value": 50.358233,
+          "unit": "%"
+        },
+        "lts__t_sector_hit_rate.pct": {
+          "value": 91.301488,
+          "unit": "%"
+        },
+        "sm__throughput.avg.pct_of_peak_sustained_elapsed": {
+          "value": 69.061122,
+          "unit": "%"
+        },
+        "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 15.060799,
+          "unit": "%"
+        },
+        "sm__issue_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 69.061122,
+          "unit": "%"
+        },
+        "sm__pipe_alu_cycles_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 50.756658,
+          "unit": "%"
+        },
+        "sm__pipe_fma_cycles_active.avg.pct_of_peak_sustained_elapsed": {
+          "value": 29.731841,
+          "unit": "%"
+        },
+        "sm__inst_executed_pipe_xu.avg.pct_of_peak_sustained_elapsed": {
+          "value": 33.06316,
+          "unit": "%"
+        },
+        "sm__warps_active.avg.pct_of_peak_sustained_active": {
+          "value": 24.815843,
+          "unit": "%"
+        },
+        "launch__registers_per_thread": {
+          "value": 128.0,
+          "unit": "register/thread"
+        },
+        "launch__shared_mem_per_block": {
+          "value": 46.08,
+          "unit": "Kbyte/block"
+        }
+      },
+      "minimum_unique_input_bytes": 813694976,
+      "raw_bias_bytes": 8388608,
+      "logical_row_repeated_bias_bytes": 8589934592,
+      "analytical_notes": "Logical bytes are operand counts, not physical HBM or L2 transactions. Minimum input counts assume one read of Q/K/V/bias; writeback timing and cache residency affect observed counters.",
+      "bias_resident_candidate": {
+        "query_tile": 64,
+        "row_shards": 6,
+        "simultaneous_rows": 2,
+        "key_tile": 64,
+        "kv_stages": 3,
+        "grid_ctas": 384,
+        "raw_bias_smem_bytes": 131072,
+        "kv_smem_bytes": 49152,
+        "q_smem_bytes": 8192,
+        "state_notes": "Only data arrays; excludes alignment, barriers, output store staging and compiler resources. O/stats in registers."
+      }
+    }
+  ]
+}

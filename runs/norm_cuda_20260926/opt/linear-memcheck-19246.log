@@ -1,0 +1,97 @@
+========= COMPUTE-SANITIZER
+========= Program hit CUDA_ERROR_INVALID_HANDLE (error 400) due to "invalid resource handle" on CUDA API call to cuKernelGetFunction.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame:  [0x3a997] in libcudart.so.12
+=========         Host Frame: cudaLaunchKernel [0x79f19] in libcudart.so.12
+=========         Host Frame: norm_backward(at::Tensor, at::Tensor, std::optional<at::Tensor>, at::Tensor, at::Tensor, bool, bool, int, int)::{lambda()#2}::operator()() const::{lambda()#4}::operator()() const [0x33d25] in mw_norm_cuda_a88ccf91bed7.so
+=========         Host Frame: norm_backward(at::Tensor, at::Tensor, std::optional<at::Tensor>, at::Tensor, at::Tensor, bool, bool, int, int) [0x422a8] in mw_norm_cuda_a88ccf91bed7.so
+=========         Host Frame: pybind11::cpp_function::initialize<std::vector<at::Tensor, std::allocator<at::Tensor> > (*&)(at::Tensor, at::Tensor, std::optional<at::Tensor>, at::Tensor, at::Tensor, bool, bool, int, int), std::vector<at::Tensor, std::allocator<at::Tensor> >, at::Tensor, at::Tensor, std::optional<at::Tensor>, at::Tensor, at::Tensor, bool, bool, int, int, pybind11::name, pybind11::scope, pybind11::sibling>(std::vector<at::Tensor, std::allocator<at::Tensor> > (*&)(at::Tensor, at::Tensor, std::optional<at::Tensor>, at::Tensor, at::Tensor, bool, bool, int, int), std::vector<at::Tensor, std::allocator<at::Tensor> > (*)(at::Tensor, at::Tensor, std::optional<at::Tensor>, at::Tensor, at::Tensor, bool, bool, int, int), pybind11::name const&, pybind11::scope const&, pybind11::sibling const&)::{lambda(pybind11::detail::function_call&)#3}::_FUN(pybind11::detail::function_call&) [0x736d1] in mw_norm_cuda_a88ccf91bed7.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x70006] in mw_norm_cuda_a88ccf91bed7.so
+=========         Host Frame: cfunction_call in methodobject.c:543 [0x13d0c5] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4181 [0x131d4a] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: pybind11::object pybind11::detail::object_api<pybind11::handle>::operator()<(pybind11::return_value_policy)1, pybind11::detail::args_proxy, pybind11::detail::kwargs_proxy>(pybind11::detail::args_proxy&&, pybind11::detail::kwargs_proxy&&) const [0xa2c5ce] in libtorch_python.so
+=========         Host Frame: torch::impl::dispatch::PythonKernelHolder::operator()(c10::OperatorHandle const&, c10::DispatchKeySet, std::vector<c10::IValue, std::allocator<c10::IValue> >*) [0xd91529] in libtorch_python.so
+=========         Host Frame: pybind11::object pybind11::detail::argument_loader<pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&>::call_impl<pybind11::object, torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}&, 0ul, 1ul, 2ul, 3ul, pybind11::detail::void_type>(torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}&, std::integer_sequence<unsigned long, 0ul, 1ul, 2ul, 3ul>, pybind11::detail::void_type&&) && [clone .isra.0] [0xd89a97] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::initialize<torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}, pybind11::object, pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&, pybind11::name, pybind11::is_method, pybind11::sibling>(torch::impl::dispatch::initDispatchBindings(_object*)::{lambda(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&)#1}&&, pybind11::object (*)(pybind11::object const&, c10::DispatchKeySet, pybind11::args, pybind11::kwargs const&), pybind11::name const&, pybind11::is_method const&, pybind11::sibling const&)::{lambda(pybind11::detail::function_call&)#1}::_FUN(pybind11::detail::function_call&) [0xd89eb7] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x40d209] in libtorch_python.so
+=========         Host Frame: cfunction_call in methodobject.c:543 [0x13d0c5] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14adaf] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: pybind11::object pybind11::detail::object_api<pybind11::handle>::operator()<(pybind11::return_value_policy)1, c10::DispatchKeySet&, pybind11::detail::args_proxy, pybind11::detail::kwargs_proxy>(c10::DispatchKeySet&, pybind11::detail::args_proxy&&, pybind11::detail::kwargs_proxy&&) const [0xd909d3] in libtorch_python.so
+=========         Host Frame: torch::impl::dispatch::PythonKernelHolder::operator()(c10::OperatorHandle const&, c10::DispatchKeySet, std::vector<c10::IValue, std::allocator<c10::IValue> >*) [0xd914db] in libtorch_python.so
+=========         Host Frame: c10::Dispatcher::callBoxed(c10::OperatorHandle const&, std::vector<c10::IValue, std::allocator<c10::IValue> >*) const [clone .isra.0] [0x66a755b] in libtorch_cpu.so
+=========         Host Frame: torch::jit::invokeOperatorFromPython(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, pybind11::args const&, pybind11::kwargs const&, std::optional<c10::DispatchKey>) [0xaf4463] in libtorch_python.so
+=========         Host Frame: torch::jit::_get_operation_for_overload_or_packet(c10::ArrayRef<std::shared_ptr<torch::jit::Operator> >, c10::Symbol, pybind11::args const&, pybind11::kwargs const&, bool, std::optional<c10::DispatchKey>) [0xaf4967] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::initialize<torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}, pybind11::object, pybind11::args const&, pybind11::kwargs const&>(torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}::operator()(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const::{lambda(pybind11::args const&, pybind11::kwargs const&)#1}&&, pybind11::object (*)(pybind11::args const&, pybind11::kwargs const&))::{lambda(pybind11::detail::function_call&)#1}::_FUN(pybind11::detail::function_call&) [0x9d9dd6] in libtorch_python.so
+=========         Host Frame: pybind11::cpp_function::dispatcher(_object*, _object*, _object*) [0x40d209] in libtorch_python.so
+=========         Host Frame: cfunction_call in methodobject.c:543 [0x13d0c5] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b5ae] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x13241f] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:142 [0x1350ad] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148ed6] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: PyObject_Call in call.c:317 [0x14b5ae] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyObject_FastCallDictTstate in call.c:142 [0x1350ad] in python
+=========         Host Frame: _PyObject_Call_Prepend in call.c:431 [0x148ed6] in python
+=========         Host Frame: slot_tp_call in typeobject.c:7494 [0x20fdb6] in python
+=========         Host Frame: _PyObject_MakeTpCall in call.c:215 [0x135e12] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4213 [0x1317b5] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: _PyFunction_Vectorcall in call.c:342 [0x13d59b] in python
+=========         Host Frame: _PyEval_EvalFrameDefault in ceval.c:4277 [0x12f8b1] in python
+=========         Host Frame: method_vectorcall in classobject.c:83 [0x14aac7] in python
+=========         Host Frame: torch::autograd::PyNode::apply(std::vector<at::Tensor, std::allocator<at::Tensor> >&&) [0x81a5fd] in libtorch_python.so
+=========         Host Frame: torch::autograd::Node::operator()(std::vector<at::Tensor, std::allocator<at::Tensor> >&&) [0x5dfef2a] in libtorch_cpu.so
+=========         Host Frame: torch::autograd::Engine::evaluate_function(std::shared_ptr<torch::autograd::GraphTask>&, torch::autograd::Node*, torch::autograd::InputBuffer&, std::shared_ptr<torch::autograd::ReadyQueue> const&) [0x5df8814] in libtorch_cpu.so
+=========         Host Frame: torch::autograd::Engine::thread_main(std::shared_ptr<torch::autograd::GraphTask> const&) [0x5df96c8] in libtorch_cpu.so
+=========         Host Frame: torch::autograd::Engine::thread_init(int, std::shared_ptr<torch::autograd::ReadyQueue> const&, bool) [0x5deea76] in libtorch_cpu.so
+=========         Host Frame: torch::autograd::python::PythonEngine::thread_init(int, std::shared_ptr<torch::autograd::ReadyQueue> const&, bool) [0x80dfe1] in libtorch_python.so
+=========         Host Frame: execute_native_thread_routine in thread.cc:104 [0xef5e3] in libstdc++.so.6
+=========         Host Frame: start_thread [0x81c9] in libpthread.so.0
+=========         Host Frame: clone [0x398d2] in libc.so.6
+=========         Host Frame: _backward in __init__.py:85
+=========         Host Frame: wrapped_fn in custom_ops.py:382
+=========         Host Frame: _fn in eval_frame.py:1181
+=========         Host Frame: inner in _compile.py:54
+=========         Host Frame: backend_impl in custom_ops.py:347
+=========         Host Frame: redispatch in _ops.py:826
+=========         Host Frame: forward_no_grad in autograd.py:41
+=========         Host Frame: autograd_impl in autograd.py:112
+=========         Host Frame: __call__ in _ops.py:819
+=========         Host Frame: __call__ in custom_ops.py:698
+=========         Host Frame: backward in linear.py:44
+=========         Host Frame: wrapper in function.py:610
+=========         Host Frame: apply in function.py:317
+========= 
+....                                                                     [100%]
+=============================== warnings summary ===============================
+tests/numerics/test_norm_linear_cuda_gpu.py::test_views[strided]
+  /home/psk6950/MiniWorld/.engine-release-2.0.0/src/miniworld_engine/kernels/norm_cuda/linear.py:42: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at /pytorch/aten/src/ATen/cuda/CublasHandlePool.cpp:330.)
+    dxn = dy @ w
+
+tests/numerics/test_norm_linear_cuda_gpu.py::test_views[strided]
+  /home/psk6950/MiniWorld/.engine-release-2.0.0/tests/numerics/test_norm_linear_cuda_gpu.py:27: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+    assert float(relative) < tolerance
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+4 passed, 29 deselected, 2 warnings in 27.73s
+========= ERROR SUMMARY: 1 error

@@ -1,0 +1,121 @@
+{
+  "job": "18488",
+  "front": "front8",
+  "core": "resident6",
+  "installed": false,
+  "rows": [
+    {
+      "length": 384,
+      "ending": false,
+      "baseline_ms": 0.3951815962791443,
+      "candidate_ms": 0.379448401927948,
+      "speedup": 1.041362338204968,
+      "reduction_percent": 3.971944892520851,
+      "speedup_ci95": [
+        1.0411437970617752,
+        1.0415989682698397
+      ]
+    },
+    {
+      "length": 384,
+      "ending": true,
+      "baseline_ms": 0.491076397895813,
+      "candidate_ms": 0.375382399559021,
+      "speedup": 1.3080362000085208,
+      "reduction_percent": 23.549516443544473,
+      "speedup_ci95": [
+        1.30761279280125,
+        1.3083027948600758
+      ]
+    },
+    {
+      "length": 768,
+      "ending": false,
+      "baseline_ms": 1.9433168411254882,
+      "candidate_ms": 1.81190767288208,
+      "speedup": 1.070479837219128,
+      "reduction_percent": 6.583948129487349,
+      "speedup_ci95": [
+        1.0682859386384098,
+        1.082945143616909
+      ]
+    },
+    {
+      "length": 768,
+      "ending": true,
+      "baseline_ms": 2.3131531715393066,
+      "candidate_ms": 1.8120495796203613,
+      "speedup": 1.275669212784008,
+      "reduction_percent": 21.60977234704835,
+      "speedup_ci95": [
+        1.2689271367029096,
+        1.2809113887317336
+      ]
+    },
+    {
+      "length": 1024,
+      "ending": false,
+      "baseline_ms": 4.063683700561524,
+      "candidate_ms": 3.8975067138671875,
+      "speedup": 1.0385013551305715,
+      "reduction_percent": 3.7073957525775914,
+      "speedup_ci95": [
+        1.0310220394452165,
+        1.0595917492287095
+      ]
+    },
+    {
+      "length": 1024,
+      "ending": true,
+      "baseline_ms": 4.713069152832031,
+      "candidate_ms": 3.897978401184082,
+      "speedup": 1.206864019007508,
+      "reduction_percent": 17.14062361206421,
+      "speedup_ci95": [
+        1.1973508422139258,
+        1.2144967164437555
+      ]
+    }
+  ],
+  "evidence_sha256": {
+    "qualified-front8-resident6-384-18488.json": "3b3f05d4ae1eeb96d8e9c42ece9ac2d59530460253d552b2ced5220c0b3d7539",
+    "dispatch-front8-resident6-384-18489.json": "4d7b81d628345a4a89e60c55e7a717284539bfb27526ce3be55c65e0fdfa8784",
+    "qualified-front8-resident6-768-18488.json": "1b0b320dfc5efedc5b597bbf0be66123147e1d557592d3067bd43bb5c8907f34",
+    "dispatch-front8-resident6-768-18489.json": "29476e48fc618039c1b97e3a4652221303389fd9a1719a1871b7073f3cff2b3b",
+    "qualified-front8-resident6-1024-18488.json": "c23e446c73091c7ff8826869eef2617969095bd6384bcced5408683a143786f5",
+    "dispatch-front8-resident6-1024-18489.json": "0727836a80753963e40c1501536541a106a6ad2d83f722b550269481b3ce4ed5"
+  },
+  "dispatch_job": "18489",
+  "qualification": {
+    "core_native": true,
+    "front_fp64": true,
+    "module_fp64": true,
+    "graph": true,
+    "fullgraph": true,
+    "core_sanitizers": true,
+    "front_sanitizers": true
+  },
+  "cuda_graph_rounds": 64,
+  "replays_per_round": 40,
+  "baseline": "actual installed eval/inference_mode module; complete FWD",
+  "builds": {
+    "resident6": {
+      "module": "triattn_infer_resident6",
+      "binary": "build/triattn_infer_resident6.so",
+      "smem": 230400,
+      "sha256": {
+        "fused.cu": "aaba5119ba70f6acab050e125f8c833a57e1eb9aec7391bf30cadebaf6cb0adf",
+        "build/triattn_infer_resident6.so": "a60e2e7634c51b937744a77f2165939a3dd12841fd4040eb8707f8cd0c89d317"
+      }
+    },
+    "front8": {
+      "module": "triattn_infer_front8",
+      "binary": "build/triattn_infer_front8.so",
+      "smem": 0,
+      "sha256": {
+        "fused.cu": "b65e52ab1508251d76ddb2f4d2d1a091b2e9c31df64381ef0588366ff815bb68",
+        "build/triattn_infer_front8.so": "7c2ce7a8564739dba26d68d4c9580dc181f459994454856cf158b7c59dbd499f"
+      }
+    }
+  }
+}

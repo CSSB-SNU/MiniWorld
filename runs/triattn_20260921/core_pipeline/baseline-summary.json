@@ -1,0 +1,29 @@
+{
+  "kernel": "void triattn_m1_kernel<Traits<0>>(Params)",
+  "units": {
+    "gpu__time_duration.sum": "us",
+    "sm__throughput.avg.pct_of_peak_sustained_elapsed": "%",
+    "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_elapsed": "%",
+    "sm__issue_active.avg.pct_of_peak_sustained_elapsed": "%",
+    "sm__warps_active.avg.pct_of_peak_sustained_active": "%",
+    "launch__occupancy_limit_shared_mem": "block",
+    "launch__occupancy_limit_registers": "block",
+    "launch__shared_mem_per_block": "Kbyte/block",
+    "dram__bytes_read.sum": "Mbyte",
+    "dram__bytes_write.sum": "Mbyte",
+    "lts__t_sectors.sum": "sector"
+  },
+  "metrics": {
+    "gpu__time_duration.sum": "880.352000",
+    "sm__throughput.avg.pct_of_peak_sustained_elapsed": "55.578091",
+    "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_elapsed": "31.513350",
+    "sm__issue_active.avg.pct_of_peak_sustained_elapsed": "39.099058",
+    "sm__warps_active.avg.pct_of_peak_sustained_active": "21.380122",
+    "launch__occupancy_limit_shared_mem": "1.000000",
+    "launch__occupancy_limit_registers": "1.000000",
+    "launch__shared_mem_per_block": "191.488000",
+    "dram__bytes_read.sum": "462.587904",
+    "dram__bytes_write.sum": "145.166848",
+    "lts__t_sectors.sum": "153938636.000000"
+  }
+}

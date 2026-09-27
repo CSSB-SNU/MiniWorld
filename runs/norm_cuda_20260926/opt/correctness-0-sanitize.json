@@ -1,0 +1,114 @@
+[
+  {
+    "D": 33,
+    "dtype": "torch.float32",
+    "rms": false,
+    "layout": 0,
+    "ok": true
+  },
+  {
+    "D": 33,
+    "dtype": "torch.float32",
+    "rms": false,
+    "layout": 1,
+    "ok": true
+  },
+  {
+    "D": 33,
+    "dtype": "torch.float32",
+    "rms": false,
+    "layout": 2,
+    "ok": true
+  },
+  {
+    "D": 128,
+    "dtype": "torch.bfloat16",
+    "rms": false,
+    "layout": 0,
+    "ok": true
+  },
+  {
+    "D": 128,
+    "dtype": "torch.bfloat16",
+    "rms": false,
+    "layout": 1,
+    "ok": true
+  },
+  {
+    "D": 128,
+    "dtype": "torch.bfloat16",
+    "rms": false,
+    "layout": 2,
+    "ok": true
+  },
+  {
+    "D": 4096,
+    "dtype": "torch.float16",
+    "rms": true,
+    "layout": 0,
+    "ok": true
+  },
+  {
+    "D": 4096,
+    "dtype": "torch.float16",
+    "rms": true,
+    "layout": 1,
+    "ok": true
+  },
+  {
+    "D": 4096,
+    "dtype": "torch.float16",
+    "rms": true,
+    "layout": 2,
+    "ok": true
+  },
+  {
+    "D": 8193,
+    "dtype": "torch.float64",
+    "rms": false,
+    "layout": 0,
+    "ok": true
+  },
+  {
+    "D": 8193,
+    "dtype": "torch.float64",
+    "rms": false,
+    "layout": 1,
+    "ok": true
+  },
+  {
+    "D": 8193,
+    "dtype": "torch.float64",
+    "rms": false,
+    "layout": 2,
+    "ok": true
+  },
+  {
+    "op": "lnlinear",
+    "D": 33,
+    "N": 17,
+    "dtype": "torch.float16",
+    "ok": true
+  },
+  {
+    "op": "lnlinear",
+    "D": 33,
+    "N": 17,
+    "dtype": "torch.bfloat16",
+    "ok": true
+  },
+  {
+    "op": "lnlinear",
+    "D": 33,
+    "N": 17,
+    "dtype": "torch.float32",
+    "ok": true
+  },
+  {
+    "op": "lnlinear",
+    "D": 33,
+    "N": 17,
+    "dtype": "torch.float64",
+    "ok": true
+  }
+]

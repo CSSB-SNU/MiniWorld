@@ -1,0 +1,79 @@
+========= COMPUTE-SANITIZER
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:1480: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+CUBIN b1 /home/psk6950/MiniWorld/runs/trimul_recompute_next_20260921/build/2eca7e34d814bb83742d370ef292c767e016b97ce9d18e62b5adc4c3afe4f1de.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 31 registers, used 0 barriers
+ptxas info    : Compile time = 7.649 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 255 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 660.202 ms
+
+CUBIN b7 /home/psk6950/MiniWorld/runs/trimul_recompute_next_20260921/build/34e665bfbcd66a53a5d4b70db579f216f3edcd0863240b634acbc99238256319.cubin /home/psk6950/MiniWorld/runs/trimul_recompute_next_20260921/b7_warp_specialized.cu(34): warning #177-D: variable "DW_SLOT" was declared but never referenced
+  constexpr int DW_SLOT=57344,DX_SLOT=40960;
+                ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'front_reduce' for 'sm_90a'
+ptxas info    : Function properties for front_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 6.748 ms
+ptxas info    : Compiling entry function 'front_b7b12' for 'sm_90a'
+ptxas info    : Function properties for front_b7b12
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 2048 bytes smem
+ptxas info    : Compile time = 329.980 ms
+
+PTXAS dual_ln_prefetch 132 2 /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/22b9f1907c908ec5f2f6489e70e6d90a1704808ff4b8d2915c625f9c1d1929db.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'unified_reduce' for 'sm_90a'
+ptxas info    : Function properties for unified_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 9.297 ms
+ptxas info    : Compiling entry function 'dual_b1b4' for 'sm_90a'
+ptxas info    : Function properties for dual_b1b4
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 252 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 344.093 ms
+
+PTXAS /home/psk6950/MiniWorld/runs/anthropic_b7b12_fusion_20260920/build/d2d1e0ec5e46784c993a837b2bfe83f7700f98d68fa41f160722e4a969287f98.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'front_reduce' for 'sm_90a'
+ptxas info    : Function properties for front_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 31 registers, used 0 barriers
+ptxas info    : Compile time = 10.034 ms
+ptxas info    : Compiling entry function 'front_b7b12' for 'sm_90a'
+ptxas info    : Function properties for front_b7b12
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 125 registers, used 1 barriers, 1024 bytes smem
+ptxas info    : Compile time = 156.116 ms
+
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_input_dual_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|M=589824,fs0=1,fs1=589824,gs0=128,gs1=1,shape_key=216181595387199641,vs0=128,vs1=1,ws0=1,ws1=128). Falling back to a heuristic 3 of 648 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+RESOURCE 1 0 ['    56 bytes stack frame, 52 bytes spill stores, 68 bytes spill loads', 'ptxas info    : Used 168 registers, used 1 barriers, 56 bytes cumulative stack size']
+CUBIN b1 /home/psk6950/MiniWorld/runs/trimul_split_bwd_20260921/build/cbbaaf16a508c8a3ce4251ab181c64671dc5ad7f7efe6554388c4ef5ebb2a071.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 31 registers, used 0 barriers
+ptxas info    : Compile time = 8.101 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 255 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 552.153 ms
+
+CUBIN /home/psk6950/MiniWorld/runs/trimul_split_bwd_20260921/build/d7ca96f26d834736e71bad92539274f8f63fcfd779b719e9b4eac2cc25d4cfdd.cubin {'SPLIT_ROLE': 1, 'USE_SAVED_XN': 1, 'DW_SPLITS': 16, 'PIPE_CONSUMERS': 1, 'DX_CTAS': 132, 'DW_PROD_REGS': 32, 'DW_CONS_REGS': 224, 'UCOUNT': 256, 'DX_RESIDENT': 1, 'WGRAD_SLICES': 2} ['0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 128 registers, used 16 barriers, 1024 bytes smem']
+CUBIN /home/psk6950/MiniWorld/runs/trimul_split_bwd_20260921/build/ecb1769c4aaeceab620cdad111f444c14ded5f403fff44d60b4cb4c68fb63549.cubin {'SPLIT_ROLE': 2, 'USE_SAVED_XN': 1, 'DW_SPLITS': 16, 'PIPE_CONSUMERS': 1, 'DX_CTAS': 132, 'DW_PROD_REGS': 32, 'DW_CONS_REGS': 224, 'UCOUNT': 132, 'DX_RESIDENT': 1, 'WGRAD_SLICES': 2} ['0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 180 registers, used 16 barriers, 2048 bytes smem']
+CHECKS {'baseline': (0.0004685893945861608, 'dWL'), 'split_xn_pc1': (0.0004912139847874641, 'dWL')}
+CHECK_ONLY_DONE
+========= ERROR SUMMARY: 0 errors

@@ -1,0 +1,166 @@
+[
+  {
+    "kind": "module",
+    "ending": false,
+    "mask": "mixed",
+    "dropout": 0.25,
+    "errors": [
+      0.0,
+      0.0,
+      3.954390308535949e-07,
+      1.466378165559945e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "kind": "module",
+    "ending": false,
+    "mask": "all_masked",
+    "dropout": 0.25,
+    "errors": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "kind": "optimizer_update",
+    "ending": false,
+    "errors": [
+      0.0,
+      0.0,
+      3.530994376887975e-07,
+      1.4788201951887459e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "changed_elements": [
+      128,
+      128,
+      473,
+      454,
+      470,
+      66,
+      208,
+      448
+    ]
+  },
+  {
+    "kind": "inductor_fullgraph",
+    "ending": false,
+    "errors": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "kind": "frozen_parameters",
+    "ending": false
+  },
+  {
+    "kind": "module",
+    "ending": true,
+    "mask": "mixed",
+    "dropout": 0.25,
+    "errors": [
+      0.0,
+      0.0,
+      3.9255343153854483e-07,
+      1.4620439969803556e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "kind": "module",
+    "ending": true,
+    "mask": "all_masked",
+    "dropout": 0.25,
+    "errors": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "kind": "optimizer_update",
+    "ending": true,
+    "errors": [
+      0.0,
+      0.0,
+      3.601141997933155e-07,
+      1.534716886908427e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "changed_elements": [
+      128,
+      128,
+      431,
+      467,
+      464,
+      66,
+      177,
+      476
+    ]
+  },
+  {
+    "kind": "inductor_fullgraph",
+    "ending": true,
+    "errors": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "kind": "frozen_parameters",
+    "ending": true
+  }
+]

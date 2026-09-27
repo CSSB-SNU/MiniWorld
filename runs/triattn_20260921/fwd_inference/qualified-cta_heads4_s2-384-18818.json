@@ -1,0 +1,229 @@
+{
+  "artifact": "cta_heads4_s2",
+  "length": 384,
+  "baseline": "installed TriangleAttention.eval() under inference_mode",
+  "selected_entry": false,
+  "rounds": 16,
+  "replays": 20,
+  "records": [
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "mixed",
+      "output_relative": 0.0009088340186372909,
+      "attention_relative": 0.010576037536868203
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "mixed",
+      "baseline_relative": 0.0008867275219260813,
+      "candidate_relative": 0.000970483411058633,
+      "update_rms": 0.08834543079137802
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "dense",
+      "output_relative": 0.0008846964451341388,
+      "attention_relative": 0.010798246442823777
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "one_key",
+      "output_relative": 3.3528639823502294e-05,
+      "attention_relative": 7.043288199115019e-05
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "one_key",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.5561311841011047
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "all_masked",
+      "output_relative": 0.0,
+      "attention_relative": 0.0
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "all_masked",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.0
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "none",
+      "output_relative": 0.0008846964451341388,
+      "attention_relative": 0.010798246442823777
+    },
+    {
+      "kind": "paired_module",
+      "ending": false,
+      "baseline_us": 395.3800082206726,
+      "candidate_us": 474.6335983276367,
+      "speedup": 0.832805775238205,
+      "paired_ratios": [
+        0.8314549007126094,
+        0.831579689668538,
+        0.831430928232906,
+        0.8323274301495535,
+        0.830348287316909,
+        0.8308317861660469,
+        0.8298819746297392,
+        0.8326590631170575,
+        0.8329524873593526,
+        0.8336073240411859,
+        0.8335212998397286,
+        0.8331819710577623,
+        0.8359369652043791,
+        0.8353316319455475,
+        0.8337167930064849,
+        0.8338008148177094
+      ]
+    },
+    {
+      "kind": "changed_input_weight_mask_graph",
+      "ending": false,
+      "relative": 0.0010599937296235783
+    },
+    {
+      "kind": "fullgraph_compile",
+      "ending": false,
+      "passed": true
+    },
+    {
+      "kind": "no_grad",
+      "ending": false,
+      "passed": true
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "mixed",
+      "output_relative": 0.0009102941049608738,
+      "attention_relative": 0.010603501855287271
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "mixed",
+      "baseline_relative": 0.0009436449333710612,
+      "candidate_relative": 0.0007853857035386043,
+      "update_rms": 0.08149060606956482
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "dense",
+      "output_relative": 0.0008845877951491317,
+      "attention_relative": 0.010808386954644682
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "one_key",
+      "output_relative": 3.404749637771981e-05,
+      "attention_relative": 7.188524299864708e-05
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "one_key",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.5169594287872314
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "all_masked",
+      "output_relative": 0.0,
+      "attention_relative": 0.0
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "all_masked",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.0
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "none",
+      "output_relative": 0.0008845877951491317,
+      "attention_relative": 0.010808386954644682
+    },
+    {
+      "kind": "paired_module",
+      "ending": true,
+      "baseline_us": 490.9775972366333,
+      "candidate_us": 470.8575963973999,
+      "speedup": 1.0428084024182303,
+      "paired_ratios": [
+        1.0395496721648905,
+        1.0392697238933486,
+        1.0372813494269593,
+        1.039002440428029,
+        1.057041775506409,
+        1.0445189709335767,
+        1.0445486393309389,
+        1.0432361973446218,
+        1.044665448123736,
+        1.0448812090650574,
+        1.0408505211978043,
+        1.0423806074918387,
+        1.0418125394816606,
+        1.0419597507178049,
+        1.0435926196434102,
+        1.0435400668417467
+      ]
+    },
+    {
+      "kind": "changed_input_weight_mask_graph",
+      "ending": true,
+      "relative": 0.0010573699929111722
+    },
+    {
+      "kind": "fullgraph_compile",
+      "ending": true,
+      "passed": true
+    },
+    {
+      "kind": "no_grad",
+      "ending": true,
+      "passed": true
+    }
+  ],
+  "inference_front": true,
+  "build": {
+    "module": "triattn_infer_cta_heads4_s2",
+    "binary": "build/triattn_infer_cta_heads4_s2.so",
+    "smem": 165888,
+    "sha256": {
+      "fused.cu": "15deb1354ae5e7cc65604617cce6d099c82dea84235bdd026ca1834a35286316",
+      "build/triattn_infer_cta_heads4_s2.so": "7e39f5866ce04445946b8c65e25bad74ab2564bb697f27fdcfe070f563a070fb"
+    }
+  },
+  "front_artifact": "front8_hlast",
+  "front_build": {
+    "module": "triattn_infer_front8_hlast",
+    "binary": "build/triattn_infer_front8_hlast.so",
+    "smem": 0,
+    "sha256": {
+      "fused.cu": "5679f9334165ebbf5f696a4dacb6dc3515bf3440149ecc8f34ac3a707c4d67e6",
+      "build/triattn_infer_front8_hlast.so": "13ecc94609e5884754f12b58893bdbab938c3485a611bd888832be144dc7baf8"
+    }
+  },
+  "complete": true
+}

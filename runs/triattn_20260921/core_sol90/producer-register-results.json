@@ -1,0 +1,695 @@
+{
+  "installed_changed": false,
+  "installed_sha256": "9365a4f35e018afed4adba21590ae2c1734bbccf98d1e53904ebfe2537b3e225",
+  "installed_manifest_files_verified": 12,
+  "sol90_achieved": false,
+  "last_installed_profile": {
+    "job": 14862,
+    "L768": {
+      "kernel_us": 795.904,
+      "sm_sol_pct": 61.348992
+    },
+    "L1024": {
+      "kernel_us": 1751.712,
+      "sm_sol_pct": 65.249349
+    }
+  },
+  "graph_runs": {
+    "15018": {
+      "disposition": "reject_latency",
+      "measurements": [
+        {
+          "file": "lean-producer-e0.json",
+          "ending": false,
+          "scope": "Captured core/block graphs; only hot kernel replaced; full bitwise checks before and after timing",
+          "summary": {
+            "core": {
+              "serving": {
+                "median_us": 868.6991691589355,
+                "paired_ratio": 1.0
+              },
+              "control": {
+                "median_us": 874.4463920593262,
+                "paired_ratio": 1.0002597197113885
+              },
+              "lean32": {
+                "median_us": 878.9952278137207,
+                "paired_ratio": 1.0118373741922957
+              },
+              "lean24q168": {
+                "median_us": 886.5064144134521,
+                "paired_ratio": 1.0199087373605802
+              }
+            },
+            "block": {
+              "serving": {
+                "median_us": 1374.952793121338,
+                "paired_ratio": 1.0
+              },
+              "control": {
+                "median_us": 1378.1367778778076,
+                "paired_ratio": 1.0005032132697964
+              },
+              "lean32": {
+                "median_us": 1383.5728168487549,
+                "paired_ratio": 1.0064958077005337
+              },
+              "lean24q168": {
+                "median_us": 1389.566421508789,
+                "paired_ratio": 1.0106561594754184
+              }
+            }
+          },
+          "metadata": {
+            "control": {
+              "binary_sha256": "1926fd9654ec96f7702626b03ca2d4e87a8b5cf36ecf3174b901044419fd4330",
+              "symbol": "_ZN21ta_sol_baseqthree102417triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE"
+            },
+            "lean32": {
+              "binary_sha256": "112b13156655c89787f0e6d692d1a4d769db488689b22e63d179f364a6e53d6e",
+              "symbol": "_ZN24ta_sol_leanprod32current17triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE"
+            },
+            "lean24q168": {
+              "binary_sha256": "1d412cd393e5575877fe1061bb7f5f6c236cf074278245113c683067c64cf49a",
+              "symbol": "_ZN21ta_sol_leanprod24q16817triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE"
+            }
+          }
+        },
+        {
+          "file": "lean-producer-e1.json",
+          "ending": true,
+          "scope": "Captured core/block graphs; only hot kernel replaced; full bitwise checks before and after timing",
+          "summary": {
+            "core": {
+              "serving": {
+                "median_us": 875.2887725830078,
+                "paired_ratio": 1.0
+              },
+              "control": {
+                "median_us": 873.1207847595215,
+                "paired_ratio": 0.9980915455825672
+              },
+              "lean32": {
+                "median_us": 883.4472179412842,
+                "paired_ratio": 1.0098894432201289
+              },
+              "lean24q168": {
+                "median_us": 889.4623756408691,
+                "paired_ratio": 1.0175951021419256
+              }
+            },
+            "block": {
+              "serving": {
+                "median_us": 1388.1184101104736,
+                "paired_ratio": 1.0
+              },
+              "control": {
+                "median_us": 1397.3055839538574,
+                "paired_ratio": 0.9995169565076049
+              },
+              "lean32": {
+                "median_us": 1394.1400051116943,
+                "paired_ratio": 1.0061103594579093
+              },
+              "lean24q168": {
+                "median_us": 1403.2544136047363,
+                "paired_ratio": 1.009843875834664
+              }
+            }
+          },
+          "metadata": {
+            "control": {
+              "binary_sha256": "1926fd9654ec96f7702626b03ca2d4e87a8b5cf36ecf3174b901044419fd4330",
+              "symbol": "_ZN21ta_sol_baseqthree102417triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE"
+            },
+            "lean32": {
+              "binary_sha256": "112b13156655c89787f0e6d692d1a4d769db488689b22e63d179f364a6e53d6e",
+              "symbol": "_ZN24ta_sol_leanprod32current17triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE"
+            },
+            "lean24q168": {
+              "binary_sha256": "1d412cd393e5575877fe1061bb7f5f6c236cf074278245113c683067c64cf49a",
+              "symbol": "_ZN21ta_sol_leanprod24q16817triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE"
+            }
+          }
+        }
+      ],
+      "balanced_rounds": 24,
+      "all_full_outputs_bitwise_before_and_after": true
+    },
+    "15052": {
+      "disposition": "reject_latency",
+      "measurements": [
+        {
+          "file": "lean-producer-b8v2-e0.json",
+          "ending": false,
+          "scope": "Captured core/block graphs; only hot kernel replaced; full bitwise checks before and after timing",
+          "summary": {
+            "core": {
+              "serving": {
+                "median_us": 861.9415760040283,
+                "paired_ratio": 1.0
+              },
+              "control": {
+                "median_us": 858.082389831543,
+                "paired_ratio": 0.9966580661057893
+              },
+              "lean32b8v2": {
+                "median_us": 863.7608051300049,
+                "paired_ratio": 1.0067705350479446
+              },
+              "lean24q168b8v2": {
+                "median_us": 874.562406539917,
+                "paired_ratio": 1.018478303411882
+              }
+            },
+            "block": {
+              "serving": {
+                "median_us": 1369.877576828003,
+                "paired_ratio": 1.0
+              },
+              "control": {
+                "median_us": 1367.9935932159424,
+                "paired_ratio": 1.0017962592165357
+              },
+              "lean32b8v2": {
+                "median_us": 1371.1888313293457,
+                "paired_ratio": 1.0046347751227969
+              },
+              "lean24q168b8v2": {
+                "median_us": 1380.5615901947021,
+                "paired_ratio": 1.0110300577927664
+              }
+            }
+          },
+          "metadata": {
+            "control": {
+              "binary_sha256": "1926fd9654ec96f7702626b03ca2d4e87a8b5cf36ecf3174b901044419fd4330",
+              "symbol": "_ZN21ta_sol_baseqthree102417triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE",
+              "register_roles": {
+                "producer": 32,
+                "consumers": [
+                  160,
+                  160,
+                  160
+                ]
+              },
+              "role_register_pool": 65536,
+              "emitted": {
+                "dealloc_values": [
+                  32
+                ],
+                "alloc_values": [
+                  160
+                ]
+              }
+            },
+            "lean32b8v2": {
+              "binary_sha256": "0b81df61addbe3408b8911bacd3b9d0e57bdc13f142104ec28f8b07b7deb5a8e",
+              "symbol": "_ZN28ta_sol_leanprod32currentb8v217triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE",
+              "register_roles": {
+                "producer": 32,
+                "consumers": [
+                  160,
+                  160,
+                  160
+                ]
+              },
+              "role_register_pool": 65536,
+              "emitted": {
+                "dealloc_values": [
+                  32
+                ],
+                "alloc_values": [
+                  160
+                ]
+              }
+            },
+            "lean24q168b8v2": {
+              "binary_sha256": "3803e968605e519d695863ebe6e0487941f20c59fd98b7af9eaad8e295a4943a",
+              "symbol": "_ZN25ta_sol_leanprod24q168b8v217triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE",
+              "register_roles": {
+                "producer": 24,
+                "consumers": [
+                  168,
+                  160,
+                  160
+                ]
+              },
+              "role_register_pool": 65536,
+              "emitted": {
+                "dealloc_values": [
+                  24
+                ],
+                "alloc_values": [
+                  160,
+                  168
+                ]
+              }
+            }
+          }
+        },
+        {
+          "file": "lean-producer-b8v2-e1.json",
+          "ending": true,
+          "scope": "Captured core/block graphs; only hot kernel replaced; full bitwise checks before and after timing",
+          "summary": {
+            "core": {
+              "serving": {
+                "median_us": 858.1760406494141,
+                "paired_ratio": 1.0
+              },
+              "control": {
+                "median_us": 869.0656185150146,
+                "paired_ratio": 1.0002177755342414
+              },
+              "lean32b8v2": {
+                "median_us": 866.3791656494141,
+                "paired_ratio": 1.0074902370764178
+              },
+              "lean24q168b8v2": {
+                "median_us": 877.1992206573486,
+                "paired_ratio": 1.0186644978352257
+              }
+            },
+            "block": {
+              "serving": {
+                "median_us": 1378.880786895752,
+                "paired_ratio": 1.0
+              },
+              "control": {
+                "median_us": 1379.3992042541504,
+                "paired_ratio": 1.0000843591842306
+              },
+              "lean32b8v2": {
+                "median_us": 1385.1808071136475,
+                "paired_ratio": 1.003342007347067
+              },
+              "lean24q168b8v2": {
+                "median_us": 1393.9008235931396,
+                "paired_ratio": 1.0108069237532944
+              }
+            }
+          },
+          "metadata": {
+            "control": {
+              "binary_sha256": "1926fd9654ec96f7702626b03ca2d4e87a8b5cf36ecf3174b901044419fd4330",
+              "symbol": "_ZN21ta_sol_baseqthree102417triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE",
+              "register_roles": {
+                "producer": 32,
+                "consumers": [
+                  160,
+                  160,
+                  160
+                ]
+              },
+              "role_register_pool": 65536,
+              "emitted": {
+                "dealloc_values": [
+                  32
+                ],
+                "alloc_values": [
+                  160
+                ]
+              }
+            },
+            "lean32b8v2": {
+              "binary_sha256": "0b81df61addbe3408b8911bacd3b9d0e57bdc13f142104ec28f8b07b7deb5a8e",
+              "symbol": "_ZN28ta_sol_leanprod32currentb8v217triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE",
+              "register_roles": {
+                "producer": 32,
+                "consumers": [
+                  160,
+                  160,
+                  160
+                ]
+              },
+              "role_register_pool": 65536,
+              "emitted": {
+                "dealloc_values": [
+                  32
+                ],
+                "alloc_values": [
+                  160
+                ]
+              }
+            },
+            "lean24q168b8v2": {
+              "binary_sha256": "3803e968605e519d695863ebe6e0487941f20c59fd98b7af9eaad8e295a4943a",
+              "symbol": "_ZN25ta_sol_leanprod24q168b8v217triattn_m1_kernelINS_6TraitsILi1073741824EEEEEvNT_6ParamsE",
+              "register_roles": {
+                "producer": 24,
+                "consumers": [
+                  168,
+                  160,
+                  160
+                ]
+              },
+              "role_register_pool": 65536,
+              "emitted": {
+                "dealloc_values": [
+                  24
+                ],
+                "alloc_values": [
+                  160,
+                  168
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "balanced_rounds": 24,
+      "all_full_outputs_bitwise_before_and_after": true
+    }
+  },
+  "codegen": {
+    "leanprod32current": {
+      "screen_file": "leanprod32current_screen/results.json",
+      "default": {
+        "name": "ru5",
+        "options": [
+          "--register-usage-level=5"
+        ],
+        "machine_words": 5088,
+        "same_as_installed": false,
+        "resources": [
+          0,
+          0,
+          0,
+          128
+        ],
+        "warnings": [],
+        "counts": {
+          "HGMMA": 78,
+          "WARPGROUP.ARRIVE": 39,
+          "WARPGROUP.DEPBAR": 22,
+          "MUFU.EX2": 288,
+          "F2FP": 160,
+          "LOP3.LUT": 40
+        }
+      },
+      "all_settings_serialized": false,
+      "settings": 12
+    },
+    "leanprod24q168": {
+      "screen_file": "leanprod24q168_screen/results.json",
+      "default": {
+        "name": "ru5",
+        "options": [
+          "--register-usage-level=5"
+        ],
+        "machine_words": 9328,
+        "same_as_installed": false,
+        "resources": [
+          0,
+          0,
+          0,
+          128
+        ],
+        "warnings": [],
+        "counts": {
+          "HGMMA": 156,
+          "WARPGROUP.ARRIVE": 78,
+          "WARPGROUP.DEPBAR": 44,
+          "MUFU.EX2": 576,
+          "F2FP": 320,
+          "LOP3.LUT": 67
+        }
+      },
+      "all_settings_serialized": false,
+      "settings": 12
+    },
+    "leanprod32currentb8v2": {
+      "screen_file": "leanprod32currentb8v2_screen/results.json",
+      "default": {
+        "name": "ru5",
+        "options": [
+          "--register-usage-level=5"
+        ],
+        "machine_words": 5488,
+        "same_as_installed": false,
+        "resources": [
+          0,
+          0,
+          0,
+          128
+        ],
+        "warnings": [],
+        "counts": {
+          "HGMMA": 78,
+          "WARPGROUP.ARRIVE": 39,
+          "WARPGROUP.DEPBAR": 22,
+          "MUFU.EX2": 288,
+          "F2FP": 160,
+          "LOP3.LUT": 38
+        },
+        "register_reconfiguration": {
+          "dealloc_values": [
+            32
+          ],
+          "alloc_values": [
+            160
+          ]
+        }
+      },
+      "all_settings_serialized": false,
+      "settings": 12
+    },
+    "leanprod24q168b8v2": {
+      "screen_file": "leanprod24q168b8v2_screen/results.json",
+      "default": {
+        "name": "ru5",
+        "options": [
+          "--register-usage-level=5"
+        ],
+        "machine_words": 9728,
+        "same_as_installed": false,
+        "resources": [
+          0,
+          0,
+          0,
+          128
+        ],
+        "warnings": [],
+        "counts": {
+          "HGMMA": 156,
+          "WARPGROUP.ARRIVE": 78,
+          "WARPGROUP.DEPBAR": 44,
+          "MUFU.EX2": 576,
+          "F2FP": 320,
+          "LOP3.LUT": 65
+        },
+        "register_reconfiguration": {
+          "dealloc_values": [
+            24
+          ],
+          "alloc_values": [
+            160,
+            168
+          ]
+        }
+      },
+      "all_settings_serialized": false,
+      "settings": 12
+    },
+    "currentpvbeforee": {
+      "screen_file": "currentpvbeforee_screen/results.json",
+      "default": {
+        "name": "ru5",
+        "options": [
+          "--register-usage-level=5"
+        ],
+        "machine_words": 7104,
+        "same_as_installed": false,
+        "resources": [
+          0,
+          0,
+          0,
+          128
+        ],
+        "warnings": [
+          "C7512"
+        ],
+        "counts": {
+          "HGMMA": 78,
+          "WARPGROUP.ARRIVE": 78,
+          "WARPGROUP.DEPBAR": 78,
+          "MUFU.EX2": 288,
+          "F2FP": 160,
+          "LOP3.LUT": 40
+        }
+      },
+      "all_settings_serialized": true,
+      "settings": 12
+    },
+    "currentpvbeforeefullq": {
+      "screen_file": "currentpvbeforeefullq_screen/results.json",
+      "default": {
+        "name": "ru5",
+        "options": [
+          "--register-usage-level=5"
+        ],
+        "machine_words": 7136,
+        "same_as_installed": false,
+        "resources": [
+          0,
+          0,
+          0,
+          128
+        ],
+        "warnings": [
+          "C7512"
+        ],
+        "counts": {
+          "HGMMA": 78,
+          "WARPGROUP.ARRIVE": 78,
+          "WARPGROUP.DEPBAR": 78,
+          "MUFU.EX2": 288,
+          "F2FP": 160,
+          "LOP3.LUT": 39
+        }
+      },
+      "all_settings_serialized": true,
+      "settings": 12
+    },
+    "currentpvbeforeerel": {
+      "screen_file": "currentpvbeforeerel_screen/results.json",
+      "default": {
+        "name": "ru5",
+        "options": [
+          "--register-usage-level=5"
+        ],
+        "machine_words": 7120,
+        "same_as_installed": false,
+        "resources": [
+          0,
+          0,
+          0,
+          128
+        ],
+        "warnings": [
+          "C7512"
+        ],
+        "counts": {
+          "HGMMA": 78,
+          "WARPGROUP.ARRIVE": 78,
+          "WARPGROUP.DEPBAR": 78,
+          "MUFU.EX2": 288,
+          "F2FP": 160,
+          "LOP3.LUT": 40
+        }
+      },
+      "all_settings_serialized": true,
+      "settings": 12
+    },
+    "currentpvbeforeefullqrel": {
+      "screen_file": "currentpvbeforeefullqrel_screen/results.json",
+      "default": {
+        "name": "ru5",
+        "options": [
+          "--register-usage-level=5"
+        ],
+        "machine_words": 7152,
+        "same_as_installed": false,
+        "resources": [
+          0,
+          0,
+          0,
+          128
+        ],
+        "warnings": [
+          "C7512"
+        ],
+        "counts": {
+          "HGMMA": 78,
+          "WARPGROUP.ARRIVE": 78,
+          "WARPGROUP.DEPBAR": 78,
+          "MUFU.EX2": 288,
+          "F2FP": 160,
+          "LOP3.LUT": 39
+        }
+      },
+      "all_settings_serialized": true,
+      "settings": 12
+    }
+  },
+  "register_audit": {
+    "scope": "Offline historical SASS role audit; emitted values plus explicit source role multiplicity",
+    "rows": {
+      "leanprod32current": {
+        "expected_producer": 32,
+        "emitted_producer": [
+          32
+        ],
+        "emitted_alloc": [
+          160
+        ],
+        "actual_role_pool": 65536,
+        "initial_pool": 65536,
+        "valid": true
+      },
+      "leanprod24q168": {
+        "expected_producer": 24,
+        "emitted_producer": [
+          24
+        ],
+        "emitted_alloc": [
+          160,
+          168
+        ],
+        "actual_role_pool": 65536,
+        "initial_pool": 65536,
+        "valid": true
+      },
+      "leanprod32currentb8": {
+        "expected_producer": 32,
+        "emitted_producer": [
+          32
+        ],
+        "emitted_alloc": [
+          160
+        ],
+        "actual_role_pool": 65536,
+        "initial_pool": 65536,
+        "valid": true
+      },
+      "leanprod24q168b8": {
+        "expected_producer": 24,
+        "emitted_producer": [
+          32
+        ],
+        "emitted_alloc": [
+          160,
+          168
+        ],
+        "actual_role_pool": 66560,
+        "initial_pool": 65536,
+        "valid": false
+      }
+    },
+    "deadlock": {
+      "job": 15033,
+      "exit": 124,
+      "debug_job": 15045,
+      "root_cause": "Builder overwrote its producer replacement anchor inside the unroll-bias branch; no producer injection occurred",
+      "actual_roles": [
+        32,
+        168,
+        160,
+        160
+      ],
+      "actual_registers": 66560,
+      "available_registers": 65536,
+      "sm0_warps": {
+        "producer": "bias/K/V empty-barrier waits",
+        "consumer1": "prologue named barrier 11",
+        "consumer2": "USETMAXREG retry at offsets 0x930-0x950",
+        "consumer3": "prologue named barrier 11"
+      }
+    }
+  },
+  "gate_regression_tests": {
+    "command": "python3 runs/triattn_20260921/core_sol90/test_register_role_gate.py",
+    "passed": 4
+  }
+}

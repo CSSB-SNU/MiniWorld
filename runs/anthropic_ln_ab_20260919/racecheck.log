@@ -1,0 +1,25 @@
+========= COMPUTE-SANITIZER
+64 ab 0.0
+64 pre 0.0
+64 xn 0.0
+64 mu 0.0
+64 rs 0.0
+64 out 0.0
+64 norm 0.0
+64 muout 0.0
+64 rsout 0.0
+64 proj 0.0
+64 gate 0.0
+72 ab 0.0
+72 pre 0.0
+72 xn 0.0
+72 mu 0.0
+72 rs 0.0
+72 out 0.0
+72 norm 0.0
+72 muout 0.0
+72 rsout 0.0
+72 proj 0.0
+72 gate 0.0
+PASS
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

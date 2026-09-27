@@ -1,0 +1,37 @@
+========= COMPUTE-SANITIZER
+........................                                                 [100%]
+=============================== warnings summary ===============================
+tests/numerics/test_trimul_parity_f567_gpu.py: 24 warnings
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:413: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    warpgroup.OperandMajorMode.K,
+
+tests/numerics/test_trimul_parity_f567_gpu.py: 12 warnings
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:414: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    warpgroup.OperandMajorMode.K
+
+tests/numerics/test_trimul_parity_f567_gpu.py: 48 warnings
+  <string>:10: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+
+tests/numerics/test_trimul_parity_f567_gpu.py: 48 warnings
+  /home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/nvidia_cutlass_dsl/python_packages/cutlass/base_dsl/_mlir_helpers/op.py:121: DeprecationWarning: `make_fragment` is deprecated, use `make_rmem_tensor` instead
+    res_or_list = opFunc(*args, **kwargs, loc=loc)
+
+tests/numerics/test_trimul_parity_f567_gpu.py: 24 warnings
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:207: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    warpgroup.OperandMajorMode.K,
+
+tests/numerics/test_trimul_parity_f567_gpu.py: 12 warnings
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:208: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    warpgroup.OperandMajorMode.K
+
+tests/numerics/test_trimul_parity_f567_gpu.py: 12 warnings
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:416: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    else warpgroup.OperandMajorMode.MN,
+
+tests/numerics/test_trimul_parity_f567_gpu.py: 12 warnings
+  /home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/trimul_inproj/cute/parity_f567.py:210: DeprecationWarning: warpgroup.OperandMajorMode is deprecated, use cute.nvgpu.OperandMajorMode instead
+    else warpgroup.OperandMajorMode.MN,
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+24 passed, 192 warnings in 28.56s
+========= ERROR SUMMARY: 0 errors

@@ -1,0 +1,12 @@
+{
+  "job": 17211,
+  "state": "complete",
+  "node": "node02",
+  "qos": "normal_h100",
+  "candidate": "rs8_async_q4",
+  "installed_hashes": {
+    "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/bias_fusion.cu": "401b3c654c2e0b2d34bb843966c92c05ce7d9eed7d76d46ab8f25045343ac8e2",
+    "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/bias_manifest.json": "b57c8ad897182673af605aa9f4b85f8ac33f5257e224a40c53ea27c9b3ad9f39",
+    "/home/psk6950/MiniWorld/runs/triattn_20260921/bwd/core90/installation.json": "389b992feee4a959244f72c5d2f9f4f1448046037c037f9b1efb3b372776993c"
+  }
+}

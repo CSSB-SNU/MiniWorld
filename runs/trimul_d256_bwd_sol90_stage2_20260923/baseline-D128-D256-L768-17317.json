@@ -1,0 +1,256 @@
+{
+  "L": 768,
+  "job": "17317",
+  "node": "node02",
+  "complete": false,
+  "models": {
+    "128": {
+      "strict_errors": {
+        "forward": {
+          "relative_l2": 0.0,
+          "bit_exact": true,
+          "finite": true
+        },
+        "dx": {
+          "relative_l2": 0.0,
+          "bit_exact": true,
+          "finite": true
+        },
+        "dWL": {
+          "relative_l2": 0.00013900153862778097,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWLg": {
+          "relative_l2": 0.00016931883874349296,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWR": {
+          "relative_l2": 0.00013478618348017335,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWRg": {
+          "relative_l2": 0.00014310216647572815,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWgate": {
+          "relative_l2": 0.0,
+          "bit_exact": true,
+          "finite": true
+        },
+        "dWproj": {
+          "relative_l2": 0.0,
+          "bit_exact": true,
+          "finite": true
+        },
+        "dgamma_in": {
+          "relative_l2": 2.6935222763313504e-07,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dbeta_in": {
+          "relative_l2": 3.02922217088053e-07,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dgamma_out": {
+          "relative_l2": 0.0,
+          "bit_exact": true,
+          "finite": true
+        },
+        "dbeta_out": {
+          "relative_l2": 0.0,
+          "bit_exact": true,
+          "finite": true
+        }
+      },
+      "cubins": {
+        "b1": {
+          "path": "/home/psk6950/MiniWorld/runs/trimul_b1_gate_demote_20260922/build/1c82cc4c137395d81fb6b160b3427d3a46becd7056b09c9167c259f89100290b.cubin",
+          "sha256": "857c944a6e57ac065a4f0b52b211ec9d05fa443d9507df803f72e771eb16854e"
+        },
+        "b7": {
+          "path": "/home/psk6950/MiniWorld/runs/trimul_cuda_widths_opt_20260923/fixed128/build/147e63b485657eae80ae7305c771501a25d6f1b1e950150d1d1daf8ece252a17.cubin",
+          "sha256": "8fb307d6c31073f74f28317adc630f588b9771f487d765a5e101c2ab5cb5d303"
+        }
+      },
+      "dropout_scales": [
+        0.0,
+        1.3359375
+      ],
+      "graph_errors": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "triton_errors": {
+        "forward": {
+          "relative_l2": 8.489240281051025e-05,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dx": {
+          "relative_l2": 0.00014841844676993787,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWL": {
+          "relative_l2": 0.0005773925804533064,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWLg": {
+          "relative_l2": 0.0004319131840020418,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWR": {
+          "relative_l2": 0.00035840237978845835,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWRg": {
+          "relative_l2": 0.0003108573146164417,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWgate": {
+          "relative_l2": 0.0005976437241770327,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWproj": {
+          "relative_l2": 0.00042803725227713585,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dgamma_in": {
+          "relative_l2": 0.0003396053798496723,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dbeta_in": {
+          "relative_l2": 0.0001395145955029875,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dgamma_out": {
+          "relative_l2": 3.646331242634915e-05,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dbeta_out": {
+          "relative_l2": 2.931307244580239e-05,
+          "bit_exact": false,
+          "finite": true
+        }
+      }
+    },
+    "256": {
+      "candidate": {
+        "name": "saved_products",
+        "output_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/2c870841f0daade846238cd32330a0fe7e23cf6c4686a961694871013d630771.cubin",
+        "saved_bytes": 603979776,
+        "epi_grid": 1056,
+        "epi_threads": 256,
+        "input_stats": {
+          "name": "input_stats_gamma",
+          "front_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/b7bdf933f003fec9d35942d2b2b3983052d55f76510f144e28f5346580e7c455.cubin",
+          "cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/94fdff7c93105750240bfc6c0da9dab983c874779d75506d823b795dea77370b.cubin",
+          "stats_bytes": 4718592,
+          "smem": 99456,
+          "grid": 264
+        }
+      },
+      "graph_errors": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        4.023945336939505e-07,
+        3.583080001590133e-07,
+        4.359808940535004e-07,
+        4.564126072637009e-07
+      ],
+      "triton_errors": {
+        "forward": {
+          "relative_l2": 0.00098228023853153,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dx": {
+          "relative_l2": 0.00467996671795845,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWL": {
+          "relative_l2": 0.005506196524947882,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWLg": {
+          "relative_l2": 0.005517277400940657,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWR": {
+          "relative_l2": 0.005542897153645754,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWRg": {
+          "relative_l2": 0.005542106926441193,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWgate": {
+          "relative_l2": 0.004187804646790028,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dWproj": {
+          "relative_l2": 0.003981980495154858,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dgamma_in": {
+          "relative_l2": 0.005682267714291811,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dbeta_in": {
+          "relative_l2": 0.004823992028832436,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dgamma_out": {
+          "relative_l2": 0.004151700995862484,
+          "bit_exact": false,
+          "finite": true
+        },
+        "dbeta_out": {
+          "relative_l2": 0.003765219124034047,
+          "bit_exact": false,
+          "finite": true
+        }
+      }
+    }
+  },
+  "baseline": "Existing engine Triton, static torch.compile, autotune_miss_cap=24; not an exhaustive retuned Triton baseline."
+}

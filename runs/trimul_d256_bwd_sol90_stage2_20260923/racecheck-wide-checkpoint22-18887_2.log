@@ -1,0 +1,5 @@
+========= COMPUTE-SANITIZER
+========= Warning: Race reported between Read access at mw_independent_output_ln+0x3280 in fd3e3323ad2e6d8e456671afca1b7f4decefd1f52e276def49190bc2580f8e04.cu:90
+=========     and Write access at mw_independent_output_ln+0x3800 in fd3e3323ad2e6d8e456671afca1b7f4decefd1f52e276def49190bc2580f8e04.cu:94 [589824 hazards]
+========= 
+========= RACECHECK SUMMARY: 1 hazard displayed (0 errors, 1 warning)

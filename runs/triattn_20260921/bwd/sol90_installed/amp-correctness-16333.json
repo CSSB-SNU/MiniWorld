@@ -1,0 +1,36 @@
+[
+  {
+    "dtype": "torch.bfloat16",
+    "relative_l2": [
+      0.0,
+      2.9577433451777324e-05,
+      5.8936675486620516e-05,
+      1.411867378919851e-05,
+      0.00039565699989907444,
+      0.00014152078074403107,
+      0.0,
+      0.00023692510148975998,
+      0.0,
+      0.0
+    ],
+    "compiled_relative_l2": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "compiled_native": true
+  },
+  {
+    "dtype": "torch.float16",
+    "native_declined": true,
+    "stock_module_supported": false,
+    "baseline_failure_job": 15540
+  }
+]

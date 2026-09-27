@@ -1,0 +1,81 @@
+{
+  "length": 768,
+  "ending": false,
+  "results": {
+    "baseline": {
+      "pro_rounds": [
+        280.849609375,
+        283.4448051452637,
+        284.1017532348633
+      ],
+      "block_rounds": [
+        1424.5394897460938,
+        1432.2674560546875,
+        1451.3357543945312
+      ],
+      "bitwise_equal": true,
+      "kernels": {
+        "triattn_tma_pro::prologue_tma(triattn_tm": 275.9036,
+        "void at::native::vectorized_elementwise_": 1.708799999999974,
+        "triattn_m1::mask_words_kernel(bool const": 14.489800000000105,
+        "triattn_m1::mask_rows_kernel(unsigned in": 2.5344000000000504,
+        "void triattn_m1::stage_bias_m1_kernel<fl": 13.64479999999985,
+        "void triattn_m1::triattn_m1_kernel<triat": 881.8295999999998,
+        "triattn_m1::uniform_rows_kernel(__nv_bfl": 3.603199999999833,
+        "void triattn_tma_epi::epilogue_tma<768>(": 207.03319999999994
+      },
+      "pro_us": 283.4448051452637,
+      "block_us": 1432.2674560546875
+    },
+    "pipeline64": {
+      "pro_rounds": [
+        286.30687713623047,
+        296.41408920288086,
+        303.81311416625977
+      ],
+      "block_rounds": [
+        1501.0249328613281,
+        1497.4569702148438,
+        1495.0067138671875
+      ],
+      "bitwise_equal": true,
+      "kernels": {
+        "void ta_pipeline64::prologue_tma<768>(ta": 277.9577999999999,
+        "void at::native::vectorized_elementwise_": 1.6893999999998868,
+        "triattn_m1::mask_words_kernel(bool const": 14.483400000000028,
+        "triattn_m1::mask_rows_kernel(unsigned in": 2.5728000000000066,
+        "void triattn_m1::stage_bias_m1_kernel<fl": 13.56760000000013,
+        "void triattn_m1::triattn_m1_kernel<triat": 881.7071999999998,
+        "triattn_m1::uniform_rows_kernel(__nv_bfl": 3.6229999999996836,
+        "void triattn_tma_epi::epilogue_tma<768>(": 207.50660000000016
+      },
+      "pro_us": 296.41408920288086,
+      "block_us": 1497.4569702148438
+    },
+    "pipeline128": {
+      "pro_rounds": [
+        281.6537666320801,
+        317.21792221069336,
+        281.2063980102539
+      ],
+      "block_rounds": [
+        1424.0534973144531,
+        1435.9968566894531,
+        1469.974365234375
+      ],
+      "bitwise_equal": true,
+      "kernels": {
+        "void ta_pipeline128::prologue_tma<768>(t": 274.62999999999994,
+        "void at::native::vectorized_elementwise_": 1.6703999999999268,
+        "triattn_m1::mask_words_kernel(bool const": 14.40639999999994,
+        "triattn_m1::mask_rows_kernel(unsigned in": 2.6112000000000535,
+        "void triattn_m1::stage_bias_m1_kernel<fl": 13.580600000000185,
+        "void triattn_m1::triattn_m1_kernel<triat": 881.2398000000001,
+        "triattn_m1::uniform_rows_kernel(__nv_bfl": 3.6225999999999656,
+        "void triattn_tma_epi::epilogue_tma<768>(": 207.06519999999983
+      },
+      "pro_us": 281.6537666320801,
+      "block_us": 1435.9968566894531
+    }
+  }
+}

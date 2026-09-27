@@ -1,0 +1,113 @@
+--- a/opt_core/attn/pair_fused.py
++++ b/opt_core/attn/pair_fused.py
+@@ -1182,7 +1182,7 @@
+                 GK = _carried("fpf_glue_v2", "kernels")
+                 outs.append(GK.prologue_v4(owner, xb, cch, cfg))
+             else:                                                         # variant v3: the launch under the lever's safety net (a tuned cell that fails to BUILD -> the safe cell + ONE line)
+-                base_cfg = {k: cfg[k] for k in ("BI", "BJ", "num_warps", "num_stages") if k in cfg}
++                base_cfg = {k: cfg[k] for k in ("BI", "BJ", "num_warps", "num_stages", "BN", "maxnreg", "qkv_pair", "j_fast") if k in cfg}
+                 outs.append(run_cell("pair_fused:prologue", row["cc"], tt, lambda c, zb=zb, xb=xb: PRO.triatt_prologue(
+                     owner, zb, ending=ending, ln_mode=("stock" if ln == "stock" else "fused"), x_ln=xb, write_x=False, cfg=c),
+                     base_cfg, dims=shape_dims("fpf", "prologue", (W.C, W.H, W.D)), key=(W.C, W.H, W.D)))
+@@ -1433,6 +1433,7 @@
+         _env = os.environ.get("FPF_TRIATT_EPI_CFG", "").strip()   # offline sweeps only: the block reads the CELL row, so the
+         if _env:                                                  # kernel's own env knob never reaches it
+             _v = [int(x) for x in _env.split(",")]
++            cfg.pop("starting_tile", None)  # explicit offline tile override wins for either direction
+             cfg.update(BI=_v[0], BJ=_v[1], num_warps=_v[2], num_stages=_v[3])
+             if len(_v) > 4:
+                 cfg["KVER"] = _v[4]
+@@ -1448,7 +1449,7 @@
+             u = GK.epilogue_v3(o, g, W.wo16, zz, ending=ending, residual=residual, out=out, cfg=cfg, woT16=W.woT16)
+         else:                                                             # variant v2: the launch under the lever's safety net (a tuned cell that fails to BUILD -> the safe cell + ONE line)
+             EPI = _carried("fpf_triatt_epi", "epilogue")
+-            base = {k: cfg[k] for k in ("KVER", "BI", "BJ", "num_warps", "num_stages", "EXP") if k in cfg}
++            base = {k: cfg[k] for k in ("KVER", "BI", "BJ", "num_warps", "num_stages", "EXP", "maxnreg", "starting_tile") if k in cfg}
+             tt = row["triton"] if row.get("triton", "*") != "*" else _stack(o.device)[1]
+             u = run_cell("pair_fused:epilogue", row["cc"], tt, lambda c: EPI.triatt_epilogue(o, g, W.wo16, zz, ending=ending, residual=residual, out=out,
+                                                                                           cfg=c, woT16=W.woT16, o_layout=o_layout),
+--- a/opt_core/attn/pair_fused_cells.json
++++ b/opt_core/attn/pair_fused_cells.json
+@@ -175,10 +175,13 @@
+     "BI": 8,
+     "BJ": 16,
+     "num_warps": 8,
+-    "num_stages": 2
+-   },
+-   "status": "certified",
+-   "evidence": "H100 qualification runs on both stacks, torch 2.13 / triton 3.7 and torch 2.7 / triton 3.3 (served 20/20 per stack, rel_rms within the stock-bf16 class, self-det, cross-box bitwise)"
++    "num_stages": 2,
++    "BN": 64,
++    "maxnreg": 128,
++    "j_fast": true
++   },
++   "status": "certified",
++   "evidence": "H100 80GB, torch 2.10.0+cu128 / Triton 3.6.0, 2026-09-21, step33 job 13767: C128/H4/D32 bf16 forward at L384/768/1024, starting and ending. Exact torch.equal against pre-change configs for four nonzero-weight input/mask cases per direction/length (24 total), including dense/empty/irregular masks; same fp32-reference rel_rms. Three alternating timing rounds per variant, actual core census and no-fallback log check. See CODEX_REPORT.md and logs/step33-e*-L*.json. BN changes only output columns; register cap, launch order and output tiling preserve arithmetic. Prior config had qualification on torch 2.13/Triton 3.7 and torch 2.7/Triton 3.3; new settings remeasured only on the stack stated above."
+   },
+   {
+    "id": "r08",
+@@ -372,14 +375,18 @@
+    "variant": "v2",
+    "cfg": {
+     "KVER": 2,
+-    "BI": 16,
++    "BI": 8,
+     "BJ": 8,
+     "num_warps": 4,
+     "num_stages": 1,
+-    "EXP": "libdevice"
+-   },
+-   "status": "certified",
+-   "evidence": "H100 qualification runs on both stacks, torch 2.13 / triton 3.7 and torch 2.7 / triton 3.3 (served 20/20 per stack, rel_rms within the stock-bf16 class, self-det, cross-box bitwise)"
++    "EXP": "libdevice",
++    "starting_tile": [
++     1,
++     64
++    ]
++   },
++   "status": "certified",
++   "evidence": "H100 80GB, torch 2.10.0+cu128 / Triton 3.6.0, 2026-09-21, step33 job 13767: C128/H4/D32 bf16 forward at L384/768/1024, starting and ending. Exact torch.equal against pre-change configs for four nonzero-weight input/mask cases per direction/length (24 total), including dense/empty/irregular masks; same fp32-reference rel_rms. Three alternating timing rounds per variant, actual core census and no-fallback log check. See CODEX_REPORT.md and logs/step33-e*-L*.json. BN changes only output columns; register cap, launch order and output tiling preserve arithmetic. Prior config had qualification on torch 2.13/Triton 3.7 and torch 2.7/Triton 3.3; new settings remeasured only on the stack stated above."
+   },
+   {
+    "id": "r17",
+--- a/opt_core/kernels/fpf_triatt_pro/prologue.py
++++ b/opt_core/kernels/fpf_triatt_pro/prologue.py
+@@ -290,11 +290,17 @@
+     ADDR_SPLIT: tl.constexpr,         # q/k/v and bias store offsets as a [BM] row base + a [BN] column delta (one broadcast add) instead of a [BM, BN] int64 chain
+     QKV_PAIR: tl.constexpr,           # q/k/v written in pair-natural [I, J, H, D] (contiguous, handed to the core as the [I, H, J, D] view) instead of [I, H, J, D] storage
+     DOT_F32: tl.constexpr,            # debug only (TRITON_INTERPRET=1 on CPU mis-executes bf16 tl.dot): upcast dot operands to fp32. NEVER set on GPU runs.
++    J_FAST: tl.constexpr = False,    # starting frame: visit adjacent j tiles before advancing i
+ ):
+     HD: tl.constexpr = H * D
+     BM: tl.constexpr = BI * BJ
+-    pid_i = tl.program_id(0)
+-    pid_j = tl.program_id(1)
++    if J_FAST:
++        tile = tl.program_id(0) + tl.program_id(1) * tl.num_programs(0)
++        pid_i = tile // tl.num_programs(1)
++        pid_j = tile % tl.num_programs(1)
++    else:
++        pid_i = tl.program_id(0)
++        pid_j = tl.program_id(1)
+     r = tl.arange(0, BM)
+     ii = pid_i * BI + r // BJ                      # [BM] x-frame row index i
+     jj = pid_j * BJ + r % BJ                       # [BM] x-frame col index j
+@@ -575,6 +581,7 @@
+         NOASM_AFF=(os.environ.get("FPF_TRIATTPRO_NOASM", "0") == "1"),
+         ADDR_SPLIT=_ADDR_SPLIT, QKV_PAIR=pair_qkv,
+         DOT_F32=_INTERP_DOT_F32,
++        J_FAST=bool(cfg.get("j_fast", False)) and not ending,
+         num_warps=W, num_stages=S, **nreg,
+     )
+     return (q, k, v, g, bias, xout) if write_x else (q, k, v, g, bias)
+--- a/opt_core/kernels/fpf_triatt_epi/epilogue.py
++++ b/opt_core/kernels/fpf_triatt_epi/epilogue.py
+@@ -354,6 +354,8 @@
+     assert (c_out & (c_out - 1)) == 0 and (D & (D - 1)) == 0 and (HD & (HD - 1)) == 0, "c_out, D, H*D must be powers of two"
+     cfg = cfg or pick_config(c_out, H, D, o5.device)
+     BI, BJ, KV = cfg["BI"], cfg["BJ"], cfg.get("KVER", 2)
++    if not ending and "starting_tile" in cfg:
++        BI, BJ = cfg["starting_tile"]
+     use_ld = (cfg.get("EXP", "libdevice") == "libdevice") and (_ld is not None)
+     grid = (triton.cdiv(I, BI), triton.cdiv(J, BJ), B)
+     if KV == 2:

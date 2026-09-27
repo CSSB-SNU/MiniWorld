@@ -1,0 +1,118 @@
+========= COMPUTE-SANITIZER
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:1480: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+PTXAS dual_ln_prefetch 132 2 /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/22b9f1907c908ec5f2f6489e70e6d90a1704808ff4b8d2915c625f9c1d1929db.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'unified_reduce' for 'sm_90a'
+ptxas info    : Function properties for unified_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 9.297 ms
+ptxas info    : Compiling entry function 'dual_b1b4' for 'sm_90a'
+ptxas info    : Function properties for dual_b1b4
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 252 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 344.093 ms
+
+PTXAS /home/psk6950/MiniWorld/runs/anthropic_b7b12_fusion_20260920/build/d2d1e0ec5e46784c993a837b2bfe83f7700f98d68fa41f160722e4a969287f98.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'front_reduce' for 'sm_90a'
+ptxas info    : Function properties for front_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 31 registers, used 0 barriers
+ptxas info    : Compile time = 10.034 ms
+ptxas info    : Compiling entry function 'front_b7b12' for 'sm_90a'
+ptxas info    : Function properties for front_b7b12
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 125 registers, used 1 barriers, 1024 bytes smem
+ptxas info    : Compile time = 156.116 ms
+
+CUBIN b1 /home/psk6950/MiniWorld/runs/trimul_recompute_next_20260921/build/2eca7e34d814bb83742d370ef292c767e016b97ce9d18e62b5adc4c3afe4f1de.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 31 registers, used 0 barriers
+ptxas info    : Compile time = 7.649 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 255 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 660.202 ms
+
+CUBIN b7 /home/psk6950/MiniWorld/runs/trimul_recompute_next_20260921/build/34e665bfbcd66a53a5d4b70db579f216f3edcd0863240b634acbc99238256319.cubin /home/psk6950/MiniWorld/runs/trimul_recompute_next_20260921/b7_warp_specialized.cu(34): warning #177-D: variable "DW_SLOT" was declared but never referenced
+  constexpr int DW_SLOT=57344,DX_SLOT=40960;
+                ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'front_reduce' for 'sm_90a'
+ptxas info    : Function properties for front_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 6.748 ms
+ptxas info    : Compiling entry function 'front_b7b12' for 'sm_90a'
+ptxas info    : Function properties for front_b7b12
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 2048 bytes smem
+ptxas info    : Compile time = 329.980 ms
+
+CUBIN b1 /home/psk6950/MiniWorld/runs/trimul_fused_recompute_20260920/build/aa9c3dafbd9e5c17158c3e5a0bd91ea4b20be03635a536dbd42fa3a995b061aa.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 31 registers, used 0 barriers
+ptxas info    : Compile time = 6.806 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 255 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 581.539 ms
+
+CUBIN b7 /home/psk6950/MiniWorld/runs/trimul_fused_recompute_20260920/build/3c048ad1c89b7b09748222d1f3a377bb81c29f22e5169752ffb74d4ae34a5b79.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'front_reduce' for 'sm_90a'
+ptxas info    : Function properties for front_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 7.273 ms
+ptxas info    : Compiling entry function 'front_b7b12' for 'sm_90a'
+ptxas info    : Function properties for front_b7b12
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 238 registers, used 1 barriers, 2048 bytes smem
+ptxas info    : Compile time = 295.511 ms
+
+CUBIN b1 /home/psk6950/MiniWorld/runs/trimul_recompute_optimized_20260920/build/6e1a11da5bb8861f3823ca78ecfabbab115ab0732cdd10af4c0b81d3869cad35.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 9.262 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 254 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 625.117 ms
+
+CUBIN b7 /home/psk6950/MiniWorld/runs/trimul_recompute_optimized_20260920/build/2ab35eb6c2f92c99c5e497bc02cc60c99748be9d682b0ae69213700083f32c4f.cubin /home/psk6950/MiniWorld/runs/trimul_recompute_optimized_20260920/b7_warp_specialized.cu(34): warning #177-D: variable "DW_SLOT" was declared but never referenced
+  constexpr int DW_SLOT=57344,DX_SLOT=40960;
+                ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'front_reduce' for 'sm_90a'
+ptxas info    : Function properties for front_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 6.610 ms
+ptxas info    : Compiling entry function 'front_b7b12' for 'sm_90a'
+ptxas info    : Function properties for front_b7b12
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 2048 bytes smem
+ptxas info    : Compile time = 314.584 ms
+
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/autotune/cache.py:1420: UserWarning: [miniworld.autotune] no tuned autotune cache entry for this shape for op 'trimul_input_dual_bwd_triton' on 'NVIDIA H100 80GB HBM3 (sm90)' (bfloat16|M=589824,fs0=1,fs1=589824,gs0=128,gs1=1,shape_key=216181595387199641,vs0=128,vs1=1,ws0=1,ws1=128). Falling back to a heuristic 3 of 648 configs (run `miniworld-engine build all` to tune this GPU properly) — this run may be slower and the chosen config may be suboptimal. Build a tuned cache for this GPU with the autotune cache-builder (see docs/operations/dispatch-cache.md).
+  hit = _cached_subset(self, cfgs, nargs, meta)
+CHECK {'new': {'forward': {'relative_l2': 0.0, 'bit_exact': True, 'finite': True}, 'dx': {'relative_l2': 2.947273060271982e-05, 'bit_exact': False, 'finite': True}, 'dWL': {'relative_l2': 0.0004685893945861608, 'bit_exact': False, 'finite': True}, 'dWLg': {'relative_l2': 0.00028679685783572495, 'bit_exact': False, 'finite': True}, 'dWR': {'relative_l2': 0.0001774760166881606, 'bit_exact': False, 'finite': True}, 'dWRg': {'relative_l2': 0.00019714509835466743, 'bit_exact': False, 'finite': True}, 'dWgate': {'relative_l2': 0.00019699700351338834, 'bit_exact': False, 'finite': True}, 'dWproj': {'relative_l2': 0.000236960404436104, 'bit_exact': False, 'finite': True}, 'dgamma_in': {'relative_l2': 5.689825411536731e-05, 'bit_exact': False, 'finite': True}, 'dbeta_in': {'relative_l2': 2.6064728444907814e-05, 'bit_exact': False, 'finite': True}, 'dgamma_out': {'relative_l2': 2.474518510098278e-07, 'bit_exact': False, 'finite': True}, 'dbeta_out': {'relative_l2': 1.7279276676163136e-07, 'bit_exact': False, 'finite': True}}, 'saved': {'forward': {'relative_l2': 0.0, 'bit_exact': True, 'finite': True}, 'dx': {'relative_l2': 2.947273060271982e-05, 'bit_exact': False, 'finite': True}, 'dWL': {'relative_l2': 0.0004987505380995572, 'bit_exact': False, 'finite': True}, 'dWLg': {'relative_l2': 0.00035204499727115035, 'bit_exact': False, 'finite': True}, 'dWR': {'relative_l2': 0.00023837773187551647, 'bit_exact': False, 'finite': True}, 'dWRg': {'relative_l2': 0.0003129325632471591, 'bit_exact': False, 'finite': True}, 'dWgate': {'relative_l2': 0.00017645914340391755, 'bit_exact': False, 'finite': True}, 'dWproj': {'relative_l2': 0.00016510594286955893, 'bit_exact': False, 'finite': True}, 'dgamma_in': {'relative_l2': 5.690385296475142e-05, 'bit_exact': False, 'finite': True}, 'dbeta_in': {'relative_l2': 2.6038236683234572e-05, 'bit_exact': False, 'finite': True}, 'dgamma_out': {'relative_l2': 3.3592309023333655e-07, 'bit_exact': False, 'finite': True}, 'dbeta_out': {'relative_l2': 2.0061807504134777e-07, 'bit_exact': False, 'finite': True}}, 'initial': {'forward': {'relative_l2': 0.0, 'bit_exact': True, 'finite': True}, 'dx': {'relative_l2': 2.947273060271982e-05, 'bit_exact': False, 'finite': True}, 'dWL': {'relative_l2': 0.0004685893945861608, 'bit_exact': False, 'finite': True}, 'dWLg': {'relative_l2': 0.00028679685783572495, 'bit_exact': False, 'finite': True}, 'dWR': {'relative_l2': 0.0001774760166881606, 'bit_exact': False, 'finite': True}, 'dWRg': {'relative_l2': 0.00019714509835466743, 'bit_exact': False, 'finite': True}, 'dWgate': {'relative_l2': 0.0002159404248232022, 'bit_exact': False, 'finite': True}, 'dWproj': {'relative_l2': 0.00022174102196004242, 'bit_exact': False, 'finite': True}, 'dgamma_in': {'relative_l2': 5.689825411536731e-05, 'bit_exact': False, 'finite': True}, 'dbeta_in': {'relative_l2': 2.6064728444907814e-05, 'bit_exact': False, 'finite': True}, 'dgamma_out': {'relative_l2': 2.474518510098278e-07, 'bit_exact': False, 'finite': True}, 'dbeta_out': {'relative_l2': 1.7279276676163136e-07, 'bit_exact': False, 'finite': True}}, 'previous': {'forward': {'relative_l2': 0.0, 'bit_exact': True, 'finite': True}, 'dx': {'relative_l2': 2.947273060271982e-05, 'bit_exact': False, 'finite': True}, 'dWL': {'relative_l2': 0.0004685893945861608, 'bit_exact': False, 'finite': True}, 'dWLg': {'relative_l2': 0.00028679685783572495, 'bit_exact': False, 'finite': True}, 'dWR': {'relative_l2': 0.0001774760166881606, 'bit_exact': False, 'finite': True}, 'dWRg': {'relative_l2': 0.00019714509835466743, 'bit_exact': False, 'finite': True}, 'dWgate': {'relative_l2': 0.00019699700351338834, 'bit_exact': False, 'finite': True}, 'dWproj': {'relative_l2': 0.0002046313602477312, 'bit_exact': False, 'finite': True}, 'dgamma_in': {'relative_l2': 5.689825411536731e-05, 'bit_exact': False, 'finite': True}, 'dbeta_in': {'relative_l2': 2.6064728444907814e-05, 'bit_exact': False, 'finite': True}, 'dgamma_out': {'relative_l2': 3.0542256013177393e-07, 'bit_exact': False, 'finite': True}, 'dbeta_out': {'relative_l2': 1.679827761336128e-07, 'bit_exact': False, 'finite': True}}}
+CHECK_ONLY_DONE
+========= ERROR SUMMARY: 0 errors

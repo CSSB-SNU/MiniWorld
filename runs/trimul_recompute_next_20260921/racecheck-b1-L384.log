@@ -1,0 +1,32 @@
+========= COMPUTE-SANITIZER
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:1480: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+SETUP b1 384
+PTXAS dual_ln_prefetch 132 2 /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/22b9f1907c908ec5f2f6489e70e6d90a1704808ff4b8d2915c625f9c1d1929db.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'unified_reduce' for 'sm_90a'
+ptxas info    : Function properties for unified_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 9.297 ms
+ptxas info    : Compiling entry function 'dual_b1b4' for 'sm_90a'
+ptxas info    : Function properties for dual_b1b4
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 252 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 344.093 ms
+
+CUBIN b1 /home/psk6950/MiniWorld/runs/trimul_recompute_next_20260921/build/10b9f7d09102a8660775c1386e74b2a43386710b6319f76e65b586854eb81f5a.cubin ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'b1_reduce' for 'sm_90a'
+ptxas info    : Function properties for b1_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 31 registers, used 0 barriers
+ptxas info    : Compile time = 7.782 ms
+ptxas info    : Compiling entry function 'b1_fused' for 'sm_90a'
+ptxas info    : Function properties for b1_fused
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 255 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 714.007 ms
+
+LAUNCH b1
+ERRORS {'dg': {'relative_l2': 0.0, 'max_absolute': 0.0, 'bit_exact': True, 'finite': True, 'limit': 0}, 'dwg': {'relative_l2': 9.009895620692987e-06, 'max_absolute': 0.125, 'bit_exact': False, 'finite': True, 'limit': 0.0005}, 'dt': {'relative_l2': 0.0, 'max_absolute': 0.0, 'bit_exact': True, 'finite': True, 'limit': 2e-05}, 'dgo': {'relative_l2': 2.9150916702747054e-07, 'max_absolute': 0.000274658203125, 'bit_exact': False, 'finite': True, 'limit': 5e-06}, 'dbo': {'relative_l2': 2.445211464419117e-07, 'max_absolute': 0.00018310546875, 'bit_exact': False, 'finite': True, 'limit': 5e-06}, 'dwp': {'relative_l2': 7.402479968732223e-05, 'max_absolute': 2.0, 'bit_exact': False, 'finite': True, 'limit': 0.0005}}
+CHECK_ONLY_DONE
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

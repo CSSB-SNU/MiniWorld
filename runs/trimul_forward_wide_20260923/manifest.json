@@ -1,0 +1,128 @@
+{
+  "sources": {
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/trimul_inproj/cuda/h100_wide_forward.py": "64f1d20ca7cd253ea4588345d3c68f5871f281045a7cc81d0776b87f3c79eaa4",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/trimul_inproj/cuda/h100_sources/wide_forward/front_shared.cuh": "b64d0af77ee5bff3fb2e0e3e9baa25356bed84fafc510f55c779b5c13eac5b83",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/trimul_inproj/cuda/h100_sources/wide_forward/output.cu": "a2c69dc5379082969abd8365d211a76abab765a2a2b060df3c00c10358afcf3f",
+    ".engine-release-2.0.0/src/miniworld_engine/kernels/trimul_inproj/cuda/h100_sources/wide_forward/selection.json": "fe18f80eb9e602d69455109c68a7236b401a3e187a4ead3b418f7d40c185c31d"
+  },
+  "cubins": {
+    "256-384": [
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/dba655aeb85509fd774bab9755b415d1e9f4ec4c4dcd184659adaa26dad998e8.cubin",
+        "sha256": "8f55c82740ed99c041585c78bf0419b9d82d9b2e90610958cf318eeabcf5e0be"
+      },
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/6e638005cc848dc6c8d54986980614a7d16d5d1a56b6a4a345b0d1e6b40c48ea.cubin",
+        "sha256": "181b06b8b0f275245a070c9507a9f25850159566895015244d8123a47fe0711e"
+      }
+    ],
+    "256-768": [
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/dba655aeb85509fd774bab9755b415d1e9f4ec4c4dcd184659adaa26dad998e8.cubin",
+        "sha256": "8f55c82740ed99c041585c78bf0419b9d82d9b2e90610958cf318eeabcf5e0be"
+      },
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/6e638005cc848dc6c8d54986980614a7d16d5d1a56b6a4a345b0d1e6b40c48ea.cubin",
+        "sha256": "181b06b8b0f275245a070c9507a9f25850159566895015244d8123a47fe0711e"
+      }
+    ],
+    "384-384": [
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/396709d18a4d94b14f1b826a1edab0602471ac4c78644385ad9d6e6f641de875.cubin",
+        "sha256": "d27c5d755367f8ce63958a752d466fc75588354e477b433f9ee2330a0511da3e"
+      },
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/23ce6d432f2355cca2631fed0e97dae1d4f6c4284b70b2076f6d89658657ef16.cubin",
+        "sha256": "6d80a5787f6b4dfa6ecff9ced1cff3ee2ca768df6d0182a32475e242ff97cf9b"
+      }
+    ],
+    "384-768": [
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/396709d18a4d94b14f1b826a1edab0602471ac4c78644385ad9d6e6f641de875.cubin",
+        "sha256": "d27c5d755367f8ce63958a752d466fc75588354e477b433f9ee2330a0511da3e"
+      },
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/23ce6d432f2355cca2631fed0e97dae1d4f6c4284b70b2076f6d89658657ef16.cubin",
+        "sha256": "6d80a5787f6b4dfa6ecff9ced1cff3ee2ca768df6d0182a32475e242ff97cf9b"
+      }
+    ],
+    "512-384": [
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/c58e2b1adcfde5be259a07aa39935aa8cccaa859e45c52478fbe811e4c7ee05c.cubin",
+        "sha256": "373fdc68317f93af795147da36ef20e065cc9f66ad21c281d6cc4ab48ba8a133"
+      },
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/9ec1e29690e87a4432e39f7839c4d70628914e9691750a690f7b0ece12af84b4.cubin",
+        "sha256": "333cb10388c61cd3fbdc3339e2101589a5006bfaf27d6b7db5ac365e260c7287"
+      }
+    ],
+    "512-768": [
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/c58e2b1adcfde5be259a07aa39935aa8cccaa859e45c52478fbe811e4c7ee05c.cubin",
+        "sha256": "373fdc68317f93af795147da36ef20e065cc9f66ad21c281d6cc4ab48ba8a133"
+      },
+      {
+        "path": "/home/psk6950/MiniWorld/runs/trimul_forward_wide_20260923/engine_cache/trimul_h100/9ec1e29690e87a4432e39f7839c4d70628914e9691750a690f7b0ece12af84b4.cubin",
+        "sha256": "333cb10388c61cd3fbdc3339e2101589a5006bfaf27d6b7db5ac365e260c7287"
+      }
+    ]
+  },
+  "sanitizers": {
+    "memcheck-D256-L384.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= ERROR SUMMARY: 0 errors\n"
+    },
+    "racecheck-D256-L384.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)\n"
+    },
+    "memcheck-D256-L768.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= ERROR SUMMARY: 0 errors\n"
+    },
+    "racecheck-D256-L768.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)\n"
+    },
+    "memcheck-D384-L384.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= ERROR SUMMARY: 0 errors\n"
+    },
+    "racecheck-D384-L384.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)\n"
+    },
+    "memcheck-D384-L768.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= ERROR SUMMARY: 0 errors\n"
+    },
+    "racecheck-D384-L768.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)\n"
+    },
+    "memcheck-D512-L384.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= ERROR SUMMARY: 0 errors\n"
+    },
+    "racecheck-D512-L384.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)\n"
+    },
+    "memcheck-D512-L768.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= ERROR SUMMARY: 0 errors\n"
+    },
+    "racecheck-D512-L768.log": {
+      "complete": true,
+      "tail": "========= COMPUTE-SANITIZER\n========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)\n"
+    }
+  },
+  "final_context_graph": {
+    "256-384": true,
+    "256-768": true,
+    "384-384": true,
+    "384-768": true,
+    "512-384": true,
+    "512-768": true
+  }
+}

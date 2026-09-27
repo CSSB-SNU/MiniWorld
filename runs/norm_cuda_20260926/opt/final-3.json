@@ -1,0 +1,428 @@
+[
+  {
+    "M": 8192,
+    "D": 64,
+    "rms": false,
+    "dtype": "torch.float64",
+    "old_config": [
+      128,
+      4
+    ],
+    "new_config": [
+      "warp",
+      256,
+      1
+    ],
+    "errors": [
+      1.0242060271451276e-16,
+      1.572177459199781e-16,
+      5.296098845670721e-16,
+      4.963672525950151e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 4.649600014090538,
+        "train_us": 13.823999464511871
+      },
+      "new_cuda": {
+        "fwd_us": 3.8176000118255615,
+        "train_us": 10.233599692583084
+      },
+      "pytorch_reference": {
+        "fwd_us": 54.0831983089447,
+        "train_us": 108.297598361969
+      }
+    },
+    "engine_unavailable": "FP64 accumulation contract differs"
+  },
+  {
+    "M": 8192,
+    "D": 64,
+    "rms": true,
+    "dtype": "torch.float64",
+    "old_config": [
+      128,
+      4
+    ],
+    "new_config": [
+      "warp",
+      256,
+      1
+    ],
+    "errors": [
+      1.117792767791991e-16,
+      1.4175858196943628e-16,
+      3.081999973336167e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 4.0192000567913055,
+        "train_us": 12.095999717712402
+      },
+      "new_cuda": {
+        "fwd_us": 3.622400015592575,
+        "train_us": 9.769599884748459
+      },
+      "pytorch_reference": {
+        "fwd_us": 14.934399724006653,
+        "train_us": 65.7696008682251
+      }
+    },
+    "engine_unavailable": "FP64 accumulation contract differs"
+  },
+  {
+    "M": 147456,
+    "D": 128,
+    "rms": false,
+    "dtype": "torch.float64",
+    "old_config": [
+      128,
+      64
+    ],
+    "new_config": [
+      "warp",
+      256,
+      4
+    ],
+    "errors": [
+      9.736920373202446e-17,
+      1.5306101121752246e-16,
+      3.331058657562279e-16,
+      3.6663730302636795e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 116.50559902191162,
+        "train_us": 281.98719024658203
+      },
+      "new_cuda": {
+        "fwd_us": 105.92960119247437,
+        "train_us": 267.2895908355713
+      },
+      "pytorch_reference": {
+        "fwd_us": 1048.8832473754883,
+        "train_us": 1377.6864051818848
+      }
+    },
+    "engine_unavailable": "FP64 accumulation contract differs"
+  },
+  {
+    "M": 147456,
+    "D": 128,
+    "rms": true,
+    "dtype": "torch.float64",
+    "old_config": [
+      256,
+      64
+    ],
+    "new_config": [
+      "warp",
+      256,
+      4
+    ],
+    "errors": [
+      1.1059814229578474e-16,
+      1.3789361480629027e-16,
+      9.866996104872097e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 112.94080018997192,
+        "train_us": 277.292799949646
+      },
+      "new_cuda": {
+        "fwd_us": 105.5232048034668,
+        "train_us": 265.0752067565918
+      },
+      "pytorch_reference": {
+        "fwd_us": 370.6847906112671,
+        "train_us": 1746.940803527832
+      }
+    },
+    "engine_unavailable": "FP64 accumulation contract differs"
+  },
+  {
+    "M": 147456,
+    "D": 384,
+    "rms": false,
+    "dtype": "torch.float64",
+    "old_config": [
+      256,
+      1
+    ],
+    "new_config": [
+      "warp",
+      128,
+      64
+    ],
+    "errors": [
+      9.954427603753631e-17,
+      1.8868673195309123e-16,
+      4.908588419286536e-16,
+      4.873320081723651e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 315.9071922302246,
+        "train_us": 839.4559860229492
+      },
+      "new_cuda": {
+        "fwd_us": 317.73760318756104,
+        "train_us": 835.6479644775391
+      },
+      "pytorch_reference": {
+        "fwd_us": 1410.8768463134766,
+        "train_us": 2222.208023071289
+      }
+    },
+    "engine_unavailable": "FP64 accumulation contract differs"
+  },
+  {
+    "M": 147456,
+    "D": 384,
+    "rms": true,
+    "dtype": "torch.float64",
+    "old_config": [
+      256,
+      1
+    ],
+    "new_config": [
+      "warp",
+      128,
+      64
+    ],
+    "errors": [
+      1.1923991512817334e-16,
+      1.4175688954083826e-16,
+      6.156278320041719e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 324.98559951782227,
+        "train_us": 830.6943893432617
+      },
+      "new_cuda": {
+        "fwd_us": 318.6944007873535,
+        "train_us": 824.1600036621094
+      },
+      "pytorch_reference": {
+        "fwd_us": 1073.5936164855957,
+        "train_us": 4593.574523925781
+      }
+    },
+    "engine_unavailable": "FP64 accumulation contract differs"
+  },
+  {
+    "M": 8192,
+    "D": 1024,
+    "rms": false,
+    "dtype": "torch.float64",
+    "old_config": [
+      128,
+      4
+    ],
+    "new_config": [
+      "cta",
+      128,
+      16
+    ],
+    "errors": [
+      1.0851848459131201e-16,
+      1.4575279582114924e-16,
+      5.979341472113735e-16,
+      5.905939495246022e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 53.17760109901428,
+        "train_us": 209.08479690551758
+      },
+      "new_cuda": {
+        "fwd_us": 50.569599866867065,
+        "train_us": 130.51199913024902
+      },
+      "pytorch_reference": {
+        "fwd_us": 124.90240335464478,
+        "train_us": 320.53120136260986
+      }
+    },
+    "engine_unavailable": "FP64 accumulation contract differs"
+  },
+  {
+    "M": 8192,
+    "D": 1024,
+    "rms": true,
+    "dtype": "torch.float64",
+    "old_config": [
+      128,
+      4
+    ],
+    "new_config": [
+      "cta",
+      128,
+      16
+    ],
+    "errors": [
+      1.1372945567590658e-16,
+      1.3726856901000552e-16,
+      3.6743619633217855e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 51.529598236083984,
+        "train_us": 189.31200504302979
+      },
+      "new_cuda": {
+        "fwd_us": 50.787198543548584,
+        "train_us": 127.64159440994263
+      },
+      "pytorch_reference": {
+        "fwd_us": 167.38239526748657,
+        "train_us": 728.8512229919434
+      }
+    },
+    "engine_unavailable": "FP64 accumulation contract differs"
+  },
+  {
+    "M": 2048,
+    "D": 4096,
+    "rms": false,
+    "dtype": "torch.float64",
+    "old_config": [
+      128,
+      64
+    ],
+    "new_config": [
+      "cta",
+      256,
+      4
+    ],
+    "errors": [
+      1.0797082740698188e-16,
+      1.4297628810736485e-16,
+      3.8147951992283493e-16,
+      3.5232000908888564e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 125.23839473724365,
+        "train_us": 322.24318981170654
+      },
+      "new_cuda": {
+        "fwd_us": 53.31839919090271,
+        "train_us": 187.84960508346558
+      },
+      "pytorch_reference": {
+        "fwd_us": 94.32640075683594,
+        "train_us": 256.6943883895874
+      }
+    },
+    "engine_unavailable": "autotune key width limit"
+  },
+  {
+    "M": 2048,
+    "D": 4096,
+    "rms": true,
+    "dtype": "torch.float64",
+    "old_config": [
+      128,
+      64
+    ],
+    "new_config": [
+      "cta",
+      256,
+      4
+    ],
+    "errors": [
+      1.1174887458577185e-16,
+      1.3589939907788472e-16,
+      2.792440585448092e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 102.2271990776062,
+        "train_us": 302.16639041900635
+      },
+      "new_cuda": {
+        "fwd_us": 68.1984007358551,
+        "train_us": 181.88159465789795
+      },
+      "pytorch_reference": {
+        "fwd_us": 173.71200323104858,
+        "train_us": 734.9023818969727
+      }
+    },
+    "engine_unavailable": "autotune key width limit"
+  },
+  {
+    "M": 257,
+    "D": 8193,
+    "rms": false,
+    "dtype": "torch.float64",
+    "old_config": [
+      128,
+      4
+    ],
+    "new_config": [
+      "cta",
+      256,
+      1
+    ],
+    "errors": [
+      1.1018073314621062e-16,
+      1.8309818553626566e-16,
+      2.5340736471600474e-16,
+      2.1499275682821664e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 77.183997631073,
+        "train_us": 337.96160221099854
+      },
+      "new_cuda": {
+        "fwd_us": 23.212799429893494,
+        "train_us": 243.09439659118652
+      },
+      "pytorch_reference": {
+        "fwd_us": 21.408000588417053,
+        "train_us": 96.85119986534119
+      }
+    },
+    "engine_unavailable": "autotune key width limit"
+  },
+  {
+    "M": 257,
+    "D": 8193,
+    "rms": true,
+    "dtype": "torch.float64",
+    "old_config": [
+      128,
+      4
+    ],
+    "new_config": [
+      "cta",
+      256,
+      1
+    ],
+    "errors": [
+      1.1117943680546121e-16,
+      1.346197086384444e-16,
+      2.377518601384823e-16
+    ],
+    "times": {
+      "old_cuda": {
+        "fwd_us": 68.66239905357361,
+        "train_us": 335.7408046722412
+      },
+      "new_cuda": {
+        "fwd_us": 28.886398673057556,
+        "train_us": 236.20479106903076
+      },
+      "pytorch_reference": {
+        "fwd_us": 40.963199734687805,
+        "train_us": 182.95040130615234
+      }
+    },
+    "engine_unavailable": "autotune key width limit"
+  }
+]

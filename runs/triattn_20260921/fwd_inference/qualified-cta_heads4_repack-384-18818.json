@@ -1,0 +1,229 @@
+{
+  "artifact": "cta_heads4_repack",
+  "length": 384,
+  "baseline": "installed TriangleAttention.eval() under inference_mode",
+  "selected_entry": false,
+  "rounds": 16,
+  "replays": 20,
+  "records": [
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "mixed",
+      "output_relative": 0.0009088340186372909,
+      "attention_relative": 0.010576037536868203
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "mixed",
+      "baseline_relative": 0.0008867275219260813,
+      "candidate_relative": 0.000970483411058633,
+      "update_rms": 0.08834543079137802
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "dense",
+      "output_relative": 0.0008846964451341388,
+      "attention_relative": 0.010798246442823777
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "one_key",
+      "output_relative": 3.3528639823502294e-05,
+      "attention_relative": 7.043288199115019e-05
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "one_key",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.5561311841011047
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "all_masked",
+      "output_relative": 0.0,
+      "attention_relative": 0.0
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": false,
+      "case": "all_masked",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.0
+    },
+    {
+      "kind": "correctness",
+      "ending": false,
+      "case": "none",
+      "output_relative": 0.0008846964451341388,
+      "attention_relative": 0.010798246442823777
+    },
+    {
+      "kind": "paired_module",
+      "ending": false,
+      "baseline_us": 395.88719606399536,
+      "candidate_us": 498.6096143722534,
+      "speedup": 0.7943332921302935,
+      "paired_ratios": [
+        0.7921641266707611,
+        0.7901505940202896,
+        0.7996519545376236,
+        0.8000201635979393,
+        0.7992626830091641,
+        0.7997883036196702,
+        0.7984373879591856,
+        0.7940216518113309,
+        0.7948057581365389,
+        0.7930477798640263,
+        0.7943097430730844,
+        0.7926604567122493,
+        0.7943568411875025,
+        0.7944882228828983,
+        0.7934948103301745,
+        0.7933585987809856
+      ]
+    },
+    {
+      "kind": "changed_input_weight_mask_graph",
+      "ending": false,
+      "relative": 0.0010599937296235783
+    },
+    {
+      "kind": "fullgraph_compile",
+      "ending": false,
+      "passed": true
+    },
+    {
+      "kind": "no_grad",
+      "ending": false,
+      "passed": true
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "mixed",
+      "output_relative": 0.0009102941049608738,
+      "attention_relative": 0.010603501855287271
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "mixed",
+      "baseline_relative": 0.0009436449333710612,
+      "candidate_relative": 0.0007853857035386043,
+      "update_rms": 0.08149060606956482
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "dense",
+      "output_relative": 0.0008845877951491317,
+      "attention_relative": 0.010808386954644682
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "one_key",
+      "output_relative": 3.404749637771981e-05,
+      "attention_relative": 7.188524299864708e-05
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "one_key",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.5169594287872314
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "all_masked",
+      "output_relative": 0.0,
+      "attention_relative": 0.0
+    },
+    {
+      "kind": "fp64_full_module_sample",
+      "ending": true,
+      "case": "all_masked",
+      "baseline_relative": 0.0,
+      "candidate_relative": 0.0,
+      "update_rms": 0.0
+    },
+    {
+      "kind": "correctness",
+      "ending": true,
+      "case": "none",
+      "output_relative": 0.0008845877951491317,
+      "attention_relative": 0.010808386954644682
+    },
+    {
+      "kind": "paired_module",
+      "ending": true,
+      "baseline_us": 491.40000343322754,
+      "candidate_us": 495.21920680999756,
+      "speedup": 0.9930272169672918,
+      "paired_ratios": [
+        0.9918275216959062,
+        0.9990252032581355,
+        0.9990807150514021,
+        0.9986234137001424,
+        0.999215094819236,
+        1.0013283002738596,
+        0.9928958011991785,
+        0.994124069008524,
+        0.9921280420766294,
+        0.9938742304995535,
+        0.9906682811537789,
+        0.9919285276378045,
+        0.9928558434295648,
+        0.9931586327354052,
+        0.9923007039232612,
+        0.9916221424541867
+      ]
+    },
+    {
+      "kind": "changed_input_weight_mask_graph",
+      "ending": true,
+      "relative": 0.0010573699929111722
+    },
+    {
+      "kind": "fullgraph_compile",
+      "ending": true,
+      "passed": true
+    },
+    {
+      "kind": "no_grad",
+      "ending": true,
+      "passed": true
+    }
+  ],
+  "inference_front": true,
+  "build": {
+    "module": "triattn_infer_cta_heads4_repack",
+    "binary": "build/triattn_infer_cta_heads4_repack.so",
+    "smem": 165888,
+    "sha256": {
+      "fused.cu": "bb369cb64f3cd308c898413570d1c48ea7eea5b7b9e58c0ecc36569fc5c35604",
+      "build/triattn_infer_cta_heads4_repack.so": "6c63e3a160cbc61efd8f54911493294e81963d5982cf61b4fe311ebfb80a3469"
+    }
+  },
+  "front_artifact": "front8_hlast",
+  "front_build": {
+    "module": "triattn_infer_front8_hlast",
+    "binary": "build/triattn_infer_front8_hlast.so",
+    "smem": 0,
+    "sha256": {
+      "fused.cu": "5679f9334165ebbf5f696a4dacb6dc3515bf3440149ecc8f34ac3a707c4d67e6",
+      "build/triattn_infer_front8_hlast.so": "13ecc94609e5884754f12b58893bdbab938c3485a611bd888832be144dc7baf8"
+    }
+  },
+  "complete": true
+}

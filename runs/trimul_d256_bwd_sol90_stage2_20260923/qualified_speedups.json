@@ -1,0 +1,222 @@
+{
+  "goal_complete": false,
+  "criterion": "Existing Triton / ours >= 1.5 for backward and directly measured F+B at all six D>=256 shapes",
+  "rows": [
+    {
+      "D": 128,
+      "L": 384,
+      "source": "baseline-D128-D256-L384-17324.json",
+      "job": "17324",
+      "timings": {
+        "forward": {
+          "triton_us": 544.975996017456,
+          "ours_us": 308.1279993057251,
+          "speedup": 1.7686675577857174,
+          "gap_to_1_5_us": 0
+        },
+        "backward": {
+          "triton_us": 1088.8479948043823,
+          "ours_us": 714.8640155792236,
+          "speedup": 1.5231540140150088,
+          "gap_to_1_5_us": 0
+        },
+        "full": {
+          "triton_us": 1634.4640254974365,
+          "ours_us": 1017.6640152931213,
+          "speedup": 1.6060939572739594,
+          "gap_to_1_5_us": 0
+        }
+      },
+      "target_met": true
+    },
+    {
+      "D": 128,
+      "L": 768,
+      "source": "baseline-D128-D256-L768-17323.json",
+      "job": "17323",
+      "timings": {
+        "forward": {
+          "triton_us": 2178.4480810165405,
+          "ours_us": 1207.1839570999146,
+          "speedup": 1.8045701056614005,
+          "gap_to_1_5_us": 0
+        },
+        "backward": {
+          "triton_us": 4341.791868209839,
+          "ours_us": 2874.2400407791138,
+          "speedup": 1.5105877750672903,
+          "gap_to_1_5_us": 0
+        },
+        "full": {
+          "triton_us": 6539.008140563965,
+          "ours_us": 4074.9120712280273,
+          "speedup": 1.6046991999494484,
+          "gap_to_1_5_us": 0
+        }
+      },
+      "target_met": true
+    },
+    {
+      "D": 256,
+      "L": 384,
+      "source": "result-d256-pool-checkpoint-vs-triton-D256-L384-19254.json",
+      "job": "19254",
+      "timings": {
+        "forward": {
+          "triton_us": 1325.167953968048,
+          "ours_us": 875.1200139522552,
+          "speedup": 1.5142699662224233,
+          "gap_to_1_5_us": 0
+        },
+        "backward": {
+          "triton_us": 2220.3519344329834,
+          "ours_us": 1750.7039904594421,
+          "speedup": 1.2682623370557864,
+          "gap_to_1_5_us": 270.4693675041199
+        },
+        "full": {
+          "triton_us": 3546.1920499801636,
+          "ours_us": 2620.800018310547,
+          "speedup": 1.3530952477122442,
+          "gap_to_1_5_us": 256.671984990438
+        }
+      },
+      "target_met": false
+    },
+    {
+      "D": 256,
+      "L": 768,
+      "source": "result-d256-pool-checkpoint-vs-triton-D256-L768-19249.json",
+      "job": "19249",
+      "timings": {
+        "forward": {
+          "triton_us": 5465.567827224731,
+          "ours_us": 3292.01602935791,
+          "speedup": 1.6602494576221005,
+          "gap_to_1_5_us": 0
+        },
+        "backward": {
+          "triton_us": 12111.98377609253,
+          "ours_us": 7128.079891204834,
+          "speedup": 1.6991930451056272,
+          "gap_to_1_5_us": 0
+        },
+        "full": {
+          "triton_us": 17462.703704833984,
+          "ours_us": 10506.479740142822,
+          "speedup": 1.662088933376328,
+          "gap_to_1_5_us": 0
+        }
+      },
+      "target_met": true
+    },
+    {
+      "D": 384,
+      "L": 384,
+      "source": "result-wide-checkpoint23-vs-triton-D384-L384-18910.json",
+      "job": "18910",
+      "timings": {
+        "forward": {
+          "triton_us": 2330.031991004944,
+          "ours_us": 1672.7839708328247,
+          "speedup": 1.392906694248688,
+          "gap_to_1_5_us": 119.42931016286207
+        },
+        "backward": {
+          "triton_us": 4015.632152557373,
+          "ours_us": 2886.0639333724976,
+          "speedup": 1.3913871089698708,
+          "gap_to_1_5_us": 208.97583166758204
+        },
+        "full": {
+          "triton_us": 6370.383977890015,
+          "ours_us": 4584.719896316528,
+          "speedup": 1.389481608900062,
+          "gap_to_1_5_us": 337.7972443898516
+        }
+      },
+      "target_met": false
+    },
+    {
+      "D": 384,
+      "L": 768,
+      "source": "result-wide-checkpoint23-vs-triton-D384-L768-18911.json",
+      "job": "18911",
+      "timings": {
+        "forward": {
+          "triton_us": 9644.15979385376,
+          "ours_us": 6702.0158767700195,
+          "speedup": 1.4389938745566926,
+          "gap_to_1_5_us": 272.57601420084666
+        },
+        "backward": {
+          "triton_us": 18892.01545715332,
+          "ours_us": 12333.168029785156,
+          "speedup": 1.5318055678417948,
+          "gap_to_1_5_us": 0
+        },
+        "full": {
+          "triton_us": 28820.43170928955,
+          "ours_us": 19096.303939819336,
+          "speedup": 1.5092151758850887,
+          "gap_to_1_5_us": 0
+        }
+      },
+      "target_met": true
+    },
+    {
+      "D": 512,
+      "L": 384,
+      "source": "result-wide-checkpoint24-vs-triton-D512-L384-19391.json",
+      "job": "19391",
+      "timings": {
+        "forward": {
+          "triton_us": 3644.927978515625,
+          "ours_us": 2468.8960313796997,
+          "speedup": 1.47633919459894,
+          "gap_to_1_5_us": 38.94404570261622
+        },
+        "backward": {
+          "triton_us": 5899.551868438721,
+          "ours_us": 4473.9038944244385,
+          "speedup": 1.3186586050252405,
+          "gap_to_1_5_us": 540.8693154652915
+        },
+        "full": {
+          "triton_us": 9506.415843963623,
+          "ours_us": 7048.464059829712,
+          "speedup": 1.3487216169749887,
+          "gap_to_1_5_us": 710.8534971872969
+        }
+      },
+      "target_met": false
+    },
+    {
+      "D": 512,
+      "L": 768,
+      "source": "result-wide-checkpoint24-vs-triton-D512-L768-19353.json",
+      "job": "19353",
+      "timings": {
+        "forward": {
+          "triton_us": 15605.279922485352,
+          "ours_us": 10109.392166137695,
+          "speedup": 1.543641760654673,
+          "gap_to_1_5_us": 0
+        },
+        "backward": {
+          "triton_us": 28002.960205078125,
+          "ours_us": 18621.055603027344,
+          "speedup": 1.5038331232159312,
+          "gap_to_1_5_us": 0
+        },
+        "full": {
+          "triton_us": 43382.28797912598,
+          "ours_us": 28664.560317993164,
+          "speedup": 1.5134468311343425,
+          "gap_to_1_5_us": 0
+        }
+      },
+      "target_met": true
+    }
+  ]
+}

@@ -1,0 +1,1504 @@
+{
+  "selected": "hot6t",
+  "experiment_default": "hot6t",
+  "qualification_job": 18598,
+  "initial_qualification_job": 18586,
+  "installed": false,
+  "primary_rows": [
+    {
+      "length": 384,
+      "ending": false,
+      "baseline_ms": 0.45603759288787843,
+      "candidate_ms": 0.3706455945968628,
+      "speedup": 1.2312565396633504,
+      "reduction_percent": 18.782157268913302,
+      "ci95": [
+        1.2307839844261381,
+        1.231635476252189
+      ],
+      "release_form": "copy_plus_fused_residual"
+    },
+    {
+      "length": 384,
+      "ending": true,
+      "baseline_ms": 0.46329760551452637,
+      "candidate_ms": 0.3722736001014709,
+      "speedup": 1.2513253056610838,
+      "reduction_percent": 20.08472972807873,
+      "ci95": [
+        1.2507056539482546,
+        1.2517513488640901
+      ],
+      "release_form": "copy_plus_fused_residual"
+    },
+    {
+      "length": 768,
+      "ending": false,
+      "baseline_ms": 1.760814380645752,
+      "candidate_ms": 1.700156021118164,
+      "speedup": 1.0341280113284363,
+      "reduction_percent": 3.30017279820084,
+      "ci95": [
+        1.0291037216098609,
+        1.0396739936238446
+      ],
+      "release_form": "copy_plus_fused_residual"
+    },
+    {
+      "length": 768,
+      "ending": true,
+      "baseline_ms": 1.732822799682617,
+      "candidate_ms": 1.7009411811828614,
+      "speedup": 1.0177517626894184,
+      "reduction_percent": 1.744213406470474,
+      "ci95": [
+        1.014691196080259,
+        1.0227812301897012
+      ],
+      "release_form": "copy_plus_fused_residual"
+    },
+    {
+      "length": 1024,
+      "ending": false,
+      "baseline_ms": 3.5245248794555666,
+      "candidate_ms": 3.5773056030273436,
+      "speedup": 0.9855117662654259,
+      "reduction_percent": -1.4701228570285885,
+      "ci95": [
+        0.9834946889724964,
+        0.986575987682258
+      ],
+      "release_form": "copy_plus_fused_residual"
+    },
+    {
+      "length": 1024,
+      "ending": true,
+      "baseline_ms": 3.4631940841674806,
+      "candidate_ms": 3.58252067565918,
+      "speedup": 0.9666137870506124,
+      "reduction_percent": -3.453935107966699,
+      "ci95": [
+        0.9644290734439575,
+        0.9679748833179447
+      ],
+      "release_form": "copy_plus_fused_residual"
+    }
+  ],
+  "previous_rows": [
+    {
+      "length": 384,
+      "ending": false,
+      "baseline_ms": 0.37172240018844604,
+      "candidate_ms": 0.3710484027862549,
+      "speedup": 1.0019218702672843,
+      "reduction_percent": 0.19181837669354218,
+      "ci95": [
+        1.0017906745413248,
+        1.0020294041540858
+      ],
+      "release_form": null
+    },
+    {
+      "length": 384,
+      "ending": true,
+      "baseline_ms": 0.36929280757904054,
+      "candidate_ms": 0.36835880279541017,
+      "speedup": 1.0025555552662608,
+      "reduction_percent": 0.2549041050979084,
+      "ci95": [
+        1.0023790294771484,
+        1.0026388498190302
+      ],
+      "release_form": null
+    },
+    {
+      "length": 768,
+      "ending": false,
+      "baseline_ms": 1.8065947532653808,
+      "candidate_ms": 1.6949020385742188,
+      "speedup": 1.0680625266186436,
+      "reduction_percent": 6.3725226681364155,
+      "ci95": [
+        1.0648745312691887,
+        1.0696280317917162
+      ],
+      "release_form": null
+    },
+    {
+      "length": 768,
+      "ending": true,
+      "baseline_ms": 1.8080564498901368,
+      "candidate_ms": 1.6936260223388673,
+      "speedup": 1.0703636653025206,
+      "reduction_percent": 6.573809218629767,
+      "ci95": [
+        1.0680127442116114,
+        1.0711559310736005
+      ],
+      "release_form": null
+    },
+    {
+      "length": 1024,
+      "ending": false,
+      "baseline_ms": 3.908523941040039,
+      "candidate_ms": 3.575473594665527,
+      "speedup": 1.092470164791377,
+      "reduction_percent": 8.464319463500914,
+      "ci95": [
+        1.0909245014167392,
+        1.0955876748718862
+      ],
+      "release_form": null
+    },
+    {
+      "length": 1024,
+      "ending": true,
+      "baseline_ms": 3.9091772079467773,
+      "candidate_ms": 3.57399845123291,
+      "speedup": 1.0928726158873197,
+      "reduction_percent": 8.498027541106879,
+      "ci95": [
+        1.091990067403142,
+        1.0946051788891
+      ],
+      "release_form": null
+    }
+  ],
+  "controls": [
+    {
+      "artifact": "splitq4",
+      "job": 18549,
+      "description": "4-WG static query CTA; resident KV recomputed across query groups",
+      "rows": [
+        {
+          "length": 384,
+          "ending": false,
+          "baseline_ms": 0.45147147178649905,
+          "candidate_ms": 0.4615503946940104,
+          "speedup": 0.97836151874751,
+          "reduction_percent": -2.2117060859253135,
+          "ci95": [
+            0.9774347806023388,
+            0.9786321639553369
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 384,
+          "ending": true,
+          "baseline_ms": 0.46197387377421056,
+          "candidate_ms": 0.4639797369639079,
+          "speedup": 0.9941447089833657,
+          "reduction_percent": -0.5889777377201089,
+          "ci95": [
+            0.9932333551339658,
+            0.9961583039211142
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": false,
+          "baseline_ms": 1.703324826558431,
+          "candidate_ms": 2.21058349609375,
+          "speedup": 0.7701660555799554,
+          "reduction_percent": -29.842128558492952,
+          "ci95": [
+            0.7658287673035168,
+            0.7719277886776618
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": true,
+          "baseline_ms": 1.679753621419271,
+          "candidate_ms": 2.2263028462727865,
+          "speedup": 0.7562157176528315,
+          "reduction_percent": -32.23739954835039,
+          "ci95": [
+            0.7518807962944704,
+            0.7606279554017658
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": false,
+          "baseline_ms": 3.4663711547851563,
+          "candidate_ms": 4.658222452799478,
+          "speedup": 0.7437219902937116,
+          "reduction_percent": -34.45884524741278,
+          "ci95": [
+            0.7404273173428423,
+            0.7479513063040343
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": true,
+          "baseline_ms": 3.4150149027506513,
+          "candidate_ms": 4.664375559488931,
+          "speedup": 0.7328091697344852,
+          "reduction_percent": -36.46117451864372,
+          "ci95": [
+            0.7314973269491989,
+            0.7350324702250863
+          ],
+          "release_form": "copy_plus_fused_residual"
+        }
+      ],
+      "status": "Not selected; numerical pilot passed.",
+      "build": {
+        "module": "triattn_infer_splitq4",
+        "binary": "build/triattn_infer_splitq4.so",
+        "smem": 230400,
+        "sha256": {
+          "fused.cu": "3e27a9fe5f2307564fc86f9e6ef444449005cbfa52199a78776252cc4e6ca407",
+          "build/triattn_infer_splitq4.so": "ed1e4644b60337fbbdb2b5ea1daafaf643ca4c1833a9f4e5fef6fc64db16e7ca"
+        }
+      }
+    },
+    {
+      "artifact": "splitq2",
+      "job": 18549,
+      "description": "2-WG static query CTA; more repeated KV projections",
+      "rows": [
+        {
+          "length": 384,
+          "ending": false,
+          "baseline_ms": 0.45192639032999676,
+          "candidate_ms": 0.4052309354146322,
+          "speedup": 1.1155899926640094,
+          "reduction_percent": 10.361332875349882,
+          "ci95": [
+            1.114108294750059,
+            1.1161385212828585
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 384,
+          "ending": true,
+          "baseline_ms": 0.4672133286794027,
+          "candidate_ms": 0.4101477305094401,
+          "speedup": 1.136502735674808,
+          "reduction_percent": 12.01077053226436,
+          "ci95": [
+            1.1352481730908466,
+            1.1375888690459668
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": false,
+          "baseline_ms": 1.6919914881388347,
+          "candidate_ms": 3.719413884480794,
+          "speedup": 0.45818898741955166,
+          "reduction_percent": -118.25055325573031,
+          "ci95": [
+            0.45586039328822275,
+            0.459207749423914
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": true,
+          "baseline_ms": 1.6752400080362955,
+          "candidate_ms": 3.72234992980957,
+          "speedup": 0.4511820898797182,
+          "reduction_percent": -121.64000354415498,
+          "ci95": [
+            0.4499356320841745,
+            0.45320608471604285
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": false,
+          "baseline_ms": 3.3816192626953123,
+          "candidate_ms": 8.013049570719401,
+          "speedup": 0.42235391276704326,
+          "reduction_percent": -136.76825756118131,
+          "ci95": [
+            0.4213057670369379,
+            0.4264431915289458
+          ],
+          "release_form": "update_plus_add"
+        },
+        {
+          "length": 1024,
+          "ending": true,
+          "baseline_ms": 3.3326661427815756,
+          "candidate_ms": 8.010860188802084,
+          "speedup": 0.4164758199114559,
+          "reduction_percent": -140.10997810451596,
+          "ci95": [
+            0.4135998911351758,
+            0.4212079473317277
+          ],
+          "release_form": "copy_plus_fused_residual"
+        }
+      ],
+      "status": "Not selected; numerical pilot passed.",
+      "build": {
+        "module": "triattn_infer_splitq2",
+        "binary": "build/triattn_infer_splitq2.so",
+        "smem": 181248,
+        "sha256": {
+          "fused.cu": "df1f8206b56e9b986592c0e7adb70e65e2741b5b3d37217d86958c66ad439101",
+          "build/triattn_infer_splitq2.so": "8122653750cc6f747ffe9401ae48130e5d15b3a5fe5bb4b96ea79f6b98cad893"
+        }
+      }
+    },
+    {
+      "artifact": "hot4",
+      "job": 18557,
+      "description": "4-WG max-free normal path, FP32 denominator and stable on-chip retry",
+      "rows": [],
+      "status": "Rejected: one-key FP64 regression at L128; unrounded denominator versus BF16 numerator.",
+      "build": {
+        "module": "triattn_infer_hot4",
+        "binary": "build/triattn_infer_hot4.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "5e88ce9d1705bc05fabb918d71d2adf7d6a134045c1f1a799997f44215d5ab96",
+          "build/triattn_infer_hot4.so": "e05a0f6be5d2d6e41a65f464f2e9333a1cd84a59adf3f46c7a3db9c6d8d85ce8"
+        }
+      }
+    },
+    {
+      "artifact": "hot4r",
+      "job": 18564,
+      "description": "4-WG max-free path with scalar sum of BF16 probabilities",
+      "rows": [
+        {
+          "length": 384,
+          "ending": false,
+          "baseline_ms": 0.4515146573384603,
+          "candidate_ms": 0.4281930605570475,
+          "speedup": 1.054635515311277,
+          "reduction_percent": 5.180511609752802,
+          "ci95": [
+            1.054144360516961,
+            1.055242412006836
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 384,
+          "ending": true,
+          "baseline_ms": 0.4603471914927164,
+          "candidate_ms": 0.42958294550577797,
+          "speedup": 1.0714585652472617,
+          "reduction_percent": 6.669279388398108,
+          "ci95": [
+            1.070712429764615,
+            1.0726386342958816
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": false,
+          "baseline_ms": 1.706609026590983,
+          "candidate_ms": 2.116200510660807,
+          "speedup": 0.8101299857855802,
+          "reduction_percent": -23.436981416050617,
+          "ci95": [
+            0.8059258026300684,
+            0.8131903499230315
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": true,
+          "baseline_ms": 1.6852437337239583,
+          "candidate_ms": 2.119085820515951,
+          "speedup": 0.7979388543892783,
+          "reduction_percent": -25.322885895232417,
+          "ci95": [
+            0.795986062982034,
+            0.7999409129075539
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": false,
+          "baseline_ms": 3.3980453491210936,
+          "candidate_ms": 4.332304128011068,
+          "speedup": 0.7841905772533495,
+          "reduction_percent": -27.52002242905409,
+          "ci95": [
+            0.7795986665056827,
+            0.7897304643792362
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": true,
+          "baseline_ms": 3.3315977732340496,
+          "candidate_ms": 4.3394927978515625,
+          "speedup": 0.7662818933349143,
+          "reduction_percent": -30.500277860922374,
+          "ci95": [
+            0.7623399886213085,
+            0.7712118306056972
+          ],
+          "release_form": "copy_plus_fused_residual"
+        }
+      ],
+      "status": "Not selected; numerical pilot passed.",
+      "build": {
+        "module": "triattn_infer_hot4r",
+        "binary": "build/triattn_infer_hot4r.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "8969660b4fdd36d8177a42e90a8967eaab3adfc4ffbd23ae790a94deb1c17cea",
+          "build/triattn_infer_hot4r.so": "bbc0ed017f0cf825bc593bc0a42c64858b7a1f8832d3ee58c7cc4c430042b904"
+        }
+      }
+    },
+    {
+      "artifact": "joint4",
+      "job": 18564,
+      "description": "One N128 WGMMA computes K,V,Q,gate from the same Z load; static query groups",
+      "rows": [
+        {
+          "length": 384,
+          "ending": false,
+          "baseline_ms": 0.45109814008076987,
+          "candidate_ms": 0.4418821334838867,
+          "speedup": 1.0211787076626662,
+          "reduction_percent": 2.0739472438806805,
+          "ci95": [
+            1.0207503608583248,
+            1.021912593690117
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 384,
+          "ending": true,
+          "baseline_ms": 0.45893546740214025,
+          "candidate_ms": 0.44182826677958165,
+          "speedup": 1.0374718147277804,
+          "reduction_percent": 3.6118392997126936,
+          "ci95": [
+            1.0366031959761803,
+            1.0385089497213955
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": false,
+          "baseline_ms": 1.70938351949056,
+          "candidate_ms": 2.152700297037761,
+          "speedup": 0.7958935468758648,
+          "reduction_percent": -25.644943840205503,
+          "ci95": [
+            0.79117621460389,
+            0.8006463142875179
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": true,
+          "baseline_ms": 1.6959962844848633,
+          "candidate_ms": 2.138080596923828,
+          "speedup": 0.792668762669468,
+          "reduction_percent": -26.156100390824456,
+          "ci95": [
+            0.7897215794705186,
+            0.7943021075439469
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": false,
+          "baseline_ms": 3.468169530232747,
+          "candidate_ms": 4.609161631266275,
+          "speedup": 0.7527645820506885,
+          "reduction_percent": -32.843657080117985,
+          "ci95": [
+            0.750318837979555,
+            0.7552895625832778
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": true,
+          "baseline_ms": 3.4196660359700517,
+          "candidate_ms": 4.616474151611328,
+          "speedup": 0.7406525623398823,
+          "reduction_percent": -35.01607242683167,
+          "ci95": [
+            0.7387405838423052,
+            0.7416590372890746
+          ],
+          "release_form": "copy_plus_fused_residual"
+        }
+      ],
+      "status": "Not selected; numerical pilot passed.",
+      "build": {
+        "module": "triattn_infer_joint4",
+        "binary": "build/triattn_infer_joint4.so",
+        "smem": 230400,
+        "sha256": {
+          "fused.cu": "fe801103343610bacdac8fe139564de74ef37479d3616005e4c53fab4bedeeb2",
+          "build/triattn_infer_joint4.so": "a80f4fb1ae419bd5ccff9920b347da5a188d4f44bbd64ed1abb19795aa5bb580"
+        }
+      }
+    },
+    {
+      "artifact": "hot6r",
+      "job": 18573,
+      "description": "6-WG variant of scalar BF16 probability sum",
+      "rows": [
+        {
+          "length": 384,
+          "ending": false,
+          "baseline_ms": 0.45460427602132164,
+          "candidate_ms": 0.40826347668965657,
+          "speedup": 1.11350765977739,
+          "reduction_percent": 10.193702645932612,
+          "ci95": [
+            1.1130485751020065,
+            1.1139797154591806
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 384,
+          "ending": true,
+          "baseline_ms": 0.4627039909362793,
+          "candidate_ms": 0.4072794596354166,
+          "speedup": 1.1323272788431,
+          "reduction_percent": 11.686310249303444,
+          "ci95": [
+            1.1306050581664908,
+            1.1330483270532312
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": false,
+          "baseline_ms": 1.7173546473185222,
+          "candidate_ms": 2.2234725952148438,
+          "speedup": 0.7751618150443575,
+          "reduction_percent": -29.005322578070537,
+          "ci95": [
+            0.772129187082621,
+            0.7778170202267308
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": true,
+          "baseline_ms": 1.693068822224935,
+          "candidate_ms": 2.226947784423828,
+          "speedup": 0.7653709514602914,
+          "reduction_percent": -30.655598842894083,
+          "ci95": [
+            0.7618959656905739,
+            0.7701177712005767
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": false,
+          "baseline_ms": 3.4236020406087238,
+          "candidate_ms": 4.700661468505859,
+          "speedup": 0.7286412868448948,
+          "reduction_percent": -37.241742686599785,
+          "ci95": [
+            0.7238285565230428,
+            0.7306539043165735
+          ],
+          "release_form": "update_plus_add"
+        },
+        {
+          "length": 1024,
+          "ending": true,
+          "baseline_ms": 3.3668581644694013,
+          "candidate_ms": 4.70802256266276,
+          "speedup": 0.7151237988875271,
+          "reduction_percent": -39.83592792683404,
+          "ci95": [
+            0.7116877494681513,
+            0.7182503955320594
+          ],
+          "release_form": "copy_plus_fused_residual"
+        }
+      ],
+      "status": "Not selected; numerical pilot passed.",
+      "build": {
+        "module": "triattn_infer_hot6r",
+        "binary": "build/triattn_infer_hot6r.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "bfb4f882e277d7578772f918d2ff4f5883ce2a81d1e8b9d2761633bf453aecd7",
+          "build/triattn_infer_hot6r.so": "08e337b5a7dcff97b8b7461a6003e41b9fe692944c06f2aae20cc3aadf58f504"
+        }
+      }
+    },
+    {
+      "artifact": "hot6p",
+      "job": 18573,
+      "description": "6-WG FP32 denominator with peak-dominance retry guard",
+      "rows": [],
+      "status": "Rejected: late-live FP64 regression at L64; peak guard does not cover the error.",
+      "build": {
+        "module": "triattn_infer_hot6p",
+        "binary": "build/triattn_infer_hot6p.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "8d50f6a29a5f2d3ef59fca2446119deb96c87497528a8ac93091365c1a7f23d8",
+          "build/triattn_infer_hot6p.so": "9a4f2f78bdd2bde4c2fbaef488ac96bf1f0c61ee71546a3b17fb177e3a70a410"
+        }
+      }
+    },
+    {
+      "artifact": "hot6t",
+      "job": 18575,
+      "description": "6-WG tensor-core P*V and P*1 from identical BF16 probabilities; stable retry",
+      "rows": [
+        {
+          "length": 384,
+          "ending": false,
+          "baseline_ms": 0.45470186869303386,
+          "candidate_ms": 0.3695317268371582,
+          "speedup": 1.230258352165906,
+          "reduction_percent": 18.716260024614296,
+          "ci95": [
+            1.2294490622835634,
+            1.2309499393603391
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 384,
+          "ending": true,
+          "baseline_ms": 0.463920529683431,
+          "candidate_ms": 0.370796807607015,
+          "speedup": 1.2515894126068206,
+          "reduction_percent": 20.101593227990644,
+          "ci95": [
+            1.250325161949298,
+            1.2525276319737386
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": false,
+          "baseline_ms": 1.7288955052693684,
+          "candidate_ms": 1.7024058659871422,
+          "speedup": 1.0192299950516945,
+          "reduction_percent": 1.8867179287359148,
+          "ci95": [
+            1.0133012866434437,
+            1.0229226134373324
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": true,
+          "baseline_ms": 1.7050421396891278,
+          "candidate_ms": 1.6987642923990887,
+          "speedup": 1.0046449837594973,
+          "reduction_percent": 0.4623507641590141,
+          "ci95": [
+            0.9973271969785391,
+            1.0079192854804657
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": false,
+          "baseline_ms": 3.4908570607503253,
+          "candidate_ms": 3.5657840728759767,
+          "speedup": 0.9730227389908831,
+          "reduction_percent": -2.772521127008276,
+          "ci95": [
+            0.9619844936878422,
+            0.9806737879153098
+          ],
+          "release_form": "update_plus_add"
+        },
+        {
+          "length": 1024,
+          "ending": true,
+          "baseline_ms": 3.433788299560547,
+          "candidate_ms": 3.5985632578531903,
+          "speedup": 0.9537522478491158,
+          "reduction_percent": -4.849032047387691,
+          "ci95": [
+            0.9500122421960845,
+            0.9577892067253357
+          ],
+          "release_form": "copy_plus_fused_residual"
+        }
+      ],
+      "status": "Selected; qualified18586/18598.",
+      "build": {
+        "module": "triattn_infer_hot6t",
+        "binary": "build/triattn_infer_hot6t.so",
+        "smem": 231424,
+        "sha256": {
+          "fused.cu": "e272b66371043d66554cdb640c36df30efa040cfd58c3c20b0d1790c3a832874",
+          "build/triattn_infer_hot6t.so": "ad9425cbe15a42a5db399ae00ce14e8bd5306c317fa283ee2107c317a6fbe2f1"
+        }
+      }
+    },
+    {
+      "artifact": "async6",
+      "job": 18577,
+      "description": "6-WG resident KV with PV outstanding until next QK wait",
+      "rows": [
+        {
+          "length": 384,
+          "ending": false,
+          "baseline_ms": 0.45390559832255045,
+          "candidate_ms": 0.3699952125549316,
+          "speedup": 1.228255797695521,
+          "reduction_percent": 18.583734603474234,
+          "ci95": [
+            1.227319745448434,
+            1.2286585673145682
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 384,
+          "ending": true,
+          "baseline_ms": 0.4657002766927083,
+          "candidate_ms": 0.37419306437174477,
+          "speedup": 1.2476026972634426,
+          "reduction_percent": 19.846277809958845,
+          "ci95": [
+            1.2465685974267524,
+            1.2492559091406692
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": false,
+          "baseline_ms": 1.7217530568440758,
+          "candidate_ms": 1.8979893366495766,
+          "speedup": 0.9094778021331036,
+          "reduction_percent": -9.953205856655778,
+          "ci95": [
+            0.9052969103660717,
+            0.9182359061189227
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": true,
+          "baseline_ms": 1.6990490595499672,
+          "candidate_ms": 1.9008608500162758,
+          "speedup": 0.8951440265849405,
+          "reduction_percent": -11.713866182528744,
+          "ci95": [
+            0.8883215484652587,
+            0.902307215552703
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": false,
+          "baseline_ms": 3.4898654937744142,
+          "candidate_ms": 4.074767939249675,
+          "speedup": 0.8554381339913995,
+          "reduction_percent": -16.899160823482063,
+          "ci95": [
+            0.8525782560477408,
+            0.8594657351003464
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": true,
+          "baseline_ms": 3.4533551534016924,
+          "candidate_ms": 4.056876246134441,
+          "speedup": 0.8435256838670596,
+          "reduction_percent": -18.550035775508267,
+          "ci95": [
+            0.8411007357501932,
+            0.852118170464247
+          ],
+          "release_form": "copy_plus_fused_residual"
+        }
+      ],
+      "status": "Not selected; numerical pilot passed.",
+      "build": {
+        "module": "triattn_infer_async6",
+        "binary": "build/triattn_infer_async6.so",
+        "smem": 230400,
+        "sha256": {
+          "fused.cu": "ffa5b3ed4141e9403f7e07f281dc7e58ebdb052b29e39f8eedd91556b60ddb66",
+          "build/triattn_infer_async6.so": "0efa5db02c7b262429fb52f0c47ee6fbe6ea40c2d1d7803bd1f8613e6cc6157a"
+        }
+      }
+    },
+    {
+      "artifact": "async4",
+      "job": 18577,
+      "description": "4-WG resident KV with PV outstanding until next QK wait",
+      "rows": [
+        {
+          "length": 384,
+          "ending": false,
+          "baseline_ms": 0.4545167922973633,
+          "candidate_ms": 0.40527520179748533,
+          "speedup": 1.1216197281590214,
+          "reduction_percent": 10.84322298419651,
+          "ci95": [
+            1.1209261352045587,
+            1.122002860660086
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 384,
+          "ending": true,
+          "baseline_ms": 0.4672117233276367,
+          "candidate_ms": 0.4104549249013265,
+          "speedup": 1.1401315912750947,
+          "reduction_percent": 12.290826107043928,
+          "ci95": [
+            1.1391688723637163,
+            1.141399547784968
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": false,
+          "baseline_ms": 1.7252592086791991,
+          "candidate_ms": 1.9206106185913085,
+          "speedup": 0.9019999802597479,
+          "reduction_percent": -10.864747437359279,
+          "ci95": [
+            0.8968784324452449,
+            0.9070510003382285
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": true,
+          "baseline_ms": 1.7026613235473633,
+          "candidate_ms": 1.9217487970987956,
+          "speedup": 0.8876941055003682,
+          "reduction_percent": -12.651418298686146,
+          "ci95": [
+            0.8816272744124598,
+            0.89204782662834
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": false,
+          "baseline_ms": 3.4848276774088545,
+          "candidate_ms": 3.8935189565022785,
+          "speedup": 0.8924778944974295,
+          "reduction_percent": -12.047593129812828,
+          "ci95": [
+            0.8891446119008516,
+            0.9020134493835339
+          ],
+          "release_form": "update_plus_add"
+        },
+        {
+          "length": 1024,
+          "ending": true,
+          "baseline_ms": 3.4415301005045578,
+          "candidate_ms": 3.936517333984375,
+          "speedup": 0.8666152058143219,
+          "reduction_percent": -15.391467088365008,
+          "ci95": [
+            0.8637031744157632,
+            0.8709431217538193
+          ],
+          "release_form": "copy_plus_fused_residual"
+        }
+      ],
+      "status": "Not selected; numerical pilot passed.",
+      "build": {
+        "module": "triattn_infer_async4",
+        "binary": "build/triattn_infer_async4.so",
+        "smem": 230400,
+        "sha256": {
+          "fused.cu": "366510b39d539af4197a888b1a5300da88a2a91199ccc2505cebb5f0760d3d75",
+          "build/triattn_infer_async4.so": "ec499894266d5a97ab4937cd550b1c67aab6cf2bff1828072ca5697ae018b22a"
+        }
+      }
+    },
+    {
+      "artifact": "cluster2",
+      "job": 18587,
+      "description": "Two resident-QKV CTAs share bias through TMA multicast",
+      "rows": [],
+      "status": "Rejected: nonfinite output at L768; cross-CTA scratch lifetimes were not synchronized.",
+      "build": {
+        "module": "triattn_infer_cluster2",
+        "binary": "build/triattn_infer_cluster2.so",
+        "smem": 230400,
+        "sha256": {
+          "fused.cu": "dc3647b0e0038c57c2ce22727b56c5c4eb192253c5fdbf34f6fc000319ba4042",
+          "build/triattn_infer_cluster2.so": "731159df36c65df66b6b0b595aa15719ccd1ed292939fcd52d63963ab160513a"
+        }
+      }
+    },
+    {
+      "artifact": "cluster2s",
+      "job": 18597,
+      "description": "TMA multicast with cluster-wide projection/bias scratch ownership barriers",
+      "rows": [
+        {
+          "length": 384,
+          "ending": false,
+          "baseline_ms": 0.4518799940745035,
+          "candidate_ms": 0.3968325297037761,
+          "speedup": 1.1383178847971525,
+          "reduction_percent": 12.151077185420888,
+          "ci95": [
+            1.1374112847689677,
+            1.1391349695110076
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 384,
+          "ending": true,
+          "baseline_ms": 0.46213013331095376,
+          "candidate_ms": 0.4027002652486166,
+          "speedup": 1.1576827066773119,
+          "reduction_percent": 13.620546093314301,
+          "ci95": [
+            1.1568541602859053,
+            1.1585685266767303
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": false,
+          "baseline_ms": 1.7100411097208659,
+          "candidate_ms": 1.9357914606730144,
+          "speedup": 0.8858641357172721,
+          "reduction_percent": -12.884127450346972,
+          "ci95": [
+            0.8814075372600094,
+            0.8904461174621849
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 768,
+          "ending": true,
+          "baseline_ms": 1.6853546778361004,
+          "candidate_ms": 1.9363178888956707,
+          "speedup": 0.8706155412933483,
+          "reduction_percent": -14.861262241476169,
+          "ci95": [
+            0.8685256461889335,
+            0.8743219579305418
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": false,
+          "baseline_ms": 3.4632016499837235,
+          "candidate_ms": 4.0793098449707035,
+          "speedup": 0.845130624386949,
+          "reduction_percent": -18.3249040023123,
+          "ci95": [
+            0.8393765051398443,
+            0.8531979989250423
+          ],
+          "release_form": "copy_plus_fused_residual"
+        },
+        {
+          "length": 1024,
+          "ending": true,
+          "baseline_ms": 3.4163876851399735,
+          "candidate_ms": 4.09660898844401,
+          "speedup": 0.8309908358595779,
+          "reduction_percent": -20.338270513609082,
+          "ci95": [
+            0.8242900755105427,
+            0.8400206733564795
+          ],
+          "release_form": "copy_plus_fused_residual"
+        }
+      ],
+      "status": "Not selected; numerical pilot passed.",
+      "build": {
+        "module": "triattn_infer_cluster2s",
+        "binary": "build/triattn_infer_cluster2s.so",
+        "smem": 230400,
+        "sha256": {
+          "fused.cu": "0c3b344ec63659a7d5444752503596638b1ab9d8cc0c6c0f8c124ab9c9365095",
+          "build/triattn_infer_cluster2s.so": "971a5614220b5a0fef761075d09349778fb4dfd1a67476188712df3217bd457f"
+        }
+      }
+    }
+  ],
+  "evidence_sha256": {
+    "anthropic-splitq4-384-18549.json": "e1fef1b57935e616355ca121a8c320883be5a3773ad81f275ffd0b24bdf440d7",
+    "anthropic-splitq4-768-18549.json": "90069ec2e3337205d91f2320f0aab595fb40eadbb6ce0f8608497f53bb751a81",
+    "anthropic-splitq4-1024-18549.json": "9d31c6354b267eddb4bb56dca429599ee51de478b879b093e36f1f5e11904268",
+    "splitq4/build-ready.json": "57943b3dff15a1043486ad87e85facfc309f02fc004b64aa68bca8b18383d229",
+    "anthropic-splitq2-384-18549.json": "5620ae46f04b29cbe6a8d9c86ff5df1582e128618faaece696d3299e13fdd7af",
+    "anthropic-splitq2-768-18549.json": "cc090df268d22b28f9dbf5ab1148afa654c1de1a61af9e83a476bd6aadcdbdce",
+    "anthropic-splitq2-1024-18549.json": "4edf8e2bb390a1e360b5b37bdd596d60043032e4a4a6728698de833d4c02a62b",
+    "splitq2/build-ready.json": "6e461a814bdd6a2168a50645df1ba2617cf9be5f39f28d1b7f626856accf1ac6",
+    "hot4/build-ready.json": "28feefff1edc8456c8aa5f50df7da94c8fe776d93ea93a209bddc2f43358db87",
+    "anthropic-hot4r-384-18564.json": "f818ff07fc90f66b5d71cf76d6b5dd298c899401c251f99eaf29535495e54a0c",
+    "anthropic-hot4r-768-18564.json": "e3b0aee383bc09b67192d2ebdc79b18832a9150cb2d34f5338df2219c97e0657",
+    "anthropic-hot4r-1024-18564.json": "6ca10c7fd720481d8c8f50595e1bdaeac7442329b0109f6e768c7f11a5f56a75",
+    "hot4r/build-ready.json": "0b49e2cd237f842474076d1f900ac14b63fdd341627750d39a89648fa6aeffdc",
+    "anthropic-joint4-384-18564.json": "0ed8c4b60a1e539d01c6b4e02050d423a553fa7652b546eff3e78dc67e94273b",
+    "anthropic-joint4-768-18564.json": "032312606161b243634ca4748e19047cb1bde531b187a5492099ff5ead34bfd7",
+    "anthropic-joint4-1024-18564.json": "35d9e9c6c105b0b3dae532da87880f35c438292f8b5d31bf334c6307173e6d04",
+    "joint4/build-ready.json": "5409c326b010d4330698516d6e1d2c04809a39411f801643e98024f0d1f8596c",
+    "anthropic-hot6r-384-18573.json": "5dc6ae865ca03433238b6f0af468fa60ed99952568204891e37811c7246e9163",
+    "anthropic-hot6r-768-18573.json": "e1ea37a7bac0e4ec54d3b3807dea6d8cca323cb3ae416c3e70835d3fc65050b6",
+    "anthropic-hot6r-1024-18573.json": "758c477e946e3762a3a8ba4ea9f7d1c01e9a505ae14079235c0c68e4121f751e",
+    "hot6r/build-ready.json": "98c8717f900c9a04c2ab9875d1de83feddb6bb1226a46422d37a1bd43d183f41",
+    "hot6p/build-ready.json": "ccb021265d5b0ef411abd24f58ec275087937d42cf1cc5087b40755703888bdc",
+    "anthropic-hot6t-384-18575.json": "2e6a9a027436e6baab91416670567896ad900c8d8bc074e09f280c4e94adeb3e",
+    "anthropic-hot6t-768-18575.json": "3448a1edb4f4ffa3be17cdf8192558e208d1a38a618d585961f1b73449f99b1a",
+    "anthropic-hot6t-1024-18575.json": "aa6b7a59bcd616e3ab3178ff131689146615a45f4aac0fdfac0d7a3a83957ca4",
+    "hot6t/build-ready.json": "46161041972aef7340a3f1f8c1cd2bbb7e6f3243ce0d759596585332fa96e281",
+    "anthropic-async6-384-18577.json": "e2bf42bb5a5a8f806c154c60890544cc258eafdd3f8025efc84564b4b88aff6c",
+    "anthropic-async6-768-18577.json": "1416da033415e5b740c82a291a180f1d5c5a5a7403565b7d60c5dcbee24d21ff",
+    "anthropic-async6-1024-18577.json": "6ac90f4dc308452f23fccd960e026d48b737fdc368fd7a0bae0dad0714e82381",
+    "async6/build-ready.json": "a580895786d29af80fcf41e92e9801805a8fe1d871c310472326134f528a10c6",
+    "anthropic-async4-384-18577.json": "412cb5224e1f27cf8ea5efa27ce7eb7f23003a740c0d460beadb61f5ba0e5a59",
+    "anthropic-async4-768-18577.json": "29ba82511390f65716805fdac3f45e3c83e1e47643d47a4cdd137df298a1dadf",
+    "anthropic-async4-1024-18577.json": "6ecf7c212993e0903eff82334e03bd678afa6fe75af910a8a664ad13c053c09c",
+    "async4/build-ready.json": "6ed39a7e990bdb380787a0063260c3ac4eb25c734beb109ae6500fed20c8a866",
+    "cluster2/build-ready.json": "71781ea5da3956d61ed8eefe0cc0342bd80ccc7d9b959b0f9bce9f7667172a36",
+    "anthropic-cluster2s-384-18597.json": "1522d16fe75d3abb57e38545cb998ed06514e60198e0aad19b7f5dbbb4acc853",
+    "anthropic-cluster2s-768-18597.json": "809c073dc484615efd8842497816bc24645e55ec9185eeee48c4b72302247cd4",
+    "anthropic-cluster2s-1024-18597.json": "8024163f3f9c9ea3ebf85a2806d9be1024049fe345a9a27945a2f630b4168175",
+    "cluster2s/build-ready.json": "8fcbd31b6484261b4b597b110f36ff996a21bb3d8f1113ab8d92bac07839aa02",
+    "check-hot6t-64-18575.json": "29b7180f490587a6fd77b50dc344c8988576d9dd4183c98f94a42fc91c4bd3de",
+    "audit-hot6t-64-18586.json": "d0d45a77651433f0f0b8f36bbe061da8332d4deb026021385959e37038c47c28",
+    "check-hot6t-128-18575.json": "3ce43bca92d1c380f3cc47f1019f006f29978a00fba65b40f5b761c87aa1fb3b",
+    "audit-hot6t-128-18586.json": "17c4f098fc43fffc2b4e770301446f59d38f6693c22c10d46dedf410ea67bcc4",
+    "check-hot6t-384-18575.json": "53a0c4f5a805827c7589030dc31c1aab06b304f459e47d8072d6ef68456b8635",
+    "audit-hot6t-384-18586.json": "1b14dab016b201407c63fc30603c24a117df8080ae1610b5c110d4a2a8d1c97f",
+    "check-hot6t-768-18575.json": "34118749b20efb871482fa599077d3fabb0896d2d6ccdf1d701bcf30e78e57fc",
+    "audit-hot6t-768-18586.json": "ffe240143787ad2e57a7f509100c8967a5f0d5fa13890f4ad74d43b6f99a502e",
+    "check-hot6t-1024-18575.json": "c4fe3a4a11f96471b59b026e014d9ed973808d21365f4a1565e579486fbf884e",
+    "audit-hot6t-1024-18586.json": "bcb726b93e7ba26d7fd3f52fb7e30d1403abe91da2fd7432495227c4c7c6cebb",
+    "memcheck-hot6t-128-18586.json": "97df94bff32e6d391bcb01b7220fedd51c649bda69696118253d2fd3606a757d",
+    "racecheck-hot6t-128-18586.json": "97df94bff32e6d391bcb01b7220fedd51c649bda69696118253d2fd3606a757d",
+    "synccheck-hot6t-128-18586.json": "97df94bff32e6d391bcb01b7220fedd51c649bda69696118253d2fd3606a757d",
+    "memcheck-hot6t-384-18586.json": "ebb6d86f32456bc334246924c244cb3e1272a00f1a55424ac20829ef11ce4a33",
+    "racecheck-hot6t-384-18586.json": "ebb6d86f32456bc334246924c244cb3e1272a00f1a55424ac20829ef11ce4a33",
+    "synccheck-hot6t-384-18586.json": "ebb6d86f32456bc334246924c244cb3e1272a00f1a55424ac20829ef11ce4a33",
+    "memcheck-hot6t-768-18586.json": "bf05cc3222e80a5c13061c25e9e6b2f5ba6796a80e23eb06344244ebd419927c",
+    "racecheck-hot6t-768-18586.json": "bf05cc3222e80a5c13061c25e9e6b2f5ba6796a80e23eb06344244ebd419927c",
+    "synccheck-hot6t-768-18586.json": "bf05cc3222e80a5c13061c25e9e6b2f5ba6796a80e23eb06344244ebd419927c",
+    "memcheck-hot6t-1024-18586.json": "4a09ef900ab1bc1c1ba834e7ef002b945dbead68f18a00160c69e115cc0759ba",
+    "racecheck-hot6t-1024-mixed-18598.json": "2641cbb88d2feeb9e27f52ee400bec77e535a600e0995b882174c0612226abb4",
+    "racecheck-hot6t-1024-all_masked-18598.json": "7453cbda618fa3a4fa93abe04a4830da7090656cc274816c1440733568277b4e",
+    "racecheck-hot6t-1024-large_logits-18598.json": "477d21f9dbcc7b8ba02598d22f9dbc2340aef46d5edf3cec8f4059bfc08613f9",
+    "synccheck-hot6t-1024-18598.json": "4a09ef900ab1bc1c1ba834e7ef002b945dbead68f18a00160c69e115cc0759ba",
+    "qualified-hot6t-384-18598.json": "02c75dfe44a540449ce821f8d9fbec8f6d181ec5be60c89db266e037ff137db6",
+    "anthropic-hot6t-384-18598.json": "2f27cd88b13626549966df75b7e35462d34533adb6eb1420d683babeadb0a18a",
+    "qualified-hot6t-768-18598.json": "4c9bc519bdbd6a3ab38ec7efb02b3bcd065f1d3ad4077378925db13ade41ca07",
+    "anthropic-hot6t-768-18598.json": "b8d096b2db168688fd4d8667fa8578c6fc778bbfe5512496d1baaf14c463aedf",
+    "qualified-hot6t-1024-18598.json": "ff05368a143ec8c3e2709c9cca062997ad13e87991c91d7dd79505fcde36acf5",
+    "anthropic-hot6t-1024-18598.json": "5c8c8021f8b603db77e6af11f40005b0afb4a3b3dd3ef2b7388ba220c02cd206",
+    "algorithm-ncu.json": "13ac50b55dc600c2af55e0dff399e16fbd0fabfeaeb83abdf84cbf4082d10c11"
+  },
+  "ncu": {
+    "records": [
+      {
+        "artifact": "resident6",
+        "job": "18580",
+        "length": 768,
+        "scope": "native QKV+attention+gate core only",
+        "metrics": {
+          "dram__bytes_read.sum": {
+            "value": 177.093376,
+            "unit": "Mbyte"
+          },
+          "dram__bytes_write.sum": {
+            "value": 215.709952,
+            "unit": "Mbyte"
+          },
+          "gpu__time_duration.sum": {
+            "value": 1.380928,
+            "unit": "ms"
+          },
+          "lts__t_sectors_op_read.sum": {
+            "value": 151708795.0,
+            "unit": "sector"
+          },
+          "lts__t_sectors_op_write.sum": {
+            "value": 15895510.0,
+            "unit": "sector"
+          },
+          "lts__throughput.avg.pct_of_peak_sustained_elapsed": {
+            "value": 38.981969,
+            "unit": "%"
+          },
+          "sm__throughput.avg.pct_of_peak_sustained_elapsed": {
+            "value": 57.402809,
+            "unit": "%"
+          },
+          "sm__warps_active.avg.pct_of_peak_sustained_active": {
+            "value": 37.487298,
+            "unit": "%"
+          },
+          "smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio": {
+            "value": 1.241266,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_branch_resolving_per_issue_active.ratio": {
+            "value": 0.203687,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.ratio": {
+            "value": 0.413571,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_drain_per_issue_active.ratio": {
+            "value": 0.000794,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_gmma_per_issue_active.ratio": {
+            "value": 0.514888,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_imc_miss_per_issue_active.ratio": {
+            "value": 0.003047,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_lg_throttle_per_issue_active.ratio": {
+            "value": 0.04963,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio": {
+            "value": 1.110882,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_math_pipe_throttle_per_issue_active.ratio": {
+            "value": 0.431363,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_membar_per_issue_active.ratio": {
+            "value": 0.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio": {
+            "value": 0.873817,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_misc_per_issue_active.ratio": {
+            "value": 0.00528,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_no_instruction_per_issue_active.ratio": {
+            "value": 0.035241,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_not_selected_per_issue_active.ratio": {
+            "value": 1.626238,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_selected_per_issue_active.ratio": {
+            "value": 1.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio": {
+            "value": 0.995102,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_sleeping_per_issue_active.ratio": {
+            "value": 0.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_tex_throttle_per_issue_active.ratio": {
+            "value": 0.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_wait_per_issue_active.ratio": {
+            "value": 1.605424,
+            "unit": "inst"
+          }
+        },
+        "dram_total_bytes": 392803328.0,
+        "l2_read_write_bytes": 5363337760.0
+      },
+      {
+        "artifact": "hot4r",
+        "job": "18580",
+        "length": 768,
+        "scope": "native QKV+attention+gate core only",
+        "metrics": {
+          "dram__bytes_read.sum": {
+            "value": 157.554176,
+            "unit": "Mbyte"
+          },
+          "dram__bytes_write.sum": {
+            "value": 141.037056,
+            "unit": "Mbyte"
+          },
+          "gpu__time_duration.sum": {
+            "value": 1.675104,
+            "unit": "ms"
+          },
+          "lts__t_sectors_op_read.sum": {
+            "value": 153335729.0,
+            "unit": "sector"
+          },
+          "lts__t_sectors_op_write.sum": {
+            "value": 7079603.0,
+            "unit": "sector"
+          },
+          "lts__throughput.avg.pct_of_peak_sustained_elapsed": {
+            "value": 32.623711,
+            "unit": "%"
+          },
+          "sm__throughput.avg.pct_of_peak_sustained_elapsed": {
+            "value": 60.799267,
+            "unit": "%"
+          },
+          "sm__warps_active.avg.pct_of_peak_sustained_active": {
+            "value": 24.995511,
+            "unit": "%"
+          },
+          "smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio": {
+            "value": 0.829388,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_branch_resolving_per_issue_active.ratio": {
+            "value": 0.217822,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.ratio": {
+            "value": 0.199656,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_drain_per_issue_active.ratio": {
+            "value": 0.000534,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_gmma_per_issue_active.ratio": {
+            "value": 0.570938,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_imc_miss_per_issue_active.ratio": {
+            "value": 0.001968,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_lg_throttle_per_issue_active.ratio": {
+            "value": 0.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio": {
+            "value": 0.927823,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_math_pipe_throttle_per_issue_active.ratio": {
+            "value": 0.184062,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_membar_per_issue_active.ratio": {
+            "value": 0.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio": {
+            "value": 1.726867,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_misc_per_issue_active.ratio": {
+            "value": 0.00533,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_no_instruction_per_issue_active.ratio": {
+            "value": 0.040199,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_not_selected_per_issue_active.ratio": {
+            "value": 0.9504,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_selected_per_issue_active.ratio": {
+            "value": 1.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio": {
+            "value": 0.3304,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_sleeping_per_issue_active.ratio": {
+            "value": 0.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_tex_throttle_per_issue_active.ratio": {
+            "value": 0.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_wait_per_issue_active.ratio": {
+            "value": 1.382466,
+            "unit": "inst"
+          }
+        },
+        "dram_total_bytes": 298591232.0,
+        "l2_read_write_bytes": 5133290624.0
+      },
+      {
+        "artifact": "hot6t",
+        "job": "18592",
+        "length": 768,
+        "scope": "native QKV+attention+gate core only",
+        "metrics": {
+          "dram__bytes_read.sum": {
+            "value": 178.24128,
+            "unit": "Mbyte"
+          },
+          "dram__bytes_write.sum": {
+            "value": 235.423232,
+            "unit": "Mbyte"
+          },
+          "gpu__time_duration.sum": {
+            "value": 1.238016,
+            "unit": "ms"
+          },
+          "lts__t_sectors_op_read.sum": {
+            "value": 156488966.0,
+            "unit": "sector"
+          },
+          "lts__t_sectors_op_write.sum": {
+            "value": 16328151.0,
+            "unit": "sector"
+          },
+          "lts__throughput.avg.pct_of_peak_sustained_elapsed": {
+            "value": 44.944404,
+            "unit": "%"
+          },
+          "sm__throughput.avg.pct_of_peak_sustained_elapsed": {
+            "value": 51.098231,
+            "unit": "%"
+          },
+          "sm__warps_active.avg.pct_of_peak_sustained_active": {
+            "value": 37.48612,
+            "unit": "%"
+          },
+          "smsp__average_warps_issue_stalled_barrier_per_issue_active.ratio": {
+            "value": 2.366356,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_branch_resolving_per_issue_active.ratio": {
+            "value": 0.254344,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_dispatch_stall_per_issue_active.ratio": {
+            "value": 0.399042,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_drain_per_issue_active.ratio": {
+            "value": 0.000992,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_gmma_per_issue_active.ratio": {
+            "value": 0.930611,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_imc_miss_per_issue_active.ratio": {
+            "value": 0.00361,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_lg_throttle_per_issue_active.ratio": {
+            "value": 0.045155,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_long_scoreboard_per_issue_active.ratio": {
+            "value": 1.579723,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_math_pipe_throttle_per_issue_active.ratio": {
+            "value": 0.324115,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_membar_per_issue_active.ratio": {
+            "value": 0.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_mio_throttle_per_issue_active.ratio": {
+            "value": 0.883793,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_misc_per_issue_active.ratio": {
+            "value": 0.006506,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_no_instruction_per_issue_active.ratio": {
+            "value": 0.049099,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_not_selected_per_issue_active.ratio": {
+            "value": 1.510376,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_selected_per_issue_active.ratio": {
+            "value": 1.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_short_scoreboard_per_issue_active.ratio": {
+            "value": 0.68827,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_sleeping_per_issue_active.ratio": {
+            "value": 0.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_tex_throttle_per_issue_active.ratio": {
+            "value": 0.0,
+            "unit": "inst"
+          },
+          "smsp__average_warps_issue_stalled_wait_per_issue_active.ratio": {
+            "value": 1.353567,
+            "unit": "inst"
+          }
+        },
+        "dram_total_bytes": 413664512.0,
+        "l2_read_write_bytes": 5530147744.0
+      }
+    ],
+    "method": "5 warmups; cache-control none; clock-control none; 17 replay passes; use paired graphs for performance selection"
+  },
+  "all_masked_matches_anthropic": false
+}

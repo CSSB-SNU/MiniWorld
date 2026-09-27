@@ -1,0 +1,378 @@
+{
+  "ptx_sha256": "3b750b23df6b9c7e9e9bcf65f51dc7fbf18e81aa20389acd8eb2cd610b6880d9",
+  "scope": "Offline compiler comparison, no runtime result",
+  "variants": [
+    {
+      "name": "ru5",
+      "options": [
+        "--register-usage-level=5"
+      ],
+      "machine_words": 5488,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    },
+    {
+      "name": "ru0",
+      "options": [
+        "--register-usage-level=0"
+      ],
+      "machine_words": 5552,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    },
+    {
+      "name": "ru1",
+      "options": [
+        "--register-usage-level=1"
+      ],
+      "machine_words": 5552,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    },
+    {
+      "name": "ru2",
+      "options": [
+        "--register-usage-level=2"
+      ],
+      "machine_words": 5552,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    },
+    {
+      "name": "ru3",
+      "options": [
+        "--register-usage-level=3"
+      ],
+      "machine_words": 5552,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    },
+    {
+      "name": "ru4",
+      "options": [
+        "--register-usage-level=4"
+      ],
+      "machine_words": 5488,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    },
+    {
+      "name": "ru6",
+      "options": [
+        "--register-usage-level=6"
+      ],
+      "machine_words": 5488,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    },
+    {
+      "name": "ru7",
+      "options": [
+        "--register-usage-level=7"
+      ],
+      "machine_words": 5488,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    },
+    {
+      "name": "ru8",
+      "options": [
+        "--register-usage-level=8"
+      ],
+      "machine_words": 5488,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    },
+    {
+      "name": "ru9",
+      "options": [
+        "--register-usage-level=9"
+      ],
+      "machine_words": 5488,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    },
+    {
+      "name": "ru10",
+      "options": [
+        "--register-usage-level=10"
+      ],
+      "machine_words": 5488,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    },
+    {
+      "name": "noexp",
+      "options": [
+        "--allow-expensive-optimizations=false"
+      ],
+      "machine_words": 5488,
+      "same_as_installed": false,
+      "resources": [
+        0,
+        0,
+        0,
+        128
+      ],
+      "warnings": [],
+      "counts": {
+        "HGMMA": 78,
+        "WARPGROUP.ARRIVE": 39,
+        "WARPGROUP.DEPBAR": 22,
+        "MUFU.EX2": 288,
+        "F2FP": 160,
+        "LOP3.LUT": 38
+      },
+      "register_reconfiguration": {
+        "dealloc_values": [
+          32
+        ],
+        "alloc_values": [
+          160
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+========= COMPUTE-SANITIZER
+....                                                                     [100%]
+=============================== warnings summary ===============================
+tests/numerics/test_norm_linear_cuda_gpu.py::test_views[strided]
+  /home/psk6950/MiniWorld/.engine-release-2.0.0/src/miniworld_engine/kernels/norm_cuda/linear.py:68: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at /pytorch/aten/src/ATen/cuda/CublasHandlePool.cpp:330.)
+    dxn = dy @ w
+
+tests/numerics/test_norm_linear_cuda_gpu.py::test_views[strided]
+  /home/psk6950/MiniWorld/.engine-release-2.0.0/tests/numerics/test_norm_linear_cuda_gpu.py:49: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+    assert float(relative) < tolerance
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+4 passed, 29 deselected, 2 warnings in 20.66s
+========= ERROR SUMMARY: 0 errors

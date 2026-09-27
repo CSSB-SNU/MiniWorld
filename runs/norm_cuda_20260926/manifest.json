@@ -1,0 +1,28 @@
+{
+  "cuda_source_sha256": "005f768206b65474cb99ff6933d5420d67f97117569141e617a19a4304723534",
+  "python_sha256": "89c2173a7a5c2ba334ba77b1387c2c9cd232e6d335823702448c494575d30def",
+  "jobs": {
+    "matrix": [
+      19072
+    ],
+    "sweep": [
+      19077
+    ],
+    "qualification": [
+      19078
+    ],
+    "linear": [
+      19079
+    ],
+    "fair": [
+      19090
+    ],
+    "selected_gradients": [
+      19091
+    ],
+    "ncu": [
+      19097
+    ]
+  },
+  "production_dispatch_changed": false
+}

@@ -1,0 +1,21 @@
+========= COMPUTE-SANITIZER
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:1480: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.10/site-packages/torch/jit/_script.py:362: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+RESOURCE 0 0 ['    16 bytes stack frame, 16 bytes spill stores, 32 bytes spill loads', 'ptxas info    : Used 168 registers, used 1 barriers, 16 bytes cumulative stack size']
+CHECK 0_tma {'output_bit_exact': True}
+RESOURCE 1 0 ['    56 bytes stack frame, 52 bytes spill stores, 68 bytes spill loads', 'ptxas info    : Used 168 registers, used 1 barriers, 56 bytes cumulative stack size']
+CHECK 1_tma {'output_bit_exact': True, 'input_ln': {'relative_l2': 8.889029028297418e-06, 'finite': True}}
+RESOURCE 1 1 ['    32 bytes stack frame, 32 bytes spill stores, 44 bytes spill loads', 'ptxas info    : Used 168 registers, used 1 barriers, 32 bytes cumulative stack size']
+CHECK 1_stg {'output_bit_exact': True, 'input_ln': {'relative_l2': 8.889029028297418e-06, 'finite': True}}
+RESOURCE 2 0 ['    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 168 registers, used 1 barriers']
+CHECK 2_tma {'output_bit_exact': True, 'output_ln': {'relative_l2': 1.0291855045356267e-05, 'finite': True}}
+RESOURCE 2 1 ['    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 168 registers, used 1 barriers']
+CHECK 2_stg {'output_bit_exact': True, 'output_ln': {'relative_l2': 1.0291855045356267e-05, 'finite': True}}
+RESOURCE 3 0 ['    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 168 registers, used 1 barriers']
+CHECK 3_tma {'output_bit_exact': True, 'input_ln': {'relative_l2': 8.889029028297418e-06, 'finite': True}, 'output_ln': {'relative_l2': 1.0291855045356267e-05, 'finite': True}}
+RESOURCE 3 1 ['    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads', 'ptxas info    : Used 168 registers, used 1 barriers']
+CHECK 3_stg {'output_bit_exact': True, 'input_ln': {'relative_l2': 8.889029028297418e-06, 'finite': True}, 'output_ln': {'relative_l2': 1.0291855045356267e-05, 'finite': True}}
+CHECK_ONLY_DONE
+========= ERROR SUMMARY: 0 errors

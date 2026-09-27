@@ -1,0 +1,202 @@
+[
+  {
+    "M": 8192,
+    "D": 64,
+    "rms": false,
+    "dtype": "torch.bfloat16",
+    "config": "cuda_t128_r4",
+    "relative_l2": [
+      2.319335544598289e-05,
+      3.160996584483655e-07,
+      6.734322255397274e-08
+    ],
+    "ok": true
+  },
+  {
+    "M": 8192,
+    "D": 64,
+    "rms": true,
+    "dtype": "torch.bfloat16",
+    "config": "cuda_t128_r4",
+    "relative_l2": [
+      4.1393545870960224e-06,
+      1.7868319446279202e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 147456,
+    "D": 128,
+    "rms": false,
+    "dtype": "torch.bfloat16",
+    "config": "cuda_t128_r64",
+    "relative_l2": [
+      1.690024510025978e-05,
+      2.0966369618236058e-07,
+      1.2104803204238124e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 147456,
+    "D": 128,
+    "rms": true,
+    "dtype": "torch.bfloat16",
+    "config": "cuda_t128_r64",
+    "relative_l2": [
+      1.530392182758078e-05,
+      4.411287477523729e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 147456,
+    "D": 384,
+    "rms": false,
+    "dtype": "torch.bfloat16",
+    "config": "cuda_t128_r64",
+    "relative_l2": [
+      1.9553657693904825e-05,
+      2.6822681320481934e-07,
+      1.1439059477424962e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 147456,
+    "D": 384,
+    "rms": true,
+    "dtype": "torch.bfloat16",
+    "config": "cuda_t128_r64",
+    "relative_l2": [
+      1.789467023627367e-05,
+      3.5520082519724383e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 8192,
+    "D": 1024,
+    "rms": false,
+    "dtype": "torch.bfloat16",
+    "config": "cuda_t128_r16",
+    "relative_l2": [
+      1.8104847185895778e-05,
+      3.208765804174618e-07,
+      6.425762677508828e-08
+    ],
+    "ok": true
+  },
+  {
+    "M": 8192,
+    "D": 1024,
+    "rms": true,
+    "dtype": "torch.bfloat16",
+    "config": "cuda_t256_r4",
+    "relative_l2": [
+      1.4682403161714319e-05,
+      1.6627465981855494e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 8192,
+    "D": 64,
+    "rms": false,
+    "dtype": "torch.float32",
+    "config": "cuda_t256_r4",
+    "relative_l2": [
+      8.73912640031449e-08,
+      2.9766522402496776e-07,
+      3.404387030059297e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 8192,
+    "D": 64,
+    "rms": true,
+    "dtype": "torch.float32",
+    "config": "cuda_t128_r4",
+    "relative_l2": [
+      7.971195259415254e-08,
+      1.4559954308879242e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 147456,
+    "D": 128,
+    "rms": false,
+    "dtype": "torch.float32",
+    "config": "cuda_t256_r64",
+    "relative_l2": [
+      8.535037210322116e-08,
+      2.4427947664662497e-07,
+      2.3907168156256375e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 147456,
+    "D": 128,
+    "rms": true,
+    "dtype": "torch.float32",
+    "config": "cuda_t128_r64",
+    "relative_l2": [
+      7.563293280554717e-08,
+      4.2121689602936385e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 147456,
+    "D": 384,
+    "rms": false,
+    "dtype": "torch.float32",
+    "config": "cuda_t128_r64",
+    "relative_l2": [
+      1.0532603056390144e-07,
+      2.39090780951301e-07,
+      2.469201376698038e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 147456,
+    "D": 384,
+    "rms": true,
+    "dtype": "torch.float32",
+    "config": "cuda_t128_r64",
+    "relative_l2": [
+      8.160417053204583e-08,
+      3.2589960596851597e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 8192,
+    "D": 1024,
+    "rms": false,
+    "dtype": "torch.float32",
+    "config": "cuda_t128_r16",
+    "relative_l2": [
+      8.254208694324916e-08,
+      3.0245092830227804e-07,
+      3.154075898237352e-07
+    ],
+    "ok": true
+  },
+  {
+    "M": 8192,
+    "D": 1024,
+    "rms": true,
+    "dtype": "torch.float32",
+    "config": "cuda_t128_r4",
+    "relative_l2": [
+      7.670136170645492e-08,
+      1.7718284084367042e-07
+    ],
+    "ok": true
+  }
+]

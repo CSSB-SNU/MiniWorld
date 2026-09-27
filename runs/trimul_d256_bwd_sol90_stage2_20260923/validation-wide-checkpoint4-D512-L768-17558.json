@@ -1,0 +1,288 @@
+{
+  "D": 512,
+  "L": 768,
+  "job": "17558",
+  "complete": true,
+  "stress": [
+    {
+      "case": "normal",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00033787457505241036,
+        "dWproj": 0.0,
+        "dgamma_in": 1.13827252334886e-06,
+        "dbeta_in": 8.942620297602843e-07,
+        "dgamma_out": 9.552998108119937e-07,
+        "dbeta_out": 8.736441827750241e-07
+      },
+      "passed": true,
+      "forward_error": 0.0,
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 5.183833309274632e-07,
+        "dbeta_in": 4.849522383665317e-07,
+        "dgamma_out": 3.7159708199396846e-07,
+        "dbeta_out": 3.794356189246173e-07
+      },
+      "graph_forward": 0.0
+    },
+    {
+      "case": "changed",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0003455476544331759,
+        "dWproj": 0.0,
+        "dgamma_in": 1.03669412965246e-06,
+        "dbeta_in": 8.95305163339799e-07,
+        "dgamma_out": 1.0066106597150792e-06,
+        "dbeta_out": 8.542195359950711e-07
+      },
+      "passed": true,
+      "forward_error": 0.0,
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 4.947235652252857e-07,
+        "dbeta_in": 4.5426119754665706e-07,
+        "dgamma_out": 3.8996870443952503e-07,
+        "dbeta_out": 3.58361006647101e-07
+      },
+      "graph_forward": 0.0
+    },
+    {
+      "case": "zero_gamma",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00033656074083410203,
+        "dWproj": 0.0,
+        "dgamma_in": 9.745192528498592e-07,
+        "dbeta_in": 7.860610367060872e-07,
+        "dgamma_out": 9.91738716038526e-07,
+        "dbeta_out": 8.453919235762442e-07
+      },
+      "passed": true,
+      "forward_error": 0.0,
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 4.810544851352461e-07,
+        "dbeta_in": 4.180306802936684e-07,
+        "dgamma_out": 3.642103933998442e-07,
+        "dbeta_out": 3.6578552453647717e-07
+      },
+      "graph_forward": 0.0
+    },
+    {
+      "case": "mask_zero",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00033696231548674405,
+        "dWproj": 0.0,
+        "dgamma_in": 9.191358003590722e-07,
+        "dbeta_in": 8.963974664766283e-07,
+        "dgamma_out": 0.0,
+        "dbeta_out": 9.34123875140358e-07
+      },
+      "passed": true,
+      "forward_error": 0.0,
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 5.239200504547625e-07,
+        "dbeta_in": 4.045125763241231e-07,
+        "dgamma_out": 0.0,
+        "dbeta_out": 3.6807952596973337e-07
+      },
+      "graph_forward": 0.0
+    },
+    {
+      "case": "dropout_zero",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 0.0,
+        "dbeta_in": 0.0,
+        "dgamma_out": 0.0,
+        "dbeta_out": 0.0
+      },
+      "passed": true,
+      "forward_error": 0.0,
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 0.0,
+        "dbeta_in": 0.0,
+        "dgamma_out": 0.0,
+        "dbeta_out": 0.0
+      },
+      "graph_forward": 0.0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/8278ab19ff056c7ca00e24aa15fd00a458a58ed9d249aa52c06670878c11e669.cubin",
+      "sha256": "f9ec40ec9abfc82e8353e70c7c3f13c98a77602479c34caa463bada9f1cf5e67"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/773f6c3f5126057a1173a100eab1aeddd81a0cc4979df4021b374b788eb1002b.cubin",
+      "sha256": "9f2575cc180efb5c6ebcb0555004587ca2f43175e143a0790a27ecda825c9bab"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/bf86bb9601aa22b933108f81b72d32092e3755ad46bc5c9b715832a178a47d3f.cubin",
+      "sha256": "3cf1894d117eb0902d72fa172b825a18deb577fd43cd06130a25c975f6b04688"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/87500c7277fb11578f859b28babe091b33f451096747810c2bce15e9f38e26ed.cubin",
+      "sha256": "e92f2754d9338ee23147d73ce6697b2eb65eb7d80b949f15e1ba370719cde177"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/3468bdbe64ca18e00214a88e85013d668272c719d6c8002028ae3e2720b71393.cubin",
+      "sha256": "7b6a8d18da1587b88ed3c43f4812b332928ba281b56f8d90f479801117e0d5b7"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/25791f9201e3d0bb741b3cf7942cefa4e22bb73bc59197e18052c7e03a0619e3.cubin",
+      "sha256": "aecd356b8071e2c1f8d2d1769b8042472f6580f4e6e5458bb7bec1279cfa36c0"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/0b3e3a844033904b0112e0eea3db1d674319ece57bff45cbaaf761a7b79d864c.cubin",
+      "sha256": "9be34cbb0b32ef3ff347e63ff2a1980639e7eabf5eb3bfd9be587a56663cfb66"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/0910f4aa28e6deec859d7dcdc99b3f522feffc9b2791658a7dbd7e28d7f9baf6.cubin",
+      "sha256": "748aacc0dc5778120ea4127091a3234f79095825d1cd48ff91bc98f483a84dcd"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/3e71bddd7cf7b205d0b083d52ca1385dc942f985e6ff1d121970a6b3402ea694.cubin",
+      "sha256": "5be617127751b3580a18cd8d88b0debdda923e8bbbdd4c62b5a1874e785362c0"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/dff2f14e41648c91f11b3ea249a3bcce99140f6398c5d1f6114f73270b3c1934.cubin",
+      "sha256": "32a0b92ee97fa046b4bc7c796823913a50c9359e56afab873de120038ac24fab"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/ad5f43d9415e01b24aa09754180baa0f796877c436da8f2f5bdf53113e3c1ef6.cubin",
+      "sha256": "1439e5248306bc05cd0106a472d98b9158ca1a7b04585f35c68d9c486950d663"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/59a6f4aae12d26ffec32a830d45450d1dc74f6361c2d6fec44787afef75964ae.cubin",
+      "sha256": "c48d4d8a011d0fe7b4afed8459e6f4c6f52bb1010be4340c83e0f7c3caf03c5a"
+    }
+  ],
+  "source_sha256": {
+    "wide_combined.py": "0497f47b24e7c8b1ff0854f8cf6ead0885592d882e1fc3e354ff516364601ca9",
+    "wide_b7.py": "1e0563a47c25c2440a9bf7a0861d0aece6a58224c3c5fb3d90754e177071bd7b",
+    "wide_source.cu": "cc192dfceba2411b8d487d396be9f5de7c5535e812c5110c0ce3e3b581cb9591",
+    "prefix_dx.py": "4353c41363755e939ffb6d9f0c7974fae9d4b9c1c3afbef577a934f90dd90401",
+    "prefix_transpose.cu": "2890ca448d71074586be1284f70277e0bb44a44f033c9b4dc2f8d605ef22eacc",
+    "wide_saved_norm.py": "51229acc94c46f444bf4fc513b9a356d0f92dbf8c3f588683855b87cdd12c75c",
+    "wide_hybrid_b1.py": "478f6edb28c6e71fc37cf97f6aadeefb174849c538e0542b6f9b734d016f644c",
+    "wide_checkpoint2.py": "4f6e19cdd634fd50741fd4c9ff5656d88545e0e021fd65912e233877bd7d7de7",
+    "wide_saved_products.py": "c4baa5c5d967c3266e724c614047685ecacb075d7da131505a9e8901fd398c51",
+    "wide_split_dwp.py": "8958c518e009d2fd82abaa2a115fbbab655fc5305073d4d5bf4b461927a7fa99",
+    "wide_bounded_ln.py": "d55e5612f54ba737f97137df8dee424ab2e39a882561a2457aed75d2f2641e08",
+    "lt_contract.py": "b3bb90b044609fea8a5a62ff7c9847df1b0239b78cb59d5726510142f64b6662",
+    "wide_checkpoint4.py": "68557198c5b7500aec6b818b6c97ce37d73e2b2750c5aaa849e00fde821274d1",
+    "wide_pipe_source.py": "90a9c5fd4f4aa7f3aba373377dd287eaacbeb9c7b045b71e74dded79976f7a06",
+    "wide_pipe_source.cu": "67d028bfc18f4053ad54fbd0b0e407986177c095e0771aa2b39e03c627e2fb9c",
+    "wide_offset_source.py": "9ae486cb2b6de01997810ac018deabaabb4596ddbb6dfcd20deac7407a188d5b",
+    "wide_input_reduce.py": "f39d06687a5f296c216b9f23909c948d110a61a94809cf84c152ff872c654f94",
+    "wide_checkpoint3.py": "7c699f78d89302c41666ef1c9f8274e74f992dc53826fbaa5774e498d39a0a4e",
+    "wide_dense_output.py": "68bc2c88f9d2ed02c087dba65dc7910c5503b262b9421f35d98aea7f0ddf8f0e",
+    "wide_tile_ln.py": "c898e12257c8e64e2a20cd15bbf6597e19f78ae022d5fa5a354ad541e929e120",
+    "wide_tile_ln.cu": "9342b8231a5d61998178ba69ad892c7e3074124691706fb9b49823ec7b146522",
+    "wide_tma_input.py": "e480d6d90ddba765bcfa0f3404f0ec18a601398c06dc4122d26c2c3567ff5178",
+    "wide_tma_input.cu": "cc47f8aa72ebc24bcb2f0deae967fe29c4b8fb04015cb6c122b1e2795d995cdb",
+    "ln_aggregate.cuh": "4cec78e8c6fd1b5fde97e763368b3c6de76ddc231ab10ccd45d9bde30ab3ff9b"
+  },
+  "configuration": {
+    "source": "prefetch_offset_n64",
+    "input_reduce": [
+      "tma",
+      16,
+      128,
+      4
+    ],
+    "output_ln": [
+      "tma",
+      16,
+      128,
+      2
+    ],
+    "output": [
+      "dense",
+      256,
+      16
+    ],
+    "dwp_algo": [
+      103079215170,
+      4294967331,
+      0,
+      1407374883553287,
+      518849229225985,
+      60129542158,
+      292057776128,
+      0
+    ]
+  },
+  "pytorch_forward": 0.003354589454829693,
+  "pytorch": {
+    "dx": 0.004818186163902283,
+    "dWL": 0.00602070102468133,
+    "dWLg": 0.005972106475383043,
+    "dWR": 0.005991683341562748,
+    "dWRg": 0.0059875668957829475,
+    "dWgate": 0.006508187390863895,
+    "dWproj": 0.006086377892643213,
+    "dgamma_in": 0.006722691003233194,
+    "dbeta_in": 0.0049836779944598675,
+    "dgamma_out": 0.005671520251780748,
+    "dbeta_out": 0.003425802104175091
+  }
+}

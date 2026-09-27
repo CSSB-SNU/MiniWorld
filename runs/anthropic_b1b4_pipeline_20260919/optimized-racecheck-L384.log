@@ -1,0 +1,24 @@
+========= COMPUTE-SANITIZER
+PTXAS dual_optimized 132 2 /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/build/a1759201404153b87bb5b1e5ac0055b84b604215ccc714b4097b3f0a5f1a51ca.cubin /home/psk6950/MiniWorld/runs/anthropic_b1b4_pipeline_20260919/dual_optimized.cu(73): warning #20058-D: the #pragma unroll must precede a loop
+  #pragma unroll
+          ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function 'unified_reduce' for 'sm_90a'
+ptxas info    : Function properties for unified_reduce
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 15.250 ms
+ptxas info    : Compiling entry function 'dual_b1b4' for 'sm_90a'
+ptxas info    : Function properties for dual_b1b4
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 255 registers, used 16 barriers, 1024 bytes smem
+ptxas info    : Compile time = 288.706 ms
+
+CHECK {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 0.00017940520774573088, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 5.537878223549342e-06, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 8.046101243053272e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 5.503910074367013e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 0.0002332182484678924, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK 20261305 {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 1.6828878870001063e-05, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 5.837055596202845e-06, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 1.8291839296580292e-06, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 5.532846785172296e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 0.00017299233877565712, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK 20261306 {'dg': {'relative_l2': 0.0, 'tolerance': 0.0, 'bit_exact': True}, 'dWg': {'relative_l2': 0.0002502260613255203, 'tolerance': 0.0005, 'bit_exact': None}, 'dtri': {'relative_l2': 6.058242888684617e-06, 'tolerance': 2e-05, 'bit_exact': None}, 'dgamma': {'relative_l2': 1.2398378430589219e-06, 'tolerance': 5e-06, 'bit_exact': None}, 'dbeta': {'relative_l2': 5.240709128884191e-07, 'tolerance': 5e-06, 'bit_exact': None}, 'dWp': {'relative_l2': 0.00021398723765742034, 'tolerance': 0.0005, 'bit_exact': None}}
+CHECK counters_zero=true
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

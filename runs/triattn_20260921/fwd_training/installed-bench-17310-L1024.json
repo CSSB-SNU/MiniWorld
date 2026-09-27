@@ -1,0 +1,650 @@
+{
+  "artifact": "cooperative_q2",
+  "length": 1024,
+  "mode": "bench",
+  "records": [
+    {
+      "kind": "forward",
+      "ending": false,
+      "baseline_us": 5455.7769775390625,
+      "candidate_us": 4261.576080322266,
+      "speedup": 1.2793043308936705,
+      "paired_ratios": [
+        1.2936199958527077,
+        1.270502419367872,
+        1.2917071479420021,
+        1.2864947712994272,
+        1.2670608811554418,
+        1.2412552001546646,
+        1.2539231371252766,
+        1.2865701628027664,
+        1.2336135203216703,
+        1.2902859460793716,
+        1.3015966301759256,
+        1.279812102561014,
+        1.2787965592263266,
+        1.3490441999884781,
+        1.2776892951611032,
+        1.2578784626515611
+      ],
+      "rounds_us": [
+        [
+          5349.687957763672,
+          5367.990493774414,
+          5343.6065673828125,
+          5491.012954711914,
+          5790.531158447266,
+          5464.110565185547,
+          5348.51188659668,
+          5398.209762573242,
+          5350.521469116211,
+          5870.462417602539,
+          5486.460876464844,
+          5447.443389892578,
+          5348.334503173828,
+          5743.865585327148,
+          5583.399963378906,
+          5488.067245483398
+        ],
+        [
+          4135.4400634765625,
+          4225.092697143555,
+          4136.8560791015625,
+          4268.196868896484,
+          4570.049667358398,
+          4402.084732055664,
+          4265.422439575195,
+          4195.814514160156,
+          4337.275314331055,
+          4549.737548828125,
+          4215.177536010742,
+          4256.439971923828,
+          4182.318496704102,
+          4257.729721069336,
+          4369.919967651367,
+          4362.955093383789
+        ]
+      ],
+      "errors": [
+        4.542087622712342e-05
+      ],
+      "candidate_kernels": [
+        "Memset (Unknown)",
+        "_gate_out_fwd",
+        "layer_norm_fwd_fused",
+        "nvjet_tst_128x288_64x4_1x2_h_bz_coopA_TNT",
+        "nvjet_tst_64x8_64x16_2x4_v_bz_TNT",
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1})",
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})",
+        "void at::native::vectorized_elementwise_kernel<4, at::native::bitwise_not_kernel_cuda(at::TensorIteratorBase&)::{lambda(bool)#1}, std::array<char*, 2ul> >(int, at::native::bitwise_not_kernel_cuda(at::TensorIteratorBase&)::{lambda(bool)#1}, std::array<char*, 2ul>)",
+        "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+        "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_128x2_tn_align2>(cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_128x2_tn_align2::Params)",
+        "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_tn_align2>(cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_tn_align2::Params)",
+        "void training_fwd_stream<false>(Config::Params)"
+      ]
+    },
+    {
+      "kind": "backward",
+      "ending": false,
+      "baseline_us": 10305.322647094727,
+      "candidate_us": 10336.86408996582,
+      "speedup": 0.9965460685235992,
+      "paired_ratios": [
+        0.9850260196161512,
+        1.0762787646068195,
+        1.044019268924423,
+        1.018586466715231,
+        1.0330168184392485,
+        0.98666322804159,
+        0.9936419047828565,
+        0.9805166498650151,
+        0.9760782980341824,
+        0.9748622549776798,
+        0.9937670641829639,
+        0.9813386186918738,
+        0.9993250728642343,
+        1.000961575388937,
+        1.0012376442234732,
+        1.0134120876756958
+      ],
+      "rounds_us": [
+        [
+          9962.633514404297,
+          10903.495788574219,
+          10592.906951904297,
+          10287.108612060547,
+          10711.164855957031,
+          10099.247741699219,
+          10475.726318359375,
+          10140.315246582031,
+          10306.977844238281,
+          10178.958129882812,
+          10267.521667480469,
+          10337.09945678711,
+          10276.33285522461,
+          10439.620971679688,
+          10303.667449951172,
+          10495.05615234375
+        ],
+        [
+          10114.081573486328,
+          10130.735778808594,
+          10146.275329589844,
+          10099.396514892578,
+          10368.819427490234,
+          10235.759735107422,
+          10542.758178710938,
+          10341.808319091797,
+          10559.580993652344,
+          10441.432189941406,
+          10331.919860839844,
+          10533.672332763672,
+          10283.273315429688,
+          10429.59213256836,
+          10290.930938720703,
+          10356.158447265625
+        ]
+      ],
+      "errors": [
+        0.0001229759745123971,
+        0.0002919961841087885,
+        7.579450856070581e-05,
+        0.0005476826745237141,
+        0.0005697112701386604,
+        0.00040332731612706776,
+        0.0008039837971847759,
+        0.0005621353786097313,
+        0.0005348072638266322
+      ]
+    },
+    {
+      "kind": "forward_backward",
+      "ending": false,
+      "baseline_us": 15810.70785522461,
+      "candidate_us": 14781.725311279297,
+      "speedup": 1.0716569980139867,
+      "paired_ratios": [
+        1.0722524961616917,
+        1.031336467113015,
+        1.0329661349704213,
+        1.0565418566512226,
+        1.0821005374152657,
+        1.0968516213818404,
+        1.0869007274296685,
+        1.0742210542974828,
+        1.061152071476969,
+        1.0588398216787482,
+        1.068635964071469,
+        1.077407917202078,
+        1.0751601974543354,
+        1.079261912010266,
+        1.0710614998662817,
+        1.0636758226021013
+      ],
+      "rounds_us": [
+        [
+          15404.066467285156,
+          15779.899597167969,
+          15526.942443847656,
+          15643.063354492188,
+          15968.489074707031,
+          15980.33447265625,
+          15870.498657226562,
+          15918.936157226562,
+          15712.332153320312,
+          15709.278869628906,
+          15837.841796875,
+          15818.319702148438,
+          15866.720581054688,
+          15882.316589355469,
+          15803.096008300781,
+          15781.739807128906
+        ],
+        [
+          14366.081237792969,
+          15300.437927246094,
+          15031.414794921875,
+          14805.909729003906,
+          14756.936645507812,
+          14569.276428222656,
+          14601.608276367188,
+          14819.050598144531,
+          14806.861877441406,
+          14836.312866210938,
+          14820.614624023438,
+          14681.829833984375,
+          14757.540893554688,
+          14715.90576171875,
+          14754.611206054688,
+          14836.982727050781
+        ]
+      ],
+      "errors": [
+        0.0001229759745123971,
+        0.0002919961841087885,
+        7.579450856070581e-05,
+        0.0005476826745237141,
+        0.0005697112701386604,
+        0.00040332731612706776,
+        0.0008039837971847759,
+        0.0005621353786097313,
+        0.0005348072638266322
+      ]
+    },
+    {
+      "kind": "forward",
+      "ending": true,
+      "baseline_us": 6112.447929382324,
+      "candidate_us": 4898.047256469727,
+      "speedup": 1.2463326811314204,
+      "paired_ratios": [
+        1.2682606367433014,
+        1.2356545147332476,
+        1.247399254771831,
+        1.3942376007499757,
+        1.2646403436867637,
+        1.2400073491021515,
+        1.2269260837553442,
+        1.3360986556574161,
+        1.2452661074910096,
+        1.2206158256705997,
+        1.2487328608129238,
+        1.2750413105715819,
+        1.230503036848219,
+        1.2247882959473253,
+        1.2316624697514058,
+        1.2501909996582887
+      ],
+      "rounds_us": [
+        [
+          6078.590393066406,
+          6025.436782836914,
+          5987.937545776367,
+          6832.415771484375,
+          6220.1568603515625,
+          6068.33610534668,
+          6006.572723388672,
+          6503.376007080078,
+          6193.459320068359,
+          6081.235122680664,
+          6014.668655395508,
+          6271.4080810546875,
+          6162.859344482422,
+          6160.692977905273,
+          6024.740982055664,
+          6143.660736083984
+        ],
+        [
+          4792.8558349609375,
+          4876.311874389648,
+          4800.337600708008,
+          4900.467300415039,
+          4918.518447875977,
+          4893.790435791016,
+          4895.627212524414,
+          4867.436981201172,
+          4973.603057861328,
+          4982.104110717773,
+          4816.617584228516,
+          4918.592071533203,
+          5008.406448364258,
+          5030.006408691406,
+          4891.551971435547,
+          4914.177703857422
+        ]
+      ],
+      "errors": [
+        4.5962045377038246e-05
+      ],
+      "candidate_kernels": [
+        "Memset (Unknown)",
+        "_gate_out_fwd",
+        "nvjet_tst_128x288_64x4_1x2_h_bz_coopA_TNT",
+        "nvjet_tst_64x8_64x16_2x4_v_bz_TNT",
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1}>(at::TensorIteratorBase&, at::native::(anonymous namespace)::masked_fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16, bool)#1} const&)::{lambda(int)#1})",
+        "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})",
+        "void at::native::vectorized_elementwise_kernel<4, at::native::bitwise_not_kernel_cuda(at::TensorIteratorBase&)::{lambda(bool)#1}, std::array<char*, 2ul> >(int, at::native::bitwise_not_kernel_cuda(at::TensorIteratorBase&)::{lambda(bool)#1}, std::array<char*, 2ul>)",
+        "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul>)",
+        "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_128x2_tn_align2>(cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_128x2_tn_align2::Params)",
+        "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_tn_align2>(cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_tn_align2::Params)",
+        "void training_fwd_stream<false>(Config::Params)"
+      ]
+    },
+    {
+      "kind": "backward",
+      "ending": true,
+      "baseline_us": 10716.928100585938,
+      "candidate_us": 10610.828018188477,
+      "speedup": 1.0025223450566643,
+      "paired_ratios": [
+        0.9989452376756601,
+        1.0993346285741037,
+        1.0282212155925397,
+        1.0332195538968243,
+        1.0345830723633107,
+        1.0136922193046225,
+        1.0162228009650085,
+        1.0040733809351297,
+        1.00221113927475,
+        1.0004424446420306,
+        0.9936046589379013,
+        0.9925290689290761,
+        0.9918721132442152,
+        0.9874421340572186,
+        1.0028335508385786,
+        0.9856240916611626
+      ],
+      "rounds_us": [
+        [
+          10362.310028076172,
+          11465.850830078125,
+          10750.758361816406,
+          10883.4716796875,
+          10913.68637084961,
+          10693.756866455078,
+          10929.214477539062,
+          10583.175659179688,
+          10864.895629882812,
+          10599.23324584961,
+          10770.162963867188,
+          10607.736206054688,
+          10740.099334716797,
+          10614.742279052734,
+          10657.222747802734,
+          10650.852966308594
+        ],
+        [
+          10373.251342773438,
+          10429.8095703125,
+          10455.68618774414,
+          10533.551788330078,
+          10548.873901367188,
+          10549.313354492188,
+          10754.742431640625,
+          10540.241241455078,
+          10840.924835205078,
+          10594.54574584961,
+          10839.485168457031,
+          10687.582397460938,
+          10828.108978271484,
+          10749.736022949219,
+          10627.110290527344,
+          10806.201934814453
+        ]
+      ],
+      "errors": [
+        0.00012216674419543246,
+        0.0002435088748693713,
+        7.727704554342755e-05,
+        0.000570383150917843,
+        0.0006431244122898642,
+        0.0004015605532431148,
+        0.0009600860270769289,
+        0.0005500478858849143,
+        0.000580655836374932
+      ]
+    },
+    {
+      "kind": "forward_backward",
+      "ending": true,
+      "baseline_us": 16756.432342529297,
+      "candidate_us": 15688.893127441406,
+      "speedup": 1.070536057477865,
+      "paired_ratios": [
+        1.081722350493553,
+        1.026965981468376,
+        1.035236883200051,
+        1.075528999871729,
+        1.0856234686769064,
+        1.0765495260525137,
+        1.0602312970018595,
+        1.051420641904633,
+        1.0648293155194113,
+        1.07981738998754,
+        1.0718470213385194,
+        1.0652606937489415,
+        1.061733939701021,
+        1.0708067875649134,
+        1.0702653273908167,
+        1.0756228235029415
+      ],
+      "rounds_us": [
+        [
+          16476.577758789062,
+          16662.45880126953,
+          16487.33367919922,
+          16683.657836914062,
+          16904.588317871094,
+          16879.237365722656,
+          16666.824340820312,
+          16590.646362304688,
+          16782.565307617188,
+          16799.54376220703,
+          16757.386779785156,
+          16756.344604492188,
+          16716.043090820312,
+          16756.520080566406,
+          16801.849365234375,
+          16835.955810546875
+        ],
+        [
+          15231.79931640625,
+          16224.937438964844,
+          15926.145935058594,
+          15512.04833984375,
+          15571.318054199219,
+          15679.01611328125,
+          15719.989013671875,
+          15779.266357421875,
+          15760.80322265625,
+          15557.763671875,
+          15634.121704101562,
+          15729.806518554688,
+          15744.097900390625,
+          15648.500061035156,
+          15698.770141601562,
+          15652.285766601562
+        ]
+      ],
+      "errors": [
+        0.00012216674419543246,
+        0.0002435088748693713,
+        7.727704554342755e-05,
+        0.000570383150917843,
+        0.0006431244122898642,
+        0.0004015605532431148,
+        0.0009600860270769289,
+        0.0005500478858849143,
+        0.000580655836374932
+      ]
+    }
+  ],
+  "manifests": {
+    "manifest.json": {
+      "torch": "2.10.0+cu128",
+      "python_abi": "cpython-310",
+      "arch": "sm_90a",
+      "module_name": "triattn_projection_bwd",
+      "binary": "triattn_projection_bwd.so",
+      "tile_m": 64,
+      "tile_k": 64,
+      "sha256": {
+        "__init__.py": "111d276babee0a3e3d54d154ed50bc6f6c24999fc23b861d188dd2eafde58daf",
+        "projection_dgrad.cu": "f4fe07c924a072ae5cce0efba4e2303ba220e628bb8229ade64bba4ce8ba6b6a",
+        "fa3_utils.h": "776172706a741081ba0a32058ca6d0ce94bea976a5689d0965b162eaf7f5d9cc",
+        "build_native.py": "773265a70bbf985fc2383cacb37ecf1b39ebfc27e89606b6da42f607582c067d",
+        "triattn_projection_bwd.so": "9c48f4e0057a64b4462b68969e66d95c2bf314f1c6be01ab07211c1590586419"
+      }
+    },
+    "bias_manifest.json": {
+      "module_name": "triattn_bias_rs8_async_q4",
+      "binary": "triattn_bias_rs8_async_q4.so",
+      "torch": "2.10.0+cu128",
+      "python_abi": "cpython-310",
+      "lengths": [
+        384,
+        768,
+        1024
+      ],
+      "partial_dtype": "fp32",
+      "row_group": 8,
+      "artifact": "rs8_async_q4",
+      "qualification_job": 17203,
+      "files": {
+        "bias_backward.py": "cd4e989934131ea5a0c2128f123165d9cd89f15fc284080bf42bbcab26cf4a56",
+        "bias_fusion.cu": "401b3c654c2e0b2d34bb843966c92c05ce7d9eed7d76d46ab8f25045343ac8e2",
+        "build_bias.py": "4f740ab6c0ac5e246ce2b27902a9d2e8110d384470a510ad442884a8a090b18c",
+        "fa3_utils.h": "776172706a741081ba0a32058ca6d0ce94bea976a5689d0965b162eaf7f5d9cc",
+        "triattn_bias_rs8_async_q4.so": "0b377f05a587d59913f5db7166e6a95b922d09d4124f851d85489950bcbb5065"
+      },
+      "dq_artifact": "rs_softmax_overlap",
+      "below80_combined_job": 16576,
+      "priority_combined_job": 16661,
+      "core90_combined_job": 17204,
+      "legacy_abi_row_group": 4,
+      "core90_followup_baseline": "checkpoint17175"
+    },
+    "ln_manifest.json": {
+      "module_name": "triattn_ln_warp_packed",
+      "binary": "triattn_ln_warp_packed.so",
+      "torch": "2.10.0+cu128",
+      "python_abi": "cpython-310",
+      "lengths": [
+        384,
+        768,
+        1024
+      ],
+      "artifact": "warp_packed",
+      "qualification_job": 16574,
+      "files": {
+        "build_ln.py": "1af45f01c1c72e747fb9a7475cbc8454ed7d655a71eb5edc90784a1f6d3e38f6",
+        "fa3_utils.h": "776172706a741081ba0a32058ca6d0ce94bea976a5689d0965b162eaf7f5d9cc",
+        "ln_backward.py": "933fc33e2b7009ebd4ce26774a953bc712fcfc1e61092b816f344084e552baf5",
+        "ln_residual.cu": "cabd03e537012a204018fde8962ee62d3115098cfb6b02343ce9b1dc8955220c",
+        "triattn_ln_warp_packed.so": "046cf013e9124aaabdbcd76c3fec2dea6139faa940c10d7189ad9a7c079b1fac"
+      },
+      "gate_artifact": "n64_staged",
+      "below80_combined_job": 16576,
+      "wgrad_artifact": "shared_z_tensor",
+      "wgrad_qualification_job": 16662,
+      "priority_combined_job": 16661
+    },
+    "dq_manifest.json": {
+      "module_name": "triattn_dq_rs_softmax_overlap",
+      "binary": "triattn_dq_rs_softmax_overlap.so",
+      "torch": "2.10.0+cu128",
+      "python_abi": "cpython-310",
+      "lengths": [
+        384,
+        768,
+        1024
+      ],
+      "artifact": "rs_softmax_overlap",
+      "qualification_job": 17055,
+      "files": {
+        "build_dq.py": "d8c3ad4ee15189877d9d7719d600ecb87823adbb0e334d4389be69aff346af4c",
+        "dq.cu": "3b50549c448fc97a6ba36cf4f3f26dfd1750102cff12272b3e6ba2c55d270abf",
+        "dq_backward.py": "8b9b9142076757249b0a26b896c9e22d6aa75ee7ad8c34fc7da4c3efb250a335",
+        "fa3_utils.h": "776172706a741081ba0a32058ca6d0ce94bea976a5689d0965b162eaf7f5d9cc",
+        "triattn_dq_rs_softmax_overlap.so": "2477359467dd79a1a92bfa162822082f57ea12eb11f7db2d5b4ee8da31612f2b"
+      },
+      "below80_combined_job": 16576,
+      "core90_combined_job": 17057,
+      "fp64_job": 17056,
+      "core90_followup_baseline": "checkpoint17025"
+    },
+    "gate_manifest.json": {
+      "module_name": "triattn_gate_n64_staged",
+      "binary": "triattn_gate_n64_staged.so",
+      "torch": "2.10.0+cu128",
+      "python_abi": "cpython-310",
+      "lengths": [
+        384,
+        768,
+        1024
+      ],
+      "artifact": "n64_staged",
+      "qualification_job": 16324,
+      "files": {
+        "gate_delta.cu": "566285134fded0e8f851868f21e708504a73390f508e78cc5d801eda85f2ee87",
+        "gate_backward.py": "9b0aa05cf4e0df19e14deb34ef0d2ad164dfae7183828d47c61bfa6a6dd364a5",
+        "build_gate.py": "1d3a27a430628257ff85a7a7940aa80210eee573f4e7451be69d2393c83d2a85",
+        "triattn_gate_n64_staged.so": "4f052f4d86d065647fbba302908561f2227a51d9ecef4acfe01be673cb4caa2f",
+        "fa3_utils.h": "776172706a741081ba0a32058ca6d0ce94bea976a5689d0965b162eaf7f5d9cc"
+      },
+      "bias_row_group": 8
+    },
+    "wgrad_manifest.json": {
+      "module_name": "triattn_wgrad_shared_z_tensor",
+      "binary": "triattn_wgrad_shared_z_tensor.so",
+      "torch": "2.10.0+cu128",
+      "python_abi": "cpython-310",
+      "arch": "sm_90a",
+      "lengths": [
+        384,
+        768,
+        1024
+      ],
+      "splits": {
+        "384": 2304,
+        "768": 8960,
+        "1024": 15936
+      },
+      "artifact": "shared_z_tensor",
+      "partial_dtype": "fp32",
+      "qualification_job": 16662,
+      "combined_job": 16661,
+      "files": {
+        "wgrad.cu": "33c298fcb6b95de918c3e73d663a019ab1010a2e4560891cc6862d42fd6be105",
+        "wgrad_backward.py": "91c3e214583ff7a2964e88d0cb489f8bef58b4ea180f240f068811678d707e1b",
+        "build_wgrad.py": "b6705a17fe43749a5a0874645e2dc8d18c047708528e73eca5aa7a4796dc8f42",
+        "fa3_utils.h": "776172706a741081ba0a32058ca6d0ce94bea976a5689d0965b162eaf7f5d9cc",
+        "triattn_wgrad_shared_z_tensor.so": "997ef2a16c62dfdb46f12899a2a09a3f04888747f8b5c384261cc95dc889808c"
+      }
+    },
+    "fwd_manifest.json": {
+      "module_name": "triattn_training_cooperative_q2",
+      "binary": "triattn_training_cooperative_q2.so",
+      "artifact": "cooperative_q2",
+      "torch": "2.10.0+cu128",
+      "python_abi": "cpython-310",
+      "arch": "sm_90a",
+      "lengths": [
+        384,
+        768,
+        1024
+      ],
+      "query_tile": 64,
+      "key_tile": 64,
+      "threads": 128,
+      "kv_stages": 3,
+      "normalizer": "fp32_unrounded_probability_sum",
+      "lse": "fp32_base2",
+      "qualification_job": 17290,
+      "benchmark_job": 17289,
+      "profile_job": 17294,
+      "full_sanitizer_job": 17300,
+      "dispatcher": {
+        "path": "../triton/main.py",
+        "sha256": "de5673c82fe84236ff09e0f3c394faff56e2d6da2d4d025d447a0bbe6bcc22da"
+      },
+      "files": {
+        "training_forward.py": "10f00912a7010da430948af391ad634fb699004b1be34b8e0269ccc3c2d1e3a7",
+        "training_forward.cu": "cca26e9c3b192f9b0324561badf00603ce3d90cb0607d64153bff32124176de5",
+        "triattn_training_cooperative_q2.so": "64c4e6c8ad39394a645424f8bbc5e615a471705c652fe08123c408e483061b56",
+        "fa3_utils.h": "776172706a741081ba0a32058ca6d0ce94bea976a5689d0965b162eaf7f5d9cc"
+      }
+    }
+  },
+  "installed_dispatch": true,
+  "candidate_build": {
+    "module": "triattn_training_cooperative_q2",
+    "binary": "build/triattn_training_cooperative_q2.so",
+    "smem": 54272,
+    "sha256": {
+      "fused.cu": "cca26e9c3b192f9b0324561badf00603ce3d90cb0607d64153bff32124176de5",
+      "build/triattn_training_cooperative_q2.so": "64c4e6c8ad39394a645424f8bbc5e615a471705c652fe08123c408e483061b56"
+    }
+  },
+  "complete": true
+}

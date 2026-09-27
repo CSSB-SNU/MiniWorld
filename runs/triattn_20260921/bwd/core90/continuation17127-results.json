@@ -1,0 +1,996 @@
+[
+  {
+    "job": 17127,
+    "kind": "bias",
+    "artifact": "rs8_q16_two",
+    "source_digests": {
+      "grouped.cu": "6173ad55526e66a5f0d6f01832ab5760d9247b3a1de8192ba09151e14f612d73",
+      "build/triattn_bias_fusion.so": "59df9d4191ee03ff13e9f82958ba3237afe3961bbfe4fcea0659f23d471f1976"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.012755200266838074,
+        "candidate_ms": 0.014906400442123414,
+        "speedup": 0.8558931271168506,
+        "latency_change_pct": 16.837017183276814
+      },
+      "384": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.4172032117843628,
+        "candidate_ms": 0.5744616031646729,
+        "speedup": 0.7241505818171091,
+        "latency_change_pct": 38.09282559584537
+      },
+      "768": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 2.7880616188049316,
+        "candidate_ms": 4.0058744430542,
+        "speedup": 0.6960819359203548,
+        "latency_change_pct": 43.66124853934139
+      },
+      "1024": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 6.3998311996459964,
+        "candidate_ms": 9.182661056518555,
+        "speedup": 0.6969523139065763,
+        "latency_change_pct": 43.48183943816364
+      }
+    },
+    "ptxas": [
+      "8 bytes stack frame, 12 bytes spill stores, 12 bytes spill loads",
+      "Used 168 registers, used 16 barriers, 8 bytes cumulative stack size",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 34 registers, used 0 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 40 registers, used 0 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_bias_rs8_producer32.so",
+    "baseline_binary_sha256": "0a94b7be27be3fd2709fd238ba8453692d6fbf176945e3d6075ac5f84129f1eb",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17128,
+    "kind": "bias",
+    "artifact": "rs8_q16_four",
+    "source_digests": {
+      "grouped.cu": "f61c4e958b5346f871f777df5efc178a9fdc7355beef60b61872f3126f2fc3ff",
+      "build/triattn_bias_fusion.so": "efd118001c6292a5bab9901b6e1b2bde5cb6f0b0484054eec2084fbcc15a5fa5"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.012593600153923034,
+        "candidate_ms": 0.01340320035815239,
+        "speedup": 0.9395965140254279,
+        "latency_change_pct": 6.428662204778823
+      },
+      "384": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.4178031921386719,
+        "candidate_ms": 0.4321367979049683,
+        "speedup": 0.9671215836014455,
+        "latency_change_pct": 3.3996156177302117
+      },
+      "768": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 2.8134391784667967,
+        "candidate_ms": 2.983975124359131,
+        "speedup": 0.942920167548233,
+        "latency_change_pct": 6.053516980147444
+      },
+      "1024": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 6.466166305541993,
+        "candidate_ms": 6.934270858764648,
+        "speedup": 0.9312295262542866,
+        "latency_change_pct": 7.384911217573942
+      }
+    },
+    "ptxas": [
+      "8 bytes stack frame, 12 bytes spill stores, 16 bytes spill loads",
+      "Used 96 registers, used 16 barriers, 8 bytes cumulative stack size",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 34 registers, used 0 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 40 registers, used 0 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_bias_rs8_producer32.so",
+    "baseline_binary_sha256": "0a94b7be27be3fd2709fd238ba8453692d6fbf176945e3d6075ac5f84129f1eb",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17129,
+    "kind": "bias",
+    "artifact": "rs8_q16_coop",
+    "source_digests": {
+      "grouped.cu": "38d8af289f48c7614dbd9bafbe1b4d70a1c7a21806a728a58ceadade76fc3370",
+      "build/triattn_bias_fusion.so": "256ae384767d1502df68f0f66522b08ff746c7fc6314bb26e5e1738832331c5a"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.012586399912834167,
+        "candidate_ms": 0.016631200164556506,
+        "speedup": 0.7568359425496833,
+        "latency_change_pct": 32.12903137648671
+      },
+      "384": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.4153488159179688,
+        "candidate_ms": 0.5816887855529784,
+        "speedup": 0.7138795778760334,
+        "latency_change_pct": 40.07964802344463
+      },
+      "768": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 2.808784770965576,
+        "candidate_ms": 4.1759479522705085,
+        "speedup": 0.6741800645865235,
+        "latency_change_pct": 48.32832540269531
+      },
+      "1024": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 6.446709060668946,
+        "candidate_ms": 9.655957794189453,
+        "speedup": 0.667666929027205,
+        "latency_change_pct": 49.77527814010594
+      }
+    },
+    "ptxas": [
+      "64 bytes stack frame, 64 bytes spill stores, 72 bytes spill loads",
+      "Used 128 registers, used 16 barriers, 64 bytes cumulative stack size",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 34 registers, used 0 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 40 registers, used 0 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_bias_rs8_producer32.so",
+    "baseline_binary_sha256": "0a94b7be27be3fd2709fd238ba8453692d6fbf176945e3d6075ac5f84129f1eb",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17133,
+    "kind": "bias",
+    "artifact": "rs8_staged_parallel",
+    "source_digests": {
+      "grouped.cu": "9a1a56383647cf622c50d847d5e715cab2f88500a231b563530c16d67dd9b698",
+      "build/triattn_bias_fusion.so": "6271d2a25bf8a7917dee43d81597434ba2e31768ec2981b427394c95319f773e"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.012389599904417993,
+        "candidate_ms": 0.013411200046539307,
+        "speedup": 0.9235265787332974,
+        "latency_change_pct": 8.280586940074098
+      },
+      "384": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.4174943923950195,
+        "candidate_ms": 0.4217447996139526,
+        "speedup": 0.9892868775477165,
+        "latency_change_pct": 1.0829136315685828
+      },
+      "768": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 2.8320615768432615,
+        "candidate_ms": 2.892242431640625,
+        "speedup": 0.9794548469288571,
+        "latency_change_pct": 2.0976110471619513
+      },
+      "1024": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 6.516104125976563,
+        "candidate_ms": 6.747601699829101,
+        "speedup": 0.9657862109562683,
+        "latency_change_pct": 3.542584130483206
+      }
+    },
+    "ptxas": [
+      "16 bytes stack frame, 20 bytes spill stores, 24 bytes spill loads",
+      "Used 96 registers, used 16 barriers, 16 bytes cumulative stack size",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 34 registers, used 0 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 36 registers, used 0 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_bias_rs8_producer32.so",
+    "baseline_binary_sha256": "0a94b7be27be3fd2709fd238ba8453692d6fbf176945e3d6075ac5f84129f1eb",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17138,
+    "kind": "dq",
+    "artifact": "rs_query_group2",
+    "source_digests": {
+      "fused.cu": "029829cc6c702add1d29f103110e8f8b77c3474b7c552f7b637cfe5d04e1fe3b",
+      "build/triattn_dq.so": "9149d015c36ecbfc3d126a91eae5d332a64f983ed8eadd77eea5131d4588bf08"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 0.004116000048816204,
+        "candidate_ms": 0.00404719989746809,
+        "speedup": 1.0171832304479493,
+        "latency_change_pct": -1.6892954910770697
+      },
+      "384": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 0.15589439868927002,
+        "candidate_ms": 0.25199199914932247,
+        "speedup": 0.6187658414534747,
+        "latency_change_pct": 61.6120239687133
+      },
+      "768": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 1.1030392169952394,
+        "candidate_ms": 1.5231527805328369,
+        "speedup": 0.723929966729503,
+        "latency_change_pct": 38.134908894253684
+      },
+      "1024": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 2.635236072540283,
+        "candidate_ms": 3.248916053771973,
+        "speedup": 0.8100633542398309,
+        "latency_change_pct": 23.44713469212627
+      }
+    },
+    "ptxas": [
+      "64 bytes stack frame, 128 bytes spill stores, 64 bytes spill loads",
+      "Used 80 registers, used 16 barriers, 64 bytes cumulative stack size",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 106 registers, used 1 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_dq_rs_softmax_overlap.so",
+    "baseline_binary_sha256": "2477359467dd79a1a92bfa162822082f57ea12eb11f7db2d5b4ee8da31612f2b",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17139,
+    "kind": "dq",
+    "artifact": "rs_query_group4",
+    "source_digests": {
+      "fused.cu": "eee74789db7edc7b7c0e513d301418d2d6261c3f735c460ebab7bbe58f2133cb",
+      "build/triattn_dq.so": "d61a7a2f4eea16b67db119bb3b940b3ddde7e4439ec74f3c1b2a1a93947f72bf"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 0.004256800003349781,
+        "candidate_ms": 0.004188799858093261,
+        "speedup": 1.015808052521591,
+        "latency_change_pct": -1.5562046867368062
+      },
+      "384": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 0.15148159861564636,
+        "candidate_ms": 0.2513488054275512,
+        "speedup": 0.602776805460691,
+        "latency_change_pct": 65.8988851164767
+      },
+      "768": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 1.0501215934753416,
+        "candidate_ms": 1.2318480014801025,
+        "speedup": 0.8584032480247369,
+        "latency_change_pct": 16.495365354347147
+      },
+      "1024": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 2.5451199531555178,
+        "candidate_ms": 2.8382895469665526,
+        "speedup": 0.9115091041361709,
+        "latency_change_pct": 9.708174659175906
+      }
+    },
+    "ptxas": [
+      "64 bytes stack frame, 128 bytes spill stores, 64 bytes spill loads",
+      "Used 80 registers, used 16 barriers, 64 bytes cumulative stack size",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 96 registers, used 16 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 106 registers, used 1 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_dq_rs_softmax_overlap.so",
+    "baseline_binary_sha256": "2477359467dd79a1a92bfa162822082f57ea12eb11f7db2d5b4ee8da31612f2b",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17146,
+    "kind": "bias",
+    "artifact": "rs8_three",
+    "source_digests": {
+      "grouped.cu": "97ca25674d5bcbf4f78967e2f46fd0196d3a0758afe8537497ebba29fd4d9770",
+      "build/triattn_bias_fusion.so": "13a1d34dc70742dbbbc6ec5bcebc6e7d3104f89696d4b61ec6c5724150c708b3"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.012583199888467789,
+        "candidate_ms": 0.013272799551486969,
+        "speedup": 0.9487150645999237,
+        "latency_change_pct": 5.405725840529718
+      },
+      "384": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.4171247959136963,
+        "candidate_ms": 0.4051543951034546,
+        "speedup": 1.0292685513979625,
+        "latency_change_pct": -2.8436263167867737
+      },
+      "768": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 2.8146416664123537,
+        "candidate_ms": 2.751180076599121,
+        "speedup": 1.0228647364130925,
+        "latency_change_pct": -2.235362663226903
+      },
+      "1024": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 6.456872940063477,
+        "candidate_ms": 6.351389694213867,
+        "speedup": 1.0166884640075113,
+        "latency_change_pct": -1.6414530702679508
+      }
+    },
+    "ptxas": [
+      "16 bytes stack frame, 16 bytes spill stores, 16 bytes spill loads",
+      "Used 128 registers, used 16 barriers, 16 bytes cumulative stack size",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 34 registers, used 0 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 36 registers, used 0 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_bias_rs8_producer32.so",
+    "baseline_binary_sha256": "0a94b7be27be3fd2709fd238ba8453692d6fbf176945e3d6075ac5f84129f1eb",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17147,
+    "kind": "bias",
+    "artifact": "rs8_three_staged",
+    "source_digests": {
+      "grouped.cu": "86a25349aee02528916fca85cbb3bdc66209c33c0e7d6cb279f034873301a7aa",
+      "build/triattn_bias_fusion.so": "cabe802f8043cfae59483a5b27d2aeb89cc5481ef066a62c2416b5f132f61a49"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.012529599666595458,
+        "candidate_ms": 0.014518400281667709,
+        "speedup": 0.8631729753935558,
+        "latency_change_pct": 15.851634435619255
+      },
+      "384": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.4162591934204102,
+        "candidate_ms": 0.4603760004043579,
+        "speedup": 0.9099804299960781,
+        "latency_change_pct": 9.892473182561723
+      },
+      "768": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 2.8100840568542482,
+        "candidate_ms": 3.185719108581543,
+        "speedup": 0.881974342883511,
+        "latency_change_pct": 13.38198305526872
+      },
+      "1024": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 6.45563850402832,
+        "candidate_ms": 7.436830520629883,
+        "speedup": 0.86805910650171,
+        "latency_change_pct": 15.19952875444317
+      }
+    },
+    "ptxas": [
+      "8 bytes stack frame, 8 bytes spill stores, 8 bytes spill loads",
+      "Used 128 registers, used 16 barriers, 8 bytes cumulative stack size",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 34 registers, used 0 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 36 registers, used 0 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_bias_rs8_producer32.so",
+    "baseline_binary_sha256": "0a94b7be27be3fd2709fd238ba8453692d6fbf176945e3d6075ac5f84129f1eb",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17148,
+    "kind": "dq",
+    "artifact": "rs_query_coop2",
+    "source_digests": {
+      "fused.cu": "a513ba48ec349149c4b3da6d63912a8d3a3abc211552aaa96859517b8227001f",
+      "build/triattn_dq.so": "ef402f8ed9870b4bf7a054bb86a8bf7d7e8c226809d1c191ed1f7b4ffe5e183f"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 0.004057599976658821,
+        "candidate_ms": 0.004070400074124336,
+        "speedup": 0.9986247439777829,
+        "latency_change_pct": 0.13771499559875888
+      },
+      "384": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 0.15616639852523803,
+        "candidate_ms": 0.18740639686584473,
+        "speedup": 0.8272870896694182,
+        "latency_change_pct": 20.877022316351802
+      },
+      "768": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 1.0959327697753907,
+        "candidate_ms": 1.1904391765594484,
+        "speedup": 0.9201749969022337,
+        "latency_change_pct": 8.674980668513799
+      },
+      "1024": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 2.590396785736084,
+        "candidate_ms": 2.7183559417724608,
+        "speedup": 0.949142737588959,
+        "latency_change_pct": 5.358231211907105
+      }
+    },
+    "ptxas": [
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 110 registers, used 1 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 106 registers, used 1 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_dq_rs_softmax_overlap.so",
+    "baseline_binary_sha256": "2477359467dd79a1a92bfa162822082f57ea12eb11f7db2d5b4ee8da31612f2b",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17149,
+    "kind": "dq",
+    "artifact": "rs_query_coop4",
+    "source_digests": {
+      "fused.cu": "53e7190ef93d6eab9ff279347561a7790497bc8bf498d455a786662665d7228b",
+      "build/triattn_dq.so": "644158c3ea502f7793e7cc016516d1fae6034c3da6491df5feae5a68a1827115"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 0.004165600053966045,
+        "candidate_ms": 0.004216000065207481,
+        "speedup": 0.989539757847274,
+        "latency_change_pct": 1.0570815442001225
+      },
+      "384": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 0.15334720015525818,
+        "candidate_ms": 0.18563600182533263,
+        "speedup": 0.831625302575345,
+        "latency_change_pct": 20.24646158591361
+      },
+      "768": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 1.0425464153289794,
+        "candidate_ms": 1.424180030822754,
+        "speedup": 0.7532626402990099,
+        "latency_change_pct": 32.75582067936449
+      },
+      "1024": {
+        "bitwise": [
+          true
+        ],
+        "relative_l2": [
+          0.0
+        ],
+        "baseline_ms": 2.606763935089111,
+        "candidate_ms": 3.1152640342712403,
+        "speedup": 0.8471045096301231,
+        "latency_change_pct": 18.049188574929985
+      }
+    },
+    "ptxas": [
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 110 registers, used 1 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 110 registers, used 1 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 106 registers, used 1 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_dq_rs_softmax_overlap.so",
+    "baseline_binary_sha256": "2477359467dd79a1a92bfa162822082f57ea12eb11f7db2d5b4ee8da31612f2b",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17151,
+    "kind": "bias",
+    "artifact": "rs8_async_bias64",
+    "source_digests": {
+      "grouped.cu": "3906f9fb9dd81f74b52fde466f4acf4b2f0706b1ad49941d41add57353dec388",
+      "build/triattn_bias_fusion.so": "dc065c6ecf855469f0a49e7116fd7f17db6b5d7cb0d12d0b1fb9b21befbcb9e2"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.012455200031399726,
+        "candidate_ms": 0.012495199963450433,
+        "speedup": 0.9966705425511282,
+        "latency_change_pct": 0.3340579767060703
+      },
+      "384": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.4213775873184204,
+        "candidate_ms": 0.40990798473358153,
+        "speedup": 1.0271184871727224,
+        "latency_change_pct": -2.6402491544446405
+      },
+      "768": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 2.8318687438964845,
+        "candidate_ms": 2.735439968109131,
+        "speedup": 1.035491867319016,
+        "latency_change_pct": -3.427537041976758
+      },
+      "1024": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 6.515675354003906,
+        "candidate_ms": 6.251428031921387,
+        "speedup": 1.0422827244289121,
+        "latency_change_pct": -4.0567423250807195
+      }
+    },
+    "ptxas": [
+      "8 bytes stack frame, 8 bytes spill stores, 20 bytes spill loads",
+      "Used 168 registers, used 16 barriers, 8 bytes cumulative stack size",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 34 registers, used 0 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 36 registers, used 0 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_bias_rs8_producer32.so",
+    "baseline_binary_sha256": "0a94b7be27be3fd2709fd238ba8453692d6fbf176945e3d6075ac5f84129f1eb",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17160,
+    "kind": "bias",
+    "artifact": "rs8_three_p56c152",
+    "source_digests": {
+      "grouped.cu": "7ec9111fc5eb17e88b19bd083f45d18da27218efb9df62611f4108d45641aa69",
+      "build/triattn_bias_fusion.so": "3f70ed50d7adda95004404260762ec927f303400a3a1389a0db6871e6d57006a"
+    },
+    "lengths": {
+      "64": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.012577599287033081,
+        "candidate_ms": 0.014112799614667892,
+        "speedup": 0.8913675840841437,
+        "latency_change_pct": 12.187162496768721
+      },
+      "384": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 0.4170656204223633,
+        "candidate_ms": 0.44759280681610103,
+        "speedup": 0.93203646078092,
+        "latency_change_pct": 7.291939970045358
+      },
+      "768": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 2.813053607940674,
+        "candidate_ms": 3.0689080238342283,
+        "speedup": 0.9164956884486175,
+        "latency_change_pct": 9.111260707918124
+      },
+      "1024": {
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "relative_l2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "baseline_ms": 6.45770492553711,
+        "candidate_ms": 7.177918243408204,
+        "speedup": 0.8996300253391005,
+        "latency_change_pct": 11.156805779472133
+      }
+    },
+    "ptxas": [
+      "64 bytes stack frame, 192 bytes spill stores, 128 bytes spill loads",
+      "Used 128 registers, used 16 barriers, 64 bytes cumulative stack size",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 34 registers, used 0 barriers",
+      "0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads",
+      "Used 36 registers, used 0 barriers"
+    ],
+    "baseline_binary": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_bias_rs8_producer32.so",
+    "baseline_binary_sha256": "0a94b7be27be3fd2709fd238ba8453692d6fbf176945e3d6075ac5f84129f1eb",
+    "pilot_complete": true,
+    "qualified": false
+  },
+  {
+    "job": 17167,
+    "kind": "bias",
+    "artifact": "rs8_async_q4",
+    "source_digests": {},
+    "lengths": {},
+    "pilot_complete": false,
+    "qualified": false
+  },
+  {
+    "job": 17168,
+    "kind": "bias",
+    "artifact": "rs8_async_q8",
+    "source_digests": {},
+    "lengths": {},
+    "pilot_complete": false,
+    "qualified": false
+  }
+]

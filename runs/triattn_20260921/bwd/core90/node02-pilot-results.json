@@ -1,0 +1,226 @@
+[
+  {
+    "job": 17167,
+    "measurements": [
+      {
+        "length": 64,
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 0.012458400055766105,
+        "candidate_ms": 0.01255280002951622,
+        "speedup": 0.9925411610506435,
+        "reduction_pct": -0.7514891313384897
+      },
+      {
+        "length": 384,
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 0.4063152074813843,
+        "candidate_ms": 0.3500223994255066,
+        "speedup": 1.1623042357472828,
+        "reduction_pct": 13.96400621760896
+      },
+      {
+        "length": 768,
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 2.7012080192565917,
+        "candidate_ms": 2.3225599288940426,
+        "speedup": 1.1633784669211527,
+        "reduction_pct": 14.043449450592727
+      },
+      {
+        "length": 1024,
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 6.1986688613891605,
+        "candidate_ms": 5.381587982177734,
+        "speedup": 1.150675700729733,
+        "reduction_pct": 13.094540940959975
+      }
+    ],
+    "artifact": "rs8_async_q4",
+    "kind": "bias",
+    "source_digests": {
+      "grouped.cu": "401b3c654c2e0b2d34bb843966c92c05ce7d9eed7d76d46ab8f25045343ac8e2",
+      "build/triattn_bias_fusion.so": "0b377f05a587d59913f5db7166e6a95b922d09d4124f851d85489950bcbb5065"
+    },
+    "baseline": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_bias_rs8_async_bias64.so"
+  },
+  {
+    "job": 17168,
+    "measurements": [
+      {
+        "length": 64,
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 0.012440799921751022,
+        "candidate_ms": 0.012709599733352662,
+        "speedup": 0.9790368114366599,
+        "reduction_pct": -2.1412053477926296
+      },
+      {
+        "length": 384,
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 0.4067479848861694,
+        "candidate_ms": 0.3596863985061646,
+        "speedup": 1.1316735948752494,
+        "reduction_pct": 11.635297975629143
+      },
+      {
+        "length": 768,
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 2.7088296890258787,
+        "candidate_ms": 2.4377696037292482,
+        "speedup": 1.1145265953211583,
+        "reduction_pct": 10.275806409819833
+      },
+      {
+        "length": 1024,
+        "bitwise": [
+          true,
+          true,
+          true
+        ],
+        "baseline_ms": 6.202350425720215,
+        "candidate_ms": 5.619016075134278,
+        "speedup": 1.1050800908898395,
+        "reduction_pct": 9.508821284186396
+      }
+    ],
+    "artifact": "rs8_async_q8",
+    "kind": "bias",
+    "source_digests": {
+      "grouped.cu": "4d11229f7da3e8276662dfea6939b66b2b3af7dbfd4515c85e33e614ced94ac4",
+      "build/triattn_bias_fusion.so": "f39a4fa2718a1549380084815f5d7d6c51ffcf3f245e011c6d1e16e168e98746"
+    },
+    "baseline": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_bias_rs8_async_bias64.so"
+  },
+  {
+    "job": 17193,
+    "measurements": [
+      {
+        "length": 64,
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 0.004049599915742874,
+        "candidate_ms": 0.004131200164556504,
+        "speedup": 0.981577054253532,
+        "reduction_pct": -1.8768720872838873
+      },
+      {
+        "length": 384,
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 0.1569271981716156,
+        "candidate_ms": 0.158924001455307,
+        "speedup": 1.0018790067157424,
+        "reduction_pct": 0.1875482671207962
+      },
+      {
+        "length": 768,
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 1.1350423812866213,
+        "candidate_ms": 1.1755544185638427,
+        "speedup": 0.96546921319745,
+        "reduction_pct": -3.5765808303913182
+      },
+      {
+        "length": 1024,
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 2.614464855194092,
+        "candidate_ms": 2.765735149383545,
+        "speedup": 0.954455189290434,
+        "reduction_pct": -4.771812361712358
+      }
+    ],
+    "artifact": "rs_half_p4",
+    "kind": "dq",
+    "source_digests": {
+      "fused.cu": "3c60aad7cd8c4c8c3592e95772688174e3a38fdc881e469fafa02feaf38b29ee",
+      "build/triattn_dq.so": "8a3d402738bf23694ea6305c7e330091baf0081f87eafb8f19c9f7ec939598ab"
+    },
+    "baseline": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_dq_rs_softmax_overlap.so"
+  },
+  {
+    "job": 17194,
+    "measurements": [
+      {
+        "length": 64,
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 0.003951199911534786,
+        "candidate_ms": 0.004023200087249279,
+        "speedup": 0.980349364172892,
+        "reduction_pct": -2.0044523457907193
+      },
+      {
+        "length": 384,
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 0.1523736000061035,
+        "candidate_ms": 0.15126399993896483,
+        "speedup": 1.0058065049909355,
+        "reduction_pct": 0.577298412977334
+      },
+      {
+        "length": 768,
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 1.1270591735839846,
+        "candidate_ms": 1.1460808277130128,
+        "speedup": 0.9829632114322951,
+        "reduction_pct": -1.7332071403649119
+      },
+      {
+        "length": 1024,
+        "bitwise": [
+          true
+        ],
+        "baseline_ms": 2.5841416358947757,
+        "candidate_ms": 2.6875280380249027,
+        "speedup": 0.9722836067639884,
+        "reduction_pct": -2.850649033182706
+      }
+    ],
+    "artifact": "rs_half_p5",
+    "kind": "dq",
+    "source_digests": {
+      "fused.cu": "ebad1314f6ecb7aa071527293161b12ecf801cee4d40bd0509d14e86d8fec791",
+      "build/triattn_dq.so": "facef9035813b62c4a407c525d4e68ad77a54d08b3056aa35883b498ca3db885"
+    },
+    "baseline": "/home/psk6950/MiniWorld/runs/trimul_sm90_parity_20260917/engine/src/miniworld_engine/kernels/triangle_attention/cuda/triattn_dq_rs_softmax_overlap.so"
+  }
+]

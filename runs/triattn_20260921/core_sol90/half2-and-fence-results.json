@@ -1,0 +1,141 @@
+{
+  "installed_sha256": "97634810cdba1e91fe4aecb8bdfa610dd050dd39e7504ffb8babee8c46d4077b",
+  "installed_unchanged": true,
+  "sol90_achieved": false,
+  "installed_profile": {
+    "job": 14525,
+    "us": 793.536,
+    "sm_sol_pct": 61.041971
+  },
+  "compile_controls": [
+    {
+      "job": 14782,
+      "variant": "basepackfencedep",
+      "rejected_before_gpu": true,
+      "hot_resources": {
+        "stack_bytes": 0,
+        "spill_store_bytes": 0,
+        "spill_load_bytes": 0,
+        "registers": 128
+      },
+      "warnings": {
+        "C7511": 0,
+        "C7512": 1,
+        "C7514": 0,
+        "C7515": 0,
+        "C7517": 0,
+        "C7519": 16,
+        "C7520": 0
+      }
+    },
+    {
+      "job": 14787,
+      "variant": "basepackfenceqdep",
+      "rejected_before_gpu": true,
+      "hot_resources": {
+        "stack_bytes": 0,
+        "spill_store_bytes": 0,
+        "spill_load_bytes": 0,
+        "registers": 128
+      },
+      "warnings": {
+        "C7511": 0,
+        "C7512": 1,
+        "C7514": 0,
+        "C7515": 0,
+        "C7517": 0,
+        "C7519": 16,
+        "C7520": 0
+      }
+    },
+    {
+      "job": 14800,
+      "variant": "m128compactprod3p2dep",
+      "rejected_before_gpu": true,
+      "hot_resources": {
+        "stack_bytes": 192,
+        "spill_store_bytes": 4608,
+        "spill_load_bytes": 3392,
+        "registers": 91
+      },
+      "warnings": {
+        "C7511": 0,
+        "C7512": 1,
+        "C7514": 0,
+        "C7515": 0,
+        "C7517": 0,
+        "C7519": 0,
+        "C7520": 0
+      }
+    },
+    {
+      "job": 14802,
+      "variant": "basepackfencewarpdep",
+      "rejected_before_gpu": true,
+      "hot_resources": {
+        "stack_bytes": 0,
+        "spill_store_bytes": 0,
+        "spill_load_bytes": 0,
+        "registers": 128
+      },
+      "warnings": {
+        "C7511": 0,
+        "C7512": 0,
+        "C7514": 0,
+        "C7515": 0,
+        "C7517": 0,
+        "C7519": 13,
+        "C7520": 1
+      }
+    }
+  ],
+  "half2_model": [
+    {
+      "job": 14796,
+      "ending": false,
+      "rows": [
+        0,
+        17,
+        257,
+        767
+      ],
+      "max_model_rms_ratio": 1.0117394671173026,
+      "micro_us": {
+        "0": 36.87711954116821,
+        "3": 97.3043155670166,
+        "4": 96.02911949157715
+      },
+      "cubic_native_time_ratio": 2.638609435272995,
+      "quartic_native_time_ratio": 2.604029834390235
+    },
+    {
+      "job": 14796,
+      "ending": true,
+      "rows": [
+        0,
+        17,
+        257,
+        767
+      ],
+      "max_model_rms_ratio": 1.0112234242680285,
+      "micro_us": {
+        "0": 37.10239887237549,
+        "3": 97.42879867553711,
+        "4": 96.18559837341309
+      },
+      "cubic_native_time_ratio": 2.6259433793128,
+      "quartic_native_time_ratio": 2.5924361037751624
+    }
+  ],
+  "half2_limits": "FP64 logits/model BF16 probability only; not actual attention qualification. Microprobe is not attention latency.",
+  "compact_producer_limit": {
+    "naive_budget_invalid": true,
+    "threads": 544,
+    "warps": 17,
+    "assumed_warps_for_hardware_cta_limit": 20,
+    "registers_at_120": 76800,
+    "hardware_cta_register_limit": 65536,
+    "ptxas_entry_limit": 96,
+    "source": "/usr/local/cuda-12.9/include/cuda_occupancy.h:1496"
+  }
+}

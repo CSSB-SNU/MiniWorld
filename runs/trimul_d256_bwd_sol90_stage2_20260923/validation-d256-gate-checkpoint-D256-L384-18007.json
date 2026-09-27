@@ -1,0 +1,414 @@
+{
+  "L": 384,
+  "job": "18007",
+  "candidate": {
+    "name": "saved_products",
+    "output_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/2c870841f0daade846238cd32330a0fe7e23cf6c4686a961694871013d630771.cubin",
+    "saved_bytes": 150994944,
+    "epi_grid": 1056,
+    "epi_threads": 256,
+    "input_stats": {
+      "name": "input_stats_gamma",
+      "front_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/b7bdf933f003fec9d35942d2b2b3983052d55f76510f144e28f5346580e7c455.cubin",
+      "cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/f7c9cbccfc78d873ce1e6399d381b59d67c54b596a930f479525b2e0524e7121.cubin",
+      "stats_bytes": 1179648,
+      "smem": 99456,
+      "grid": 264
+    },
+    "dense_output_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/637e67ab243892cc4c601805f4143d69105e2cc746ab739bf355d98e03fb8b08.cubin",
+    "prefix_dx": {
+      "source_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/7e03430b49468e86494172d77819685f2d075c4f42ee11f1448cede8402a7479.cubin",
+      "copy_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/773f6c3f5126057a1173a100eab1aeddd81a0cc4979df4021b374b788eb1002b.cubin",
+      "input_cubin": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/66de12d1f4f500a97baded599220c7104eb22509a35d4c91503e50b0ebd900f4.cubin",
+      "lt_index": 3,
+      "lt_algo": [
+        85899345986,
+        4294967331,
+        0,
+        844424930131969,
+        518849229225985,
+        60129542158,
+        292058693646,
+        0
+      ]
+    },
+    "lt": {
+      "proj": {
+        "index": 3,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "gate": {
+        "index": 3,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "dn": {
+        "index": 5,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      }
+    },
+    "output_gate": {
+      "layout": "column_major_direct_dx_prefix",
+      "grid_factor": 4,
+      "dwg": {
+        "index": 0,
+        "algo": [
+          77309411394,
+          68719476771,
+          2,
+          1407374883553283,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      }
+    }
+  },
+  "stress": [
+    {
+      "case": "normal",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00017816144099924713,
+        "dWproj": 0.0002691289409995079,
+        "dgamma_in": 1.0265002856613137e-06,
+        "dbeta_in": 8.66245159159007e-07,
+        "dgamma_out": 9.155726843346201e-07,
+        "dbeta_out": 5.623512038255285e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 6.465667183874757e-07,
+        "dbeta_in": 5.968958021185244e-07,
+        "dgamma_out": 4.201871774967003e-07,
+        "dbeta_out": 4.844802674597304e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "changed",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0001552170142531395,
+        "dWproj": 0.00029395113233476877,
+        "dgamma_in": 1.2247273843968287e-06,
+        "dbeta_in": 7.43778514333826e-07,
+        "dgamma_out": 9.55808559410798e-07,
+        "dbeta_out": 5.683081099050469e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 6.407860269064258e-07,
+        "dbeta_in": 6.457934205172933e-07,
+        "dgamma_out": 4.46658788177956e-07,
+        "dbeta_out": 4.755588918214926e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "zero_gamma",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00015529865049757063,
+        "dWproj": 0.0003054266853723675,
+        "dgamma_in": 1.1011991318810033e-06,
+        "dbeta_in": 8.423789950029459e-07,
+        "dgamma_out": 9.136348353422363e-07,
+        "dbeta_out": 5.793495461148268e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 6.102093266235897e-07,
+        "dbeta_in": 5.658333748215227e-07,
+        "dgamma_out": 4.3580558894973365e-07,
+        "dbeta_out": 4.4624349015975895e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "mask_zero",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.00018431380158290267,
+        "dWproj": 0.00018911466759163886,
+        "dgamma_in": 1.139939968197723e-06,
+        "dbeta_in": 7.483537274310947e-07,
+        "dgamma_out": 0.0,
+        "dbeta_out": 5.737796300309128e-07
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 6.555566756105691e-07,
+        "dbeta_in": 4.998603344574803e-07,
+        "dgamma_out": 0.0,
+        "dbeta_out": 4.6522762886525015e-07
+      },
+      "passed": true
+    },
+    {
+      "case": "dropout_zero",
+      "strict": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 0.0,
+        "dbeta_in": 0.0,
+        "dgamma_out": 0.0,
+        "dbeta_out": 0.0
+      },
+      "graph": {
+        "dx": 0.0,
+        "dWL": 0.0,
+        "dWLg": 0.0,
+        "dWR": 0.0,
+        "dWRg": 0.0,
+        "dWgate": 0.0,
+        "dWproj": 0.0,
+        "dgamma_in": 0.0,
+        "dbeta_in": 0.0,
+        "dgamma_out": 0.0,
+        "dbeta_out": 0.0
+      },
+      "passed": true
+    }
+  ],
+  "complete": true,
+  "config": {
+    "SHARED_CANDIDATE": "saved_products",
+    "SAVE_EPI_GRID": "1056",
+    "SAVE_EPI_THREADS": "256",
+    "GP_OFF": "1",
+    "GP_WARP": "1",
+    "DX_LN": "1",
+    "DX_WARP": "1",
+    "SAVE_NORM": "1",
+    "DX_N256": "0",
+    "DX_PIPE": "0",
+    "DX_SPLIT": "0",
+    "DX_IN_STATS": "0",
+    "DX_GAMMA_CACHE": "0",
+    "LN_THREADS": "128",
+    "LN_MINBLOCKS": "3",
+    "LN_AGG": "1",
+    "LN_CACHE": "0",
+    "LN_STATS_TMA": "0",
+    "LN_STORE_READ": "0",
+    "LN_GAMMA_SMEM": "0",
+    "DN_SLIM": "0"
+  },
+  "artifacts": [
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/637e67ab243892cc4c601805f4143d69105e2cc746ab739bf355d98e03fb8b08.cubin",
+      "sha256": "6d64be3b9f088d7e2f5175e9020734a53ffbb3fde1a15767c033c233b619a17c"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/b7bdf933f003fec9d35942d2b2b3983052d55f76510f144e28f5346580e7c455.cubin",
+      "sha256": "77c1c87546e2369d60bbd18294a5961e5c407461ae481d5d5d8264ce8eadfe88"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/f7c9cbccfc78d873ce1e6399d381b59d67c54b596a930f479525b2e0524e7121.cubin",
+      "sha256": "4fb4f287cd00d9f1ddb5cec6cd208927814afcd27213188c10f13728057dc385"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/90c51e9d0c6f9a9df9d8d275ac10c07a504b0ba130677fd53f611754c19a85ba.cubin",
+      "sha256": "d3f17d253ebebdad5167993c9edc948e8a026978b24d2c50989c7e2da8027a1b"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/95149dd52543041105a3edcf83c755e6f8ea932711f6213b3ecf5a82e9e89cbc.cubin",
+      "sha256": "597894f03a7abeae492154a337fbd8d059d5d8431bc0c99646e8ad097d191021"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/c5174c5803de4fa40673b41b53ab83f175cdc2aa6f118499a1a28903093e5e98.cubin",
+      "sha256": "6d9f0fd9db28a6d93e3230d0068127034db83eee468243ed59e7f167227e0484"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/7e03430b49468e86494172d77819685f2d075c4f42ee11f1448cede8402a7479.cubin",
+      "sha256": "e692db6e55428930366563eaf6f374d38ba556d32954f312617cb1afd5c5a8a8"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/773f6c3f5126057a1173a100eab1aeddd81a0cc4979df4021b374b788eb1002b.cubin",
+      "sha256": "9f2575cc180efb5c6ebcb0555004587ca2f43175e143a0790a27ecda825c9bab"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/66de12d1f4f500a97baded599220c7104eb22509a35d4c91503e50b0ebd900f4.cubin",
+      "sha256": "c2bbdb154ff1bc9d6d0247b4ac30d692b7c4dbff60a8a314cc4e8833975b7af9"
+    },
+    {
+      "path": "/home/psk6950/MiniWorld/runs/trimul_d256_bwd_sol90_stage2_20260923/engine_cache/trimul_h100/120b0badb5975189c465d21aac1c34a58ac9ee6e6034f80952e186139c804b1a.cubin",
+      "sha256": "ad22e9b140492b8e0693696acf61c7e5ecbf4fb4cbcc1a1e129e473760d0ee73"
+    }
+  ],
+  "configuration": {
+    "output": [
+      "dense",
+      128,
+      1
+    ],
+    "source": "d256_saved_products",
+    "input_stats": true,
+    "input_gamma_cache": true,
+    "ln_threads": 128,
+    "ln_minblocks": 3,
+    "splits": 8,
+    "mask": "bulk",
+    "dx": "prefix_lt",
+    "input_ln": "cached_tma16_128_4",
+    "dx_lt": {
+      "index": 3,
+      "algo": [
+        85899345986,
+        4294967331,
+        0,
+        844424930131969,
+        518849229225985,
+        60129542158,
+        292058693646,
+        0
+      ]
+    },
+    "input_stats_used": false,
+    "lt": {
+      "proj": {
+        "index": 3,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "gate": {
+        "index": 3,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      },
+      "dn": {
+        "index": 5,
+        "algo": [
+          85899345986,
+          4294967331,
+          0,
+          844424930131969,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      }
+    },
+    "output_gate": {
+      "layout": "column_major_direct_dx_prefix",
+      "grid_factor": 4,
+      "dwg": {
+        "index": 0,
+        "algo": [
+          77309411394,
+          68719476771,
+          2,
+          1407374883553283,
+          518849229225985,
+          60129542158,
+          292058693646,
+          0
+        ]
+      }
+    }
+  },
+  "pytorch_forward": 0.0033807014115154743,
+  "pytorch": {
+    "dx": 0.00485509866848588,
+    "dWL": 0.00605114595964551,
+    "dWLg": 0.006037827581167221,
+    "dWR": 0.006016907282173634,
+    "dWRg": 0.006040866486728191,
+    "dWgate": 0.0065453387796878815,
+    "dWproj": 0.006109579931944609,
+    "dgamma_in": 0.006345459725707769,
+    "dbeta_in": 0.005903393495827913,
+    "dgamma_out": 0.005302174482494593,
+    "dbeta_out": 0.003568712854757905
+  }
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "variant": "baseline",
+    "kernel": "_triatt_prologue_kernel",
+    "dram_MB": 763.381248,
+    "time_us": 340.864,
+    "TBps": 2.2395478783327074,
+    "stream_pct": 75.9168772316172,
+    "hardware_pct": 66.810192
+  },
+  {
+    "variant": "baseline",
+    "kernel": "_triatt_epilogue_kernel_v2",
+    "dram_MB": 594.233344,
+    "time_us": 216.768,
+    "TBps": 2.7413333333333334,
+    "stream_pct": 92.92655367231637,
+    "hardware_pct": 81.79545
+  },
+  {
+    "variant": "cuda",
+    "kernel": "triattn_tma_pro::prologue_tma(triattn_tma_pro::Params)",
+    "dram_MB": 742.562816,
+    "time_us": 273.888,
+    "TBps": 2.7111914943334505,
+    "stream_pct": 91.90479641808307,
+    "hardware_pct": 80.883094
+  },
+  {
+    "variant": "cuda",
+    "kernel": "void triattn_tma_epi::epilogue_tma<768>(triattn_tma_epi::Params)",
+    "dram_MB": 592.951552,
+    "time_us": 207.712,
+    "TBps": 2.854681250962872,
+    "stream_pct": 96.7688559648431,
+    "hardware_pct": 85.170067
+  }
+]
