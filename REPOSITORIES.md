@@ -188,3 +188,10 @@ GPU의 baseline/candidate 시간을 다시 확인한다.
 
 원래 백업 patch·index·파일 SHA는 `runs/repository_cleanup_20260927`에 남아 있다.
 대형 profile, dataset, checkpoint, 환경 전체는 Git 통합 범위가 아니다.
+2026-09-30: engine pin을 `627c089195bdc21b05150d2039098643024db760`로, team-gm gitlink를 `8444c58`로 올렸다.
+여러 세션이 B200(sm_100a)에서 따로 개발하던 엔진 통합 5건을 engine main에 합친 커밋이다: TriMul(두 모듈,
+D64-D512, 추론·학습), TriangleAttention(d_pair 128 추론·학습, 다른 폭 추론), Transition(n=4, D64-D512),
+token DiT(추론·학습, CUDA + cuBLAS), OPM/PWA 학습. 새 경로는 모두 compute capability 10.0에서만 켜지므로
+H100·A100 동작은 바뀌지 않는다. engine 의존성은 그대로라 pixi.lock은 커밋 해시만 바뀐다. B200 검증: 병합된
+GPU 테스트 232 passed, CPU 테스트는 engine main 대비 새 실패 없음. 연구 캡슐(라운드 기록·원본 커널)은 main에
+넣지 않고 engine 태그 `archive/research-*-20260930`으로 보존했다.
