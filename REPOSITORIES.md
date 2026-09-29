@@ -33,6 +33,13 @@ torch 2.13부터 CUDA autocast가 `rms_norm`을 FP32로 계산하므로 team-gm 
 되돌린다. B200 검증(2026-09-29): team-gm 155 passed / 3 failed(무관: branch_compatibility,
 f567 config 개수, adaln 강제 256KB 타일). MiniWorld는 FA4 미설치 SWA 테스트와 원인 미분류
 실패가 남아 있어 H100에서 재검증한다.
+2026-09-29(추가): engine pin을 `a3c26277ce4097da6726b56be07ba5da3c6462a4`(engine main)로 올렸다.
+`32c0e4a0`(FP32 추론 수정)을 main에 합친 뒤, H100 TriMul 단방향 학습 CUDA 경로(D64/256/384),
+K1/B7 token mask(호출마다 [L, L] pair mask를 만들지 않음), 추론 K1의 weight in-place 읽기를
+더한 커밋이다. 엔진의 의존성(pyproject)은 바뀌지 않아 pixi.lock은 커밋 해시만 바뀐다.
+team-gm gitlink도 같은 engine pin을 쓰는 team-gm main(`4fafa83`)으로 올렸다. 이 커밋은
+branch_compatibility와 f567 config 개수 테스트도 고쳤다. H100 검증(2026-09-29): team-gm
+601 passed / 0 failed / 390 skipped(388개는 마이그레이션 비교용 source snapshot 부재).
 `.gitmodules`의 team-gm 추적 브랜치는 main이며, 실제 재현 기준은 커밋된 gitlink다.
 v2.1.0(`afd54410`) 서버 설치 기록은 [서버 설치 기록](docs/engine-install-v210-20260927.json)에 남아 있다.
 
