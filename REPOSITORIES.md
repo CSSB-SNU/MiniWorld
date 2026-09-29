@@ -21,14 +21,20 @@ main에 포함된 로컬 브랜치 63개와 원격 브랜치 7개를 삭제했�
 삭제 대상 브랜치를 사용하던 과거 worktree 10개는 HEAD와 index를 유지한 채
 detached HEAD로 전환했다. 파일은 그대로이며, 최신 실행 코드는 위 경로를 기준으로 한다.
 
-MiniWorld와 team-gm의 engine pin은 모두 `afd54410a0bf59a204b6ca00af38909a684cf50f`이다.
-`pixi.lock`과 `uv.lock`도 engine 2.1.0 및 같은 SHA로 맞췄다. engine의 의존성과 extras는
-이전 pin과 동일함을 비교했고 다른 패키지 버전은 바꾸지 않았다.
+2026-09-29: MiniWorld와 team-gm의 engine pin을 모두 `32c0e4a037b2c56087289cd01a406e9c37ce34c7`로
+올렸다. v2.2.0 이후 main(`335a74a2`)에 FP32 TriMul/Transition 추론 수정을 더한 engine 브랜치
+`fix/trimul-bidir-infer-fp32`의 커밋이다. v2.2.0은 CuTe DSL 커널을 제거하고
+CUDA + Triton만 남겼으므로 team-gm의 `miniworld-engine[cute]` extra와 quack/CUTLASS DSL
+constraint를 없앴다. 함께 torch 2.13.0(cu12 = cu129 index), cuequivariance 0.12로 올렸다.
+pixi 환경 이름 `cu128`은 실행 스크립트 호환을 위해 유지하지만 내용은 CUDA 12.9 / torch
+2.13.0+cu129다. 삭제된 CuTe 모듈을 import하던 테스트·스크립트와 v2.1 설치본용 patch/캐시
+게시 도구는 두 저장소에서 삭제했다(git 이력에 남아 있음).
+torch 2.13부터 CUDA autocast가 `rms_norm`을 FP32로 계산하므로 team-gm qk-norm 출력은 V의 dtype으로
+되돌린다. B200 검증(2026-09-29): team-gm 155 passed / 3 failed(무관: branch_compatibility,
+f567 config 개수, adaln 강제 256KB 타일). MiniWorld는 FA4 미설치 SWA 테스트와 원인 미분류
+실패가 남아 있어 H100에서 재검증한다.
 `.gitmodules`의 team-gm 추적 브랜치는 main이며, 실제 재현 기준은 커밋된 gitlink다.
-2026-09-27 서버 업데이트로 MiniWorld의 `cu128` 환경에는 위 SHA의 engine 2.1.0을
-설치했다. engine 개발 환경도 canonical main의 editable 2.1.0으로 갱신했다.
-다른 의존성 버전은 유지했고, 구버전 설치본과 미등록 파일은 백업했다.
-설치 경로·파일 비교·검사 결과는 [서버 설치 기록](docs/engine-install-v210-20260927.json)에 남겼다.
+v2.1.0(`afd54410`) 서버 설치 기록은 [서버 설치 기록](docs/engine-install-v210-20260927.json)에 남아 있다.
 
 ## v2.1.0 튜닝 정책
 

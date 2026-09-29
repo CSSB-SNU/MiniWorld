@@ -14,7 +14,7 @@ dependencies = [
   "scipy>=1.15.3,<2",
   "lightning>=2.5.6,<3",
   "biomol>=1.0.0",
-  "cuequivariance-torch>=0.9.0,<0.10",
+  "cuequivariance-torch>=0.12,<0.13",
   "pyyaml>=6,<7",
   "rdkit>=2024.3,<2027",
 ]
@@ -61,7 +61,8 @@ ignore = [
 cuda = "13"
 
 [tool.pixi.feature.cuda13.pypi-dependencies]
-cuequivariance-ops-torch-cu13 = "*"
+torch = "==2.13.0"
+cuequivariance-ops-torch-cu13 = "==0.12.*"
 # FlashAttention-4 (CuTeDSL) for the SWA atom-attention flash backend.
 # Supports Hopper (H100 / sm_90) and Blackwell (B200 / sm_100 / sm_110). FA2/3
 # lack sm_100 support, so on Blackwell the SWA path otherwise falls back to
@@ -73,21 +74,25 @@ cuequivariance-ops-torch-cu13 = "*"
 [tool.pixi.feature.cuda13.pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/cu130"]
 
-[tool.pixi.feature.cuda128.system-requirements]
-cuda = "12.8"
+# miniworld-engine v2.2.0 runtime: torch 2.13.0+cu129 / cuequivariance 0.12. CUDA 12.9 is
+# the newest the cluster's 575 driver runs. The environment keeps its historical `cu128`
+# name because run scripts address `.pixi/envs/cu128` and `-e cu128`.
+[tool.pixi.feature.cuda129.system-requirements]
+cuda = "12.9"
 
-[tool.pixi.feature.cuda128.pypi-dependencies]
-cuequivariance-ops-torch-cu12 = "*"
+[tool.pixi.feature.cuda129.pypi-dependencies]
+torch = "==2.13.0"
+cuequivariance-ops-torch-cu12 = "==0.12.*"
 # FA4 (CuTeDSL) — same story as the cu13 feature, but install with the cu12
 # extra so the JIT wheel picks up cu12-compatible CUTLASS:
 #   uv pip install --python .pixi/envs/cu128/bin/python --prerelease=allow "flash-attn-4[cu12]"
 
-[tool.pixi.feature.cuda128.pypi-options]
-extra-index-urls = ["https://download.pytorch.org/whl/cu128"]
+[tool.pixi.feature.cuda129.pypi-options]
+extra-index-urls = ["https://download.pytorch.org/whl/cu129"]
 
 [tool.pixi.environments]
 default = { features = ["cuda13"] }
-cu128 = { features = ["cuda128"] }
+cu128 = { features = ["cuda129"] }
 
 [tool.pixi.tasks]
 # Consolidated main contains the reviewed fixes; do not replay the old 1.x patches.
@@ -103,7 +108,7 @@ team_gm = { path = "libs/team-gm", editable = true }
 # resolve.
 # Pinned to consolidated engine main; see REPOSITORIES.md for source, research,
 # native rebuild requirements and the scope of validation.
-miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "afd54410a0bf59a204b6ca00af38909a684cf50f" }
+miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "32c0e4a037b2c56087289cd01a406e9c37ce34c7" }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"

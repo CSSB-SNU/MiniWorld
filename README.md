@@ -40,6 +40,9 @@ pixi install -e cu128
 pixi run -e cu128 engine-setup
 ```
 
+The `cu128` environment keeps its historical name; since miniworld-engine v2.2.0 it
+installs torch 2.13.0+cu129 and cuequivariance 0.12.
+
 Run `engine-setup` again after reinstalling the engine dependency. It verifies
 the consolidated engine version, recorded Git pin and required source files.
 The old 1.x patch stack is historical and is not reapplied to main. FlashAttention and MathDx kernel
