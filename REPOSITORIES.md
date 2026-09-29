@@ -40,6 +40,15 @@ K1/B7 token mask(호출마다 [L, L] pair mask를 만들지 않음), 추론 K1�
 team-gm gitlink도 같은 engine pin을 쓰는 team-gm main(`4fafa83`)으로 올렸다. 이 커밋은
 branch_compatibility와 f567 config 개수 테스트도 고쳤다. H100 검증(2026-09-29): team-gm
 601 passed / 0 failed / 390 skipped(388개는 마이그레이션 비교용 source snapshot 부재).
+같은 날 Vast H100 2장에서 v1.3 설정을 synthetic batch로 돌린 결과(grad_accum 64, recycle 1): 새 스택
+optimizer step 4.14–4.23 s, 옛 스택(engine 55304541 / MiniWorld 1f065f84d / team-gm 4a45ec86, 같은
+torch 2.13 환경) 4.62–4.70 s, loss 동일. 모듈별 fwd+bwd도 옛 스택 이하이며(template D64 TriMul은 CUDA로
+바뀌어 1.40→0.47 ms), trunk의 TriMul/Transition/PWA/OPM은 모두 H100 CUDA 경로를 탄다.
+2026-09-29(추가 2): engine pin을 `5ddf1c48b67eca135774a8d251ea70b091541a62`로, team-gm gitlink를
+`cade063`으로 올렸다. fused SWA atom DiT 블록이 team-gm에서 엔진(`kernels/swa_dit`)으로 옮겨졌고
+bf16에 더해 fp32 버전과 num_aug(A)를 포함한 autotune key가 추가됐다. team-gm의 fused 경로는 여전히
+opt-in(`fused_triton` / `MINIWORLD_SWA_FUSED=1`)이라 v1.3 학습 동작은 바뀌지 않는다. bf16 경로는 H100에서
+team-gm 기존 커널과 비트 단위로 같음을 확인했고, fp32 경로의 GPU 테스트는 아직 다시 돌리지 않았다.
 `.gitmodules`의 team-gm 추적 브랜치는 main이며, 실제 재현 기준은 커밋된 gitlink다.
 v2.1.0(`afd54410`) 서버 설치 기록은 [서버 설치 기록](docs/engine-install-v210-20260927.json)에 남아 있다.
 
