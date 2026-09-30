@@ -202,3 +202,4 @@ GPU 테스트 232 passed, CPU 테스트는 engine main 대비 새 실패 없음.
 `docs/history/legacy-branches`, FoldBench 재현 patch는 `libs/patches`, `submits/`는 `scripts/slurm`으로 옮겼다.
 `logs/` `outputs/` `eval_results/` `wandb/`는 git 밖의 결과물이라 `runs/` 아래 같은 이름으로 옮겼다.
 문서 링크와 스크립트 기본 경로는 새 위치로 고쳤고, `runs/` 안의 기존 기록 경로는 바꾸지 않았다.
+2026-09-30: engine pin을 `3ac2de00c7194447c36884432b414b48b999845d`로, team-gm gitlink를 `92435d0`로 올렸다. AdaptiveLayerNorm의 `ln_cond.weight`가 부모의 bf16 캐스팅 뒤에도 fp32로 남도록 고친 커밋이다(engine 2.0 통합 때 1.x patch가 빠진 회귀; bf16 DiT의 AdaLN gamma가 Adam 한 스텝으로 움직이지 못했다).
