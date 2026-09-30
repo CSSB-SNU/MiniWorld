@@ -68,7 +68,7 @@ outputs. The surrounding existing autograd function owns the backward formula.
   training those still use cuBLAS; huge-K weight reductions strongly favored
   cuBLAS in the preceding component audit.
 
-`patches/miniworld-engine-trimul-packed-training.patch` is the sixth patch in
+`docs/history/engine-patches/miniworld-engine-trimul-packed-training.patch` is the sixth patch in
 `scripts/apply_engine_audit_patches.py`. It includes the two source changes and
 the remeasured native cache. MiniWorld and team-gm contain matching copies.
 

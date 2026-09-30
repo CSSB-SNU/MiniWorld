@@ -60,7 +60,7 @@ latest H100/Triton comparison and the compile-independent contraction dispatch.
 [The September 22 TriMul closeout](docs/trimul-fusion/closeout-20260922/README.md)
 records the final measured B1/B7 candidate, reproducibility evidence, and the
 remaining input-LayerNorm gradient validation issue. See the
-[consolidated status and wiring](TRIMUL_STATUS.html).
+[consolidated status and wiring](docs/reports/TRIMUL_STATUS.html).
 [AdaLN and attention fixes](docs/engine-adaln-attention-fixes.md) cover the H100
 shared-memory alignment failure and L8192 attention training memory.
 
@@ -75,4 +75,4 @@ Generated FoldBench results live under `eval_results/` and are excluded from Git
 ## TriMul update (2026-09-17)
 
 [Kernel changes, validation, and reinstall instructions](docs/trimul-release-20260917.md).
-[Inference kernel wiring](TRIMUL_INFERENCE.svg) · [Wiring details](docs/trimul-fusion/inference.md).
+[Inference kernel wiring](docs/reports/TRIMUL_INFERENCE.svg) · [Wiring details](docs/trimul-fusion/inference.md).

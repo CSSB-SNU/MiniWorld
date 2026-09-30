@@ -135,7 +135,7 @@ config 축 / grid와 tile 수 / GROUP_M 연결의 기존 정적 검사를 실행
 - [60건 검증](../../runs/transition_triton_audit_20260917/validation.log)
 - [Compute Sanitizer](../../runs/transition_triton_audit_20260917/memcheck.log)
 - [전체 모듈 compile/graph 검사](../../runs/transition_triton_audit_20260917/module-check.log)
-- [portable patch](../../patches/miniworld-engine-transition-layout-audit.patch)
+- [portable patch](../history/engine-patches/miniworld-engine-transition-layout-audit.patch)
 - [engine 작업 체크아웃](../../runs/transition_triton_audit_20260917/engine)
 
 생성된 Inductor `output_code.py` 및 원시 CUDA trace는 같은 run 디렉터리의

@@ -92,7 +92,7 @@ in-place gradient accumulation also remain present.
 
 In pinned `cute/dispatch.py`, an eager-calibrated cache HIT could be traced into
 the compiled graph; a cold miss selected a default. In the local
-`patches/miniworld-engine-h100-upgrade.patch`, the cold-compile repair instead
+`docs/history/engine-patches/miniworld-engine-h100-upgrade.patch`, the cold-compile repair instead
 returns the cuBLAS candidate before constructing a stride-based key. It avoids
 the observed unknown-stride failure during speculative backward tracing, but
 also prevents compiled execution from using warm Quack/CuTe winners.

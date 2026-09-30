@@ -30,7 +30,7 @@ this TriMul tuning pass.
 - The driver now emits the real projection contracts: [D,2D] without saved
   preactivations for per-side inference, [D,4D] with saved preactivations for
   single-direction training, and [D,8D] for bidirectional training.
-- The new `patches/miniworld-engine-trimul-tuning.patch` contains both fixes and
+- The new `docs/history/engine-patches/miniworld-engine-trimul-tuning.patch` contains both fixes and
   the measured H100 JSON. It follows the four existing engine patches in
   `scripts/apply_engine_audit_patches.py`. MiniWorld and team-gm carry matching
   copies, so engine-setup restores the source fixes and tuning file on reinstall.

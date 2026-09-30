@@ -6,7 +6,7 @@ L384, BF16 C128/H256, dropout25%/mask/residual, node01 H100, job15526.
 최신 forward294.384µs / backward712.624µs이며 full은 별도로 직접 측정했다.
 **최신 조합은 입력 LN gamma/beta gradient 상대L2 최대9.535e-6로 기존 한도5e-6를 초과했다.**
 후보의 성능 진단값이며 정확도 통과·기본 경로 승격으로 표시하지 않는다.
-[전체 표·배선·검증·구성 대조](runs/trimul_full_latest_20260922/index.html).
+[전체 표·배선·검증·구성 대조](../../runs/trimul_full_latest_20260922/index.html).
 
 ---
 
@@ -16,7 +16,7 @@ L384, BF16 C128/H256, dropout25%/mask/residual, node01 H100, job15526.
 동기화 후보 L384 B1은182.624→182.112µs(-0.28%)였지만, 예전 B7 구현을 사용하는 별도 검사 코드의 전체 차이는0.07%다.
 그 코드의1,185µs는 앞서1,048~1,076µs였던 개선 B7 조합의 최신 시간이 아니며 직접 비교하면 안 된다.
 변경 없는 forward에서도 비슷한 변동이 있어 전체 학습의 확정 이득으로 채택하지 않았다. SoL90 미달.
-[후속 실험·HBM 시각화·NCU 근거](runs/trimul_b1_cache_followup_20260922/index.html).
+[후속 실험·HBM 시각화·NCU 근거](../../runs/trimul_b1_cache_followup_20260922/index.html).
 
 ---
 
@@ -32,7 +32,7 @@ dWproj partial 저장을 dWgate 계산 뒤로 미루고, dGate 보존·소비 �
 
 동일 실행 5×200 교차 측정. 전체 11 gradients·graph/eager bit-exact, 두 길이 memcheck/racecheck 통과.
 전체 학습 변화는 이 B1 개선율보다 작다. SoL90 미달이며 생산용 dispatch 승격은 아니다.
-[새 배선·전체 비교·NCU·검증](runs/trimul_b1_gate_demote_20260922/index.html).
+[새 배선·전체 비교·NCU·검증](../../runs/trimul_b1_gate_demote_20260922/index.html).
 아래는 이전 날짜의 개발 기록이다.
 
 ---

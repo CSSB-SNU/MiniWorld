@@ -108,4 +108,4 @@ L384에서 eager와 static compile 모두 FWD는 LN → expand/SwiGLU → 새 sq
 - [설치본 기본 config 회귀 테스트 로그](../../runs/transition_residual_20260917/installed-default-tests.log)
 - [선택 config 메모리 검사](../../runs/transition_residual_20260917/memcheck-selected-configs.log)
 - [Profiler](../../runs/transition_residual_20260917/profile.log)
-- [재설치 patch](../../patches/miniworld-engine-transition-residual-fusion.patch)
+- [재설치 patch](../history/engine-patches/miniworld-engine-transition-residual-fusion.patch)

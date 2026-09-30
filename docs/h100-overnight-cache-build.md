@@ -9,7 +9,7 @@ the existing autograd function retains the gradient equations. The training
 path no longer concatenates the three pair-sized contraction outputs.
 Inference is unchanged by this seventh patch.
 
-Patch: `patches/miniworld-engine-triton-packed-training.patch`. MiniWorld and
+Patch: `docs/history/engine-patches/miniworld-engine-triton-packed-training.patch`. MiniWorld and
 team-gm have matching installer, patch and test copies. The original source
 checkout outside MiniWorld was not edited.
 

@@ -142,7 +142,7 @@ lines(54,1810,['파랑 = Triton   ·   초록 = CuTe   ·   보라 = cuBLAS 호�
               'weight packing·cast·mask 준비 등 보조 연산은 생략. 입력 LN은 μ/rstd buffer도 생성. dropout는 추론에서 비활성. B200 경로는 이 그림 범위 밖.'],17,28)
 text(36,1946,'Source: installed miniworld_engine / cu128   ·   상세 근거와 SHA-256: docs/trimul-fusion/inference.md + inference-sources.json',15,'#60728a')
 OUT.mkdir(parents=True,exist_ok=True)
-ET.ElementTree(svg).write(str(ROOT/'TRIMUL_INFERENCE.svg'),encoding='utf-8',xml_declaration=True)
+ET.ElementTree(svg).write(str(ROOT/'docs/reports/TRIMUL_INFERENCE.svg'),encoding='utf-8',xml_declaration=True)
 files=['kernels/trimul_inproj/triton/contract.py','modules/triangle_multiplication/module.py','modules/triangle_multiplication/bidirectional.py','modules/dispatch.py','kernels/trimul_inproj/triton/unidirectional.py','kernels/trimul_inproj/triton/bidirectional.py','kernels/trimul_inproj/triton/back.py','kernels/trimul_inproj/triton/gate_elem.py','kernels/tm1/cute/launch.py','kernels/trimul_inproj/cute/masked_front.py','kernels/layernorm/triton/transpose.py','kernels/layernorm/triton/main.py','kernels/trimul_inproj/triton/backward_fused.py']
 (OUT/'inference-sources.json').write_text(json.dumps({'date':'2026-09-17','scope':'installed source wiring, not runtime profiling','package':str(PKG),'sha256':{f:hashlib.sha256((PKG/f).read_bytes()).hexdigest() for f in files}},indent=2)+'\n')
-print(ROOT/'TRIMUL_INFERENCE.svg')
+print(ROOT/'docs/reports/TRIMUL_INFERENCE.svg')

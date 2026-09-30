@@ -195,3 +195,6 @@ token DiT(추론·학습, CUDA + cuBLAS), OPM/PWA 학습. 새 경로는 모두 c
 H100·A100 동작은 바뀌지 않는다. engine 의존성은 그대로라 pixi.lock은 커밋 해시만 바뀐다. B200 검증: 병합된
 GPU 테스트 232 passed, CPU 테스트는 engine main 대비 새 실패 없음. 연구 캡슐(라운드 기록·원본 커널)은 main에
 넣지 않고 engine 태그 `archive/research-*-20260930`으로 보존했다.
+2026-09-30(정리): 루트의 engine/TriMul 보고서(`ENGINE_*.html`, `TRIMUL_*`)를 [docs/reports](docs/reports)로,
+더는 적용하지 않는 engine 1.x/2.1 patch와 manifest를 [docs/history/engine-patches](docs/history/engine-patches/README.md)로
+옮기고 문서·생성 스크립트의 경로를 고쳤다. `patches/`에는 FoldBench 재현 patch만 남는다.

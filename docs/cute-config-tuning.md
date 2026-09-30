@@ -58,7 +58,7 @@ not claim fully independent per-kernel dependency hashes.
 Job 13096 uses the unchanged eight-patch snapshot in
 `runs/h100_build_20260915_retry1/package`. The new source is developed and tested in
 `runs/native_tuning_dev/package` and packaged as
-`patches/miniworld-engine-native-tuning.patch`.
+`docs/history/engine-patches/miniworld-engine-native-tuning.patch`.
 
 `activate_native_tuning.py` waits for the previous build's exit marker, validates
 the exact source and patch hashes, then appends the new patch to both root and

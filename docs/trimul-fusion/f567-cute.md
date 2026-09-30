@@ -92,7 +92,7 @@ H100 80GB, BF16, B1, pair/방향별 hidden=128, fixed-shape compile. 아래는 F
 
 ### 배포물과 원시 기록
 
-- [엔진 패치](../../patches/miniworld-engine-trimul-f567-cute.patch), [manifest](../../patches/trimul-f567-cute-manifest.json), [커널 소스 스냅샷](f567-cute/output_f567.py)
+- [엔진 패치](../history/engine-patches/miniworld-engine-trimul-f567-cute.patch), [manifest](../history/engine-patches/trimul-f567-cute-manifest.json), [커널 소스 스냅샷](f567-cute/output_f567.py)
 - [L384 전체 config](f567-cute/final_tune_L384.json), [L768 전체 config](f567-cute/final_tune_L768.json)
 - [L384 runtime·profiler](f567-cute/final_runtime_L384.json), [L768 runtime·profiler](f567-cute/final_runtime_L768.json)
 - [테스트 XML](f567-cute/final_tests.xml), [memcheck](f567-cute/memcheck.log), [build 계약](f567-cute/final_plan.json), [패치 검증](f567-cute/patch-validation.json)

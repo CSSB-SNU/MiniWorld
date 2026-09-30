@@ -117,7 +117,7 @@ migration records the exact two unrelated Triton source-file hashes.
 AdaLN GEMM timings are rebuilt for its changed implementation.
 
 The ordered installer patches include
-`patches/miniworld-engine-attention-compute-memory.patch` to remove automatic
+`docs/history/engine-patches/miniworld-engine-attention-compute-memory.patch` to remove automatic
 atomic routing and implement the compute-efficient changes above. Native cache
 identities are migrated only after proving that the two changed source files
 are Triton attention code and all native kernels/launchers/tuning dependencies

@@ -257,8 +257,8 @@ Job 12961: **6 passed**.
 Engine changes are preserved against the pinned engine revision
 `1bc0803e3b2fef3b963fdc383e090c0adcccdb43` in:
 
-- `patches/miniworld-engine-wheel-cute-path.patch`
-- `patches/miniworld-engine-cudagraph-amp.patch`
+- `docs/history/engine-patches/miniworld-engine-wheel-cute-path.patch`
+- `docs/history/engine-patches/miniworld-engine-cudagraph-amp.patch`
 
 They are applied to the local cu128 installation. The dependency revision in
 `pyproject.toml` has not been repinned to an unpublished commit. After reinstalling

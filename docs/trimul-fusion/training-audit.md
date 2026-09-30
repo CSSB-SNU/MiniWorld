@@ -226,8 +226,8 @@ Example, from the project root on an allocated H100:
 
 Use `--implementation pytorch` for the baseline and `--graph manual` for the
 runner's graph setup. The hash-checked patch and activation manifest are in
-`patches/miniworld-engine-trimul-training-audit.patch` and
-`patches/trimul-training-audit-manifest.json`, mirrored into `libs/team-gm`.
+`docs/history/engine-patches/miniworld-engine-trimul-training-audit.patch` and
+`docs/history/engine-patches/trimul-training-audit-manifest.json`, mirrored into `libs/team-gm`.
 
 ### Installation
 

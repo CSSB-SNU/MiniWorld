@@ -2,7 +2,7 @@
 
 2026-09-16. BF16 양방향 TriMul **학습 forward**에 A를 연결했다. F4 LayerNorm은 별도이며, F5 출력 projection + F6 gate projection + F7 sigmoid·곱·dropout scale·residual을 한 Triton 커널에서 실행한다. backward에 필요한 projection과 gate는 저장한다. dropout 난수 생성은 커널 밖이다.
 
-이전 `scripts/trimul_output_fusion.py`의 Python 설정 목록·`SELECTED`는 A/B 실험 재현용으로 남겼다. 새 엔진 구현은 [output_fused.py 스냅샷](f567-config/output_fused.py)이며, 실제 배포물은 [엔진 패치](../../patches/miniworld-engine-trimul-f567-config.patch)다.
+이전 `scripts/trimul_output_fusion.py`의 Python 설정 목록·`SELECTED`는 A/B 실험 재현용으로 남겼다. 새 엔진 구현은 [output_fused.py 스냅샷](f567-config/output_fused.py)이며, 실제 배포물은 [엔진 패치](../history/engine-patches/miniworld-engine-trimul-f567-config.patch)다.
 
 ## Config 공간
 
