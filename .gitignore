@@ -8,7 +8,8 @@ output/
 outputs/
 *.sh
 wandb/
-submits/
+# one-off launch files (formerly submits/); only reviewed ones are tracked
+/scripts/slurm/
 *.pyc
 __pycache__/
 *.py[cod]
@@ -20,8 +21,6 @@ commands/
 tests/inference_data/
 .codex.cache/
 /inference/
-# one-off experiment/bench/probe scripts, not for main
-scratch/
 # local dependency checkouts (separate git repos, NOT submodules; foldbench is ~147G)
 /libs/datacooker/
 /libs/foldbench/
@@ -38,8 +37,6 @@ docs/paper/*.log
 docs/paper/*.out
 docs/paper/*.synctex.gz
 docs/paper/main.pdf
-# Local FoldBench runs and per-target outputs; publish source and reports separately.
-/eval_results/
 
 # Separate engine worktrees and local proof environment.
 /.engine-release-2.0.0/

@@ -4,9 +4,9 @@
 
 ## 현재 배선
 
-- [Forward](../../tmp_kernel/trimul/TRIMUL_FORWARD.svg): F4는 별도, F5+F6+F7은 `_output_f567_kernel` 하나.
-- [Backward](../../tmp_kernel/trimul/TRIMUL_BACKWARD.svg): B9+B10은 `_input_dual_bwd_kernel`, B11+B12는 `_ln_bwd_residual_kernel`.
-- [확대 뷰어](../../tmp_kernel/trimul/TRIMUL_STATUS.html): 기본 화면은 현재 Triton. 이전 H100과 미적용 CuTe F567은 별도로 표시한다.
+- [Forward](../kernels/trimul/TRIMUL_FORWARD.svg): F4는 별도, F5+F6+F7은 `_output_f567_kernel` 하나.
+- [Backward](../kernels/trimul/TRIMUL_BACKWARD.svg): B9+B10은 `_input_dual_bwd_kernel`, B11+B12는 `_ln_bwd_residual_kernel`.
+- [확대 뷰어](../kernels/trimul/TRIMUL_STATUS.html): 기본 화면은 현재 Triton. 이전 H100과 미적용 CuTe F567은 별도로 표시한다.
 
 각 커널의 실선 경계 안에 실제 CSV의 타일·warp·stage 후보를 표시했다. 화살표는 데이터 의존성을 나타내며 병렬 실행을 뜻하지 않는다.
 

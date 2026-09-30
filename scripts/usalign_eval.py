@@ -11,7 +11,7 @@ Per target it scans ``<dir>/structures`` for ``<name>_gt.cif`` and the matching
 best sample (lowest RMSD and highest TM-score, reported separately).
 
 Usage:
-    python scripts/usalign_eval.py outputs/.../edm0500_protein_noema \
+    python scripts/usalign_eval.py runs/outputs/.../edm0500_protein_noema \
         [more_dirs ...] [--usalign tools/USalign/USalign]
 """
 

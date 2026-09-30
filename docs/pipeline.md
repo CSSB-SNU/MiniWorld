@@ -72,8 +72,8 @@ raised-LR one.
 
 | pre-1.0.0 run | max_lr | checkpoints |
 |---|---|---|
-| `logs/phase3/large_H100_diffusion` | 1.8e-3 | 3 |
-| **`logs/phase3/large_H100_diffusion_hlr`** | **5e-3** | **9** (the one phase 4 seeded from) |
+| `runs/logs/phase3/large_H100_diffusion` | 1.8e-3 | 3 |
+| **`runs/logs/phase3/large_H100_diffusion_hlr`** | **5e-3** | **9** (the one phase 4 seeded from) |
 
 The rationale recorded with the raise — *"frozen trunk + from-scratch diffusion head"* —
 applies identically to phase 2a, which also trains a scratch diffusion head on a frozen
@@ -188,7 +188,7 @@ Runs and checkpoints produced before this document use the old numbering. The ma
 | phase3 | 2 (2a / 2b) |
 | phase4 | 3 (3a / 3b) |
 
-Affected on-disk paths keep their old names — `logs/autoscale/large_H100_full_d16k/...`
+Affected on-disk paths keep their old names — `runs/logs/autoscale/large_H100_full_d16k/...`
 (phases 1a+1b), `runs/phase3/...`, `runs/phase4/...`. New runs use
 `runs/v1.0.0/<phase>/<name>`.
 

@@ -60,4 +60,4 @@ Graph OFF에서는 L384가 약 24.9% 느려졌고, L768은 약 2.4% 가속이다
 - [Graph replay 커널 확인 L384](../../runs/trimul_sm90_dropout_20260917/graph/provenance-L384.json) · [L768](../../runs/trimul_sm90_dropout_20260917/graph/provenance-L768.json)
 - [Stochastic graph adapter](../../runs/trimul_sm90_dropout_20260917/graph/stochastic_graph.py)
 - [Graph OFF benchmark](../../runs/trimul_sm90_dropout_20260917/module/benchmark.py)
-- [이전 dropout OFF 결과](TMA_ROUND2.md) · [SVG 뷰어](../../tmp_kernel/trimul/TRIMUL_STATUS.html)
+- [이전 dropout OFF 결과](TMA_ROUND2.md) · [SVG 뷰어](../kernels/trimul/TRIMUL_STATUS.html)

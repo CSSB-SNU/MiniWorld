@@ -5,7 +5,7 @@ main에 포함된 로컬 브랜치 63개와 원격 브랜치 7개를 삭제했�
 정리 대상 7개 저장소는 `main`을 사용하며, engine에는 `mpnn`과
 `backup/mpnn-pre-rebase-20260913`도 로컬·원격에 유지했다.
 삭제한 브랜치의 커밋은 main 이력에 남아 있고, 이름과 SHA는
-[브랜치 정리 기록](docs/repository-audit-20260927/branch-cleanup.json)에 보존했다.
+[브랜치 정리 기록](repository-audit-20260927/branch-cleanup.json)에 보존했다.
 
 ## 현재 작업 경로
 
@@ -50,7 +50,7 @@ bf16에 더해 fp32 버전과 num_aug(A)를 포함한 autotune key가 추가됐�
 opt-in(`fused_triton` / `MINIWORLD_SWA_FUSED=1`)이라 v1.3 학습 동작은 바뀌지 않는다. bf16 경로는 H100에서
 team-gm 기존 커널과 비트 단위로 같음을 확인했고, fp32 경로의 GPU 테스트는 아직 다시 돌리지 않았다.
 `.gitmodules`의 team-gm 추적 브랜치는 main이며, 실제 재현 기준은 커밋된 gitlink다.
-v2.1.0(`afd54410`) 서버 설치 기록은 [서버 설치 기록](docs/engine-install-v210-20260927.json)에 남아 있다.
+v2.1.0(`afd54410`) 서버 설치 기록은 [서버 설치 기록](engine-install-v210-20260927.json)에 남아 있다.
 
 ## v2.1.0 튜닝 정책
 
@@ -86,7 +86,7 @@ CPU 전체 job 19676: 3,967 passed / 16 failed / 279 skipped, GPU 1,002 deselect
 위 두 설치 환경은 v2.1.0으로 갱신했다. 설치 확인은 GPU 성능·정확성 검증과 별개다.
 
 CUDA의 `default → expanded → 구조 variant` 확장 방향은
-[후속 개발 계획](docs/cuda-config-expansion-plan.md)에 기록했다. 아직 구현·실측 완료된
+[후속 개발 계획](cuda-config-expansion-plan.md)에 기록했다. 아직 구현·실측 완료된
 공간이 아니라 다음 개발 기준이다.
 
 ## main에 들어간 내용
@@ -100,16 +100,16 @@ CUDA의 `default → expanded → 구조 variant` 확장 방향은
   prepared pair bias API, valid-atom diffusion loss, SWA 연구 구현,
   FoldForge adapter와 inference bucket 확장.
 
-현재 구현과 충돌하는 오래된 코드는 main 안의 `experiments/legacy_branches/`에 파일·provenance로
+현재 구현과 충돌하는 오래된 코드는 main 안의 `docs/history/legacy-branches/`에 파일·provenance로
 보존하고 branch 이력도 연결했다. BioMol/AF3 구형 API를 현재 API에 덮어쓰거나,
 불완전한 publish worktree의 164개 삭제를 현재 코드에 적용하지 않았다.
 engine의 이전 연구 runtime은 `experiments/legacy_h100_runtime/`, 오래된 tuning은
 `experiments/transition_fused/records/cache_snapshot_20260927/`에서 확인한다.
 DiT 실험 runner는 최신 `runner.py`와 이전 `runner_multistream.py`를 함께 보존했다.
 
-[통합 refs 및 소스 검증](docs/repository-audit-20260927/main-verification.json) ·
-[초기 보존 작업의 전체 작업본 표](docs/repository-audit-20260927/BRANCHES.md) ·
-[초기 커밋별 파일](docs/repository-audit-20260927/commits.json)
+[통합 refs 및 소스 검증](repository-audit-20260927/main-verification.json) ·
+[초기 보존 작업의 전체 작업본 표](repository-audit-20260927/BRANCHES.md) ·
+[초기 커밋별 파일](repository-audit-20260927/commits.json)
 
 ## v2.1 변경 전 통합 검증 기록
 
@@ -128,8 +128,8 @@ cache identity, MPNN dropout cache coverage, 연구 커널의 compile/빌드/명
 CPU LayerNorm dispatch 검사 등이 포함된다. 일부는 GPU 없이 재생성할 수 없고,
 일부는 연구 코드의 별도 정비가 필요하다. 이번 main은 개발 코드 통합본이며 완전 통과한
 릴리스나 새 GPU 검증 완료본으로 취급하지 않는다.
-[정확한 실패 목록](docs/repository-audit-20260927/engine-cpu.json) ·
-[실패 상세](docs/repository-audit-20260927/engine-failures.txt)
+[정확한 실패 목록](repository-audit-20260927/engine-cpu.json) ·
+[실패 상세](repository-audit-20260927/engine-failures.txt)
 
 TriangleAttention checkpoint18246의 기록된 파일 48개는 모두 기존 SHA와 일치한다.
 Norm manifest 12개 중 11개는 일치한다. 나머지 `layernorm/compile_native.py`는
@@ -155,7 +155,7 @@ D512 `wide_checkpoint24.py`다. 공용 engine의 wide backward dispatch 통합�
 
 기준은 기존 Triton과 우리 커널의 직접 측정값이다. 원본 외부 커널 대비라는 의미가 아니다.
 모든 wide shape 1.5배와 SOL90은 미달성이다. 숫자·job·원본 JSON:
-[qualified_speedups.json](runs/trimul_d256_bwd_sol90_stage2_20260923/qualified_speedups.json).
+[qualified_speedups.json](../runs/trimul_d256_bwd_sol90_stage2_20260923/qualified_speedups.json).
 
 ## 나머지 저장소와 서버 이동
 
@@ -169,8 +169,8 @@ D512 `wide_checkpoint24.py`다. 공용 engine의 wide backward dispatch 통합�
 | 외부 참고 커널·CUTLASS | upstream revision 유지 |
 
 FoldBench의 MiniWorld adapter와 target 선택은
-[재현 patch](patches/dependencies/foldbench-miniworld.patch)와
-[기준 revision](patches/dependencies/foldbench.json)으로 MiniWorld main에 포함했다.
+[재현 patch](../libs/patches/foldbench-miniworld.patch)와
+[기준 revision](../libs/patches/foldbench.json)으로 MiniWorld main에 포함했다.
 DataCooker/FoldBench/KmerFastAlign은 부모에서 무시하는 로컬 저장소이므로
 `--recurse-submodules`만으로 설치되지 않는다.
 DataCooker의 과거 `gh-pages`는 생성된 사이트 배포 이력이므로 소스 main 통합에서 제외했다.
@@ -195,6 +195,10 @@ token DiT(추론·학습, CUDA + cuBLAS), OPM/PWA 학습. 새 경로는 모두 c
 H100·A100 동작은 바뀌지 않는다. engine 의존성은 그대로라 pixi.lock은 커밋 해시만 바뀐다. B200 검증: 병합된
 GPU 테스트 232 passed, CPU 테스트는 engine main 대비 새 실패 없음. 연구 캡슐(라운드 기록·원본 커널)은 main에
 넣지 않고 engine 태그 `archive/research-*-20260930`으로 보존했다.
-2026-09-30(정리): 루트의 engine/TriMul 보고서(`ENGINE_*.html`, `TRIMUL_*`)를 [docs/reports](docs/reports)로,
-더는 적용하지 않는 engine 1.x/2.1 patch와 manifest를 [docs/history/engine-patches](docs/history/engine-patches/README.md)로
-옮기고 문서·생성 스크립트의 경로를 고쳤다. `patches/`에는 FoldBench 재현 patch만 남는다.
+2026-09-30(정리): 최상위 폴더를 코드(`src` `configs` `tests` `libs` `scripts`), 문서(`docs`), 실행 결과(`runs`)로
+줄였다. `tmp_kernel/`과 루트 보고서(`ENGINE_*`, `TRIMUL_*`)는 [docs/kernels](kernels/README.md),
+이 문서(구 `REPOSITORIES.md`)는 `docs/repositories.md`, 더는 적용하지 않는 engine 1.x/2.1 patch는
+[docs/history/engine-patches](history/engine-patches/README.md), `experiments/legacy_branches`는
+`docs/history/legacy-branches`, FoldBench 재현 patch는 `libs/patches`, `submits/`는 `scripts/slurm`으로 옮겼다.
+`logs/` `outputs/` `eval_results/` `wandb/`는 git 밖의 결과물이라 `runs/` 아래 같은 이름으로 옮겼다.
+문서 링크와 스크립트 기본 경로는 새 위치로 고쳤고, `runs/` 안의 기존 기록 경로는 바꾸지 않았다.

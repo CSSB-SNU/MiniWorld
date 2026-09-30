@@ -106,7 +106,7 @@ team_gm = { path = "libs/team-gm", editable = true }
 # [tool.uv.sources] transitive through the editable team_gm path dep, so MiniWorld
 # must declare the git source itself for team_gm's `miniworld-engine` requirement to
 # resolve.
-# Pinned to consolidated engine main; see REPOSITORIES.md for source, research,
+# Pinned to consolidated engine main; see docs/repositories.md for source, research,
 # native rebuild requirements and the scope of validation.
 miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "627c089195bdc21b05150d2039098643024db760" }
 

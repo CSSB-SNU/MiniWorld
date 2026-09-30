@@ -19,7 +19,7 @@ miniworld-engine의 개발 방향으로 삼는다.
 아래 기록은 전환 이전 자체 개발의 결과이며, 당시의 유지·개발 계획보다 이 방향이
 우선한다. 수치 비교는 동일 조건의 실측으로 별도 증명한다.
 
-[엔진의 공식 개발 방향과 기여 표기 원칙](../runs/trimul_sm90_parity_20260917/engine/docs/project-direction.md).
+[엔진의 공식 개발 방향과 기여 표기 원칙](../../runs/trimul_sm90_parity_20260917/engine/docs/project-direction.md).
 
 ### 9/19 원본 연결 및 H100 분석
 
@@ -43,7 +43,7 @@ node02 H100, L384, static compile + manual CUDA Graph, 단위 ms. CUDA 열은 �
 
 기존 CUDA 대비 전체 학습은 1.08~1.16배 빨라졌다. 최선 Triton 대비로는 D256만 약 1.04배 빠르며, 전체 15% 목표는 미달이다. 경계 shape 24건, graph 8건, memcheck/racecheck 각 16설정 통과. M129의 8개 조합에서 이전 CUDA와 출력·6개 gradient가 bitwise 일치했다.
 
-[모든 L384/768·형식별 측정](../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-opt-20260919/RESULTS.md) · [구현·검증·cubin/ptxas/NCU 근거](../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-opt-20260919/README.md).
+[모든 L384/768·형식별 측정](../../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-opt-20260919/RESULTS.md) · [구현·검증·cubin/ptxas/NCU 근거](../../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-opt-20260919/README.md).
 
 ## Transition forward — 9/18 기준, 이번 CUDA 최적화 이전
 
@@ -60,7 +60,7 @@ node02 H100, B1 pair, expansion4, BF16 activation/weight + FP32 LN affine, nonze
 | 512 | 384 | 2.1787 | 2.3445 | 2.3445 | 3.3561 | 0.929× | 1.000× |
 | 512 | 768 | 8.7894 | 9.2645 | 9.2645 | 12.8118 | 0.949× | 1.000× |
 
-[새 CUDA 자체의 PyTorch/이전 Triton 대비 속도비까지 포함한 표](../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-variants-20260918/FORWARD_COMPARISON.md) · [학습/방향별 시간](../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-variants-20260918/RESULTS.md) · [설정](../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-variants-20260918/CONFIGS.md).
+[새 CUDA 자체의 PyTorch/이전 Triton 대비 속도비까지 포함한 표](../../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-variants-20260918/FORWARD_COMPARISON.md) · [학습/방향별 시간](../../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-variants-20260918/RESULTS.md) · [설정](../../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-variants-20260918/CONFIGS.md).
 
 아래 9/18 측정에서 새 CUDA 두 형식은 당시 최선 Triton을 이기지 못했다. D384/512에서는 PyTorch보다도 느리다. 작은 D의 Triton 개선과 새 CUDA의 성능을 혼동하지 않는다.
 
@@ -88,7 +88,7 @@ Transition은 GPU 18건 및 memcheck 10건(오류 0건), 관련 import/dispatch 
 
 현재 Triton 대비 H100의 추가 이득은 각각 1.033× / 1.039×다. 누적 27~30% 속도비를 H100 이식만의 이득으로 해석하지 않는다. 당시 baseline의 H100 캐시 부재와 현재 튜닝 차이도 포함한다. H100 열은 front/f567/dual_bwd/out_ln_bwd를 명시 선택한 결과이며 untouched default가 아니다. 전체 MiniWorld 학습 속도 측정은 아니다.
 
-[Trimul 마무리 원본](../runs/trimul_sm90_parity_20260917/engine/docs/records/trimul-weekly-closeout-20260918/README.md) · [B4 기준 정정 및 미승격 실험](../runs/trimul_sm90_parity_20260917/engine/docs/records/trimul-b4-l384-20260918/README.md).
+[Trimul 마무리 원본](../../runs/trimul_sm90_parity_20260917/engine/docs/records/trimul-weekly-closeout-20260918/README.md) · [B4 기준 정정 및 미승격 실험](../../runs/trimul_sm90_parity_20260917/engine/docs/records/trimul-b4-l384-20260918/README.md).
 
 [Transition 두 버전 배선 그림](transition/TRANSITION_VARIANTS.svg) · [Trimul 배선 뷰어](trimul/TRIMUL_STATUS.html).
 
@@ -103,4 +103,4 @@ node02 H100, B1/D=hidden128, BF16 + FP32 norm affine. PyTorch 포함 모두 정�
 | inference | 384 | 1.3027 | 0.4252 | 0.4048 | 3.064× | 3.218× |
 | inference | 768 | 11.6595 | 1.6290 | 1.5128 | 7.157× | 7.707× |
 
-[비교 조건·검증·원본](../runs/trimul_sm90_parity_20260917/engine/docs/records/trimul-pytorch-compare-20260919/README.md).
+[비교 조건·검증·원본](../../runs/trimul_sm90_parity_20260917/engine/docs/records/trimul-pytorch-compare-20260919/README.md).

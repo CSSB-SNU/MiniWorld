@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Emit the four MSA-module maps in the house style of trimul/TRIMUL_FORWARD.svg.
 
-Run: python tmp_kernel/generate_msa_svg.py   (writes msa_opm/ and msa_pwa/ beside this file)
+Run: python docs/kernels/generate_msa_svg.py   (writes msa_opm/ and msa_pwa/ beside this file)
 """
 from xml.sax.saxutils import escape
 

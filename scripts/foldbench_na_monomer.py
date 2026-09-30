@@ -58,9 +58,9 @@ def main() -> None:
     ap.add_argument("--pred-dir", type=Path,
                     default=Path("runs/foldbench/v1.0.1-phase2b-swa-full"))
     ap.add_argument("--official", type=Path,
-                    default=Path("eval_results/foldbench/p2b-swa-full-partial/detail"))
+                    default=Path("runs/eval_results/foldbench/p2b-swa-full-partial/detail"))
     ap.add_argument("--out", type=Path,
-                    default=Path("eval_results/foldbench/na_monomer_nostereo"))
+                    default=Path("runs/eval_results/foldbench/na_monomer_nostereo"))
     ap.add_argument("--workers", type=int, default=48)
     args = ap.parse_args()
 

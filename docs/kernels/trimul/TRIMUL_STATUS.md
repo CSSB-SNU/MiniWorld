@@ -4,13 +4,13 @@
 최근 전체 연결 실험 `FP32 x̂/rstd 저장 + raw tri 없는 B1 + split_xn_pc1 B7`을 표시한다. 엔진의 production 기본값을 뜻하지 않는다.
 
 **학습 커널 개발 설정:** K3에서 입력 affine BF16 `x_n`, 출력 pre-affine 정규화 값 FP32 `x̂`, 출력 FP32 `rstd`를 저장한다. B1은 `tri`나 평균을 받지 않는다. 평균·분산 및 `(tri−mean)*rstd` 재계산 없이 `x̂*gamma+beta`만 적용한다.
-[현재 구현·측정·검증](../../runs/trimul_xhat_native2_20260921/README.md). 이전 FP32 정규화 저장 경로 대비 B1 지연 −1.4/−2.8%, 전체 −0.55/−0.43%. 아직 raw tri 재계산 기준보다 전체 약6.4/6.8% 느리다. 현재 방향은 정규화 값 저장으로 유지한다.
+[현재 구현·측정·검증](../../../runs/trimul_xhat_native2_20260921/README.md). 이전 FP32 정규화 저장 경로 대비 B1 지연 −1.4/−2.8%, 전체 −0.55/−0.43%. 아직 raw tri 재계산 기준보다 전체 약6.4/6.8% 느리다. 현재 방향은 정규화 값 저장으로 유지한다.
 이전 통계만 저장하는 경로는 비교 이력으로 남긴다. 현재 개발 어댑터는 [training.py](runs/trimul_xhat_native2_20260921/training.py)다.
 
 - [확대 뷰어](TRIMUL_STATUS.html) · [온라인 현황판](https://miniworld-kernel-status.psk6950.chatgpt.site/trimul.html#current-wiring)
 - Forward: [L384](TRIMUL_FORWARD.svg) · [L768](TRIMUL_FORWARD_L768.svg)
 - Backward: [L384](TRIMUL_BACKWARD.svg) · [L768](TRIMUL_BACKWARD_L768.svg)
-- [Anthropic 도입 전 그림 보관](../../docs/trimul-fusion/archive-pre-anthropic-20260921/README.md)
+- [Anthropic 도입 전 그림 보관](../../trimul-fusion/archive-pre-anthropic-20260921/README.md)
 
 ## 그림 읽는 법: HBM 왕복
 
@@ -65,7 +65,7 @@ Backward 호출은 **CUDA 3회 + cuBLAS 4회 + 준비용 복사 1회**이며, cu
 
 ## 전체 연결 후보의 동일 실행 실측
 
-[최신 구현·NCU·검증 보고서](../../runs/trimul_b1_shared_20260921/README.md). H100 node02, BF16 C128/H256 양방향, mask/dropout25%/residual. Live packing과 모든11개 gradient, CUDA graph600회 교대 측정.
+[최신 구현·NCU·검증 보고서](../../../runs/trimul_b1_shared_20260921/README.md). H100 node02, BF16 C128/H256 양방향, mask/dropout25%/residual. Live packing과 모든11개 gradient, CUDA graph600회 교대 측정.
 
 | L | B1 이전 → 신규 | B1 속도 | 전체 fwd+bwd 이전 → 신규 | 전체 속도 |
 |---|---:|---:|---:|---:|
@@ -81,7 +81,7 @@ Backward 호출은 **CUDA 3회 + cuBLAS 4회 + 준비용 복사 1회**이며, cu
 - [전체 연결과 호출 순서](runs/trimul_b1_shared_20260921/training.py)
 - [Forward K1/K3 연결](runs/trimul_ln_only_save_20260921/ln_save_core.py)
 - [B1–B4 CUDA](runs/trimul_b1_shared_20260921/b1_fused.cu) · [B7 역할별 CUDA](runs/trimul_split_bwd_20260921/b7_roles.cu)
-- [선택 / 검증 상태](../../runs/trimul_b1_shared_20260921/README.md)
+- [선택 / 검증 상태](../../../runs/trimul_b1_shared_20260921/README.md)
 - [소스·결과·SVG SHA-256](runs/trimul_diagrams_20260921/manifest.json)
 
 ```sh
@@ -94,12 +94,12 @@ python3 scripts/render_kernel_viewers.py --trimul-only
 
 ## 출력 LN 저장 실험 (2026-09-21)
 
-입력 x_n 저장은 유지한다. 출력 LN을 추가 저장하고 B1에서 재사용해도 전체 학습은 L384 +1.4~1.8%, L768 +0.1~0.2%로 이득이 없었다. [실험 결과](../../runs/trimul_output_ln_save_20260921/README.md). 당시 SVG 정책은 변경하지 않았다. 현재 선택은 상단의 native FP32 x̂/rstd 경로다.
+입력 x_n 저장은 유지한다. 출력 LN을 추가 저장하고 B1에서 재사용해도 전체 학습은 L384 +1.4~1.8%, L768 +0.1~0.2%로 이득이 없었다. [실험 결과](../../../runs/trimul_output_ln_save_20260921/README.md). 당시 SVG 정책은 변경하지 않았다. 현재 선택은 상단의 native FP32 x̂/rstd 경로다.
 
 ## tri 대체 저장 검증 (2026-09-21)
 
-이전 출력 LN 추가 저장 실험은 tri도 읽는 경로였다. 후속 실험에서 tri를 B1 인자 및 backward 저장 목록에서 제거하고 NaN poison 검사를 통과했다. 정규화 값 FP32+rstd는 기존과 bit-exact, BF16은 약0.35% gradient 오차로 실패. FP32 첫 구현의 전체 시간은 약8.6% 증가했으나 재튜닝 전이며 정책 자체의 최적성 결론은 아니다. [상세 결과](../../runs/trimul_replace_tri_20260921/README.md). 당시 기본값/SVG는 기존 경로였다. 현재 선택은 상단의 native FP32 x̂/rstd 경로다.
+이전 출력 LN 추가 저장 실험은 tri도 읽는 경로였다. 후속 실험에서 tri를 B1 인자 및 backward 저장 목록에서 제거하고 NaN poison 검사를 통과했다. 정규화 값 FP32+rstd는 기존과 bit-exact, BF16은 약0.35% gradient 오차로 실패. FP32 첫 구현의 전체 시간은 약8.6% 증가했으나 재튜닝 전이며 정책 자체의 최적성 결론은 아니다. [상세 결과](../../../runs/trimul_replace_tri_20260921/README.md). 당시 기본값/SVG는 기존 경로였다. 현재 선택은 상단의 native FP32 x̂/rstd 경로다.
 
 ## 출력 LN 통계 TMA 최종 선택
 
-[개발 어댑터](runs/trimul_ln_policy_v4_20260921/training.py)와 [측정·검증 보고서](../../runs/trimul_ln_policy_v4_20260921/README.md). 원본 tri 유지 + 통계만 저장한다. 최종 두 길이 출력/11개 gradient bit-exact, memcheck0 errors, L384 B1/K3 racecheck0 hazards. NCU DRAM·레지스터·tensor 지표도 보고서에 기록했다.
+[개발 어댑터](runs/trimul_ln_policy_v4_20260921/training.py)와 [측정·검증 보고서](../../../runs/trimul_ln_policy_v4_20260921/README.md). 원본 tri 유지 + 통계만 저장한다. 최종 두 길이 출력/11개 gradient bit-exact, memcheck0 errors, L384 B1/K3 racecheck0 hazards. NCU DRAM·레지스터·tensor 지표도 보고서에 기록했다.

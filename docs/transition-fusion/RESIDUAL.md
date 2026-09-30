@@ -1,6 +1,6 @@
 # Transition residual 융합 — 2026-09-17
 
-**[융합 전후 SVG](../../tmp_kernel/transition/TRANSITION_RESIDUAL.svg)** · [확대 뷰어](../../tmp_kernel/transition/TRANSITION_STATUS.html)
+**[융합 전후 SVG](../kernels/transition/TRANSITION_RESIDUAL.svg)** · [확대 뷰어](../kernels/transition/TRANSITION_STATUS.html)
 
 일반 BF16 Transition의 Triton 경로에 forward와 backward residual 융합을 구현했다.
 설치본과 재설치 patch에 반영했으며, **`transition_residual_fusion=True`가 기본값**이다.

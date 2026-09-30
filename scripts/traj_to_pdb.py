@@ -3,7 +3,7 @@
 Use this to inspect a diffusion trajectory in PyMOL as an animation:
 
     python scripts/traj_to_pdb.py \\
-        "outputs/.../['2D94']_1_1_._traj/x_with_noise" \\
+        "runs/outputs/.../['2D94']_1_1_._traj/x_with_noise" \\
         /tmp/2d94_x_with_noise.pdb
 
     pymol /tmp/2d94_x_with_noise.pdb

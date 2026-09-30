@@ -1,7 +1,7 @@
 # v1.0.1 variant of phase2a_diffusion.yaml — IDENTICAL except train.max_lr 1.8e-3 -> 5e-3.
 # The raise (and its rationale, "frozen trunk + from-scratch diffusion head") is the one
 # already adopted pre-1.0.0: the phase-3 run actually carried forward was
-# logs/phase3/large_H100_diffusion_hlr (max_lr 0.005, 9 checkpoints), not the 1.8e-3
+# runs/logs/phase3/large_H100_diffusion_hlr (max_lr 0.005, 9 checkpoints), not the 1.8e-3
 # baseline (3 checkpoints). v1.0.0 inherited 1.8e-3 by mistake; v1.0.1 restores 5e-3.
 # Loss stays at v1.0.0 (no smooth lDDT / bond loss) — those arrive in v1.0.2.
 # (large: pf48 / msa4) and train ONLY the diffusion module with the EDM diffusion loss.

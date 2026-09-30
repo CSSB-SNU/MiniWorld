@@ -1,11 +1,19 @@
 # MiniWorld
 
-[Repository map, development branches, kernel status, and transfer checklist (2026-09-27)](REPOSITORIES.md).
+[Repository map, development branches, kernel status, and transfer checklist (2026-09-27)](docs/repositories.md).
+
+| Path | Contents |
+|---|---|
+| `src/`, `configs/`, `tests/` | MiniWorld package, Hydra configs, tests |
+| `libs/` | team-gm and StructCooker submodules; local dependency checkouts; `patches/` for FoldBench |
+| `scripts/` | Python entry points and tools; `slurm/` holds sbatch launchers (mostly local, untracked) |
+| `docs/` | Guides and records; `kernels/` kernel diagrams and status reports; `history/` retired material |
+| `runs/` | Every run output: training runs, `logs/`, `outputs/`, `eval_results/`, `wandb/` (ignored by Git except reviewed benchmark records) |
 
 ## Training pipeline
 
 v1.1 work: [distogram fixes and interchain weighting](docs/v1.1-distogram.md),
-with a [diagram of current cropping](tmp_kernel/cropping/CROPPING.svg).
+with a [diagram of current cropping](docs/kernels/cropping/CROPPING.svg).
 v1.2.0: [AF3-style MSA sampling — full-depth PDB pool and per-recycle re-draw](docs/v1.2-msa-sampling.md).
 v2.0.0 (phase 2): [BiasOnlyTokenDiT + full-bf16 diffusion module, 1.9-2.4x diffusion step](docs/v2.0.0-dit.md).
 
@@ -16,15 +24,15 @@ configuration names, crop sizes, checkpoint handoffs, and version variants.
 ## Engine setup
 
 **Kernel development (2026-09-27):** Our H100 inference and training kernels are
-developed in miniworld-engine. The [repository map](REPOSITORIES.md) identifies
+developed in miniworld-engine. The [repository map](docs/repositories.md) identifies
 the current development worktrees, installed research runtime, and remaining
 validation work. Upstream attribution and the earlier development direction are
-recorded in [the historical kernel report](tmp_kernel/KERNEL_PROGRESS.md#개발-방향-전환--anthropic의-추론-최적화를-계승).
+recorded in [the historical kernel report](docs/kernels/KERNEL_PROGRESS.md#개발-방향-전환--anthropic의-추론-최적화를-계승).
 
-[Anthropic inference integration and H100 profiling results](tmp_kernel/ANTHROPIC_INFERENCE.md)
+[Anthropic inference integration and H100 profiling results](docs/kernels/ANTHROPIC_INFERENCE.md)
 cover the first shared-kernel campaign. These historical records predate the
 current training kernels.
-The [interactive HTML dashboard](tmp_kernel/ANTHROPIC_STATUS.html) shows wiring, timings,
+The [interactive HTML dashboard](docs/kernels/ANTHROPIC_STATUS.html) shows wiring, timings,
 NCU bottlenecks, and remaining integration work.
 
 Add `train.engine_backend=triton` to pin training to the engine Triton paths.
@@ -60,7 +68,7 @@ latest H100/Triton comparison and the compile-independent contraction dispatch.
 [The September 22 TriMul closeout](docs/trimul-fusion/closeout-20260922/README.md)
 records the final measured B1/B7 candidate, reproducibility evidence, and the
 remaining input-LayerNorm gradient validation issue. See the
-[consolidated status and wiring](docs/reports/TRIMUL_STATUS.html).
+[consolidated status and wiring](docs/kernels/reports/TRIMUL_STATUS.html).
 [AdaLN and attention fixes](docs/engine-adaln-attention-fixes.md) cover the H100
 shared-memory alignment failure and L8192 attention training memory.
 
@@ -70,9 +78,9 @@ shared-memory alignment failure and L8192 attention training memory.
 - [Known issues and validation limits](docs/known-issues.md)
 - [Technical report draft and build instructions](docs/paper/README.md)
 
-Generated FoldBench results live under `eval_results/` and are excluded from Git.
+Generated FoldBench results live under `runs/eval_results/` and are excluded from Git.
 
 ## TriMul update (2026-09-17)
 
 [Kernel changes, validation, and reinstall instructions](docs/trimul-release-20260917.md).
-[Inference kernel wiring](docs/reports/TRIMUL_INFERENCE.svg) · [Wiring details](docs/trimul-fusion/inference.md).
+[Inference kernel wiring](docs/kernels/reports/TRIMUL_INFERENCE.svg) · [Wiring details](docs/trimul-fusion/inference.md).

@@ -10,8 +10,8 @@ SSH/포트 포워딩 없이 브라우저에서 열고 사이트 소유자의 Cha
 2026-09-19, node02 H100. Anthropic의 추론 개발을 계승한다는 방향과 출처를
 engine README 및 개발 방향 문서에 명시했다. 아래는 추론 통합 당시 결과다. 이후 [TriMul K3 학습용 CUDA 확장](trimul/ANTHROPIC_TRIMUL_TRAINING.md)을 구현·검증했다.
 
-**[전체 분석 보고서·연결 범위·원자료](../runs/trimul_sm90_parity_20260917/engine/docs/anthropic-h100-audit.md)**
-· **[연결 API](../runs/trimul_sm90_parity_20260917/engine/docs/anthropic-integration.md)**
+**[전체 분석 보고서·연결 범위·원자료](../../runs/trimul_sm90_parity_20260917/engine/docs/anthropic-h100-audit.md)**
+· **[연결 API](../../runs/trimul_sm90_parity_20260917/engine/docs/anthropic-integration.md)**
 
 | 기존 Triton 대비, 추론 | L384 | L768 |
 |---|---:|---:|

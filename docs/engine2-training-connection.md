@@ -28,7 +28,7 @@ scripts/with_engine2.sh .pixi/envs/cu128/bin/python \
 
 Pairformer16, MSA4, L384/atom4096, MSA pool8192/subsample1024, dropout/residual, compile을 포함합니다. recycle1/4를 각각 고정해 측정합니다. 단일 GPU이며 DDP, 데이터 로딩/H2D는 제외합니다. microbatch와 64 microbatch마다 실행하는 optimizer/clip/EMA 비용을 분리합니다.
 
-[HTML 결과](reports/ENGINE_TRAINING_PROFILE.html).
+[HTML 결과](kernels/reports/ENGINE_TRAINING_PROFILE.html).
 
 ## 확인된 기존 잡의 MSA 경로
 
@@ -47,7 +47,7 @@ D64 템플릿 TriMul은 `[1,L,L]` 마스크를 전달합니다. 최신 엔진의
 - TMA descriptor는 CUDA context·주소·dtype·레이아웃·타일·옵션이 같을 때 인코딩된 바이트만 재사용합니다. 최대8192개이며 GPU tensor를 캐시에 붙잡지 않습니다. 파라미터 값이나 activation을 재사용하는 캐시가 아닙니다.
 - 별도 H100 전체 모델 trace에서 no-grad 전용84회 + 학습 저장형28회를 확인했습니다. 이전은 저장형112회였습니다.
 - 실행 중인 학습 snapshot은 변경하지 않습니다. 새 프로세스는 `scripts/with_engine2.sh`로 로컬 수정 엔진을 선택할 수 있습니다.
-- 측정 근거: `runs/engine2-training-profile-20260923/`; 최종 표는 `docs/reports/ENGINE_TRAINING_PROFILE.html`.
+- 측정 근거: `runs/engine2-training-profile-20260923/`; 최종 표는 `docs/kernels/reports/ENGINE_TRAINING_PROFILE.html`.
 
 최종 재측정(15회): 기존 fwd121.77/bwd67.35/합계189.14ms → 수정 엔진 fwd91.54/bwd56.30/합계147.85ms. 합계 기준1.279배. node01 잡16425·16427 완료, node02 학습13228 유지. 수정은 로컬이며 아직 추가 커밋/푸시는 하지 않았습니다.
 
@@ -76,7 +76,7 @@ D64 템플릿 TriMul은 `[1,L,L]` 마스크를 전달합니다. 최신 엔진의
 - PF48 성능 모델은 PF16 체크포인트의 block i%16을 독립 parameter를 가진 block i에 복사합니다. 학습된 PF48 체크포인트가 아니며, PF16 optimizer state를 48블록 모델에 억지로 로드하지 않습니다.
 - GPU 유휴율은 replay를 추적한 CUDA event 전체 구간에서 kernel/memcpy/memset 실행 구간의 합집합을 빼서 계산합니다. 비계측 시간에서 계측 kernel 시간을 빼는 추정과 구분합니다. kernel 내부 stall/occupancy는 유휴율에 포함하지 않습니다.
 - 이 실행은 단일 GPU의 고정 입력 buffer 계산 경로입니다. 실제 DDP 학습 job에 적용하지 않았으며, 데이터/H2D·optimizer/EMA·DDP 통신 및 recycle별 graph 선택은 시간에서 제외됩니다. `scripts/with_engine2.sh`는 엔진 선택만 하며 이 graph 실행을 자동 활성화하지 않습니다.
-- 최종 수치: `runs/engine2-training-profile-20260923/matrix-summary.json`, 검증: `graph-accum-pf48-r1.json`, 시각화: `docs/reports/ENGINE_TRAINING_PROFILE.html`. 측정 과정의 초기 gradient-overwrite graph 자료는 `matrix-before-accumulation/`에 보존했습니다.
+- 최종 수치: `runs/engine2-training-profile-20260923/matrix-summary.json`, 검증: `graph-accum-pf48-r1.json`, 시각화: `docs/kernels/reports/ENGINE_TRAINING_PROFILE.html`. 측정 과정의 초기 gradient-overwrite graph 자료는 `matrix-before-accumulation/`에 보존했습니다.
 
 ### 상위 모듈 경계와 랜덤 recycle 검증
 
@@ -103,7 +103,7 @@ Jobs 16640/16641 completed. Full Phase1 inference, recycle1, L384/atom4096/MSA10
 |48|compile|42.686|37.036|1.153x|
 |48|compile + graph|28.952|26.763|1.082x|
 
-Same GPU per block count, latest/original/original/latest. Pooled medians of 30 ordinary samples and 10 groups of 10 graph replays per process. Original adapter is compiler-disabled, so ordinary results include host integration differences; prioritize graph numbers for GPU path comparison. All 22/54 distinct TriMul modules were checked against latest on the same inputs, max output relative L2 0.00038078; all outputs finite. Existing training13228 unchanged. Raw results: `runs/engine2-training-profile-20260923/inference-original-comparison.json`; visualization: `docs/reports/ENGINE_TRAINING_PROFILE.html#inference-original`.
+Same GPU per block count, latest/original/original/latest. Pooled medians of 30 ordinary samples and 10 groups of 10 graph replays per process. Original adapter is compiler-disabled, so ordinary results include host integration differences; prioritize graph numbers for GPU path comparison. All 22/54 distinct TriMul modules were checked against latest on the same inputs, max output relative L2 0.00038078; all outputs finite. Existing training13228 unchanged. Raw results: `runs/engine2-training-profile-20260923/inference-original-comparison.json`; visualization: `docs/kernels/reports/ENGINE_TRAINING_PROFILE.html#inference-original`.
 
 ### Corrected scope: original TriMul + Transition + OPM + PWA
 

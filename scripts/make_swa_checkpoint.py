@@ -12,7 +12,7 @@ loads this as a weights-only seed via ``--ckpt`` and freezes the trunk.
 
 Usage:
     python scripts/make_swa_checkpoint.py \
-        --run-root logs/autoscale/large_H100_full_d16k \
+        --run-root runs/logs/autoscale/large_H100_full_d16k \
         --last 12 \
         --out runs/v1.0.0/phase1b/swa_last12/epoch=0900_swa12.pt
 """
@@ -43,7 +43,7 @@ def discover(run_root: str) -> dict[int, str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--run-root", default="logs/autoscale/large_H100_full_d16k")
+    ap.add_argument("--run-root", default="runs/logs/autoscale/large_H100_full_d16k")
     ap.add_argument("--last", type=int, default=12)
     ap.add_argument("--out", required=True)
     args = ap.parse_args()

@@ -1,8 +1,8 @@
 # TriMul 추론 배선 — 2026-09-17 설치본
 
-[전체 SVG](../../tmp_kernel/trimul/TRIMUL_INFERENCE.svg)
+[전체 SVG](../kernels/trimul/TRIMUL_INFERENCE.svg)
 
-기준은 MiniWorld cu128 환경에 **실제로 설치된 miniworld_engine 소스**다. 기존 `docs/reports/TRIMUL_FORWARD.svg`는 학습 forward 그림이며, 이 추론 그림과 구분한다. H100, BF16, B=1, d_pair=d_hidden=128, mask 전달, 기본 layout을 그렸다. 그림은 소스 배선을 나타낸다. 아래 Triton contraction 검증은 별도로 수행했으며, 전체 모듈의 GPU 커널 프로파일은 아니다.
+기준은 MiniWorld cu128 환경에 **실제로 설치된 miniworld_engine 소스**다. 기존 `docs/kernels/reports/TRIMUL_FORWARD.svg`는 학습 forward 그림이며, 이 추론 그림과 구분한다. H100, BF16, B=1, d_pair=d_hidden=128, mask 전달, 기본 layout을 그렸다. 그림은 소스 배선을 나타낸다. 아래 Triton contraction 검증은 별도로 수행했으며, 전체 모듈의 GPU 커널 프로파일은 아니다.
 
 ## 진입 조건
 

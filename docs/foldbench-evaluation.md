@@ -25,9 +25,9 @@ Predictions land at `<output_dir>/<target>/<target>_seed{s}_sample{k}_pred.cif`.
 ```bash
 PY=/home/psk6950/data/foldbench/upstream/.venv/bin/python
 $PY scripts/foldbench_evaluate.py \
-    --pred-dir runs/foldbench/<run> --eval-dir eval_results/foldbench --name <run>
+    --pred-dir runs/foldbench/<run> --eval-dir runs/eval_results/foldbench --name <run>
 $PY scripts/foldbench_compare.py \
-    --eval-dir eval_results/foldbench --name <run>
+    --eval-dir runs/eval_results/foldbench --name <run>
 ```
 
 `foldbench_evaluate.py` wraps upstream `evaluate.py` + `task_score_summary.py`, so

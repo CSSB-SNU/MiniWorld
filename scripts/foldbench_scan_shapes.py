@@ -40,8 +40,8 @@ def one(tid: str) -> tuple[str, int, int, int, int] | None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--index", type=Path, default=Path("submits/phase2b/foldbench_full_index.txt"))
-    ap.add_argument("--out", type=Path, default=Path("submits/phase2b/foldbench_shapes.csv"))
+    ap.add_argument("--index", type=Path, default=Path("scripts/slurm/phase2b/foldbench_full_index.txt"))
+    ap.add_argument("--out", type=Path, default=Path("scripts/slurm/phase2b/foldbench_shapes.csv"))
     ap.add_argument("--workers", type=int, default=int(os.environ.get("SLURM_CPUS_PER_TASK", "32")))
     args = ap.parse_args()
 

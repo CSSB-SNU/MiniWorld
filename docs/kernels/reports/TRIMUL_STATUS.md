@@ -8,19 +8,19 @@
 - 성능: job15612 같은 실행 TriMul 전체1006.800 →1009.168µs(+0.24%). MiniPairformer는 job15616에서1575.856 →1579.664µs.
 - 남은 범위: 큰 폭의 추가 최적화, production 승격, SoL90/252µs 목표. 이번 정확도 수정으로 완료됐다고 주장하지 않는다.
 
-[수정·검증 상세](../../runs/trimul_ln_gradient_20260922/index.html) · [선택·SHA-256](../../runs/trimul_ln_gradient_20260922/selected.json) · [수정 전 마무리 기록](../trimul-fusion/closeout-20260922/README.md)
+[수정·검증 상세](../../../runs/trimul_ln_gradient_20260922/index.html) · [선택·SHA-256](../../../runs/trimul_ln_gradient_20260922/selected.json) · [수정 전 마무리 기록](../../trimul-fusion/closeout-20260922/README.md)
 
 ## MiniPairformer 1블록 · 새 CUDA Transition 포함
 
 L384/C128 H100, job15581: 최신 추론 **0.406ms**, 학습 forward **0.431ms**, 학습 fwd+bwd **1.582ms**. 동일 실행의 이전 H100 TriMul + 기존 Triton Transition은 각각 0.578/0.626/2.470ms. 수정 전 측정 기록이며, 이후 L384 LN gradient 엄격 검증을 통과했다.
 
-[비교표·배선·검증](../../runs/minipairformer_block_cuda_20260922/index.html)
+[비교표·배선·검증](../../../runs/minipairformer_block_cuda_20260922/index.html)
 
 ## MiniPairformer 1블록 · PyTorch / cuEquivariance
 
 job15592, 같은 실행 최신 추론 0.386ms / 학습 forward 0.412ms / 학습 fwd+bwd 1.520ms. 학습은 PyTorch compile 대비 3.43배, cuEq primitives + PyTorch Transition 대비 2.28배, cuEq + 동일 CUDA Transition 대비 1.81배. 수정 전 측정 기록이며, 이후 L384 엄격한 LN gradient 검증을 통과했다.
 
-[조건·전체 표·검증](../../runs/minipairformer_block_baselines_20260922/index.html)
+[조건·전체 표·검증](../../../runs/minipairformer_block_baselines_20260922/index.html)
 
 ## Transition backward 추가 개선 · 2026-09-22
 
@@ -30,11 +30,11 @@ job15592, 같은 실행 최신 추론 0.386ms / 학습 forward 0.412ms / 학습 
 | Transition backward · L768 | 1714.896 | 1703.360 | 0.67% |
 | MiniPairformer fwd+bwd · L384 | 1565.920 | 1548.688 | 1.10% |
 
-기존 hand-CUDA 대비. 엄격 검증·memcheck/racecheck 통과, Transition 개발 작업 트리에 반영. [구조·결과](../../runs/transition_bwd_upgrade_20260922/index.html).
+기존 hand-CUDA 대비. 엄격 검증·memcheck/racecheck 통과, Transition 개발 작업 트리에 반영. [구조·결과](../../../runs/transition_bwd_upgrade_20260922/index.html).
 
 ## TriMul D별 최적화 · 2026-09-23
 
-[최신 표·배선·검증](../../runs/trimul_cuda_widths_opt_20260923/index.html). D128 L768은 단일 B7로 전환했다. D64/256/384/512도 이전 CUDA 대비 개선했지만 Triton보다 느리다. 10shape autograd와 수정 커널 sanitizer 검증 통과.
+[최신 표·배선·검증](../../../runs/trimul_cuda_widths_opt_20260923/index.html). D128 L768은 단일 B7로 전환했다. D64/256/384/512도 이전 CUDA 대비 개선했지만 Triton보다 느리다. 10shape autograd와 수정 커널 sanitizer 검증 통과.
 
 ## 큰 D forward 개선 · 2026-09-23
 
@@ -51,7 +51,7 @@ H100, B1, BF16, 양방향, 저장값·dropout25%·residual 포함, 같은 실행
 D512 K1은 shared operand와 가중치 조각별 공급을 사용한다.
 6shape PyTorch/Triton 출력, 저장값, 변경된 입력의 CUDA graph 검증 통과.
 명시적 `h100_wide_forward.Forward` 진입점이며 기존 자동 dispatch와 backward 연결은 변경하지 않았다.
-[구조·사용법·측정·sanitizer 결과](../../runs/trimul_forward_wide_20260923/README.md).
+[구조·사용법·측정·sanitizer 결과](../../../runs/trimul_forward_wide_20260923/README.md).
 
 ## 큰 D backward 착수: B1 첫 후보 · 2026-09-23
 
@@ -62,7 +62,7 @@ D512 후보는 전체 backward가 2.1% 느려져 채택하지 않았다.
 검사한 5shape의 11개 gradient가 기존 relative-L2 < 0.01 기준을 통과했고,
 D256·384 L384의 변경 커널 memcheck/racecheck는 오류·hazard가 없다.
 실험 진입점만 추가했으며 엔진 자동 dispatch는 그대로다. B7 구조 변경은 아직 남아 있다.
-[D128 비교·B1 결과·남은 tensor 소비 관계](../../runs/trimul_backward_wide_20260923/README.md).
+[D128 비교·B1 결과·남은 tensor 소비 관계](../../../runs/trimul_backward_wide_20260923/README.md).
 
 ## D256 backward: D128 구조 적용 · 2026-09-23
 
@@ -75,4 +75,4 @@ L768 dW split16으로 엄격한 오차 기준을 유지했다. 10개 변경 조�
 **SOL90 미달**: 낙관적 재계산 roofline 기준 20.7%/23.6%. B1 재설계와 B7
 미분 버퍼 축소가 남아 있으며, spill로 느려진 완전 융합/ring 후보는 채택하지 않았다.
 자동 engine dispatch는 변경하지 않았다.
-[구조·선택 진입점·정확도·SOL 계산·실패 후보](../../runs/trimul_d256_bwd_sol90_20260923/README.md).
+[구조·선택 진입점·정확도·SOL 계산·실패 후보](../../../runs/trimul_d256_bwd_sol90_20260923/README.md).

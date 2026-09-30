@@ -339,7 +339,7 @@ def cli():
 @click.option(
     "--output-dir",
     type=click.Path(path_type=Path),
-    default=Path("outputs/miniworld_validation"),
+    default=Path("runs/outputs/miniworld_validation"),
     show_default=True,
     help="Root directory for validation outputs; results land in "
          "<output_dir>/<YYYY-MM-DD>/<HHMMSS>[_<job_name>]/.",
@@ -601,7 +601,7 @@ class InferenceConfig(BaseModel):
 @click.option(
     "--output-dir",
     type=click.Path(path_type=Path),
-    default=Path("outputs/miniworld_inference"),
+    default=Path("runs/outputs/miniworld_inference"),
     show_default=True,
     help="Root directory for inference outputs; results land in "
          "<output_dir>/<YYYY-MM-DD>/[<subdir>/]<HHMMSS>/<job_name|spec.name>/.",

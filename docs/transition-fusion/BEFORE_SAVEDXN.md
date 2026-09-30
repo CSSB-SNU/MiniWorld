@@ -53,4 +53,4 @@ NCU의 stall/roofline 분석을 새로 수행한 결과가 아니다.
 2. 현재 약 39%인 D128 gate-backward를 별도로 최적화한다. 이것이 아직 H100 native로 대체되지 않은 큰 부분이다.
 3. cuBLAS와 LN residual은 이번 trace에서 두 경로가 거의 같다. 이들에 이번 약 0.26ms 추가 비용의 원인을 돌릴 근거는 없다.
 
-[원본 summary](../../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-hopper-residual-20260918/summary.json) · [L768 trace 포함 JSON](../../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-hopper-residual-20260918/bench-L768-D128.json) · [Backward SVG](../../tmp_kernel/transition/TRANSITION_BACKWARD.svg)
+[원본 summary](../../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-hopper-residual-20260918/summary.json) · [L768 trace 포함 JSON](../../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-hopper-residual-20260918/bench-L768-D128.json) · [Backward SVG](../kernels/transition/TRANSITION_BACKWARD.svg)

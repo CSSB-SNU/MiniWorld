@@ -104,7 +104,7 @@ not establish L768 graph support.
 Attempt16843 failed before optimizer updates on empty-template shape mismatch.
 Attempt16915 was canceled during worker8 startup for host-memory use. Analysis
 allocation16858 has been returned. Current production status and measured live
-latency are in production-summary.json and docs/reports/ENGINE_TRAINING_PROFILE.html.
+latency are in production-summary.json and docs/kernels/reports/ENGINE_TRAINING_PROFILE.html.
 
 ## Verified completed production epoch
 

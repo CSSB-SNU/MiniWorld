@@ -6,9 +6,9 @@
 
 ## 배선도
 
-- [Forward 전체 SVG](../../tmp_kernel/trimul/TRIMUL_FORWARD.svg): Triton A / 기존 H100 / 신규 H100 개발 경로.
-- [L768 전체 SVG](../../tmp_kernel/trimul/TRIMUL_FORWARD_L768.svg).
-- [확대·경로별 비교](../../tmp_kernel/trimul/TRIMUL_STATUS.html).
+- [Forward 전체 SVG](../kernels/trimul/TRIMUL_FORWARD.svg): Triton A / 기존 H100 / 신규 H100 개발 경로.
+- [L768 전체 SVG](../kernels/trimul/TRIMUL_FORWARD_L768.svg).
+- [확대·경로별 비교](../kernels/trimul/TRIMUL_STATUS.html).
 
 Triton A와 신규 H100 열에서는 F5·F6·F7이 한 실선 경계 안에 있다. `glogit` HBM 버퍼가 사라지고, projection은 backward용으로 저장하되 forward에서는 다시 읽지 않는다. F4 LayerNorm과 dropout 난수·scale 생성은 별도다. Backward의 기존 저장값·계산 연결은 유지했다.
 

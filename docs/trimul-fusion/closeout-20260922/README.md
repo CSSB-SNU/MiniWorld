@@ -67,7 +67,7 @@ TMA 묶음, L2 보존 비율, 타일 분할·부분합 캐시, gate/LN 중첩, �
 
 Anthropic의 biomolecular inference 구현과 TMA/WGMMA primitives를 적극 차용한 학습 확장이다.
 자체 추론 구현보다 우수했던 upstream 결과를 계승한다는 기존 기조와 라이선스 표기를 유지한다.
-관련 통합 기록: [Anthropic inference](../../../tmp_kernel/ANTHROPIC_INFERENCE.md).
+관련 통합 기록: [Anthropic inference](../../kernels/ANTHROPIC_INFERENCE.md).
 
 ## 재현·증거
 
@@ -76,7 +76,7 @@ Anthropic의 biomolecular inference 구현과 TMA/WGMMA primitives를 적극 차
 - [B7 선택과 전체 검사 제한](../../../runs/trimul_b7_weight_batch128_20260922/README.md)
 - [후속 제외 실험과 NCU](../../../runs/trimul_b1_cache_followup_20260922/README.md)
 - [고정 증거 목록·SHA-256](manifest.json)
-- [누적 상태 보관본](../../reports/TRIMUL_STATUS_HISTORY_20260922.md)
+- [누적 상태 보관본](../../kernels/reports/TRIMUL_STATUS_HISTORY_20260922.md)
 
 동일 조건 재현: 저장소 루트에서 `sbatch --job-name=trimul-full-now runs/trimul_full_latest_20260922/bench.sbatch`.
 새 실험은 실행하지 않았다. 관련 마지막 실험·검증 잡들은 종료된 상태이며 다른 학습 잡은 건드리지 않았다.

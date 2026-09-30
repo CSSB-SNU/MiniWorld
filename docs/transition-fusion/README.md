@@ -7,14 +7,14 @@
 
 ## 신규 개발 단위: streamed-K / full-K
 
-**[두 버전 개발 기준](VARIANTS.md)** · [버전 목록](variants.json) · [두 버전 + backward 그림](../../tmp_kernel/transition/TRANSITION_VARIANTS.svg)
+**[두 버전 개발 기준](VARIANTS.md)** · [버전 목록](variants.json) · [두 버전 + backward 그림](../kernels/transition/TRANSITION_VARIANTS.svg)
 
 신규 구현은 `streamed_k`(BK<D)와 `full_k`(전체 K 입력을 hidden 루프 밖에서 재사용)를 관리한다.
 두 CUDA 버전의 **forward + backward + residual 및 명시적 모듈 선택**을 구현했고, GPU 검증 18건과 memcheck 10건(오류 0건)을 통과했다. [신규 구현 및 측정 기록](../../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-variants-20260918/README.md).
 기존 split은 비교 기준/fallback이다. 아래 표는 현재 배선이며 두 새 CUDA 버전의 완성을 뜻하지 않는다.
 기존 large-D BK512 sweep은 입력 재사용 개선 전 결과다. 신규 기록은 최신 Triton과 새 CUDA를 다시 측정하며, 아래 기본 배선과 별도인 실험 경로다.
 
-[확대 뷰어](../../tmp_kernel/transition/TRANSITION_STATUS.html) · [선택표·성능](../../tmp_kernel/transition/TRANSITION.svg) · [Forward](../../tmp_kernel/transition/TRANSITION_FORWARD.svg) · [Backward](../../tmp_kernel/transition/TRANSITION_BACKWARD.svg) · [Residual 융합](../../tmp_kernel/transition/TRANSITION_RESIDUAL.svg)
+[확대 뷰어](../kernels/transition/TRANSITION_STATUS.html) · [선택표·성능](../kernels/transition/TRANSITION.svg) · [Forward](../kernels/transition/TRANSITION_FORWARD.svg) · [Backward](../kernels/transition/TRANSITION_BACKWARD.svg) · [Residual 융합](../kernels/transition/TRANSITION_RESIDUAL.svg)
 
 ## 현재 연결
 

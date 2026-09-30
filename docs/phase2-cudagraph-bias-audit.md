@@ -266,8 +266,8 @@ that environment, reapply the checked patches with:
 
 ```bash
 .pixi/envs/cu128/bin/python scripts/apply_engine_audit_patches.py
-sbatch submits/engine/audit_phase2_cudagraph.sbatch --paired
-sbatch submits/engine/audit_ln_pair_bias.sbatch --catalog-snapshot \
+sbatch scripts/slurm/engine/audit_phase2_cudagraph.sbatch --paired
+sbatch scripts/slurm/engine/audit_ln_pair_bias.sbatch --catalog-snapshot \
   /home/psk6950/data/BioMolDB_20260224/catalog_trainitem_no_disordered_bioai_unified.arrow
 ```
 

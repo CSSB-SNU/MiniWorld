@@ -43,7 +43,7 @@ def main() -> None:
     ap.add_argument("--pred-dir", type=Path,
                     default=Path("runs/foldbench/v1.0.1-phase2b-swa-full"))
     ap.add_argument("--out", type=Path,
-                    default=Path("eval_results/foldbench/stereo_audit"))
+                    default=Path("runs/eval_results/foldbench/stereo_audit"))
     ap.add_argument("--per-category", type=int, default=25)
     ap.add_argument("--workers", type=int, default=48)
     args = ap.parse_args()

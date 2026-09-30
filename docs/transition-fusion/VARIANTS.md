@@ -99,4 +99,4 @@ cuBLAS와 동일한 LN/reduction 코드를 버전별로 복사할 필요는 없�
 - [새 CUDA 구현·검증 기록](../../runs/trimul_sm90_parity_20260917/engine/docs/records/transition-cuda-variants-20260918/README.md). GPU 18건과 unfiltered memcheck 10건(오류 0건), import/dispatch 47건을 통과했다. native bounded sweep과 large-D 후속 후보 비교를 완료했다. 자동 production dispatch와 build-all 캐시에 새 버전을 등록한 상태는 아니다.
 
 현재 기계 판독 목록: [variants.json](variants.json).
-두 버전과 공통 backward 그림: [TRANSITION_VARIANTS.svg](../../tmp_kernel/transition/TRANSITION_VARIANTS.svg).
+두 버전과 공통 backward 그림: [TRANSITION_VARIANTS.svg](../kernels/transition/TRANSITION_VARIANTS.svg).

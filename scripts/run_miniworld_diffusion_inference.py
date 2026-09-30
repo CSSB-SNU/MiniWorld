@@ -155,7 +155,7 @@ def cli():
 @click.option(
     "--output-dir",
     type=click.Path(path_type=Path),
-    default=Path("outputs/phase2_validation"),
+    default=Path("runs/outputs/phase2_validation"),
     show_default=True,
     help="Root dir; results land in <output_dir>/<YYYY-MM-DD>/<HHMMSS>[_<job>]/.",
 )
@@ -365,7 +365,7 @@ def _nullify_like(real: object, dummy: object) -> None:
 # over-padding is real but small next to that: the worst case is a target just above
 # a rung, and the rungs are tight where targets are dense.
 # Ladder chosen against the measured FoldBench shape distribution
-# (submits/phase2b/foldbench_shapes.csv, produced by scripts/foldbench_scan_shapes.py).
+# (scripts/slurm/phase2b/foldbench_shapes.csv, produced by scripts/foldbench_scan_shapes.py).
 # A finer ladder is not better: it cuts wasted compute only marginally while adding a
 # compile. Over the 1,522 targets, finer (14x14 rungs) gives 46 buckets at 1.64x mean
 # token^2 padding; this one gives 29 buckets at 1.74x -- 17 fewer compiles, ~4 min each

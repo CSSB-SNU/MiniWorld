@@ -1,3 +1,3 @@
 # Unified patches require a leading space on blank context lines.
-patches/**/*.patch -whitespace
+libs/patches/*.patch -whitespace
 docs/history/engine-patches/*.patch -whitespace

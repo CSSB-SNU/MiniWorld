@@ -16,8 +16,8 @@ Writes ``<run_dir>/metrics.json`` per run. Walks idempotently — already-
 written metrics.json files are rewritten unless ``--skip-existing``.
 
 Usage:
-    python scripts/eval_2oxs_docking.py --run-dir outputs/<...>/<job>/
-    python scripts/eval_2oxs_docking.py --root outputs/miniworld_test/2026-05-11/2oxs/
+    python scripts/eval_2oxs_docking.py --run-dir runs/outputs/<...>/<job>/
+    python scripts/eval_2oxs_docking.py --root runs/outputs/miniworld_test/2026-05-11/2oxs/
 """
 from __future__ import annotations
 

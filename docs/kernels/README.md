@@ -31,8 +31,8 @@ backward 두 장은 머리띠가 자주색이다. **측정값이 아니라 설�
 
 ## 다시 만들기
 
-    python tmp_kernel/generate_msa_svg.py          # msa_opm/, msa_pwa/ 네 장
-    python tmp_kernel/generate_token_dit_svg.py    # token_dit/ 세 장
+    python docs/kernels/generate_msa_svg.py          # msa_opm/, msa_pwa/ 네 장
+    python docs/kernels/generate_token_dit_svg.py    # token_dit/ 세 장
     dot -Tsvg docs/cropping-current.dot -o cropping/CROPPING.svg
 
 TriMul·Transition 그림은 각 fusion 문서(`docs/trimul-fusion/`, `docs/transition-fusion/`)가 출처다.

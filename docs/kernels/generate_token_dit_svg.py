@@ -2,7 +2,7 @@
 """Token DiT attention: training forward / backward and the fused inference block, in the house style of
 msa_opm/MSA_OPM_FORWARD.svg (helpers taken from generate_msa_svg.py without running its figures).
 
-Run: python tmp_kernel/generate_token_dit_svg.py   (writes token_dit/ beside this file)
+Run: python docs/kernels/generate_token_dit_svg.py   (writes token_dit/ beside this file)
 """
 import os
 

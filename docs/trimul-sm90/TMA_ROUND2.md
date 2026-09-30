@@ -84,4 +84,4 @@ FWD+BWD, optimizer 제외, dropout0,12라운드 교대 측정.
 - [L384 모듈](../../runs/trimul_sm90_round2_20260917/module/benchmark-L384.json) · [L768 모듈](../../runs/trimul_sm90_round2_20260917/module/benchmark-L768.json)
 - [최종 source·검증 기록](../../runs/trimul_sm90_round2_20260917/module/final-evidence.json)
 - [삭제 목록](../../runs/trimul_sm90_round2_20260917/cleanup/root-dumps.json)
-- [이전 최적화](TMA_PIPELINE.md) · [SVG 뷰어](../../tmp_kernel/trimul/TRIMUL_STATUS.html)
+- [이전 최적화](TMA_PIPELINE.md) · [SVG 뷰어](../kernels/trimul/TRIMUL_STATUS.html)

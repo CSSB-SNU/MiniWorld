@@ -42,7 +42,7 @@ data:
 train:
   comment: oldcode_pf16_repro (June stack via worktree)
   name: MiniWorld-Distogram
-  run_dir: /home/psk6950/MiniWorld/logs/oldcode_pf16
+  run_dir: /home/psk6950/MiniWorld/runs/logs/oldcode_pf16
   overfitting: false
   overfitting_dir: null
   train_item: 25600

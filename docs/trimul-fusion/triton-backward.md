@@ -111,7 +111,7 @@ Eager 연산 경계를 CUDA graph로 재생한 값이다. 위 compiled 모델 �
 
 ## 배포·재현
 
-- [Backward 전체 SVG](../../tmp_kernel/trimul/TRIMUL_BACKWARD.svg) · [L768](../../tmp_kernel/trimul/TRIMUL_BACKWARD_L768.svg) · [확대 뷰어](../../tmp_kernel/trimul/TRIMUL_STATUS.html)
+- [Backward 전체 SVG](../kernels/trimul/TRIMUL_BACKWARD.svg) · [L768](../kernels/trimul/TRIMUL_BACKWARD_L768.svg) · [확대 뷰어](../kernels/trimul/TRIMUL_STATUS.html)
 - [엔진 패치](../history/engine-patches/miniworld-engine-trimul-backward-fusion.patch) · [SHA-256 manifest](../history/engine-patches/trimul-backward-fusion-manifest.json)
 - [튜너](../../scripts/build_trimul_backward_cache.py) · [4경로 비교](../../scripts/benchmark_trimul_backward_fusion.py) · [구간별 비교](../../scripts/benchmark_trimul_backward_components.py) · [production 검사](../../scripts/check_trimul_backward_runtime.py)
 - [단위 검사](../../tests/test_engine_trimul_backward_fusion.py)

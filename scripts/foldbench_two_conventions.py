@@ -113,7 +113,7 @@ def covered_keys(sec, cat: str, model: str) -> set:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw", type=Path,
-                    default=Path("eval_results/foldbench/p2b-swa-full-partial/raw"))
+                    default=Path("runs/eval_results/foldbench/p2b-swa-full-partial/raw"))
     args = ap.parse_args()
     sec = paper_sections()
 
