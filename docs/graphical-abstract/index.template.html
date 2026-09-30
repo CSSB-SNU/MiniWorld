@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiniWorld · Kernel fusion & algorithms</title>
+<style>
+:root{--ink:#162e3d;--teal:#087f78;--muted:#5c6d75;--line:#d6ddda;--bg:#f5f4ef}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);background:var(--bg);font:16px/1.65 system-ui,sans-serif}
+main{max-width:1500px;margin:auto;padding:42px 28px}header{display:flex;align-items:end;justify-content:space-between;gap:24px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--teal)}h1{font-size:40px;line-height:1.2;margin:14px 0}p{max-width:1000px;margin:12px 0;color:var(--muted)}a{color:var(--teal)}
+.download,.tabs button{display:inline-block;background:white;border:1px solid var(--line);border-radius:7px;padding:10px 15px;text-decoration:none;color:var(--ink);font:inherit;cursor:pointer}
+.download.primary{background:var(--teal);color:white;border-color:var(--teal)}.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:28px 0 16px}
+.tabs button[aria-selected=true]{background:var(--ink);color:white;border-color:var(--ink)}.pane[hidden]{display:none}.figure{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:12px}
+.caption{display:flex;justify-content:space-between;gap:24px;margin:12px 0 25px}.caption p{margin:0;font-size:14px}.caption a{white-space:nowrap}
+.notice{border-left:4px solid #c27a20;background:#fffaf0;padding:15px 20px;margin:30px 0;font-size:14px}
+h2{font-size:24px;margin-top:36px}label{font-size:14px}select{font:inherit;padding:7px 12px;margin:0 18px 14px 8px;border:1px solid var(--line);border-radius:5px;background:white}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;background:white}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:11px 13px;border-bottom:1px solid #e9edeb;white-space:nowrap}th{background:#edf2ef;color:var(--muted);font-size:12px}.ratio{font-weight:700;color:var(--teal)}.slow{color:#b85550}td.notes{white-space:normal;min-width:270px;font-size:12px;color:var(--muted)}details{margin:20px 0}summary{cursor:pointer;font-weight:600}code{font-size:12px;overflow-wrap:anywhere}footer{margin-top:40px;font-size:13px;color:var(--muted)}
+@media(max-width:800px){main{padding:24px 14px}header,.caption{display:block}h1{font-size:29px}.download{margin-top:12px}.tabs button{font-size:13px}.figure{min-width:850px}.pane{overflow:auto}}
+</style>
+<main>
+<header><div><div class="eyebrow">MINIWORLD ENGINE / GRAPHICAL ABSTRACT / REVIEW DRAFT</div>
+<h1>커널 경계에서 알고리즘과 성능까지</h1>
+<p>융합 지도, TriMul 내부 처리, 연산별 측정을 한 흐름으로 연결한 초안. 확대 가능한 SVG와 편집용 데이터, 4페이지 PDF를 함께 제공한다.</p></div>
+<a class="download primary" href="miniworld-graphical-abstract.pdf">전체 PDF</a></header>
+<nav class="tabs" role="tablist" aria-label="Figure selection">
+<button id="tab0" role="tab" aria-controls="pane0" aria-selected="true" data-pane="0">00 · Graphical abstract</button>
+<button id="tab1" role="tab" aria-controls="pane1" aria-selected="false" data-pane="1">01 · Fusion 지도</button>
+<button id="tab2" role="tab" aria-controls="pane2" aria-selected="false" data-pane="2">02 · TriMul 알고리즘</button>
+<button id="tab3" role="tab" aria-controls="pane3" aria-selected="false" data-pane="3">03 · 연산별 성능</button></nav>
+<section class="pane" id="pane0" role="tabpanel" aria-labelledby="tab0"><img class="figure" src="00-graphical-abstract.svg" alt="MiniWorld graphical abstract: TriMul and Transition fusion boundaries, producer-consumer pipeline and historical per-operator forward-plus-backward speedups."><div class="caption"><p>메인 구성안. 오른쪽은 각 계열의 과거 기준 구현 대비 F+B 배속이며, 전체 모델 배속을 의미하지 않는다.</p><a href="00-graphical-abstract.svg">SVG</a> · <a href="00-graphical-abstract.png">PNG</a></div></section>
+<section class="pane" id="pane1" role="tabpanel" aria-labelledby="tab1" hidden><img class="figure" src="01-fusion-map.svg" alt="Seven operator groups showing mathematical stages and implemented fusion boundaries. Solid boxes are audited main kernels or library-call groups; dashed boxes are stages."><div class="caption"><p>실선은 확인한 main kernel/library-call 묶음, 점선은 하나 이상의 launch가 가능한 stage다. PWA의 pair/MSA 입력 branch는 병렬 관계다.</p><a href="01-fusion-map.svg">SVG</a> · <a href="01-fusion-map.png">PNG</a></div></section>
+<section class="pane" id="pane2" role="tabpanel" aria-labelledby="tab2" hidden><img class="figure" src="02-trimul-algorithm.svg" alt="TriMul outgoing and incoming contractions, K1/BMM/K3 HBM boundaries, TMA producer and WGMMA consumers, and D128 backward saved tensor lifetimes."><div class="caption"><p>수식 → 실제 실행 경계 → CTA 내부 overlap → backward 저장값의 수명. 시간축은 원리 설명용이며 실측 trace가 아니다.</p><a href="02-trimul-algorithm.svg">SVG</a> · <a href="02-trimul-algorithm.png">PNG</a></div></section>
+<section class="pane" id="pane3" role="tabpanel" aria-labelledby="tab3" hidden><img class="figure" src="03-performance.svg" alt="Training forward, backward, and directly measured forward-plus-backward speedup panels with L384/L768 and a TriMul width-scaling matrix. Missing measurements are blank."><div class="caption"><p>FWD는 학습 forward다. 추론 수치로 대체하거나 F+B에서 빼서 backward를 추정하지 않았다. TriangleAttention의 matched 비교는 이번 bundle에 포함하지 않았다.</p><a href="03-performance.svg">SVG</a> · <a href="03-performance.png">PNG</a></div></section>
+<div class="notice"><strong>자료 범위.</strong> 구현 스냅샷은 <code>afd54410</code>. 수치는 기존 H100 기록이며 v2.1 재측정 결과가 아니다. 계열별 baseline과 시점이 다르므로 통합 평균을 계산하지 않는다. D256+ TriMul backward는 연구 checkpoint, Norm 수치는 portable Triton 경로 개선이다. OPM/PWA 원본 log는 0.001 ms 단위로 반올림되어 있다.</div>
+<h2>측정값과 출처</h2><p>그림의 대표 shape 외에도 수집한 모든 행을 제공한다. 전후 시간과 baseline을 확인할 수 있다. <a href="measurements.csv">CSV 다운로드</a> · <a href="evidence.json">수치·출처 SHA-256</a></p>
+<label>연산<select id="op"><option value="all">전체</option></select></label>
+<label>측정 구간<select id="phase"><option value="all">전체</option><option value="inference">추론 FWD</option><option value="train_fwd">학습 FWD</option><option value="bwd">학습 BWD</option><option value="fb">학습 F+B</option></select></label>
+<div class="table-wrap"><table><thead><tr><th>연산</th><th>Shape</th><th>L</th><th>구간</th><th>기존 ms</th><th>우리 ms</th><th>배속</th><th>Baseline · source</th><th>범위 / 주의</th></tr></thead><tbody id="measurements"></tbody></table></div>
+<details><summary>설계와 검증 범위</summary><p>수치와 코드 경계는 <a href="README.md">README</a>에 설명했다. SVG 텍스트는 편집 가능하다. figure를 재생성하는 Python 스크립트와 evidence bundle이 같은 디렉터리에 있으며, 생성 작업은 GPU 없이 CPU에서 수행했다.</p></details>
+<footer>© MiniWorld project · Draft visual synthesis · New GPU benchmarking was not performed.</footer>
+</main>
+<script id="evidence" type="application/json">__EVIDENCE_JSON__</script>
+<script>
+const data=JSON.parse(document.getElementById('evidence').textContent);
+const esc=x=>String(x??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const op=document.getElementById('op'), phase=document.getElementById('phase');
+[...new Set(data.records.map(r=>r.op))].forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;op.appendChild(o)});
+const names={inference:'추론 FWD',train_fwd:'학습 FWD',bwd:'BWD',fb:'F+B'};
+function render(){document.getElementById('measurements').innerHTML=data.records.filter(r=>(op.value==='all'||r.op===op.value)&&(phase.value==='all'||r.phase===phase.value)).map(r=>`<tr><td>${esc(r.op)}</td><td>${esc(r.shape)}</td><td>${esc(r.length)}</td><td>${names[r.phase]}</td><td>${r.baseline_ms.toFixed(4)}</td><td>${r.ours_ms.toFixed(4)}</td><td class="ratio ${r.speedup<1?'slow':''}">${r.speedup.toFixed(3)}×</td><td title="${esc(r.sources.map(s=>data.sources[s].path).join('\n'))}">${esc(r.baseline)} [${r.sources.join(', ')}]</td><td class="notes">${esc(r.status)} · ${esc(r.note)}</td></tr>`).join('')}
+op.addEventListener('change',render);phase.addEventListener('change',render);render();
+const tabs=[...document.querySelectorAll('[role=tab]')];
+function activate(t){tabs.forEach(b=>{const on=b===t;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;document.getElementById('pane'+b.dataset.pane).hidden=!on});}
+tabs.forEach((t,i)=>{t.tabIndex=i? -1:0;t.onclick=()=>activate(t);t.onkeydown=e=>{if(['ArrowRight','ArrowLeft','Home','End'].includes(e.key)){e.preventDefault();const n=e.key==='Home'?0:e.key==='End'?tabs.length-1:(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;activate(tabs[n]);tabs[n].focus();}}});
+</script></html>

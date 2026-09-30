@@ -1,0 +1,60 @@
+op,shape,length,phase,baseline_ms,ours_ms,speedup,baseline,status,note,sources
+TriMul,D128,384,train_fwd,0.544975996017456,0.3081279993057251,1.7686675577857174,Existing Triton,historical checkpoint,job 17324; baseline-D128-D256-L384-17324.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D128,384,bwd,1.0888479948043823,0.7148640155792236,1.5231540140150088,Existing Triton,historical checkpoint,job 17324; baseline-D128-D256-L384-17324.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D128,384,fb,1.6344640254974365,1.0176640152931213,1.6060939572739594,Existing Triton,historical checkpoint,job 17324; baseline-D128-D256-L384-17324.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D128,768,train_fwd,2.1784480810165405,1.2071839570999146,1.8045701056614005,Existing Triton,historical checkpoint,job 17323; baseline-D128-D256-L768-17323.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D128,768,bwd,4.341791868209839,2.8742400407791138,1.5105877750672903,Existing Triton,historical checkpoint,job 17323; baseline-D128-D256-L768-17323.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D128,768,fb,6.539008140563965,4.074912071228027,1.6046991999494484,Existing Triton,historical checkpoint,job 17323; baseline-D128-D256-L768-17323.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D256,384,train_fwd,1.325167953968048,0.8751200139522552,1.5142699662224233,Existing Triton,research checkpoint,job 19254; result-d256-pool-checkpoint-vs-triton-D256-L384-19254.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D256,384,bwd,2.2203519344329834,1.7507039904594421,1.2682623370557864,Existing Triton,research checkpoint,job 19254; result-d256-pool-checkpoint-vs-triton-D256-L384-19254.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D256,384,fb,3.5461920499801636,2.620800018310547,1.3530952477122442,Existing Triton,research checkpoint,job 19254; result-d256-pool-checkpoint-vs-triton-D256-L384-19254.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D256,768,train_fwd,5.4655678272247314,3.29201602935791,1.6602494576221005,Existing Triton,research checkpoint,job 19249; result-d256-pool-checkpoint-vs-triton-D256-L768-19249.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D256,768,bwd,12.11198377609253,7.128079891204834,1.6991930451056272,Existing Triton,research checkpoint,job 19249; result-d256-pool-checkpoint-vs-triton-D256-L768-19249.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D256,768,fb,17.462703704833984,10.506479740142822,1.662088933376328,Existing Triton,research checkpoint,job 19249; result-d256-pool-checkpoint-vs-triton-D256-L768-19249.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D384,384,train_fwd,2.330031991004944,1.6727839708328247,1.392906694248688,Existing Triton,research checkpoint,job 18910; result-wide-checkpoint23-vs-triton-D384-L384-18910.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D384,384,bwd,4.015632152557373,2.8860639333724976,1.3913871089698708,Existing Triton,research checkpoint,job 18910; result-wide-checkpoint23-vs-triton-D384-L384-18910.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D384,384,fb,6.370383977890015,4.584719896316528,1.389481608900062,Existing Triton,research checkpoint,job 18910; result-wide-checkpoint23-vs-triton-D384-L384-18910.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D384,768,train_fwd,9.64415979385376,6.7020158767700195,1.4389938745566926,Existing Triton,research checkpoint,job 18911; result-wide-checkpoint23-vs-triton-D384-L768-18911.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D384,768,bwd,18.89201545715332,12.333168029785156,1.5318055678417948,Existing Triton,research checkpoint,job 18911; result-wide-checkpoint23-vs-triton-D384-L768-18911.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D384,768,fb,28.82043170928955,19.096303939819336,1.5092151758850887,Existing Triton,research checkpoint,job 18911; result-wide-checkpoint23-vs-triton-D384-L768-18911.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D512,384,train_fwd,3.644927978515625,2.4688960313796997,1.47633919459894,Existing Triton,research checkpoint,job 19391; result-wide-checkpoint24-vs-triton-D512-L384-19391.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D512,384,bwd,5.899551868438721,4.4739038944244385,1.3186586050252405,Existing Triton,research checkpoint,job 19391; result-wide-checkpoint24-vs-triton-D512-L384-19391.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D512,384,fb,9.506415843963623,7.048464059829712,1.3487216169749887,Existing Triton,research checkpoint,job 19391; result-wide-checkpoint24-vs-triton-D512-L384-19391.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D512,768,train_fwd,15.605279922485352,10.109392166137695,1.543641760654673,Existing Triton,research checkpoint,job 19353; result-wide-checkpoint24-vs-triton-D512-L768-19353.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D512,768,bwd,28.002960205078125,18.621055603027344,1.5038331232159312,Existing Triton,research checkpoint,job 19353; result-wide-checkpoint24-vs-triton-D512-L768-19353.json; wide BWD is not promoted to shared dispatch,T
+TriMul,D512,768,fb,43.38228797912598,28.664560317993164,1.5134468311343425,Existing Triton,research checkpoint,job 19353; result-wide-checkpoint24-vs-triton-D512-L768-19353.json; wide BWD is not promoted to shared dispatch,T
+Transition,D128; expansion 4,384,fb,1.0740991592407227,0.5622960090637207,1.910202352368116,Triton residual path,historical,,X384
+Transition,D128; expansion 4,768,fb,4.022264099121093,2.0914608001708985,1.9231840724877196,Triton residual path,historical,,X768
+RMSNorm,D128,384,train_fwd,0.02738879919052124,0.027497598528862,0.9960433149016062,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+RMSNorm,D128,384,fb,0.07545599937438965,0.07240639925003052,1.0421178259925397,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+RMSNorm,D128,384,inference,0.02770879864692688,0.027798399329185486,0.9967767682880743,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+RMSNorm,D128,768,train_fwd,0.10252480506896973,0.102947199344635,0.9958969813811911,Pre-change portable Triton,historical,M=589824; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+RMSNorm,D128,768,fb,0.2806432008743286,0.25867838859558107,1.0849116634675169,Pre-change portable Triton,historical,M=589824; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+RMSNorm,D128,768,inference,0.10284479856491088,0.1028480052947998,0.9999688206895241,Pre-change portable Triton,historical,M=589824; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+RMSNorm,D384,384,train_fwd,0.09121599793434143,0.0776416003704071,1.1748340773396548,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+RMSNorm,D384,384,fb,0.2540672063827515,0.22017600536346435,1.1539277677571627,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+RMSNorm,D384,384,inference,0.0917472004890442,0.07757440209388733,1.1826994216211129,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+RMSNorm,D1024,,train_fwd,0.009849599748849868,0.008857599645853042,1.1119942357590367,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+RMSNorm,D1024,,fb,0.05241280198097229,0.036723199486732486,1.4272395301479168,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+RMSNorm,D1024,,inference,0.010153599828481675,0.008729600161314011,1.1631231260142065,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LayerNorm,D384,384,train_fwd,0.07896639704704285,0.07929279804229736,0.9958835984690514,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LayerNorm,D384,384,fb,0.2758527994155884,0.24625279903411865,1.1202016809456392,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LayerNorm,D384,384,inference,0.0794048011302948,0.0796671986579895,0.9967063291779447,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LayerNorm,D384,768,train_fwd,0.30409600734710696,0.30456640720367434,0.9984555097166287,Pre-change portable Triton,historical,M=589824; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LayerNorm,D384,768,fb,1.034604835510254,0.9492159843444824,1.0899572411064486,Pre-change portable Triton,historical,M=589824; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LayerNorm,D384,768,inference,0.3043423891067505,0.3041663885116577,1.000578632622605,Pre-change portable Triton,historical,M=589824; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LayerNorm,D1024,,train_fwd,0.009910400211811065,0.00995199978351593,0.9958199786364778,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LayerNorm,D1024,,fb,0.07248640060424805,0.04426240026950836,1.6376518255423833,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LayerNorm,D1024,,inference,0.00995519980788231,0.009932799637317658,1.0022551718933799,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LNLinear,D128 to 16,384,train_fwd,0.20476160049438477,0.023075200617313385,8.873665017705267,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LNLinear,D128 to 16,384,fb,0.35005760192871094,0.1689792037010193,2.071601677967899,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LNLinear,D128 to 16,384,inference,0.0217056006193161,0.021798400580883025,0.9957428086880691,Pre-change portable Triton,historical,M=147456; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LNLinear,D384 to 512,,train_fwd,0.056707197427749635,0.030976000428199767,1.8306817098351031,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LNLinear,D384 to 512,,fb,0.11978880167007447,0.09485759735107421,1.2628277018943272,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LNLinear,D384 to 512,,inference,0.031404799222946166,0.03126719892024994,1.0044007876448156,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LNLinear,D64 to 64,,train_fwd,0.017606399953365326,0.0032448001205921174,5.426035286929315,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LNLinear,D64 to 64,,fb,0.05049920082092285,0.03589119911193848,1.4070079036207324,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+LNLinear,D64 to 64,,inference,0.003296000137925148,0.0033023998141288756,0.9980621134435791,Pre-change portable Triton,historical,M=8192; not a native CUDA speedup; no BWD inferred by subtraction,N0|N1
+OPM,S1024; save O,384,fb,5.858,2.028,2.888560157790927,Own engine path (job 15640),historical,Input log rounded to 0.001 ms; save/recompute is a time-memory tradeoff,O
+OPM,S1024; recompute O,384,fb,5.858,2.462,2.3793663688058486,Own engine path (job 15640),historical,Input log rounded to 0.001 ms; save/recompute is a time-memory tradeoff,O
+PWA,S1024; D_msa64 / D_pair128,384,fb,4.161,1.561,2.665598975016015,Own engine path (job 15737),historical,Input log rounded to 0.001 ms,P
