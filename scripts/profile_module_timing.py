@@ -2,7 +2,11 @@
 (recycle=1, real shape). CUDA events are inserted at module boundaries; recorded
 during capture they become graph nodes that re-fire on every replay -> per-module
 GPU time in the real (compiled+captured) execution. Event wraps also act as dynamo
-graph-breaks, so torch.compile compiles WITHIN each module."""
+graph-breaks, so torch.compile compiles WITHIN each module.
+
+Run from the repository root on a GPU node:
+    python scripts/profile_module_timing.py [config_name]   # default phase1b_distogram_medium_v120
+(Moved from tests/, where it ran at import time and broke collection.)"""
 import sys, statistics, torch
 sys.path.insert(0, "scripts")
 from pathlib import Path
@@ -15,7 +19,7 @@ from miniworld.loss.auxiliary import cal_atom_distogram_loss
 dev = "cuda"; torch.set_float32_matmul_precision("medium")
 torch._dynamo.config.cache_size_limit = 256
 with initialize_config_dir(str(Path("configs/miniworld").absolute()), version_base=None):
-    raw = compose(config_name="config_distogram_swa_af3_mix_local_8gpu")
+    raw = compose(config_name=sys.argv[1] if len(sys.argv) > 1 else "phase1b_distogram_medium_v120")
 cfg = Config.model_validate(raw)
 w = cfg.loss.distogram_loss
 batch = _build_precompile_batch(

@@ -155,7 +155,7 @@ def _build_step_schedule_for_single_t(
     )
     single = pre_time + cond.add_time_embedding(time_embedding)
     for trans in cond.single_transitions:
-        single = single + trans(single)
+        single = trans(single)  # owns its residual
     single = cond.final_layernorm_token_single(single)
 
     # (T=1, B, L_token, d_single) and (T=1, B, L_token, d_single_token)

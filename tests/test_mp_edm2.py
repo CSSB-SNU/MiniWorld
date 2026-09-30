@@ -2,15 +2,15 @@
 
 Covers: magnitude_normalize / MPLinear (forced weight norm), mp_sum
 (variance preservation), apply_pairwise_rotation (norm preservation),
-AdaptiveLayerNorm rotation modulation, and a full DiffusionTransformer forward
-with the MP flags on (PyTorch path) + a training step that keeps ||w|| pinned.
+AdaptiveLayerNorm rotation modulation and the MP pair-bias projection. The
+DiffusionTransformer MP/rotation options were removed in team-gm 26eeba9
+(2026-08-03), so the block-level MP tests went with them.
 """
 
 import math
 
 import torch
 
-from team_gm.modules.blocks.diffusion_transformer import DiffusionTransformer
 from team_gm.modules.layers.adaln import AdaptiveLayerNorm
 from team_gm.modules.layers.ops import apply_pairwise_rotation, mp_sum, mp_swish_gate
 from team_gm.modules.primitives import (
@@ -91,12 +91,6 @@ def test_adaln_rotation_identity_at_init():
     assert torch.allclose(out, scaled, atol=1e-5)
 
 
-def _cfg(**kw):
-    return DiffusionTransformer.Config(
-        d_single=16, d_cond=8, d_pair=4, n_head=2, n_block=2, **kw
-    )
-
-
 def test_pair_bias_projection_is_mp_under_flag():
     from team_gm.modules.layers.augmented_attention import AugmentedAttentionPairBias
 
@@ -108,102 +102,10 @@ def test_pair_bias_projection_is_mp_under_flag():
     assert torch.allclose(rows, torch.full_like(rows, math.sqrt(mp.to_bias.in_features)), atol=5e-2)
 
 
-def test_diffusion_transformer_baseline_and_mp_forward():
-    torch.manual_seed(0)
-    single = torch.randn(1, 1, 5, 16)
-    cond = torch.randn(1, 1, 5, 8)
-    pair = torch.randn(1, 5, 5, 4)
-    for kw in (
-        {},  # backward-compatible default
-        {"magnitude_preserving": True, "use_rotation": True, "mp_residual": True},
-    ):
-        model = _cfg(**kw).build() if hasattr(_cfg(**kw), "build") else DiffusionTransformer(_cfg(**kw))
-        model.train()
-        out = model(single, cond, pair)
-        assert out.shape == single.shape
-        assert torch.isfinite(out).all()
-
-
-def test_diffusion_transformer_mp_training_step_keeps_norm_bounded():
-    torch.manual_seed(0)
-    model = DiffusionTransformer(
-        _cfg(magnitude_preserving=True, use_rotation=True, mp_residual=True)
-    )
-    model.train()
-    opt = torch.optim.Adam(model.parameters(), lr=1e-1)
-    mp_rows_max = []
-    for _ in range(15):
-        single = torch.randn(1, 1, 5, 16)
-        cond = torch.randn(1, 1, 5, 8)
-        pair = torch.randn(1, 5, 5, 4)
-        model(single, cond, pair).pow(2).mean().backward()
-        opt.step()
-        opt.zero_grad()
-    # Every MPLinear weight stays pinned to sqrt(fan_in) despite the aggressive
-    # LR (forced WN), i.e. ||w|| does not drift up over training.
-    for m in model.modules():
-        if isinstance(m, MPLinear):
-            rn = torch.linalg.vector_norm(m.weight, dim=1)
-            target = math.sqrt(m.in_features)
-            mp_rows_max.append((rn.max() / target).item())
-    assert mp_rows_max, "no MPLinear found under magnitude_preserving=True"
-    assert max(mp_rows_max) < 1.05, max(mp_rows_max)
-
-
-# ---------------- full-MP (mp_full) ----------------
-
 def test_mp_swish_gate_preserves_variance():
     a = torch.randn(200_000)
     b = torch.randn(200_000)
     assert abs(mp_swish_gate(a, b).var().item() - 1.0) < 0.03, mp_swish_gate(a, b).var().item()
-
-
-def test_mp_full_makes_every_block_linear_mp():
-    torch.manual_seed(0)
-    cfg = DiffusionTransformer.Config(
-        d_single=16, d_cond=8, d_pair=4, n_head=2, n_block=1,
-        mp_full=True, use_rotation=True,
-    )
-    model = DiffusionTransformer(cfg)
-    # mp_full implies mp_residual
-    assert model.blocks[0].mp_residual is True
-    # every Linear under the block must be MPLinear (no plain Linear left)
-    plain = [
-        n for n, m in model.named_modules()
-        if isinstance(m, Linear) and not isinstance(m, MPLinear)
-    ]
-    assert not plain, f"plain Linears remain under mp_full: {plain}"
-    # spot-check the previously zero/gating-init layers are now MP
-    blk = model.blocks[0]
-    assert isinstance(blk.attention_pair_bias.to_out, MPLinear)
-    assert isinstance(blk.attention_pair_bias.to_gate, MPLinear)
-    assert isinstance(blk.transition.squeeze, MPLinear)
-    assert isinstance(blk.transition.ada_ln_in.to_scale, MPLinear)
-    assert isinstance(blk.attention_pair_bias.ada_ln_in.to_angle, MPLinear)
-
-
-def test_mp_full_forward_and_norm_pinned():
-    torch.manual_seed(0)
-    cfg = DiffusionTransformer.Config(
-        d_single=16, d_cond=8, d_pair=4, n_head=2, n_block=2,
-        mp_full=True, use_rotation=True,
-    )
-    model = DiffusionTransformer(cfg)
-    model.train()
-    opt = torch.optim.Adam(model.parameters(), lr=1e-1)
-    for _ in range(12):
-        single = torch.randn(1, 1, 5, 16)
-        cond = torch.randn(1, 1, 5, 8)
-        pair = torch.randn(1, 5, 5, 4)
-        out = model(single, cond, pair)
-        assert out.shape == single.shape and torch.isfinite(out).all()
-        out.pow(2).mean().backward()
-        opt.step()
-        opt.zero_grad()
-    for m in model.modules():
-        if isinstance(m, MPLinear):
-            rn = torch.linalg.vector_norm(m.weight, dim=1)
-            assert (rn.max() / math.sqrt(m.in_features)) < 1.05
 
 
 def test_convert_linears_to_mp_excludes_final_denoising():

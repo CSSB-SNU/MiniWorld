@@ -378,7 +378,7 @@ def build_step_schedule(
         time_embedding = fourier_embedding(t_emb_t)     # (1, d_time)
         single = base + cond.add_time_embedding(time_embedding)   # (B, L_token, d_single)
         for trans in cond.single_transitions:
-            single = single + trans(single)
+            single = trans(single)   # the engine Transition owns its residual (as in DiffusionConditioning)
         single = cond.final_layernorm_token_single(single)
         token_single_cond_list.append(single)
         added_token_cond_list.append(dm.add_single_token_cond(single))

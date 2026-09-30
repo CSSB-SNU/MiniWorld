@@ -16,6 +16,7 @@ def test_condition_loop_fullgraph_preserves_last_recycle_grad(recycles, grad_ena
 
     class TinyTrunk(torch.nn.Module):
         _condition_impl = DiffusionModel._condition_impl
+        dit_dtype = torch.float32
 
         def __init__(self):
             super().__init__()

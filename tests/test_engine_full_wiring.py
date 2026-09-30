@@ -22,19 +22,19 @@ def reference_backends(module):
     return reference
 
 
-def check_outputs_and_gradients(native, reference, inputs, *, output_tol=0.03):
+def check_outputs_and_gradients(native, reference, inputs, *, output_tol=0.03, output_dtype=None):
     refs = [x.detach().clone().requires_grad_(x.requires_grad) for x in inputs]
     with torch.autocast("cuda", dtype=torch.bfloat16):
         actual = native(*inputs)
         expected = reference(*refs)
-    assert actual.dtype == expected.dtype
+    assert actual.dtype == (output_dtype or expected.dtype)
     error = (
         actual.float() - expected.float()
     ).norm() / expected.float().norm().clamp_min(1e-8)
     assert torch.isfinite(actual).all() and error < output_tol, error
     grad = torch.randn_like(actual)
     actual.backward(grad)
-    expected.backward(grad)
+    expected.backward(grad.to(expected.dtype))
     pairs = [("input", x.grad, r.grad) for x, r in zip(inputs, refs) if x.requires_grad]
     pairs += [
         (name, p.grad, r.grad)
@@ -67,7 +67,9 @@ def test_rmsnorm_keeps_epsilon_dtype_and_gradients(width, affine, dtype):
     reference.load_state_dict(native.state_dict(), strict=True)
     x = (torch.randn(2, 128, width, device="cuda", dtype=dtype) * 0.1).requires_grad_()
     # Small values catch input-dtype epsilon instead of torch's accumulation-dtype epsilon.
-    check_outputs_and_gradients(native, reference, [x])
+    # Since torch 2.13 CUDA autocast runs torch's rms_norm in fp32 and returns fp32; the engine
+    # norm keeps the input dtype (the trunk stays bf16), so only the values are compared to torch.
+    check_outputs_and_gradients(native, reference, [x], output_dtype=dtype)
 
 
 @pytest.mark.parametrize("variant", ["esmfold2", "af3"])
