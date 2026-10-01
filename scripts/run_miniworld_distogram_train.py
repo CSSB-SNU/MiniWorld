@@ -264,6 +264,11 @@ def _build_precompile_batch(  # noqa: PLR0915
     batch.structure.atom_pos_mask.fill_(True)  # noqa: FBT003
     batch.structure.atom_mask.fill_(True)  # noqa: FBT003
     batch.structure.token_mask.fill_(True)  # noqa: FBT003
+    # One representative atom per token (its first): the CB distogram target reads
+    # atom_is_rep, which Batch.empty leaves all False -- a zero loss and zero gradients.
+    rep = torch.ones_like(atom_to_token, dtype=torch.bool)
+    rep[1:] = atom_to_token[1:] != atom_to_token[:-1]
+    batch.structure.atom_is_rep = rep.unsqueeze(0)
     if n_tokens > 1:
         batch.structure.token_bond = torch.stack(
             [

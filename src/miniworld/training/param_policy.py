@@ -41,6 +41,7 @@ from typing import Literal
 
 import torch
 from pydantic import BaseModel, Field
+from team_gm.modules.blocks.diffusion_transformer import upgrade_legacy_keys
 from torch import nn
 
 logger = logging.getLogger(__name__)
@@ -227,7 +228,9 @@ def apply_param_policy(
     classifications = classify_params(model, policy)
 
     named_params = dict(model.named_parameters())
-    ckpt = ckpt_state_dict or {}
+    # Checkpoints from before the diffusion block took the engine's names spell its
+    # attention ``attention_pair_bias.``; read them under the parameter names.
+    ckpt = upgrade_legacy_keys(model, ckpt_state_dict or {})
 
     summary: dict[str, list[str]] = {"loaded": [], "reinit": [], "frozen": []}
     reinit_targets: list[str] = []

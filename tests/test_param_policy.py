@@ -374,3 +374,46 @@ def test_format_summary_truncates() -> None:
     assert "(7 more)" in text
     assert "reinit: 0 params" in text
     assert "frozen: 1 params" in text
+
+
+# ---------------------------------------------------------------------------
+# Checkpoints from before the diffusion block took the engine's names
+# ---------------------------------------------------------------------------
+
+
+def test_legacy_diffusion_block_keys_load_and_freeze() -> None:
+    """A checkpoint spelling the DiT attention ``attention_pair_bias.`` loads and freezes.
+
+    Before the fix it came back re-initialised and trainable.
+    """
+    from team_gm.modules import ImplementationType
+    from team_gm.modules.blocks.diffusion_transformer import DiffusionTransformerBlock
+
+    def model() -> nn.Module:
+        m = nn.Module()
+        m.blocks = nn.ModuleList(
+            [
+                DiffusionTransformerBlock(
+                    32, 16, 8, 4, implementation=ImplementationType.PYTORCH,
+                ),
+            ],
+        )
+        return m
+
+    src = model()
+    with torch.no_grad():
+        for p in src.parameters():
+            p.normal_()
+    legacy = {
+        k.replace("blocks.0.attention.", "blocks.0.attention_pair_bias.", 1): v
+        for k, v in src.state_dict().items()
+    }
+    assert any(".attention_pair_bias." in k for k in legacy)
+    dst = model()
+    policy = ParamPolicyConfig(enabled=True, default="freeze_loaded")
+    summary = apply_param_policy(dst, legacy, policy)
+    assert summary["reinit"] == []
+    pairs = zip(src.named_parameters(), dst.named_parameters(), strict=True)
+    for (n, a), (_, b) in pairs:
+        torch.testing.assert_close(b, a, atol=0, rtol=0, msg=n)
+        assert not b.requires_grad, n
