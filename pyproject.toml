@@ -108,7 +108,7 @@ team_gm = { path = "libs/team-gm", editable = true }
 # resolve.
 # Pinned to consolidated engine main; see docs/repositories.md for source, research,
 # native rebuild requirements and the scope of validation.
-miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "eaa08c42ccb721a358503bc7462c116cd8658b98" }
+miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "84def490c559add7ca23f0315356c3aebf6e97ba" }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"
