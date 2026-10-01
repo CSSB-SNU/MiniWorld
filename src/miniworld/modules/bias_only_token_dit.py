@@ -26,9 +26,12 @@ Everything else is kept from the v1 block, with identical initialisation: AdaLN 
 input, ``to_value`` (default init), the value gate (``gating``), ``to_out`` (zero),
 the conditioned output scale (``to_scale`` bias -2), ``to_bias`` (zero), ``ln_pair`` without
 offset, the engine ``ConditionedTransition``, and the plain ``x + f(x)`` residuals, each owned
-by its module (both parts return ``x + f(x)``; the block chains them). The kernel-level op is the same GEMM the engine's own
-bias-only path uses ("a single big GEMM per (b, h) -- already optimal, no custom kernel
-beats it"), so the module is plain torch + engine ops.
+by its module (both parts return ``x + f(x)``; the block chains them).
+
+The block is the engine's ``BiasOnlyDiTBlock`` (same parameter names, so checkpoints are
+unchanged): with an engine implementation it takes the engine's fused paths where they serve
+the call (B200 bf16: hand-written CUDA + cuBLAS for training and for inference) and this
+module's attention + ``ConditionedTransition`` otherwise.
 """
 
 from __future__ import annotations
@@ -37,6 +40,7 @@ import torch
 import torch.nn.functional as F
 from jaxtyping import Bool, Float
 from miniworld_engine.modules import AdaptiveLayerNorm, ConditionedTransition
+from miniworld_engine.modules.bias_only_dit import BiasOnlyDiTBlock
 from miniworld_engine.modules.functional import sigmoid_gate
 from miniworld_engine.modules.primitives import LayerNorm, Linear
 from pydantic import BaseModel
@@ -121,8 +125,13 @@ class BiasOnlyAttention(nn.Module):
         return single + sigmoid_gate(self.to_scale(cond), out)
 
 
-class BiasOnlyTokenDiTBlock(nn.Module):
-    """AdaLN bias-only attention + engine ``ConditionedTransition``, plain residuals."""
+class BiasOnlyTokenDiTBlock(BiasOnlyDiTBlock):
+    """AdaLN bias-only attention + engine ``ConditionedTransition``, plain residuals.
+
+    The engine's ``BiasOnlyDiTBlock`` -- its ``forward`` takes the fused B200 paths when they
+    serve the call -- with this module's parts: ``BiasOnlyAttention`` (fp32 softmax,
+    ``attention_pattern``) and the transition on the configured engine backend.
+    """
 
     def __init__(
         self,
@@ -133,23 +142,14 @@ class BiasOnlyTokenDiTBlock(nn.Module):
         *,
         implementation: ImplementationType = ImplementationType.PYTORCH,
     ) -> None:
-        super().__init__()
+        impl = to_engine_impl(implementation)
+        super().__init__(d_single, d_cond, d_pair, n_head, implementation=impl)
         self.attention = BiasOnlyAttention(
             d_single, d_cond, d_pair, n_head, implementation=implementation,
         )
         self.transition = ConditionedTransition(
-            d_hidden=d_single, d_cond=d_cond, implementation=to_engine_impl(implementation),
+            d_hidden=d_single, d_cond=d_cond, implementation=impl,
         )
-
-    def forward(
-        self,
-        single: Float[torch.Tensor, "A B L d_single"],
-        cond: Float[torch.Tensor, "A B L d_cond"],
-        pair: Float[torch.Tensor, "B L L d_pair"],
-        mask: Bool[torch.Tensor, "B L"] | None = None,
-    ) -> Float[torch.Tensor, "A B L d_single"]:
-        single = self.attention(single, cond, pair, mask)
-        return self.transition(single, cond)
 
 
 class BiasOnlyTokenDiT(nn.Module):

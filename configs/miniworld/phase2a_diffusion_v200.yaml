@@ -17,3 +17,6 @@ model:
   diffusion:
     token_dit_kind: bias_only
     dtype: bf16
+    # The engine's fused SWA atom DiT block (B200 bf16: the sm_100a kernels); off by default.
+    atom_swa:
+      fused_triton: true

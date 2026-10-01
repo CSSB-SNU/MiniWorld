@@ -7,5 +7,14 @@ train:
   comment: "v2.0.0-phase3a-confidence"
   run_dir: "runs/v2.0.0/phase3a/large_confidence"
 
+# The frozen diffusion module is the v2.0.0 phase-2 one (bias-only token DiT, bf16): the
+# phase-2b checkpoint only loads into the same module.
+model:
+  diffusion:
+    token_dit_kind: bias_only
+    dtype: bf16
+    atom_swa:
+      fused_triton: true
+
 loss:
   align_symmetry_targets: true

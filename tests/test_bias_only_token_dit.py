@@ -106,3 +106,15 @@ def test_v200_configs_compose_and_select_bias_only():
         assert cfg.model.diffusion.token_dit_kind == "bias_only"
         assert cfg.model.diffusion.token_dit.n_block == 24
         assert "v2.0.0" in cfg.train.run_dir
+
+
+def test_the_block_is_the_engine_block_and_keeps_its_keys():
+    """The engine's BiasOnlyDiTBlock (its B200 paths) with the same parameter names as before."""
+    from miniworld_engine.integrations import bias_only_dit_train
+    from miniworld_engine.modules.bias_only_dit import BiasOnlyDiTBlock
+
+    dit = _dit()
+    blk = dit.blocks[0]
+    assert isinstance(blk, BiasOnlyDiTBlock)
+    names = [n for n, _ in blk.named_parameters()]
+    assert sorted(names) == sorted(bias_only_dit_train.NAMES)
