@@ -25,8 +25,8 @@ learn 24 different patterns. Two things follow from ``p`` not depending on ``sin
 Everything else is kept from the v1 block, with identical initialisation: AdaLN on the
 input, ``to_value`` (default init), the value gate (``gating``), ``to_out`` (zero),
 the conditioned output scale (``to_scale`` bias -2), ``to_bias`` (zero), ``ln_pair`` without
-offset, the engine ``ConditionedTransition``, and the plain ``x + f(x)`` residuals via
-:func:`conditioned_residual`. The kernel-level op is the same GEMM the engine's own
+offset, the engine ``ConditionedTransition``, and the plain ``x + f(x)`` residuals, each owned
+by its module (both parts return ``x + f(x)``; the block chains them). The kernel-level op is the same GEMM the engine's own
 bias-only path uses ("a single big GEMM per (b, h) -- already optimal, no custom kernel
 beats it"), so the module is plain torch + engine ops.
 """
@@ -42,7 +42,6 @@ from miniworld_engine.modules.primitives import LayerNorm, Linear
 from pydantic import BaseModel
 from team_gm import typecheck
 from team_gm.modules.blocks._engine_impl import to_engine_impl
-from team_gm.modules.blocks.composition import conditioned_residual
 from team_gm.modules.exceptions import ImplementationType
 from torch import nn
 from torch.utils.checkpoint import checkpoint_sequential
@@ -119,7 +118,7 @@ class BiasOnlyAttention(nn.Module):
         out = out.reshape(a, b, length, self.n_head * self.d_hidden)
         out = sigmoid_gate(self.to_gate(x), out)
         out = self.to_out(out)
-        return sigmoid_gate(self.to_scale(cond), out)
+        return single + sigmoid_gate(self.to_scale(cond), out)
 
 
 class BiasOnlyTokenDiTBlock(nn.Module):
@@ -149,11 +148,8 @@ class BiasOnlyTokenDiTBlock(nn.Module):
         pair: Float[torch.Tensor, "B L L d_pair"],
         mask: Bool[torch.Tensor, "B L"] | None = None,
     ) -> Float[torch.Tensor, "A B L d_single"]:
-        return conditioned_residual(
-            single, cond,
-            attention=lambda value: self.attention(value, cond, pair, mask),
-            transition=self.transition,
-        )
+        single = self.attention(single, cond, pair, mask)
+        return self.transition(single, cond)
 
 
 class BiasOnlyTokenDiT(nn.Module):

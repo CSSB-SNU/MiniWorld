@@ -52,7 +52,8 @@ def test_conditioned_transition_amp_master_weights(width, cond_width, training):
         cond.detach().clone().requires_grad_(training),
     )
     with torch.set_grad_enabled(training), torch.autocast("cuda", dtype=torch.bfloat16):
-        y, yr = fused(x, cond), reference(xr, cr)
+        # the update alone: the module adds x to it, which would dilute the relative error below
+        y, yr = fused.delta(x, cond), reference.delta(xr, cr)
     assert y.dtype == yr.dtype
     assert torch.isfinite(y).all()
     rel = (y.float() - yr.float()).norm() / yr.float().norm()
