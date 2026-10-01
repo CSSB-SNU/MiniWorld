@@ -414,6 +414,10 @@ class ModelWrapper(nn.Module):
             token_single_input = token_single_input.clone()
             token_pair_trunk = token_pair_trunk.clone()
         token_single_trunk = self.model.to_token_single_trunk(token_single_input)
+        # The conditioning's pair half does not depend on the noise level: once per structure.
+        token_pair_cond = self.model.diffusion_module.diffusion_conditioning.pair_conditioning(
+            scheme, token_pair_trunk,
+        )
         self.conditioned_forwarded = True
         self.condition = {
             "reference": reference,
@@ -422,6 +426,7 @@ class ModelWrapper(nn.Module):
             "token_single_input": token_single_input,
             "token_single_trunk": token_single_trunk,
             "token_pair_trunk": token_pair_trunk,
+            "token_pair_cond": token_pair_cond,
         }
 
     def forward(
@@ -447,6 +452,7 @@ class ModelWrapper(nn.Module):
             self.condition["token_single_input"],
             self.condition["token_single_trunk"],
             self.condition["token_pair_trunk"],
+            token_pair_cond=self.condition["token_pair_cond"],
         )
         return x_update.squeeze(1)  # (A=N_str, B=1, L, 3) -> (N_str, L, 3)
 

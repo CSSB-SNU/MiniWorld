@@ -975,18 +975,13 @@ class DiffusionConditioning(nn.Module):
         )
 
     @typecheck
-    def forward(
+    def pair_conditioning(
         self,
         scheme: SchemeFeatures,
-        t_emb: Float[torch.Tensor, "A B"],
-        token_single_input: Float[torch.Tensor, "B L_token d_single_input"],
-        token_single_trunk: Float[torch.Tensor, "B L_token d_single"],
         token_pair_trunk: Float[torch.Tensor, "B L_token L_token d_pair"],
-    ) -> tuple[
-        Float[torch.Tensor, "B L_token d_single"],
-        Float[torch.Tensor, "B L_token L_token d_pair"],
-    ]:
-        """Forward pass of the diffusion conditioning module."""
+    ) -> Float[torch.Tensor, "B L_token L_token d_pair"]:
+        """The pair half: a function of the trunk pair and the token scheme only, not of the
+        noise level -- a sampler computes it once per structure, not once per step."""
         rel_emb = self.relative_position_embedder(
             asym_id=scheme.token_asym_id,
             token_residue_idx=scheme.token_residue_idx,
@@ -999,6 +994,28 @@ class DiffusionConditioning(nn.Module):
 
         for transition in self.pair_transitions:
             token_pair = transition(token_pair)
+        return token_pair
+
+    @typecheck
+    def forward(
+        self,
+        scheme: SchemeFeatures,
+        t_emb: Float[torch.Tensor, "A B"],
+        token_single_input: Float[torch.Tensor, "B L_token d_single_input"],
+        token_single_trunk: Float[torch.Tensor, "B L_token d_single"],
+        token_pair_trunk: Float[torch.Tensor, "B L_token L_token d_pair"],
+        token_pair_cond: Float[torch.Tensor, "B L_token L_token d_pair"] | None = None,
+    ) -> tuple[
+        Float[torch.Tensor, "B L_token d_single"],
+        Float[torch.Tensor, "B L_token L_token d_pair"],
+    ]:
+        """Forward pass of the diffusion conditioning module.
+
+        ``token_pair_cond``: :meth:`pair_conditioning` of these inputs, when the caller
+        already has it (a sampler, across its steps).
+        """
+        if token_pair_cond is None:
+            token_pair_cond = self.pair_conditioning(scheme, token_pair_trunk)
 
         token_single = torch.cat([token_single_input, token_single_trunk], dim=-1)
 
@@ -1012,7 +1029,7 @@ class DiffusionConditioning(nn.Module):
 
         token_single = self.final_layernorm_token_single(token_single)
 
-        return token_single, token_pair
+        return token_single, token_pair_cond
 
 
 class DiffusionModule(nn.Module):
@@ -1140,14 +1157,20 @@ class DiffusionModule(nn.Module):
         token_single_input: Float[torch.Tensor, "B L_token d_single_token_input"],
         token_single_trunk: Float[torch.Tensor, "B L_token d_single"],
         token_pair_trunk: Float[torch.Tensor, "B L_token L_token d_pair"],
+        token_pair_cond: Float[torch.Tensor, "B L_token L_token d_pair"] | None = None,
     ) -> Float[torch.Tensor, "B L_atom 3"]:
-        """Forward pass of the diffusion module."""
+        """Forward pass of the diffusion module.
+
+        ``token_pair_cond``: the conditioning's noise-independent pair half
+        (``diffusion_conditioning.pair_conditioning``), when the caller already has it.
+        """
         token_single_cond, token_pair_cond = self.diffusion_conditioning(
             scheme,
             t_emb,
             token_single_input,
             token_single_trunk,
             token_pair_trunk,
+            token_pair_cond,
         )
         token_single_rep, atom_single_rep, atom_single_cond, carry = self._encode_atoms(
             reference,

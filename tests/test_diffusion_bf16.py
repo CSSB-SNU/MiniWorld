@@ -72,10 +72,12 @@ def test_v200_configs_select_bf16_and_bias_only():
 
     from hydra import compose, initialize_config_dir
     root = Path(__file__).resolve().parents[1] / "configs" / "miniworld"
-    for name in ("phase2a_diffusion_v200", "phase2b_diffusion_v200"):
+    for name in ("phase2a_diffusion_v200", "phase2b_diffusion_v200",
+                 "phase3a_confidence_v200", "phase3b_confidence_v200"):
         with initialize_config_dir(str(root), version_base=None):
             cfg = compose(config_name=name)
         assert cfg.model.diffusion.dtype == "bf16" and cfg.model.diffusion.token_dit_kind == "bias_only"
+        assert cfg.model.diffusion.atom_swa.fused_triton, name
     from miniworld.models.diffusion.model import DiffusionModel
     assert DiffusionModel.DiffusionConfig.model_fields["dtype"].default == "fp32"
 
@@ -138,3 +140,21 @@ def test_full_module_forward_runs_in_bf16_swa_atom_path():
     dm = _cast_like_the_model(dm, torch.bfloat16).eval()
     out = _run_module(dm)
     assert out.dtype == torch.bfloat16 and torch.isfinite(out).all()
+
+
+def test_a_precomputed_pair_conditioning_gives_the_same_step():
+    """The sampler computes the conditioning's pair half once; a step fed it is bit-identical."""
+    make_batch, canonical_t_emb = _mock_harness()
+    dm = _small_module("bias_only").eval()
+    g = torch.Generator().manual_seed(5)
+    batch = make_batch(L_token=4, L_atom=9, seed=3)
+    pair = torch.randn(1, 4, 4, 8, generator=g)
+    args = (batch.reference, batch.scheme, batch.structure,
+            torch.randn(2, 1, 9, 3, generator=g), torch.ones(2, 1, 9, dtype=torch.bool),
+            canonical_t_emb(4.0), torch.randn(1, 4, 12, generator=g), torch.randn(1, 4, 16, generator=g),
+            pair)
+    with torch.no_grad():
+        plain = dm(*args)
+        cond = dm.diffusion_conditioning.pair_conditioning(batch.scheme, pair)
+        hoisted = dm(*args, token_pair_cond=cond)
+    torch.testing.assert_close(hoisted, plain, atol=0, rtol=0)
