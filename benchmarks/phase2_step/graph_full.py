@@ -6,7 +6,7 @@ in-place weight update. ``--share-pool`` captures all recycle graphs into one me
 The capture-safe stand-ins live in ``graph_safe.py``. The recycle count is baked into each graph at capture time
 (``_forced_n_recycle``); a trainer draws the count on the host and replays that graph.
 
-    python scripts/phase2_speed/graph_full.py --config configs/miniworld/phase2a_diffusion_v200.yaml --steps 10 [--share-pool]
+    python -m benchmarks.phase2_step.graph_full --config configs/miniworld/phase2a_diffusion_v200.yaml --steps 10 [--share-pool]
 """
 
 import argparse
@@ -22,10 +22,10 @@ import torch
 from pathlib import Path
 
 sys.path.insert(
-    0, str(Path(__file__).resolve().parents[1])
-)  # scripts/: run_miniworld_*_train
+    0, str(Path(__file__).resolve().parents[2] / "scripts")
+)  # run_miniworld_*_train
 
-from graph_safe import (
+from benchmarks.phase2_step.graph_safe import (
     cal_loss_gs,
     clear_pack_caches,
     graph_safe_sampling,

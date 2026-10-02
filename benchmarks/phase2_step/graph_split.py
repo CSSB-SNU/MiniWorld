@@ -16,7 +16,7 @@ and memory (reserved) after each capture, plus replay-vs-eager correctness incl.
 The capture-safe stand-ins (GPU sampling, Horn alignment, no host reads, engine weight-pack caches cleared around each capture)
 live in ``graph_safe.py``; ``graph_full.py`` is the per-recycle-count variant.
 
-    python scripts/phase2_speed/graph_split.py --config configs/miniworld/phase2a_diffusion_v200.yaml --steps 10"""
+    python -m benchmarks.phase2_step.graph_split --config configs/miniworld/phase2a_diffusion_v200.yaml --steps 10"""
 
 import argparse
 import os
@@ -30,10 +30,10 @@ import torch
 from pathlib import Path
 
 sys.path.insert(
-    0, str(Path(__file__).resolve().parents[1])
-)  # scripts/: run_miniworld_*_train
+    0, str(Path(__file__).resolve().parents[2] / "scripts")
+)  # run_miniworld_*_train
 
-from graph_safe import (
+from benchmarks.phase2_step.graph_safe import (
     cal_loss_gs,
     clear_pack_caches,
     graph_safe_sampling,

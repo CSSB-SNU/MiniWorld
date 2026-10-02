@@ -1,7 +1,7 @@
 # Phase 2 학습 속도: recycle 깊이, 체크포인팅, CUDA 그래프, 커널 배선 (B200, 2026-10-02)
 
 phase 2(frozen trunk + diffusion head) 학습의 마이크로 스텝을 B200 한 장에서 재고, 속도를 깎던 항목을 고친 기록이다.
-이 문서의 코드는 `scripts/phase2_speed/`와 `tests/test_phase2_*.py`에 있다. 3.3절과 3.5절의 비교는 **같은 프로세스 안에서** 한 것이다.
+이 문서의 코드는 `benchmarks/phase2_step/`와 `tests/test_phase2_*.py`에 있다. 3.3절과 3.5절의 비교는 **같은 프로세스 안에서** 한 것이다.
 요약 표는 각 단계의 값을 서로 다른 프로세스의 측정에서 이어 붙인 것이라 ±3% 잡음이 있다(전력 상한과 메모리 배치 때문에 같은 코드도
 프로세스마다 조금씩 다르게 나온다).
 
@@ -73,7 +73,7 @@ v200 설정은 token DiT(24 블록)와 atom SWA 인코더/디코더(3+3 블록)�
   걸치지 않는다. 거기서 잘라 E(임베더, 1회), T(trunk recycle 1회분, r번 replay), H(샘플링 + head + 손실 + 역전파)로 나눈다.
   recycle 횟수가 캡처와 컴파일 키에서 빠진다.
 
-### 3.2 캡처되도록 바꾼 것 (`scripts/phase2_speed/graph_safe.py`)
+### 3.2 캡처되도록 바꾼 것 (`benchmarks/phase2_step/graph_safe.py`)
 
 원본 학습 스텝은 그대로는 캡처되지 않는다. 아래는 확인한 사실이다.
 
@@ -131,7 +131,7 @@ frozen trunk만 inductor cudagraph-trees로 돌리는 기존 옵션을 같은 �
 
 ### 3.6 한계와 남은 일
 
-- 그래프 트레이너는 아직 저장소 학습 스크립트에 들어가 있지 않다. `scripts/phase2_speed/`는 측정과 검증 도구다.
+- 그래프 트레이너는 아직 저장소 학습 스크립트에 들어가 있지 않다. `benchmarks/phase2_step/`는 측정과 검증 도구다.
 - **결정**(트레이너에 넣을 때): B200은 recycle별 전체 스텝 그래프(풀 공유, 22.4 GiB), 그 외 GPU는 분리 그래프(E + T×r + H, 24.4 GiB).
   풀을 공유하면 전체 스텝 그래프의 메모리가 분리 그래프와 비슷해져서 메모리는 더 이상 이유가 아니다. 분리 그래프가 남기는 이점은
   recycle 횟수가 캡처와 컴파일 키에서 빠진다는 것(trunk 한 단계를 한 번만 컴파일)이다.
@@ -190,17 +190,17 @@ eager recycle 4에서 모듈 호출 수와 실행된 엔진 연산 수가 구조
 
 ```sh
 # recycle별 시간, 랜덤 추첨 40스텝, script warm-up 검증, 정체 진단
-python scripts/phase2_speed/bench_step.py --config configs/miniworld/phase2a_diffusion_v200.yaml \
+python -m benchmarks.phase2_step.bench_step --config configs/miniworld/phase2a_diffusion_v200.yaml \
     --script-warmup --recycles 1,2,3,4 --steps 8 --random-steps 40
-python scripts/phase2_speed/bench_step.py --config configs/miniworld/phase2a_diffusion_v200.yaml --recycles 1,2,3,4 --stall-probe 400
+python -m benchmarks.phase2_step.bench_step --config configs/miniworld/phase2a_diffusion_v200.yaml --recycles 1,2,3,4 --stall-probe 400
 # trunk 전용 그래프(저장소 옵션)와 대조군
-python scripts/phase2_speed/bench_step.py --config ... --recycles 1,2,3,4 --forced --trunk-graph default
-python scripts/phase2_speed/bench_step.py --config ... --recycles 1,2,3,4 --forced --trunk-graph reduce-overhead
+python -m benchmarks.phase2_step.bench_step --config ... --recycles 1,2,3,4 --forced --trunk-graph default
+python -m benchmarks.phase2_step.bench_step --config ... --recycles 1,2,3,4 --forced --trunk-graph reduce-overhead
 # CUDA 그래프: 전체 스텝(풀 공유), 분리
-python scripts/phase2_speed/graph_full.py  --config ... --steps 10 --share-pool
-python scripts/phase2_speed/graph_split.py --config ... --steps 10
+python -m benchmarks.phase2_step.graph_full --config ... --steps 10 --share-pool
+python -m benchmarks.phase2_step.graph_split --config ... --steps 10
 # 커널 배선 점검 (eager 인벤토리 + 컴파일 계열별 시간)
-python scripts/phase2_speed/wiring_audit.py --config ...
+python -m benchmarks.phase2_step.wiring_audit --config ...
 ```
 
 체크포인팅을 다시 켜려면 `model.diffusion.token_dit.n_checkpoint_segments=24 model.diffusion.atom_swa.n_checkpoint_segments=3`.

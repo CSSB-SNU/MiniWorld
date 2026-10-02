@@ -1,4 +1,4 @@
-"""The capture-safe stand-ins of ``scripts/phase2_speed/graph_safe.py`` against the repo's own host-synchronising versions."""
+"""The capture-safe stand-ins of ``benchmarks/phase2_step/graph_safe.py`` against the repo's own host-synchronising versions."""
 
 import importlib
 import sys
@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.fixture(scope="module")
 def gs():
-    path = str(ROOT / "scripts" / "phase2_speed")
+    path = str(ROOT / "benchmarks" / "phase2_step")
     sys.path.insert(0, path)
     try:
         yield importlib.import_module("graph_safe")

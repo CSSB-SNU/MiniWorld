@@ -18,8 +18,8 @@ import torch
 from pathlib import Path
 
 sys.path.insert(
-    0, str(Path(__file__).resolve().parents[1])
-)  # scripts/: run_miniworld_*_train
+    0, str(Path(__file__).resolve().parents[2] / "scripts")
+)  # run_miniworld_*_train
 from hydra import compose, initialize_config_dir
 from lightning import Fabric
 
@@ -51,9 +51,20 @@ ap.add_argument(
     help="select the count through _forced_n_recycle instead of the stub rng",
 )
 ap.add_argument("--trunk-graph", default="")
+ap.add_argument(
+    "--engine-setting",
+    action="append",
+    default=[],
+    metavar="KEY=VALUE",
+    help="miniworld_engine.settings field, e.g. b200_engine_triton=True (repeatable; an unknown field is an error)",
+)
 ap.add_argument("--tag", default="p2")
 ap.add_argument("overrides", nargs="*")
 a = ap.parse_args()
+
+from benchmarks.common import apply_engine_settings, header  # noqa: E402
+
+apply_engine_settings(a.engine_setting)
 
 import run_miniworld_distogram_train  # noqa: F401
 import run_miniworld_diffusion_train as R
@@ -113,6 +124,7 @@ client.setup(
 client.model.train()
 hi = raw.n_recycle_max + 1
 random_mode = raw.config.train_recycle == "random"
+print(header(a.tag), flush=True)
 print(
     f"BENCH [{a.tag}] tokens {n_tok} atoms {n_atom} A {cfg.train.num_augment} train_recycle={raw.config.train_recycle} n_recycle_max={raw.n_recycle_max} "
     f"trunk_graph='{a.trunk_graph}' ckpt token/atom {cfg.model.diffusion.token_dit.n_checkpoint_segments}/{cfg.model.diffusion.atom_swa.n_checkpoint_segments}",

@@ -32,8 +32,8 @@ def log(msg):
 from pathlib import Path
 
 sys.path.insert(
-    0, str(Path(__file__).resolve().parents[1])
-)  # scripts/: run_miniworld_*_train
+    0, str(Path(__file__).resolve().parents[2] / "scripts")
+)  # run_miniworld_*_train
 from hydra import compose, initialize_config_dir
 from lightning import Fabric
 import run_miniworld_distogram_train  # noqa: F401
