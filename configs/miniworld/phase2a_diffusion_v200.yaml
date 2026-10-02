@@ -14,6 +14,8 @@ train:
   run_dir: "runs/v2.0.0/phase2a/large_diffusion"
 
 model:
+  # the frozen trunk runs a uniform random 1..n_recycle_max recycles per micro-step in training (as in phase 1)
+  train_recycle: random
   diffusion:
     token_dit_kind: bias_only
     dtype: bf16

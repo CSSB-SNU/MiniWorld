@@ -340,9 +340,24 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
         cfg.train.bucket_atom_multiple,
     )
     n_templates = TemplateConfig().n_templates
-    warmup_n_recycle = 2
+    # Compile the SAME path real training takes. ``train_recycle="random"``: real forward draws n_recycle from
+    # ``raw_model.rng`` (``_forced_n_recycle`` None), so warm up each count with a stub Generator whose first draw is that
+    # count (a graph compiled under a forced count would be invalidated by the first real batch). ``"max"``: one pass at
+    # ``n_recycle_max``, also with ``_forced_n_recycle`` None for the same reason.
+    random_recycle = raw_model.config.train_recycle == "random"
+    recycle_values = list(range(1, raw_model.n_recycle_max + 1)) if random_recycle else [raw_model.n_recycle_max]
+    orig_rng = raw_model.rng
+
+    def _rng_yielding(target: int) -> np.random.Generator:
+        """A real numpy Generator whose first ``integers(1, n_recycle_max + 1)`` is ``target``."""
+        hi = raw_model.n_recycle_max + 1
+        for seed in range(10000):
+            if int(np.random.default_rng(seed).integers(1, hi)) == target:
+                return np.random.default_rng(seed)
+        return np.random.default_rng()
+
     total_bucket_shapes = len(msa_buckets) * len(token_buckets) * len(atom_buckets)
-    total_variants = total_bucket_shapes
+    total_variants = total_bucket_shapes * len(recycle_values)
 
     client.fabric.barrier()
     if client.device.type == "cuda":
@@ -350,9 +365,9 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
     start_time = time.perf_counter()
     if client.is_global_zero:
         client.logger.info(
-            "Starting synthetic bucket warmup: %d shapes x n_recycle=%d = %d passes",
+            "Starting synthetic bucket warmup: %d shapes x recycle counts %s = %d passes",
             total_bucket_shapes,
-            warmup_n_recycle,
+            recycle_values,
             total_variants,
         )
 
@@ -361,10 +376,13 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
         client.optimizer.zero_grad(set_to_none=True)
 
         warmup_idx = 0
-        for msa_depth, n_tokens, n_atoms in product(
-            reversed(msa_buckets),
-            reversed(token_buckets),
-            reversed(atom_buckets),
+        for (msa_depth, n_tokens, n_atoms), rc in product(
+            product(
+                reversed(msa_buckets),
+                reversed(token_buckets),
+                reversed(atom_buckets),
+            ),
+            recycle_values,
         ):
             batch = _build_precompile_batch(
                 device=client.device,
@@ -374,7 +392,9 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
                 n_templates=n_templates,
                 num_res_class=cfg.model.shared.num_res_class,
             )
-            raw_model._forced_n_recycle = warmup_n_recycle  # noqa: SLF001
+            raw_model._forced_n_recycle = None  # noqa: SLF001
+            if random_recycle:
+                raw_model.rng = _rng_yielding(rc)
             with client.fabric.no_backward_sync(
                 client.model,  # pyright: ignore[reportArgumentType]
                 enabled=False,
@@ -395,10 +415,11 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
                     msa_depth,
                     n_tokens,
                     n_atoms,
-                    warmup_n_recycle,
+                    rc,
                 )
     finally:
         raw_model._forced_n_recycle = None  # noqa: SLF001
+        raw_model.rng = orig_rng  # the real Generator, before the RNG-state restore
         client.optimizer.zero_grad(set_to_none=True)
         with torch.no_grad():
             for name, p in raw_model.named_parameters():

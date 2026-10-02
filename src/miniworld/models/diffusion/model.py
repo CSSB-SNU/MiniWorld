@@ -112,6 +112,12 @@ class DiffusionModel(MiniSWAModel):
         # this flag keeps the trunk modules in eval mode and runs the trunk under
         # ``torch.no_grad`` during forward).
         freeze_trunk: bool = True
+        # Recycle depth of the frozen trunk while TRAINING. "max": always ``n_recycle_max`` (the behaviour since the
+        # phase-2 refactor, and what ``ConfidenceModel`` keeps); "random": uniform in 1..n_recycle_max per micro-step
+        # from ``self.rng`` -- the rule the phase-1 trunk and ``models.miniworld.Model`` use in training (the head then
+        # learns to read conditioning from any recycle depth, and the mean trunk cost drops to (1 + n_recycle_max) / 2 recycles).
+        # Inference (eval) always runs the full depth; ``_forced_n_recycle`` overrides both.
+        train_recycle: Literal["max", "random"] = "max"
 
     def __init__(self, config: Config) -> None:
         # Build the exact phase 1b trunk via the parent, so submodule/param names
@@ -243,6 +249,17 @@ class DiffusionModel(MiniSWAModel):
             template,
         )
 
+    @torch.compiler.disable
+    def _draw_train_recycle(self) -> int:
+        """Uniform draw in 1..n_recycle_max from ``self.rng`` (the phase-1 rule).
+
+        Runs eagerly: under ``torch.compile`` the call is a deliberate graph break and the returned Python int is specialised,
+        so there is one compiled graph per count. Tracing it instead (``int(rng.integers(..))`` inside the graph) makes Dynamo
+        emit ``aten._local_scalar_dense``, which inductor cannot lower: the backend compile fails once per variant before
+        Dynamo falls back to the same graph break.
+        """
+        return int(self.rng.integers(1, self.n_recycle_max + 1))
+
     def _condition_impl(
         self,
         msa: MSAFeatures,
@@ -256,15 +273,15 @@ class DiffusionModel(MiniSWAModel):
 
         Mirrors :meth:`MiniSWAModel.forward` (same ``_embed`` / ``_trunk_step``
         recycle loop) but returns the trunk conditioning tensors instead of
-        distogram logits. The frozen trunk always uses the full recycle depth for
-        the best, deterministic conditioning (warmup can still pin a fixed count
-        via ``_forced_n_recycle``).
+        distogram logits. The recycle depth is ``n_recycle_max`` in eval and, in training, ``n_recycle_max`` or a
+        uniform draw per ``config.train_recycle`` (``_forced_n_recycle`` pins it).
         """
-        n_recycle = (
-            self._forced_n_recycle
-            if self._forced_n_recycle is not None
-            else self.n_recycle_max
-        )
+        if self._forced_n_recycle is not None:
+            n_recycle = self._forced_n_recycle
+        elif self.training and self.config.train_recycle == "random":
+            n_recycle = self._draw_train_recycle()
+        else:
+            n_recycle = self.n_recycle_max
 
         (
             token_pair_init_bf16,
