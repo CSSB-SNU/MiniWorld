@@ -102,14 +102,18 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
     ) -> Float[torch.Tensor, "B L_token d_single_token"]:
         atom_single_rep = atom_single_rep * atom_mask[..., None]
         to_add_single_token_rep = self.atom_single_rep_to_token_single(atom_single_rep)
+        # Mean over the atoms of each token as a scatter-add (the backward is a gather) instead of a one-hot
+        # [B, L_atom, L_token] mapping and two einsums over it: the whole embedder's forward + backward CUDA-graph step goes
+        # 1.41 -> 1.38 ms at 384 tokens / 4096 atoms. The sums run in fp32 whatever the activation dtype (the einsum
+        # accumulated in fp32 too); the order of the atomic adds is not fixed.
         token_length = int(token_idx.shape[1])
-        mapping = torch.nn.functional.one_hot(
-            atom_to_token_idx_map,
-            num_classes=token_length,
-        ).to(to_add_single_token_rep.dtype)
-        token_sum = torch.einsum("bat,bad->btd", mapping, to_add_single_token_rep)
-        count = torch.einsum("bat,ba->bt", mapping, atom_mask.to(mapping.dtype))
-        return token_sum / count.unsqueeze(-1).clamp(min=1.0)
+        idx = atom_to_token_idx_map.long()
+        src = to_add_single_token_rep.float()
+        token_sum = src.new_zeros(idx.shape[0], token_length, src.shape[-1]).scatter_add(
+            1, idx.unsqueeze(-1).expand_as(src), src,
+        )
+        count = src.new_zeros(idx.shape[0], token_length).scatter_add(1, idx, atom_mask.to(src.dtype))
+        return (token_sum / count.unsqueeze(-1).clamp(min=1.0)).to(to_add_single_token_rep.dtype)
 
     @typecheck
     def forward(
