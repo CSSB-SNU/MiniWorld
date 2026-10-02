@@ -31,6 +31,17 @@ from miniworld.data.features import TemplateFeatures
 from miniworld.modules.mini_pairformer import MiniPairformer
 
 
+def _engine_batch_limit() -> int:
+    """Return the samples one call of the engine's native B200 TriMul takes (1 for an engine that predates batched samples)."""
+    try:
+        from miniworld_engine.integrations.trimul_b200 import (  # noqa: PLC0415
+            MAX_BATCH,
+        )
+    except ImportError:  # an engine that predates batched samples has no such name
+        return 1
+    return MAX_BATCH
+
+
 def _dgram_from_positions(
     cb: Float[torch.Tensor, "B L 3"],
     lower: Float[torch.Tensor, "num_bins"],
@@ -148,6 +159,18 @@ class AF3TemplateEmbedder(nn.Module):
         # choice — the pathway trains large, so starting dead only lengthens the ramp).
         # Set via TemplateEmbedderConfig.out_init (default vs zero).
         self.proj_out = Linear(num_channels, d_pair, bias=False, init=out_init)
+        # B200: the templates are B samples of one pair stack, and the engine's native TriMul / Transition take them as ONE batch
+        # (one launch per stage instead of one call per template, the row-dropout scale drawn per sample) where they serve it:
+        # bf16, a 64-channel stack, at most ``_engine_batch_limit()`` templates. Anything else keeps the per-template loop.
+        self._batch_templates = (
+            torch.cuda.is_available()
+            and torch.cuda.get_device_capability() == (10, 0)
+            and ImplementationType[implementation] == ImplementationType.MINIWORLD_ENGINE
+            and num_channels == 64
+        )
+        self._batch_limit = _engine_batch_limit()  # asked once, here: a traced forward must not import or query the engine
+        # The four small per-pair projections as ONE linear map (bf16 only, see ``forward``).
+        self._fuse_projections = True
 
     @typecheck
     def forward(
@@ -164,6 +187,11 @@ class AF3TemplateEmbedder(nn.Module):
         batch dim: the trunk is a miniworld-engine MiniPairformer whose bidirectional
         trimul kernel only supports batch size 1, so the template axis cannot be folded
         into B. ``N_temp`` is static, so the unrolled loop stays CUDA-graph capturable.
+
+        Where the engine's native B200 TriMul takes samples (bf16, 64 channels, at most
+        ``_engine_batch_limit()`` templates) the templates are folded into the batch
+        dim instead: one pair stack over ``[N_temp * B, L, L, C]``, then the sum over
+        the template axis. The result is the same function (up to bf16 rounding).
         """
         b, n_temp = template.mask.shape
         dtype = pair.dtype
@@ -175,6 +203,23 @@ class AF3TemplateEmbedder(nn.Module):
         ).to(dtype)[..., None]  # [B, L, L, 1]
 
         summed = query.new_zeros((b, query.shape[1], query.shape[2], self.num_channels))
+        batched = (
+            self._batch_templates and dtype == torch.bfloat16 and 1 < n_temp <= self._batch_limit
+        )
+        acts: list[torch.Tensor] = []
+        fuse = self._fuse_projections and dtype == torch.bfloat16
+        if fuse:
+            # The four per-pair features with a small input width (distogram 39, pseudo-beta mask 1, unit vector 3, backbone
+            # mask 1) are projected by independent bias-free Linears that are SUMMED, i.e. one linear map on their
+            # concatenation. Run as that one map on an input padded to a multiple of 8 columns: in bf16 the K = 39 / 3 / 1
+            # GEMMs are misaligned (cutlass align1) or split-K kernels, four forward and four weight-gradient GEMMs per
+            # template. The parameters (and so the state dict) are unchanged. Not in fp32: there the aligned GEMM would run
+            # on tensor cores under the "medium" matmul precision the training scripts set, the misaligned ones do not.
+            w_feat = torch.cat(
+                [self.proj_dgram.weight, self.proj_pb_mask.weight, self.proj_unit_vec.weight, self.proj_bb_mask.weight],
+                dim=1,
+            )
+            w_feat = F.pad(w_feat, (0, -w_feat.shape[1] % 8)).to(dtype)
         for t in range(n_temp):
             # Invalid templates (mask=0) and missing residues can carry NaN/Inf coords.
             # Sanitize BEFORE any math: F.normalize(NaN)=NaN would flow into ``act`` and
@@ -195,19 +240,32 @@ class AF3TemplateEmbedder(nn.Module):
             unit_vec = _backbone_unit_vectors(bb).to(dtype)  # [B, L, L, 3]
             bb2d = (bb_mask[:, :, None] & bb_mask[:, None, :]).to(dtype)[..., None] * multichain
 
-            act = (
-                query
-                # AF3 masks the geometric features by the pseudo-beta / backbone masks
-                # BEFORE projection: a missing residue's coord is nan_to_num->origin, so
-                # its dgram/unit-vector to a valid residue would otherwise inject a
-                # spurious contact/direction. pb2d/bb2d zero those out at the source.
-                + self.proj_dgram(dgram * pb2d)
-                + self.proj_pb_mask(pb2d)
-                + self.proj_aatype_i(aatype)[:, None, :, :]  # broadcast over i
-                + self.proj_aatype_j(aatype)[:, :, None, :]  # broadcast over j
-                + self.proj_unit_vec(unit_vec * bb2d)
-                + self.proj_bb_mask(bb2d)
-            )
+            # AF3 masks the geometric features by the pseudo-beta / backbone masks
+            # BEFORE projection: a missing residue's coord is nan_to_num->origin, so
+            # its dgram/unit-vector to a valid residue would otherwise inject a
+            # spurious contact/direction. pb2d/bb2d zero those out at the source.
+            if fuse:
+                feat = torch.cat([dgram * pb2d, pb2d, unit_vec * bb2d, bb2d], dim=-1)
+                feat = F.pad(feat, (0, w_feat.shape[1] - feat.shape[-1]))
+                act = (
+                    query
+                    + F.linear(feat, w_feat)
+                    + self.proj_aatype_i(aatype)[:, None, :, :]  # broadcast over i
+                    + self.proj_aatype_j(aatype)[:, :, None, :]  # broadcast over j
+                )
+            else:
+                act = (
+                    query
+                    + self.proj_dgram(dgram * pb2d)
+                    + self.proj_pb_mask(pb2d)
+                    + self.proj_aatype_i(aatype)[:, None, :, :]  # broadcast over i
+                    + self.proj_aatype_j(aatype)[:, :, None, :]  # broadcast over j
+                    + self.proj_unit_vec(unit_vec * bb2d)
+                    + self.proj_bb_mask(bb2d)
+                )
+            if batched:
+                acts.append(act)
+                continue
             act = self.template_pairformer(act, mask=token_mask)  # B=1 -> miniworld
             act = self.ln_out(act)
             # AF3 averages over a FIXED template count (every padded slot contributes the
@@ -217,6 +275,13 @@ class AF3TemplateEmbedder(nn.Module):
             # were found. Sum all slots / fixed n_temp (invalid-slot geometry is masked via
             # pb2d/bb2d above; padding-slot gap res_type is a data-side follow-up).
             summed = summed + act
+
+        if batched:
+            # [T * B, L, L, C] templates-major: one pair stack over all templates, then the sum over T (same fixed-count average below)
+            stacked = self.ln_out(self.template_pairformer(
+                torch.cat(acts, dim=0), mask=token_mask.repeat(n_temp, 1),
+            ))
+            summed = summed + stacked.view(n_temp, b, *stacked.shape[1:]).sum(dim=0)
 
         n_temp_div = template.mask.shape[1]
         avg = summed / (1e-7 + n_temp_div)
