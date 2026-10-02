@@ -54,7 +54,7 @@ def test_connected_paths_amp(kind, training):
     from miniworld.configs.models import SharedConfig
     from miniworld.modules.diffusion_module import DiffusionConditioning
     from miniworld.modules.mini_msa_module import MiniMSAModuleBlock
-    from miniworld_engine.modules.dispatch import KernelBackend
+    from miniworld_engine.modules.dispatch import KernelBackend, resolve_layernorm
     from team_gm.modules.exceptions import ImplementationType
 
     torch.manual_seed(21)
@@ -70,9 +70,12 @@ def test_connected_paths_amp(kind, training):
             if kind == "opm"
             else block.msa_pair_weighted_averaging
         )
-        assert module.ln_msa._backend != KernelBackend.PYTORCH
+        # The norms took the engine's known-best LayerNorm backend (a B200 runs it as PyTorch ops that torch.compile
+        # fuses, every other card the engine kernel): not the PyTorch reference where the engine has a kernel.
+        norm_backend = resolve_layernorm("miniworld")
+        assert module.ln_msa._backend == norm_backend
         if kind == "pwa":
-            assert module.ln_pair._backend != KernelBackend.PYTORCH
+            assert module.ln_pair._backend == norm_backend
         shapes = [(1, 32, 64, 64)]
         if kind == "pwa":
             shapes.append((1, 64, 64, 128))
