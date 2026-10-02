@@ -17,6 +17,11 @@ model:
   diffusion:
     token_dit_kind: bias_only
     dtype: bf16
+    # bf16 diffusion module: no per-block activation checkpointing (it was the fp32 recipe's memory knob). With it every DiT block
+    # re-runs its forward in backward: phase 2a L384 121.9 -> 108.0 ms per micro-step (peak 5.1 -> 20.2 GiB), 2b L768 336.9 -> 317.8 ms (10.7 -> 40.9 GiB).
+    token_dit:
+      n_checkpoint_segments: null
     # The engine's fused SWA atom DiT block (B200 bf16: the sm_100a kernels); off by default.
     atom_swa:
       fused_triton: true
+      n_checkpoint_segments: null
