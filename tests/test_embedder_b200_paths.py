@@ -1,9 +1,14 @@
-"""The atom-to-token mean as a scatter-add, against the one-hot einsums it replaced (CPU only)."""
+"""The input embedder's B200 paths: the atom-to-token mean as a scatter-add, and the fused token-pair initialisation with its fallbacks.
+
+CPU only. The scatter-add is checked against the one-hot einsums it replaced; the fused pair stream must stay out of the way (return
+None, so the unfused ops run) when it is switched off or when the engine predates the op."""
+import sys
 from types import SimpleNamespace
 
 import pytest
 import torch
 
+from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.input_feature_embedder_esmfold2_style import ESMFold2InputAtomAttentionEncoder
 
 
@@ -45,3 +50,23 @@ def test_the_scatter_add_mean_is_differentiable_like_the_einsum():
     want = _one_hot_mean(10, atom_mask, atom_to_token, stub.atom_single_rep_to_token_single(rep))
     (g_old,) = torch.autograd.grad(want, rep, grad)
     assert torch.allclose(g_new, g_old, atol=1e-5)
+
+
+def _call_fused(token_left):
+    stub = SimpleNamespace()
+    return InputFeatureEmbedder._fused_token_pair_init(stub, token_left, token_left, None, None)
+
+
+def test_the_fused_pair_stream_stays_off_without_cuda():
+    assert _call_fused(torch.zeros(1, 4, 128)) is None
+
+
+def test_the_fused_pair_stream_can_be_switched_off(monkeypatch):
+    monkeypatch.setenv("MINIWORLD_FUSED_PAIR_INIT", "0")
+    assert _call_fused(SimpleNamespace(is_cuda=True)) is None
+
+
+def test_the_fused_pair_stream_falls_back_on_an_engine_without_the_op(monkeypatch):
+    monkeypatch.delenv("MINIWORLD_FUSED_PAIR_INIT", raising=False)
+    monkeypatch.setitem(sys.modules, "miniworld_engine.kernels.token_pair_init", None)      # import raises ImportError
+    assert _call_fused(SimpleNamespace(is_cuda=True)) is None

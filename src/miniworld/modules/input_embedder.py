@@ -366,6 +366,29 @@ class InputFeatureEmbedder(nn.Module):
         self._bond_feat_cache = (_tb, _out)
         return _out
 
+    def _fused_token_pair_init(self, token_left, token_right, scheme, structure):
+        """The pair stream ``left_i + right_j + Linear(relative-position one-hot) + Linear(bond one-hot)`` as one engine kernel
+        pair (``miniworld_engine.kernels.token_pair_init``; B200, fp32, d_pair 128, dense ``token_bond_feat``), or None when it
+        does not serve the call (the unfused ops below run). ``MINIWORLD_FUSED_PAIR_INIT=0`` turns it off. It never builds the
+        139-wide fp32 one-hot of the relative-position features (82 MB at 384 tokens) and does its sums in exact fp32."""
+        import os
+
+        if os.environ.get("MINIWORLD_FUSED_PAIR_INIT", "1") == "0" or not token_left.is_cuda:
+            return None
+        try:
+            from miniworld_engine.kernels.token_pair_init import refusal, token_pair_init
+        except ImportError:  # an engine that predates the op: the unfused ops below run
+            return None
+
+        rel = self.relative_position_embedder
+        w_rel, w_bond = rel.embed_rel_pos.weight, self.add_token_bond.weight
+        if refusal(token_left, token_right, w_rel, w_bond, structure.token_bond_feat, r_max=rel.r_max, s_max=rel.s_max) is not None:
+            return None
+        return token_pair_init(
+            token_left, token_right, w_rel, w_bond, scheme.token_asym_id, scheme.token_residue_idx, scheme.token_idx,
+            scheme.token_entity_id, scheme.token_sym_id, structure.token_bond_feat, r_max=rel.r_max, s_max=rel.s_max,
+        )
+
     def forward(
         self,
         token_single_msa: Float[torch.Tensor, "B L_token d_single_token_init"],
@@ -393,6 +416,10 @@ class InputFeatureEmbedder(nn.Module):
         )
         token_left = self.to_token_pair_left(token_single_input)
         token_right = self.to_token_pair_right(token_single_input)
+        fused = self._fused_token_pair_init(token_left, token_right, scheme, structure)
+        if fused is not None:
+            return token_single_input, token_single_init, fused
+
         token_pair_init = rearrange(token_left, "b l d -> b l 1 d") + rearrange(
             token_right,
             "b l d -> b 1 l d",
