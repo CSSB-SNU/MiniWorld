@@ -58,17 +58,7 @@ def test_symmetric_noise_retains_unit_variance():
     assert abs(values.var().item() - 1.) < .025
 
 
-@pytest.fixture
-def full_fp32_matmul():
-    """Scripts imported by other tests set float32 matmul precision "medium", which torch
-    2.13 also honours on CPU; an exact-algebra comparison needs full fp32."""
-    previous = torch.get_float32_matmul_precision()
-    torch.set_float32_matmul_precision("highest")
-    yield
-    torch.set_float32_matmul_precision(previous)
-
-
-def test_factored_encoder_matches_original_concat_forward_and_gradients(full_fp32_matmul):
+def test_factored_encoder_matches_original_concat_forward_and_gradients():
     torch.manual_seed(2)
     h = head()
     x = torch.randn(2, 5, 5, requires_grad=True)
