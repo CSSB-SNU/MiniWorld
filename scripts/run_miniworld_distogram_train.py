@@ -27,6 +27,7 @@ from team_gm.utils.script_utils import MetricsAggregator
 from typing import Annotated, Union
 
 import wandb
+from miniworld.utils import new_wandb_run_id
 from miniworld.configs import (
     BioMolDBConfig,
     CropConfig,
@@ -609,7 +610,7 @@ def _run_cudagraph_path(cfg: Config, job_name: str | None, ckpt: Path | None) ->
             if wandb_id_file.exists():
                 wandb_id = wandb_id_file.read_text().strip()
             else:
-                wandb_id = wandb.util.generate_id()
+                wandb_id = new_wandb_run_id()
                 wandb_id_file.parent.mkdir(parents=True, exist_ok=True)
                 wandb_id_file.write_text(wandb_id)
             wandb.init(
@@ -775,7 +776,7 @@ def train(  # noqa: PLR0912, PLR0915
             if wandb_id_file.exists():
                 wandb_id = wandb_id_file.read_text().strip()
             else:
-                wandb_id = wandb.util.generate_id()
+                wandb_id = new_wandb_run_id()
                 wandb_id_file.parent.mkdir(parents=True, exist_ok=True)
                 wandb_id_file.write_text(wandb_id)
             wandb.init(

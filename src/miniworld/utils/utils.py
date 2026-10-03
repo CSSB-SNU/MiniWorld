@@ -66,3 +66,13 @@ def get_inverse_sqrt_scheduler_with_warmup(
 def to_numpy(tensor: torch.Tensor) -> np.ndarray:
     """Convert a torch Tensor to a numpy array."""
     return tensor.detach().cpu().numpy()
+
+
+def new_wandb_run_id() -> str:
+    """A fresh W&B run id. wandb 0.30 dropped ``wandb.util.generate_id``; the generator lives in ``wandb.sdk.lib.runid``."""
+    import wandb
+
+    generate = getattr(wandb.util, "generate_id", None)
+    if generate is None:
+        from wandb.sdk.lib.runid import generate_id as generate
+    return generate()

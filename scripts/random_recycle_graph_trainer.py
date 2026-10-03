@@ -787,10 +787,11 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
     if rank == 0:
         print("[graph] validation passed; full model/Adam restored", flush=True)
     import wandb
+    from miniworld.utils import new_wandb_run_id
 
     wandb_id = state.get("wandb_run_id")
     if rank == 0 and cfg.train.use_wandb and not diagnostic_steps:
-        wandb_id = prepare_wandb_id(cfg.train.run_dir, run_dir, state, fresh, wandb.util.generate_id)
+        wandb_id = prepare_wandb_id(cfg.train.run_dir, run_dir, state, fresh, new_wandb_run_id)
 
     def checkpoint_payload(rng_states):
         return {

@@ -1,0 +1,32 @@
+# v1.2.0 phase 2a: v2.0.0 diffusion recipe (BiasOnlyTokenDiT, full-bf16 diffusion module) on the
+# FROZEN v1.2.0 medium trunk (pf16, msa4). Trunk seed = phase-1b epoch-900 online EMA weights,
+# weights only, epoch 0:
+#   runs/v1.2.0/phase1b/ema_ep900/epoch=0900_ema.pt   (pass via --ckpt)
+# The trunk and data overrides repeat phase1{a,b}_distogram_medium_v120 (v1.1 cropping + v1.2 MSA
+# sampling) so the frozen trunk sees the inputs it was trained on. 400 epochs at L384.
+defaults:
+  - phase2a_diffusion_v200
+  - _self_
+
+model:
+  trunk:
+    pairformer:
+      n_block: 16
+      n_checkpoint_segments: 16
+    msa_subsample_per_recycle: 1024
+
+data:
+  crop:
+    ab_ag_interface_only: true
+    prefer_nonprotein_focus: true
+  msa:
+    sample_depth_by_source:
+      pdb: af3
+    max_msa_depth_by_source:
+      pdb: 8192
+
+train:
+  comment: "v1.2.0-phase2a-diffusion-medium-v200-L384"
+  run_dir: "runs/v1.2.0/phase2a/medium_diffusion_v200_L384"
+  num_epoch: 400
+  bucket_msa_multiple: 8192
