@@ -2,6 +2,7 @@
 import pytest
 import torch
 import triton
+from triton.runtime.errors import OutOfResources
 from miniworld_engine.kernels.adaln.triton.inference import _adaln_gemm_gate_kernel
 
 pytestmark=pytest.mark.skipif(not torch.cuda.is_available(),reason='CUDA required')
@@ -19,10 +20,15 @@ def run_case(m,n,k,dtype,config,offset=0):
     c1=x.float().mean(-1)*r
     y=torch.empty_like(x)
     bm,bn,bk,warps,stages,group=config
-    compiled=_adaln_gemm_gate_kernel.fn[(triton.cdiv(m,bm)*triton.cdiv(n,bn),)](
-        c,sw,sb,bw,x,r,c1,y,m,n,k,k,n,n,n,n,
-        BLOCK_M=bm,BLOCK_N=bn,BLOCK_K=bk,GROUP_M=group,shape_key=0,
-        num_warps=warps,num_stages=stages)
+    try:
+        compiled=_adaln_gemm_gate_kernel.fn[(triton.cdiv(m,bm)*triton.cdiv(n,bn),)](
+            c,sw,sb,bw,x,r,c1,y,m,n,k,k,n,n,n,n,
+            BLOCK_M=bm,BLOCK_N=bn,BLOCK_K=bk,GROUP_M=group,shape_key=0,
+            num_warps=warps,num_stages=stages)
+    except OutOfResources as error:
+        # A fixed tile this GPU cannot launch (B200: 256 x 256 needs 256 KB of shared memory, the limit is 227 KB);
+        # the autotuner drops such configs, so there is nothing to execute here.
+        pytest.skip(f'tile {config} does not fit this GPU: {error}')
     torch.cuda.synchronize()
     old=torch.backends.cuda.matmul.allow_tf32
     torch.backends.cuda.matmul.allow_tf32=False

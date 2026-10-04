@@ -72,7 +72,11 @@ def test_mini_model_all_engine_modules_and_checkpoint_layout():
         k: tuple(v.shape) for k, v in after.state_dict().items()
     }
     modules = [m for m in after.modules() if hasattr(m, "_backend")]
-    assert modules and all(m._backend.value == "triton" for m in modules)
+    # The policy is about where the engine's own choice lands. On B200 team-gm builds its norm / pointwise
+    # modules as PyTorch ops on purpose (team_gm.modules._engine_impl.torch_pointwise); those stay PyTorch.
+    engine_chosen = [m for m in modules if getattr(m, "implementation", None) != EngineImpl.PYTORCH]
+    assert engine_chosen and all(m._backend.value == "triton" for m in engine_chosen)
+    assert all(m._backend.value in ("triton", "pytorch") for m in modules)
     assert any(isinstance(m, Transition) for m in modules)
 
 
