@@ -22,6 +22,7 @@ GPU별로 비교하는 용도다.
 | `phase2_step/` | phase 2 마이크로 스텝(recycle별, 랜덤 recycle, 그래프, 커널 배선) | `python -m benchmarks.phase2_step.bench_step --config configs/miniworld/phase2a_diffusion_v200.yaml --recycles 1,2,3,4` |
 | `embedder/` | 입력 임베더 forward+backward 그래프, 커널 계열별 시간 | `python -m benchmarks.embedder.ladder` |
 | `template_embedder/` | 템플릿 배치·투영 융합의 속도와 정확도, 컴파일 점검 | `python -m benchmarks.template_embedder.variants` |
+| `protenix_finetune/` | Protenix v1 파인튜닝 한 스텝을 엔진 B200 커널로, 스텝 전체를 CUDA 그래프 하나로(외부 모델로 엔진 연결 검증) | `benchmarks/protenix_finetune/README.md` |
 | `engine_ops/` | 엔진 연산 단위: `token_pair_init`(융합 대 dense 기준), `trimul_batch`(B 샘플 한 번 대 B번) | `python -m benchmarks.engine_ops.token_pair_init` |
 | `common.py` | 그래프 시간 재기, 커널 계열 분류, 머리줄, 엔진 설정 적용 | |
 
