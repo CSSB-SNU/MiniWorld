@@ -184,7 +184,32 @@ eager recycle 4에서 모듈 호출 수와 실행된 엔진 연산 수가 구조
 | smooth-lDDT 손실의 augment별 체크포인트 루프 | `client.py` | 0 가중치(v200)라 해당 없음 |
 | 증강 회전 `bmm`과 Kabsch 공분산이 `medium` 행렬곱 정밀도 | team-gm `diffuser` / `align` | 회전 최대 오차 0.28 Å (좌표 크기 1149 Å, 상대 2.5e-4), SVD 정렬 오차는 3.2절 |
 
-## 6. 재현
+## 6. fp32 마스터 가중치 (`train.precision: bf16-mixed`, 2026-10-04)
+
+PyTorch AMP / Lightning `bf16-mixed`와 같은 방식이다. 파라미터는 모두 fp32(옵티마이저가 갱신하는 마스터, Adam 모멘트와
+EMA도 fp32)이고, 모델 순전파만 bf16 autocast로 돈다. 손실은 autocast 밖에서 fp32로 계산한다. 모델이 활성값을 bf16으로
+바꾸던 곳은 그대로라서 엔진 B200 커널이 같은 호출을 받는다. 엔진은 fp32 파라미터를 autograd 밖에서 bf16으로 바꿔 커널에
+넘기고, 커널의 fp32 가중치 기울기 누산값을 반올림하지 않고 돌려준다. autocast 아래의 일반 Linear는 AMP 그대로 기울기가
+bf16 값으로 반올림된다(phase 2a 학습 파라미터 565개 중 13개). 구현은 `miniworld.training.precision`이다. v1.x까지의 방식
+(bf16 trunk 파라미터, autocast 없음)은 `train.precision=native`로 남겼다.
+
+phase 2a v200, 같은 코드에서 설정만 바꿔 쟀다(miniworld-engine fp32 마스터 수정본, 체크포인팅 끔).
+
+| | native | bf16-mixed |
+|---|---:|---:|
+| 전체 스텝 CUDA 그래프, recycle 1~4 평균 (`graph_full --share-pool`) | 75.2 ms | 76.5 ms (+1.7%) |
+| eager 마이크로 스텝, recycle 1 | 70.0 ms | 75.4 ms |
+| 마이크로 스텝 GPU 커널 시간, recycle 1 | 59.6 ms | 61.1 ms |
+| 최대 메모리 (eager) | 20.5 GiB | 21.2 GiB |
+| `optimizer.step` (Adam, 학습 파라미터 1.75억 개) | 4.06 ms | 4.27 ms |
+| 반올림되지 않은 fp32 가중치 기울기 | 0 / 565 | 552 / 565 |
+
+- 두 설정 모두 엔진 커널 구성이 같다(대체 경로로 빠지는 모듈 없음). 그래프 재생은 두 설정 모두 eager와 손실, 기울기가
+  정확히 같다.
+- 늘어난 시간은 매 호출 fp32 → bf16 가중치 변환이다. 고정 trunk의 파라미터도 fp32가 되므로 trunk에서도 변환이 생긴다.
+  eager에서 더 크게 늘어나는 것은 호스트 쪽 연산 수가 늘어서이며, 그래프에서는 GPU 몫만 남는다.
+
+## 7. 재현
 
 저장소 루트에서(GPU 1장, 같은 프로세스 비교):
 
@@ -199,6 +224,8 @@ python -m benchmarks.phase2_step.bench_step --config ... --recycles 1,2,3,4 --fo
 # CUDA 그래프: 전체 스텝(풀 공유), 분리
 python -m benchmarks.phase2_step.graph_full --config ... --steps 10 --share-pool
 python -m benchmarks.phase2_step.graph_split --config ... --steps 10
+# 6절의 대조: 같은 측정을 v1.x 방식 파라미터로
+python -m benchmarks.phase2_step.graph_full --config ... --steps 10 --share-pool train.precision=native
 # 커널 배선 점검 (eager 인벤토리 + 컴파일 계열별 시간)
 python -m benchmarks.phase2_step.wiring_audit --config ...
 ```

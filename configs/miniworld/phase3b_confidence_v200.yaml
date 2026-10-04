@@ -6,6 +6,7 @@ defaults:
 train:
   comment: "v2.0.0-phase3b-confidence"
   run_dir: "runs/v2.0.0/phase3b/large_confidence"
+  precision: bf16-mixed  # fp32 master parameters, bf16-autocast forward (miniworld.training.precision); native = earlier
 
 # The frozen diffusion module is the v2.0.0 phase-2 one (bias-only token DiT, bf16): the
 # phase-2b checkpoint only loads into the same module.

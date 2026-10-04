@@ -43,6 +43,7 @@ from miniworld.models.diffusion.model import (
 )
 from miniworld.training import ParamPolicyConfig
 from miniworld.training.engine_backend import EngineBackend, configure_engine_backend
+from miniworld.training.precision import Precision, apply_precision, model_autocast
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -59,6 +60,8 @@ class Client(BaseClient):
         name: str = "MiniWorld-phase2"
         run_dir: str = "runs/v1.0.0/phase2"
         engine_backend: EngineBackend = "auto"
+        # fp32 master parameters with a bf16-autocast forward (miniworld.training.precision); "native" is the earlier setting
+        precision: Precision = "bf16-mixed"
         overfitting: bool = False
         overfitting_dir: str | None = None
         train_item: int = 25600
@@ -139,7 +142,7 @@ class Client(BaseClient):
         super().__init__(config)
         self.config = config
         self.set_seed(config.train.seed)
-        self.register_model(DiffusionModel(config.model))
+        self.register_model(apply_precision(DiffusionModel(config.model), config.train.precision))
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
@@ -342,17 +345,19 @@ class Client(BaseClient):
         x_mask: Bool[torch.Tensor, "... L"] | None = None,
     ) -> tuple[torch.Tensor, dict]:
         """Compute the EDM diffusion loss (no distogram / lddt aux)."""
-        atom_pos_update = self.model.forward(
-            msa=batch.msa,
-            template=batch.template,
-            reference=batch.reference,
-            scheme=batch.scheme,
-            sequence=batch.sequence,
-            structure=batch.structure,
-            x_t=x_input,
-            x_mask=x_mask,
-            t_emb=t_emb,
-        )
+        with model_autocast(self.model):
+            atom_pos_update = self.model.forward(
+                msa=batch.msa,
+                template=batch.template,
+                reference=batch.reference,
+                scheme=batch.scheme,
+                sequence=batch.sequence,
+                structure=batch.structure,
+                x_t=x_input,
+                x_mask=x_mask,
+                t_emb=t_emb,
+            )
+        atom_pos_update = atom_pos_update.float()  # the loss runs in fp32, outside autocast
 
         # AF3 Eq.4 per-atom weight w_l = 1 + is_dna*a_dna + is_rna*a_rna
         # + is_ligand*a_ligand, gathered from chain entity_type to atoms.

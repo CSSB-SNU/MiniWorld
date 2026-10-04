@@ -185,6 +185,7 @@ import run_miniworld_diffusion_train as R
 from miniworld.configs import TemplateConfig
 from miniworld.models.diffusion import Client
 from miniworld.training import trainable_parameters
+from miniworld.training.precision import model_autocast
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
 cfgp = Path(a.config).resolve()
@@ -247,17 +248,18 @@ log(
 
 def loss_fn_gs(x0, x_input, t_emb, sigma, x_mask):
     b = batch
-    upd = client.model.forward(
-        msa=b.msa,
-        template=b.template,
-        reference=b.reference,
-        scheme=b.scheme,
-        sequence=b.sequence,
-        structure=b.structure,
-        x_t=x_input,
-        x_mask=x_mask,
-        t_emb=t_emb,
-    )
+    with model_autocast(client.model):     # as Client.loss_fn: the forward under the training precision, the loss fp32
+        upd = client.model.forward(
+            msa=b.msa,
+            template=b.template,
+            reference=b.reference,
+            scheme=b.scheme,
+            sequence=b.sequence,
+            structure=b.structure,
+            x_t=x_input,
+            x_mask=x_mask,
+            t_emb=t_emb,
+        ).float()
     et = b.chain.entity_type
     w_chain = (
         1.0
@@ -486,17 +488,18 @@ if not a.no_correctness and recs:
     #     under the training scripts' matmul precision ('medium': fp32 matmuls in bf16) and under 'highest'
     raw._forced_n_recycle = r
     b_ = batch
-    upd = client.model.forward(
-        msa=b_.msa,
-        template=b_.template,
-        reference=b_.reference,
-        scheme=b_.scheme,
-        sequence=b_.sequence,
-        structure=b_.structure,
-        x_t=ST["x_input"],
-        x_mask=ST["x_mask"],
-        t_emb=ST["t_emb"],
-    ).detach()
+    with model_autocast(client.model):
+        upd = client.model.forward(
+            msa=b_.msa,
+            template=b_.template,
+            reference=b_.reference,
+            scheme=b_.scheme,
+            sequence=b_.sequence,
+            structure=b_.structure,
+            x_t=ST["x_input"],
+            x_mask=ST["x_mask"],
+            t_emb=ST["t_emb"],
+        ).float().detach()
     et_ = b_.chain.entity_type
     w_chain_ = (
         1.0

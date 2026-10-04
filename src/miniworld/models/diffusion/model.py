@@ -40,6 +40,7 @@ from miniworld.configs import SharedConfig
 from miniworld.configs.models import AtomSWAConfig
 from miniworld.models.distogram_only.model_mini_swa import MiniSWAModel
 from miniworld.modules.diffusion_module import DiffusionConditioning, DiffusionModule
+from miniworld.training.precision import is_bf16_mixed, model_autocast
 
 if TYPE_CHECKING:
     import numpy as np
@@ -415,7 +416,10 @@ class ModelWrapper(nn.Module):
         if self.conditioned_forwarded:
             msg = "Conditioned forward is already done."
             raise ValueError(msg)
+        with model_autocast(self.model):
+            self._prepare_condition(msa, template, reference, scheme, sequence, structure)
 
+    def _prepare_condition(self, msa, template, reference, scheme, sequence, structure) -> None:
         token_single_input, token_pair_trunk = self.model.condition_forward(
             msa,
             reference,
@@ -459,7 +463,14 @@ class ModelWrapper(nn.Module):
         n_str = x_t.shape[0]
         atom_mask = self.condition["structure"].atom_mask  # (B=1, L_atom)
         x_mask = atom_mask.unsqueeze(0).expand(n_str, -1, -1)  # (A, B=1, L_atom)
-        x_update = self.model.diffusion_module(
+        with model_autocast(self.model):
+            x_update = self._denoise(x_t, x_mask, t_emb)
+        if is_bf16_mixed(self.model):
+            x_update = x_update.float()     # the solver's arithmetic stays fp32
+        return x_update.squeeze(1)  # (A=N_str, B=1, L, 3) -> (N_str, L, 3)
+
+    def _denoise(self, x_t, x_mask, t_emb):
+        return self.model.diffusion_module(
             self.condition["reference"],
             self.condition["scheme"],
             self.condition["structure"],
@@ -471,7 +482,6 @@ class ModelWrapper(nn.Module):
             self.condition["token_pair_trunk"],
             token_pair_cond=self.condition["token_pair_cond"],
         )
-        return x_update.squeeze(1)  # (A=N_str, B=1, L, 3) -> (N_str, L, 3)
 
 
 @dataclass

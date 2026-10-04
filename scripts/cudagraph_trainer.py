@@ -84,7 +84,9 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
          f"{cfg.train.num_batch * cfg.train.grad_accum_steps * world}")
 
     torch.manual_seed(cfg.train.seed or 0)
-    model = MiniSWAModel(cfg.model).to(dev)
+    from miniworld.training.precision import apply_precision
+
+    model = apply_precision(MiniSWAModel(cfg.model), cfg.train.precision).to(dev)
     model.train()
     model._forced_n_recycle = n_rec  # noqa: SLF001
     if world > 1:  # identical init across ranks

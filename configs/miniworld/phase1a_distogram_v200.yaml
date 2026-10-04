@@ -6,3 +6,4 @@ defaults:
 train:
   comment: "v2.0.0-phase1a-distogram"
   run_dir: "runs/v2.0.0/phase1a/large_distogram_L384"
+  precision: bf16-mixed  # fp32 master parameters, bf16-autocast forward (miniworld.training.precision); native = earlier

@@ -12,6 +12,7 @@ defaults:
 train:
   comment: "v2.0.0-phase2b-diffusion-bias-only-token-dit"
   run_dir: "runs/v2.0.0/phase2b/large_diffusion"
+  precision: bf16-mixed  # fp32 master parameters, bf16-autocast forward (miniworld.training.precision); native = earlier
 
 model:
   # the frozen trunk runs a uniform random 1..n_recycle_max recycles per micro-step in training (as in phase 1)

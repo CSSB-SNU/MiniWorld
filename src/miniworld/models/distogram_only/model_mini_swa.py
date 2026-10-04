@@ -28,6 +28,7 @@ from miniworld.modules.input_feature_embedder_esmfold2_style import (
 )
 from miniworld.modules.mini_msa_module import MiniMSAModule
 from miniworld.modules.mini_pairformer import MiniPairformer
+from miniworld.training.precision import model_autocast
 from miniworld.modules.msa_util import (
     init_msa,
     init_token_single_msa,
@@ -325,17 +326,19 @@ class MiniSWAModel(nn.Module):
         """
         if self.diffusion is None or self.training:
             raise ValueError("sample_distogram requires a diffusion model in eval mode")
-        pair, single, msa_feat, msa_mask, token_mask = self._embed(
-            msa, reference, scheme, sequence, structure,
-        )
+        with model_autocast(self):
+            pair, single, msa_feat, msa_mask, token_mask = self._embed(
+                msa, reference, scheme, sequence, structure,
+            )
         msa_feat, msa_mask = self._msa_for_step(msa_feat, msa_mask)
 
         def denoise(x_t, sigma):
-            features = self._diffusion_trunk(
-                pair, x_t, sigma, single, msa_feat, msa_mask,
-                token_mask, scheme.token_asym_id, template,
-            )
-            return self.diffusion.decode_output(features, x_t, sigma)
+            with model_autocast(self):      # the trunk under its training precision; the Heun arithmetic stays fp32
+                features = self._diffusion_trunk(
+                    pair, x_t, sigma, single, msa_feat, msa_mask,
+                    token_mask, scheme.token_asym_id, template,
+                )
+                return self.diffusion.decode_output(features, x_t, sigma)
 
         return self.diffusion.sample(
             denoise, pair.shape[0], pair.shape[1], pair.device,

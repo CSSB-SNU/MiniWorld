@@ -19,6 +19,7 @@ from miniworld.loss.auxiliary import (
 from miniworld.models.distogram_only.model import Model
 from miniworld.models.distogram_only.model_mini_swa import MiniSWAModel
 from miniworld.training.engine_backend import EngineBackend, configure_engine_backend, configure_fused_msa_train, align_engine_optimizer_state
+from miniworld.training.precision import Precision, apply_precision, model_autocast
 
 
 def _model_variant_discriminator(value: object) -> str:
@@ -52,6 +53,8 @@ class Client(BaseClient):
         name: str = "MiniWorld-Distogram"
         run_dir: str = "runs/distogram_only"
         engine_backend: EngineBackend = "auto"
+        # fp32 master parameters with a bf16-autocast forward (miniworld.training.precision); "native" is the earlier setting
+        precision: Precision = "bf16-mixed"
         # The engine's fused MSA training kernels (PairWeightedAveraging / OuterProductMean fwd+bwd, H100 only);
         # measured 2.6x / 2.9x on the modules, within the bf16 spread of the engine's own path.
         fused_msa_train: bool = False
@@ -126,9 +129,9 @@ class Client(BaseClient):
         self.config = config
         self.set_seed(config.train.seed)
         if isinstance(config.model, MiniSWAModel.Config):
-            self.register_model(MiniSWAModel(config.model))
+            self.register_model(apply_precision(MiniSWAModel(config.model), config.train.precision))
         else:
-            self.register_model(Model(config.model))
+            self.register_model(apply_precision(Model(config.model), config.train.precision))
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
@@ -338,25 +341,27 @@ class Client(BaseClient):
         if getattr(trunk, "diffusion", None) is not None:
             if not self.config.loss.distogram_cb_target:
                 raise ValueError("Distogram diffusion requires the pseudo-beta target")
-            diff_loss, stats = self.model(
-                msa=batch.msa, reference=batch.reference, scheme=batch.scheme,
-                sequence=batch.sequence, structure=batch.structure, template=batch.template,
-                interchain_weight=self.config.loss.distogram_interchain_weight,
-            )
+            with model_autocast(self.model):    # the EDM loss inside is fp32 elementwise math either way
+                diff_loss, stats = self.model(
+                    msa=batch.msa, reference=batch.reference, scheme=batch.scheme,
+                    sequence=batch.sequence, structure=batch.structure, template=batch.template,
+                    interchain_weight=self.config.loss.distogram_interchain_weight,
+                )
             loss = self.config.loss.distogram_loss * diff_loss
             return loss, {
                 **{key: value.item() for key, value in stats.items()},
                 "distogram_loss": diff_loss.item(),
                 "total_loss": loss.item(), "main_loss": loss.item(),
             }
-        distogram_logit = self.model.forward(
-            msa=batch.msa,
-            reference=batch.reference,
-            scheme=batch.scheme,
-            sequence=batch.sequence,
-            structure=batch.structure,
-            template=batch.template,
-        )
+        with model_autocast(self.model):
+            distogram_logit = self.model.forward(
+                msa=batch.msa,
+                reference=batch.reference,
+                scheme=batch.scheme,
+                sequence=batch.sequence,
+                structure=batch.structure,
+                template=batch.template,
+            )
 
         # CB/pseudo-beta distogram target (config.loss.distogram_cb_target); default off
         # keeps the legacy shortest-inter-atom-distance target.

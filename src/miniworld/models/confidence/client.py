@@ -32,6 +32,7 @@ from miniworld.models.diffusion.client import Client as DiffusionClient
 from miniworld.models.diffusion.model import ModelWrapper
 from miniworld.models.confidence.model import ConfidenceOutput, ConfidenceModel
 from miniworld.training import ParamPolicyConfig
+from miniworld.training.precision import Precision, apply_precision
 
 
 class Client(DiffusionClient):
@@ -58,6 +59,8 @@ class Client(DiffusionClient):
         decay_factor: float = 0.95
         compile: bool = False
         engine_backend: Literal["auto", "triton"] = "auto"
+        # fp32 master parameters with a bf16-autocast forward (miniworld.training.precision); "native" is the earlier setting
+        precision: Precision = "bf16-mixed"
         trunk_compile_mode: str = ""
         # DIFFUSION-STEP SEAM: reverse steps for the frozen rollout in predict_structure.
         # Open decision (inline count / precompute); change here.
@@ -115,7 +118,7 @@ class Client(DiffusionClient):
         BaseClient.__init__(self, config)
         self.config = config
         self.set_seed(config.train.seed)
-        self.register_model(ConfidenceModel(config.model))
+        self.register_model(apply_precision(ConfidenceModel(config.model), config.train.precision))
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
@@ -260,6 +263,7 @@ class Client(DiffusionClient):
 
         # Route through self.model (the DDP/Fabric wrapper) so confidence-head grads
         # are all-reduced across ranks. ConfidenceModel.forward IS the confidence head.
+        # the head computes in fp32 (ConfidenceModel keeps it so under either precision): no autocast here
         logits = self.model(
             token_single_input,
             token_pair,

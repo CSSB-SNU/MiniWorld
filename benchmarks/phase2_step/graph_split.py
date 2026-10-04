@@ -67,6 +67,7 @@ import run_miniworld_diffusion_train as R
 from miniworld.configs import TemplateConfig
 from miniworld.models.diffusion import Client
 from miniworld.training import trainable_parameters
+from miniworld.training.precision import model_autocast
 from miniworld.utils import get_step_decay_scheduler_with_warmup
 
 cfgp = Path(a.config).resolve()
@@ -115,8 +116,18 @@ client.setup(
 client.model.train()
 # the three pieces compiled separately (the trunk step ONCE: no recycle count in any compile key)
 raw.diffusion_module.compile(dynamic=False)
-embed_c = torch.compile(raw._embed, dynamic=False)
-step_c = torch.compile(raw._trunk_step, dynamic=False)
+
+
+def _amp(fn):
+    """fn under the model's training precision (bf16 autocast for an fp32-master model), as Client.loss_fn runs the forward."""
+    def run(*args, **kwargs):
+        with model_autocast(raw):
+            return fn(*args, **kwargs)
+    return run
+
+
+embed_c = _amp(torch.compile(raw._embed, dynamic=False))
+step_c = _amp(torch.compile(raw._trunk_step, dynamic=False))
 params = [p for p in client.model.parameters() if p.requires_grad]
 A = cfg.train.num_augment
 lc = client.config.loss
@@ -217,7 +228,7 @@ def atom_weight():
 
 
 def head_loss(x0, x_input, x_mask, t_emb, sigma):
-    upd = raw.diffusion_forward(
+    upd = _amp(raw.diffusion_forward)(
         batch.reference,
         batch.scheme,
         batch.structure,
@@ -226,7 +237,7 @@ def head_loss(x0, x_input, x_mask, t_emb, sigma):
         t_emb,
         SH.to(dit),
         PT.to(dit),
-    )
+    ).float()
     return lc.diffusion_loss * cal_loss_gs(
         client.diffuser, x0, x_input, upd, sigma, x_mask, atom_weight()
     )

@@ -258,10 +258,12 @@ class RecycleGraphs:
 
     def _compute_on_stream(self):
         b = self.batch
+        from miniworld.training.precision import model_autocast
+
         with (
             torch.autocast("cuda", dtype=torch.bfloat16)
             if os.environ.get("MW_GRAPH_AMP") == "1"
-            else contextlib.nullcontext()
+            else model_autocast(self.model)    # bf16 autocast for an fp32-master (bf16-mixed) model
         ):
             y = self.model(
                 msa=b.msa,
@@ -412,6 +414,7 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
     from miniworld.data.dataloader.dataloader import BioMolData
     from miniworld.models.distogram_only import MiniSWAModel
     from miniworld.training.engine_backend import configure_engine_backend
+    from miniworld.training.precision import apply_precision
     from miniworld.utils import get_step_decay_scheduler_with_warmup
 
     rank = int(os.environ.get("RANK", "0"))
@@ -437,7 +440,7 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
     torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction = False
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    model = MiniSWAModel(cfg.model).to(dev).train()
+    model = apply_precision(MiniSWAModel(cfg.model), cfg.train.precision).to(dev).train()
     is_diffusion = getattr(cfg.model.trunk, "diffusion", None) is not None
     fresh = ckpt is None
     opt = (
@@ -772,7 +775,7 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
                     reference_compute_ms=reference_times,
                     graph_compute_ms=graph_times,
                     recycles=seq,
-                    precision="production native mixed dtypes, no global autocast",
+                    precision=cfg.train.precision,
                 )
             )
             del reference
