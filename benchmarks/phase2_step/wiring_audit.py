@@ -58,7 +58,8 @@ torch._dynamo.config.cache_size_limit = 128
 torch._dynamo.config.accumulated_cache_size_limit = 512
 raw = R._find_recycle_model(client.model)
 for name in raw._TRUNK_MODULE_NAMES:
-    getattr(raw, name).requires_grad_(False)
+    if getattr(raw, name) is not None:  # add_pair_recycle / distogram_head are None on a distogram-diffusion trunk
+        getattr(raw, name).requires_grad_(False)
 raw._set_trunk_eval()
 dev = torch.device("cuda", 0)
 n_tok, n_atom = cfg.data.crop.max_tokens, cfg.data.crop.max_atoms
