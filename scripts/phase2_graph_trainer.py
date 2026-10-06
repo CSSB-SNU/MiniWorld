@@ -106,14 +106,15 @@ class Phase2GraphTrainer:
     def _fill_atom_weight(self, batch) -> None:
         """AF3 Eq.4 per-atom weight (entity type -> atom), outside the graph: the chain axis of a batch is not static."""
         lc = self.client.config.loss
-        et = batch.chain.entity_type
+        et = batch.chain.entity_type.to(self.device, non_blocking=True)
+        atom_to_chain = batch.scheme.atom_to_chain_id.to(self.device, non_blocking=True)
         w_chain = (
             1.0
             + lc.alpha_dna * (et == 4).float()
             + lc.alpha_rna * ((et == 3) | (et == 5)).float()
             + lc.alpha_ligand * ((et == 6) | (et == 7)).float()
         )
-        self.atom_weight.copy_(torch.gather(w_chain, dim=1, index=batch.scheme.atom_to_chain_id))
+        self.atom_weight.copy_(torch.gather(w_chain, dim=1, index=atom_to_chain))
 
     def _body(self):
         """One micro-step on the static inputs; runs eagerly for the warm-up and the check, and once under capture."""
@@ -252,7 +253,8 @@ class Phase2GraphTrainer:
                     client.call_callbacks("on_train_step_start", batch, batch_idx)
                     has_template = False
                     started = time.perf_counter()
-                batch = batch.to(device=self.device)
+                # The batch is in pinned host memory (pin_memory + pin_batch): both copies are asynchronous and queue behind the
+                # previous replay on the stream, so the host never waits for the GPU and enqueues the next micro-step early.
                 has_template = has_template or batch.template.mask.shape[1] > 0
                 copy_static(self.static, batch)
                 self._fill_atom_weight(batch)

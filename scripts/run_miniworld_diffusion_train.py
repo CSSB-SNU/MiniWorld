@@ -714,6 +714,10 @@ def train(  # noqa: PLR0912, PLR0915
         sampler_config=cfg.data.sampler,
         tokenizer_config=cfg.data.tokenizer,
     )
+    if cfg.train.cuda_graph:
+        from random_recycle_graph_trainer import pin_batch
+
+        Batch.pin_memory = pin_batch  # DataLoader(pin_memory=True) pins a Batch through this
     train_dataset = BioMolData(train_data_config)
     train_dataloader = train_dataset.create_ddp_dataloader(
         world_size=world_size,
@@ -730,6 +734,7 @@ def train(  # noqa: PLR0912, PLR0915
         bucket_token_multiple=cfg.train.bucket_token_multiple,
         bucket_atom_multiple=cfg.train.bucket_atom_multiple,
         bucket_template_multiple=TemplateConfig().n_templates,
+        pin_memory=cfg.train.cuda_graph,  # the graph trainer copies asynchronously from pinned memory
     )
 
     graph_trainer = None
