@@ -73,7 +73,7 @@ v200 설정은 token DiT(24 블록)와 atom SWA 인코더/디코더(3+3 블록)�
   걸치지 않는다. 거기서 잘라 E(임베더, 1회), T(trunk recycle 1회분, r번 replay), H(샘플링 + head + 손실 + 역전파)로 나눈다.
   recycle 횟수가 캡처와 컴파일 키에서 빠진다.
 
-### 3.2 캡처되도록 바꾼 것 (`benchmarks/phase2_step/graph_safe.py`)
+### 3.2 캡처되도록 바꾼 것 (`src/miniworld/training/phase2_graph_safe.py`)
 
 원본 학습 스텝은 그대로는 캡처되지 않는다. 아래는 확인한 사실이다.
 
@@ -232,3 +232,23 @@ python -m benchmarks.phase2_step.wiring_audit --config ...
 
 체크포인팅을 다시 켜려면 `model.diffusion.token_dit.n_checkpoint_segments=24 model.diffusion.atom_swa.n_checkpoint_segments=3`.
 `tests/test_phase2_train_recycle.py`와 `tests/test_phase2_graph_safe.py`가 recycle 정책, warm-up, 캡처 안전 대체(SVD와 같은 정렬, 같은 손실)를 CPU에서 검증한다.
+
+
+## 6. 트레이너의 전체 스텝 CUDA 그래프 (2026-10-06)
+
+`train.cuda_graph=true`(기본 false)이면 `run_miniworld_diffusion_train.py`가 `scripts/phase2_graph_trainer.py`로 학습한다. 그래프 하나에
+GPU 샘플링(회전, 노이즈 수준), frozen trunk, diffusion head, EDM 손실, backward가 들어가고, gradient는 정적 `.grad`에 누적된다.
+그래프 밖에서는 마이크로 배치마다 정적 입력 복사, optimizer step마다 한 번 NCCL gradient 평균(DDP 래퍼 없음), clip, Adam, 스케줄러, EMA를
+한다. 첫 배치에서 캡처하고 같은 난수로 eager 스텝과 비교해 손실과 gradient를 로그에 남긴다(`[graph] captured ...`).
+
+합성 배치(`scripts/b200/bench_phase2_synthetic.py`), L384 / MSA 8192 / 4096 atom, 배치 256, GPU 2장, fp32 diffusion + bf16 trunk
+(`train.precision=native model.diffusion.dtype=fp32`):
+
+| | optimizer step | 마이크로 스텝 |
+|---|---:|---:|
+| 그래프 없음 | 16.0 s | 125.6 ms |
+| **그래프** | **11.1 s** | **86.9 ms** |
+
+재생과 eager의 gradient 상대 오차는 bf16-mixed에서 0, fp32에서 7.7e-6이다. 한계: EDM 손실만(smooth lDDT, bond 손실은 0), 정적 shape 하나
+(bucket multiple == crop), trunk는 recycle 없는 distogram-diffusion trunk(`model.trunk.diffusion`)로 확인했다. 실행은
+`scripts/b200/run_phase2.sh`.

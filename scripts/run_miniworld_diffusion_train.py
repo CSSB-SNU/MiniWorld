@@ -490,7 +490,13 @@ def train(  # noqa: PLR0912, PLR0915
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
 
-    fabric = _fabric_from_torchrun()
+    if cfg.train.cuda_graph:
+        from phase2_graph_trainer import GraphFabric, configure_graph_cublas
+
+        configure_graph_cublas()  # before any CUDA handle exists
+        fabric = GraphFabric()
+    else:
+        fabric = _fabric_from_torchrun()
     fabric.launch()
     if cfg.train.seed is not None:
         fabric.seed_everything(cfg.train.seed)
@@ -688,7 +694,8 @@ def train(  # noqa: PLR0912, PLR0915
             "build mode" if _capture_cache else "timeout-only",
         )
 
-    _warmup_bucket_shapes(client, cfg)
+    if not cfg.train.cuda_graph:  # the graph's own warm-up compiles its one static shape
+        _warmup_bucket_shapes(client, cfg)
 
     if _capture_cache:
         from miniworld_engine.autotune import capture
@@ -725,6 +732,12 @@ def train(  # noqa: PLR0912, PLR0915
         bucket_template_multiple=TemplateConfig().n_templates,
     )
 
+    graph_trainer = None
+    if cfg.train.cuda_graph:
+        from phase2_graph_trainer import Phase2GraphTrainer
+
+        graph_trainer = Phase2GraphTrainer(client, cfg)
+
     train_aggregator = MetricsAggregator(client, "train", use_wandb=cfg.train.use_wandb)
     checkpoint_dir = run_sub_dir / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -735,7 +748,10 @@ def train(  # noqa: PLR0912, PLR0915
         train_dataloader.sampler.set_epoch(client.epoch)  # pyright: ignore[reportAttributeAccessIssue]
         train_dataset.set_epoch(client.epoch)
 
-        for step, result in enumerate(client.training_epoch(train_dataloader)):
+        epoch_results = (
+            graph_trainer.epoch(train_dataloader) if graph_trainer is not None else client.training_epoch(train_dataloader)
+        )
+        for step, result in enumerate(epoch_results):
             train_aggregator.log_step(result)
             if step == train_num_item - 1:
                 break

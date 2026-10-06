@@ -49,6 +49,8 @@ train:
   # speedup on the static-shape frozen trunk but MUST be validated on GPU first (cudagraph
   # capture + the "overwritten CUDAGraphs output" risk seen in phase-1 whole-model attempts).
   trunk_compile_mode: ""
+  # The whole micro-step in one CUDA graph (scripts/phase2_graph_trainer.py); needs bucket multiples == crop.
+  cuda_graph: false
   optimizer: "Adam"
   # LR for a from-scratch diffusion head on a frozen trunk.
   max_lr: 5e-3

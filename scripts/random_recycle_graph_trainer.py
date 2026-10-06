@@ -136,19 +136,20 @@ def validate_empty_template(model, static, original):
     from miniworld.training.precision import model_autocast
 
     empty = empty_template_batch(original).template.to(device=static.device)
-    params = tuple(module.parameters())
+    # phase 2 freezes the template embedder: then only the forward values are compared
+    params = tuple(q for q in module.parameters() if q.requires_grad)
     # under the model's own precision: a bf16-mixed model has fp32 parameters and its forward runs under bf16 autocast
     with model_autocast(model):
         expected = module._graph_original_forward(
             pair, empty, static.scheme.token_asym_id, static.structure.token_mask
         )
-    ref = torch.autograd.grad(expected.sum(), params, allow_unused=True)
+    ref = torch.autograd.grad(expected.sum(), params, allow_unused=True) if params else ()
     static.template._graph_present.fill_(False)
     with model_autocast(model):
         actual = module(
             pair, static.template, static.scheme.token_asym_id, static.structure.token_mask
         )
-    grads = torch.autograd.grad(actual.sum(), params, allow_unused=True)
+    grads = torch.autograd.grad(actual.sum(), params, allow_unused=True) if params else ()
     torch.testing.assert_close(actual, expected, rtol=0, atol=0)
     for a, b in zip(grads, ref):
         if a is not None:

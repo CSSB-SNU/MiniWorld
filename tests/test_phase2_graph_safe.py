@@ -1,7 +1,6 @@
-"""The capture-safe stand-ins of ``benchmarks/phase2_step/graph_safe.py`` against the repo's own host-synchronising versions."""
+"""The capture-safe stand-ins of ``src/miniworld/training/phase2_graph_safe.py`` against the repo's own host-synchronising versions."""
 
 import importlib
-import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -15,12 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.fixture(scope="module")
 def gs():
-    path = str(ROOT / "benchmarks" / "phase2_step")
-    sys.path.insert(0, path)
-    try:
-        yield importlib.import_module("graph_safe")
-    finally:
-        sys.path.remove(path)
+    return importlib.import_module("miniworld.training.phase2_graph_safe")
 
 
 def _clouds(n=8, length=512, seed=0):

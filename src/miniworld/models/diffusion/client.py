@@ -84,6 +84,9 @@ class Client(BaseClient):
         # whole-model ``compile(dynamic=False)`` behaviour unchanged. Needs GPU
         # validation before use.
         trunk_compile_mode: str = ""
+        # The whole micro-step (sampling, frozen trunk, diffusion head, EDM loss, backward) in one CUDA graph; see
+        # scripts/phase2_graph_trainer.py. One static shape: the bucket multiples must equal the crop. EDM loss only.
+        cuda_graph: bool = False
         num_augment: int = 48
         save_freq: int = 5
         eval_freq: int = 10
