@@ -231,6 +231,25 @@ class Phase2GraphTrainer:
         if self.pointers != [p.grad.data_ptr() for p in self.params]:
             raise RuntimeError("A gradient buffer moved: the captured graph would write into freed memory")
 
+    def _profile_replay(self) -> None:
+        """MW_P2_PROFILE=1: GPU time per kernel family of one replay on the current batch (debugging aid, rank 0, once)."""
+        from torch.profiler import ProfilerActivity, profile
+
+        torch.cuda.synchronize()
+        with profile(activities=[ProfilerActivity.CUDA]) as prof:
+            self.graph.replay()
+            torch.cuda.synchronize()
+        events = [e for e in prof.events() if e.device_type == torch.autograd.DeviceType.CUDA]
+        total = sum(e.device_time for e in events) / 1000
+        by_name: dict[str, list[float]] = {}
+        for e in events:
+            row = by_name.setdefault(e.name, [0.0, 0])
+            row[0] += e.device_time / 1000
+            row[1] += 1
+        self.client.logger.info("[graph-profile] one replay: %d kernels, GPU busy %.1f ms", len(events), total)
+        for name, (ms, n) in sorted(by_name.items(), key=lambda kv: -kv[1][0])[:25]:
+            self.client.logger.info("[graph-profile] %8.3f ms x%-4d %s", ms, n, name[:110])
+
     def epoch(self, dataloader):
         """Yield one result dict per micro-batch, like ``Client.training_epoch``; the optimizer step runs every ``ga`` of them."""
         client = self.client
@@ -246,24 +265,54 @@ class Phase2GraphTrainer:
         losses = torch.zeros(ga, device=self.device)
         has_template = False
         started = time.perf_counter()
+        spent = {"data": 0.0, "copy": 0.0, "replay": 0.0}  # host seconds of the current optimizer step
+        epoch_started, steps_done = time.perf_counter(), 0
+        marks = []  # CUDA events around the copy and the replay of each micro-step: the GPU's own time
+
+        def timed(source):
+            while True:
+                t = time.perf_counter()
+                try:
+                    item = next(source)
+                except StopIteration:
+                    return
+                spent["data"] += time.perf_counter() - t
+                yield item
+
         try:
-            for batch_idx, batch in enumerate(iterator):
+            for batch_idx, batch in enumerate(timed(iterator)):
                 slot = batch_idx % ga
                 if slot == 0:
                     client.call_callbacks("on_train_step_start", batch, batch_idx)
                     has_template = False
                     started = time.perf_counter()
+                    spent.update(data=0.0, copy=0.0, replay=0.0)
+                    marks.clear()
                 # The batch is in pinned host memory (pin_memory + pin_batch): both copies are asynchronous and queue behind the
                 # previous replay on the stream, so the host never waits for the GPU and enqueues the next micro-step early.
                 has_template = has_template or batch.template.mask.shape[1] > 0
+                events = [torch.cuda.Event(enable_timing=True) for _ in range(3)]
+                events[0].record()
+                t = time.perf_counter()
                 copy_static(self.static, batch)
                 self._fill_atom_weight(batch)
+                spent["copy"] += time.perf_counter() - t
+                events[1].record()
+                t = time.perf_counter()
+                if os.environ.get("MW_P2_PROFILE") and batch_idx == 3 and client.is_global_zero and client.epoch == 0:
+                    self._profile_replay()
                 self.graph.replay()
                 losses[slot].copy_(self.loss)
+                spent["replay"] += time.perf_counter() - t
+                events[2].record()
+                marks.append(events)
                 if slot != ga - 1:
                     continue
+                enqueued = time.perf_counter()
                 self._optimizer_step(has_template)
+                steps_done += 1
                 values = losses.tolist()  # one host sync per optimizer step
+                tail = time.perf_counter() - enqueued  # the GPU work still queued when the host got here, plus the step itself
                 result = {
                     "diffusion_loss": 0.0, "smooth_lddt_loss": 0.0, "bond_loss": 0.0, "total_loss": 0.0, "main_loss": 0.0,
                 }
@@ -272,13 +321,26 @@ class Phase2GraphTrainer:
                 )
                 if client.global_step % 50 == 0:
                     client.logger.info(
-                        "[graph] step %d: %.0f ms per optimizer step", client.global_step, (time.perf_counter() - started) * 1000,
+                        "[graph] step %d: %.0f ms per optimizer step (host: data wait %.0f, copy %.0f, replay enqueue %.0f; "
+                        "GPU tail + optimizer %.0f; GPU time per micro-step: copy %.1f ms, replay %.1f ms)",
+                        client.global_step, (time.perf_counter() - started) * 1000,
+                        spent["data"] * 1000, spent["copy"] * 1000, spent["replay"] * 1000, tail * 1000,
+                        sum(a.elapsed_time(b) for a, b, _ in marks) / len(marks),
+                        sum(b.elapsed_time(c) for _, b, c in marks) / len(marks),
                     )
                 for v in values:
                     yield {
                         "diffusion_loss": v / weight, "smooth_lddt_loss": 0.0, "bond_loss": 0.0, "total_loss": v, "main_loss": v,
                     }
         finally:
+            if steps_done:
+                # The aggregator's ``epoch_time`` starts when the first result arrives, i.e. after the first optimizer step here
+                # (results are yielded once a step is done), so it misses one step: this is the whole epoch.
+                client.logger.info(
+                    "[graph] epoch %d: %d optimizer steps in %.1f s (%.0f ms each; the 'epoch_time' metric excludes the first step)",
+                    client.epoch, steps_done, time.perf_counter() - epoch_started,
+                    (time.perf_counter() - epoch_started) * 1000 / steps_done,
+                )
             self._clear_grads()
             client._epoch += 1  # noqa: SLF001
             client.call_callbacks("on_train_epoch_end")

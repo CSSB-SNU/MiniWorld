@@ -184,70 +184,24 @@ eager recycle 4에서 모듈 호출 수와 실행된 엔진 연산 수가 구조
 | smooth-lDDT 손실의 augment별 체크포인트 루프 | `client.py` | 0 가중치(v200)라 해당 없음 |
 | 증강 회전 `bmm`과 Kabsch 공분산이 `medium` 행렬곱 정밀도 | team-gm `diffuser` / `align` | 회전 최대 오차 0.28 Å (좌표 크기 1149 Å, 상대 2.5e-4), SVD 정렬 오차는 3.2절 |
 
-## 6. fp32 마스터 가중치 (`train.precision: bf16-mixed`, 2026-10-04)
-
-PyTorch AMP / Lightning `bf16-mixed`와 같은 방식이다. 파라미터는 모두 fp32(옵티마이저가 갱신하는 마스터, Adam 모멘트와
-EMA도 fp32)이고, 모델 순전파만 bf16 autocast로 돈다. 손실은 autocast 밖에서 fp32로 계산한다. 모델이 활성값을 bf16으로
-바꾸던 곳은 그대로라서 엔진 B200 커널이 같은 호출을 받는다. 엔진은 fp32 파라미터를 autograd 밖에서 bf16으로 바꿔 커널에
-넘기고, 커널의 fp32 가중치 기울기 누산값을 반올림하지 않고 돌려준다. autocast 아래의 일반 Linear는 AMP 그대로 기울기가
-bf16 값으로 반올림된다(phase 2a 학습 파라미터 565개 중 13개). 구현은 `miniworld.training.precision`이다. v1.x까지의 방식
-(bf16 trunk 파라미터, autocast 없음)은 `train.precision=native`로 남겼다.
-
-phase 2a v200, 같은 코드에서 설정만 바꿔 쟀다(miniworld-engine fp32 마스터 수정본, 체크포인팅 끔).
-
-| | native | bf16-mixed |
-|---|---:|---:|
-| 전체 스텝 CUDA 그래프, recycle 1~4 평균 (`graph_full --share-pool`) | 75.2 ms | 76.5 ms (+1.7%) |
-| eager 마이크로 스텝, recycle 1 | 70.0 ms | 75.4 ms |
-| 마이크로 스텝 GPU 커널 시간, recycle 1 | 59.6 ms | 61.1 ms |
-| 최대 메모리 (eager) | 20.5 GiB | 21.2 GiB |
-| `optimizer.step` (Adam, 학습 파라미터 1.75억 개) | 4.06 ms | 4.27 ms |
-| 반올림되지 않은 fp32 가중치 기울기 | 0 / 565 | 552 / 565 |
-
-- 두 설정 모두 엔진 커널 구성이 같다(대체 경로로 빠지는 모듈 없음). 그래프 재생은 두 설정 모두 eager와 손실, 기울기가
-  정확히 같다.
-- 늘어난 시간은 매 호출 fp32 → bf16 가중치 변환이다. 고정 trunk의 파라미터도 fp32가 되므로 trunk에서도 변환이 생긴다.
-  eager에서 더 크게 늘어나는 것은 호스트 쪽 연산 수가 늘어서이며, 그래프에서는 GPU 몫만 남는다.
-
-## 7. 재현
-
-저장소 루트에서(GPU 1장, 같은 프로세스 비교):
-
-```sh
-# recycle별 시간, 랜덤 추첨 40스텝, script warm-up 검증, 정체 진단
-python -m benchmarks.phase2_step.bench_step --config configs/miniworld/phase2a_diffusion_v200.yaml \
-    --script-warmup --recycles 1,2,3,4 --steps 8 --random-steps 40
-python -m benchmarks.phase2_step.bench_step --config configs/miniworld/phase2a_diffusion_v200.yaml --recycles 1,2,3,4 --stall-probe 400
-# trunk 전용 그래프(저장소 옵션)와 대조군
-python -m benchmarks.phase2_step.bench_step --config ... --recycles 1,2,3,4 --forced --trunk-graph default
-python -m benchmarks.phase2_step.bench_step --config ... --recycles 1,2,3,4 --forced --trunk-graph reduce-overhead
-# CUDA 그래프: 전체 스텝(풀 공유), 분리
-python -m benchmarks.phase2_step.graph_full --config ... --steps 10 --share-pool
-python -m benchmarks.phase2_step.graph_split --config ... --steps 10
-# 6절의 대조: 같은 측정을 v1.x 방식 파라미터로
-python -m benchmarks.phase2_step.graph_full --config ... --steps 10 --share-pool train.precision=native
-# 커널 배선 점검 (eager 인벤토리 + 컴파일 계열별 시간)
-python -m benchmarks.phase2_step.wiring_audit --config ...
-```
-
-체크포인팅을 다시 켜려면 `model.diffusion.token_dit.n_checkpoint_segments=24 model.diffusion.atom_swa.n_checkpoint_segments=3`.
-`tests/test_phase2_train_recycle.py`와 `tests/test_phase2_graph_safe.py`가 recycle 정책, warm-up, 캡처 안전 대체(SVD와 같은 정렬, 같은 손실)를 CPU에서 검증한다.
-
-
 ## 6. 트레이너의 전체 스텝 CUDA 그래프 (2026-10-06)
 
 `train.cuda_graph=true`(기본 false)이면 `run_miniworld_diffusion_train.py`가 `scripts/phase2_graph_trainer.py`로 학습한다. 그래프 하나에
 GPU 샘플링(회전, 노이즈 수준), frozen trunk, diffusion head, EDM 손실, backward가 들어가고, gradient는 정적 `.grad`에 누적된다.
-그래프 밖에서는 마이크로 배치마다 정적 입력 복사, optimizer step마다 한 번 NCCL gradient 평균(DDP 래퍼 없음), clip, Adam, 스케줄러, EMA를
-한다. 첫 배치에서 캡처하고 같은 난수로 eager 스텝과 비교해 손실과 gradient를 로그에 남긴다(`[graph] captured ...`).
+그래프 밖에서는 마이크로 배치마다 정적 입력 복사(핀 메모리에서 비동기), optimizer step마다 한 번 NCCL gradient 평균(DDP 래퍼 없음), clip,
+Adam, 스케줄러, EMA를 한다. 첫 배치에서 캡처하고 같은 난수로 eager 스텝과 비교해 손실과 gradient를 로그에 남긴다(`[graph] captured ...`).
 
-합성 배치(`scripts/b200/bench_phase2_synthetic.py`), L384 / MSA 8192 / 4096 atom, 배치 256, GPU 2장, fp32 diffusion + bf16 trunk
-(`train.precision=native model.diffusion.dtype=fp32`):
+fp32 diffusion + bf16 trunk(`train.precision=native model.diffusion.dtype=fp32`), L384 / MSA 8192 / 4096 atom, 배치 256, GPU 2장:
 
 | | optimizer step | 마이크로 스텝 |
 |---|---:|---:|
 | 그래프 없음 | 16.0 s | 125.6 ms |
-| **그래프** | **11.1 s** | **86.9 ms** |
+| 그래프 | 14.9 s | 116 ms (GPU busy 111 ms) |
+
+그래프의 이득은 약 7%다. 한 마이크로 스텝의 GPU 시간은 두 경우 모두 약 110 ms라서, 그래프는 GPU 시간이 아니라 호스트 쪽 틈만 없앤다.
+4장 실제 데이터 학습은 7.5 s/step(합성 배치와 같다; 데이터 대기는 스텝당 약 10 ms). **측정 주의**: 그래프 트레이너는 결과를 optimizer
+step이 끝난 뒤 내보내므로 `MetricsAggregator`의 `epoch_time`은 첫 step을 빼고 잰다. 스텝 시간은 로그의 `[graph] step N` / `[graph] epoch N`
+줄을 쓴다(처음 이 문서에 적었던 11.1 s는 이 때문에 틀린 값이었다).
 
 재생과 eager의 gradient 상대 오차는 bf16-mixed에서 0, fp32에서 7.7e-6이다. 한계: EDM 손실만(smooth lDDT, bond 손실은 0), 정적 shape 하나
 (bucket multiple == crop), trunk는 recycle 없는 distogram-diffusion trunk(`model.trunk.diffusion`)로 확인했다. 실행은
