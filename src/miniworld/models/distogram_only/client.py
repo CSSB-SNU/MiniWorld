@@ -92,6 +92,9 @@ class Client(BaseClient):
         decay_steps: int = int(5e6)
         decay_factor: float = 0.95
         compile: bool = False
+        # Forbid every Triton kernel launch and every inductor compile in the process (miniworld.training.no_triton): the engine's
+        # CUDA kernels, cuBLAS, flash attention and ATen only. Needs ``compile: false`` (inductor's GPU kernels are Triton).
+        forbid_triton: bool = False
         # Trainer dispatch (was MW_FORCE_CUDAGRAPH / MW_FORCE_FABRIC): "auto" picks
         # CUDA-graph for fixed recycle (n_recycle_max==1) else Fabric; force either.
         force_trainer: Literal["auto", "cudagraph", "random_cudagraph", "fabric"] = "auto"

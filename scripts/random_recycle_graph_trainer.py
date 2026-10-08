@@ -408,6 +408,12 @@ def restore_training_state(model, optimizer, scheduler, state):
 
 def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_name=None):
     configure_graph_cublas()
+    if getattr(cfg.train, "forbid_triton", False):
+        if cfg.train.compile:
+            raise ValueError("train.forbid_triton needs train.compile=false: inductor's GPU kernels are Triton")
+        from miniworld.training import no_triton
+
+        no_triton.install()
     from miniworld_engine.integrations.optimizer import align_optimizer_state_layout_
 
     from miniworld.configs import TemplateConfig

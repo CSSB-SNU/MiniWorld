@@ -7,11 +7,23 @@ from miniworld.data.features import (
     StructureFeatures,
     TemplateFeatures,
 )
+from miniworld.training import no_triton
 
 
-@torch.compile
-@torch.no_grad()
 def init_msa(
+    msa: MSAFeatures,
+    num_res_class: int = 32,
+    dtype: torch.dtype = torch.float32,
+) -> tuple[Float[torch.Tensor, "B N L C"], Bool[torch.Tensor, "B N"]]:
+    """One-hot / deletion MSA features for the rows in ``msa`` (compiled, or eager when ``train.forbid_triton`` is on:
+    the compiled version runs inductor-generated Triton kernels)."""
+    if no_triton.active():
+        return _init_msa(msa, num_res_class, dtype)
+    return _init_msa_compiled(msa, num_res_class, dtype)
+
+
+@torch.no_grad()
+def _init_msa(
     msa: MSAFeatures,
     num_res_class: int = 32,
     dtype: torch.dtype = torch.float32,
@@ -41,6 +53,9 @@ def init_msa(
     )
     msa_feat = msa_feat * msa_mask[:, :, None, None]
     return msa_feat.to(dtype=dtype), msa_mask.bool()
+
+
+_init_msa_compiled = torch.compile(_init_msa)
 
 
 def subsample_msa_rows(msa: MSAFeatures, n_rows: int) -> MSAFeatures:

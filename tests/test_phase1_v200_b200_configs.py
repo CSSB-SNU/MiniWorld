@@ -39,6 +39,8 @@ def test_v200_medium_b200_phase1(name, crop, epochs):
     assert cfg.data.train_db.resources_base.startswith("/NHNHOME/") and "b200" in str(cfg.data.train_db.catalog_cache_path)
     assert cfg.train.use_wandb and cfg.train.wandb_project == "MiniWorld"
     assert cfg.train.grad_accum_steps == 64
+    # no Triton anywhere: no inductor, and the guard that stops the run on any Triton launch
+    assert cfg.train.compile is False and cfg.train.forbid_triton is True
     assert cfg.train.run_dir == load("phase1a_distogram_medium_v200_b200").train.run_dir
     # the data policy of v1.2 / v1.1 stays
     assert cfg.data.crop.ab_ag_interface_only and cfg.data.msa.pairing_mode == "no_pairing"

@@ -664,6 +664,13 @@ def train(  # noqa: PLR0912, PLR0915
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
+    if cfg.train.forbid_triton:
+        if cfg.train.compile:
+            msg = "train.forbid_triton needs train.compile=false: inductor's GPU kernels are Triton"
+            raise ValueError(msg)
+        from miniworld.training import no_triton
+
+        no_triton.install()
 
     # ---- Trainer dispatch --------------------------------------------------
     # Fixed recycle (n_recycle_max == 1) -> standard torch.cuda.CUDAGraph capture
