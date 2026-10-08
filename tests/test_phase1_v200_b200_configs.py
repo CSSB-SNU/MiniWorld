@@ -34,13 +34,13 @@ def test_v200_medium_b200_phase1(name, crop, epochs):
     assert cfg.loss.distogram_interchain_weight == 1.0
     lc = cfg.loss
     assert (lc.distogram_alpha_dna, lc.distogram_alpha_rna, lc.distogram_alpha_ligand, lc.distogram_ab_ag_weight) == (5.0, 5.0, 10.0, 10.0)
-    assert lc.distogram_class_metrics
     # B200 server paths, W&B on, effective batch 256 on 4 GPUs, one shared run directory
     assert cfg.data.train_db.resources_base.startswith("/NHNHOME/") and "b200" in str(cfg.data.train_db.catalog_cache_path)
     assert cfg.train.use_wandb and cfg.train.wandb_project == "MiniWorld"
     assert cfg.train.grad_accum_steps == 64
-    # no Triton anywhere: no inductor, and the guard that stops the run on any Triton launch
-    assert cfg.train.compile is False and cfg.train.forbid_triton is True
+    # compiled, CUDA graphs per recycle count, and a stop on any engine Triton fallback
+    assert cfg.train.compile is True and cfg.train.forbid_triton is True and cfg.train.force_trainer == "random_cudagraph"
+    assert cfg.loss.distogram_class_metrics is False
     assert cfg.train.run_dir == load("phase1a_distogram_medium_v200_b200").train.run_dir
     # the data policy of v1.2 / v1.1 stays
     assert cfg.data.crop.ab_ag_interface_only and cfg.data.msa.pairing_mode == "no_pairing"

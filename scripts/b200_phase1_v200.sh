@@ -73,7 +73,7 @@ cd $REPO
 exec pixi run --manifest-path $W/mwenv/pixi.toml python -u -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node=$NGPU \\
   scripts/run_miniworld_distogram_train.py train \\
   --config configs/miniworld/$CONFIG.yaml ${CKPT_ARGS[@]+"${CKPT_ARGS[@]}"} --job-name $NAME \\
-  train.engine_backend=auto +train.force_trainer=fabric "train.run_dir=$RUN_DIR" ${EXTRA[@]+"${EXTRA[@]}"}
+  train.engine_backend=auto "train.run_dir=$RUN_DIR" ${EXTRA[@]+"${EXTRA[@]}"}
 EOS
 )
 "$GPUQ" run -g "${G[0]}" -n "$NAME" -- bash -c "$TRAIN"

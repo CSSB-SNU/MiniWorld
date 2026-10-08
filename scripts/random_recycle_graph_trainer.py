@@ -70,6 +70,10 @@ def copy_static(dst, src):
                 value.copy_(other, non_blocking=True)
             elif value is None and other is not None:
                 raise ValueError(f"Graph optional input changed: {group}.{name}")
+    weight_fn = getattr(dst, "_pair_weight_fn", None)
+    if weight_fn is not None:
+        # outside the graph, on the caller's stream, into the buffer the captured loss reads (chain counts vary per batch)
+        dst.pair_weight.copy_(weight_fn(src))
 
 
 def template_graph_forward(self, pair, template, token_asym_id, token_mask):
@@ -129,16 +133,21 @@ def validate_empty_template(model, static, original):
         device=static.device,
         dtype=torch.bfloat16,
     )
+    from miniworld.training.precision import model_autocast
+
     empty = empty_template_batch(original).template.to(device=static.device)
     params = tuple(module.parameters())
-    expected = module._graph_original_forward(
-        pair, empty, static.scheme.token_asym_id, static.structure.token_mask
-    )
+    # under the model's own precision: a bf16-mixed model has fp32 parameters and its forward runs under bf16 autocast
+    with model_autocast(model):
+        expected = module._graph_original_forward(
+            pair, empty, static.scheme.token_asym_id, static.structure.token_mask
+        )
     ref = torch.autograd.grad(expected.sum(), params, allow_unused=True)
     static.template._graph_present.fill_(False)
-    actual = module(
-        pair, static.template, static.scheme.token_asym_id, static.structure.token_mask
-    )
+    with model_autocast(model):
+        actual = module(
+            pair, static.template, static.scheme.token_asym_id, static.structure.token_mask
+        )
     grads = torch.autograd.grad(actual.sum(), params, allow_unused=True)
     torch.testing.assert_close(actual, expected, rtol=0, atol=0)
     for a, b in zip(grads, ref):
@@ -328,9 +337,24 @@ def graph_objective(cfg):
             rep_atom_mask=b.structure.atom_is_rep if cfg.loss.distogram_cb_target else None,
             token_asym_id=b.scheme.token_asym_id,
             interchain_weight=cfg.loss.distogram_interchain_weight,
+            pair_weight=getattr(b, "pair_weight", None),
         )
 
     return loss_fn, {}
+
+
+def attach_pair_weight(static, loss_cfg):
+    """Give the static batch the chemistry pair weight buffer of the distogram CE (no-op when every weight is 1).
+
+    ``copy_static`` keeps it current: the weight depends on chain features whose size changes from batch to batch, so it is
+    computed eagerly per batch and copied into one fixed [B, L, L] buffer that the captured loss reads."""
+    from miniworld.models.distogram_only.client import _pair_weight, _pair_weights_enabled
+
+    if not _pair_weights_enabled(loss_cfg):
+        return False
+    static._pair_weight_fn = lambda batch: _pair_weight(loss_cfg, batch)
+    static.pair_weight = static._pair_weight_fn(static).clone()
+    return True
 
 
 def resolve_run_directory(cfg, ckpt, run_dir, state):
@@ -409,8 +433,6 @@ def restore_training_state(model, optimizer, scheduler, state):
 def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_name=None):
     configure_graph_cublas()
     if getattr(cfg.train, "forbid_triton", False):
-        if cfg.train.compile:
-            raise ValueError("train.forbid_triton needs train.compile=false: inductor's GPU kernels are Triton")
         from miniworld.training import no_triton
 
         no_triton.install()
@@ -461,8 +483,6 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
         decay_factor=cfg.train.decay_factor,
     )
     if ckpt is None:
-        if not diagnostic_steps and not is_diffusion:
-            raise ValueError("Fresh graph initialization requires a diffusion model")
         state = {
             "model_state_dict": {k: v.detach().cpu().clone() for k, v in model.state_dict().items()},
             "optimizer_state_dict": opt.state_dict(),
@@ -575,6 +595,8 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
             # Short numerical/compute check; deliberately excludes loader throughput.
             it = itertools.cycle([first, second])
     static = first.to(device=dev)
+    if attach_pair_weight(static, cfg.loss) and rank == 0:
+        print("[graph] distogram chemistry pair weights ride in the static batch", flush=True)
     unused_if_empty = prepare_template_graph(model, static, TemplateConfig().n_templates)
     validate_empty_template(model, static, first)
 
@@ -615,7 +637,7 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
                 # Fresh warmup starts at lr=0; make a temporary nonzero decoder
                 # update so validation exercises upstream gradients. Restore all
                 # weights/Adam/scheduler state before the first training step.
-                if fresh and is_diffusion:
+                if fresh:
                     for group in opt.param_groups:
                         if group["lr"] == 0:
                             group["lr"] = min(cfg.train.max_lr, 1e-4)
@@ -822,7 +844,7 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
             if cfg.train.use_wandb:
                 wandb.init(project=cfg.train.wandb_project, id=wandb_id,
                            name=job_name or cfg.train.comment,
-                           resume="allow" if is_diffusion else "must",
+                           resume="allow" if (is_diffusion or fresh) else "must",
                            config=cfg.model_dump(mode="json"))
         if world > 1:
             dist.barrier()

@@ -665,9 +665,6 @@ def train(  # noqa: PLR0912, PLR0915
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
     if cfg.train.forbid_triton:
-        if cfg.train.compile:
-            msg = "train.forbid_triton needs train.compile=false: inductor's GPU kernels are Triton"
-            raise ValueError(msg)
         from miniworld.training import no_triton
 
         no_triton.install()
@@ -694,12 +691,13 @@ def train(  # noqa: PLR0912, PLR0915
                                   job_name=job_name)
             return
     if _force == "random_cudagraph":
-        # Explicit full-state continuation: preserve the existing run/log identity.
+        # One CUDA graph per recycle count. Continuing a run needs both --ckpt and MW_RESUME_RUN_SUBDIR (the run/log
+        # identity is preserved); neither starts a fresh run.
         from random_recycle_graph_trainer import train as train_random_graph
         existing_run = os.environ.get("MW_RESUME_RUN_SUBDIR")
-        if ckpt is None or not existing_run:
-            raise ValueError("random_cudagraph requires --ckpt and MW_RESUME_RUN_SUBDIR")
-        train_random_graph(cfg, ckpt, Path(existing_run))
+        if (ckpt is None) != (not existing_run):
+            raise ValueError("random_cudagraph: pass both --ckpt and MW_RESUME_RUN_SUBDIR to continue a run, or neither to start one")
+        train_random_graph(cfg, ckpt, Path(existing_run) if existing_run else None, job_name=job_name)
         return
     use_cudagraph = _force == "cudagraph" or (_force == "auto" and n_recycle_max == 1)
     if use_cudagraph:

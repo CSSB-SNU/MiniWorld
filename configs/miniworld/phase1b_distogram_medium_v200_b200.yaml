@@ -11,8 +11,9 @@ train:
   run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v200/medium_distogram"
   grad_accum_steps: 64
   use_wandb: true
-  compile: false        # inductor's GPU kernels are Triton
-  forbid_triton: true   # any Triton launch / inductor compile stops the run (miniworld.training.no_triton)
+  compile: true
+  forbid_triton: true   # an engine Triton fallback stops the run (miniworld.training.no_triton); inductor's own kernels are fine
+  force_trainer: random_cudagraph   # one CUDA graph per recycle count (scripts/random_recycle_graph_trainer.py)
 
 loss:
   distogram_interchain_weight: 1.0
@@ -20,4 +21,4 @@ loss:
   distogram_alpha_rna: 5.0
   distogram_alpha_ligand: 10.0
   distogram_ab_ag_weight: 10.0
-  distogram_class_metrics: true
+  distogram_class_metrics: false   # computed by the eager (Fabric) trainer only; the graph trainer does not report them

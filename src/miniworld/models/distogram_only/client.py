@@ -92,8 +92,8 @@ class Client(BaseClient):
         decay_steps: int = int(5e6)
         decay_factor: float = 0.95
         compile: bool = False
-        # Forbid every Triton kernel launch and every inductor compile in the process (miniworld.training.no_triton): the engine's
-        # CUDA kernels, cuBLAS, flash attention and ATen only. Needs ``compile: false`` (inductor's GPU kernels are Triton).
+        # Forbid the engine's Triton kernels (miniworld.training.no_triton): a fallback from its CUDA kernels to its Triton family
+        # stops the run instead of running slowly. The kernels torch.compile's inductor generates are not affected.
         forbid_triton: bool = False
         # Trainer dispatch (was MW_FORCE_CUDAGRAPH / MW_FORCE_FABRIC): "auto" picks
         # CUDA-graph for fixed recycle (n_recycle_max==1) else Fabric; force either.
