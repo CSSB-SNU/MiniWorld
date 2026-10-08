@@ -15,6 +15,8 @@ from torch.utils.data import DataLoader
 from miniworld.data.features.batch import Batch
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
+    distogram_class_ce,
+    distogram_pair_weight,
 )
 from miniworld.models.distogram_only.model import Model
 from miniworld.models.distogram_only.model_mini_swa import MiniSWAModel
@@ -41,6 +43,24 @@ def _model_variant_discriminator(value: object) -> str:
 if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
+
+
+def _pair_weights_enabled(lc) -> bool:
+    """True when any chemistry weight of the distogram CE differs from 1 (``lc`` is a ``Client.LossConfig``)."""
+    # getattr: duck-typed loss configs without the chemistry fields (older tests and stubs) mean "off"
+    return bool(getattr(lc, "distogram_alpha_dna", 0.0) or getattr(lc, "distogram_alpha_rna", 0.0)
+                or getattr(lc, "distogram_alpha_ligand", 0.0) or getattr(lc, "distogram_ab_ag_weight", 1.0) != 1.0)
+
+
+def _pair_weight(lc, batch: Batch) -> torch.Tensor | None:
+    """Chemistry weight of every token pair, or None when all of them are 1 (the old loss, bit for bit)."""
+    if not _pair_weights_enabled(lc):
+        return None
+    return distogram_pair_weight(
+        batch.chain.entity_type, batch.scheme.token_asym_id,
+        alpha_dna=lc.distogram_alpha_dna, alpha_rna=lc.distogram_alpha_rna, alpha_ligand=lc.distogram_alpha_ligand,
+        ab_ag_weight=lc.distogram_ab_ag_weight,
+    )
 
 
 class Client(BaseClient):
@@ -106,6 +126,15 @@ class Client(BaseClient):
         # shortest-inter-atom-distance target. Was MW_DISTOGRAM_CB.
         distogram_cb_target: bool = False
         distogram_interchain_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+        # Per token-pair CE multiplier by chemistry (see miniworld.loss.auxiliary.distogram_pair_weight): AF3 Eq. 4's
+        # w = 1 + is_dna a_dna + is_rna a_rna + is_ligand a_ligand with "is_x" = either token of the pair is x, times
+        # ``distogram_ab_ag_weight`` for antibody-antigen pairs. All defaults are no-ops (weight 1 everywhere).
+        distogram_alpha_dna: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+        distogram_alpha_rna: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+        distogram_alpha_ligand: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+        distogram_ab_ag_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+        # log the UNWEIGHTED CE per pair class (protein / na / ligand / ab_ag) next to the weighted loss
+        distogram_class_metrics: bool = False
 
     class Config(BaseModel):
         """Configuration for the distogram-only client.
@@ -341,6 +370,8 @@ class Client(BaseClient):
         if getattr(trunk, "diffusion", None) is not None:
             if not self.config.loss.distogram_cb_target:
                 raise ValueError("Distogram diffusion requires the pseudo-beta target")
+            if _pair_weights_enabled(self.config.loss):
+                raise ValueError("The chemistry pair weights (distogram_alpha_*, distogram_ab_ag_weight) are not wired into distogram diffusion")
             with model_autocast(self.model):    # the EDM loss inside is fp32 elementwise math either way
                 diff_loss, stats = self.model(
                     msa=batch.msa, reference=batch.reference, scheme=batch.scheme,
@@ -376,15 +407,24 @@ class Client(BaseClient):
             rep_atom_mask=batch.structure.atom_is_rep if _use_cb else None,
             token_asym_id=batch.scheme.token_asym_id,
             interchain_weight=self.config.loss.distogram_interchain_weight,
+            pair_weight=_pair_weight(self.config.loss, batch),
         )
 
         loss = self.config.loss.distogram_loss * distogram_loss
 
-        return loss, {
+        stats = {
             "distogram_loss": distogram_loss.item(),
             "total_loss": loss.item(),
             "main_loss": loss.item(),
         }
+        if getattr(self.config.loss, "distogram_class_metrics", False):
+            ce = distogram_class_ce(
+                distogram_logit.detach(), batch.structure.atom_pos, batch.structure.atom_pos_mask,
+                batch.scheme.atom_to_token_idx_map, batch.chain.entity_type, batch.scheme.token_asym_id,
+                rep_atom_mask=batch.structure.atom_is_rep if _use_cb else None,
+            )
+            stats.update({f"distogram_ce_{k}" if not k.startswith("frac_") else f"distogram_{k}": v for k, v in ce.items()})
+        return loss, stats
 
     def training_step(self, batch: Batch) -> dict[str, float]:
         """Train the model on a batch."""

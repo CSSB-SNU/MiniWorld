@@ -1,0 +1,25 @@
+# MiniWorld v2.0.0 phase 1a, medium trunk (PF16 / MSA 4, recycle <= 4), L384, 800 epochs, on the B200 server.
+# Same recipe and schedule as phase1a_distogram_medium_v200 (= v1.2 medium data policy, bf16-mixed), on the B200 data paths
+# (data=B200_default), 4 GPUs x 1 sample x grad_accum 64 = effective batch 256, with ONE change of the distogram objective:
+#   * the interchain x2 policy (v1.1 / v1.2) is retired: distogram_interchain_weight 1.0
+#   * AF3 Eq. 4 chemistry weights on token pairs, with AF3's alphas (DNA 5, RNA 5, ligand 10; a pair counts when EITHER token
+#     is of that kind), see miniworld.loss.auxiliary.distogram_pair_weight
+#   * antibody-antigen pairs (antibody chain vs protein chain) x10; antibody-antibody pairs are not upweighted
+# phase1b_distogram_medium_v200_b200 continues this run (same run_dir) at L768.
+defaults:
+  - phase1a_distogram_medium_v200
+  - override data: B200_default
+  - _self_
+
+train:
+  comment: "v2.0.0-phase1a-distogram-medium-L384-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v200/medium_distogram"
+  use_wandb: true
+
+loss:
+  distogram_interchain_weight: 1.0
+  distogram_alpha_dna: 5.0
+  distogram_alpha_rna: 5.0
+  distogram_alpha_ligand: 10.0
+  distogram_ab_ag_weight: 10.0
+  distogram_class_metrics: true

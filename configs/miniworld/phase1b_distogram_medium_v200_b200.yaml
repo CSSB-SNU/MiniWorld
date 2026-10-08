@@ -1,0 +1,21 @@
+# MiniWorld v2.0.0 phase 1b, medium trunk, L768: CONTINUES phase1a_distogram_medium_v200_b200 (same run_dir, resume from its
+# last.pt at epoch 800) with the same distogram objective (no interchain x2; AF3 chemistry weights 5 / 5 / 10 on token pairs;
+# antibody-antigen pairs x10). 4 GPUs x 1 sample x grad_accum 64 = effective batch 256 (v1.2 ran 8 GPUs x 32).
+defaults:
+  - phase1b_distogram_medium_v200
+  - override data: B200_default
+  - _self_
+
+train:
+  comment: "v2.0.0-phase1b-distogram-medium-L768-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v200/medium_distogram"
+  grad_accum_steps: 64
+  use_wandb: true
+
+loss:
+  distogram_interchain_weight: 1.0
+  distogram_alpha_dna: 5.0
+  distogram_alpha_rna: 5.0
+  distogram_alpha_ligand: 10.0
+  distogram_ab_ag_weight: 10.0
+  distogram_class_metrics: true

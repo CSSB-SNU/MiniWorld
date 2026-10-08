@@ -230,6 +230,7 @@ def cal_atom_distogram_loss(
     rep_atom_mask: Bool[torch.Tensor, "* L_atom"] | None = None,
     token_asym_id: Int[torch.Tensor, "* L"] | None = None,
     interchain_weight: float = 1.0,
+    pair_weight: Float[torch.Tensor, "* L L"] | None = None,
 ) -> Float[torch.Tensor, "*"]:
     """Calculate residue level distogram loss from atom positions.
 
@@ -249,6 +250,9 @@ def cal_atom_distogram_loss(
     ``interchain_weight`` multiplies CE for different ``token_asym_id`` values.
     Reduction divides by the number of valid upper-triangle pairs, NOT the sum
     of weights. At 2.0 only interchain loss/gradient contributions double.
+
+    ``pair_weight`` (see :func:`distogram_pair_weight`) multiplies the CE of every token pair, on top of
+    ``interchain_weight``; the reduction still divides by the number of valid pairs.
     """
     *lead, L, _, D = logit_pred.shape
     if not 0 <= interchain_weight < float("inf"):
@@ -284,8 +288,110 @@ def cal_atom_distogram_loss(
     if interchain_weight != 1.0:
         interchain = token_asym_id[..., :, None] != token_asym_id[..., None, :]
         ce = ce * torch.where(interchain, interchain_weight, 1.0)
+    if pair_weight is not None:
+        ce = ce * pair_weight.to(ce.dtype)
     num = (ce * residue_pair_mask).sum(dim=(-2, -1))  # (*,)
     return num / denom  # (*,)
+
+
+# MoleculeType tags of ``ChainFeatures.entity_type`` (miniworld.data.constants.mapping._entity_tag_to_idx_mapping)
+ENTITY_ANTIBODY, ENTITY_PROTEIN, ENTITY_DPROTEIN = 0, 1, 2
+ENTITY_RNA, ENTITY_DNA, ENTITY_NA, ENTITY_LIGAND, ENTITY_BRANCHED = 3, 4, 5, 6, 7
+
+
+@typecheck
+def distogram_pair_class_masks(
+    entity_type: Int[torch.Tensor, "* L_chain"],
+    token_asym_id: Int[torch.Tensor, "* L"],
+) -> dict:
+    """Boolean token-pair masks of the chemistry classes the distogram weights and the loss monitor use.
+
+    A token takes the ``entity_type`` of its chain. A pair belongs to a class when EITHER token does:
+    ``dna`` (DNA), ``rna`` (RNA, other nucleic acid), ``ligand`` (ligand, branched). ``ab_ag`` is an antibody chain
+    against a protein / D-protein chain (antibody-antibody, antibody-ligand and antibody-nucleic-acid pairs are not).
+    """
+    chain = token_asym_id.clamp(min=0, max=entity_type.shape[-1] - 1).long()
+    et = torch.gather(entity_type, -1, chain)  # (*, L)
+
+    def either(flag):
+        return flag[..., :, None] | flag[..., None, :]
+
+    antibody, antigen = et == ENTITY_ANTIBODY, (et == ENTITY_PROTEIN) | (et == ENTITY_DPROTEIN)
+    return {
+        "dna": either(et == ENTITY_DNA),
+        "rna": either((et == ENTITY_RNA) | (et == ENTITY_NA)),
+        "ligand": either((et == ENTITY_LIGAND) | (et == ENTITY_BRANCHED)),
+        "ab_ag": (antibody[..., :, None] & antigen[..., None, :]) | (antigen[..., :, None] & antibody[..., None, :]),
+    }
+
+
+@typecheck
+def distogram_pair_weight(
+    entity_type: Int[torch.Tensor, "* L_chain"],
+    token_asym_id: Int[torch.Tensor, "* L"],
+    *,
+    alpha_dna: float = 0.0,
+    alpha_rna: float = 0.0,
+    alpha_ligand: float = 0.0,
+    ab_ag_weight: float = 1.0,
+) -> Float[torch.Tensor, "* L L"]:
+    """Per token-pair multiplier of the distogram CE.
+
+    ``w_ij = (1 + alpha_dna [dna] + alpha_rna [rna] + alpha_ligand [ligand]) * (ab_ag_weight if ab_ag else 1)`` where
+    each bracket is 1 when EITHER token of the pair is of that kind (:func:`distogram_pair_class_masks`): AF3 Eq. 4's
+    per-atom ``w_l = 1 + is_dna a_dna + is_rna a_rna + is_ligand a_ligand`` carried over to pairs, then the
+    antibody-antigen interface factor. The defaults give weight 1 everywhere.
+    """
+    for name, value in (("alpha_dna", alpha_dna), ("alpha_rna", alpha_rna), ("alpha_ligand", alpha_ligand), ("ab_ag_weight", ab_ag_weight)):
+        if not 0 <= value < float("inf"):
+            raise ValueError(f"{name} must be finite and nonnegative")
+    cls = distogram_pair_class_masks(entity_type, token_asym_id)
+    w = (1.0 + alpha_dna * cls["dna"].float() + alpha_rna * cls["rna"].float() + alpha_ligand * cls["ligand"].float())
+    return w * torch.where(cls["ab_ag"], ab_ag_weight, 1.0)
+
+
+@torch.no_grad()
+def distogram_class_ce(
+    logit_pred: Float[torch.Tensor, "* L L D"],
+    atom_pos: Float[torch.Tensor, "* L_atom 3"],
+    atom_pos_mask: Bool[torch.Tensor, "* L_atom"],
+    atom_to_token_idx_map: Int[torch.Tensor, "* L_atom"],
+    entity_type: Int[torch.Tensor, "* L_chain"],
+    token_asym_id: Int[torch.Tensor, "* L"],
+    rep_atom_mask: Bool[torch.Tensor, "* L_atom"] | None = None,
+) -> dict[str, float]:
+    """UNWEIGHTED mean distogram CE per pair class (monitoring only, no gradient), averaged over the batch.
+
+    Classes: ``protein`` (both tokens protein / antibody), ``na`` (either token nucleic acid), ``ligand`` (either token
+    ligand / branched), ``ab_ag``; plus ``frac_<class>``, the share of the valid pairs in the class. A class with no
+    pair in the batch reports 0.0 for both. Same target and pair mask as :func:`cal_atom_distogram_loss`.
+    """
+    *lead, L, _, D = logit_pred.shape
+    target, residue_pair_mask = atom_distogram_target(
+        atom_pos=atom_pos, atom_pos_mask=atom_pos_mask, atom_to_token_idx_map=atom_to_token_idx_map,
+        num_bins=D, token_num=L, rep_atom_mask=rep_atom_mask,
+    )
+    tri = torch.triu(torch.ones(L, L, dtype=torch.bool, device=logit_pred.device), diagonal=1)
+    valid = residue_pair_mask & tri
+    ce = F.cross_entropy(logit_pred.float().permute(*range(len(lead)), -1, -3, -2), target, reduction="none")
+    cls = distogram_pair_class_masks(entity_type, token_asym_id)
+    chain = token_asym_id.clamp(min=0, max=entity_type.shape[-1] - 1).long()
+    et = torch.gather(entity_type, -1, chain)
+    polymer_protein = (et <= ENTITY_DPROTEIN)
+    masks = {
+        "protein": polymer_protein[..., :, None] & polymer_protein[..., None, :],
+        "na": cls["dna"] | cls["rna"],
+        "ligand": cls["ligand"],
+        "ab_ag": cls["ab_ag"],
+    }
+    total = valid.sum().clamp_min(1)
+    out = {}
+    for name, m in masks.items():
+        m = m & valid
+        n = m.sum()
+        out[name] = float((ce * m).sum() / n.clamp_min(1)) if int(n) else 0.0
+        out[f"frac_{name}"] = float(n / total)
+    return out
 
 
 @typecheck
