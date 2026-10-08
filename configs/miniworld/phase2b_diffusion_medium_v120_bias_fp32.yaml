@@ -1,0 +1,38 @@
+# v1.2.0 phase 2b: continues phase2a_diffusion_medium_v120_bias_fp32 (bias-only token DiT, fp32, fused atom DiT off) at the
+# phase-1b crop L768 / 8192 atoms, 20 more epochs (counter continues: 200 + 20). Loss = the repo's 2b fine-tune loss
+# (diffusion_v101_ft). Block checkpointing ON (the 2a recipe ran without it at L384; fp32 L768 memory is untested).
+# --ckpt = the finished 2a last.pt (model + optimizer + scheduler + epoch).
+defaults:
+  - phase2b_diffusion_v200
+  - _self_
+
+model:
+  trunk:
+    pairformer:
+      n_block: 16
+      n_checkpoint_segments: 16
+    msa_subsample_per_recycle: 1024
+  diffusion:
+    token_dit_kind: bias_only
+    dtype: fp32
+    token_dit:
+      n_checkpoint_segments: 24
+    atom_swa:
+      fused_triton: false
+      n_checkpoint_segments: 3
+
+data:
+  crop:
+    ab_ag_interface_only: true
+    prefer_nonprotein_focus: true
+  msa:
+    sample_depth_by_source:
+      pdb: af3
+    max_msa_depth_by_source:
+      pdb: 8192
+
+train:
+  comment: "v1.2.0-phase2b-diffusion-medium-bias-fp32-L768"
+  run_dir: "runs/v1.2.0/phase2b/medium_diffusion_bias_fp32_L768"
+  num_epoch: 220
+  bucket_msa_multiple: 8192

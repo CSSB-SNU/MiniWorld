@@ -1,0 +1,15 @@
+# v1.2.0 phase 2a ablation: bias-only token DiT in fp32. Differs from phase2a_diffusion_medium_v120_aug_fp32 ONLY in
+# token_dit_kind (bias_only vs augmented); same dtype (fp32), atom DiT (fused off), data, trunk seed and recipe, so the
+# comparison isolates the token DiT. 10 epochs first, extended to 25, then 200 (resumes last.pt).
+defaults:
+  - phase2a_diffusion_medium_v120_aug_fp32
+  - _self_
+
+train:
+  comment: "v1.2.0-phase2a-diffusion-medium-bias-fp32-L384"
+  run_dir: "runs/v1.2.0/phase2a/medium_diffusion_bias_fp32_L384"
+  num_epoch: 200
+
+model:
+  diffusion:
+    token_dit_kind: bias_only

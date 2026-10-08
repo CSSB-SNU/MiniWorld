@@ -1,0 +1,19 @@
+# v1.2.0 phase 2a ablation: the v1.0.1 diffusion recipe (augmented token DiT, fp32 diffusion module)
+# on the same FROZEN v1.2.0 medium trunk / data as phase2a_diffusion_medium_v120 (BiasOnlyTokenDiT, bf16).
+# Same trunk seed, crop, MSA sampling, lr and loss: only token_dit_kind and the diffusion dtype differ,
+# so the loss gap to the bias-only run isolates the DiT kind + precision. Params differ in name from
+# bias-only -> fresh run in its own run_dir (never resumes from the bias-only checkpoints).
+defaults:
+  - phase2a_diffusion_medium_v120
+  - _self_
+
+train:
+  comment: "v1.2.0-phase2a-diffusion-medium-aug-fp32-L384"
+  run_dir: "runs/v1.2.0/phase2a/medium_diffusion_aug_fp32_L384"
+
+model:
+  diffusion:
+    token_dit_kind: augmented
+    dtype: fp32
+    atom_swa:
+      fused_triton: false   # v1.0.1 behaviour; the fused SWA kernels are the bf16 recipe's
