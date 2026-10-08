@@ -36,6 +36,7 @@ from miniworld.data.features.batch import Batch
 from torch.utils.checkpoint import checkpoint
 
 from miniworld.loss.smooth_lddt import cal_smooth_lddt
+from miniworld.training.phase2_graph_safe import cal_loss_gs
 from miniworld.models.diffusion.model import (
     InferenceOutput,
     ModelWrapper,
@@ -131,6 +132,9 @@ class Client(BaseClient):
         #                      (AF3 Table 6), so it stays 0 for phases 2a/2b.
         smooth_lddt_loss: float = 0.0
         bond_loss: float = 0.0
+        # AF3 SI Eq.2 + Algorithm 28: the ground truth is superposed on the prediction with the per-atom weights w_l above, not just the
+        # resolved-atom mask. False (default) keeps the mask-only alignment every earlier phase was trained with.
+        align_atom_weight: bool = False
 
     class Config(BaseModel):
         """Configuration for the phase 2 client."""
@@ -377,14 +381,19 @@ class Client(BaseClient):
             w_chain, dim=1, index=batch.scheme.atom_to_chain_id,
         )  # [B, L_atom] -> broadcasts over the augment dim
 
-        structure_loss = self.diffuser.cal_loss(
-            x0=x0,
-            x_input=x_input,
-            x_update=atom_pos_update,
-            sigma=sigma,
-            mask=x_mask,
-            atom_weight=atom_weight,
-        )
+        if lc.align_atom_weight:
+            structure_loss = cal_loss_gs(
+                self.diffuser, x0, x_input, atom_pos_update, sigma, x_mask, atom_weight, align_atom_weight=True,
+            )
+        else:
+            structure_loss = self.diffuser.cal_loss(
+                x0=x0,
+                x_input=x_input,
+                x_update=atom_pos_update,
+                sigma=sigma,
+                mask=x_mask,
+                atom_weight=atom_weight,
+            )
 
         # ---- v1.0.1 auxiliary terms (both no-ops when their weights are 0.0) ----
         smooth_lddt_loss = torch.tensor(0.0, device=atom_pos_update.device)

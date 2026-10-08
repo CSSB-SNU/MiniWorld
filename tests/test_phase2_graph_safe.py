@@ -114,6 +114,136 @@ def test_the_graph_safe_loss_equals_the_repos_loss(gs):
     assert abs(float(reference) - float(got)) < 1e-4 * abs(float(reference))
 
 
+def _eager_bond_loss(diffuser, x0, x_input, update, sigma, pairs):
+    """``DiffusionClient.loss_fn``'s AF3 Eq.5 bond term, verbatim, on a sparse ``[n_bond, 2]`` pair list."""
+    x_pred = diffuser.get_x_pred(x_input=x_input, x_update=update, sigma=sigma)
+    bi, bj = pairs[:, 0].long(), pairs[:, 1].long()
+    d_pred = (x_pred[..., bi, :] - x_pred[..., bj, :]).norm(dim=-1)
+    d_gt = (x0[..., bi, :] - x0[..., bj, :]).norm(dim=-1)
+    per_augment = (d_pred - d_gt).pow(2).mean(dim=-1)
+    w_sigma = diffuser.scheduler.loss_weight(sigma).to(dtype=per_augment.dtype).reshape(per_augment.shape)
+    return (w_sigma * per_augment).mean()
+
+
+def _padded_pairs(pairs, size):
+    bond_i, bond_j = torch.zeros(size, dtype=torch.long), torch.zeros(size, dtype=torch.long)
+    bond_valid = torch.zeros(size, dtype=torch.bool)
+    n = pairs.shape[0]
+    bond_i[:n], bond_j[:n], bond_valid[:n] = pairs[:, 0], pairs[:, 1], True
+    return bond_i, bond_j, bond_valid
+
+
+def test_the_graph_safe_bond_loss_equals_the_repos_bond_loss(gs):
+    diffuser = _diffuser()
+    length = 256
+    g = torch.Generator().manual_seed(4)
+    pos = torch.randn(1, length, 3, generator=g) * 15
+    mask = torch.ones(1, length, dtype=torch.bool)
+    mask[:, -20:] = False
+    x0, x_input, _, _, sigma = diffuser.sample(pos, num_augment=4, mask=mask)
+    update = (torch.randn(x0.shape, generator=g) * 3).requires_grad_()
+    pairs = torch.tensor([[3, 4], [10, 40], [100, 101], [7, 200], [55, 56]])
+
+    reference = _eager_bond_loss(diffuser, x0, x_input, update, sigma, pairs)
+    (ref_grad,) = torch.autograd.grad(reference, update)
+    # the same pairs in a padded list (padding is masked, wherever it points)
+    got = gs.bond_loss_gs(diffuser, x0, x_input, update, sigma, *_padded_pairs(pairs, 64))
+    (got_grad,) = torch.autograd.grad(got, update)
+    assert float(reference) > 0
+    assert abs(float(reference) - float(got)) < 1e-5 * abs(float(reference))
+    assert (ref_grad - got_grad).abs().max() < 1e-5 * ref_grad.abs().max()
+
+
+def test_the_graph_safe_bond_loss_is_zero_and_finite_without_bonds(gs):
+    diffuser = _diffuser()
+    g = torch.Generator().manual_seed(5)
+    pos = torch.randn(1, 128, 3, generator=g) * 15
+    x0, x_input, _, _, sigma = diffuser.sample(pos, num_augment=4, mask=torch.ones(1, 128, dtype=torch.bool))
+    update = (torch.randn(x0.shape, generator=g) * 3).requires_grad_()
+    empty = _padded_pairs(torch.zeros(0, 2, dtype=torch.long), 16)
+    loss = gs.bond_loss_gs(diffuser, x0, x_input, update, sigma, *empty)
+    (grad,) = torch.autograd.grad(loss, update)
+    assert float(loss) == 0.0 and torch.isfinite(grad).all() and float(grad.abs().max()) == 0.0
+
+
+def _loss_inputs(seed=6, length=256, n_aug=4):
+    g = torch.Generator().manual_seed(seed)
+    pos = torch.randn(1, length, 3, generator=g) * 15
+    mask = torch.ones(1, length, dtype=torch.bool)
+    mask[:, -20:] = False
+    diffuser = _diffuser()
+    x0, x_input, x_mask, _, sigma = diffuser.sample(pos, num_augment=n_aug, mask=mask)
+    update = torch.randn(x0.shape, generator=g) * 3
+    # AF3 Eq.4: a polymer chain, then a nucleic-acid stretch (w = 6) and a ligand (w = 11)
+    weight = torch.ones(1, length)
+    weight[:, 120:180] = 6.0
+    weight[:, 200:230] = 11.0
+    return diffuser, x0, x_input, x_mask, sigma, update, weight
+
+
+def _weighted_sq_error(diffuser, x0, x_input, x_mask, sigma, update, weight, align_weight):
+    """The loss's squared error, aligning with ``align_weight`` (the repo's SVD ``weighted_align``), summed with the Eq.4 weights."""
+    sch = diffuser.scheduler
+    noisy = x_input / sch.input_scale(sigma)
+    x_pred = sch.skip_scale(sigma) * noisy + sch.output_scale(sigma) * update
+    mask = x_mask.expand(x_pred.shape[:-1])
+    x0_safe, pred_safe = torch.where(mask[..., None], x0, 0.0), torch.where(mask[..., None], x_pred, 0.0)
+    aligned = weighted_align(x0_safe, pred_safe, weight=align_weight.expand(mask.shape) * mask)
+    sq = torch.where(mask[..., None], (pred_safe - aligned).pow(2), 0.0)
+    return (sq.sum(-1) * weight.expand(mask.shape)).sum(-1)  # [A, B], Eq.4-weighted
+
+
+def test_the_default_alignment_is_still_the_mask_only_one_of_the_repos_loss(gs):
+    diffuser, x0, x_input, x_mask, sigma, update, weight = _loss_inputs()
+    reference = diffuser.cal_loss(
+        x0=x0, x_input=x_input, x_update=update, sigma=sigma, mask=x_mask, atom_weight=weight
+    )
+    got = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, weight)
+    assert abs(float(reference) - float(got)) < 1e-4 * abs(float(reference))
+
+
+def test_af3_alignment_weights_equal_the_weighted_kabsch_reference(gs):
+    """``align_atom_weight=True`` = the repo's SVD alignment with weights ``mask * w_l`` (AF3 Algorithm 28), same loss otherwise."""
+    diffuser, x0, x_input, x_mask, sigma, update, weight = _loss_inputs()
+    sch = diffuser.scheduler
+    got = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, weight, align_atom_weight=True)
+
+    noisy = x_input / sch.input_scale(sigma)
+    x_pred = sch.skip_scale(sigma) * noisy + sch.output_scale(sigma) * update
+    mask = x_mask.expand(x_pred.shape[:-1])
+    x0_safe, pred_safe = torch.where(mask[..., None], x0, 0.0), torch.where(mask[..., None], x_pred, 0.0)
+    aligned = weighted_align(x0_safe, pred_safe, weight=weight.expand(mask.shape) * mask)
+    sq = torch.where(mask[..., None], (pred_safe - aligned).pow(2), 0.0)
+    w = sch.loss_weight(sigma) * mask[..., None] * weight[..., None]
+    reference = ((sq * w).sum((-2, -1)) / (mask.sum(-1).clamp_min(1) * 3)).mean()
+    assert abs(float(reference) - float(got)) < 1e-4 * abs(float(reference))
+
+
+def test_atom_weighted_alignment_minimises_the_weighted_error_and_differs_from_the_mask_only_one(gs):
+    diffuser, x0, x_input, x_mask, sigma, update, weight = _loss_inputs()
+    ones = torch.ones_like(weight)
+    mask_only = _weighted_sq_error(diffuser, x0, x_input, x_mask, sigma, update, weight, ones)
+    atom_weighted = _weighted_sq_error(diffuser, x0, x_input, x_mask, sigma, update, weight, weight)
+    assert (atom_weighted <= mask_only * (1 + 1e-5)).all()  # Kabsch is optimal for the weights it is given
+    assert (atom_weighted < mask_only * 0.9999).any()  # and the two alignments really differ
+
+
+def test_uniform_atom_weights_give_the_same_loss_with_the_flag_on_or_off(gs):
+    diffuser, x0, x_input, x_mask, sigma, update, _ = _loss_inputs()
+    ones = torch.ones(1, x0.shape[-2])
+    off = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, ones)
+    on = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, ones, align_atom_weight=True)
+    assert abs(float(off) - float(on)) < 1e-6 * abs(float(off))
+
+
+def test_atom_weighted_alignment_carries_no_gradient_through_the_alignment(gs):
+    diffuser, x0, x_input, x_mask, sigma, update, weight = _loss_inputs()
+    update = update.requires_grad_()
+    loss = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, weight, align_atom_weight=True)
+    (grad,) = torch.autograd.grad(loss, update)
+    assert torch.isfinite(grad).all() and float(grad.abs().max()) > 0
+
+
 def test_graph_safe_sampling_swaps_and_restores(gs):
     diffuser = _diffuser()
     before = (
