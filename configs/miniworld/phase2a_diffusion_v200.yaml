@@ -24,6 +24,9 @@ model:
     # re-runs its forward in backward: phase 2a L384 121.9 -> 108.0 ms per micro-step (peak 5.1 -> 20.2 GiB), 2b L768 336.9 -> 317.8 ms (10.7 -> 40.9 GiB).
     token_dit:
       n_checkpoint_segments: null
+      # every block's pair bias from ONE LayerNorm + ONE GEMM (engine pair_bias_all), outside any checkpointed block; same
+      # parameters, same result to rounding (BiasOnlyTokenDiT.Config.hoist_pair_bias). Off by default.
+      # hoist_pair_bias: true
     # The engine's fused SWA atom DiT block (B200 bf16: the sm_100a kernels); off by default.
     atom_swa:
       fused_triton: true

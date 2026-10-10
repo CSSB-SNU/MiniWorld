@@ -1095,6 +1095,8 @@ class DiffusionModule(nn.Module):
                 n_block=token_dit_config.n_block,
                 n_checkpoint_segments=token_dit_config.n_checkpoint_segments,
                 implementation=token_dit_config.implementation,
+                # team-gm's DiffusionTransformer.Config field: every block's pair bias from one LayerNorm + GEMM
+                hoist_pair_bias=getattr(token_dit_config, "hoist_pair_bias", False),
             ))
         else:
             msg = f"unknown token_dit_kind {token_dit_kind!r} (augmented | bias_only)"

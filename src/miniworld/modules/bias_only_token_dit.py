@@ -32,6 +32,15 @@ The block is the engine's ``BiasOnlyDiTBlock`` (same parameter names, so checkpo
 unchanged): with an engine implementation it takes the engine's fused paths where they serve
 the call (B200 bf16: hand-written CUDA + cuBLAS for training and for inference) and this
 module's attention + ``ConditionedTransition`` otherwise.
+
+``hoist_pair_bias`` (default off): every block's pair bias from ONE LayerNorm and ONE GEMM over
+the pair (the engine's ``pair_bias_all``; ``ln_pair`` has no offset, so the per-block LayerNorm
+weight folds into ``to_bias``) instead of a pair LayerNorm + ``to_bias`` in every block. Same
+parameters, the same result up to rounding; it saves the per-block pair LayerNorm, its backward
+and the 24 pair-gradient accumulations. The hoist runs outside the checkpointed blocks (as in
+team-gm's ``DiffusionTransformer``) and only under autograd: without it (sampling) the blocks
+take the pair, and the engine's inference path makes each block's softmax once per pair for
+every solver step, which a per-call hoist could only repeat.
 """
 
 from __future__ import annotations
@@ -90,16 +99,20 @@ class BiasOnlyAttention(nn.Module):
     @typecheck
     def attention_pattern(
         self,
-        pair: Float[torch.Tensor, "B L L d_pair"],
+        pair: Float[torch.Tensor, "B L L d_pair"] | None = None,
         mask: Bool[torch.Tensor, "B L"] | None = None,
+        *,
+        bias: Float[torch.Tensor, "B H L L"] | None = None,
     ) -> Float[torch.Tensor, "B H L L"]:
         """``softmax_n(to_bias(ln_pair(pair))[b, m, n, h])`` with masked keys at zero.
 
         Softmax in fp32 (the logits are the bias unscaled, as in the engine kernel); the
         caller casts to the value dtype. The mask is over keys, so no real query row is
-        ever fully masked.
+        ever fully masked. ``bias``: this block's hoisted bias [B, H, L, L]
+        (``pair_bias_all``) in place of ``to_bias(ln_pair(pair))``.
         """
-        bias = self.to_bias(self.ln_pair(pair)).permute(0, 3, 1, 2)  # [B, H, L, L]
+        if bias is None:
+            bias = self.to_bias(self.ln_pair(pair)).permute(0, 3, 1, 2)  # [B, H, L, L]
         if mask is not None:
             bias = bias.masked_fill(~mask[:, None, None, :], torch.finfo(bias.dtype).min)
         return F.softmax(bias.float(), dim=-1)
@@ -109,10 +122,12 @@ class BiasOnlyAttention(nn.Module):
         self,
         single: Float[torch.Tensor, "A B L d_single"],
         cond: Float[torch.Tensor, "A B L d_cond"],
-        pair: Float[torch.Tensor, "B L L d_pair"],
+        pair: Float[torch.Tensor, "B L L d_pair"] | None = None,
         mask: Bool[torch.Tensor, "B L"] | None = None,
+        *,
+        bias: Float[torch.Tensor, "B H L L"] | None = None,
     ) -> Float[torch.Tensor, "A B L d_single"]:
-        p = self.attention_pattern(pair, mask)
+        p = self.attention_pattern(pair, mask, bias=bias)
         x = self.ada_ln_in(single, cond)
         a, b, length, _ = x.shape
         value = self.to_value(x).view(a, b, length, self.n_head, self.d_hidden)
@@ -165,6 +180,9 @@ class BiasOnlyTokenDiT(nn.Module):
         n_block: int = 24
         n_checkpoint_segments: int | None = None
         implementation: ImplementationType = ImplementationType.PYTORCH
+        # All blocks' pair biases from one LayerNorm + one GEMM (the engine's ``pair_bias_all``), outside the
+        # checkpointed blocks, under autograd only. Same parameters, same result to rounding.
+        hoist_pair_bias: bool = False
 
     def __init__(self, config: Config) -> None:
         super().__init__()
@@ -188,7 +206,16 @@ class BiasOnlyTokenDiT(nn.Module):
         """Same call signature as ``team_gm.DiffusionTransformer`` (drop-in in ``DiffusionModule``)."""
         if mask is not None and mask.ndim == 3:
             mask = mask[0]  # augment-invariant key mask
-        block_fns = [(lambda s, block=b: block(s, cond, pair, mask)) for b in self.blocks]
+        if self.config.hoist_pair_bias and torch.is_grad_enabled():
+            # one LayerNorm + one GEMM for every block's bias, OUTSIDE the checkpointed segments (team-gm's place)
+            # imported here: only an engine with the hoist (89f5ab28 and later) has it; the default path keeps working
+            # with older pinned engines
+            from miniworld_engine.modules.bias_only_dit import pair_bias_all
+            biases = pair_bias_all(self.blocks, pair)
+            block_fns = [(lambda s, block=b, bias=bb: block(s, cond, None, mask, bias=bias))
+                         for b, bb in zip(self.blocks, biases, strict=True)]
+        else:
+            block_fns = [(lambda s, block=b: block(s, cond, pair, mask)) for b in self.blocks]
         if self.config.n_checkpoint_segments is None:
             for fn in block_fns:
                 single = fn(single)
