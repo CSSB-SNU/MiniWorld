@@ -132,9 +132,10 @@ class Client(BaseClient):
         #                      (AF3 Table 6), so it stays 0 for phases 2a/2b.
         smooth_lddt_loss: float = 0.0
         bond_loss: float = 0.0
-        # AF3 SI Eq.2 + Algorithm 28: the ground truth is superposed on the prediction with the per-atom weights w_l above, not just the
-        # resolved-atom mask. False (default) keeps the mask-only alignment every earlier phase was trained with.
-        align_atom_weight: bool = False
+        # AF3 SI Eq.2 + Algorithm 28 (default on): the ground truth is superposed on the prediction with the per-atom weights w_l above,
+        # times the resolved-atom mask. False is the mask-only alignment the phases before v1.2.0 were trained with; set it only to
+        # reproduce one of those runs.
+        align_atom_weight: bool = True
 
     class Config(BaseModel):
         """Configuration for the phase 2 client."""

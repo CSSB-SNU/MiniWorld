@@ -132,10 +132,13 @@ def test_class_metrics_are_unweighted_and_report_the_pair_shares():
     assert float(unweighted) > 0
 
 
-def test_loss_config_defaults_leave_the_loss_untouched():
+def test_loss_config_defaults_are_the_af3_weights():
     cfg = Client.LossConfig()
     batch = NS(chain=NS(entity_type=ENTITY), scheme=NS(token_asym_id=ASYM))
-    assert not _pair_weights_enabled(cfg) and _pair_weight(cfg, batch) is None
+    assert (cfg.distogram_alpha_dna, cfg.distogram_alpha_rna, cfg.distogram_alpha_ligand, cfg.distogram_ab_ag_weight) == (5.0, 5.0, 10.0, 1.0)
+    assert _pair_weights_enabled(cfg)
+    off = Client.LossConfig(distogram_alpha_dna=0, distogram_alpha_rna=0, distogram_alpha_ligand=0)
+    assert not _pair_weights_enabled(off) and _pair_weight(off, batch) is None
     assert cfg.distogram_interchain_weight == 1.0 and not cfg.distogram_class_metrics
     on = Client.LossConfig(distogram_alpha_dna=5, distogram_alpha_rna=5, distogram_alpha_ligand=10, distogram_ab_ag_weight=10)
     assert _pair_weights_enabled(on)

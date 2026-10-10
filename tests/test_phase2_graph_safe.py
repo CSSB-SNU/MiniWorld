@@ -110,7 +110,7 @@ def test_the_graph_safe_loss_equals_the_repos_loss(gs):
         mask=x_mask,
         atom_weight=weight,
     )
-    got = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, weight)
+    got = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, weight, align_atom_weight=False)
     assert abs(float(reference) - float(got)) < 1e-4 * abs(float(reference))
 
 
@@ -198,7 +198,7 @@ def test_the_default_alignment_is_still_the_mask_only_one_of_the_repos_loss(gs):
     reference = diffuser.cal_loss(
         x0=x0, x_input=x_input, x_update=update, sigma=sigma, mask=x_mask, atom_weight=weight
     )
-    got = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, weight)
+    got = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, weight, align_atom_weight=False)
     assert abs(float(reference) - float(got)) < 1e-4 * abs(float(reference))
 
 
@@ -231,7 +231,7 @@ def test_atom_weighted_alignment_minimises_the_weighted_error_and_differs_from_t
 def test_uniform_atom_weights_give_the_same_loss_with_the_flag_on_or_off(gs):
     diffuser, x0, x_input, x_mask, sigma, update, _ = _loss_inputs()
     ones = torch.ones(1, x0.shape[-2])
-    off = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, ones)
+    off = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, ones, align_atom_weight=False)
     on = gs.cal_loss_gs(diffuser, x0, x_input, update, sigma, x_mask, ones, align_atom_weight=True)
     assert abs(float(off) - float(on)) < 1e-6 * abs(float(off))
 

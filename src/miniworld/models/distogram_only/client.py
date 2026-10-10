@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import warnings
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 import numpy as np
@@ -131,10 +132,11 @@ class Client(BaseClient):
         distogram_interchain_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
         # Per token-pair CE multiplier by chemistry (see miniworld.loss.auxiliary.distogram_pair_weight): AF3 Eq. 4's
         # w = 1 + is_dna a_dna + is_rna a_rna + is_ligand a_ligand with "is_x" = either token of the pair is x, times
-        # ``distogram_ab_ag_weight`` for antibody-antigen pairs. All defaults are no-ops (weight 1 everywhere).
-        distogram_alpha_dna: float = Field(default=0.0, ge=0, allow_inf_nan=False)
-        distogram_alpha_rna: float = Field(default=0.0, ge=0, allow_inf_nan=False)
-        distogram_alpha_ligand: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+        # ``distogram_ab_ag_weight`` for antibody-antigen pairs. The alphas default to the AF3 values 5 / 5 / 10 (set them to 0 for the
+        # unweighted CE); the antibody-antigen factor is not AF3 and stays 1.
+        distogram_alpha_dna: float = Field(default=5.0, ge=0, allow_inf_nan=False)
+        distogram_alpha_rna: float = Field(default=5.0, ge=0, allow_inf_nan=False)
+        distogram_alpha_ligand: float = Field(default=10.0, ge=0, allow_inf_nan=False)
         distogram_ab_ag_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
         # log the UNWEIGHTED CE per pair class (protein / na / ligand / ab_ag) next to the weighted loss
         distogram_class_metrics: bool = False
@@ -374,7 +376,9 @@ class Client(BaseClient):
             if not self.config.loss.distogram_cb_target:
                 raise ValueError("Distogram diffusion requires the pseudo-beta target")
             if _pair_weights_enabled(self.config.loss):
-                raise ValueError("The chemistry pair weights (distogram_alpha_*, distogram_ab_ag_weight) are not wired into distogram diffusion")
+                if self.config.loss.model_fields_set & {"distogram_alpha_dna", "distogram_alpha_rna", "distogram_alpha_ligand", "distogram_ab_ag_weight"}:
+                    raise ValueError("The chemistry pair weights (distogram_alpha_*, distogram_ab_ag_weight) are not wired into distogram diffusion")
+                warnings.warn("distogram diffusion does not apply the chemistry pair weights; the AF3 defaults of distogram_alpha_* are ignored", stacklevel=2)
             with model_autocast(self.model):    # the EDM loss inside is fp32 elementwise math either way
                 diff_loss, stats = self.model(
                     msa=batch.msa, reference=batch.reference, scheme=batch.scheme,

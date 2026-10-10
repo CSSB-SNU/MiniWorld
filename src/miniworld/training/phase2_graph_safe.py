@@ -117,12 +117,12 @@ def sample_noise_gs(self, batch_size, uniform=False):
     )
 
 
-def cal_loss_gs(diffuser, x0, x_input, x_update, sigma, mask, atom_weight, align_atom_weight=False):
+def cal_loss_gs(diffuser, x0, x_input, x_update, sigma, mask, atom_weight, align_atom_weight=True):
     """``EuclideanDiffuser.cal_loss`` minus the host-side isnan/save branch, alignment through ``weighted_align_gs``.
 
-    ``align_atom_weight=False`` aligns the ground truth with the resolved-atom mask as the weight, as ``cal_loss`` does. ``True`` is
-    AF3 SI Eq.2 + Algorithm 28 (``weighted_rigid_align``): the alignment uses the same per-atom weights ``w_l = 1 + a_dna*is_dna + a_rna*is_rna +
-    a_lig*is_ligand`` (Eq.4) as the MSE, times the resolved mask, so DNA / RNA / ligand atoms pull the superposition harder.
+    ``align_atom_weight=True`` (default) is AF3 SI Eq.2 + Algorithm 28 (``weighted_rigid_align``): the alignment uses the same per-atom
+    weights ``w_l = 1 + a_dna*is_dna + a_rna*is_rna + a_lig*is_ligand`` (Eq.4) as the MSE, times the resolved mask, so DNA / RNA / ligand
+    atoms pull the superposition harder. ``False`` aligns with the resolved-atom mask alone, as ``EuclideanDiffuser.cal_loss`` does.
     The alignment carries no gradient either way."""
     sch, dtype = diffuser.scheduler, x_update.dtype
     noisy_x = x_input / sch.input_scale(sigma).to(device=x0.device, dtype=diffuser.dtype)

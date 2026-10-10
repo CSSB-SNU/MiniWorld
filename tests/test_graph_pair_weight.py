@@ -36,7 +36,7 @@ def test_pair_weight_is_attached_and_follows_every_loaded_batch():
 
 def test_nothing_is_attached_when_every_weight_is_one():
     static = synthetic()
-    assert not G.attach_pair_weight(static, Client.LossConfig())
+    assert not G.attach_pair_weight(static, Client.LossConfig(distogram_alpha_dna=0, distogram_alpha_rna=0, distogram_alpha_ligand=0))
     assert not hasattr(static, "pair_weight")
     G.copy_static(static, synthetic())                                          # still loads plain batches
 

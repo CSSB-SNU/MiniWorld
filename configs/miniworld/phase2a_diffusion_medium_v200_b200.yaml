@@ -1,0 +1,18 @@
+# MiniWorld v2.0.0 phase 2a, medium trunk, L384, on the B200 server: connects to the finished v2.0.0 phase 1b run
+# (phase1b_distogram_medium_v200_b200, epoch 900). The trunk is FROZEN and seeded with that run's epoch-900 online EMA weights, weights
+# only, epoch 0 (the same hand-off as v1.2.0: phase-1b epoch-900 EMA):
+#   runs/b200/v200_phase1b_ema900/epoch=0900_ema.pt   (pass via --ckpt --no-ckpt-strict)
+# Recipe = phase2a_diffusion_medium_v120 (bias-only token DiT, bf16-mixed with fp32 master parameters, fused atom DiT, v1.2 data policy) on
+# the B200 data paths. The AF3 loss weighting is the code default: w_l = 1 + 5 dna + 5 rna + 10 ligand on the MSE, and the ground truth
+# is superposed with the same w_l (loss.align_atom_weight, AF3 SI Eq.2 / Algorithm 28). CUDA graph, one graph per recycle depth.
+defaults:
+  - phase2a_diffusion_medium_v120
+  - override data: B200_default
+  - _self_
+
+train:
+  comment: "v2.0.0-phase2a-diffusion-medium-L384-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase2a_v200_medium"
+  num_epoch: 200
+  use_wandb: true
+  cuda_graph: true

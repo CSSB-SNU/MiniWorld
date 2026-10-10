@@ -119,6 +119,7 @@ def test_v110_config_composition_and_client_wiring():
             assert cfg.model.shared.n_distogram_bins == 96
             lc = Client.LossConfig.model_validate(dict(cfg.loss))
             assert lc.distogram_interchain_weight == 2. and lc.distogram_cb_target
+    lc = lc.model_copy(update=dict(distogram_alpha_dna=0.0, distogram_alpha_rna=0.0, distogram_alpha_ligand=0.0))  # v1.1 recipe: no chemistry weights
     logits = torch.randn(1,4,4,96,requires_grad=True)
     pos, mask, mapping, chains = inputs()
     batch = NS(msa=None,reference=None,sequence=None,template=None,
