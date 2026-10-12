@@ -20,6 +20,9 @@ import numpy as np
 import torch
 from hydra import compose, initialize_config_dir
 from lightning import Fabric
+from miniworld_engine.architecture.diffusion.decoupled_xpred import (
+    DecoupledXPredScheduler,
+)
 from omegaconf import OmegaConf
 from pydantic import BaseModel
 
@@ -34,7 +37,6 @@ from miniworld.configs import (
 from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.data.features.batch import Batch
 from miniworld.data.io.to_cif import batch_to_cif
-from miniworld.diffusion.decoupled_xpred import DecoupledXPredScheduler
 from miniworld.loss import metrics
 from miniworld.models.miniworld import Client, Model
 from miniworld.models.miniworld.model import InferenceOutput

@@ -40,10 +40,11 @@ import math
 from typing import Literal
 
 import torch
+from miniworld_engine.architecture.blocks.diffusion_transformer import (
+    upgrade_legacy_keys,
+)
 from pydantic import BaseModel, Field
 from torch import nn
-
-from miniworld.modules.blocks.diffusion_transformer import upgrade_legacy_keys
 
 logger = logging.getLogger(__name__)
 
@@ -151,13 +152,13 @@ def _reinit_param_inplace(model: nn.Module, name: str) -> None:
     """Re-initialize a single parameter in-place using the project's init."""
     # Lazy imports — the policy module shouldn't hard-depend on team_gm
     # at import time (callers may not have it installed for tests).
-    from miniworld.modules.primitives import (
+    from miniworld_engine.architecture.primitives import (
         InitType,
     )
-    from miniworld.modules.primitives import (
+    from miniworld_engine.architecture.primitives import (
         LayerNorm as ProjectLayerNorm,
     )
-    from miniworld.modules.primitives import (
+    from miniworld_engine.architecture.primitives import (
         Linear as ProjectLinear,
     )
 

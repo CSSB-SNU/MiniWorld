@@ -5,6 +5,10 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import torch
+from miniworld_engine.architecture.blocks._engine_impl import to_engine_impl
+from miniworld_engine.architecture.primitives import (
+    Linear,
+)
 from miniworld_engine.modules import LayerNorm
 from pydantic import BaseModel
 from torch import nn
@@ -14,7 +18,6 @@ from miniworld.configs.models import AtomSWAConfig
 from miniworld.data.features import MSAFeatures
 from miniworld.loss.auxiliary import atom_distogram_target
 from miniworld.modules import DiffusionTransformer
-from miniworld.modules.blocks._engine_impl import to_engine_impl
 from miniworld.modules.distogram_diffusion import (
     DistogramDiffusion,
     DistogramDiffusionConfig,
@@ -29,9 +32,6 @@ from miniworld.modules.msa_util import (
     init_msa,
     init_token_single_msa,
     subsample_msa_rows,
-)
-from miniworld.modules.primitives import (
-    Linear,
 )
 from miniworld.modules.template_embedder_af3 import AF3TemplateEmbedder
 from miniworld.training.precision import model_autocast

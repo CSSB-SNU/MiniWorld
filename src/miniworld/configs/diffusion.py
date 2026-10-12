@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
-
-from miniworld.diffusion import (
+from miniworld_engine.architecture.diffusion import (
     DecoupledXPredScheduler,
     EDMScheduler,
     XPredDecoupledSolver,
 )
+from pydantic import BaseModel, Field
 
 
 class EDMDiffuserConfig(BaseModel):

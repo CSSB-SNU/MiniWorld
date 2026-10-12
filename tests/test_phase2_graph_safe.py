@@ -6,9 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 import torch
-
-from miniworld.diffusion import EDMScheduler, EuclideanDiffuser
-from miniworld.utils.align import weighted_align
+from miniworld_engine.architecture.diffusion import EDMScheduler, EuclideanDiffuser
+from miniworld_engine.architecture.utils.align import weighted_align
 
 ROOT = Path(__file__).resolve().parents[1]
 

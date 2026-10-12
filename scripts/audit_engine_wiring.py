@@ -10,8 +10,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from audit_phase2_cudagraph import difference, load_model_batch
-
-from miniworld.diffusion import EDMScheduler, EuclideanDiffuser
+from miniworld_engine.architecture.diffusion import EDMScheduler, EuclideanDiffuser
 
 
 def main():
@@ -77,9 +76,8 @@ def main():
     with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
         baseline = None
         if args.compare_before_wiring:
+            from miniworld_engine.architecture.exceptions import ImplementationType
             from miniworld_engine.modules.dispatch import KernelBackend
-
-            from miniworld.modules.exceptions import ImplementationType
 
             changes = []
             stage = "before_wiring"

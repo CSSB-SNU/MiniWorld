@@ -49,13 +49,13 @@ from pathlib import Path
 from typing import Any
 
 import torch
+from miniworld_engine.architecture.blocks.diffusion_transformer import (
+    DiffusionTransformer,
+)
 from miniworld_engine.modules import (
     AugmentedAttentionPairBias,
 )
 
-from miniworld.modules.blocks.diffusion_transformer import (
-    DiffusionTransformer,
-)
 from miniworld.modules.diffusion_module import (
     AtomAttentionDecoder,
     AtomAttentionEncoder,

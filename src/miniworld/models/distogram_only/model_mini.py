@@ -5,6 +5,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
+from miniworld_engine.architecture.primitives import (
+    LayerNorm,
+    Linear,
+)
 from pydantic import BaseModel
 from torch import nn
 
@@ -17,10 +21,6 @@ from miniworld.modules.mini_pairformer import MiniPairformer
 from miniworld.modules.msa_util import (
     init_msa,
     init_token_single_msa,
-)
-from miniworld.modules.primitives import (
-    LayerNorm,
-    Linear,
 )
 
 if TYPE_CHECKING:

@@ -6,6 +6,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import torch
+from miniworld_engine.architecture.primitives import (
+    LayerNorm,
+    Linear,
+)
 from pydantic import BaseModel
 from torch import nn
 
@@ -18,10 +22,6 @@ from miniworld.modules.diffusion_module import (
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.msa_util import init_msa, init_token_single_msa
-from miniworld.modules.primitives import (
-    LayerNorm,
-    Linear,
-)
 
 if TYPE_CHECKING:
     import numpy as np

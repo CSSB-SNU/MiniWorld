@@ -7,12 +7,16 @@ import numpy as np
 import torch
 from jaxtyping import Bool, Float
 from lightning.fabric.wrappers import _FabricDataLoader
+from miniworld_engine.architecture.diffusion import (
+    AF3Solver,
+    EDMScheduler,
+    EuclideanDiffuser,
+)
 from pydantic import BaseModel
 from torch.utils.data import DataLoader
 
 from miniworld.configs import EDMDiffuserConfig
 from miniworld.data.features.batch import Batch
-from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,

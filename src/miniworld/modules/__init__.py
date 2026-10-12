@@ -1,6 +1,6 @@
-"""PyTorch modules for MiniWorld."""
+"""PyTorch modules for MiniWorld; the blocks and layers live in miniworld_engine.architecture."""
 
-from .blocks import (
+from miniworld_engine.architecture.blocks import (
     DiffusionTransformer,
     DiffusionTransformerBlock,
     MSAModule,
@@ -12,8 +12,11 @@ from .blocks import (
     TemplatePairformer,
     TemplatePairformerBlock,
 )
-from .exceptions import ImplementationType, InvalidImplementationError
-from .primitives import Dropout, Linear
+from miniworld_engine.architecture.exceptions import (
+    ImplementationType,
+    InvalidImplementationError,
+)
+from miniworld_engine.architecture.primitives import Dropout, Linear
 
 __all__ = [
     "DiffusionTransformer",

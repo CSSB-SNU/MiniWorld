@@ -19,6 +19,12 @@ never re-adds ``pair + drop(...)`` itself.
 
 import torch
 from jaxtyping import Bool, Float, Int
+from miniworld_engine.architecture.exceptions import (
+    ImplementationType,
+    InvalidImplementationError,
+)
+from miniworld_engine.architecture.primitives import Linear
+from miniworld_engine.architecture.typing import typecheck
 from miniworld_engine.modules import (
     BidirectionalTriangleMultiplication,
     MSAPairWeightedAveraging,
@@ -30,10 +36,6 @@ from pydantic import BaseModel, model_validator
 from torch import nn
 from torch.utils.checkpoint import checkpoint_sequential
 from typing_extensions import Self
-
-from miniworld.modules.exceptions import ImplementationType, InvalidImplementationError
-from miniworld.modules.primitives import Linear
-from miniworld.typing import typecheck
 
 
 def _to_engine_impl(impl: ImplementationType) -> _EngineImpl:

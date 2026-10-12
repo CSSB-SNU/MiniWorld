@@ -1,6 +1,9 @@
 import torch
 from einops import rearrange
 from jaxtyping import Bool, Float, Int
+from miniworld_engine.architecture.layers import RelativePositionEmbedding
+from miniworld_engine.architecture.primitives import Linear
+from miniworld_engine.architecture.typing import typecheck
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
@@ -11,9 +14,6 @@ from miniworld.data.features.features import (
     StructureFeatures,
 )
 from miniworld.modules import DiffusionTransformer
-from miniworld.modules.layers import RelativePositionEmbedding
-from miniworld.modules.primitives import Linear
-from miniworld.typing import typecheck
 
 
 @typecheck

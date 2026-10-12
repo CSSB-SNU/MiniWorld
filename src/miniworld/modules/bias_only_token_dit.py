@@ -48,6 +48,9 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 from jaxtyping import Bool, Float
+from miniworld_engine.architecture.blocks._engine_impl import to_engine_impl
+from miniworld_engine.architecture.exceptions import ImplementationType
+from miniworld_engine.architecture.typing import typecheck
 from miniworld_engine.modules import AdaptiveLayerNorm, ConditionedTransition
 from miniworld_engine.modules.bias_only_dit import BiasOnlyDiTBlock
 from miniworld_engine.modules.functional import sigmoid_gate
@@ -55,10 +58,6 @@ from miniworld_engine.modules.primitives import LayerNorm, Linear
 from pydantic import BaseModel
 from torch import nn
 from torch.utils.checkpoint import checkpoint_sequential
-
-from miniworld.modules.blocks._engine_impl import to_engine_impl
-from miniworld.modules.exceptions import ImplementationType
-from miniworld.typing import typecheck
 
 
 class BiasOnlyAttention(nn.Module):

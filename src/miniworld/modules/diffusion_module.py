@@ -4,6 +4,18 @@ from pathlib import Path
 import numpy as np
 import torch
 from jaxtyping import Bool, Float, Int
+from miniworld_engine.architecture.blocks._engine_impl import to_engine_impl
+from miniworld_engine.architecture.blocks.rope_swa_af3_transformer import (
+    RoPESWAAF3Transformer,
+)
+from miniworld_engine.architecture.layers import (
+    RelativePositionEmbedding,
+    fourier_embedding,
+)
+from miniworld_engine.architecture.primitives import (
+    Linear,
+)
+from miniworld_engine.architecture.typing import typecheck
 from miniworld_engine.modules import LayerNorm, Transition
 from miniworld_engine.modules.swa_atom_attention.module import (
     build_attention_params,
@@ -21,13 +33,6 @@ from miniworld.data.features import (
 )
 from miniworld.modules import DiffusionTransformer, SWAAtomTransformer
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
-from miniworld.modules.blocks._engine_impl import to_engine_impl
-from miniworld.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Transformer
-from miniworld.modules.layers import RelativePositionEmbedding, fourier_embedding
-from miniworld.modules.primitives import (
-    Linear,
-)
-from miniworld.typing import typecheck
 
 
 def _make_atom_transformer(

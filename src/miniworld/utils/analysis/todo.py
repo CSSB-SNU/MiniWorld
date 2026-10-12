@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from jaxtyping import Bool, Float, Int
-
-from miniworld.typing import typecheck
+from miniworld_engine.architecture.typing import typecheck
 
 
 @typecheck

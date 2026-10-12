@@ -10,6 +10,9 @@ from __future__ import annotations
 
 import torch
 from jaxtyping import Bool, Float, Int
+from miniworld_engine.architecture.blocks._engine_impl import to_engine_impl
+from miniworld_engine.architecture.primitives import Linear
+from miniworld_engine.architecture.typing import typecheck
 from miniworld_engine.modules import RMSNorm
 from miniworld_engine.modules.swa_atom_attention.module import build_attention_params
 from torch import nn
@@ -22,10 +25,7 @@ from miniworld.data.features.features import (
     StructureFeatures,
 )
 from miniworld.modules import DiffusionTransformer, SWAAtomTransformer
-from miniworld.modules.blocks._engine_impl import to_engine_impl
 from miniworld.modules.input_embedder import InputFeatureEmbedder, init_atom_features
-from miniworld.modules.primitives import Linear
-from miniworld.typing import typecheck
 
 
 class ESMFold2InputAtomAttentionEncoder(nn.Module):

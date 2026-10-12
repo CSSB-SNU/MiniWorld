@@ -1,6 +1,6 @@
 """Slim inference solver.
 
-Same math as :class:`miniworld.diffusion.decoupled_xpred.solver.XPredDecoupledSolver`,
+Same math as :class:`miniworld_engine.architecture.diffusion.decoupled_xpred.solver.XPredDecoupledSolver`,
 but:
 
   - Sigmas, c_in, gamma etc. are looked up from the prebuilt
@@ -21,15 +21,23 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal
 
 import torch
+from miniworld_engine.architecture.diffusion.base.solver import (
+    _chain_count,
+    _expand_to_batch,
+)
 
-from miniworld.diffusion.base.solver import _chain_count, _expand_to_batch
 from miniworld.inference.diffusion import diffusion_step
 from miniworld.utils.structure.align import weighted_align
 from miniworld.utils.structure.se3 import apply_chain_rt, sample_rigid
 
 if TYPE_CHECKING:
-    from miniworld.diffusion.decoupled_xpred.scheduler import DecoupledXPredScheduler
-    from miniworld.diffusion.decoupled_xpred.solver import XPredDecoupledSolver
+    from miniworld_engine.architecture.diffusion.decoupled_xpred.scheduler import (
+        DecoupledXPredScheduler,
+    )
+    from miniworld_engine.architecture.diffusion.decoupled_xpred.solver import (
+        XPredDecoupledSolver,
+    )
+
     from miniworld.inference.cache import InferenceCache, StepSchedule
     from miniworld.models.miniworld.model import Model
 

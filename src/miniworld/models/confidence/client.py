@@ -21,11 +21,15 @@ from __future__ import annotations
 from typing import Literal, cast
 
 import torch
+from miniworld_engine.architecture.diffusion import (
+    AF3Solver,
+    EDMScheduler,
+    EuclideanDiffuser,
+)
 from pydantic import BaseModel
 
 from miniworld.configs import EDMDiffuserConfig
 from miniworld.data.features.batch import Batch
-from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 from miniworld.loss import confidence as conf
 from miniworld.models.confidence.model import ConfidenceModel, ConfidenceOutput
 from miniworld.models.diffusion.client import Client as DiffusionClient

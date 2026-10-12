@@ -71,7 +71,7 @@ def main():
     hook = model.diffusion_module.diffusion_transformer.register_forward_pre_hook(
         save_inputs, with_kwargs=True
     )
-    from miniworld.diffusion import EDMScheduler, EuclideanDiffuser
+    from miniworld_engine.architecture.diffusion import EDMScheduler, EuclideanDiffuser
 
     diffuser = EuclideanDiffuser(
         config=EuclideanDiffuser.EuclideanConfig(seed=0),

@@ -20,15 +20,15 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 from jaxtyping import Bool, Float, Int
+from miniworld_engine.architecture.blocks._engine_impl import to_engine_impl
+from miniworld_engine.architecture.exceptions import ImplementationType
+from miniworld_engine.architecture.primitives import Linear
+from miniworld_engine.architecture.typing import typecheck
 from miniworld_engine.modules import LayerNorm
 from torch import nn
 
 from miniworld.data.features import TemplateFeatures
-from miniworld.modules.blocks._engine_impl import to_engine_impl
-from miniworld.modules.exceptions import ImplementationType
 from miniworld.modules.mini_pairformer import MiniPairformer
-from miniworld.modules.primitives import Linear
-from miniworld.typing import typecheck
 
 
 def _engine_batch_limit() -> int:

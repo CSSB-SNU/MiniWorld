@@ -4,8 +4,8 @@ from types import SimpleNamespace as NS
 
 import pytest
 import torch
+from miniworld_engine.architecture.diffusion import EDMScheduler, EuclideanDiffuser
 
-from miniworld.diffusion import EDMScheduler, EuclideanDiffuser
 from miniworld.loss.confidence import per_atom_lddt, token_frames
 
 

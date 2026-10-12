@@ -4,7 +4,7 @@ Why: the step as the trainer runs it cannot be recorded into a CUDA graph. ``tor
 ``.item()`` and ``isnan`` host reads fail during capture, and scipy ``Rotation.random`` / CPU ``torch.rand`` would be frozen into
 constants. These functions compute the same quantities with GPU tensor ops only:
 
-  * ``weighted_align_gs``    Kabsch alignment through Horn's quaternion, equal to ``miniworld.utils.align.weighted_align``
+  * ``weighted_align_gs``    Kabsch alignment through Horn's quaternion, equal to ``miniworld_engine.architecture.utils.align.weighted_align``
                              (``tests/test_phase2_graph_safe.py``). Plain fp32 elementwise / reduction ops, NO matmul or einsum:
                              under ``torch.set_float32_matmul_precision("medium")`` (the training scripts set it) a matmul would run in
                              bf16 and lose ~3 digits on coordinates with an extent of hundreds of Angstrom.
@@ -77,7 +77,7 @@ def horn_rot(H, squarings=24):
 
 @torch.no_grad()
 def weighted_align_gs(x, y, weight):
-    """miniworld.utils.align.weighted_align with the SVD replaced by horn_rot; same conventions (aligned = x_c @ R + y_c)."""
+    """miniworld_engine.architecture.utils.align.weighted_align with the SVD replaced by horn_rot; same conventions (aligned = x_c @ R + y_c)."""
     shape, L = x.shape, x.shape[-2]
     x, y, w = x.reshape(-1, L, 3), y.reshape(-1, L, 3), weight.reshape(-1, L)
     w_sum = w.sum(dim=-1, keepdim=True)

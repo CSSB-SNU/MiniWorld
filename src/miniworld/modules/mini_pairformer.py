@@ -16,6 +16,10 @@ un-fuse the residual and lose the speed win).
 
 import torch
 from jaxtyping import Bool, Float
+from miniworld_engine.architecture.exceptions import (
+    ImplementationType,
+    InvalidImplementationError,
+)
 from miniworld_engine.modules import (
     AttentionPairBias,
     BidirectionalTriangleMultiplication,
@@ -26,8 +30,6 @@ from pydantic import BaseModel, model_validator
 from torch import nn
 from torch.utils.checkpoint import checkpoint_sequential
 from typing_extensions import Self
-
-from miniworld.modules.exceptions import ImplementationType, InvalidImplementationError
 
 
 def _to_engine_impl(impl: ImplementationType) -> _EngineImpl:

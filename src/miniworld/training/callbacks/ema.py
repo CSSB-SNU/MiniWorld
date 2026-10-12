@@ -120,7 +120,7 @@ class ModelEMA(Callback):
         # Shadows written before the diffusion transformer block took the engine's
         # attribute name spell its attention ``attention_pair_bias.``; read them as
         # the live model names them. (Imported here: the blocks import the engine.)
-        from miniworld.modules.blocks.diffusion_transformer import (  # noqa: PLC0415
+        from miniworld_engine.architecture.blocks.diffusion_transformer import (  # noqa: PLC0415
             upgrade_legacy_keys,
         )
 

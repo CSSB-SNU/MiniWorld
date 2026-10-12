@@ -29,8 +29,8 @@ from miniworld.training.param_policy import (
 # Tiny model that mixes project Linear, project LayerNorm, and a generic
 # module, so we can exercise every re-init branch.
 def _make_test_model() -> nn.Module:
-    from miniworld.modules.primitives import LayerNorm as ProjectLayerNorm
-    from miniworld.modules.primitives import Linear as ProjectLinear
+    from miniworld_engine.architecture.primitives import LayerNorm as ProjectLayerNorm
+    from miniworld_engine.architecture.primitives import Linear as ProjectLinear
 
     class M(nn.Module):
         def __init__(self) -> None:
@@ -406,8 +406,11 @@ def test_legacy_diffusion_block_keys_load_and_freeze() -> None:
 
     Before the fix it came back re-initialised and trainable.
     """
+    from miniworld_engine.architecture.blocks.diffusion_transformer import (
+        DiffusionTransformerBlock,
+    )
+
     from miniworld.modules import ImplementationType
-    from miniworld.modules.blocks.diffusion_transformer import DiffusionTransformerBlock
 
     def model() -> nn.Module:
         m = nn.Module()

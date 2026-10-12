@@ -7,17 +7,18 @@ import numpy as np
 import torch
 from jaxtyping import Bool, Float, Int
 from lightning.fabric.wrappers import _FabricDataLoader
+from miniworld_engine.architecture.diffusion import (
+    DecoupledXPredScheduler,
+    XPredDecoupledDiffuser,
+    XPredDecoupledSolver,
+)
+from miniworld_engine.architecture.typing import typecheck
 from pydantic import BaseModel
 from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
 from miniworld.configs import XPredDecoupledDiffuserConfig
 from miniworld.data.features.batch import Batch
-from miniworld.diffusion import (
-    DecoupledXPredScheduler,
-    XPredDecoupledDiffuser,
-    XPredDecoupledSolver,
-)
 from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
@@ -30,7 +31,6 @@ from miniworld.models.miniworld.model import (
 from miniworld.training import ParamPolicyConfig
 from miniworld.training.callbacks import ModelEMA
 from miniworld.training.client import BaseClient, _SetEpochProtocol
-from miniworld.typing import typecheck
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
@@ -740,7 +740,7 @@ class Client(BaseClient):
         ``(n_samples, L, 3)`` and each trajectory is ``(n_samples, T, L, 3)``.
 
         ``init_x0`` / ``start_sigma_y``: flexible-docking warm start; see
-        :meth:`miniworld.diffusion.decoupled_xpred.solver.XPredDecoupledSolver.sample`.
+        :meth:`miniworld_engine.architecture.diffusion.decoupled_xpred.solver.XPredDecoupledSolver.sample`.
         """
         if n_samples < 1:
             msg = f"n_samples must be >= 1, got {n_samples}."
