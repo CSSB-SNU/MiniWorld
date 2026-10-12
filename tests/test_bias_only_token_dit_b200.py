@@ -79,7 +79,10 @@ def calls(monkeypatch):
 
 
 def test_training_takes_the_fused_path(calls, monkeypatch):
-    truth = _train(torch.float32)
+    # The fp32 (TF32) kernels exist now, so the reference is pinned to the module path explicitly.
+    with monkeypatch.context() as ctx:
+        ctx.setenv("MINIWORLD_BIAS_ONLY_DIT_TRAIN", "0")
+        truth = _train(torch.float32)
     assert calls == []
     fused = _train(torch.bfloat16)
     assert calls == ["block", "block"]
@@ -99,7 +102,9 @@ def test_inference_takes_the_fused_path(calls, monkeypatch):
         ("fused", torch.bfloat16),
         ("module", torch.bfloat16),
     ):
-        if key == "module":
+        if key == "fused":
+            monkeypatch.delenv("MINIWORLD_BIAS_ONLY_DIT", raising=False)
+        else:  # the reference and the module path both run the unfused modules
             monkeypatch.setenv("MINIWORLD_BIAS_ONLY_DIT", "0")
         dit = _dit(dtype)
         (single, cond, pair), mask = _inputs(dtype)

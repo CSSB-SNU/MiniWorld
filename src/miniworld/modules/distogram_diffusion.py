@@ -146,7 +146,7 @@ class DistogramDiffusion(nn.Module):
     def add_noise(
         self,
         x0: Float[torch.Tensor, "B L L"],
-        sigma: Float[torch.Tensor, B],
+        sigma: Float[torch.Tensor, " B"],
     ) -> Float[torch.Tensor, "B L L"]:
         """x_t = x0 + sigma * symmetric_noise (keeps x_t symmetric)."""
         n = _symmetric_noise(
@@ -162,7 +162,7 @@ class DistogramDiffusion(nn.Module):
     def encode_input(
         self,
         x_t: Float[torch.Tensor, "B L L"],
-        sigma: Float[torch.Tensor, B],
+        sigma: Float[torch.Tensor, " B"],
         dtype: torch.dtype,
     ) -> Float[torch.Tensor, "B L L C"]:
         """Noised bin image + noise level -> pair-rep addition for the trunk input.
@@ -185,7 +185,7 @@ class DistogramDiffusion(nn.Module):
         self,
         token_pair: Float[torch.Tensor, "B L L C"],
         x_t: Float[torch.Tensor, "B L L"],
-        sigma: Float[torch.Tensor, B],
+        sigma: Float[torch.Tensor, " B"],
     ) -> Float[torch.Tensor, "B L L"]:
         """Trunk output -> denoised bin image, with EDM ``c_skip``/``c_out`` (fp32)."""
         f = _symmetrize(self.decoder(token_pair)[..., 0].float())  # [B, L, L]
@@ -200,7 +200,7 @@ class DistogramDiffusion(nn.Module):
         x0_hat: Float[torch.Tensor, "B L L"],
         x0: Float[torch.Tensor, "B L L"],
         pair_mask: Bool[torch.Tensor, "B L L"],
-        sigma: Float[torch.Tensor, B],
+        sigma: Float[torch.Tensor, " B"],
         token_asym_id: Int[torch.Tensor, "B L"] | None = None,
         interchain_weight: float = 1.0,
     ) -> tuple[torch.Tensor, dict]:

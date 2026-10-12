@@ -10,6 +10,21 @@
 | `docs/` | Guides and records; `kernels/` kernel diagrams and status reports; `history/` retired material |
 | `runs/` | Every run output: training runs, `logs/`, `outputs/`, `eval_results/`, `wandb/` (ignored by Git except reviewed benchmark records) |
 
+## Development
+
+MiniWorld depends on `miniworld-engine` directly; the training loop, EMA, diffusion, blocks and layers that used to live in
+team-gm are part of this package (`miniworld.training`, `miniworld.diffusion`, `miniworld.modules`, `miniworld.utils`).
+
+```bash
+bash scripts/check.sh          # ruff check, ruff format --check, pyright
+bash scripts/check.sh --fix    # apply the safe fixes and the formatter first
+pytest tests                   # needs a B200/H100 node; CI only runs ruff and a compile check
+```
+
+Known lint and type-check debt is listed in `pyproject.toml` (`[tool.ruff.lint] ignore`, `[tool.pyright]` warnings).
+jaxtyping dimension names that are a single identifier are written with a leading space (`" B"`) so that linters
+do not read them as forward references.
+
 ## Training pipeline
 
 v1.1 work: [distogram fixes and interchain weighting](docs/v1.1-distogram.md),

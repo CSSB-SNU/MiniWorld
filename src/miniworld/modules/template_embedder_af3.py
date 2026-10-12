@@ -44,8 +44,8 @@ def _engine_batch_limit() -> int:
 
 def _dgram_from_positions(
     cb: Float[torch.Tensor, "B L 3"],
-    lower: Float[torch.Tensor, num_bins],
-    upper: Float[torch.Tensor, num_bins],
+    lower: Float[torch.Tensor, " num_bins"],
+    upper: Float[torch.Tensor, " num_bins"],
 ) -> Float[torch.Tensor, "B L L num_bins"]:
     """AF3 dgram_from_positions: squared-distance histogram over pseudo-beta coords.
 

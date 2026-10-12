@@ -129,8 +129,6 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"src/miniworld/modules/distogram_diffusion.py" = ["F821"]    # jaxtyping dimension names ("B")
-"src/miniworld/modules/template_embedder_af3.py" = ["F821"]  # jaxtyping dimension names ("num_bins")
 "scripts/bench_token_dit.py" = ["F821"]
 "__init__.py" = ["F401"]
 "scripts/fix_cif.py" = ["W291"]  # trailing whitespace is inside string literals
@@ -141,8 +139,29 @@ addopts = "-ra"
 
 [tool.pyright]
 include = ["src/miniworld"]
-exclude = ["libs", "scratchpad_logs", "docs", "runs", "benchmarks", "tests/artifacts"]
+exclude = ["libs", "scratchpad_logs", "docs", "runs", "benchmarks", "tests/artifacts",
+  # evaluation helpers that need joblib and a vendored DockQ; nothing imports them
+  "src/miniworld/utils/structure/eval.py", "src/miniworld/utils/structure/eval2.py"]
 enableReachabilityAnalysis = false
+# Known debt, still reported as warnings: jaxtyping shapes and flag-guarded branches confuse the checker.
+# New categories of error fail the run.
+reportArgumentType = "warning"
+reportAttributeAccessIssue = "warning"
+reportCallIssue = "warning"
+reportOptionalMemberAccess = "warning"
+reportOptionalSubscript = "warning"
+reportOptionalOperand = "warning"
+reportOptionalIterable = "warning"
+reportReturnType = "warning"
+reportIndexIssue = "warning"
+reportIncompatibleMethodOverride = "warning"
+reportIncompatibleVariableOverride = "warning"
+reportAssignmentType = "warning"
+reportPossiblyUnboundVariable = "warning"
+reportOptionalCall = "warning"
+reportFunctionMemberAccess = "warning"
+reportGeneralTypeIssues = "warning"
+reportOperatorIssue = "warning"
 
 [tool.hatch.build.targets.wheel]
 packages = [
