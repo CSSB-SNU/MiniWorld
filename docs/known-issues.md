@@ -5,6 +5,30 @@ a retrain to take effect). Fixed issues are removed from here once the fix lands
 
 ---
 
+## v2.0.0 checkpoints were trained with bf16 RoPE angles (needs the compat switch, or a retrain)
+
+**Status:** confirmed 2026-10-12, worked around; the real fix is training with the correct angles.
+
+Engine commit `5aeb1297` (2026-10-06) makes the 3D RoPE angles of the SWA atom attention fp32 under autocast. Before it,
+`build_3d_rope` used einsums, which autocast runs as bf16 matmuls: UID rotations were off by up to a whole turn at
+ids in the thousands. The v2.0.0 phase 1 / 2a checkpoints were trained with engine `135b7966` (+ 4 commits), i.e. with
+those wrong angles, and have adapted to them.
+
+**Evidence:** the same phase 2a `epoch=0200.pt`, one epoch (256 samples, 1 optimizer step) of the same data:
+
+| engine | `train/diffusion_loss` |
+|---|---|
+| `135b7966` + 4 (what trained it) | 0.0565 |
+| engine main `92f041ae` | 0.130 |
+| engine main with only `5aeb1297` reverted | 0.0576 |
+| MiniWorld after the architecture move, engine `995ea01e` | 0.130 |
+
+**Workaround:** resume or evaluate those checkpoints with `MINIWORLD_ROPE_ANGLES_BF16=1` (or
+`miniworld_engine.settings.configure(rope_angles_bf16_compat=True)`). Models trained from scratch with the current engine
+must leave it off. Mixing the two silently doubles the loss, so record which one a checkpoint needs next to it.
+
+---
+
 ## EMA is broken under compiled / CUDA-graph training (does not track live weights)
 
 **Status:** confirmed, NOT fixed. The EMA weights are unusable; keep loading raw.
