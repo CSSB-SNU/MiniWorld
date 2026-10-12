@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "runs/trimul_sm90_parity_20260917/engine"
 PKG = ENGINE / "src/miniworld_engine"
 RECORD = ENGINE / "docs/records/transition-segmented-small-20260918"
-DOC = ROOT / "docs/transition-fusion"
+DOC = ROOT / "docs/archive/transition-fusion"
 NS = "http://www.w3.org/2000/svg"
 ET.register_namespace("", NS)
 COLORS = {
@@ -320,7 +320,7 @@ def forward():
             "M=B·L²(pair) 또는 B·L(token). B/C 지원: 정확히 SM90, BF16, n=4, D∈{128,256,384,512,768}, M%128=0.",
             "auto native OFF / shape 미지원 / 작은 wide-D token은 A. explicit cute는 지원 shape에서 C를 선택. legacy fusion=False는 별도.",
             "C의 weight 준비 / stats / expand / squeeze는 각각 별도 경계. 타일링 전체 최적성이나 완전한 native autotune을 주장하지 않음.",
-            "소스: kernels/transition/hopper.py · triton/residual.py · cute/squeeze_residual.py · docs/transition-fusion/current-sources.json",
+            "소스: kernels/transition/hopper.py · triton/residual.py · cute/squeeze_residual.py · docs/archive/transition-fusion/current-sources.json",
         ],
     )
     d.save("TRANSITION_FORWARD.svg")
@@ -507,7 +507,7 @@ def backward():
             "B의 B2는 Triton, cuBLAS 4회도 그대로. D128 large pair LN도 Triton. native는 전체 backward 교체를 뜻하지 않음.",
             "프로파일 숫자는 node02 L768/D128의 한 CUDA trace. 전체 학습 시간은 별도 CUDA graph 반복 측정값을 사용.",
             "save_xn=False / 작은 M은 이전 B 재계산 경로. C는 기본 triton backward이며 opt-in cute backward는 별도.",
-            "모든 tensor 의존 화살표 / 초기화 / cast를 펼친 전체 launch 목록은 아님. 상세와 제한: docs/transition-fusion/PERFORMANCE.md",
+            "모든 tensor 의존 화살표 / 초기화 / cast를 펼친 전체 launch 목록은 아님. 상세와 제한: docs/archive/transition-fusion/PERFORMANCE.md",
         ],
     )
     d.save("TRANSITION_BACKWARD.svg")
@@ -604,7 +604,7 @@ def overview():
         [
             "BF16, B1, n4, FP32 affine, nonzero squeeze, static compile (관측 graph 1개), manual CUDA graph; optimizer 제외.",
             "D384/512의 선택된 streamed-K는 split보다 느림. 최신 full-K는 재튜닝 필요. auto CUDA/CuTe는 별도.",
-            "소스/측정: docs/transition-fusion/README.md · transition-segmented-small-20260918/timings.md · current-sources.json",
+            "소스/측정: docs/archive/transition-fusion/README.md · transition-segmented-small-20260918/timings.md · current-sources.json",
         ],
     )
     d.save("TRANSITION.svg")
@@ -813,7 +813,7 @@ def variants():
         [
             "새 측정: transition-cuda-variants-20260918/RESULTS.md · 같은 형식 대비 이득과 최선 Triton 대비 성능을 구분.",
             "공통 비교는 LN 분리 / FP32 affine / BF16 activation·weight / residual ON. LN 융합 실험은 별도 표기.",
-            "정의·실제 소스·검증 기준: docs/transition-fusion/VARIANTS.md · 기계 판독 목록: variants.json",
+            "정의·실제 소스·검증 기준: docs/archive/transition-fusion/VARIANTS.md · 기계 판독 목록: variants.json",
         ],
     )
     d.save("TRANSITION_VARIANTS.svg")
@@ -847,7 +847,7 @@ def sources():
                 "package": str(PKG),
                 "scope": "Local development checkout; current residual-fused default. Installed training package unchanged.",
                 "development_variants": {
-                    "path": "docs/transition-fusion/variants.json",
+                    "path": "docs/archive/transition-fusion/variants.json",
                     "sha256": hashlib.sha256(
                         (DOC / "variants.json").read_bytes()
                     ).hexdigest(),

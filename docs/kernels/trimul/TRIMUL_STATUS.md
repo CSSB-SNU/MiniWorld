@@ -10,7 +10,7 @@
 - [확대 뷰어](TRIMUL_STATUS.html) · [온라인 현황판](https://miniworld-kernel-status.psk6950.chatgpt.site/trimul.html#current-wiring)
 - Forward: [L384](TRIMUL_FORWARD.svg) · [L768](TRIMUL_FORWARD_L768.svg)
 - Backward: [L384](TRIMUL_BACKWARD.svg) · [L768](TRIMUL_BACKWARD_L768.svg)
-- [Anthropic 도입 전 그림 보관](../../trimul-fusion/archive-pre-anthropic-20260921/README.md)
+- [Anthropic 도입 전 그림 보관](../../archive/trimul-fusion/archive-pre-anthropic-20260921/README.md)
 
 ## 그림 읽는 법: HBM 왕복
 

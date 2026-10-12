@@ -8,7 +8,7 @@
 - 성능: job15612 같은 실행 TriMul 전체1006.800 →1009.168µs(+0.24%). MiniPairformer는 job15616에서1575.856 →1579.664µs.
 - 남은 범위: 큰 폭의 추가 최적화, production 승격, SoL90/252µs 목표. 이번 정확도 수정으로 완료됐다고 주장하지 않는다.
 
-[수정·검증 상세](../../../runs/trimul_ln_gradient_20260922/index.html) · [선택·SHA-256](../../../runs/trimul_ln_gradient_20260922/selected.json) · [수정 전 마무리 기록](../../trimul-fusion/closeout-20260922/README.md)
+[수정·검증 상세](../../../runs/trimul_ln_gradient_20260922/index.html) · [선택·SHA-256](../../../runs/trimul_ln_gradient_20260922/selected.json) · [수정 전 마무리 기록](../../archive/trimul-fusion/closeout-20260922/README.md)
 
 ## MiniPairformer 1블록 · 새 CUDA Transition 포함
 

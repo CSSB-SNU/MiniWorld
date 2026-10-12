@@ -48,4 +48,4 @@ compute-sanitizer memcheck 오류 0건. CPU 설정·배선 검사 8건도 통과
 검증 원본은 `runs/phase1_compile_graph_fix/`에 있다.
 
 설치본과 root/team-gm의 재설치 patch stack에 반영했으며 파일 SHA-256을
-검증했다. [배포·검증 기록](phase1-compile-graph-checks/)을 함께 보관한다.
+검증했다. [배포·검증 기록](archive/phase1-compile-graph-checks)을 함께 보관한다.

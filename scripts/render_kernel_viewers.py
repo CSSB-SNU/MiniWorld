@@ -99,8 +99,8 @@ page(
         ),
     ],
     [
-        ("Residual 융합 실측", "docs/transition-fusion/RESIDUAL.md"),
-        ("소스 근거·분기 조건", "docs/transition-fusion/README.md"),
+        ("Residual 융합 실측", "docs/archive/transition-fusion/RESIDUAL.md"),
+        ("소스 근거·분기 조건", "docs/archive/transition-fusion/README.md"),
         ("TriMul 뷰어", "docs/kernels/reports/TRIMUL_STATUS.html"),
     ],
 )
@@ -124,7 +124,7 @@ page(
         *[
             dict(
                 label="이전 Triton/CuTe " + phase + " · 보관본",
-                file="docs/trimul-fusion/archive-pre-anthropic-20260921/TRIMUL_"
+                file="docs/archive/trimul-fusion/archive-pre-anthropic-20260921/TRIMUL_"
                 + phase.upper()
                 + ".svg",
                 note="Anthropic 도입 전 8c7d8b39 개발 버전의 역사 기록입니다. 현재 경로를 나타내지 않습니다.",
@@ -138,7 +138,7 @@ page(
             "온라인 현황판",
             "https://miniworld-kernel-status.psk6950.chatgpt.site/trimul.html#current-wiring",
         ),
-        ("이전 SVG 보관", "docs/trimul-fusion/archive-pre-anthropic-20260921/README.md"),
+        ("이전 SVG 보관", "docs/archive/trimul-fusion/archive-pre-anthropic-20260921/README.md"),
         ("Transition 뷰어", "docs/kernels/transition/TRANSITION_STATUS.html"),
     ],
 )

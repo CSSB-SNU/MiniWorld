@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PKG = ROOT / ".pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine"
-OUT = ROOT / "docs/trimul-fusion"
+OUT = ROOT / "docs/archive/trimul-fusion"
 NS = "http://www.w3.org/2000/svg"
 ET.register_namespace("", NS)
 W, H = 2508, 1960
@@ -452,7 +452,7 @@ lines(
 text(
     36,
     1946,
-    "Source: installed miniworld_engine / cu128   ·   상세 근거와 SHA-256: docs/trimul-fusion/inference.md + inference-sources.json",
+    "Source: installed miniworld_engine / cu128   ·   상세 근거와 SHA-256: docs/archive/trimul-fusion/inference.md + inference-sources.json",
     15,
     "#60728a",
 )

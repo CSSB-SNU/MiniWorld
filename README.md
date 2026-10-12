@@ -80,7 +80,7 @@ mask/residual fusion, and measured speedups. See also the
 [direct PyTorch comparison](docs/h100-pytorch-comparison.md).
 [Packed bidirectional TriMul training](docs/trimul-packed-training.md) records the
 latest H100/Triton comparison and the compile-independent contraction dispatch.
-[The September 22 TriMul closeout](docs/trimul-fusion/closeout-20260922/README.md)
+[The September 22 TriMul closeout](docs/archive/trimul-fusion/closeout-20260922/README.md)
 records the final measured B1/B7 candidate, reproducibility evidence, and the
 remaining input-LayerNorm gradient validation issue. See the
 [consolidated status and wiring](docs/kernels/reports/TRIMUL_STATUS.html).
@@ -98,4 +98,4 @@ Generated FoldBench results live under `runs/eval_results/` and are excluded fro
 ## TriMul update (2026-09-17)
 
 [Kernel changes, validation, and reinstall instructions](docs/trimul-release-20260917.md).
-[Inference kernel wiring](docs/kernels/reports/TRIMUL_INFERENCE.svg) · [Wiring details](docs/trimul-fusion/inference.md).
+[Inference kernel wiring](docs/kernels/reports/TRIMUL_INFERENCE.svg) · [Wiring details](docs/archive/trimul-fusion/inference.md).

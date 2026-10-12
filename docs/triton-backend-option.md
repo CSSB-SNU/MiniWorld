@@ -87,7 +87,7 @@ compile·CUDA graph·inference를 실행한다. Native selector와 H100 전용 �
   이번 소형 검증 shape 중에는 cache miss에 따른 현장 autotune도 있었다.
 
 검증 원본은 `runs/triton_backend_option/`, 공유할 결과 사본은
-[triton-backend-checks](triton-backend-checks/)에 둔다.
+[triton-backend-checks](archive/triton-backend-checks)에 둔다.
 
 
 ### 전체 모델 후속 검사

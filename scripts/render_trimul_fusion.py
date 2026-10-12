@@ -3,7 +3,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "docs/trimul-fusion"
+OUT = ROOT / "docs/archive/trimul-fusion"
 COLORS = {
     "triton": ("#2868ba", "#eef5ff"),
     "cute": ("#168269", "#eaf8f2"),

@@ -8,7 +8,7 @@ main에 포함된 로컬 브랜치 63개와 원격 브랜치 7개를 삭제했�
 정리 대상 7개 저장소는 `main`을 사용하며, engine에는 `mpnn`과
 `backup/mpnn-pre-rebase-20260913`도 로컬·원격에 유지했다.
 삭제한 브랜치의 커밋은 main 이력에 남아 있고, 이름과 SHA는
-[브랜치 정리 기록](repository-audit-20260927/branch-cleanup.json)에 보존했다.
+[브랜치 정리 기록](archive/repository-audit-20260927/branch-cleanup.json)에 보존했다.
 
 ## 현재 작업 경로
 
@@ -103,16 +103,16 @@ CUDA의 `default → expanded → 구조 variant` 확장 방향은
   prepared pair bias API, valid-atom diffusion loss, SWA 연구 구현,
   FoldForge adapter와 inference bucket 확장.
 
-현재 구현과 충돌하는 오래된 코드는 main 안의 `docs/history/legacy-branches/`에 파일·provenance로
+현재 구현과 충돌하는 오래된 코드는 main 안의 `docs/archive/history/legacy-branches/`에 파일·provenance로
 보존하고 branch 이력도 연결했다. BioMol/AF3 구형 API를 현재 API에 덮어쓰거나,
 불완전한 publish worktree의 164개 삭제를 현재 코드에 적용하지 않았다.
 engine의 이전 연구 runtime은 `experiments/legacy_h100_runtime/`, 오래된 tuning은
 `experiments/transition_fused/records/cache_snapshot_20260927/`에서 확인한다.
 DiT 실험 runner는 최신 `runner.py`와 이전 `runner_multistream.py`를 함께 보존했다.
 
-[통합 refs 및 소스 검증](repository-audit-20260927/main-verification.json) ·
-[초기 보존 작업의 전체 작업본 표](repository-audit-20260927/BRANCHES.md) ·
-[초기 커밋별 파일](repository-audit-20260927/commits.json)
+[통합 refs 및 소스 검증](archive/repository-audit-20260927/main-verification.json) ·
+[초기 보존 작업의 전체 작업본 표](archive/repository-audit-20260927/BRANCHES.md) ·
+[초기 커밋별 파일](archive/repository-audit-20260927/commits.json)
 
 ## v2.1 변경 전 통합 검증 기록
 
@@ -131,8 +131,8 @@ cache identity, MPNN dropout cache coverage, 연구 커널의 compile/빌드/명
 CPU LayerNorm dispatch 검사 등이 포함된다. 일부는 GPU 없이 재생성할 수 없고,
 일부는 연구 코드의 별도 정비가 필요하다. 이번 main은 개발 코드 통합본이며 완전 통과한
 릴리스나 새 GPU 검증 완료본으로 취급하지 않는다.
-[정확한 실패 목록](repository-audit-20260927/engine-cpu.json) ·
-[실패 상세](repository-audit-20260927/engine-failures.txt)
+[정확한 실패 목록](archive/repository-audit-20260927/engine-cpu.json) ·
+[실패 상세](archive/repository-audit-20260927/engine-failures.txt)
 
 TriangleAttention checkpoint18246의 기록된 파일 48개는 모두 기존 SHA와 일치한다.
 Norm manifest 12개 중 11개는 일치한다. 나머지 `layernorm/compile_native.py`는
@@ -201,8 +201,8 @@ GPU 테스트 232 passed, CPU 테스트는 engine main 대비 새 실패 없음.
 2026-09-30(정리): 최상위 폴더를 코드(`src` `configs` `tests` `libs` `scripts`), 문서(`docs`), 실행 결과(`runs`)로
 줄였다. `tmp_kernel/`과 루트 보고서(`ENGINE_*`, `TRIMUL_*`)는 [docs/kernels](kernels/README.md),
 이 문서(구 `REPOSITORIES.md`)는 `docs/repositories.md`, 더는 적용하지 않는 engine 1.x/2.1 patch는
-[docs/history/engine-patches](history/engine-patches/README.md), `experiments/legacy_branches`는
-`docs/history/legacy-branches`, FoldBench 재현 patch는 `libs/patches`, `submits/`는 `scripts/slurm`으로 옮겼다.
+[docs/archive/history/engine-patches](archive/history/engine-patches/README.md), `experiments/legacy_branches`는
+`docs/archive/history/legacy-branches`, FoldBench 재현 patch는 `libs/patches`, `submits/`는 `scripts/slurm`으로 옮겼다.
 `logs/` `outputs/` `eval_results/` `wandb/`는 git 밖의 결과물이라 `runs/` 아래 같은 이름으로 옮겼다.
 문서 링크와 스크립트 기본 경로는 새 위치로 고쳤고, `runs/` 안의 기존 기록 경로는 바꾸지 않았다.
 2026-09-30: engine pin을 `3ac2de00c7194447c36884432b414b48b999845d`로, team-gm gitlink를 `92435d0`로 올렸다. AdaptiveLayerNorm의 `ln_cond.weight`가 부모의 bf16 캐스팅 뒤에도 fp32로 남도록 고친 커밋이다(engine 2.0 통합 때 1.x patch가 빠진 회귀; bf16 DiT의 AdaLN gamma가 Adam 한 스텝으로 움직이지 못했다).

@@ -87,5 +87,5 @@ Neither is launched on GPU. No further GPU experiments were submitted during
 the user's status review or kernel-inventory request.
 
 All source, binaries, compiler logs and initial timings are under
-[core_sol90](core_sol90/). Installed manifest hashes are checked independently;
+[core_sol90](core_sol90). Installed manifest hashes are checked independently;
 expected test vectors are not regenerated.

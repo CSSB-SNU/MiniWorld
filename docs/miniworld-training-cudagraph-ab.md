@@ -23,7 +23,7 @@ L384 / MSA2048 / atom4096, 21,781,312 parameter, Triton 엔진 모듈 296개다.
 일치했다. 각 round의 scalar loss와 gradient norm도 일치했다. 전체 gradient
 원소별 비교는 아니며, FA4 단위 출력·Q/K/V gradient 정확도는 별도로 검증했다.
 
-[원본 JSON·로그·패치 manifest](phase1-compile-graph-checks/)에 결과를 보관했다.
+[원본 JSON·로그·패치 manifest](archive/phase1-compile-graph-checks)에 결과를 보관했다.
 
 ## Phase 1에서 FlashAttention backward가 실행되는 이유와 수정
 
@@ -87,6 +87,6 @@ GPU 전체 사용량은 원본 JSON에 구분해 기록했다.
 | 4 | 14.359 s | 13.844 s | 1.037× |
 
 이전 결과와 최초 compile 실패 로그는
-[miniworld-training-graph-checks](miniworld-training-graph-checks/)에 보존한다.
+[miniworld-training-graph-checks](archive/miniworld-training-graph-checks)에 보존한다.
 이전 실험과 이번 실험 사이에 FA4 backward 경계 수정이 있으므로 두 표를 이용해
 compile 단독 효과를 엄밀하게 분리했다고 주장하지 않는다.
