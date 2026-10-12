@@ -23,11 +23,11 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import torch
-from miniworld.modules import DiffusionTransformer
 
 from miniworld.configs import SharedConfig
 from miniworld.inference.cache import StepSchedule, build_inference_cache
 from miniworld.inference.diffusion import diffusion_step
+from miniworld.modules import DiffusionTransformer
 from miniworld.modules.diffusion_module import (
     DiffusionConditioning,
     DiffusionModule,

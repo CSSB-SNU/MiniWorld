@@ -12,11 +12,11 @@ def main():
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
     import torch
-    from omegaconf import OmegaConf
-    from miniworld_engine.autotune import cache
-    from miniworld_engine.kernels.trimul_inproj.triton import bidirectional as bd
-    from miniworld_engine.kernels.layernorm_linear.triton import te_style as te
     from check_trimul_f567_runtime import paired
+    from miniworld_engine.autotune import cache
+    from miniworld_engine.kernels.layernorm_linear.triton import te_style as te
+    from miniworld_engine.kernels.trimul_inproj.triton import bidirectional as bd
+    from omegaconf import OmegaConf
 
     spec = importlib.util.spec_from_file_location(
         "paired_module_runner", a.run / "harness/benchmarks/runners/bench.py"

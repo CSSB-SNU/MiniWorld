@@ -10,12 +10,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import random
 import statistics
 import time
 from pathlib import Path
-
-import os
 
 os.environ.setdefault("TRITON_CACHE_AUTOTUNING", "1")
 
@@ -54,18 +53,19 @@ def main():
         help="Extra Hydra overrides, e.g. data.train_db.catalog_cache_path=...",
     )
     args = parser.parse_args()
-    from run_miniworld_distogram_train import Config
-    from miniworld.data.dataloader.dataloader import (
-        BioMolData,
-        _load_catalog_arrow,
-        _catalog_fingerprint,
-    )
-    from miniworld.models.distogram_only import MiniSWAModel
-    from miniworld.loss.auxiliary import cal_atom_distogram_loss
-    from miniworld.training.engine_backend import configure_engine_backend
-    from miniworld.utils import get_step_decay_scheduler_with_warmup
     from cudagraph_trainer import _load_static
     from miniworld_engine.autotune.native import source_identity
+    from run_miniworld_distogram_train import Config
+
+    from miniworld.data.dataloader.dataloader import (
+        BioMolData,
+        _catalog_fingerprint,
+        _load_catalog_arrow,
+    )
+    from miniworld.loss.auxiliary import cal_atom_distogram_loss
+    from miniworld.models.distogram_only import MiniSWAModel
+    from miniworld.training.engine_backend import configure_engine_backend
+    from miniworld.utils import get_step_decay_scheduler_with_warmup
 
     random.seed(17)
     np.random.seed(17)
@@ -102,8 +102,8 @@ def main():
                             "Catalog mismatch: pass --catalog-snapshot for a read-only diagnostic snapshot"
                         )
                     from miniworld.data.dataloader.dataloader import (
-                        source_balanced_weights_from_sources,
                         configured_source_weights,
+                        source_balanced_weights_from_sources,
                     )
 
                     log(
@@ -290,6 +290,7 @@ def main():
             rounds.append(record)
             log(json.dumps(record))
         import gc
+
         from triton.runtime.autotuner import Autotuner
 
         choices = sorted(

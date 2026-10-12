@@ -7,9 +7,10 @@ calls run in baseline, A, B order; each retains the same training saved tensors.
 import argparse
 import json
 from pathlib import Path
+
 import torch
-from benchmark_trimul_fusion_ab import inputs, baseline
 import trimul_output_fusion as fusion
+from benchmark_trimul_fusion_ab import baseline, inputs
 
 p = argparse.ArgumentParser()
 p.add_argument("--tuning", type=Path, required=True)

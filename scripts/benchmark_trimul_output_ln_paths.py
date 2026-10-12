@@ -10,9 +10,9 @@ def main():
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
     import torch
+    from check_trimul_f567_runtime import capture, paired
     from miniworld_engine.autotune.shape_key import both_key
     from miniworld_engine.kernels.layernorm_linear.triton import mmajor_bwd as mod
-    from check_trimul_f567_runtime import capture, paired
 
     torch.manual_seed(67)
     reports = []

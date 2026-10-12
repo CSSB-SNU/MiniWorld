@@ -79,10 +79,10 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
+    from miniworld_engine.autotune.shape_key import token_key
     from miniworld_engine.kernels.trimul_inproj.triton.bidirectional import (
         _bidir_front_launch,
     )
-    from miniworld_engine.autotune.shape_key import token_key
 
     m, k, h = 384**2, 128, 256
     torch.manual_seed(65)

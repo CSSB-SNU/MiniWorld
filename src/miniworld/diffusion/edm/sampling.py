@@ -6,10 +6,13 @@ Constructing a sampler never reseeds a process or changes backend settings.
 """
 
 from __future__ import annotations
+
 import itertools
 from typing import TYPE_CHECKING, Any
+
 import torch
 from pydantic import BaseModel, ConfigDict, Field
+
 from miniworld.diffusion.base.solver import ModelFn
 
 if TYPE_CHECKING:

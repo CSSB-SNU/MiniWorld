@@ -2,21 +2,19 @@ from collections.abc import Mapping
 from typing import TypeVar
 
 import torch
+from einops import rearrange, repeat
 from jaxtyping import Bool, Float
+from miniworld_engine.modules import AugmentedAttentionPairBias
+from miniworld_engine.modules.dit import DiTBlock
+from miniworld_engine.modules.functional import sigmoid_gate
 from pydantic import BaseModel
 from torch import nn
 from torch.utils.checkpoint import checkpoint, checkpoint_sequential
 
-from miniworld.typing import typecheck
-from miniworld.modules.exceptions import ImplementationType
 from miniworld.modules.blocks._engine_impl import to_engine_impl
-from einops import rearrange, repeat
-from miniworld_engine.modules import AugmentedAttentionPairBias
-from miniworld_engine.modules.dit import DiTBlock
-from miniworld_engine.modules.functional import sigmoid_gate
-
 from miniworld.modules.blocks.pair_bias_hoist import pair_bias_all
-
+from miniworld.modules.exceptions import ImplementationType
+from miniworld.typing import typecheck
 
 T = TypeVar("T")
 

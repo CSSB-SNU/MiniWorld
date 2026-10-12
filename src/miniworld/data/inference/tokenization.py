@@ -25,7 +25,6 @@ from pathlib import Path
 
 import yaml
 
-
 _KEY_RE = re.compile(r"^([A-Za-z0-9]+):(\d+)$")
 
 
@@ -45,7 +44,7 @@ class TokenizationPolicy:
                 raise ValueError(msg)
 
     @classmethod
-    def from_file(cls, path: Path) -> "TokenizationPolicy":
+    def from_file(cls, path: Path) -> TokenizationPolicy:
         with Path(path).open("r") as f:
             data = yaml.safe_load(f)
         if data is None:

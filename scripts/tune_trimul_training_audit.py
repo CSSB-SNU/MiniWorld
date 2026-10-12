@@ -15,10 +15,10 @@ def main():
     import torch
     import triton
     from miniworld_engine import settings
-    from miniworld_engine.autotune import capture, cache
+    from miniworld_engine.autotune import cache, capture
     from miniworld_engine.autotune.shape_key import both_key
-    from miniworld_engine.kernels.trimul_inproj.triton import bidirectional as bd
     from miniworld_engine.kernels.layernorm_linear.triton import te_style as te
+    from miniworld_engine.kernels.trimul_inproj.triton import bidirectional as bd
 
     torch.manual_seed(64)
     length = args.length

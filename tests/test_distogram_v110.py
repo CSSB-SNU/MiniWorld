@@ -155,6 +155,7 @@ def test_representatives_must_coexist_in_same_conformer_and_padding_is_preserved
 
 def test_v110_config_composition_and_client_wiring():
     from hydra import compose, initialize_config_dir
+
     from miniworld.models.distogram_only.client import Client
 
     root = Path(__file__).resolve().parents[1]

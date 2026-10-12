@@ -6,7 +6,6 @@ once per optimizer step in buckets. This module never changes effective batch.
 
 from __future__ import annotations
 
-import contextlib
 import copy
 import itertools
 import json
@@ -16,8 +15,8 @@ import random
 import time
 import uuid
 from dataclasses import fields, is_dataclass, replace
-from types import MethodType
 from pathlib import Path
+from types import MethodType
 
 import numpy as np
 import torch
@@ -875,6 +874,7 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
     if rank == 0:
         print("[graph] validation passed; full model/Adam restored", flush=True)
     import wandb
+
     from miniworld.utils import new_wandb_run_id
 
     wandb_id = state.get("wandb_run_id")

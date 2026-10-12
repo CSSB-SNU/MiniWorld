@@ -41,8 +41,9 @@ from typing import Literal
 
 import torch
 from pydantic import BaseModel, Field
-from miniworld.modules.blocks.diffusion_transformer import upgrade_legacy_keys
 from torch import nn
+
+from miniworld.modules.blocks.diffusion_transformer import upgrade_legacy_keys
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +153,11 @@ def _reinit_param_inplace(model: nn.Module, name: str) -> None:
     # at import time (callers may not have it installed for tests).
     from miniworld.modules.primitives import (
         InitType,
+    )
+    from miniworld.modules.primitives import (
         LayerNorm as ProjectLayerNorm,
+    )
+    from miniworld.modules.primitives import (
         Linear as ProjectLinear,
     )
 

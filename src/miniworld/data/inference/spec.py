@@ -8,7 +8,6 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-
 _CONTACT_RE = re.compile(
     r"^([A-Za-z0-9]+):(\d+)(?:#(\d+))?-([A-Za-z0-9]+):(\d+)(?:#(\d+))?$",
 )
@@ -110,7 +109,7 @@ class ComplexTemplateSpec(BaseModel):
         return _coerce_int_keys(v) if v is not None else v
 
     @model_validator(mode="after")
-    def _check_source(self) -> "ComplexTemplateSpec":
+    def _check_source(self) -> ComplexTemplateSpec:
         if (self.cif is None) == (self.cif_id is None):
             msg = (
                 "ComplexTemplateSpec must set exactly one of `cif` (file path) "
@@ -153,7 +152,7 @@ class FlexibleDockingGroupSpec(BaseModel):
         return _coerce_int_keys(v)
 
     @model_validator(mode="after")
-    def _check_chain_map(self) -> "FlexibleDockingGroupSpec":
+    def _check_chain_map(self) -> FlexibleDockingGroupSpec:
         if not self.chain_map:
             msg = "FlexibleDockingGroupSpec.chain_map must list at least one chain."
             raise ValueError(msg)
@@ -224,7 +223,7 @@ class RefinementSpec(BaseModel):
         return _coerce_int_keys(v)
 
     @model_validator(mode="after")
-    def _check_chain_map(self) -> "RefinementSpec":
+    def _check_chain_map(self) -> RefinementSpec:
         if not self.chain_map:
             msg = "RefinementSpec.chain_map must list at least one chain."
             raise ValueError(msg)
@@ -391,7 +390,7 @@ class InferenceSpec(BaseModel):
     residue_indices: dict[str, list[int]] = Field(default_factory=dict)
 
     @model_validator(mode="after")
-    def _check_msa_pairing_flags(self) -> "InferenceSpec":
+    def _check_msa_pairing_flags(self) -> InferenceSpec:
         if self.paired_msa_only and self.no_pairing_msa:
             msg = (
                 "paired_msa_only and no_pairing_msa are mutually exclusive — "
@@ -480,7 +479,7 @@ class InferenceSpec(BaseModel):
         return _coerce_int_keys(v)
 
     @model_validator(mode="after")
-    def _check_residue_indices(self) -> "InferenceSpec":
+    def _check_residue_indices(self) -> InferenceSpec:
         if not self.residue_indices:
             return self
         chain_indices = {int(k) for k in self.chain_letters}
@@ -517,7 +516,7 @@ class InferenceSpec(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def _check_warmstart_mode(self) -> "InferenceSpec":
+    def _check_warmstart_mode(self) -> InferenceSpec:
         if self.flexible_docking is not None and self.refinement is not None:
             msg = (
                 "flexible_docking and refinement are mutually exclusive — "
@@ -540,7 +539,7 @@ class InferenceSpec(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def _check_flexible_docking(self) -> "InferenceSpec":
+    def _check_flexible_docking(self) -> InferenceSpec:
         fd = self.flexible_docking
         if fd is None:
             return self
@@ -580,7 +579,7 @@ class InferenceSpec(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def _check_letter_keyed_inputs(self) -> "InferenceSpec":
+    def _check_letter_keyed_inputs(self) -> InferenceSpec:
         if not self.chain_letters:
             msg = "InferenceSpec.chain_letters must list at least one chain."
             raise ValueError(msg)
@@ -613,7 +612,7 @@ class InferenceSpec(BaseModel):
         cls,
         path: Path,
         sampling_path: Path | None = None,
-    ) -> "InferenceSpec":
+    ) -> InferenceSpec:
         """Load the spec from a data YAML, optionally overlaying a sampling YAML.
 
         The data YAML holds target-bound fields (chain_letters, fasta, a3m,

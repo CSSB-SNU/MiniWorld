@@ -1,10 +1,10 @@
 """Generate local SVG viewers with phase selection, zoom and direct artifact links."""
 
-from pathlib import Path
 import html
 import json
 import os
 import sys
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 STYLE = """*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#22384d;font:16px/1.65 system-ui,sans-serif}header{background:white;padding:24px 30px 20px;border-bottom:1px solid #d8e1eb}h1{margin:0 0 8px;font-size:28px}p{margin:6px 0}.sub{color:#51687e}.controls{position:sticky;top:0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 26px;background:#edf3faf5;border-bottom:1px solid #ccd8e5;z-index:1}select,button{font:inherit;border:1px solid #aec1d1;padding:6px 10px;border-radius:6px;background:white;color:inherit}label{display:flex;align-items:center;gap:7px}a{color:#1962a0;text-underline-offset:3px}.viewport{overflow:auto;background:white;height:76vh;padding:16px}img{display:block;max-width:none;height:auto}aside{padding:10px 28px;background:#fff7e5;border-bottom:1px solid #ecd9b3}footer{padding:18px 30px}input{width:150px}button,select,input{cursor:pointer}:focus-visible{outline:3px solid #eeaa33;outline-offset:3px}@media(max-width:700px){header{padding:16px}h1{font-size:23px}.controls{padding:10px;gap:10px}}"""

@@ -7,19 +7,17 @@ from typing import TYPE_CHECKING
 import numpy as np
 import torch
 from pydantic import BaseModel, Field
+from torch import nn
+
+from miniworld.configs import SharedConfig
 from miniworld.modules import (
     DiffusionTransformer,
     MSAModule,
     Pairformer,
     SWAAtomTransformer,
+    TemplateEmbedder,
+    TemplatePairformer,
 )
-from miniworld.modules.primitives import (
-    LayerNorm,
-    Linear,
-)
-from torch import nn
-
-from miniworld.configs import SharedConfig
 from miniworld.modules.diffusion_module import (
     DiffusionConditioning,
     DiffusionModule,
@@ -33,7 +31,10 @@ from miniworld.modules.msa_util import (
     init_template_feat,
     init_token_single_msa,
 )
-from miniworld.modules import TemplateEmbedder, TemplatePairformer
+from miniworld.modules.primitives import (
+    LayerNorm,
+    Linear,
+)
 
 if TYPE_CHECKING:
     from jaxtyping import Bool, Float

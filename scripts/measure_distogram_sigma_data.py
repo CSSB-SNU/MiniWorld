@@ -11,7 +11,6 @@ import json
 import math
 from pathlib import Path
 
-import torch
 from hydra import compose, initialize_config_dir
 
 from miniworld.data.dataloader.dataloader import BioMolData

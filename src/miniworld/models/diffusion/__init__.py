@@ -8,7 +8,7 @@ The trunk weights are loaded from the epoch-900 checkpoint and frozen.
 """
 
 from .client import Client
-from .model import Model, ModelWrapper, DiffusionModel
+from .model import DiffusionModel, Model, ModelWrapper
 
 __all__ = [
     "Client",

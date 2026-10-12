@@ -4,10 +4,10 @@ import pytest
 import torch
 import triton
 from miniworld_engine.kernels.augmented_attention import interface
-from miniworld_engine.kernels.augmented_attention.triton import main
 from miniworld_engine.kernels.augmented_attention.reference import (
     augmented_attention_pair_bias_pytorch,
 )
+from miniworld_engine.kernels.augmented_attention.triton import main
 
 
 @pytest.mark.parametrize("training", [True, False])

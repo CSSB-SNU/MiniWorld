@@ -1,8 +1,8 @@
 import numpy as np
 from jaxtyping import Float, Int
-from miniworld.typing import typecheck
 
 from miniworld.data.mols import CIFMolAttached
+from miniworld.typing import typecheck
 
 
 @typecheck

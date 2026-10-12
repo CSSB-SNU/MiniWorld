@@ -6,9 +6,9 @@ import torch.nn.functional as F
 from einops import rearrange, repeat
 from jaxtyping import Bool, Float
 
-from miniworld.typing import typecheck
 from miniworld.modules.exceptions import ImplementationType, InvalidImplementationError
 from miniworld.modules.primitives import Linear, MPLinear
+from miniworld.typing import typecheck
 
 from .adaln import AdaptiveLayerNorm
 from .ops import sigmoid_gate

@@ -3,10 +3,11 @@
 import argparse
 import gc
 import hashlib
-import time
 import json
 import statistics
+import time
 from pathlib import Path
+
 import torch
 from miniworld_engine.modules import (
     Transition,

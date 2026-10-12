@@ -1,8 +1,9 @@
 import torch
 from jaxtyping import Float
-from miniworld.typing import typecheck
-from miniworld.modules.primitives import Linear
 from torch import nn
+
+from miniworld.modules.primitives import Linear
+from miniworld.typing import typecheck
 
 
 class ContactMapHead(nn.Module):

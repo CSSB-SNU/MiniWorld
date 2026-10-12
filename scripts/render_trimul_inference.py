@@ -1,9 +1,9 @@
 """Render the installed TriMul inference wiring without importing CUDA packages."""
 
-from pathlib import Path
 import hashlib
 import json
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PKG = ROOT / ".pixi/envs/cu128/lib/python3.10/site-packages/miniworld_engine"

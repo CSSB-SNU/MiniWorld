@@ -7,8 +7,8 @@ The snapshot avoids the external runner prepending an older engine checkout.
 import argparse
 import importlib.util
 import json
-from pathlib import Path
 import statistics
+from pathlib import Path
 
 
 def main():
@@ -22,8 +22,8 @@ def main():
     parser.add_argument("--profile", action="store_true")
     parser.add_argument("--ln-partial", type=Path, help="Experimental A/B config report")
     args = parser.parse_args()
-    import torch
     import miniworld_engine
+    import torch
     from miniworld_engine.autotune import cache
     from omegaconf import OmegaConf
 

@@ -9,6 +9,7 @@ from hydra import compose, initialize_config_dir
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import run_miniworld_diffusion_train as R
+
 from miniworld.configs import TemplateConfig
 from miniworld.data.dataloader.dataloader import BioMolData
 

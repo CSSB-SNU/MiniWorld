@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-
 spec = importlib.util.spec_from_file_location(
     "engine_install_check",
     Path(__file__).resolve().parents[1] / "scripts/check_engine_install.py",

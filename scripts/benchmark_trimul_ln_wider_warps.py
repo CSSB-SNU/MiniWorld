@@ -10,9 +10,10 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
-    import torch, triton
-    from miniworld_engine.kernels.layernorm_linear.triton import mmajor_bwd as mod
+    import torch
+    import triton
     from miniworld_engine.autotune.shape_key import both_key, pack
+    from miniworld_engine.kernels.layernorm_linear.triton import mmajor_bwd as mod
 
     reports = []
     for length in [384, 768]:

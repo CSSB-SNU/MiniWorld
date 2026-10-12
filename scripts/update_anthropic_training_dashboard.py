@@ -4,9 +4,9 @@ Run after inference dashboard generators, then publish the same private site.
 Measurements come from the JSON records, never from claimed target speedups.
 """
 
-from pathlib import Path
 import json
 import re
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RUN = ROOT / "runs/anthropic_adoption_20260919"

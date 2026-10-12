@@ -3,10 +3,10 @@ from collections.abc import Sequence
 import numpy as np
 import torch
 from jaxtyping import Bool, Float, Int
-from miniworld.typing import typecheck
 
 from miniworld.data.constants import EntityMapping, MoleculeType
 from miniworld.data.features import Batch
+from miniworld.typing import typecheck
 from miniworld.utils import to_numpy
 
 Array = np.ndarray | torch.Tensor

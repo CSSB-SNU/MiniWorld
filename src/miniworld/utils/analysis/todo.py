@@ -1,8 +1,9 @@
 from pathlib import Path
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
-from jaxtyping import Float, Bool, Int
+from jaxtyping import Bool, Float, Int
 
 from miniworld.typing import typecheck
 

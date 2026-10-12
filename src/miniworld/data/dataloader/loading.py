@@ -22,7 +22,6 @@ from miniworld.data.pipeline import (
 
 from .types import DataRecord, ResourceLocator, msa_paths, template_path
 
-
 # ---------------------------------------------------------------------------
 # CCD fragmentation cache (lazy LMDB-backed)
 # ---------------------------------------------------------------------------

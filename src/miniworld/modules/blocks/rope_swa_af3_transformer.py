@@ -20,21 +20,21 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from jaxtyping import Float, Int
-
-from miniworld.typing import typecheck
 from miniworld_engine.modules import AdaptiveLayerNorm, ConditionedTransition, RMSNorm
-from miniworld.modules.exceptions import ImplementationType
-from miniworld.modules.blocks._engine_impl import to_engine_impl
-from miniworld_engine.modules.swa_atom_attention.module import _flash_backend
-from miniworld.modules.layers.ops import mp_sum, sigmoid_gate
 from miniworld_engine.modules.swa_atom_attention import (
     apply_rotary_emb_3d,
     build_3d_rope,
     flash_window_seqused,
     sparse_neighbor_attention,
 )
+from miniworld_engine.modules.swa_atom_attention.module import _flash_backend
+
+from miniworld.modules.blocks._engine_impl import to_engine_impl
 from miniworld.modules.blocks.swa_atom_transformer import SWAAtomTransformer
+from miniworld.modules.exceptions import ImplementationType
+from miniworld.modules.layers.ops import mp_sum, sigmoid_gate
 from miniworld.modules.primitives import Linear, MPLinear
+from miniworld.typing import typecheck
 
 
 class RoPESWAAttentionAF3(nn.Module):
@@ -268,7 +268,7 @@ class RoPESWAAF3Transformer(nn.Module):
 
     Config = SWAAtomTransformer.Config
 
-    def __init__(self, config: "SWAAtomTransformer.Config") -> None:
+    def __init__(self, config: SWAAtomTransformer.Config) -> None:
         super().__init__()
         self.config = config
         self.head_dim = config.d_atom // config.n_head

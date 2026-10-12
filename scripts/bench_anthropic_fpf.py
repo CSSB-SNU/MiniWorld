@@ -11,10 +11,18 @@ interleaved rounds, median), inference forward only (the opt_core rows are forwa
                      weights shared across arms (engine module parameters mapped onto opt_core's ten keys).
 """
 
-import argparse, faulthandler, json, os, statistics, sys, time, traceback
+import argparse
+import faulthandler
+import json
+import os
+import statistics
+import sys
+import time
+import traceback
 
 faulthandler.enable()
 from pathlib import Path
+
 import torch
 
 p = argparse.ArgumentParser()
@@ -80,7 +88,7 @@ def time_arms(arms, warmup, rounds, reps):
 def rel_rms(a, ref):
     a = a.float()
     ref = ref.float()
-    return float(((a - ref).pow(2).mean().sqrt() / (ref.pow(2).mean().sqrt() + 1e-30)))
+    return float((a - ref).pow(2).mean().sqrt() / (ref.pow(2).mean().sqrt() + 1e-30))
 
 
 def row_record(
@@ -106,12 +114,12 @@ def row_record(
 
 # ------------------------------------------------------------------------------------------------------------ triattn
 def run_triattn(L):
-    from opt_core.kernels import triattn as OT
     import cuequivariance_torch as cqt
     from miniworld_engine.kernels.triangle_attention.triton.main import (
         triton_triangle_attention_pair_bias,
     )
     from miniworld_engine.modules import TriangleAttention
+    from opt_core.kernels import triattn as OT
 
     B, N, S, H, D = 1, L, L, 4, 32
     g = torch.Generator(device=dev).manual_seed(681 + L)
@@ -247,9 +255,9 @@ def run_triattn(L):
 
 # ------------------------------------------------------------------------------------------------------------ trimul
 def run_trimul(L):
-    from opt_core.kernels import trimul as OM
     import cuequivariance_torch as cqt
     from miniworld_engine.modules import TriangleMultiplication
+    from opt_core.kernels import trimul as OM
 
     C = 128
     g = torch.Generator(device=dev).manual_seed(681 + L)

@@ -4,17 +4,18 @@ from typing import TYPE_CHECKING
 
 import torch
 import torch.nn.functional as F
-from pydantic import BaseModel
-from miniworld.typing import typecheck
-from miniworld.modules.exceptions import ImplementationType
-from miniworld.modules.blocks._engine_impl import to_engine_impl
 from miniworld_engine.modules import (
     Transition,
     TriangleAttention,
     TriangleMultiplication,
 )
-from miniworld.modules.primitives import LayerNorm, Linear
+from pydantic import BaseModel
 from torch import nn
+
+from miniworld.modules.blocks._engine_impl import to_engine_impl
+from miniworld.modules.exceptions import ImplementationType
+from miniworld.modules.primitives import LayerNorm, Linear
+from miniworld.typing import typecheck
 
 if TYPE_CHECKING:
     from jaxtyping import Bool, Float

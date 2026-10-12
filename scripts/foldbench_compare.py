@@ -194,8 +194,8 @@ def main() -> None:
             continue
 
         cols: dict[str, dict[str, float | None]] = {
-            f"ours@1": category_metrics(list(first.values()), cat),
-            f"ours@best": category_metrics(list(best.values()), cat),
+            "ours@1": category_metrics(list(first.values()), cat),
+            "ours@best": category_metrics(list(best.values()), cat),
         }
         by_model: dict[str, list[dict]] = defaultdict(list)
         for r in precs:
@@ -211,7 +211,7 @@ def main() -> None:
                 "    note: our DockQ is OST's, not DockQv2's — FoldBench reports "
                 "DockQv2 here, so this column is not strictly comparable"
             )
-        metrics = list(cols[f"ours@1"])
+        metrics = list(cols["ours@1"])
         head = "  " + "metric".ljust(26) + "".join(c.rjust(12) for c in cols)
         lines.append(head)
         lines.append("  " + "-" * (len(head) - 2))

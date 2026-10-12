@@ -29,11 +29,9 @@ from miniworld.configs.data import (
     TokenizerConfig,
 )
 from miniworld.data.dataloader.dataloader import FragmentedCCDMolCache
-from miniworld.data.features import make_batch
 from miniworld.data.io import extract_lmdb_keys, load_msa, load_raw_data, load_templates
 from miniworld.data.mols.cifmol_attached import CIFMolAttached
 from miniworld.data.pipeline import Tokenizer
-from miniworld.data.pipeline.utils import remove_terminal_oxygen
 from miniworld.utils.crop import crop_spatial_segment_token
 
 DEFAULT_DB = Path("/home/psk6950/data/openfold_distillation/cif_short.lmdb")

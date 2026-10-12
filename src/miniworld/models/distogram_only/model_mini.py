@@ -6,14 +6,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 import torch
 from pydantic import BaseModel
-from miniworld.modules import DiffusionTransformer
-from miniworld.modules.primitives import (
-    LayerNorm,
-    Linear,
-)
 from torch import nn
 
 from miniworld.configs import SharedConfig
+from miniworld.modules import DiffusionTransformer
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder
 from miniworld.modules.mini_msa_module import MiniMSAModule
@@ -21,6 +17,10 @@ from miniworld.modules.mini_pairformer import MiniPairformer
 from miniworld.modules.msa_util import (
     init_msa,
     init_token_single_msa,
+)
+from miniworld.modules.primitives import (
+    LayerNorm,
+    Linear,
 )
 
 if TYPE_CHECKING:

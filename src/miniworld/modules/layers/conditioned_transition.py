@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 from jaxtyping import Float
 
-from miniworld.typing import typecheck
 from miniworld.modules.exceptions import ImplementationType, InvalidImplementationError
 from miniworld.modules.primitives import Linear, MPLinear
+from miniworld.typing import typecheck
 
 from .adaln import AdaptiveLayerNorm
 from .ops import mp_swish_gate, sigmoid_gate, swish_gate

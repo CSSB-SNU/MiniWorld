@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 import torch
+
 from miniworld.diffusion import EDMScheduler, EuclideanDiffuser
 from miniworld.utils.align import weighted_align
 

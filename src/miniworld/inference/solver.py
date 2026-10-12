@@ -68,7 +68,7 @@ def _align_to_prediction(
 
 
 def _sample_rt(
-    scheduler: "DecoupledXPredScheduler",
+    scheduler: DecoupledXPredScheduler,
     sigma_hat: torch.Tensor,
     sigma_t_hat: torch.Tensor,
     batch_size: int,
@@ -84,11 +84,11 @@ def _sample_rt(
 
 @torch.inference_mode()
 def sample_trajectory(
-    model: "Model",
-    cache: "InferenceCache",
-    schedule: "StepSchedule",
-    solver_cfg: "XPredDecoupledSolver.Config",
-    scheduler: "DecoupledXPredScheduler",
+    model: Model,
+    cache: InferenceCache,
+    schedule: StepSchedule,
+    solver_cfg: XPredDecoupledSolver.Config,
+    scheduler: DecoupledXPredScheduler,
     *,
     n_samples: int,
     atom_to_combine: torch.Tensor,

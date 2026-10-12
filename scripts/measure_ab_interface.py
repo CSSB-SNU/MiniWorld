@@ -26,7 +26,6 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import torch
 from hydra import compose, initialize_config_dir
 from scipy.spatial import cKDTree
 

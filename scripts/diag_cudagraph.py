@@ -11,7 +11,6 @@ from datetime import datetime
 
 from audit_phase2_cudagraph import main
 
-
 if __name__ == "__main__":
     if "--graph" not in sys.argv:
         sys.argv += ["--graph", "trees"]

@@ -8,9 +8,6 @@ import torch
 from jaxtyping import Bool, Float
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
-from miniworld.training.client import BaseClient
-from miniworld.training.callbacks import ModelEMA
-from miniworld.training.client import _SetEpochProtocol
 from torch.utils.data import DataLoader
 
 from miniworld.configs import EDMDiffuserConfig
@@ -25,6 +22,8 @@ from miniworld.models.af3_like.model import (
     Model,
     ModelWrapper,
 )
+from miniworld.training.callbacks import ModelEMA
+from miniworld.training.client import BaseClient, _SetEpochProtocol
 
 if TYPE_CHECKING:
     from collections.abc import Generator

@@ -10,8 +10,8 @@ pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="H100 requ
 @pytest.mark.parametrize("dtype", [torch.bfloat16, torch.float32])
 def test_fa4_compiled_backward_and_graph(half_window, dtype):
     from miniworld_engine.modules.swa_atom_attention.module import (
-        flash_window_seqused,
         _flash_window_core,
+        flash_window_seqused,
     )
 
     n, s, h, d = 2, 128, 4, 32
@@ -81,8 +81,8 @@ def test_fa4_compiled_backward_and_graph(half_window, dtype):
 
 def test_fa4_partial_requires_grad():
     from miniworld_engine.modules.swa_atom_attention.module import (
-        flash_window_seqused,
         _flash_window_core,
+        flash_window_seqused,
     )
 
     n, s, h, d = 1, 128, 4, 32

@@ -3,8 +3,8 @@
 import pytest
 import torch
 import triton
-from triton.runtime.errors import OutOfResources
 from miniworld_engine.kernels.adaln.triton.inference import _adaln_gemm_gate_kernel
+from triton.runtime.errors import OutOfResources
 
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required")
 

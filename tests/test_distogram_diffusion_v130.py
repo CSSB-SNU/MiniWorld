@@ -7,7 +7,6 @@ import pytest
 import torch
 import torch.nn.functional as F
 from hydra import compose, initialize_config_dir
-from miniworld.modules.layers.embeddings import fourier_embedding
 
 from miniworld.loss.auxiliary import atom_distogram_target, cal_atom_distogram_loss
 from miniworld.models.distogram_only.client import Client
@@ -17,6 +16,7 @@ from miniworld.modules.distogram_diffusion import (
     DistogramDiffusionConfig,
     _symmetric_noise,
 )
+from miniworld.modules.layers.embeddings import fourier_embedding
 
 
 def head(device="cpu"):

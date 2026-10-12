@@ -7,17 +7,14 @@ import numpy as np
 import torch
 from miniworld_engine.modules import LayerNorm
 from pydantic import BaseModel
-from miniworld.modules import DiffusionTransformer
-from miniworld.modules.blocks._engine_impl import to_engine_impl
-from miniworld.modules.primitives import (
-    Linear,
-)
 from torch import nn
 
 from miniworld.configs import SharedConfig
 from miniworld.configs.models import AtomSWAConfig
 from miniworld.data.features import MSAFeatures
 from miniworld.loss.auxiliary import atom_distogram_target
+from miniworld.modules import DiffusionTransformer
+from miniworld.modules.blocks._engine_impl import to_engine_impl
 from miniworld.modules.distogram_diffusion import (
     DistogramDiffusion,
     DistogramDiffusionConfig,
@@ -28,13 +25,16 @@ from miniworld.modules.input_feature_embedder_esmfold2_style import (
 )
 from miniworld.modules.mini_msa_module import MiniMSAModule
 from miniworld.modules.mini_pairformer import MiniPairformer
-from miniworld.training.precision import model_autocast
 from miniworld.modules.msa_util import (
     init_msa,
     init_token_single_msa,
     subsample_msa_rows,
 )
+from miniworld.modules.primitives import (
+    Linear,
+)
 from miniworld.modules.template_embedder_af3 import AF3TemplateEmbedder
+from miniworld.training.precision import model_autocast
 
 if TYPE_CHECKING:
     from miniworld.data.features import (

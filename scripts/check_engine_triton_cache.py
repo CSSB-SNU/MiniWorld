@@ -1,7 +1,9 @@
 """Report staleness for the requested Triton scope, keeping native status separate."""
 
 from __future__ import annotations
-import argparse, json
+
+import argparse
+import json
 from dataclasses import asdict
 from pathlib import Path
 

@@ -5,16 +5,18 @@ does, pull a few batches, and validate shapes / finiteness / timing.
 Run from MiniWorld root (cwd) under the cu128 env.
 """
 
-import sys, time
+import sys
+import time
 
 sys.path.insert(0, "scripts")
+import os
 from pathlib import Path
+
 import torch
 from hydra import compose, initialize_config_dir
 from run_miniworld_distogram_train import Config
-from miniworld.data.dataloader.dataloader import BioMolData
 
-import os
+from miniworld.data.dataloader.dataloader import BioMolData
 
 CONFIG = "config_distogram_swa_af3_mix_local"
 N_BATCHES = int(os.environ.get("DL_SMOKE_N", "6"))

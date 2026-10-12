@@ -5,9 +5,9 @@ retained. Imported only by the isolated comparison harness.
 
 import torch
 from miniworld_engine.kernels.trimul_inproj.triton.bidirectional import (
+    _BidirBackHalfTriton,
     bidir_front_triton,
     packed_forward,
-    _BidirBackHalfTriton,
 )
 from trimul_output_fusion import output_forward
 

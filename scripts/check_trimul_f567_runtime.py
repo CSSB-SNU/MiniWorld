@@ -3,18 +3,19 @@
 import argparse
 import importlib.util
 import json
-from pathlib import Path
 import statistics
 import sys
+from pathlib import Path
+
 import torch
-from miniworld_engine.kernels.trimul_inproj.triton import bidirectional as bt
-from miniworld_engine.kernels.trimul_inproj.triton.output_fused import output_f567_train
+from miniworld_engine.autotune import cache
 from miniworld_engine.kernels.layernorm_linear.triton.te_style import (
     _ln_materialize,
     _te_forward,
 )
+from miniworld_engine.kernels.trimul_inproj.triton import bidirectional as bt
 from miniworld_engine.kernels.trimul_inproj.triton.gate_elem import gate_elem_train
-from miniworld_engine.autotune import cache
+from miniworld_engine.kernels.trimul_inproj.triton.output_fused import output_f567_train
 from miniworld_engine.modules import BidirectionalTriangleMultiplication
 
 

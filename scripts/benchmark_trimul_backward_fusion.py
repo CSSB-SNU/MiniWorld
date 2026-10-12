@@ -1,12 +1,14 @@
 """Paired fixed-shape comparisons of baseline, LN/residual, dual GEMM and both."""
 
-import argparse, json
+import argparse
+import json
 from pathlib import Path
+
 import torch
+from check_trimul_f567_runtime import capture, paired
 from miniworld_engine.autotune import cache
 from miniworld_engine.kernels.trimul_inproj.triton import bidirectional as bt
 from miniworld_engine.modules import BidirectionalTriangleMultiplication
-from check_trimul_f567_runtime import capture, paired
 
 p = argparse.ArgumentParser()
 p.add_argument("--length", type=int, required=True)

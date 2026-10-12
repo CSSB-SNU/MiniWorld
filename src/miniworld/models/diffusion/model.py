@@ -32,14 +32,14 @@ from typing import TYPE_CHECKING, Literal
 
 import torch
 from pydantic import BaseModel, Field
-from miniworld.modules import DiffusionTransformer, SWAAtomTransformer
-from miniworld.modules.primitives import Linear
 from torch import nn
 
 from miniworld.configs import SharedConfig
 from miniworld.configs.models import AtomSWAConfig
 from miniworld.models.distogram_only.model_mini_swa import MiniSWAModel
+from miniworld.modules import DiffusionTransformer, SWAAtomTransformer
 from miniworld.modules.diffusion_module import DiffusionConditioning, DiffusionModule
+from miniworld.modules.primitives import Linear
 from miniworld.training.precision import is_bf16_mixed, model_autocast
 
 if TYPE_CHECKING:

@@ -13,10 +13,10 @@ import time
 from pathlib import Path
 
 import torch
-from miniworld.modules import DiffusionTransformer
-from miniworld.modules.exceptions import ImplementationType
 
+from miniworld.modules import DiffusionTransformer
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
+from miniworld.modules.exceptions import ImplementationType
 
 
 def timed(fn, warm, rep):

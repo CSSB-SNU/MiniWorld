@@ -4,9 +4,10 @@ from pathlib import Path
 
 import pytest
 import torch
-from miniworld_engine import settings, kernels
-from miniworld_engine.modules import dispatch
+from miniworld_engine import kernels, settings
+from miniworld_engine.modules import dispatch  # noqa: F401
 from miniworld_engine.modules.exceptions import ImplementationType as EngineImpl
+
 from miniworld.training.engine_backend import configure_engine_backend
 
 
@@ -35,9 +36,10 @@ def test_standalone_layernorm_cannot_select_cuda():
 )
 def test_training_config_override(phase):
     from hydra import compose, initialize_config_dir
-    from miniworld.models.distogram_only.client import Client as Distogram
-    from miniworld.models.diffusion.client import Client as Diffusion
+
     from miniworld.models.confidence.client import Client as Confidence
+    from miniworld.models.diffusion.client import Client as Diffusion
+    from miniworld.models.distogram_only.client import Client as Distogram
 
     client = {"1": Distogram, "2": Diffusion, "3": Confidence}[phase[5]]
     root = Path(__file__).resolve().parents[1]
@@ -53,8 +55,9 @@ def test_training_config_override(phase):
 
 def test_mini_model_all_engine_modules_and_checkpoint_layout():
     from hydra import compose, initialize_config_dir
-    from miniworld.models.distogram_only.model_mini_swa import MiniSWAModel
     from miniworld_engine.modules.transition.module import Transition
+
+    from miniworld.models.distogram_only.model_mini_swa import MiniSWAModel
 
     root = Path(__file__).resolve().parents[1]
     with initialize_config_dir(str(root / "configs/miniworld"), version_base=None):

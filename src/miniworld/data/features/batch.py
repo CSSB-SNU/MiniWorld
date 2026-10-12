@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import torch
+
 from miniworld.training.batch import BaseBatch
 
 from .features import (

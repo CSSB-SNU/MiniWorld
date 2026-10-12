@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from jaxtyping import Float
 
-from miniworld.typing import typecheck
 from miniworld.modules.primitives import Linear, MPLinear
+from miniworld.typing import typecheck
 
 from .ops import apply_pairwise_rotation
 

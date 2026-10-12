@@ -34,8 +34,8 @@ if args.variants[0] != "pytorch":
 from miniworld_engine import settings
 
 settings.configure(transition_large_d_training=args.engine_backward)
-from miniworld_engine.modules import Transition
 from miniworld_engine import kernels as engine_kernels
+from miniworld_engine.modules import Transition
 
 NATIVE_DEFAULTS = dict(
     transition_cuda_b2b=True,

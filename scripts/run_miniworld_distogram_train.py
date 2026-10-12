@@ -14,20 +14,17 @@ import random
 import time
 from itertools import product
 from pathlib import Path
+from typing import Annotated, Union
 
 import click
 import numpy as np
 import torch
+import wandb
 from hydra import compose, initialize_config_dir
 from lightning import Fabric
 from omegaconf import OmegaConf
 from pydantic import BaseModel, Discriminator, Tag
-from miniworld.training.callbacks import Callback
-from miniworld.utils.script_utils import MetricsAggregator
-from typing import Annotated, Union
 
-import wandb
-from miniworld.utils import new_wandb_run_id
 from miniworld.configs import (
     BioMolDBConfig,
     CropConfig,
@@ -40,8 +37,9 @@ from miniworld.data.dataloader import BioMolDBV2Config
 from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.data.features.batch import Batch
 from miniworld.models.distogram_only import Client, MiniSWAModel, Model
-from miniworld.utils import get_step_decay_scheduler_with_warmup
-
+from miniworld.training.callbacks import Callback
+from miniworld.utils import get_step_decay_scheduler_with_warmup, new_wandb_run_id
+from miniworld.utils.script_utils import MetricsAggregator
 
 _ModelType = Union[Model, MiniSWAModel]
 

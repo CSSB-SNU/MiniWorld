@@ -18,8 +18,8 @@ from __future__ import annotations
 
 import argparse
 import csv
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from miniworld.data.io import extract_lmdb_keys
 

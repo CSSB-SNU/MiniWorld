@@ -8,15 +8,20 @@ Run from the repository root on a GPU node:
     python scripts/profile_module_timing.py [config_name]   # default phase1b_distogram_medium_v120
 (Moved from tests/, where it ran at import time and broke collection.)"""
 
-import sys, statistics, torch
+import statistics
+import sys
+
+import torch
 
 sys.path.insert(0, "scripts")
 from pathlib import Path
+
 from hydra import compose, initialize_config_dir
 from run_miniworld_distogram_train import Config, _build_precompile_batch
+
 from miniworld.configs import TemplateConfig
-from miniworld.models.distogram_only import MiniSWAModel
 from miniworld.loss.auxiliary import cal_atom_distogram_loss
+from miniworld.models.distogram_only import MiniSWAModel
 
 dev = "cuda"
 torch.set_float32_matmul_precision("medium")

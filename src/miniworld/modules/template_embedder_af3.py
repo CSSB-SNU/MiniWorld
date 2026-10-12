@@ -20,15 +20,15 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 from jaxtyping import Bool, Float, Int
-from miniworld.typing import typecheck
-from miniworld.modules.exceptions import ImplementationType
-from miniworld.modules.primitives import Linear
 from miniworld_engine.modules import LayerNorm
-from miniworld.modules.blocks._engine_impl import to_engine_impl
 from torch import nn
 
 from miniworld.data.features import TemplateFeatures
+from miniworld.modules.blocks._engine_impl import to_engine_impl
+from miniworld.modules.exceptions import ImplementationType
 from miniworld.modules.mini_pairformer import MiniPairformer
+from miniworld.modules.primitives import Linear
+from miniworld.typing import typecheck
 
 
 def _engine_batch_limit() -> int:
@@ -44,8 +44,8 @@ def _engine_batch_limit() -> int:
 
 def _dgram_from_positions(
     cb: Float[torch.Tensor, "B L 3"],
-    lower: Float[torch.Tensor, "num_bins"],
-    upper: Float[torch.Tensor, "num_bins"],
+    lower: Float[torch.Tensor, num_bins],
+    upper: Float[torch.Tensor, num_bins],
 ) -> Float[torch.Tensor, "B L L num_bins"]:
     """AF3 dgram_from_positions: squared-distance histogram over pseudo-beta coords.
 

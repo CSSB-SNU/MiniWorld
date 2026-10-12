@@ -31,7 +31,6 @@ from Bio.PDB.MMCIFParser import MMCIFParser
 
 from miniworld.data.io import load_cifmol
 
-
 DEFAULT_CIF_DB = "/public_data02/BioMolDB_20260224/cif_attached_train.lmdb"
 
 

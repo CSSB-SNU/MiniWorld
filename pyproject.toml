@@ -31,32 +31,6 @@ include-package-data = true
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 
-[tool.ruff.lint]
-select = ["ALL"]
-ignore = [
-  "E731",
-  "E741",
-  "F722",    # Incompatible with jaxtyping
-  "S311",
-  "D105",
-  "D100",
-  "D107",
-  "D203",
-  "D213",
-  "PLR0913",
-  "ANN401",
-  "N812",
-  "E501",
-  "N806",
-  "FBT001",
-  "FBT002",
-  "PLR2004",
-  "NPY002",
-  "TC001",
-  "TC002",
-]
-
-
 [tool.pixi.feature.cuda13.system-requirements]
 cuda = "13"
 
@@ -118,21 +92,56 @@ tqdm = ">=4.67.1,<5"
 click = ">=8.3.1,<9"
 biopython = ">=1.87,<2"
 
-[tool.ruff.lint.per-file-ignores]
-"scripts/*" = ["D", "ANN201", "S101", "INP001", "FBT001", "PLC0415", "C901"]
-"src/miniworld/modules/kernels/*" = ["N806", "N803", "ANN", "ARG001", "D"]
-"src/miniworld/data/pipeline/msa.py" = ["N802","N803"]
-"src/miniworld/utils/structure/se3.py" = ["N802","N803", "RET504","E741"]
-
-
 [tool.ruff]
 line-length = 89
 target-version = "py310"
+extend-exclude = ["libs", "docs", "runs", "benchmarks"]
 
+[tool.ruff.lint]
+# The gate: correctness (E/F/B), import order (I), modern syntax (UP), simplifications (SIM, C4, PIE).
+# The broader `ALL` set was never enforceable here; the ignores below are known debt, not decisions --
+# remove an entry when its violations are fixed.
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "PIE"]
+ignore = [
+  "E501",    # the formatter owns line length
+  "E731",
+  "E741",
+  "F722",    # incompatible with jaxtyping shape strings
+  "B905",
+  "UP006",
+  "UP007",
+  "UP038",   # deprecated upstream
+  "B023",    # debt: closures over loop variables in benchmark scripts
+  "C408",    # debt: dict(...) / list() calls
+  "UP031",   # debt: printf-style formatting
+  "B007",
+  "F841",
+  "E402",    # scripts set sys.path / env before importing
+  "SIM115",
+  "SIM113",
+  "SIM102",
+  "C401",
+  "B904",
+  "PIE810",
+  "SIM105",
+  "SIM108",
+  "SIM117",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/miniworld/modules/distogram_diffusion.py" = ["F821"]    # jaxtyping dimension names ("B")
+"src/miniworld/modules/template_embedder_af3.py" = ["F821"]  # jaxtyping dimension names ("num_bins")
+"scripts/bench_token_dit.py" = ["F821"]
+"__init__.py" = ["F401"]
+"scripts/fix_cif.py" = ["W291"]  # trailing whitespace is inside string literals
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
 
 [tool.pyright]
 include = ["src/miniworld"]
-exclude = ["libs", "scratchpad_logs", "docs", "tests/artifacts"]
+exclude = ["libs", "scratchpad_logs", "docs", "runs", "benchmarks", "tests/artifacts"]
 enableReachabilityAnalysis = false
 
 [tool.hatch.build.targets.wheel]

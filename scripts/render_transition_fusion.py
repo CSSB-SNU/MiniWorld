@@ -1,9 +1,9 @@
 """Source-audited Transition wiring; stdlib SVG generation, no GPU imports."""
 
-from pathlib import Path
 import hashlib
 import json
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "runs/trimul_sm90_parity_20260917/engine"

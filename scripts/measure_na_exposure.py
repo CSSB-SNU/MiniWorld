@@ -12,11 +12,9 @@ from __future__ import annotations
 
 import argparse
 import collections
+import sys
 from pathlib import Path
 
-import sys
-
-import torch
 from hydra import compose, initialize_config_dir
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))

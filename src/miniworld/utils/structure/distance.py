@@ -5,9 +5,9 @@ import numpy as np
 import torch
 from jaxtyping import Bool, Float, Int
 from numpy import ndarray
-from miniworld.typing import typecheck
 
 from miniworld.data.mols import CIFMolAttached
+from miniworld.typing import typecheck
 
 # Single-slot memo for the distogram-loss target. get_shortest_distances is a pure
 # function of the (fixed-per-input) atom_pos/mask/token-map, but builds `residue_exists`

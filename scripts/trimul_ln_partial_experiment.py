@@ -1,8 +1,12 @@
 """Experiment: output LN backward with per-tile partials instead of contended atomics."""
 
-import argparse, itertools, json
+import argparse
+import itertools
+import json
 from pathlib import Path
-import torch, triton
+
+import torch
+import triton
 import triton.language as tl
 
 
@@ -109,10 +113,10 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
+    from miniworld_engine.autotune.shape_key import both_key
     from miniworld_engine.kernels.layernorm_linear.triton.mmajor_bwd import (
         _ln_bwd_atomic,
     )
-    from miniworld_engine.autotune.shape_key import both_key
 
     m, n = 384**2, 256
     torch.manual_seed(69)

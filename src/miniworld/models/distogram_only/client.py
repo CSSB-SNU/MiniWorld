@@ -8,9 +8,6 @@ import numpy as np
 import torch
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel, Discriminator, Field, Tag
-from miniworld.training.client import BaseClient
-from miniworld.training.callbacks import ModelEMA
-from miniworld.training.client import _SetEpochProtocol
 from torch.utils.data import DataLoader
 
 from miniworld.data.features.batch import Batch
@@ -21,11 +18,13 @@ from miniworld.loss.auxiliary import (
 )
 from miniworld.models.distogram_only.model import Model
 from miniworld.models.distogram_only.model_mini_swa import MiniSWAModel
+from miniworld.training.callbacks import ModelEMA
+from miniworld.training.client import BaseClient, _SetEpochProtocol
 from miniworld.training.engine_backend import (
     EngineBackend,
+    align_engine_optimizer_state,
     configure_engine_backend,
     configure_fused_msa_train,
-    align_engine_optimizer_state,
 )
 from miniworld.training.precision import Precision, apply_precision, model_autocast
 

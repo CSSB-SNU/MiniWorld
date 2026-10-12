@@ -4,11 +4,10 @@ import torch.nn.functional as F
 from einops import rearrange
 from jaxtyping import Bool, Float
 
-from miniworld.typing import typecheck
+from miniworld.modules.checkpoints.backend_attention import gated_projection
 from miniworld.modules.exceptions import ImplementationType
 from miniworld.modules.primitives import LayerNorm, Linear
-
-from miniworld.modules.checkpoints.backend_attention import gated_projection
+from miniworld.typing import typecheck
 
 
 class MSAPairWeightedAveraging(nn.Module):

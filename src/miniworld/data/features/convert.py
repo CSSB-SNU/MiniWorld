@@ -8,13 +8,13 @@ import torch
 from jaxtyping import Int
 
 from miniworld.data.constants import CANONICAL_CHEMCOMPS, AtomMapping, EntityMapping
+from miniworld.data.pipeline.template import ProteinTemplate
 from miniworld.data.reference import (
     augment_reference,
     map_reference,
     parse_coordinates,
     resolve_reference,
 )
-from miniworld.data.pipeline.template import ProteinTemplate
 from miniworld.utils.structure import SE3_oper
 
 from .batch import Batch

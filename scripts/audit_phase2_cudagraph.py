@@ -27,6 +27,7 @@ sys.setrecursionlimit(30000)
 
 def load_model_batch(config, checkpoint, weights="model", catalog_snapshot=None):
     from run_miniworld_diffusion_train import Config
+
     from miniworld.data.dataloader.dataloader import BioMolData
     from miniworld.models.diffusion.model import DiffusionModel
 

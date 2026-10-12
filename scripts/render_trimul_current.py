@@ -4,8 +4,11 @@ The drawing describes shared B1-B4 plus the selected single-launch shared-GP B7 
 Sizes are buffer payloads, not measured DRAM traffic; L2 can service rereads.
 """
 
+import hashlib
+import html
+import json
+import unicodedata
 from pathlib import Path
-import hashlib, html, json, unicodedata
 
 ROOT = Path(__file__).resolve().parents[1]
 RUN = ROOT / "runs/trimul_diagrams_20260921"

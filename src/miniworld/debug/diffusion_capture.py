@@ -49,17 +49,17 @@ from pathlib import Path
 from typing import Any
 
 import torch
+from miniworld_engine.modules import (
+    AugmentedAttentionPairBias,
+)
 
+from miniworld.modules.blocks.diffusion_transformer import (
+    DiffusionTransformer,
+)
 from miniworld.modules.diffusion_module import (
     AtomAttentionDecoder,
     AtomAttentionEncoder,
     DiffusionModule,
-)
-from miniworld.modules.blocks.diffusion_transformer import (
-    DiffusionTransformer,
-)
-from miniworld_engine.modules import (
-    AugmentedAttentionPairBias,
 )
 
 _STACK_ENCODER = "encoder"
@@ -154,7 +154,7 @@ class DiffusionCapture(AbstractContextManager):
             _STACK_DECODER: [],
         }
 
-    def __enter__(self) -> "DiffusionCapture":
+    def __enter__(self) -> DiffusionCapture:
         self._discover_stacks()
         self._install_patches()
         return self

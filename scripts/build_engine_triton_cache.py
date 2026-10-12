@@ -7,8 +7,8 @@ dedicated configuration search jobs are excluded.
 
 from __future__ import annotations
 
-import sys
 import argparse
+import sys
 from unittest.mock import patch
 
 

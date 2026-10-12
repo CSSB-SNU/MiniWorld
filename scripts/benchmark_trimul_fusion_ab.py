@@ -8,23 +8,22 @@ import argparse
 import gc
 import hashlib
 import json
-from pathlib import Path
 import statistics
-import time
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F
+import trimul_output_fusion as fusion
 from miniworld_engine.kernels.layernorm_linear.triton.te_style import (
-    _te_forward,
     _te_backward,
-)
-from miniworld_engine.kernels.trimul_inproj.triton.gate_elem import (
-    gate_elem_train,
-    gate_elem_bwd_ew,
+    _te_forward,
 )
 from miniworld_engine.kernels.trimul_inproj.triton import bidirectional as bt
+from miniworld_engine.kernels.trimul_inproj.triton.gate_elem import (
+    gate_elem_bwd_ew,
+    gate_elem_train,
+)
 from miniworld_engine.modules import BidirectionalTriangleMultiplication
-import trimul_output_fusion as fusion
 from trimul_fusion_training import BidirFusionA, BidirFusionB
 
 

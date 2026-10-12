@@ -1,13 +1,5 @@
 import torch
 from jaxtyping import Bool, Float, Int
-from pydantic import BaseModel, model_validator
-from torch import nn
-from torch.utils.checkpoint import checkpoint, checkpoint_sequential
-from typing_extensions import Self
-
-from miniworld.typing import typecheck
-from miniworld.modules.exceptions import ImplementationType
-from miniworld.modules.blocks._engine_impl import to_engine_impl
 from miniworld_engine.modules import (
     MSAPairWeightedAveraging,
     OuterProductMean,
@@ -15,7 +7,15 @@ from miniworld_engine.modules import (
     TriangleAttention,
     TriangleMultiplication,
 )
+from pydantic import BaseModel, model_validator
+from torch import nn
+from torch.utils.checkpoint import checkpoint, checkpoint_sequential
+from typing_extensions import Self
+
+from miniworld.modules.blocks._engine_impl import to_engine_impl
+from miniworld.modules.exceptions import ImplementationType
 from miniworld.modules.primitives import Linear
+from miniworld.typing import typecheck
 
 
 class MSAPairformerBlock(nn.Module):

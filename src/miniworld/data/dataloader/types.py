@@ -13,7 +13,6 @@ from pydantic import BaseModel
 
 from miniworld.configs.data import BioMolDBConfig
 
-
 # ---------------------------------------------------------------------------
 # Pydantic configs (DB sources)
 # ---------------------------------------------------------------------------

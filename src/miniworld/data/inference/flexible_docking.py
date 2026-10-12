@@ -113,7 +113,7 @@ class _BatchAtomLayout:
     n_atom: int
 
 
-def _read_batch_layout(spec: "InferenceSpec", batch: "Batch") -> _BatchAtomLayout:
+def _read_batch_layout(spec: InferenceSpec, batch: Batch) -> _BatchAtomLayout:
     atom_names = batch.atom_ids[0]
     chem_comp_ids = batch.chem_comp_ids[0]
     token_asym_id = batch.scheme.token_asym_id[0].cpu().numpy()
@@ -208,8 +208,8 @@ def _fill_chain_init_x0(
 
 def _center_per_diffusion_group(
     init_x0: torch.Tensor,
-    spec: "InferenceSpec",
-    batch: "Batch",
+    spec: InferenceSpec,
+    batch: Batch,
 ) -> None:
     """Subtract each combine-group's centroid in place.
 
@@ -246,8 +246,8 @@ def _assert_no_nan(init_x0: torch.Tensor, where: str) -> None:
 
 
 def build_flexible_docking_init_x0(
-    spec: "InferenceSpec",
-    batch: "Batch",
+    spec: InferenceSpec,
+    batch: Batch,
 ) -> torch.Tensor:
     """Build the ``(N_atom, 3)`` warm-start tensor for flexible-docking.
 
@@ -301,8 +301,8 @@ def build_flexible_docking_init_x0(
 
 
 def build_refinement_init_x0(
-    spec: "InferenceSpec",
-    batch: "Batch",
+    spec: InferenceSpec,
+    batch: Batch,
 ) -> torch.Tensor:
     """Build the ``(N_atom, 3)`` warm-start tensor for refinement.
 

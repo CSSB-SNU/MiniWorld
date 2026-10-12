@@ -1,6 +1,5 @@
 """CSV, shape-key and tiled F567 correctness contracts for the staged engine."""
 
-from pathlib import Path
 import itertools
 
 import pytest

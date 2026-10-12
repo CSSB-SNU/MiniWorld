@@ -18,22 +18,22 @@ import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.checkpoint import checkpoint_sequential
 from jaxtyping import Float, Int
-from pydantic import BaseModel
-
-from miniworld.typing import typecheck
+from miniworld_engine import kernels
+from miniworld_engine.modules import RMSNorm
 from miniworld_engine.modules.swa_atom_attention.module import (
     SWA3DRoPEAttention,
     build_3d_rope,
 )
+from pydantic import BaseModel
+from torch.utils.checkpoint import checkpoint_sequential
+
+from miniworld.modules._engine_impl import to_engine_impl_pointwise, torch_pointwise
+from miniworld.modules.blocks._engine_impl import to_engine_impl
+from miniworld.modules.exceptions import ImplementationType
 from miniworld.modules.layers.ops import mp_sum, mp_swish_gate
 from miniworld.modules.primitives import Linear, MPLinear
-from miniworld.modules.exceptions import ImplementationType
-from miniworld.modules.blocks._engine_impl import to_engine_impl
-from miniworld.modules._engine_impl import to_engine_impl_pointwise, torch_pointwise
-from miniworld_engine.modules import RMSNorm
-from miniworld_engine import kernels
+from miniworld.typing import typecheck
 
 
 class SwiGLUFFN(nn.Module):

@@ -6,8 +6,10 @@ Preserves the released equations and signatures; contains no model imports.
 """
 
 from __future__ import annotations
+
 import math
 from typing import Any, Union
+
 import torch
 from torch import nn
 

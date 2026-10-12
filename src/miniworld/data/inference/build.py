@@ -18,8 +18,18 @@ from typing import TYPE_CHECKING
 import numpy as np
 import torch
 
-from miniworld.data.constants import AtomMapping, EntityMapping, ResidueMapping
+from miniworld.data.constants import (
+    CANONICAL_CHEMCOMPS,
+    AtomMapping,
+    EntityMapping,
+    ResidueMapping,
+)
 from miniworld.data.features import Batch
+from miniworld.data.features.convert import (
+    _build_atom_is_rep,
+    _build_token_frame_atoms,
+    to_template_features,
+)
 from miniworld.data.features.features import (
     ChainFeatures,
     MSAFeatures,
@@ -29,13 +39,8 @@ from miniworld.data.features.features import (
     StructureFeatures,
     TemplateFeatures,
 )
-from miniworld.data.features.convert import (
-    to_template_features,
-    _build_atom_is_rep,
-    _build_token_frame_atoms,
-)
 from miniworld.data.io.load import load_a3m, load_template
-from miniworld.data.pipeline import ComplexMSA, MSA, ProteinTemplate, sample_msa
+from miniworld.data.pipeline import MSA, ComplexMSA, ProteinTemplate, sample_msa
 from miniworld.data.reference import augment_reference
 from miniworld.utils.structure.se3 import SE3_oper
 
@@ -43,7 +48,6 @@ from .a3m import parse_a3m_file
 from .ccd import CCDLookup, CCDResidue
 from .fasta import ChainSpec, EntityType, parse_fasta_file
 from .tokenization import TokenizationPolicy
-from miniworld.data.constants import CANONICAL_CHEMCOMPS
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +113,7 @@ class _ChainExpansion:
 
 
 def build_inference_batch(
-    spec: "InferenceSpec",
+    spec: InferenceSpec,
     max_msa_depth: int = 256,
     missing_policy: str = "query",
     seed: int = 0,
@@ -557,7 +561,7 @@ def _build_letter_to_chains(
 
 
 def _resolve_residue_idx_for_relpos(
-    spec: "InferenceSpec",
+    spec: InferenceSpec,
     chain_index: int,
     n_res: int,
     chain_res_offset: int,
@@ -597,7 +601,7 @@ def _resolve_residue_idx_for_relpos(
 
 
 def _load_or_build_chain_msa(
-    spec: "InferenceSpec",
+    spec: InferenceSpec,
     chain_index: int,
     cs: ChainSpec,
     rm: ResidueMapping,
@@ -720,7 +724,7 @@ _TEMPLATE_ELIGIBLE_ENTITIES: set[EntityType] = {
 
 
 def _build_single_chain_template_layers(
-    spec: "InferenceSpec",
+    spec: InferenceSpec,
     expansions: list[_ChainExpansion],
     rng: np.random.Generator,
 ) -> list[ProteinTemplate]:
@@ -760,7 +764,7 @@ def _build_single_chain_template_layers(
 
 
 def _build_template_features(
-    spec: "InferenceSpec",
+    spec: InferenceSpec,
     expansions: list[_ChainExpansion],
     token_to_residue_idx_map: np.ndarray,
     rng: np.random.Generator,

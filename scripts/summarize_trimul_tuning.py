@@ -1,8 +1,12 @@
 """Summarize observed TriMul cache keys and compare the native build driver."""
 
-import argparse, json, importlib, collections
-import torch
+import argparse
+import collections
+import importlib
+import json
 from pathlib import Path
+
+import torch
 from miniworld_engine.autotune import cache, cache_status
 from miniworld_engine.autotune.configs import configs_for
 
@@ -79,8 +83,10 @@ for op in sorted(set(r["op"] for r in report)):
     print(op, len(rs), "unsearched", [r.get("unsearched_current_grid") for r in rs])
 
 # Meta tensors execute only the driver shape construction, with no GPU launches.
-import json, importlib, ast
+import importlib
+import json
 from pathlib import Path
+
 from miniworld_engine.autotune.native import tensor_key
 from miniworld_engine.kernels.drivers import trimul_inproj as driver
 

@@ -1,11 +1,9 @@
 import torch
 import torch.nn.functional as F
-
-from jaxtyping import Float, Bool, Int
+from jaxtyping import Bool, Float, Int
+from MiniWorld.utils.structure.sdist import get_shortest_distances
 
 from miniworld.typing import typecheck
-
-from MiniWorld.utils.structure.sdist import get_shortest_distances
 
 
 @typecheck

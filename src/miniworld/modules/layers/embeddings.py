@@ -3,10 +3,11 @@ import math
 import torch
 import torch.nn.functional as F
 from jaxtyping import Float
+from torch import nn
+
 from miniworld.modules.primitives import (
     Linear,
 )
-from torch import nn
 
 _WEIGHT = [
     -1.1589,

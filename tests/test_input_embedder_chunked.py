@@ -17,9 +17,9 @@ or:
 from __future__ import annotations
 
 import torch
-from miniworld.modules import DiffusionTransformer
 
 from miniworld.configs import SharedConfig
+from miniworld.modules import DiffusionTransformer
 from miniworld.modules.input_embedder import InputAtomAttentionEncoder
 
 

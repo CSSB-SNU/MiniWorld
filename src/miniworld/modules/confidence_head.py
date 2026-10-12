@@ -29,12 +29,12 @@ import torch
 import torch.nn.functional as F
 from jaxtyping import Bool, Float, Int
 from pydantic import BaseModel
-from miniworld.typing import typecheck
-from miniworld.modules.primitives import Linear
-from miniworld.modules.exceptions import ImplementationType
 from torch import nn
 
+from miniworld.modules.exceptions import ImplementationType
 from miniworld.modules.mini_pairformer import MiniPairformer
+from miniworld.modules.primitives import Linear
+from miniworld.typing import typecheck
 
 
 class ConfidenceHead(nn.Module):

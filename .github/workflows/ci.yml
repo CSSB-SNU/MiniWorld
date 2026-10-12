@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff==0.11.13
+      - name: lint
+        run: ruff check src tests scripts
+      - name: format
+        run: ruff format --check src tests scripts
+      - name: every file compiles
+        run: python -m compileall -q src tests scripts
+# The GPU test suite (CUDA kernels, CUDA graphs, engine wiring) needs a B200/H100 node and runs on the cluster:
+#   pixi run pytest tests

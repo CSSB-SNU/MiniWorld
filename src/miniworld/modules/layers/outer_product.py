@@ -3,9 +3,9 @@ import torch.nn as nn
 from einops import rearrange
 from jaxtyping import Bool, Float, Int
 
-from miniworld.typing import typecheck
 from miniworld.modules.exceptions import ImplementationType
 from miniworld.modules.primitives import LayerNorm, Linear
+from miniworld.typing import typecheck
 
 
 class OuterProduct(nn.Module):

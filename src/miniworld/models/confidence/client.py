@@ -22,16 +22,16 @@ from typing import Literal, cast
 
 import torch
 from pydantic import BaseModel
-from miniworld.training.callbacks import ModelEMA
-from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 
 from miniworld.configs import EDMDiffuserConfig
 from miniworld.data.features.batch import Batch
+from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 from miniworld.loss import confidence as conf
+from miniworld.models.confidence.model import ConfidenceModel, ConfidenceOutput
 from miniworld.models.diffusion.client import Client as DiffusionClient
 from miniworld.models.diffusion.model import ModelWrapper
-from miniworld.models.confidence.model import ConfidenceOutput, ConfidenceModel
 from miniworld.training import ParamPolicyConfig
+from miniworld.training.callbacks import ModelEMA
 from miniworld.training.precision import Precision, apply_precision
 
 

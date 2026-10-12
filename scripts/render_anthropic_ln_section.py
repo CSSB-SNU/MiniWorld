@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import json, re
+import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]

@@ -1,9 +1,9 @@
 """v2.0.0 bf16 diffusion module: norms stay fp32, everything else bf16, output fp32."""
 
 import torch
-from miniworld.modules import DiffusionTransformer
 
 from miniworld.configs import SharedConfig
+from miniworld.modules import DiffusionTransformer
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
 from miniworld.modules.diffusion_module import DiffusionConditioning, DiffusionModule
 

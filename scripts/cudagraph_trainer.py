@@ -33,8 +33,8 @@ from pathlib import Path
 
 import torch
 import torch.distributed as dist
-
 import wandb
+
 from miniworld.configs import TemplateConfig
 from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.loss.auxiliary import cal_atom_distogram_loss

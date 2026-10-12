@@ -8,15 +8,10 @@ import torch
 from jaxtyping import Bool, Float, Int
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
-from miniworld.training.client import BaseClient
-from miniworld.typing import typecheck
-from miniworld.training.callbacks import ModelEMA
-from miniworld.training.client import _SetEpochProtocol
 from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
 from miniworld.configs import XPredDecoupledDiffuserConfig
-from miniworld.training import ParamPolicyConfig
 from miniworld.data.features.batch import Batch
 from miniworld.diffusion import (
     DecoupledXPredScheduler,
@@ -32,6 +27,10 @@ from miniworld.models.miniworld.model import (
     Model,
     ModelWrapper,
 )
+from miniworld.training import ParamPolicyConfig
+from miniworld.training.callbacks import ModelEMA
+from miniworld.training.client import BaseClient, _SetEpochProtocol
+from miniworld.typing import typecheck
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence

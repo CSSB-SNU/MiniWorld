@@ -1,10 +1,10 @@
 """Fresh graph dispatch and checkpoint/log identity regression checks."""
 
-import importlib
 import copy
+import importlib
+import random
 from pathlib import Path
 from types import SimpleNamespace
-import random
 
 import numpy as np
 import pytest

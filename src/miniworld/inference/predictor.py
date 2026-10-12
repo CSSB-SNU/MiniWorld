@@ -69,18 +69,17 @@ class Predictor:
 
     def __init__(
         self,
-        model: "Model",
-        scheduler: "DecoupledXPredScheduler",
-        solver_cfg: "XPredDecoupledSolver.Config",
+        model: Model,
+        scheduler: DecoupledXPredScheduler,
+        solver_cfg: XPredDecoupledSolver.Config,
     ) -> None:
         self.model = model
         self.scheduler = scheduler
         self.solver_cfg = solver_cfg
 
     @classmethod
-    def from_client(cls, client: "Client") -> "Predictor":
+    def from_client(cls, client: Client) -> Predictor:
         """Wrap an already-loaded Client (EMA shadow, fabric, compile all OK)."""
-        from miniworld.models.miniworld.model import Model
 
         raw_model = cast("Model", getattr(client.model, "module", client.model))
         return cls(
@@ -94,7 +93,7 @@ class Predictor:
         return next(self.model.parameters()).device
 
     @torch.inference_mode()
-    def prepare(self, batch: "Batch") -> InferenceCache:
+    def prepare(self, batch: Batch) -> InferenceCache:
         """Run the trunk once, return a cache the diffusion loop reuses."""
         batch = batch.to(device=self.device)
         (

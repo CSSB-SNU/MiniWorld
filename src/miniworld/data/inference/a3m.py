@@ -34,7 +34,6 @@ import numpy as np
 from miniworld.data.constants import ResidueMapping
 from miniworld.data.pipeline import MSA
 
-
 PolymerType = Literal["protein", "rna", "dna", "na"]
 
 

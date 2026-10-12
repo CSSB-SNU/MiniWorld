@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import torch
+
 from miniworld.typing import typecheck
 
 if TYPE_CHECKING:

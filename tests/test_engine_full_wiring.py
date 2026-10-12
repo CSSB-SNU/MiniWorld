@@ -11,6 +11,7 @@ pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA requ
 
 def reference_backends(module):
     from miniworld_engine.modules.dispatch import KernelBackend
+
     from miniworld.modules.exceptions import ImplementationType
 
     reference = copy.deepcopy(module)
@@ -76,8 +77,8 @@ def test_rmsnorm_keeps_epsilon_dtype_and_gradients(width, affine, dtype):
 
 @pytest.mark.parametrize("variant", ["esmfold2", "af3"])
 def test_swa_atom_block_uses_modulation_ffn_and_preserves_checkpoint(variant):
-    from miniworld.modules.blocks.swa_atom_transformer import SWAAtomBlock
     from miniworld.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Block
+    from miniworld.modules.blocks.swa_atom_transformer import SWAAtomBlock
     from miniworld.modules.exceptions import ImplementationType
 
     torch.manual_seed(19)
@@ -147,8 +148,9 @@ def test_confidence_attention_engine_core(qk_norm):
 
 @pytest.mark.parametrize("batch_size", [1, 2])
 def test_confidence_head_backward_and_native_selection(batch_size):
-    from miniworld.modules.confidence_head import ConfidenceHead
     from miniworld_engine.modules.dispatch import KernelBackend
+
+    from miniworld.modules.confidence_head import ConfidenceHead
     from miniworld.modules.exceptions import ImplementationType
 
     torch.manual_seed(22)

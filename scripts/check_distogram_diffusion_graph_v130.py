@@ -12,14 +12,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from pathlib import Path
 import statistics
+from pathlib import Path
 
 from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
-
-from run_miniworld_distogram_train import Config
 from random_recycle_graph_trainer import train
+from run_miniworld_distogram_train import Config
 
 
 def main():

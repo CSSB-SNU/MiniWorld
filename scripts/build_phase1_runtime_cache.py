@@ -17,10 +17,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 
 def worker(args):
@@ -45,8 +45,9 @@ def worker(args):
     # Imports follow the explicit engine/config setup (kernel decorators read it).
     from omegaconf import OmegaConf
     from run_miniworld_distogram_train import Config, _build_precompile_batch
-    from miniworld.models.distogram_only import MiniSWAModel
+
     from miniworld.loss.auxiliary import cal_atom_distogram_loss
+    from miniworld.models.distogram_only import MiniSWAModel
 
     cfg = Config.model_validate(
         OmegaConf.to_container(OmegaConf.load(args.config), resolve=True)

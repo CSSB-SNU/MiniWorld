@@ -46,7 +46,7 @@ class InferenceCache:
 
     # --- Original batch reference (held so the solver can read scheme/structure
     # for R/T sampling and ODE bookkeeping without re-threading every field).
-    batch: "Batch"
+    batch: Batch
 
     # --- Trunk outputs (B, ...)
     token_single_input: torch.Tensor  # (B, L_token, d_single_token_input)
@@ -106,8 +106,8 @@ class StepSchedule:
 
 
 def build_inference_cache(
-    model: "Model",
-    batch: "Batch",
+    model: Model,
+    batch: Batch,
     *,
     token_single_input: torch.Tensor,
     token_single_trunk: torch.Tensor,
@@ -202,14 +202,14 @@ def build_inference_cache(
     # _before_atom_transformer{,_chunked} methods on AtomAttentionEncoder
     # are bypassed by the cached diffusion step. So the dump must go here.
     from miniworld.modules.diffusion_module import (
+        _dump_dir,
         _next_call_idx,
         _pool_atom_pair_to_token,
         _should_dump,
-        _dump_dir,
     )
 
     dump = _should_dump("cache_build")
-    snap_pools: dict[str, "torch.Tensor"] = {}
+    snap_pools: dict[str, torch.Tensor] = {}
     L_token_for_pool = int(scheme.token_idx.shape[1])
     if dump:
         snap_pools["0_init"] = _pool_atom_pair_to_token(
@@ -340,10 +340,10 @@ def build_inference_cache(
 
 
 def build_step_schedule(
-    model: "Model",
+    model: Model,
     cache: InferenceCache,
-    scheduler: "DecoupledXPredScheduler",
-    solver: "XPredDecoupledSolver",
+    scheduler: DecoupledXPredScheduler,
+    solver: XPredDecoupledSolver,
     *,
     num_steps: int,
     start_sigma_y: float | None = None,

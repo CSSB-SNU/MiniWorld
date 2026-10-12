@@ -18,14 +18,12 @@ from pathlib import Path
 import click
 import numpy as np
 import torch
+import wandb
 from hydra import compose, initialize_config_dir
 from lightning import Fabric
 from omegaconf import OmegaConf
 from pydantic import BaseModel
-from miniworld.training.callbacks import Callback
-from miniworld.utils.script_utils import MetricsAggregator
 
-import wandb
 from miniworld.configs import (
     BioMolDBConfig,
     CropConfig,
@@ -39,7 +37,9 @@ from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.data.features.batch import Batch
 from miniworld.models.miniworld import Client, Model
 from miniworld.training import trainable_parameters
+from miniworld.training.callbacks import Callback
 from miniworld.utils import get_step_decay_scheduler_with_warmup
+from miniworld.utils.script_utils import MetricsAggregator
 
 torch.set_float32_matmul_precision("medium")
 torch.autograd.set_detect_anomaly(False)

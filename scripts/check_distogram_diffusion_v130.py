@@ -12,9 +12,10 @@ from pathlib import Path
 
 import torch
 import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel
 from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
+from run_miniworld_distogram_train import _build_precompile_batch
+from torch.nn.parallel import DistributedDataParallel
 
 from miniworld.models.distogram_only.client import Client
 from miniworld.models.distogram_only.model_mini_swa import MiniSWAModel
@@ -22,7 +23,6 @@ from miniworld.training.engine_backend import (
     configure_engine_backend,
     configure_fused_msa_train,
 )
-from run_miniworld_distogram_train import _build_precompile_batch
 
 
 def main():

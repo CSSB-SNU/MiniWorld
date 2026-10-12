@@ -30,7 +30,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
-
 from biomol.cif import CIFMol
 from biomol.core.types import BioMolDict
 
@@ -544,7 +543,7 @@ def stack_slots(templates: list[ProteinTemplate]) -> ProteinTemplate:
 
 
 def _load_complex_chain(
-    complex_spec: "ComplexTemplateSpec",
+    complex_spec: ComplexTemplateSpec,
     template_chain_id: str,
     cif_db: Path | None,
 ) -> tuple[np.ndarray, list[str]]:
@@ -669,7 +668,7 @@ def _load_chain_centroid_from_lmdb(
 
 
 def _load_complex_chain_centroid(
-    complex_spec: "ComplexTemplateSpec",
+    complex_spec: ComplexTemplateSpec,
     template_chain_id: str,
     cif_db: Path | None,
 ) -> tuple[np.ndarray, list[str]]:
@@ -788,7 +787,7 @@ def _load_chain_atoms_from_lmdb(
 
 
 def _load_complex_chain_atoms(
-    complex_spec: "ComplexTemplateSpec",
+    complex_spec: ComplexTemplateSpec,
     template_chain_id: str,
     cif_db: Path | None,
 ) -> tuple[list[dict[str, np.ndarray]], list[str]]:
@@ -811,7 +810,7 @@ def _load_complex_chain_atoms(
     )
 
 
-def _build_derivation_expansions(spec: "InferenceSpec") -> list:
+def _build_derivation_expansions(spec: InferenceSpec) -> list:
     """Rebuild expansions for standalone contact derivation (skips MSA loading).
 
     Mirrors the per-chain expansion section of :func:`build_inference_batch`
@@ -889,7 +888,7 @@ def _build_derivation_expansions(spec: "InferenceSpec") -> list:
 
 
 def derive_contacts_from_complex_templates(
-    spec: "InferenceSpec",
+    spec: InferenceSpec,
     *,
     expansions: list | None = None,
     positive_cutoff: float = 6.0,
@@ -1129,8 +1128,8 @@ def derive_contacts_from_complex_templates(
 
 
 def load_complex_template_layers(
-    spec: "InferenceSpec",
-    expansions: list["_ChainExpansion"],
+    spec: InferenceSpec,
+    expansions: list[_ChainExpansion],
     template_id_offset: int = 1000,
 ) -> list[ProteinTemplate]:
     """Return one ``ProteinTemplate`` per chain whose slot count equals

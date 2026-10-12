@@ -5,8 +5,8 @@ from types import SimpleNamespace as NS
 import pytest
 import torch
 
-from miniworld.loss.confidence import per_atom_lddt, token_frames
 from miniworld.diffusion import EDMScheduler, EuclideanDiffuser
+from miniworld.loss.confidence import per_atom_lddt, token_frames
 
 
 def test_plddt_uses_each_batch_ground_truth_and_resolved_mask():
@@ -92,9 +92,10 @@ def test_best_of_n_uses_second_sample():
 
 
 def test_empty_template_padding_matches_training_convention():
-    from miniworld.data.pipeline import ProteinTemplate
-    from miniworld.data.features.convert import to_template_features
     import numpy as np
+
+    from miniworld.data.features.convert import to_template_features
+    from miniworld.data.pipeline import ProteinTemplate
 
     empty = ProteinTemplate.empty(3).padded(n_templates=4)
     features = to_template_features(empty, np.arange(3))
@@ -104,9 +105,10 @@ def test_empty_template_padding_matches_training_convention():
 
 
 def test_template_masks_geometry_but_preserves_interchain_query():
-    from miniworld.modules.template_embedder_af3 import AF3TemplateEmbedder
-    from miniworld.data.features import TemplateFeatures
     from torch import nn
+
+    from miniworld.data.features import TemplateFeatures
+    from miniworld.modules.template_embedder_af3 import AF3TemplateEmbedder
 
     class IdentityPair(nn.Module):
         def forward(self, x, mask):
@@ -143,6 +145,7 @@ def test_template_masks_geometry_but_preserves_interchain_query():
 
 def test_inference_has_representatives_without_ground_truth(tmp_path, monkeypatch):
     import numpy as np
+
     from miniworld.data.inference import build as build_module
     from miniworld.data.inference.ccd import CCDResidue
     from miniworld.data.inference.spec import InferenceSpec
@@ -227,6 +230,7 @@ def test_confidence_targets_batch_two_without_gt_leak_into_head():
 
 def test_confidence_chain_permutation_and_mask_follow_each_other():
     import numpy as np
+
     from miniworld.loss.symmetry import align_confidence_targets
 
     torch.manual_seed(12)
@@ -259,6 +263,7 @@ def test_confidence_chain_permutation_and_mask_follow_each_other():
 
 def test_confidence_residue_symmetry_swap():
     import numpy as np
+
     from miniworld.loss.symmetry import align_confidence_targets
 
     torch.manual_seed(71)

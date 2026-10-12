@@ -1,9 +1,9 @@
 """Source-backed SVG of native Anthropic TriMul and the saved-policy derivative."""
 
-from pathlib import Path
-from html import escape
 import shutil
 import xml.etree.ElementTree as ET
+from html import escape
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 W, H = 1600, 2070

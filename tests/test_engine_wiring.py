@@ -51,11 +51,12 @@ def test_condition_loop_fullgraph_preserves_last_recycle_grad(recycles, grad_ena
 @pytest.mark.parametrize("kind", ["opm", "pwa", "pair_cond", "single_cond"])
 @pytest.mark.parametrize("training", [False, True])
 def test_connected_paths_amp(kind, training):
+    from miniworld_engine.modules.dispatch import KernelBackend, resolve_layernorm
+
     from miniworld.configs.models import SharedConfig
     from miniworld.modules.diffusion_module import DiffusionConditioning
-    from miniworld.modules.mini_msa_module import MiniMSAModuleBlock
-    from miniworld_engine.modules.dispatch import KernelBackend, resolve_layernorm
     from miniworld.modules.exceptions import ImplementationType
+    from miniworld.modules.mini_msa_module import MiniMSAModuleBlock
 
     torch.manual_seed(21)
     np.random.seed(21)

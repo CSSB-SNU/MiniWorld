@@ -20,10 +20,10 @@ from dataclasses import dataclass
 
 import torch
 from jaxtyping import Bool, Float, Int
-from miniworld.typing import typecheck
 
 from miniworld.models.diffusion.model import DiffusionModel
 from miniworld.modules.confidence_head import ConfidenceHead
+from miniworld.typing import typecheck
 
 
 class ConfidenceModel(DiffusionModel):

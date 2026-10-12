@@ -107,11 +107,11 @@ def test_mapping_crop_and_unknown_atom():
 
 def test_training_inference_match_even_when_crop_removed_missing_atom():
     from miniworld.data.features.convert import to_reference_features
-    from miniworld.data.inference.ccd import _ccdmol_to_residue
     from miniworld.data.inference.build import (
         _build_reference_arrays,
         _strip_terminal_atoms,
     )
+    from miniworld.data.inference.ccd import _ccdmol_to_residue
 
     full = molecule()
     cropped_atoms = NS(
@@ -145,11 +145,12 @@ def test_training_inference_match_even_when_crop_removed_missing_atom():
 
 def test_inference_failure_mask_survives_terminal_stripping(monkeypatch):
     from rdkit.Chem import AllChem
-    from miniworld.data.inference.ccd import _ccdmol_to_residue
+
     from miniworld.data.inference.build import (
-        _strip_terminal_atoms,
         _build_reference_arrays,
+        _strip_terminal_atoms,
     )
+    from miniworld.data.inference.ccd import _ccdmol_to_residue
 
     monkeypatch.setattr(AllChem, "EmbedMolecule", lambda *args: -1)
     residue = _ccdmol_to_residue("FAIL", molecule())
@@ -233,11 +234,11 @@ def test_generated_geometry_preserves_stereochemistry(smiles):
 
 def test_full_component_mapping_after_crop_removed_all_missing_atoms():
     from miniworld.data.features.convert import to_reference_features
-    from miniworld.data.inference.ccd import _ccdmol_to_residue
     from miniworld.data.inference.build import (
         _build_reference_arrays,
         _strip_terminal_atoms,
     )
+    from miniworld.data.inference.ccd import _ccdmol_to_residue
 
     full = from_smiles("CCO")
     # Only A0 is missing. The other atoms' coordinates deliberately have a

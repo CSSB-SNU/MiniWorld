@@ -1,9 +1,9 @@
 """Check the consolidated engine installation without applying legacy patches."""
 
-from importlib import metadata, util
 import json
-from pathlib import Path
 import re
+from importlib import metadata, util
+from pathlib import Path
 
 
 def check_installation(package, version, direct_url, expected_commit):

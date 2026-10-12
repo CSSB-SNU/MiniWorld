@@ -2,8 +2,8 @@
 
 import argparse
 import json
-from pathlib import Path
 import types
+from pathlib import Path
 
 
 def main():

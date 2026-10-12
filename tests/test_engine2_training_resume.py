@@ -1,8 +1,10 @@
 """Engine 2 integration must retain Adam values when parameter strides change."""
 
 import os
+
 import pytest
 import torch
+
 from miniworld.training.engine_backend import (
     align_engine_optimizer_state,
     configure_fused_msa_train,

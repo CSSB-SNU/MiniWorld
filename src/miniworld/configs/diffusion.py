@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Annotated, Literal, Union
+from typing import Literal
 
-from pydantic import BaseModel, Discriminator, Field
+from pydantic import BaseModel, Field
 
 from miniworld.diffusion import (
     DecoupledXPredScheduler,

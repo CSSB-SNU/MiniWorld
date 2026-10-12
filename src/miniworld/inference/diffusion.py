@@ -36,9 +36,9 @@ if TYPE_CHECKING:
 
 
 def diffusion_step(
-    model: "Model",
-    cache: "InferenceCache",
-    schedule: "StepSchedule",
+    model: Model,
+    cache: InferenceCache,
+    schedule: StepSchedule,
     x_t: torch.Tensor,
     t_index: int,
 ) -> torch.Tensor:

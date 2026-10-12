@@ -366,7 +366,7 @@ def chain_to_a3m_lmdb(
     species = msa.species  # (N,) object/str
 
     n_seqs, L = aligned.shape
-    if expected_len is not None and L != expected_len:
+    if expected_len is not None and expected_len != L:
         return None
     lines: list[str] = []
     for k in range(n_seqs):

@@ -10,14 +10,6 @@ from miniworld_engine.modules.swa_atom_attention.module import (
     build_local_structure_neighbor_indices,
 )
 from pydantic import BaseModel
-from miniworld.typing import typecheck
-from miniworld.modules import DiffusionTransformer, SWAAtomTransformer
-from miniworld.modules.blocks._engine_impl import to_engine_impl
-from miniworld.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Transformer
-from miniworld.modules.layers import RelativePositionEmbedding, fourier_embedding
-from miniworld.modules.primitives import (
-    Linear,
-)
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
@@ -27,7 +19,15 @@ from miniworld.data.features import (
     SchemeFeatures,
     StructureFeatures,
 )
+from miniworld.modules import DiffusionTransformer, SWAAtomTransformer
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
+from miniworld.modules.blocks._engine_impl import to_engine_impl
+from miniworld.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Transformer
+from miniworld.modules.layers import RelativePositionEmbedding, fourier_embedding
+from miniworld.modules.primitives import (
+    Linear,
+)
+from miniworld.typing import typecheck
 
 
 def _make_atom_transformer(

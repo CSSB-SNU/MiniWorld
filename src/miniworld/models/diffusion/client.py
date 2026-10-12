@@ -25,25 +25,23 @@ import torch
 from jaxtyping import Bool, Float
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
-from miniworld.training.client import BaseClient
-from miniworld.training.callbacks import ModelEMA
-from miniworld.training.client import _SetEpochProtocol
-from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
+from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
 from miniworld.configs import EDMDiffuserConfig
 from miniworld.data.features.batch import Batch
-from torch.utils.checkpoint import checkpoint
-
+from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 from miniworld.loss.smooth_lddt import cal_smooth_lddt
-from miniworld.training.phase2_graph_safe import cal_loss_gs
 from miniworld.models.diffusion.model import (
+    DiffusionModel,
     InferenceOutput,
     ModelWrapper,
-    DiffusionModel,
 )
 from miniworld.training import ParamPolicyConfig
+from miniworld.training.callbacks import ModelEMA
+from miniworld.training.client import BaseClient, _SetEpochProtocol
 from miniworld.training.engine_backend import EngineBackend, configure_engine_backend
+from miniworld.training.phase2_graph_safe import cal_loss_gs
 from miniworld.training.precision import Precision, apply_precision, model_autocast
 
 if TYPE_CHECKING:

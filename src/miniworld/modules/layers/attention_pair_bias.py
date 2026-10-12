@@ -4,8 +4,8 @@ import torch.nn.functional as F
 from einops import rearrange
 from jaxtyping import Bool, Float
 
-from miniworld.typing import typecheck
 from miniworld.modules.primitives import Linear
+from miniworld.typing import typecheck
 
 from .ops import sigmoid_gate
 

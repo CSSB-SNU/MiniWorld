@@ -1,7 +1,9 @@
 """Backward fusion accuracy, tail/stride handling, and autograd branch placement."""
 
-import pytest, torch, triton
-from miniworld_engine.autotune.shape_key import token_key, both_key, pack
+import pytest
+import torch
+import triton
+from miniworld_engine.autotune.shape_key import both_key, pack, token_key
 from miniworld_engine.kernels.trimul_inproj.triton.backward_fused import (
     _input_dual_bwd_kernel,
     _ln_bwd_residual_kernel,

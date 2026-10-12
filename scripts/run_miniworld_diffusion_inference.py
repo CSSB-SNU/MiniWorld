@@ -22,8 +22,8 @@ diffusion-head EMA; loading swaps it in automatically (frozen trunk stays as sav
 
 from __future__ import annotations
 
-import logging
 import dataclasses
+import logging
 import os
 import time
 from pathlib import Path
@@ -46,10 +46,10 @@ from miniworld.configs import (
     TokenizerConfig,
 )
 from miniworld.data.dataloader import BioMolDBV2Config
-from miniworld.data.dataloader.dataloader import BioMolData
-from miniworld.data.features.batch import Batch
 from miniworld.data.dataloader.collate import _ceil_to_multiple
+from miniworld.data.dataloader.dataloader import BioMolData
 from miniworld.data.features import Batch as _Batch
+from miniworld.data.features.batch import Batch
 from miniworld.data.inference import InferenceSpec, build_inference_batch
 from miniworld.data.io.to_cif import batch_to_cif
 from miniworld.loss import metrics
