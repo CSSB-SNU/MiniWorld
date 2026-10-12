@@ -138,7 +138,10 @@ page(
             "온라인 현황판",
             "https://miniworld-kernel-status.psk6950.chatgpt.site/trimul.html#current-wiring",
         ),
-        ("이전 SVG 보관", "docs/archive/trimul-fusion/archive-pre-anthropic-20260921/README.md"),
+        (
+            "이전 SVG 보관",
+            "docs/archive/trimul-fusion/archive-pre-anthropic-20260921/README.md",
+        ),
         ("Transition 뷰어", "docs/kernels/transition/TRANSITION_STATUS.html"),
     ],
 )

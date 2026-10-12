@@ -577,54 +577,40 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
         model.compile(dynamic=False)
     from miniworld.data.features.batch import Batch
 
-    use_pin = os.environ.get("MW_GRAPH_PIN", "1") == "1"
-    if use_pin:
-        Batch.pin_memory = pin_batch
-    if os.environ.get("MW_GRAPH_CACHED_INPUTS") == "1":
-        assert diagnostic_steps, "Cached-input mode is diagnostic only"
-        cached = torch.load(
-            Path(run_dir) / f"input-rank{rank}.pt",
-            map_location="cpu",
-            weights_only=False,
+    Batch.pin_memory = pin_batch
+    ds = BioMolData(
+        BioMolData.BioMolConfig(
+            crop_config=cfg.data.crop,
+            msa_config=cfg.data.msa,
+            DB_config=cfg.data.train_db,
+            sampler_config=cfg.data.sampler,
+            tokenizer_config=cfg.data.tokenizer,
         )
-        if use_pin:
-            cached = [pin_batch(x) for x in cached]
-        first, second = cached
-        it = itertools.cycle(cached)
-    else:
-        ds = BioMolData(
-            BioMolData.BioMolConfig(
-                crop_config=cfg.data.crop,
-                msa_config=cfg.data.msa,
-                DB_config=cfg.data.train_db,
-                sampler_config=cfg.data.sampler,
-                tokenizer_config=cfg.data.tokenizer,
-            )
-        )
-        dl = ds.create_ddp_dataloader(
-            world_size=world,
-            rank=rank,
-            seed=cfg.train.seed,
-            drop_last=True,
-            batch_size=cfg.train.num_batch,
-            num_workers=cfg.train.num_workers,
-            pin_memory=use_pin,
-            prefetch_factor=cfg.train.prefetch_factor,
-            num_samples_per_rank=cfg.train.train_item // world,
-            persistent_workers=cfg.train.num_workers > 0,
-            shuffle=True,
-            bucket_msa_multiple=cfg.train.bucket_msa_multiple,
-            bucket_token_multiple=cfg.train.bucket_token_multiple,
-            bucket_atom_multiple=cfg.train.bucket_atom_multiple,
-            bucket_template_multiple=TemplateConfig().n_templates,
-        )
-        dl.sampler.set_epoch(epoch)
-        ds.set_epoch(epoch)
-        it = iter(dl)
-        first = next(it)
-        second = next(it)
-        if rank == 0:
-            print("[graph] real batches ready; compile/capture begins", flush=True)
+    )
+    dl = ds.create_ddp_dataloader(
+        world_size=world,
+        rank=rank,
+        seed=cfg.train.seed,
+        drop_last=True,
+        batch_size=cfg.train.num_batch,
+        num_workers=cfg.train.num_workers,
+        pin_memory=True,
+        prefetch_factor=cfg.train.prefetch_factor,
+        num_samples_per_rank=cfg.train.train_item // world,
+        persistent_workers=cfg.train.num_workers > 0,
+        shuffle=True,
+        bucket_msa_multiple=cfg.train.bucket_msa_multiple,
+        bucket_token_multiple=cfg.train.bucket_token_multiple,
+        bucket_atom_multiple=cfg.train.bucket_atom_multiple,
+        bucket_template_multiple=TemplateConfig().n_templates,
+    )
+    dl.sampler.set_epoch(epoch)
+    ds.set_epoch(epoch)
+    it = iter(dl)
+    first = next(it)
+    second = next(it)
+    if rank == 0:
+        print("[graph] real batches ready; compile/capture begins", flush=True)
     if diagnostic_steps:
         Path(run_dir).mkdir(parents=True, exist_ok=True)
         torch.save([first, second], Path(run_dir) / f"input-rank{rank}.pt")
@@ -1008,14 +994,6 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
             )
             if diagnostic_steps:
                 records.append(timing)
-            metrics_dir = os.environ.get("MW_GRAPH_METRICS_DIR")
-            if metrics_dir and done <= int(
-                os.environ.get("MW_GRAPH_METRICS_STEPS", "100")
-            ):
-                destination = Path(metrics_dir)
-                destination.mkdir(parents=True, exist_ok=True)
-                with (destination / f"rank{rank}.jsonl").open("a") as handle:
-                    handle.write(json.dumps(timing) + "\n")
             if rank == 0:
                 message = f"Step {global_step:8d} (Epoch {epoch:5d}) | train/distogram_loss={value:.6f} step_time_ms={timing['wall_ms']:.1f}"
                 if diagnostic_steps:

@@ -40,7 +40,6 @@ from miniworld.training.phase2_graph_safe import (
     cal_loss_gs,
     clear_pack_caches,
     graph_safe_sampling,
-    weighted_align_gs,
 )
 from miniworld.training.precision import model_autocast
 
@@ -115,7 +114,6 @@ class Phase2GraphTrainer:
         self.losses: dict[int | None, torch.Tensor] = {}
         self.recycles: list[int | None] = [None]
         self.use_bond = False
-        self._stash = None  # MW_P2_ALIGN_DIAG only: the tensors of one eager micro-step
 
     # ------------------------------------------------------------------ build
     def _fill_atom_weight(self, batch) -> None:
@@ -172,14 +170,6 @@ class Phase2GraphTrainer:
                 t_emb=t_emb,
             )
         update = update.float()
-        if self._stash is not None:
-            self._stash.update(
-                x0=x0.detach(),
-                x_input=x_input.detach(),
-                update=update.detach(),
-                sigma=sigma.detach(),
-                x_mask=x_mask,
-            )
         structure = cal_loss_gs(
             client.diffuser,
             x0,
@@ -330,8 +320,6 @@ class Phase2GraphTrainer:
         del ref_grads_by_depth
         if self.use_bond:
             self._check_bond_term(raw, rng, recycles[-1], first_dev)
-        if os.environ.get("MW_P2_ALIGN_DIAG"):
-            self._align_diagnostic(raw, rng, recycles[-1])
         raw._forced_n_recycle = None  # noqa: SLF001
         self.pointers = [p.grad.data_ptr() for p in self.params]
         client.logger.info(
@@ -356,76 +344,6 @@ class Phase2GraphTrainer:
                 "[graph] the replayed gradients differ from the eager step by %.2e",
                 worst,
             )
-
-    def _align_diagnostic(self, raw, rng, depth) -> None:
-        """MW_P2_ALIGN_DIAG=1: the Eq.4 weights of the first batch's resolved atoms, and the same micro-step's loss with the alignment
-        weighted by mask only vs by mask * w_l (same random numbers, eager)."""
-        log, lc = self.client.logger, self.client.config.loss
-        mask = self.static.structure.atom_pos_mask.reshape(-1).bool()
-        w = self.atom_weight.reshape(-1)[mask]
-        values, counts = torch.unique(w, return_counts=True)
-        log.info(
-            "[align-diag] resolved atoms %d; w_l value -> atoms: %s",
-            int(mask.sum()),
-            {round(float(v), 3): int(c) for v, c in zip(values, counts)},
-        )
-        raw._forced_n_recycle = depth  # noqa: SLF001
-        flag, out = lc.align_atom_weight, {}
-        self._stash = {}
-        for on in (False, True):
-            lc.align_atom_weight = on
-            torch.cuda.set_rng_state(rng)
-            self._clear_grads()
-            with torch.cuda.stream(self.stream):
-                out[on] = self._body().tolist()
-            torch.cuda.synchronize()
-        lc.align_atom_weight = flag
-        st, self._stash = self._stash, None
-        with torch.no_grad():  # structure RMSD of the denoised prediction against the ground truth aligned both ways
-            xp = self.client.diffuser.get_x_pred(
-                x_input=st["x_input"], x_update=st["update"], sigma=st["sigma"]
-            )
-            m = st["x_mask"].expand(xp.shape[:-1])
-            x0s, ps = (
-                torch.where(m[..., None], st["x0"].to(xp.dtype), 0.0),
-                torch.where(m[..., None], xp, 0.0),
-            )
-            wa = self.atom_weight.to(xp.dtype)
-            heavy = m & (wa > 1.0)
-            res = {}
-            for name, aw in (
-                ("mask-only", m.to(xp.dtype)),
-                ("mask*w_l", m.to(xp.dtype) * wa),
-            ):
-                sq = (ps - weighted_align_gs(x0s, ps, aw)).pow(2).sum(-1)
-                rm_all = ((sq * m).sum(-1) / m.sum(-1).clamp_min(1)).sqrt().mean()
-                rm_hv = (
-                    ((sq * heavy).sum(-1) / heavy.sum(-1).clamp_min(1)).sqrt().mean()
-                    if bool(heavy.any())
-                    else float("nan")
-                )
-                res[name] = (float(rm_all), float(rm_hv))
-        log.info(
-            "[align-diag] RMSD (A) of the denoised prediction vs aligned GT, mean over %d augments, mean sigma %.2f, %d nucleic/ligand atoms: "
-            "all atoms %.3f -> %.3f | nucleic/ligand atoms %.3f -> %.3f (mask-only -> mask*w_l)",
-            xp.shape[0],
-            float(st["sigma"].mean()),
-            int(heavy[0, 0].sum()),
-            res["mask-only"][0],
-            res["mask*w_l"][0],
-            res["mask-only"][1],
-            res["mask*w_l"][1],
-        )
-        raw._forced_n_recycle = None  # noqa: SLF001
-        self._clear_grads()
-        log.info(
-            "[align-diag] recycle %s, same draws: EDM term mask-only %.6f vs mask*w_l %.6f (total %.6f vs %.6f)",
-            depth,
-            out[False][1],
-            out[True][1],
-            out[False][0],
-            out[True][0],
-        )
 
     def _check_bond_term(self, raw, rng, depth, first_dev) -> None:
         """Replay vs eager on synthetic bond pairs (atoms k, k+1, both resolved), then restore the pairs of the first batch."""
@@ -527,33 +445,6 @@ class Phase2GraphTrainer:
                 "A gradient buffer moved: the captured graph would write into freed memory"
             )
 
-    def _profile_replay(self) -> None:
-        """MW_P2_PROFILE=1: GPU time per kernel family of one replay on the current batch (debugging aid, rank 0, once)."""
-        from torch.profiler import ProfilerActivity, profile
-
-        torch.cuda.synchronize()
-        with profile(activities=[ProfilerActivity.CUDA]) as prof:
-            self.graphs[self.recycles[-1]].replay()
-            torch.cuda.synchronize()
-        events = [
-            e for e in prof.events() if e.device_type == torch.autograd.DeviceType.CUDA
-        ]
-        total = sum(e.device_time for e in events) / 1000
-        by_name: dict[str, list[float]] = {}
-        for e in events:
-            row = by_name.setdefault(e.name, [0.0, 0])
-            row[0] += e.device_time / 1000
-            row[1] += 1
-        self.client.logger.info(
-            "[graph-profile] one replay: %d kernels, GPU busy %.1f ms",
-            len(events),
-            total,
-        )
-        for name, (ms, n) in sorted(by_name.items(), key=lambda kv: -kv[1][0])[:25]:
-            self.client.logger.info(
-                "[graph-profile] %8.3f ms x%-4d %s", ms, n, name[:110]
-            )
-
     def epoch(self, dataloader):
         """Yield one result dict per micro-batch, like ``Client.training_epoch``; the optimizer step runs every ``ga`` of them."""
         client = self.client
@@ -607,28 +498,9 @@ class Phase2GraphTrainer:
                 self._fill_atom_weight(batch)
                 if self.use_bond:
                     self._fill_bond_pairs(batch)
-                if (
-                    os.environ.get("MW_P2_ALIGN_DIAG")
-                    and batch_idx < 400
-                    and getattr(self, "_diag_left", 4) > 0
-                ):
-                    if (
-                        float(self.atom_weight.max()) > 1.0
-                    ):  # a batch with nucleic-acid / ligand atoms
-                        self._diag_left = getattr(self, "_diag_left", 4) - 1
-                        self._align_diagnostic(
-                            client.model, torch.cuda.get_rng_state(), self.recycles[-1]
-                        )
                 spent["copy"] += time.perf_counter() - t
                 events[1].record()
                 t = time.perf_counter()
-                if (
-                    os.environ.get("MW_P2_PROFILE")
-                    and batch_idx == 3
-                    and client.is_global_zero
-                    and client.epoch == 0
-                ):
-                    self._profile_replay()
                 recycle = self._draw_recycle()
                 self.graphs[recycle].replay()
                 losses[slot].copy_(self.losses[recycle])

@@ -200,73 +200,15 @@ def build_inference_cache(
     # Chunked atom attention is the default here (cache prep is inference-only and the
     # canonical [B, L_atom, L_atom, d] broadcast OOMs at ~14k+ atoms). Built-in fallback.
     use_chunked_inference = True
-    # Atom-pair build-up instrumentation — opt-in dump of per-stage L2 norm
-    # pooled to token-pair. The diffusion_module.py helpers handle the env
-    # var check, counter cap, and NPZ write. Inference (this cache builder)
-    # is the ONLY caller during normal runs — the in-place
-    # _before_atom_transformer{,_chunked} methods on AtomAttentionEncoder
-    # are bypassed by the cached diffusion step. So the dump must go here.
-    from miniworld.modules.diffusion_module import (
-        _dump_dir,
-        _next_call_idx,
-        _pool_atom_pair_to_token,
-        _should_dump,
-    )
-
-    dump = _should_dump("cache_build")
-    snap_pools: dict[str, torch.Tensor] = {}
-    L_token_for_pool = int(scheme.token_idx.shape[1])
-    if dump:
-        snap_pools["0_init"] = _pool_atom_pair_to_token(
-            atom_pair,
-            atom_to_token_idx_map,
-            L_token_for_pool,
-        )
-
-    # Dump path mirrors the exact ``add_`` sequence on atom_pair so each
-    # captured stage is the cumulative state after one specific addition:
-    #   0_init        : atom_pair = to_atom_pair(atom_pair_init)
-    #   1_token_cond  : + _to_add_pair[b, A[b,i], A[b,j]]  (pair-cond gather)
-    #   2_left        : + _left.unsqueeze(2)   (row-broadcast atom-single)
-    #   3_right       : + _right.unsqueeze(1)  (col-broadcast atom-single)
-    #   4_mlp         : + mlp_atom_pair(atom_pair)  (residual)
-    # No stages are merged — every distinct ``add_`` gets its own row.
     if use_chunked_inference:
         _ATOM_CHUNK = 1024
-        if dump:
-            for s in range(0, atom_length, _ATOM_CHUNK):
-                e = min(s + _ATOM_CHUNK, atom_length)
-                row_tokens = atom_to_token_idx_map[:, s:e].unsqueeze(-1)
-                atom_pair[:, s:e].add_(_to_add_pair[b_arange, row_tokens, col_tokens])
-            snap_pools["1_token_cond"] = _pool_atom_pair_to_token(
-                atom_pair,
-                atom_to_token_idx_map,
-                L_token_for_pool,
-            )
-            for s in range(0, atom_length, _ATOM_CHUNK):
-                e = min(s + _ATOM_CHUNK, atom_length)
-                atom_pair[:, s:e].add_(_left[:, s:e].unsqueeze(2))
-            snap_pools["2_left"] = _pool_atom_pair_to_token(
-                atom_pair,
-                atom_to_token_idx_map,
-                L_token_for_pool,
-            )
-            for s in range(0, atom_length, _ATOM_CHUNK):
-                e = min(s + _ATOM_CHUNK, atom_length)
-                atom_pair[:, s:e].add_(_right.unsqueeze(1))
-            snap_pools["3_right"] = _pool_atom_pair_to_token(
-                atom_pair,
-                atom_to_token_idx_map,
-                L_token_for_pool,
-            )
-        else:
-            for s in range(0, atom_length, _ATOM_CHUNK):
-                e = min(s + _ATOM_CHUNK, atom_length)
-                row_tokens = atom_to_token_idx_map[:, s:e].unsqueeze(-1)
-                pair_slice = atom_pair[:, s:e]
-                pair_slice.add_(_to_add_pair[b_arange, row_tokens, col_tokens])
-                pair_slice.add_(_left[:, s:e].unsqueeze(2))
-                pair_slice.add_(_right.unsqueeze(1))
+        for s in range(0, atom_length, _ATOM_CHUNK):
+            e = min(s + _ATOM_CHUNK, atom_length)
+            row_tokens = atom_to_token_idx_map[:, s:e].unsqueeze(-1)
+            pair_slice = atom_pair[:, s:e]
+            pair_slice.add_(_to_add_pair[b_arange, row_tokens, col_tokens])
+            pair_slice.add_(_left[:, s:e].unsqueeze(2))
+            pair_slice.add_(_right.unsqueeze(1))
         for s in range(0, atom_length, _ATOM_CHUNK):
             e = min(s + _ATOM_CHUNK, atom_length)
             atom_pair[:, s:e].add_(enc.mlp_atom_pair(atom_pair[:, s:e]))
@@ -276,45 +218,8 @@ def build_inference_cache(
         # safe for small L_atom (kept as a reference; chunking is the default).
         row_tokens_full = atom_to_token_idx_map.unsqueeze(-1)  # [B, L_atom, 1]
         pair_cond = _to_add_pair[b_arange, row_tokens_full, col_tokens]
-        if dump:
-            atom_pair = atom_pair + pair_cond
-            snap_pools["1_token_cond"] = _pool_atom_pair_to_token(
-                atom_pair,
-                atom_to_token_idx_map,
-                L_token_for_pool,
-            )
-            atom_pair = atom_pair + _left.unsqueeze(2)
-            snap_pools["2_left"] = _pool_atom_pair_to_token(
-                atom_pair,
-                atom_to_token_idx_map,
-                L_token_for_pool,
-            )
-            atom_pair = atom_pair + _right.unsqueeze(1)
-            snap_pools["3_right"] = _pool_atom_pair_to_token(
-                atom_pair,
-                atom_to_token_idx_map,
-                L_token_for_pool,
-            )
-        else:
-            atom_pair = atom_pair + pair_cond + _left.unsqueeze(2) + _right.unsqueeze(1)
+        atom_pair = atom_pair + pair_cond + _left.unsqueeze(2) + _right.unsqueeze(1)
         atom_pair = atom_pair + enc.mlp_atom_pair(atom_pair)
-
-    if dump:
-        snap_pools["4_mlp"] = _pool_atom_pair_to_token(
-            atom_pair,
-            atom_to_token_idx_map,
-            L_token_for_pool,
-        )
-        out_dir = _dump_dir()
-        assert out_dir is not None
-        call_idx = _next_call_idx("cache_build")
-        import numpy as np
-
-        np.savez(
-            out_dir / f"atom_pair_cache_build_call{call_idx:04d}.npz",
-            **{k: v.numpy() for k, v in snap_pools.items()},
-            atom_to_token_idx_map=atom_to_token_idx_map[0].cpu().numpy(),
-        )
 
     # --- Scatter scaffolding ---
     token_length = int(scheme.token_idx.shape[1])
