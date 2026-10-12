@@ -1,12 +1,15 @@
 logs/
 runs/
-checkpoints/
+/checkpoints/
 *.pt
 *.cif
 *.mmcif
 output/
 outputs/
 *.sh
+# tooling scripts are source, not launch artifacts
+!/scripts/*.sh
+!/scripts/**/*.sh
 wandb/
 # one-off launch files (formerly submits/); only reviewed ones are tracked
 /scripts/slurm/
