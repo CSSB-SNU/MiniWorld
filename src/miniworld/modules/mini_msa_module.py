@@ -28,9 +28,9 @@ from miniworld_engine.modules import (
 )
 from miniworld_engine.modules.exceptions import ImplementationType as _EngineImpl
 from pydantic import BaseModel, model_validator
-from team_gm import typecheck
-from team_gm.modules.exceptions import ImplementationType, InvalidImplementationError
-from team_gm.modules.primitives import Linear
+from miniworld.typing import typecheck
+from miniworld.modules.exceptions import ImplementationType, InvalidImplementationError
+from miniworld.modules.primitives import Linear
 from torch import nn
 from typing_extensions import Self
 

@@ -7,7 +7,7 @@ bf16 module path.
 import pytest
 import torch
 from miniworld_engine.integrations import bias_only_dit, bias_only_dit_train
-from team_gm.modules.exceptions import ImplementationType
+from miniworld.modules.exceptions import ImplementationType
 
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
 

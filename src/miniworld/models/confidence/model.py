@@ -20,7 +20,7 @@ from dataclasses import dataclass
 
 import torch
 from jaxtyping import Bool, Float, Int
-from team_gm import typecheck
+from miniworld.typing import typecheck
 
 from miniworld.models.diffusion.model import DiffusionModel
 from miniworld.modules.confidence_head import ConfidenceHead

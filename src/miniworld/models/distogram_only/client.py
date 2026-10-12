@@ -7,9 +7,9 @@ import numpy as np
 import torch
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel, Discriminator, Field, Tag
-from team_gm import BaseClient
-from team_gm.core.callbacks import ModelEMA
-from team_gm.core.client import _SetEpochProtocol
+from miniworld.training.client import BaseClient
+from miniworld.training.callbacks import ModelEMA
+from miniworld.training.client import _SetEpochProtocol
 from torch.utils.data import DataLoader
 
 from miniworld.data.features.batch import Batch

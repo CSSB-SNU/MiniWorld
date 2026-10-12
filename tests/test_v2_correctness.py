@@ -5,7 +5,7 @@ import pytest
 import torch
 
 from miniworld.loss.confidence import per_atom_lddt, token_frames
-from team_gm.diffusion import EDMScheduler, EuclideanDiffuser
+from miniworld.diffusion import EDMScheduler, EuclideanDiffuser
 
 
 def test_plddt_uses_each_batch_ground_truth_and_resolved_mask():

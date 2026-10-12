@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from jaxtyping import Bool, Float, Int
-from team_gm import typecheck
+from miniworld.typing import typecheck
 
 from miniworld.utils.structure import (
     extract_contact_map,

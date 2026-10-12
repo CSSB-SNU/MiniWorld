@@ -32,8 +32,8 @@ from typing import TYPE_CHECKING, Literal
 
 import torch
 from pydantic import BaseModel, Field
-from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
-from team_gm.modules.primitives import Linear
+from miniworld.modules import DiffusionTransformer, SWAAtomTransformer
+from miniworld.modules.primitives import Linear
 from torch import nn
 
 from miniworld.configs import SharedConfig

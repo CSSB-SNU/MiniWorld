@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 from jaxtyping import Float, Bool, Int
 
-from team_gm import typecheck
+from miniworld.typing import typecheck
 
 @typecheck
 def get_shortest_distances(

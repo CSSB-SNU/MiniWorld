@@ -24,10 +24,10 @@ import torch
 from jaxtyping import Bool, Float, Int
 from pydantic import BaseModel, Field, model_validator
 import torch.nn.functional as F
-from team_gm import typecheck
-from team_gm.diffusion import EDMScheduler
-from team_gm.modules.layers.embeddings import fourier_embedding
-from team_gm.modules.primitives import Linear
+from miniworld.typing import typecheck
+from miniworld.diffusion import EDMScheduler
+from miniworld.modules.layers.embeddings import fourier_embedding
+from miniworld.modules.primitives import Linear
 from torch import nn
 
 

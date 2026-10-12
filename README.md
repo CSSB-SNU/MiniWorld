@@ -5,7 +5,7 @@
 | Path | Contents |
 |---|---|
 | `src/`, `configs/`, `tests/` | MiniWorld package, Hydra configs, tests |
-| `libs/` | team-gm and StructCooker submodules; local dependency checkouts; `patches/` for FoldBench |
+| `libs/` | StructCooker submodule; local dependency checkouts; `patches/` for FoldBench |
 | `scripts/` | Python entry points and tools; `slurm/` holds sbatch launchers (mostly local, untracked) |
 | `docs/` | Guides and records; `kernels/` kernel diagrams and status reports; `history/` retired material |
 | `runs/` | Every run output: training runs, `logs/`, `outputs/`, `eval_results/`, `wandb/` (ignored by Git except reviewed benchmark records) |

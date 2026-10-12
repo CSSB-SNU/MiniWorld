@@ -55,7 +55,7 @@ def test_connected_paths_amp(kind, training):
     from miniworld.modules.diffusion_module import DiffusionConditioning
     from miniworld.modules.mini_msa_module import MiniMSAModuleBlock
     from miniworld_engine.modules.dispatch import KernelBackend, resolve_layernorm
-    from team_gm.modules.exceptions import ImplementationType
+    from miniworld.modules.exceptions import ImplementationType
 
     torch.manual_seed(21)
     np.random.seed(21)

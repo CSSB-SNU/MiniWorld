@@ -53,9 +53,9 @@ from miniworld_engine.modules.bias_only_dit import BiasOnlyDiTBlock
 from miniworld_engine.modules.functional import sigmoid_gate
 from miniworld_engine.modules.primitives import LayerNorm, Linear
 from pydantic import BaseModel
-from team_gm import typecheck
-from team_gm.modules.blocks._engine_impl import to_engine_impl
-from team_gm.modules.exceptions import ImplementationType
+from miniworld.typing import typecheck
+from miniworld.modules.blocks._engine_impl import to_engine_impl
+from miniworld.modules.exceptions import ImplementationType
 from torch import nn
 from torch.utils.checkpoint import checkpoint_sequential
 

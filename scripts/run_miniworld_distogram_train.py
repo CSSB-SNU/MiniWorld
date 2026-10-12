@@ -22,8 +22,8 @@ from hydra import compose, initialize_config_dir
 from lightning import Fabric
 from omegaconf import OmegaConf
 from pydantic import BaseModel, Discriminator, Tag
-from team_gm.core.callbacks import Callback
-from team_gm.utils.script_utils import MetricsAggregator
+from miniworld.training.callbacks import Callback
+from miniworld.utils.script_utils import MetricsAggregator
 from typing import Annotated, Union
 
 import wandb

@@ -11,9 +11,9 @@ import math
 
 import torch
 
-from team_gm.modules.layers.adaln import AdaptiveLayerNorm
-from team_gm.modules.layers.ops import apply_pairwise_rotation, mp_sum, mp_swish_gate
-from team_gm.modules.primitives import (
+from miniworld.modules.layers.adaln import AdaptiveLayerNorm
+from miniworld.modules.layers.ops import apply_pairwise_rotation, mp_sum, mp_swish_gate
+from miniworld.modules.primitives import (
     Linear,
     MPLinear,
     convert_linears_to_mp,
@@ -92,7 +92,7 @@ def test_adaln_rotation_identity_at_init():
 
 
 def test_pair_bias_projection_is_mp_under_flag():
-    from team_gm.modules.layers.augmented_attention import AugmentedAttentionPairBias
+    from miniworld.modules.layers.augmented_attention import AugmentedAttentionPairBias
 
     plain = AugmentedAttentionPairBias(16, 8, 4, 2, magnitude_preserving=False)
     assert not isinstance(plain.to_bias, MPLinear)  # original zero-init Linear

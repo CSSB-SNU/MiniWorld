@@ -23,7 +23,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import torch
-from team_gm.modules import DiffusionTransformer
+from miniworld.modules import DiffusionTransformer
 
 from miniworld.configs import SharedConfig
 from miniworld.inference.cache import StepSchedule, build_inference_cache
@@ -32,7 +32,7 @@ from miniworld.modules.diffusion_module import (
     DiffusionConditioning,
     DiffusionModule,
 )
-from team_gm.modules.layers import fourier_embedding
+from miniworld.modules.layers import fourier_embedding
 
 
 def _build_diffusion_module(
@@ -139,7 +139,7 @@ def _build_step_schedule_for_single_t(
     ``DiffusionConditioning.forward`` produces for the given ``sigma_hat``.
 
     We bypass the real scheduler (which lives in the matplotlib-pulling
-    team_gm.diffusion package — see test_inference_equivalence README)
+    miniworld.diffusion package — see test_inference_equivalence README)
     and instead run the cond's single branch by hand for one timestep.
     """
     cond = dm.diffusion_conditioning

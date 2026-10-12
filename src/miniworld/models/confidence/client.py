@@ -22,8 +22,8 @@ from typing import Literal, cast
 
 import torch
 from pydantic import BaseModel
-from team_gm.core.callbacks import ModelEMA
-from team_gm.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
+from miniworld.training.callbacks import ModelEMA
+from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 
 from miniworld.configs import EDMDiffuserConfig
 from miniworld.data.features.batch import Batch
@@ -113,7 +113,7 @@ class Client(DiffusionClient):
         configure_engine_backend(config.train.engine_backend)
         # Bypass DiffusionClient.__init__ (which registers a DiffusionModel); replicate its
         # setup but register the ConfidenceModel instead.
-        from team_gm import BaseClient
+        from miniworld.training.client import BaseClient
 
         BaseClient.__init__(self, config)
         self.config = config

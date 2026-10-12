@@ -55,7 +55,7 @@ from miniworld.modules.diffusion_module import (
     AtomAttentionEncoder,
     DiffusionModule,
 )
-from team_gm.modules.blocks.diffusion_transformer import (
+from miniworld.modules.blocks.diffusion_transformer import (
     DiffusionTransformer,
 )
 from miniworld_engine.modules import (

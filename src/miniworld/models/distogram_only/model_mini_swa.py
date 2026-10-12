@@ -7,9 +7,9 @@ import numpy as np
 import torch
 from miniworld_engine.modules import LayerNorm
 from pydantic import BaseModel
-from team_gm.modules import DiffusionTransformer
-from team_gm.modules.blocks._engine_impl import to_engine_impl
-from team_gm.modules.primitives import (
+from miniworld.modules import DiffusionTransformer
+from miniworld.modules.blocks._engine_impl import to_engine_impl
+from miniworld.modules.primitives import (
     Linear,
 )
 from torch import nn

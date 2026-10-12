@@ -8,7 +8,7 @@ representative-atom distances, this head:
   2. adds a binned-distance embedding of the predicted structure (the structure
      signal the confidence head scores),
   3. seeds a single track ``s = Linear(s_in)`` and refines BOTH single and pair with a
-     full :class:`~team_gm.modules.Pairformer` (``use_single=True``) — the confidence
+     full :class:`~miniworld.modules.Pairformer` (``use_single=True``) — the confidence
      mini-trunk, AF3-style (updates ``s_i`` and ``z_ij`` per block),
   4. reads three heads:
        * **PAE** — per token-pair predicted aligned error (asymmetric), ``n_pae_bins``.
@@ -29,9 +29,9 @@ import torch
 import torch.nn.functional as F
 from jaxtyping import Bool, Float, Int
 from pydantic import BaseModel
-from team_gm import typecheck
-from team_gm.modules.primitives import Linear
-from team_gm.modules.exceptions import ImplementationType
+from miniworld.typing import typecheck
+from miniworld.modules.primitives import Linear
+from miniworld.modules.exceptions import ImplementationType
 from torch import nn
 
 from miniworld.modules.mini_pairformer import MiniPairformer

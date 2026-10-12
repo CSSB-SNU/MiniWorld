@@ -12,8 +12,8 @@ import time
 from pathlib import Path
 
 import torch
-from team_gm.modules import DiffusionTransformer
-from team_gm.modules.exceptions import ImplementationType
+from miniworld.modules import DiffusionTransformer
+from miniworld.modules.exceptions import ImplementationType
 
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
 

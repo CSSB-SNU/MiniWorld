@@ -25,10 +25,10 @@ import torch
 from jaxtyping import Bool, Float
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
-from team_gm import BaseClient
-from team_gm.core.callbacks import ModelEMA
-from team_gm.core.client import _SetEpochProtocol
-from team_gm.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
+from miniworld.training.client import BaseClient
+from miniworld.training.callbacks import ModelEMA
+from miniworld.training.client import _SetEpochProtocol
+from miniworld.diffusion import AF3Solver, EDMScheduler, EuclideanDiffuser
 from torch.utils.data import DataLoader
 
 from miniworld.configs import EDMDiffuserConfig

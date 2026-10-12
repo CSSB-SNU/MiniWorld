@@ -8,16 +8,17 @@ import torch
 from jaxtyping import Bool, Float, Int
 from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
-from team_gm import BaseClient, typecheck
-from team_gm.core.callbacks import ModelEMA
-from team_gm.core.client import _SetEpochProtocol
+from miniworld.training.client import BaseClient
+from miniworld.typing import typecheck
+from miniworld.training.callbacks import ModelEMA
+from miniworld.training.client import _SetEpochProtocol
 from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
 from miniworld.configs import XPredDecoupledDiffuserConfig
 from miniworld.training import ParamPolicyConfig
 from miniworld.data.features.batch import Batch
-from team_gm.diffusion import (
+from miniworld.diffusion import (
     DecoupledXPredScheduler,
     XPredDecoupledDiffuser,
     XPredDecoupledSolver,
@@ -742,7 +743,7 @@ class Client(BaseClient):
         ``(n_samples, L, 3)`` and each trajectory is ``(n_samples, T, L, 3)``.
 
         ``init_x0`` / ``start_sigma_y``: flexible-docking warm start; see
-        :meth:`team_gm.diffusion.decoupled_xpred.solver.XPredDecoupledSolver.sample`.
+        :meth:`miniworld.diffusion.decoupled_xpred.solver.XPredDecoupledSolver.sample`.
         """
         if n_samples < 1:
             msg = f"n_samples must be >= 1, got {n_samples}."

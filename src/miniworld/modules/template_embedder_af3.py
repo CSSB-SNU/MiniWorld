@@ -20,11 +20,11 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 from jaxtyping import Bool, Float, Int
-from team_gm import typecheck
-from team_gm.modules.exceptions import ImplementationType
-from team_gm.modules.primitives import Linear
+from miniworld.typing import typecheck
+from miniworld.modules.exceptions import ImplementationType
+from miniworld.modules.primitives import Linear
 from miniworld_engine.modules import LayerNorm
-from team_gm.modules.blocks._engine_impl import to_engine_impl
+from miniworld.modules.blocks._engine_impl import to_engine_impl
 from torch import nn
 
 from miniworld.data.features import TemplateFeatures

@@ -23,8 +23,8 @@ from miniworld_engine.modules import (
 )
 from miniworld_engine.modules.exceptions import ImplementationType as _EngineImpl
 from pydantic import BaseModel, model_validator
-from team_gm import typecheck
-from team_gm.modules.exceptions import ImplementationType, InvalidImplementationError
+from miniworld.typing import typecheck
+from miniworld.modules.exceptions import ImplementationType, InvalidImplementationError
 from torch import nn
 from torch.utils.checkpoint import checkpoint_sequential
 from typing_extensions import Self
@@ -49,7 +49,7 @@ class MiniPairformerBlock(nn.Module):
 
     With ``use_single=True`` it also carries a single track — AttentionPairBias
     (single self-attention biased by the pair) + single Transition, mirroring the
-    full :class:`~team_gm.modules.Pairformer` block but keeping the lightweight
+    full :class:`~miniworld.modules.Pairformer` block but keeping the lightweight
     pair core (bidir trimul, no triangle attention).
     """
 

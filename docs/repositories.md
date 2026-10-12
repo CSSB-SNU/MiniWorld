@@ -1,5 +1,8 @@
 # MiniWorld 저장소와 개발 상태
 
+> 2026-10-12: team-gm은 MiniWorld에 흡수됐다(`miniworld.training`, `miniworld.diffusion`, `miniworld.modules`, `miniworld.utils`). `libs/team-gm` 서브모듈과 team-gm 의존성은 없다. 아래 team-gm 항목은 이력이다.
+
+
 2026-09-27: MiniWorld, miniworld-engine, team-gm의 로컬·원격 작업 브랜치를 **main으로 통합**했다.
 main에 포함된 로컬 브랜치 63개와 원격 브랜치 7개를 삭제했다.
 정리 대상 7개 저장소는 `main`을 사용하며, engine에는 `mpnn`과

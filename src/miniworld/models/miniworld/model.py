@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 import torch
 from pydantic import BaseModel, Field
-from team_gm.modules import (
+from miniworld.modules import (
     DiffusionTransformer,
     MSAModule,
     Pairformer,
     SWAAtomTransformer,
 )
-from team_gm.modules.primitives import (
+from miniworld.modules.primitives import (
     LayerNorm,
     Linear,
 )
@@ -33,7 +33,7 @@ from miniworld.modules.msa_util import (
     init_template_feat,
     init_token_single_msa,
 )
-from team_gm.modules import TemplateEmbedder, TemplatePairformer
+from miniworld.modules import TemplateEmbedder, TemplatePairformer
 
 if TYPE_CHECKING:
     from jaxtyping import Bool, Float

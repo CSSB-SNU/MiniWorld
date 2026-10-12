@@ -6,7 +6,7 @@ import pytest
 import torch
 import torch.nn.functional as F
 from hydra import compose, initialize_config_dir
-from team_gm.modules.layers.embeddings import fourier_embedding
+from miniworld.modules.layers.embeddings import fourier_embedding
 
 from miniworld.loss.auxiliary import atom_distogram_target, cal_atom_distogram_loss
 from miniworld.models.distogram_only.client import Client

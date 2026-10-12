@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
-from team_gm.modules import ImplementationType
+from miniworld.modules import ImplementationType
 
 
 class SharedConfig(BaseModel):

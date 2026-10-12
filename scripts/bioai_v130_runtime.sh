@@ -11,7 +11,7 @@ fi
 module load cuda/12.8
 export CUDA_HOME=/opt/ohpc/pub/apps/cuda/12.8
 export PATH="$v130_env/bin:$CUDA_HOME/bin:$PATH"
-export PYTHONPATH="$v130_runtime/python:$v130_runtime/engine-src:$v130_root/src:$v130_root/libs/team-gm/src:$v130_root/scripts"
+export PYTHONPATH="$v130_runtime/python:$v130_runtime/engine-src:$v130_root/src:$v130_root/scripts"
 export LD_LIBRARY_PATH="$v130_env/lib:$CUDA_HOME/lib64:${LD_LIBRARY_PATH:-}"
 export PYTHONNOUSERSITE=1 PYTHONUNBUFFERED=1 OMP_NUM_THREADS=2
 export TORCH_CUDA_ARCH_LIST=9.0 MAX_JOBS=4 CUBLAS_WORKSPACE_CONFIG=:4096:8

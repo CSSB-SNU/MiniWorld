@@ -27,8 +27,8 @@ import torch
 
 if TYPE_CHECKING:
     from miniworld.data.features.batch import Batch
-    from team_gm.diffusion.decoupled_xpred.scheduler import DecoupledXPredScheduler
-    from team_gm.diffusion.decoupled_xpred.solver import XPredDecoupledSolver
+    from miniworld.diffusion.decoupled_xpred.scheduler import DecoupledXPredScheduler
+    from miniworld.diffusion.decoupled_xpred.solver import XPredDecoupledSolver
     from miniworld.models.miniworld.model import Model
 
 
@@ -374,7 +374,7 @@ def build_step_schedule(
         # with a single trailing singleton — yields (1, d_time) which feeds
         # the LayerNorm+Linear in add_time_embedding.
         t_emb_t = scheduler.noise_condition(sigma_t).reshape(1)
-        from team_gm.modules.layers import fourier_embedding
+        from miniworld.modules.layers import fourier_embedding
         time_embedding = fourier_embedding(t_emb_t)     # (1, d_time)
         single = base + cond.add_time_embedding(time_embedding)   # (B, L_token, d_single)
         for trans in cond.single_transitions:

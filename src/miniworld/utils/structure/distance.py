@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from jaxtyping import Bool, Float, Int
 from numpy import ndarray
-from team_gm import typecheck
+from miniworld.typing import typecheck
 
 from miniworld.data.mols import CIFMolAttached
 

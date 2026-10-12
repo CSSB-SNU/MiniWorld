@@ -1,7 +1,7 @@
 """v2.0.0 bf16 diffusion module: norms stay fp32, everything else bf16, output fp32."""
 
 import torch
-from team_gm.modules import DiffusionTransformer
+from miniworld.modules import DiffusionTransformer
 
 from miniworld.configs import SharedConfig
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
@@ -128,7 +128,7 @@ def test_full_module_forward_runs_in_bf16_af3_atom_path():
 
 
 def test_full_module_forward_runs_in_bf16_swa_atom_path():
-    from team_gm.modules import SWAAtomTransformer
+    from miniworld.modules import SWAAtomTransformer
     # d_single_atom=64 / n_head=2 -> head_dim 32 >= the 16 active 3D-RoPE frequencies
     shared = SharedConfig(d_single=16, d_single_atom=64, d_single_token=16, d_single_token_input=12,
                           d_pair=8, d_pair_atom=4, d_time=256)

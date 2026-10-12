@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import torch
 from jaxtyping import Bool, Float, Int
-from team_gm import typecheck
-from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
+from miniworld.typing import typecheck
+from miniworld.modules import DiffusionTransformer, SWAAtomTransformer
 from miniworld_engine.modules.swa_atom_attention.module import build_attention_params
 from miniworld_engine.modules import RMSNorm
-from team_gm.modules.blocks._engine_impl import to_engine_impl
-from team_gm.modules.primitives import Linear
+from miniworld.modules.blocks._engine_impl import to_engine_impl
+from miniworld.modules.primitives import Linear
 from torch import nn
 
 from miniworld.configs import SharedConfig

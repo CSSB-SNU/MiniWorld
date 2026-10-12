@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 import torch
 from jaxtyping import Bool, Float, Int
-from team_gm import BaseBatch, typecheck
+from miniworld.training.batch import BaseBatch
+from miniworld.typing import typecheck
 
 
 @typecheck

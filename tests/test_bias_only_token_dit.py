@@ -1,7 +1,7 @@
 """v2.0.0 BiasOnlyTokenDiT: per-block pattern, masking, gradients, checkpoint parity, wiring."""
 
 import torch
-from team_gm.modules.exceptions import ImplementationType
+from miniworld.modules.exceptions import ImplementationType
 
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
 

@@ -4,7 +4,7 @@ from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, Discriminator, Field
 
-from team_gm.diffusion import (
+from miniworld.diffusion import (
     DecoupledXPredScheduler,
     EDMScheduler,
     XPredDecoupledSolver,

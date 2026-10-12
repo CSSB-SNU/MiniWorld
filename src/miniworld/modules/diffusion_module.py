@@ -10,12 +10,12 @@ from miniworld_engine.modules.swa_atom_attention.module import (
     build_local_structure_neighbor_indices,
 )
 from pydantic import BaseModel
-from team_gm import typecheck
-from team_gm.modules import DiffusionTransformer, SWAAtomTransformer
-from team_gm.modules.blocks._engine_impl import to_engine_impl
-from team_gm.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Transformer
-from team_gm.modules.layers import RelativePositionEmbedding, fourier_embedding
-from team_gm.modules.primitives import (
+from miniworld.typing import typecheck
+from miniworld.modules import DiffusionTransformer, SWAAtomTransformer
+from miniworld.modules.blocks._engine_impl import to_engine_impl
+from miniworld.modules.blocks.rope_swa_af3_transformer import RoPESWAAF3Transformer
+from miniworld.modules.layers import RelativePositionEmbedding, fourier_embedding
+from miniworld.modules.primitives import (
     Linear,
 )
 from torch import nn

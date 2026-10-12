@@ -65,7 +65,7 @@ def rel(a_, b_):
 
 
 def selfcheck(device):
-    from team_gm.utils.align import weighted_align
+    from miniworld.utils.align import weighted_align
 
     g = torch.Generator(device=device)
     g.manual_seed(7)

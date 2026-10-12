@@ -100,15 +100,10 @@ engine-setup = "python scripts/check_engine_install.py"
 
 [tool.pixi.pypi-dependencies]
 miniworld = { path = ".", editable = true }
-team_gm = { path = "libs/team-gm", editable = true }
-# miniworld-engine (formerly miniworld-kernels) is now an upstream package, not a
-# nested submodule. team-gm consumes it as a uv git dep, but uv/pixi does NOT make
-# [tool.uv.sources] transitive through the editable team_gm path dep, so MiniWorld
-# must declare the git source itself for team_gm's `miniworld-engine` requirement to
-# resolve.
-# Pinned to consolidated engine main; see docs/repositories.md for source, research,
-# native rebuild requirements and the scope of validation.
-miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "135b796698080f39903706082e37aa06a830e888" }
+# miniworld-engine is an upstream package. The blocks / layers / diffusion / training loop that used to live in team-gm are
+# part of this package (miniworld.modules, miniworld.diffusion, miniworld.training); there is no team-gm dependency.
+# Pinned to engine main; see docs/repositories.md.
+miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "92f041aee5d8f338a36cdf6ea99a0249015b6fe1" }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"
