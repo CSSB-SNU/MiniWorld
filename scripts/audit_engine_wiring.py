@@ -83,9 +83,16 @@ def main():
             for name, module in model.named_modules():
                 kind = type(module).__name__
                 if (kind == "RMSNorm" and hasattr(module, "_backend")) or (
-                    kind == "LayerNorm" and hasattr(module, "_backend") and (
+                    kind == "LayerNorm"
+                    and hasattr(module, "_backend")
+                    and (
                         name.startswith("diffusion_module.")
-                        or name in {"add_pair_recycle.0", "temp_embedder.ln_query", "temp_embedder.ln_out"}
+                        or name
+                        in {
+                            "add_pair_recycle.0",
+                            "temp_embedder.ln_query",
+                            "temp_embedder.ln_out",
+                        }
                     )
                 ):
                     changes.append((module, "_backend", module._backend))
@@ -95,12 +102,22 @@ def main():
                     module.implementation = ImplementationType.PYTORCH
             try:
                 old_single, old_pair = model.condition_forward(
-                    batch.msa, batch.reference, batch.scheme, batch.sequence,
-                    batch.structure, batch.template,
+                    batch.msa,
+                    batch.reference,
+                    batch.scheme,
+                    batch.sequence,
+                    batch.structure,
+                    batch.template,
                 )
                 old_output = model.diffusion_forward(
-                    batch.reference, batch.scheme, batch.structure,
-                    x, mask, t, old_single, old_pair,
+                    batch.reference,
+                    batch.scheme,
+                    batch.structure,
+                    x,
+                    mask,
+                    t,
+                    old_single,
+                    old_pair,
                 )
                 baseline = old_single, old_pair, old_output
             finally:

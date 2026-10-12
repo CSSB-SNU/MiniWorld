@@ -47,7 +47,9 @@ class AdaptiveLayerNorm(nn.Module):
             with torch.no_grad():
                 self.to_scale.bias.fill_(1.0)
             if use_rotation:
-                self.to_angle = MPLinear(d_cond, d_hidden // 2, bias=False, init="normal")
+                self.to_angle = MPLinear(
+                    d_cond, d_hidden // 2, bias=False, init="normal"
+                )
             else:
                 self.to_bias = MPLinear(d_cond, d_hidden, bias=False, init="normal")
         else:

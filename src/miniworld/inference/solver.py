@@ -156,7 +156,7 @@ def sample_trajectory(
         if float(gamma) > 0:
             added = (
                 noise_lambda
-                * (sigma_hat ** 2 - sigma_i ** 2).clamp(min=0.0).sqrt()
+                * (sigma_hat**2 - sigma_i**2).clamp(min=0.0).sqrt()
                 * torch.randn_like(y)
             )
             y = y + added
@@ -181,9 +181,16 @@ def sample_trajectory(
             x_with_noise = y
 
         x_input = x_with_noise * c_in
-        x_pred = diffusion_step(
-            model, cache, schedule, x_input, t_index,
-        ) * sigma_data
+        x_pred = (
+            diffusion_step(
+                model,
+                cache,
+                schedule,
+                x_input,
+                t_index,
+            )
+            * sigma_data
+        )
 
         if update_rule == "ode":
             v = (y_pre_inject - x_pred) / sigma_hat

@@ -270,15 +270,20 @@ def apply_param_policy(
                 log.warning(
                     "param %r assigned %s but missing from checkpoint; "
                     "falling back to reinit (then %s)",
-                    name, action, action,
+                    name,
+                    action,
+                    action,
                 )
                 reinit_targets.append(name)
             elif ckpt_value.shape != param.shape:
                 log.warning(
                     "param %r assigned %s but checkpoint shape %s != model "
                     "shape %s; falling back to reinit (then %s)",
-                    name, action, tuple(ckpt_value.shape),
-                    tuple(param.shape), action,
+                    name,
+                    action,
+                    tuple(ckpt_value.shape),
+                    tuple(param.shape),
+                    action,
                 )
                 reinit_targets.append(name)
             else:

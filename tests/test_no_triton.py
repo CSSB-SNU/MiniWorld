@@ -1,4 +1,5 @@
 """``train.forbid_triton``: engine / user Triton kernels are refused (launched or traced into a compiled graph), inductor's own kernels are not."""
+
 import pytest
 import torch
 
@@ -21,19 +22,23 @@ def test_install_forbids_engine_triton_kernels_but_not_inductor():
         return t
 
     x = torch.ones(8, device="cuda")
-    launch(x)                                                   # works before the guard
+    launch(x)  # works before the guard
     assert x.tolist() == [2.0] * 8
     no_triton.install()
     try:
         assert no_triton.active()
-        with pytest.raises(no_triton.TritonForbidden, match="double"):                    # an eager launch
+        with pytest.raises(no_triton.TritonForbidden, match="double"):  # an eager launch
             launch(x)
-        with pytest.raises(Exception, match="TritonForbidden: Triton kernel 'double' traced"):    # inside torch.compile
+        with pytest.raises(
+            Exception, match="TritonForbidden: Triton kernel 'double' traced"
+        ):  # inside torch.compile
             torch.compile(launch, backend="inductor")(x)
-        y = torch.compile(lambda t: t * 3 + 1)(torch.ones(8, device="cuda"))               # inductor's own kernels stay allowed
+        y = torch.compile(lambda t: t * 3 + 1)(
+            torch.ones(8, device="cuda")
+        )  # inductor's own kernels stay allowed
         assert y.tolist() == [4.0] * 8
     finally:
         no_triton.uninstall()
     assert not no_triton.active()
-    launch(x)                                                   # and the kernel works again after it
+    launch(x)  # and the kernel works again after it
     assert x.tolist() == [4.0] * 8

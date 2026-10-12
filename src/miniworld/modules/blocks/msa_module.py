@@ -196,7 +196,9 @@ class MSAPairformer(nn.Module):
         """Forward pass."""
         if self.config.use_checkpoint and torch.is_grad_enabled():
             for block in self.blocks:
-                msa, pair = checkpoint(block, msa, pair, mask, msa_mask, use_reentrant=False)
+                msa, pair = checkpoint(
+                    block, msa, pair, mask, msa_mask, use_reentrant=False
+                )
         elif self.config.n_checkpoint_segments is None or not torch.is_grad_enabled():
             for block in self.blocks:
                 msa, pair = block(msa, pair, mask, msa_mask)
@@ -316,7 +318,9 @@ class MSAModuleBlock(nn.Module):
         pair = self.outer_product_mean(msa, opm_mask, token_asym_id, residual=pair)
 
         if not self.last_block:
-            msa = self.msa_pair_weighted_averaging(msa, pair, mask)  # owns residual + drop_msa
+            msa = self.msa_pair_weighted_averaging(
+                msa, pair, mask
+            )  # owns residual + drop_msa
             msa = self.transition_msa(msa)
 
         pair = self.tri_multi_outgoing(pair, mask)

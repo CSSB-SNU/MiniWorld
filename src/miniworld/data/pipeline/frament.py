@@ -677,7 +677,9 @@ if __name__ == "__main__":
         total = sum(counts)
         assert total == num_atoms, f"Atom count mismatch at merge={merge_val}"
         all_atoms = np.concatenate(mappings)
-        assert len(np.unique(all_atoms)) == num_atoms, f"Duplicate/missing atoms at merge={merge_val}"
+        assert len(np.unique(all_atoms)) == num_atoms, (
+            f"Duplicate/missing atoms at merge={merge_val}"
+        )
         changed = prev_counts != counts
         tag = "  (same)" if (prev_counts is not None and not changed) else ""
         print(f"merge={merge_val}: {len(mappings)} fragments{tag}")

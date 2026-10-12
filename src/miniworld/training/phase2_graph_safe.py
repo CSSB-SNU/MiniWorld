@@ -117,7 +117,9 @@ def sample_noise_gs(self, batch_size, uniform=False):
     )
 
 
-def cal_loss_gs(diffuser, x0, x_input, x_update, sigma, mask, atom_weight, align_atom_weight=True):
+def cal_loss_gs(
+    diffuser, x0, x_input, x_update, sigma, mask, atom_weight, align_atom_weight=True
+):
     """``EuclideanDiffuser.cal_loss`` minus the host-side isnan/save branch, alignment through ``weighted_align_gs``.
 
     ``align_atom_weight=True`` (default) is AF3 SI Eq.2 + Algorithm 28 (``weighted_rigid_align``): the alignment uses the same per-atom
@@ -138,7 +140,9 @@ def cal_loss_gs(diffuser, x0, x_input, x_update, sigma, mask, atom_weight, align
     mask = mask.expand(x_pred.shape[:-1])
     align_weight = torch.where(mask.any(dim=-1, keepdim=True), mask, True).to(dtype)
     if align_atom_weight:
-        align_weight = align_weight * atom_weight.to(dtype)  # w_l >= 1: an empty example keeps a positive total
+        align_weight = align_weight * atom_weight.to(
+            dtype
+        )  # w_l >= 1: an empty example keeps a positive total
     x0_safe = torch.where(mask.unsqueeze(-1), x0, 0.0)
     pred_safe = torch.where(mask.unsqueeze(-1), x_pred, 0.0)
     x0_aligned = weighted_align_gs(x0_safe, pred_safe, align_weight)
@@ -164,8 +168,12 @@ def bond_loss_gs(diffuser, x0, x_input, x_update, sigma, bond_i, bond_j, bond_va
         delta = x[..., bond_i, :] - x[..., bond_j, :]
         return torch.where(bond_valid[:, None], delta, 1.0).norm(dim=-1)
 
-    per_augment = ((distance(x_pred) - distance(x0)).pow(2) * valid).sum(dim=-1) / valid.sum().clamp_min(1.0)  # [A, B]
-    w_sigma = diffuser.scheduler.loss_weight(sigma).to(dtype=per_augment.dtype, device=per_augment.device)
+    per_augment = ((distance(x_pred) - distance(x0)).pow(2) * valid).sum(
+        dim=-1
+    ) / valid.sum().clamp_min(1.0)  # [A, B]
+    w_sigma = diffuser.scheduler.loss_weight(sigma).to(
+        dtype=per_augment.dtype, device=per_augment.device
+    )
     return (w_sigma.reshape(per_augment.shape) * per_augment).mean()
 
 

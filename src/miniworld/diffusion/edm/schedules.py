@@ -40,9 +40,7 @@ class PowerLawSchedule:
         lower = config.sigma_min ** (1 / config.rho)
         return config.sigma_data * (upper + times * (lower - upper)) ** config.rho
 
-    def __call__(
-        self, num_steps: int, device=None, dtype=torch.float32
-    ) -> torch.Tensor:
+    def __call__(self, num_steps: int, device=None, dtype=torch.float32) -> torch.Tensor:
         if num_steps < 1:
             msg = "num_steps must be positive"
             raise ValueError(msg)

@@ -4,6 +4,7 @@ Uses the engine's normal incremental builder, source checks, merge and coverage
 checks. Native kernels may execute through existing module dispatch, but their
 dedicated configuration search jobs are excluded.
 """
+
 from __future__ import annotations
 
 import sys
@@ -16,9 +17,12 @@ def main(argv=None):
     from miniworld_engine.autotune import derive, native
 
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('--driver-ops', help='Comma-separated driver kernels to revisit; omitted means all Triton drivers')
+    parser.add_argument(
+        "--driver-ops",
+        help="Comma-separated driver kernels to revisit; omitted means all Triton drivers",
+    )
     options, remaining = parser.parse_known_args(sys.argv[1:] if argv is None else argv)
-    requested = set(options.driver_ops.split(',')) if options.driver_ops else None
+    requested = set(options.driver_ops.split(",")) if options.driver_ops else None
 
     original = derive.uncovered_kernels
 
@@ -26,12 +30,16 @@ def main(argv=None):
         names = original(*args, **kwargs) - set(native.BUILD_OPS)
         if requested is not None:
             if requested - names:
-                raise ValueError(f'Not in the Triton driver complement: {sorted(requested - names)}')
+                raise ValueError(
+                    f"Not in the Triton driver complement: {sorted(requested - names)}"
+                )
             names &= requested
         return names
 
-    print("Scope: Triton module coverage and Triton driver tuning; native tuning deferred.",
-          flush=True)
+    print(
+        "Scope: Triton module coverage and Triton driver tuning; native tuning deferred.",
+        flush=True,
+    )
     with patch.object(derive, "uncovered_kernels", triton_complement):
         return cli.main(["build", "all", *remaining])
 

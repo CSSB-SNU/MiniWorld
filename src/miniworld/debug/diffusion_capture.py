@@ -146,9 +146,7 @@ class DiffusionCapture(AbstractContextManager):
 
         self._original_dm_forward = None
         self._original_dt_forwards: list[tuple[DiffusionTransformer, Any]] = []
-        self._original_attn_kernels: list[
-            tuple[AugmentedAttentionPairBias, Any]
-        ] = []
+        self._original_attn_kernels: list[tuple[AugmentedAttentionPairBias, Any]] = []
 
         self._dt_stacks: dict[int, str] = {}
         self._attn_blocks: dict[str, list[AugmentedAttentionPairBias]] = {
@@ -242,7 +240,8 @@ class DiffusionCapture(AbstractContextManager):
                     return patched_kernel
 
                 attn._kernel_attention_pair_bias = make_patched_kernel(  # type: ignore[method-assign]
-                    attn, original_kernel,
+                    attn,
+                    original_kernel,
                 )
 
     def _uninstall_patches(self) -> None:
@@ -301,8 +300,7 @@ class DiffusionCapture(AbstractContextManager):
                     "n_token": int(token_asym.numel()),
                     "atom_stacks": list(_ATOM_STACKS),
                     "n_blocks_per_stack": {
-                        stack: len(self._attn_blocks[stack])
-                        for stack in _ATOM_STACKS
+                        stack: len(self._attn_blocks[stack]) for stack in _ATOM_STACKS
                     },
                     "downsample": int(self.downsample),
                 },
@@ -379,7 +377,7 @@ class DiffusionCapture(AbstractContextManager):
         b = bias[0]
         L_q, n_head, d_head = q.shape
         L_k = k.shape[0]
-        scale = d_head ** -0.5
+        scale = d_head**-0.5
 
         if mask is not None:
             m = mask if mask.ndim == 2 else mask[0]
@@ -391,7 +389,7 @@ class DiffusionCapture(AbstractContextManager):
         chunk = max(1, int(self.query_chunk))
         for start in range(0, L_q, chunk):
             end = min(start + chunk, L_q)
-            q_chunk = q[start:end] * scale          # (cq, H, D)
+            q_chunk = q[start:end] * scale  # (cq, H, D)
             scores = torch.einsum("qhd,khd->qhk", q_chunk, k)
             b_chunk = b[start:end].permute(0, 2, 1)  # (cq, H, L_k)
             scores = scores + b_chunk

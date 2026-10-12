@@ -139,8 +139,11 @@ class ResourceLocator:
     def __init__(self, index_path: Path, base_override: str | Path | None = None):
         self.index_path = Path(index_path)
         env = lmdb.open(
-            str(self.index_path), readonly=True, lock=False,
-            readahead=False, max_readers=4096,
+            str(self.index_path),
+            readonly=True,
+            lock=False,
+            readahead=False,
+            max_readers=4096,
         )
         with env.begin() as txn:
             raw = txn.get(b"__meta__")
@@ -171,8 +174,11 @@ class ResourceLocator:
     def _env_(self) -> lmdb.Environment:
         if self._env is None:
             self._env = lmdb.open(
-                str(self.index_path), readonly=True, lock=False,
-                readahead=False, max_readers=4096,
+                str(self.index_path),
+                readonly=True,
+                lock=False,
+                readahead=False,
+                max_readers=4096,
             )
         return self._env
 

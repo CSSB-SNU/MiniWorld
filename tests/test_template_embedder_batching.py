@@ -29,7 +29,9 @@ def _engine_with(monkeypatch, **attrs):
 
 
 def test_an_engine_without_batched_samples_has_a_limit_of_one(monkeypatch):
-    _engine_with(monkeypatch)  # the module exists, ``MAX_BATCH`` does not: the import raises ImportError
+    _engine_with(
+        monkeypatch
+    )  # the module exists, ``MAX_BATCH`` does not: the import raises ImportError
     assert te._engine_batch_limit() == 1
 
 
@@ -60,7 +62,12 @@ def _embedder(dtype):
     with torch.no_grad():
         for p in emb.parameters():
             if p.ndim >= 2:
-                p.copy_((torch.randn(p.shape, device=p.device, generator=gen) * p.shape[-1] ** -0.5).to(p.dtype))
+                p.copy_(
+                    (
+                        torch.randn(p.shape, device=p.device, generator=gen)
+                        * p.shape[-1] ** -0.5
+                    ).to(p.dtype)
+                )
     return emb
 
 
@@ -103,7 +110,11 @@ def _gradients(emb, args, *, batched, fused):
     emb.zero_grad(set_to_none=True)
     out = emb(*args)
     out.backward(torch.ones_like(out))
-    return {n: p.grad.detach().clone() for n, p in emb.named_parameters() if p.grad is not None}
+    return {
+        n: p.grad.detach().clone()
+        for n, p in emb.named_parameters()
+        if p.grad is not None
+    }
 
 
 def _assert_same_gradients(got, want):
@@ -111,7 +122,9 @@ def _assert_same_gradients(got, want):
     for name, grad in got.items():
         if want[name].norm() == 0:
             continue
-        cosine = F.cosine_similarity(grad.flatten().float(), want[name].flatten().float(), dim=0)
+        cosine = F.cosine_similarity(
+            grad.flatten().float(), want[name].flatten().float(), dim=0
+        )
         assert cosine > 0.99, (name, float(cosine))
 
 
@@ -121,14 +134,20 @@ def test_bf16_batched_templates_give_the_loops_gradients():
     args = _inputs(torch.bfloat16)
     if emb._batch_limit < args[1].mask.shape[1]:
         pytest.skip("the pinned engine takes one sample per TriMul call")
-    _assert_same_gradients(_gradients(emb, args, batched=True, fused=True), _gradients(emb, args, batched=False, fused=True))
+    _assert_same_gradients(
+        _gradients(emb, args, batched=True, fused=True),
+        _gradients(emb, args, batched=False, fused=True),
+    )
 
 
 @b200
 def test_bf16_fused_projections_give_the_four_projections_gradients():
     emb = _embedder(torch.bfloat16)
     args = _inputs(torch.bfloat16)
-    _assert_same_gradients(_gradients(emb, args, batched=False, fused=True), _gradients(emb, args, batched=False, fused=False))
+    _assert_same_gradients(
+        _gradients(emb, args, batched=False, fused=True),
+        _gradients(emb, args, batched=False, fused=False),
+    )
 
 
 @b200
@@ -138,7 +157,9 @@ def test_fp32_keeps_the_four_projections(monkeypatch):
 
     emb = _embedder(torch.float32)
     args = _inputs(torch.float32)
-    torch.set_float32_matmul_precision("medium")  # what the training scripts set; the aligned fused GEMM would lose precision here
+    torch.set_float32_matmul_precision(
+        "medium"
+    )  # what the training scripts set; the aligned fused GEMM would lose precision here
     try:
         with torch.no_grad():
             out = emb(*args)

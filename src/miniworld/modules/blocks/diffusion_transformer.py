@@ -27,8 +27,10 @@ def _sm90_attention():
     try:
         from miniworld_engine.kernels.augmented_attention import cuda as cuda_sm90
     except ImportError as exc:  # pragma: no cover - depends on the installed engine rev
-        raise RuntimeError("attention_core_dtype='bf16_sm90' needs a miniworld-engine with "
-                           "kernels/augmented_attention/cuda") from exc
+        raise RuntimeError(
+            "attention_core_dtype='bf16_sm90' needs a miniworld-engine with "
+            "kernels/augmented_attention/cuda"
+        ) from exc
     return cuda_sm90
 
 
@@ -39,9 +41,10 @@ def _checkpoint_segments(fns, segments, x, context_fn):
 
     def run(start, end):
         def f(y):
-            for fn in fns[start:end + 1]:
+            for fn in fns[start : end + 1]:
                 y = fn(y)
             return y
+
         return f
 
     size = len(fns) // segments
@@ -52,7 +55,9 @@ def _checkpoint_segments(fns, segments, x, context_fn):
     return run(end + 1, len(fns) - 1)(x)
 
 
-def _attention_with_bias(attn: AugmentedAttentionPairBias, single, cond, bias, mask, compute_dtype=None):
+def _attention_with_bias(
+    attn: AugmentedAttentionPairBias, single, cond, bias, mask, compute_dtype=None
+):
     """``AugmentedAttentionPairBias.forward`` with the pair bias already computed (``pair_bias_all``): the same
     steps and the same submodules, minus ``ln_pair`` / ``to_bias``.
 
@@ -61,22 +66,37 @@ def _attention_with_bias(attn: AugmentedAttentionPairBias, single, cond, bias, m
     in_dtype = single.dtype
     single_res = single
     single = attn.ada_ln_in(single, cond)
-    query, key, value, gate = attn.to_query(single), attn.to_key(single), attn.to_value(single), attn.to_gate(single)
+    query, key, value, gate = (
+        attn.to_query(single),
+        attn.to_key(single),
+        attn.to_value(single),
+        attn.to_gate(single),
+    )
     num_aug, batch, len_res = query.shape[:3]
     n_head, hidden_dim = attn.n_head, query.shape[-1] // attn.n_head
-    query, key, value = [x.view(num_aug, batch, len_res, n_head, hidden_dim) for x in (query, key, value)]
+    query, key, value = [
+        x.view(num_aug, batch, len_res, n_head, hidden_dim) for x in (query, key, value)
+    ]
     if mask is not None and mask.ndim == 2:
         mask = repeat(mask, "B L -> A B L", A=single.shape[0])
     if attn.use_qk_norm:
         query, key = attn.norm_query(query), attn.norm_key(key)
-    if compute_dtype == "bf16_sm90":            # the hoisted bias arrives head-major: no permute copy
+    if (
+        compute_dtype == "bf16_sm90"
+    ):  # the hoisted bias arrives head-major: no permute copy
         sm90 = _sm90_attention()
         if not sm90.available(query, bias, bias_head_major=True):
-            raise RuntimeError("attention_core_dtype='bf16_sm90': this shape / GPU is not supported (sm_90, 16 heads "
-                               "x 48, B == 1, L a multiple of 128) -- use 'bf16'")
-        out = sm90.augmented_attention_bf16_sm90(query, key, value, bias, mask, bias_head_major=True)
+            raise RuntimeError(
+                "attention_core_dtype='bf16_sm90': this shape / GPU is not supported (sm_90, 16 heads "
+                "x 48, B == 1, L a multiple of 128) -- use 'bf16'"
+            )
+        out = sm90.augmented_attention_bf16_sm90(
+            query, key, value, bias, mask, bias_head_major=True
+        )
     else:
-        out = attn._kernel_attention_pair_bias(query, key, value, bias, mask, compute_dtype=compute_dtype)
+        out = attn._kernel_attention_pair_bias(
+            query, key, value, bias, mask, compute_dtype=compute_dtype
+        )
     out = rearrange(out.to(in_dtype), "A B L H D -> A B L (H D)")
     out = attn.to_out(sigmoid_gate(gate, out))
     return single_res + sigmoid_gate(attn.to_scale(cond), out)
@@ -259,7 +279,9 @@ class DiffusionTransformer(nn.Module):
     ) -> tuple[Float[torch.Tensor, "B H L L"], ...]:
         """Preserve the main API's differentiable, head-major per-block biases."""
         return tuple(
-            block.attention_pair_bias.to_bias(block.attention_pair_bias.ln_pair(pair)).permute(0, 3, 1, 2)
+            block.attention_pair_bias.to_bias(
+                block.attention_pair_bias.ln_pair(pair)
+            ).permute(0, 3, 1, 2)
             for block in self.blocks
         )
 
@@ -274,26 +296,60 @@ class DiffusionTransformer(nn.Module):
         pair_biases: tuple[Float[torch.Tensor, "B H L L"], ...] | None = None,
     ) -> Float[torch.Tensor, "A B L d_single"]:
         """Forward pass."""
-        cd = {"model": None, "bf16": torch.bfloat16, "fp32": torch.float32,
-              "bf16_sm90": "bf16_sm90", "tdt": "bf16_sm90"}[self.config.attention_core_dtype]
+        cd = {
+            "model": None,
+            "bf16": torch.bfloat16,
+            "fp32": torch.float32,
+            "bf16_sm90": "bf16_sm90",
+            "tdt": "bf16_sm90",
+        }[self.config.attention_core_dtype]
         if cd == "bf16_sm90" and not self.config.hoist_pair_bias and pair_biases is None:
-            raise ValueError("attention_core_dtype 'bf16_sm90' needs hoist_pair_bias (it takes the head-major hoisted bias)")
+            raise ValueError(
+                "attention_core_dtype 'bf16_sm90' needs hoist_pair_bias (it takes the head-major hoisted bias)"
+            )
         if pair_biases is not None:
-            block_fns = [(lambda s, block=b, bias=bb: block(s, cond, pair, mask, bias=bias, core_dtype=cd))
-                         for b, bb in zip(self.blocks, pair_biases, strict=True)]
+            block_fns = [
+                (
+                    lambda s, block=b, bias=bb: block(
+                        s, cond, pair, mask, bias=bias, core_dtype=cd
+                    )
+                )
+                for b, bb in zip(self.blocks, pair_biases, strict=True)
+            ]
         elif pair is None:
             raise ValueError("either `pair` or `pair_biases` must be provided")
         elif self.config.hoist_pair_bias:
-            biases = pair_bias_all([b.attention_pair_bias for b in self.blocks], pair, head_major=cd == "bf16_sm90")
-            block_fns = [(lambda s, block=b, bias=bb: block(s, cond, pair, mask, bias=bias, core_dtype=cd, bias_head_major=False))
-                         for b, bb in zip(self.blocks, biases)]
+            biases = pair_bias_all(
+                [b.attention_pair_bias for b in self.blocks],
+                pair,
+                head_major=cd == "bf16_sm90",
+            )
+            block_fns = [
+                (
+                    lambda s, block=b, bias=bb: block(
+                        s,
+                        cond,
+                        pair,
+                        mask,
+                        bias=bias,
+                        core_dtype=cd,
+                        bias_head_major=False,
+                    )
+                )
+                for b, bb in zip(self.blocks, biases)
+            ]
         else:
-            block_fns = [(lambda s, block=b: block(s, cond, pair, mask, core_dtype=cd)) for b in self.blocks]
+            block_fns = [
+                (lambda s, block=b: block(s, cond, pair, mask, core_dtype=cd))
+                for b in self.blocks
+            ]
 
         if self.config.use_checkpoint and torch.is_grad_enabled():
             kwargs = {}
             if self.config.checkpoint_keep_attention and cd == "bf16_sm90":
-                kwargs["context_fn"] = _sm90_attention().checkpoint_context_keeping_attention
+                kwargs["context_fn"] = (
+                    _sm90_attention().checkpoint_context_keeping_attention
+                )
             for fn in block_fns:
                 single = checkpoint(fn, single, use_reentrant=False, **kwargs)
         elif self.config.n_checkpoint_segments is None or not torch.is_grad_enabled():
@@ -301,8 +357,12 @@ class DiffusionTransformer(nn.Module):
                 single = fn(single)
         elif self.config.checkpoint_keep_attention and cd == "bf16_sm90":
             # checkpoint_sequential's segmentation, with a selective-checkpoint context (it takes no context_fn)
-            single = _checkpoint_segments(block_fns, self.config.n_checkpoint_segments, single,
-                                          _sm90_attention().checkpoint_context_keeping_attention)
+            single = _checkpoint_segments(
+                block_fns,
+                self.config.n_checkpoint_segments,
+                single,
+                _sm90_attention().checkpoint_context_keeping_attention,
+            )
         else:
             single = checkpoint_sequential(
                 block_fns,

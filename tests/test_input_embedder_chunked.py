@@ -68,7 +68,11 @@ def _make_inputs(
     return {
         "atom_single_init": torch.randn(B, L_atom, d_single_atom_init, generator=g),
         "atom_pair_init": torch.randn(
-            B, L_atom, L_atom, d_pair_atom_init, generator=g,
+            B,
+            L_atom,
+            L_atom,
+            d_pair_atom_init,
+            generator=g,
         ),
     }
 

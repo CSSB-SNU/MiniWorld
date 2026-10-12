@@ -78,7 +78,8 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
         # RMSNorm adds NO parameters (state_dict unchanged, checkpoint-compatible) and just
         # bounds the output magnitude.
         self.atom_out_norm = RMSNorm(
-            shared_config.d_single_atom, elementwise_affine=False,
+            shared_config.d_single_atom,
+            elementwise_affine=False,
             implementation=to_engine_impl(diffusion_config.implementation),
         )
         self.atom_single_rep_to_token_single = nn.Sequential(
@@ -110,10 +111,16 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
         idx = atom_to_token_idx_map.long()
         src = to_add_single_token_rep.float()
         token_sum = src.new_zeros(idx.shape[0], token_length, src.shape[-1]).scatter_add(
-            1, idx.unsqueeze(-1).expand_as(src), src,
+            1,
+            idx.unsqueeze(-1).expand_as(src),
+            src,
         )
-        count = src.new_zeros(idx.shape[0], token_length).scatter_add(1, idx, atom_mask.to(src.dtype))
-        return (token_sum / count.unsqueeze(-1).clamp(min=1.0)).to(to_add_single_token_rep.dtype)
+        count = src.new_zeros(idx.shape[0], token_length).scatter_add(
+            1, idx, atom_mask.to(src.dtype)
+        )
+        return (token_sum / count.unsqueeze(-1).clamp(min=1.0)).to(
+            to_add_single_token_rep.dtype
+        )
 
     @typecheck
     def forward(
@@ -125,13 +132,19 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
         atom_single_init, _ = init_atom_features(reference)
         atom_single = self.to_atom_single_cond(atom_single_init)
         cos, sin = self.atom_transformer.build_rope(
-            reference.pos, reference.space_uid,
+            reference.pos,
+            reference.space_uid,
         )
         attention_params = build_attention_params(
-            cos, sin, structure.atom_mask, num_aug=1,
+            cos,
+            sin,
+            structure.atom_mask,
+            num_aug=1,
         )
         atom_single = self.atom_transformer(atom_single, atom_single, attention_params)
-        atom_single = self.atom_out_norm(atom_single)  # terminal norm for the pre-norm stack
+        atom_single = self.atom_out_norm(
+            atom_single
+        )  # terminal norm for the pre-norm stack
         return self._scatter_atom_to_token(
             scheme.token_idx,
             structure.atom_mask,

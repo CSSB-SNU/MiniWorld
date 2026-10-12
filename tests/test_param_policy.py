@@ -160,10 +160,12 @@ class TestReinit:
         apply_param_policy(model, ckpt_state_dict=None, policy=policy)
         # init="zero" => weight zeros, bias zeros
         assert torch.equal(
-            model.encoder.proj_zero.weight, torch.zeros_like(model.encoder.proj_zero.weight),
+            model.encoder.proj_zero.weight,
+            torch.zeros_like(model.encoder.proj_zero.weight),
         )
         assert torch.equal(
-            model.encoder.proj_zero.bias, torch.zeros_like(model.encoder.proj_zero.bias),
+            model.encoder.proj_zero.bias,
+            torch.zeros_like(model.encoder.proj_zero.bias),
         )
 
     def test_project_linear_gating_init(self) -> None:
@@ -178,10 +180,12 @@ class TestReinit:
         apply_param_policy(model, ckpt_state_dict=None, policy=policy)
         # init="gating" => weight zeros, bias ones
         assert torch.equal(
-            model.encoder.proj_gating.weight, torch.zeros_like(model.encoder.proj_gating.weight),
+            model.encoder.proj_gating.weight,
+            torch.zeros_like(model.encoder.proj_gating.weight),
         )
         assert torch.equal(
-            model.encoder.proj_gating.bias, torch.ones_like(model.encoder.proj_gating.bias),
+            model.encoder.proj_gating.bias,
+            torch.ones_like(model.encoder.proj_gating.bias),
         )
 
     def test_layernorm_resets_to_ones_zeros(self) -> None:
@@ -194,8 +198,12 @@ class TestReinit:
             reinit=["encoder.ln"],
         )
         apply_param_policy(model, ckpt_state_dict=None, policy=policy)
-        assert torch.equal(model.encoder.ln.weight, torch.ones_like(model.encoder.ln.weight))
-        assert torch.equal(model.encoder.ln.bias, torch.zeros_like(model.encoder.ln.bias))
+        assert torch.equal(
+            model.encoder.ln.weight, torch.ones_like(model.encoder.ln.weight)
+        )
+        assert torch.equal(
+            model.encoder.ln.bias, torch.zeros_like(model.encoder.ln.bias)
+        )
 
     def test_vanilla_linear_resets(self) -> None:
         model = _make_test_model()
@@ -209,7 +217,8 @@ class TestReinit:
         apply_param_policy(model, ckpt_state_dict=None, policy=policy)
         # Vanilla nn.Linear.reset_parameters => kaiming_uniform, not all 7s.
         assert not torch.allclose(
-            model.head.linear.weight, torch.full_like(model.head.linear.weight, 7.0),
+            model.head.linear.weight,
+            torch.full_like(model.head.linear.weight, 7.0),
         )
 
 
@@ -233,7 +242,8 @@ class TestApply:
         # encoder.ln: frozen (with ckpt values), requires_grad=False
         assert not model.encoder.ln.weight.requires_grad
         assert torch.allclose(
-            model.encoder.ln.weight, torch.full_like(model.encoder.ln.weight, 42.0),
+            model.encoder.ln.weight,
+            torch.full_like(model.encoder.ln.weight, 42.0),
         )
         # encoder.proj_default: reinit'd (NOT 42), requires_grad=True
         assert model.encoder.proj_default.weight.requires_grad
@@ -244,7 +254,8 @@ class TestApply:
         # head.linear: default = load_existing (==42), requires_grad=True
         assert model.head.linear.weight.requires_grad
         assert torch.allclose(
-            model.head.linear.weight, torch.full_like(model.head.linear.weight, 42.0),
+            model.head.linear.weight,
+            torch.full_like(model.head.linear.weight, 42.0),
         )
 
         assert any(n.startswith("encoder.ln") for n in summary["frozen"])
@@ -299,12 +310,14 @@ class TestFreezeLoaded:
         # Present trunk params: loaded (==42) AND frozen.
         assert not model.encoder.ln.weight.requires_grad
         assert torch.allclose(
-            model.encoder.ln.weight, torch.full_like(model.encoder.ln.weight, 42.0),
+            model.encoder.ln.weight,
+            torch.full_like(model.encoder.ln.weight, 42.0),
         )
         # Missing head params: reinit'd (!=42) AND trainable.
         assert model.head.linear.weight.requires_grad
         assert not torch.allclose(
-            model.head.linear.weight, torch.full_like(model.head.linear.weight, 42.0),
+            model.head.linear.weight,
+            torch.full_like(model.head.linear.weight, 42.0),
         )
 
         n_trunk = sum(
@@ -313,7 +326,9 @@ class TestFreezeLoaded:
         n_head = sum(1 for n, _ in model.named_parameters() if n.startswith("head."))
         assert len(summary["frozen"]) == n_trunk
         # Every head param is re-initialized (and none is frozen).
-        assert all(n.startswith("head.") or n in summary["frozen"] for n in summary["reinit"])
+        assert all(
+            n.startswith("head.") or n in summary["frozen"] for n in summary["reinit"]
+        )
         assert not any(n.startswith("head.") for n in summary["frozen"])
 
     def test_missing_freeze_loaded_is_trainable_unlike_plain_freeze(self) -> None:
@@ -330,12 +345,15 @@ class TestFreezeLoaded:
         # Even though head is present in ckpt (freeze_loaded would freeze it),
         # an explicit reinit pattern wins → reinit'd and trainable.
         policy = ParamPolicyConfig(
-            enabled=True, default="freeze_loaded", reinit=["head.linear"],
+            enabled=True,
+            default="freeze_loaded",
+            reinit=["head.linear"],
         )
         apply_param_policy(model, ckpt, policy)
         assert model.head.linear.weight.requires_grad
         assert not torch.allclose(
-            model.head.linear.weight, torch.full_like(model.head.linear.weight, 42.0),
+            model.head.linear.weight,
+            torch.full_like(model.head.linear.weight, 42.0),
         )
         # A non-overridden present param is still frozen.
         assert not model.encoder.ln.weight.requires_grad
@@ -350,7 +368,9 @@ class TestTrainableParameters:
     def test_excludes_frozen(self) -> None:
         model = _make_test_model()
         policy = ParamPolicyConfig(enabled=True, freeze=["encoder"])
-        apply_param_policy(model, None, policy)  # missing ckpt -> all reinit'd, then frozen for encoder
+        apply_param_policy(
+            model, None, policy
+        )  # missing ckpt -> all reinit'd, then frozen for encoder
         trainables = trainable_parameters(model)
         all_params = list(model.parameters())
         n_frozen = sum(1 for _, p in model.named_parameters() if not p.requires_grad)
@@ -394,7 +414,11 @@ def test_legacy_diffusion_block_keys_load_and_freeze() -> None:
         m.blocks = nn.ModuleList(
             [
                 DiffusionTransformerBlock(
-                    32, 16, 8, 4, implementation=ImplementationType.PYTORCH,
+                    32,
+                    16,
+                    8,
+                    4,
+                    implementation=ImplementationType.PYTORCH,
                 ),
             ],
         )

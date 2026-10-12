@@ -190,9 +190,11 @@ class MiniPairformer(nn.Module):
             return pair, single
 
         if not use_single:
+
             def run_pair(module):  # noqa: ANN001, ANN202
                 def forward(pair):  # noqa: ANN001, ANN202
                     return module(pair, None, mask)
+
                 return forward
 
             return checkpoint_sequential(
@@ -206,6 +208,7 @@ class MiniPairformer(nn.Module):
             def forward(inputs):  # noqa: ANN001, ANN202
                 p, s = inputs
                 return module(p, s, mask)
+
             return forward
 
         pair, single = checkpoint_sequential(

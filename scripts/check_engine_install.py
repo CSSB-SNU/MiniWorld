@@ -14,7 +14,9 @@ def check_installation(package, version, direct_url, expected_commit):
         )
     actual = direct_url.get("vcs_info", {}).get("commit_id")
     if actual is not None and actual != expected_commit:
-        raise RuntimeError(f"engine revision mismatch: {actual}; expected {expected_commit}")
+        raise RuntimeError(
+            f"engine revision mismatch: {actual}; expected {expected_commit}"
+        )
     required = (
         "ops/__init__.py",
         "kernels/transition/cuda/fused_sm90a.py",
@@ -29,7 +31,9 @@ def check_installation(package, version, direct_url, expected_commit):
 def main():
     root = Path(__file__).resolve().parents[1]
     project = (root / "pyproject.toml").read_text()
-    expected = re.search(r'^miniworld-engine = .*rev = "([0-9a-f]{40})"', project, re.M).group(1)
+    expected = re.search(
+        r'^miniworld-engine = .*rev = "([0-9a-f]{40})"', project, re.M
+    ).group(1)
     dist = metadata.distribution("miniworld-engine")
     direct_url = json.loads(dist.read_text("direct_url.json") or "{}")
     spec = util.find_spec("miniworld_engine")
@@ -40,8 +44,12 @@ def main():
     print(f"Engine {dist.version}: {package}")
     print(f"Pinned main revision: {expected}")
     if not direct_url.get("vcs_info"):
-        print("Local/wheel install: VCS revision is not recorded in distribution metadata.")
-    print("No legacy patches applied. GPU dispatch and native rebuilds require separate validation.")
+        print(
+            "Local/wheel install: VCS revision is not recorded in distribution metadata."
+        )
+    print(
+        "No legacy patches applied. GPU dispatch and native rebuilds require separate validation."
+    )
 
 
 if __name__ == "__main__":

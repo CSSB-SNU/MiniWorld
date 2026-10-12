@@ -116,8 +116,8 @@ def _fabric_from_torchrun() -> Fabric:
 
 def _best_of_n(
     output_atom_pos: torch.Tensor,  # (N_str, L, 3)
-    gt_atom_pos: torch.Tensor,      # (L, 3)
-    atom_mask: torch.Tensor,        # (L,)
+    gt_atom_pos: torch.Tensor,  # (L, 3)
+    atom_mask: torch.Tensor,  # (L,)
 ) -> tuple[float, float, int, int, list[float], list[float]]:
     """Best (min RMSD / max lDDT) over the N sampled structures.
 
@@ -160,19 +160,47 @@ def cli():
     help="Root dir; results land in <output_dir>/<YYYY-MM-DD>/<HHMMSS>[_<job>]/.",
 )
 @click.option("--job-name", type=str)
-@click.option("--num-items", type=int, default=50, show_default=True,
-              help="Number of dataset items to evaluate (per rank).")
-@click.option("--num-samples", type=int, default=5, show_default=True,
-              help="Diffusion samples per item (best-of-N scoring).")
-@click.option("--timesteps", type=int, default=200, show_default=True,
-              help="EDM solver reverse steps.")
+@click.option(
+    "--num-items",
+    type=int,
+    default=50,
+    show_default=True,
+    help="Number of dataset items to evaluate (per rank).",
+)
+@click.option(
+    "--num-samples",
+    type=int,
+    default=5,
+    show_default=True,
+    help="Diffusion samples per item (best-of-N scoring).",
+)
+@click.option(
+    "--timesteps",
+    type=int,
+    default=200,
+    show_default=True,
+    help="EDM solver reverse steps.",
+)
 @click.option("--seed", type=int, default=0, show_default=True)
-@click.option("--use-ema/--no-ema", default=True, show_default=True,
-              help="Use the diffusion-head EMA weights from the checkpoint.")
-@click.option("--compile/--no-compile", "do_compile", default=False,
-              show_default=True, help="torch.compile the model (dynamic=False).")
-@click.option("--save-all/--save-best", default=False, show_default=True,
-              help="Save every sample's CIF, or only the best-RMSD one.")
+@click.option(
+    "--use-ema/--no-ema",
+    default=True,
+    show_default=True,
+    help="Use the diffusion-head EMA weights from the checkpoint.",
+)
+@click.option(
+    "--compile/--no-compile",
+    "do_compile",
+    default=False,
+    show_default=True,
+    help="torch.compile the model (dynamic=False).",
+)
+@click.option(
+    "--save-all/--save-best",
+    default=False,
+    show_default=True,
+    help="Save every sample's CIF, or only the best-RMSD one.",
+)
 @click.argument("overrides", type=str, nargs=-1)
 def validate(  # noqa: PLR0913, PLR0915
     config: Path,
@@ -248,7 +276,10 @@ def validate(  # noqa: PLR0913, PLR0915
     client.load_state_dict(state_dict, model_only=True, strict=False)
     client.logger.info(
         "Loaded phase 2 ckpt %s (epoch=%d, step=%d) use_ema=%s",
-        ckpt, client.epoch, client.global_step, use_ema,
+        ckpt,
+        client.epoch,
+        client.global_step,
+        use_ema,
     )
 
     data_config = BioMolData.BioMolConfig(
@@ -280,7 +311,9 @@ def validate(  # noqa: PLR0913, PLR0915
     client.model.eval()
     client.logger.info(
         "Start phase 2 EDM inference: num_items=%d num_samples=%d timesteps=%d",
-        num_items, num_samples, timesteps,
+        num_items,
+        num_samples,
+        timesteps,
     )
 
     all_best_rmsd: list[float] = []
@@ -299,7 +332,9 @@ def validate(  # noqa: PLR0913, PLR0915
         gt = batch.structure.atom_pos[0]
         atom_mask = batch.structure.atom_mask[0]
         best_rmsd, best_lddt, i_rmsd, i_lddt, rmsds, lddts = _best_of_n(
-            output.atom_pos_pred, gt, atom_mask,
+            output.atom_pos_pred,
+            gt,
+            atom_mask,
         )
         all_best_rmsd.append(best_rmsd)
         all_best_lddt.append(best_lddt)
@@ -307,9 +342,15 @@ def validate(  # noqa: PLR0913, PLR0915
             "rank=%d item=%d %s | n_tokens=%d n_atoms=%d | "
             "best_rmsd=%.4f (s%d) best_lddt=%.4f (s%d) | "
             "rmsd=%s lddt=%s | mem=%.2fGB",
-            fabric.global_rank, batch_idx, name,
-            batch.token_length, batch.atom_length,
-            best_rmsd, i_rmsd, best_lddt, i_lddt,
+            fabric.global_rank,
+            batch_idx,
+            name,
+            batch.token_length,
+            batch.atom_length,
+            best_rmsd,
+            i_rmsd,
+            best_lddt,
+            i_lddt,
             ",".join(f"{r:.2f}" for r in rmsds),
             ",".join(f"{l:.3f}" for l in lddts),
             torch.cuda.max_memory_allocated() / 1024**3,
@@ -329,9 +370,12 @@ def validate(  # noqa: PLR0913, PLR0915
         client.logger.info(
             "DONE rank=%d | items=%d | mean_best_rmsd=%.4f median_best_rmsd=%.4f | "
             "mean_best_lddt=%.4f median_best_lddt=%.4f",
-            fabric.global_rank, len(all_best_rmsd),
-            float(np.mean(all_best_rmsd)), float(np.median(all_best_rmsd)),
-            float(np.mean(all_best_lddt)), float(np.median(all_best_lddt)),
+            fabric.global_rank,
+            len(all_best_rmsd),
+            float(np.mean(all_best_rmsd)),
+            float(np.median(all_best_rmsd)),
+            float(np.mean(all_best_lddt)),
+            float(np.median(all_best_lddt)),
         )
     client.logger.info("Validation complete. Results saved to %s", run_sub_dir)
 
@@ -415,11 +459,18 @@ def _pad_inference_batch(batch: Batch, mult: int = 8, *, bucket: bool = True) ->
     else:
         bm = _ceil_to_multiple(int(batch.msa_depth), mult)
         nt = int(batch.template_number)
-    if (bt == int(batch.token_length) and ba == int(batch.atom_length)
-            and bm == int(batch.msa_depth) and nt == int(batch.template_number)):
+    if (
+        bt == int(batch.token_length)
+        and ba == int(batch.atom_length)
+        and bm == int(batch.msa_depth)
+        and nt == int(batch.template_number)
+    ):
         return batch
     dummy = _Batch.empty(
-        n_temp=nt, msa_depth=bm, n_tokens=bt, n_atoms=ba,
+        n_temp=nt,
+        msa_depth=bm,
+        n_tokens=bt,
+        n_atoms=ba,
     )
     _nullify_like(batch, dummy)
     return _Batch.collate_fn([batch, dummy])[0 : batch.batch_size]
@@ -443,7 +494,10 @@ def _diffusion_client_from_config(
     cfg.train.param_policy.enabled = False
     client = Client(
         Client.Config(
-            train=cfg.train, model=cfg.model, diffuser=cfg.diffuser, loss=cfg.loss,
+            train=cfg.train,
+            model=cfg.model,
+            diffuser=cfg.diffuser,
+            loss=cfg.loss,
         ),
     )
     if do_compile:
@@ -458,51 +512,116 @@ def _diffusion_client_from_config(
 
 
 @cli.command()
-@click.option("--config", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
-@click.option("--ckpt", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
-@click.option("--data", "data_path", type=click.Path(exists=True, dir_okay=False, path_type=Path),
-              default=None, help="Single FoldBench target data.yaml (InferenceSpec).")
-@click.option("--index", "index_file", type=click.Path(exists=True, dir_okay=False, path_type=Path),
-              default=None, help="Index file of target ids (one per line) for batch mode.")
-@click.option("--inputs-root", type=click.Path(path_type=Path),
-              default=Path("/home/psk6950/data/foldbench/inputs"), show_default=True,
-              help="Root holding <target>/data.yaml (index mode).")
-@click.option("--output-dir", type=click.Path(path_type=Path),
-              default=Path("runs/foldbench/phase2"), show_default=True,
-              help="Prediction output dir (default: repo-relative runs/foldbench/phase2, gitignored).")
-@click.option("--timesteps", default="200", show_default=True,
-              help="Denoising steps. Accepts a comma-separated list (e.g. '20,50,100,200') to "
-                   "sweep in ONE process: the shape-dependent kernel compile is paid once "
-                   "instead of once per value, and each value writes to "
-                   "<output-dir>/steps<N>/<target>/. A single value writes to "
-                   "<output-dir>/<target>/ as usual.")
-@click.option("--n-samples", type=int, default=5, show_default=True,
-              help="Diffusion samples drawn per seed (AF3/FoldBench: 5).")
-@click.option("--n-seeds", type=int, default=5, show_default=True,
-              help="Independent model seeds per target (AF3/FoldBench: 5). Each seed rebuilds\n                   the input features (reference-conformer SE3 randomisation, MSA subsample,\n                   template sampling) and runs its own trunk pass, then draws --n-samples\n                   diffusion samples from it. Total predictions = n_seeds * n_samples.")
-@click.option("--num-recycles", type=int, default=10, show_default=True,
-              help="Trunk recycle depth at inference (overrides model n_recycle_max). 10 is what "
-                   "FoldBench runs the published methods at (Protenix N_cycle=10, AF3 "
-                   "--num_recycles=10). Training samples n_recycle from 1..4, so anything here "
-                   "is an extrapolation; 20 is a bigger one and was never validated.")
+@click.option(
+    "--config",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
+@click.option(
+    "--ckpt", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True
+)
+@click.option(
+    "--data",
+    "data_path",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=None,
+    help="Single FoldBench target data.yaml (InferenceSpec).",
+)
+@click.option(
+    "--index",
+    "index_file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=None,
+    help="Index file of target ids (one per line) for batch mode.",
+)
+@click.option(
+    "--inputs-root",
+    type=click.Path(path_type=Path),
+    default=Path("/home/psk6950/data/foldbench/inputs"),
+    show_default=True,
+    help="Root holding <target>/data.yaml (index mode).",
+)
+@click.option(
+    "--output-dir",
+    type=click.Path(path_type=Path),
+    default=Path("runs/foldbench/phase2"),
+    show_default=True,
+    help="Prediction output dir (default: repo-relative runs/foldbench/phase2, gitignored).",
+)
+@click.option(
+    "--timesteps",
+    default="200",
+    show_default=True,
+    help="Denoising steps. Accepts a comma-separated list (e.g. '20,50,100,200') to "
+    "sweep in ONE process: the shape-dependent kernel compile is paid once "
+    "instead of once per value, and each value writes to "
+    "<output-dir>/steps<N>/<target>/. A single value writes to "
+    "<output-dir>/<target>/ as usual.",
+)
+@click.option(
+    "--n-samples",
+    type=int,
+    default=5,
+    show_default=True,
+    help="Diffusion samples drawn per seed (AF3/FoldBench: 5).",
+)
+@click.option(
+    "--n-seeds",
+    type=int,
+    default=5,
+    show_default=True,
+    help="Independent model seeds per target (AF3/FoldBench: 5). Each seed rebuilds\n                   the input features (reference-conformer SE3 randomisation, MSA subsample,\n                   template sampling) and runs its own trunk pass, then draws --n-samples\n                   diffusion samples from it. Total predictions = n_seeds * n_samples.",
+)
+@click.option(
+    "--num-recycles",
+    type=int,
+    default=10,
+    show_default=True,
+    help="Trunk recycle depth at inference (overrides model n_recycle_max). 10 is what "
+    "FoldBench runs the published methods at (Protenix N_cycle=10, AF3 "
+    "--num_recycles=10). Training samples n_recycle from 1..4, so anything here "
+    "is an extrapolation; 20 is a bigger one and was never validated.",
+)
 @click.option("--seed", type=int, default=0, show_default=True)
 @click.option("--use-ema/--no-ema", default=True, show_default=True)
 @click.option("--compile/--no-compile", "do_compile", default=False, show_default=True)
-@click.option("--max-msa-depth", type=int, default=2048, show_default=True,
-              help="Max MSA depth (match training: H100_default uses 2048).")
-@click.option("--sample-batch/--no-sample-batch", default=False, show_default=True,
-              help="Draw all --n-samples diffusion trajectories in one batched solver run "
-                   "rather than looping one at a time. Off by default until measured.")
-@click.option("--msa-subsample/--no-msa-subsample", default=True, show_default=True,
-              help="Per seed, draw WHICH max-msa-depth rows to keep at random (query always "
-                   "kept) instead of always taking the top rows. Depth is unchanged. Without "
-                   "it every seed gets the identical alignment, so a 5-seed ensemble only "
-                   "varies the reference conformers and the diffusion noise.")
-@click.option("--no-pairing-msa/--pairing-msa", "no_pairing_msa", default=True,
-              show_default=True,
-              help="Force no_pairing MSA to match training (pairing_mode: no_pairing). "
-                   "The InferenceSpec default is 'mixed' (species pairing on).")
-@click.option("--missing-policy", type=click.Choice(["query", "gap"]), default="query", show_default=True)
+@click.option(
+    "--max-msa-depth",
+    type=int,
+    default=2048,
+    show_default=True,
+    help="Max MSA depth (match training: H100_default uses 2048).",
+)
+@click.option(
+    "--sample-batch/--no-sample-batch",
+    default=False,
+    show_default=True,
+    help="Draw all --n-samples diffusion trajectories in one batched solver run "
+    "rather than looping one at a time. Off by default until measured.",
+)
+@click.option(
+    "--msa-subsample/--no-msa-subsample",
+    default=True,
+    show_default=True,
+    help="Per seed, draw WHICH max-msa-depth rows to keep at random (query always "
+    "kept) instead of always taking the top rows. Depth is unchanged. Without "
+    "it every seed gets the identical alignment, so a 5-seed ensemble only "
+    "varies the reference conformers and the diffusion noise.",
+)
+@click.option(
+    "--no-pairing-msa/--pairing-msa",
+    "no_pairing_msa",
+    default=True,
+    show_default=True,
+    help="Force no_pairing MSA to match training (pairing_mode: no_pairing). "
+    "The InferenceSpec default is 'mixed' (species pairing on).",
+)
+@click.option(
+    "--missing-policy",
+    type=click.Choice(["query", "gap"]),
+    default="query",
+    show_default=True,
+)
 @click.argument("overrides", type=str, nargs=-1)
 def foldbench(  # noqa: PLR0913
     config: Path,
@@ -543,8 +662,10 @@ def foldbench(  # noqa: PLR0913
         raise click.UsageError(msg)
     # One value keeps the flat layout; a sweep gets a steps<N>/ level so the runs stay
     # separable and the "already done" check below still works per step count.
-    step_dirs = {n: (output_dir if len(step_list) == 1 else output_dir / f"steps{n}")
-                 for n in step_list}
+    step_dirs = {
+        n: (output_dir if len(step_list) == 1 else output_dir / f"steps{n}")
+        for n in step_list
+    }
 
     # Resolve the target list.
     if data_path is not None:
@@ -561,23 +682,42 @@ def foldbench(  # noqa: PLR0913
 
     output_dir.mkdir(parents=True, exist_ok=True)
     client = _diffusion_client_from_config(
-        config, ckpt, seed, use_ema, do_compile, fabric, list(overrides),
+        config,
+        ckpt,
+        seed,
+        use_ema,
+        do_compile,
+        fabric,
+        list(overrides),
     )
     # MW_COMPILE_TIMEOUT=1: install the fork+SIGKILL compile guard so uncached-shape
     # autotune bounds each "monster" config (e.g. transition_b2b full grid) to 60s
     # instead of hanging indefinitely. FoldBench targets are arbitrary sizes with no
     # prebuilt cache, so without this the first uncached op stalls the run.
-    if os.getenv("MW_COMPILE_TIMEOUT", "0").strip().lower() in {"1", "true", "yes", "on"}:
+    if os.getenv("MW_COMPILE_TIMEOUT", "0").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
         from miniworld_engine.autotune import capture
 
         capture.install()
-        client.logger.info("[capture] compile-timeout guard installed (bounds monster autotune)")
+        client.logger.info(
+            "[capture] compile-timeout guard installed (bounds monster autotune)"
+        )
     client.logger.info(
         "FoldBench phase 2 inference: %d targets | %d seeds x %d samples = %d preds/target "
         "| recycles=%d timesteps=%s msa=%d(%s) ema=%s",
-        len(targets), n_seeds, n_samples, n_seeds * n_samples, num_recycles,
+        len(targets),
+        n_seeds,
+        n_samples,
+        n_seeds * n_samples,
+        num_recycles,
         ",".join(str(n) for n in step_list),
-        max_msa_depth, "subsampled" if msa_subsample else "top-N", use_ema,
+        max_msa_depth,
+        "subsampled" if msa_subsample else "top-N",
+        use_ema,
     )
 
     for i, (tid, dpath) in enumerate(targets):
@@ -586,7 +726,9 @@ def foldbench(  # noqa: PLR0913
             continue
         last = f"{tid}_seed{n_seeds - 1}_sample{n_samples - 1}_pred.cif"
         if all((step_dirs[n] / tid / last).exists() for n in step_list):
-            client.logger.info("[%d/%d] %s: already done, skip", i + 1, len(targets), tid)
+            client.logger.info(
+                "[%d/%d] %s: already done, skip", i + 1, len(targets), tid
+            )
             continue
         try:
             spec = InferenceSpec.from_yaml(dpath)
@@ -611,8 +753,11 @@ def foldbench(  # noqa: PLR0913
             for s in range(n_seeds):
                 seed_s = seed + s
                 batch = build_inference_batch(
-                    spec, max_msa_depth=max_msa_depth, missing_policy=missing_policy,
-                    seed=seed_s, msa_subsample=msa_subsample,
+                    spec,
+                    max_msa_depth=max_msa_depth,
+                    missing_policy=missing_policy,
+                    seed=seed_s,
+                    msa_subsample=msa_subsample,
                 )
                 name = str(batch.name[0])
                 orig_atom = int(batch.atom_length)
@@ -638,8 +783,11 @@ def foldbench(  # noqa: PLR0913
                     np.random.seed((seed_s * 100003 + i * 1009) % (2**32 - 1))  # noqa: NPY002
                     try:
                         output = client.inference(
-                            padded, timesteps=n_steps, n_samples=n_samples,
-                            n_recycle=num_recycles, sample_batch=sample_batch,
+                            padded,
+                            timesteps=n_steps,
+                            n_samples=n_samples,
+                            n_recycle=num_recycles,
+                            sample_batch=sample_batch,
                         )
                     except torch.cuda.OutOfMemoryError:
                         # Batched sampling multiplies the atom-DiT activations by
@@ -650,7 +798,10 @@ def foldbench(  # noqa: PLR0913
                             raise
                         client.logger.warning(
                             "%s seed %d steps %d: OOM with sample_batch, "
-                            "retrying one sample at a time", tid, s, n_steps,
+                            "retrying one sample at a time",
+                            tid,
+                            s,
+                            n_steps,
                         )
                         # Deliberately no torch.cuda.empty_cache() here, the usual
                         # remedy: it corrupts the engine's cute kernels, which would
@@ -661,14 +812,20 @@ def foldbench(  # noqa: PLR0913
                         torch.manual_seed(seed_s * 100003 + i * 1009)
                         np.random.seed((seed_s * 100003 + i * 1009) % (2**32 - 1))  # noqa: NPY002
                         output = client.inference(
-                            padded, timesteps=n_steps, n_samples=n_samples,
-                            n_recycle=num_recycles, sample_batch=False,
+                            padded,
+                            timesteps=n_steps,
+                            n_samples=n_samples,
+                            n_recycle=num_recycles,
+                            sample_batch=False,
                         )
                     for k in range(n_samples):
                         pred = output.atom_pos_pred[k : k + 1, :orig_atom]
                         batch_to_cif(
-                            batch, pred,
-                            step_dirs[n_steps] / tid / f"{name}_seed{s}_sample{k}_pred.cif",
+                            batch,
+                            pred,
+                            step_dirs[n_steps]
+                            / tid
+                            / f"{name}_seed{s}_sample{k}_pred.cif",
                             chain_names=spec.chain_names,
                         )
                         n_done += 1
@@ -677,11 +834,21 @@ def foldbench(  # noqa: PLR0913
                 del padded, batch
             client.logger.info(
                 "[%d/%d] %s: OK tok=%d atom=%d (pad->%d) -> %d CIFs (%dx%d, steps=%s)",
-                i + 1, len(targets), tid, shape[0], shape[1], shape[2],
-                n_done, n_seeds, n_samples, ",".join(str(n) for n in step_list),
+                i + 1,
+                len(targets),
+                tid,
+                shape[0],
+                shape[1],
+                shape[2],
+                n_done,
+                n_seeds,
+                n_samples,
+                ",".join(str(n) for n in step_list),
             )
         except Exception as e:  # noqa: BLE001 — one bad target must not kill the shard
-            client.logger.exception("[%d/%d] %s: FAILED (%s)", i + 1, len(targets), tid, type(e).__name__)
+            client.logger.exception(
+                "[%d/%d] %s: FAILED (%s)", i + 1, len(targets), tid, type(e).__name__
+            )
 
     client.logger.info("FoldBench inference complete. Results in %s", output_dir)
 

@@ -73,7 +73,8 @@ def _make_inputs(
     # reshaping, so its layout exercises whatever PyTorch broadcast rule the
     # production model has been trained against.
     base_map = torch.tensor(
-        [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3], dtype=torch.long,
+        [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3],
+        dtype=torch.long,
     )[:L_atom]
     atom_to_token_idx_map = base_map.unsqueeze(0).repeat(B, 1)
     return {
@@ -232,7 +233,11 @@ def test_chunked_matches_canonical_large() -> None:
     # rebuild with a richer assignment than the 4-token default.
     g = torch.Generator().manual_seed(123)
     inputs["atom_to_token_idx_map"] = torch.randint(
-        0, 16, (1, 64), generator=g, dtype=torch.long,
+        0,
+        16,
+        (1, 64),
+        generator=g,
+        dtype=torch.long,
     )
     out_a = _run_canonical(encoder, inputs)
     out_b = _run_chunked(encoder, inputs, chunk=7)

@@ -43,16 +43,24 @@ class DistogramDiffusionConfig(BaseModel):
     num_sampling_steps: int = Field(default=24, ge=2)
 
     # EDM noise schedule / preconditioning. sigma_data MUST be set from measurement.
-    scheduler: EDMScheduler.EDMSchedulerConfig = Field(default_factory=EDMScheduler.EDMSchedulerConfig)
+    scheduler: EDMScheduler.EDMSchedulerConfig = Field(
+        default_factory=EDMScheduler.EDMSchedulerConfig
+    )
 
     @model_validator(mode="after")
     def validate_schedule(self):
         import math
+
         s = self.scheduler
         values = (s.sigma_data, s.sigma_min, s.sigma_max, s.rho, s.P_mean, s.P_std)
         if not all(math.isfinite(v) for v in values):
             raise ValueError("Diffusion schedule must be finite")
-        if not (s.sigma_data > 0 and 0 < s.sigma_min < s.sigma_max and s.rho > 0 and s.P_std >= 0):
+        if not (
+            s.sigma_data > 0
+            and 0 < s.sigma_min < s.sigma_max
+            and s.rho > 0
+            and s.P_std >= 0
+        ):
             raise ValueError("Invalid diffusion schedule")
         return self
 
@@ -63,7 +71,11 @@ def _symmetrize(x: torch.Tensor) -> torch.Tensor:
 
 
 def _symmetric_noise(
-    b: int, length: int, *, device: torch.device, dtype: torch.dtype,
+    b: int,
+    length: int,
+    *,
+    device: torch.device,
+    dtype: torch.dtype,
 ) -> torch.Tensor:
     """Symmetric [B, L, L] Gaussian: mirror the strict upper triangle so every
     off-diagonal entry is a single ``N(0, 1)`` draw (variance preserved, unlike
@@ -125,7 +137,9 @@ class DistogramDiffusion(nn.Module):
         n = b if s.use_time_augmentation else 1
         z = torch.randn(n, device=device, dtype=torch.float32)
         sigma = s.sigma_data * torch.exp(s.P_mean + s.P_std * z)
-        return sigma.clamp(s.sigma_min * s.sigma_data, s.sigma_max * s.sigma_data).expand(b)
+        return sigma.clamp(
+            s.sigma_min * s.sigma_data, s.sigma_max * s.sigma_data
+        ).expand(b)
 
     @typecheck
     def add_noise(
@@ -135,7 +149,10 @@ class DistogramDiffusion(nn.Module):
     ) -> Float[torch.Tensor, "B L L"]:
         """x_t = x0 + sigma * symmetric_noise (keeps x_t symmetric)."""
         n = _symmetric_noise(
-            x0.shape[0], x0.shape[1], device=x0.device, dtype=torch.float32,
+            x0.shape[0],
+            x0.shape[1],
+            device=x0.device,
+            dtype=torch.float32,
         )
         return x0 + n * sigma[:, None, None]
 
@@ -198,7 +215,9 @@ class DistogramDiffusion(nn.Module):
         mask = pair_mask & upper
         w = self.scheduler.loss_weight(sigma)  # [B]
 
-        error = torch.where(mask, x0_hat.float(), 0.) - torch.where(mask, x0.float(), 0.)
+        error = torch.where(mask, x0_hat.float(), 0.0) - torch.where(
+            mask, x0.float(), 0.0
+        )
         sq = error.square()
         denom = mask.sum(dim=(-2, -1)).clamp_min(1).to(sq.dtype)
         weighted_sq = sq
@@ -239,7 +258,9 @@ class DistogramDiffusion(nn.Module):
         s = self.config.scheduler
         ramp = torch.linspace(0, 1, steps, device=device, dtype=torch.float64)
         high, low = s.sigma_data * s.sigma_max, s.sigma_data * s.sigma_min
-        levels = (high ** (1 / s.rho) + ramp * (low ** (1 / s.rho) - high ** (1 / s.rho))) ** s.rho
+        levels = (
+            high ** (1 / s.rho) + ramp * (low ** (1 / s.rho) - high ** (1 / s.rho))
+        ) ** s.rho
         sigmas = torch.cat((levels.float(), levels.new_zeros(1).float()))
         valid = ~torch.eye(length, device=device, dtype=torch.bool)[None]
         if token_mask is not None:

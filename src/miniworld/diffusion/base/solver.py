@@ -77,4 +77,3 @@ def _chain_count(atom_chain_map: AtomChainMap) -> int:
             raise ValueError(msg)
         return int(atom_chain_map.max().item()) + 1
     return len(atom_chain_map)
-

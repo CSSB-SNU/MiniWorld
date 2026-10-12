@@ -52,7 +52,9 @@ def weighted_align(
 
     rotation_matrix = torch.einsum("bij,bkj -> bik", u, v)
     F = torch.eye(3, dtype=cov_matrix.dtype, device=cov_matrix.device)[None].repeat(
-        x.shape[0], 1, 1,
+        x.shape[0],
+        1,
+        1,
     )
     F[:, -1, -1] = torch.where(
         torch.det(rotation_matrix) < 0,
@@ -96,11 +98,11 @@ def kabsch_rmsd(coords: np.ndarray, mask: np.ndarray) -> np.ndarray:
     coords_centered = (coords - centroid) * mask[..., None]
 
     # (3) broadcast
-    P = coords_centered[:, None, :, :]   # (N,1,L,3) -> (N,N,L,3)
-    Q = coords_centered[None, :, :, :]   # (1,N,L,3) -> (N,N,L,3)
+    P = coords_centered[:, None, :, :]  # (N,1,L,3) -> (N,N,L,3)
+    Q = coords_centered[None, :, :, :]  # (1,N,L,3) -> (N,N,L,3)
 
     # pairwise common-atom mask
-    pair_mask = mask[:, None, :] & mask[None, :, :]   # (N,N,L)
+    pair_mask = mask[:, None, :] & mask[None, :, :]  # (N,N,L)
     L_pair = np.sum(pair_mask, axis=-1).clip(min=1e-8)  # (N,N)
 
     # masked coords
@@ -108,8 +110,8 @@ def kabsch_rmsd(coords: np.ndarray, mask: np.ndarray) -> np.ndarray:
     Qm = Q * pair_mask[..., None]
 
     # norms
-    P_norm_sq = np.sum(Pm ** 2, axis=(2, 3))
-    Q_norm_sq = np.sum(Qm ** 2, axis=(2, 3))
+    P_norm_sq = np.sum(Pm**2, axis=(2, 3))
+    Q_norm_sq = np.sum(Qm**2, axis=(2, 3))
 
     # covariance H (N,N,3,3)
     H = np.einsum("ijkl,ijml->ijkm", Pm, Qm)
@@ -121,7 +123,13 @@ def kabsch_rmsd(coords: np.ndarray, mask: np.ndarray) -> np.ndarray:
     # NumPy 1.21+ supports batched SVD
     U, S, Vt = np.linalg.svd(H)  # (N,N,3,3)
 
-    det_sign = np.sign(np.linalg.det(np.einsum("...ij,...jk->...ik", Vt.transpose(0,1,3,2), U.transpose(0,1,2,3))))
+    det_sign = np.sign(
+        np.linalg.det(
+            np.einsum(
+                "...ij,...jk->...ik", Vt.transpose(0, 1, 3, 2), U.transpose(0, 1, 2, 3)
+            )
+        )
+    )
 
     # correct improper rotation
     S[..., -1] *= det_sign
@@ -134,7 +142,9 @@ def kabsch_rmsd(coords: np.ndarray, mask: np.ndarray) -> np.ndarray:
     return np.sqrt(rmsd_sq)  # (N,N)
 
 
-def kabsch_rmsd_ref(coords: np.ndarray, mask: np.ndarray, ref_idx: int = 0, eps: float = 1e-7) -> np.ndarray:
+def kabsch_rmsd_ref(
+    coords: np.ndarray, mask: np.ndarray, ref_idx: int = 0, eps: float = 1e-7
+) -> np.ndarray:
     """
     Fully-vectorized NxN RMSD by aligning all structures to a single reference (coords[ref_idx]).
     - Input: NumPy arrays
@@ -154,29 +164,33 @@ def kabsch_rmsd_ref(coords: np.ndarray, mask: np.ndarray, ref_idx: int = 0, eps:
     device = tC.device
 
     # --- reference-centered coords (zero-out invalid) ---
-    ref_m = tM[ref_idx]                                        # (L,)
+    ref_m = tM[ref_idx]  # (L,)
     # ref_cnt = torch.clamp(ref_m.sum(), min=1)
     ref_centroid = tC[ref_idx, ref_m].mean(dim=0, keepdim=True)  # (1,3)
-    ref_centered = tC[ref_idx] - ref_centroid                    # (L,3)
-    ref_centered = torch.where(ref_m[:, None], ref_centered, torch.zeros(1, 3, dtype=tC.dtype, device=device))
+    ref_centered = tC[ref_idx] - ref_centroid  # (L,3)
+    ref_centered = torch.where(
+        ref_m[:, None], ref_centered, torch.zeros(1, 3, dtype=tC.dtype, device=device)
+    )
 
     # --- intersection mask vs reference; per-structure centroids ---
-    inter = tM & ref_m[None, :]                                  # (N,L)
-    cnts = torch.clamp(inter.sum(dim=1, keepdim=True), min=1)     # (N,1)
-    centroids = (tC * inter[..., None]).sum(dim=1, keepdim=True) / cnts[..., None]  # (N,1,3)
+    inter = tM & ref_m[None, :]  # (N,L)
+    cnts = torch.clamp(inter.sum(dim=1, keepdim=True), min=1)  # (N,1)
+    centroids = (tC * inter[..., None]).sum(dim=1, keepdim=True) / cnts[
+        ..., None
+    ]  # (N,1,3)
 
     # --- centered inputs with mask ---
-    P = (tC - centroids) * inter[..., None]                      # (N,L,3)
-    Q = ref_centered[None, :, :] * inter[..., None]              # (N,L,3)
+    P = (tC - centroids) * inter[..., None]  # (N,L,3)
+    Q = ref_centered[None, :, :] * inter[..., None]  # (N,L,3)
 
     # --- covariance S = P^T Q (N,3,3) ---
-    S = torch.einsum('nlc,nld->ncd', P, Q)                       # (N,3,3)
+    S = torch.einsum("nlc,nld->ncd", P, Q)  # (N,3,3)
     if eps > 0:
         S = S + eps * torch.eye(3, dtype=S.dtype, device=device)[None, :, :]
 
     # --- batched SVD -> rotation (reflection fixed) ---
-    U, _, Vh = torch.linalg.svd(S, full_matrices=False)          # (N,3,3)
-    R = Vh.transpose(-2, -1) @ U.transpose(-2, -1)               # (N,3,3)
+    U, _, Vh = torch.linalg.svd(S, full_matrices=False)  # (N,3,3)
+    R = Vh.transpose(-2, -1) @ U.transpose(-2, -1)  # (N,3,3)
     detR = torch.linalg.det(R)
     neg = detR < 0
     if neg.any():
@@ -185,20 +199,21 @@ def kabsch_rmsd_ref(coords: np.ndarray, mask: np.ndarray, ref_idx: int = 0, eps:
         R = Vh_fix.transpose(-2, -1) @ U.transpose(-2, -1)
 
     # --- handle degenerate intersections (<3 common atoms): fall back to I ---
-    valid = (inter.sum(dim=1) >= 3)                               # (N,)
+    valid = inter.sum(dim=1) >= 3  # (N,)
     I3 = torch.eye(3, dtype=R.dtype, device=device).expand(N, 3, 3)
     R = torch.where(valid[:, None, None], R, I3)
 
     # --- apply rotations; build aligned coords ---
-    aligned = (tC - centroids) @ R                                # (N,L,3)
+    aligned = (tC - centroids) @ R  # (N,L,3)
 
     # --- pairwise RMSD with per-pair mask ---
-    diff = aligned[:, None, :, :] - aligned[None, :, :, :]        # (N,N,L,3)
-    diff_sq = (diff * diff).sum(dim=-1)                           # (N,N,L)
-    pair_mask = tM[:, None, :] & tM[None, :, :]                   # (N,N,L)
-    Lpair = torch.clamp(pair_mask.sum(dim=-1), min=1)             # (N,N)
-    rmsd = torch.sqrt((diff_sq.masked_fill(~pair_mask, 0.0).sum(dim=-1) / Lpair).clamp_min(0.0))  # (N,N)
+    diff = aligned[:, None, :, :] - aligned[None, :, :, :]  # (N,N,L,3)
+    diff_sq = (diff * diff).sum(dim=-1)  # (N,N,L)
+    pair_mask = tM[:, None, :] & tM[None, :, :]  # (N,N,L)
+    Lpair = torch.clamp(pair_mask.sum(dim=-1), min=1)  # (N,N)
+    rmsd = torch.sqrt(
+        (diff_sq.masked_fill(~pair_mask, 0.0).sum(dim=-1) / Lpair).clamp_min(0.0)
+    )  # (N,N)
 
     # --- back to numpy ---
     return rmsd.cpu().numpy()
-

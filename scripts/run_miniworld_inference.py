@@ -342,7 +342,7 @@ def cli():
     default=Path("runs/outputs/miniworld_validation"),
     show_default=True,
     help="Root directory for validation outputs; results land in "
-         "<output_dir>/<YYYY-MM-DD>/<HHMMSS>[_<job_name>]/.",
+    "<output_dir>/<YYYY-MM-DD>/<HHMMSS>[_<job_name>]/.",
 )
 @click.option("--job-name", type=str)
 @click.argument("overrides", type=str, nargs=-1)
@@ -367,7 +367,9 @@ def validate(  # noqa: PLR0915
     run_sub_dir = date_dir / run_name
     run_sub_dir.mkdir(parents=True, exist_ok=True)
 
-    train_cfg = Client.TrainConfig(seed=cfg.validation.seed, use_ema=cfg.validation.use_ema)
+    train_cfg = Client.TrainConfig(
+        seed=cfg.validation.seed, use_ema=cfg.validation.use_ema
+    )
     client = Client(
         Client.Config(
             train=train_cfg,
@@ -587,7 +589,7 @@ class InferenceConfig(BaseModel):
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     required=True,
     help="YAML describing target-bound input data (fasta / a3m / template / "
-         "contacts / diffusion_groups / ...).",
+    "contacts / diffusion_groups / ...).",
 )
 @click.option(
     "--sampling",
@@ -595,8 +597,8 @@ class InferenceConfig(BaseModel):
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     default=None,
     help="Optional YAML with per-attempt sampling knobs "
-         "(n_trunk_samples, n_diffusion_samples, diffusion_batch_size, "
-         "save_trajectory). Overlays the data YAML.",
+    "(n_trunk_samples, n_diffusion_samples, diffusion_batch_size, "
+    "save_trajectory). Overlays the data YAML.",
 )
 @click.option(
     "--output-dir",
@@ -604,14 +606,14 @@ class InferenceConfig(BaseModel):
     default=Path("runs/outputs/miniworld_inference"),
     show_default=True,
     help="Root directory for inference outputs; results land in "
-         "<output_dir>/<YYYY-MM-DD>/[<subdir>/]<HHMMSS>/<job_name|spec.name>/.",
+    "<output_dir>/<YYYY-MM-DD>/[<subdir>/]<HHMMSS>/<job_name|spec.name>/.",
 )
 @click.option(
     "--subdir",
     type=str,
     default=None,
     help="Optional grouping sub-directory inserted between <date> and <time>. "
-         "Useful to bucket related runs (e.g. --subdir 2oxs).",
+    "Useful to bucket related runs (e.g. --subdir 2oxs).",
 )
 @click.option("--job-name", type=str)
 @click.argument("overrides", type=str, nargs=-1)
@@ -710,7 +712,11 @@ def inference(  # noqa: PLR0915
     client.logger.info(
         "Inference scaling: n_trunk=%d n_diffusion=%d (chunk=%d) "
         "save_trajectory=%s -> %d total structures",
-        n_trunk, n_diffusion, chunk_size, save_traj, n_trunk * n_diffusion,
+        n_trunk,
+        n_diffusion,
+        chunk_size,
+        save_traj,
+        n_trunk * n_diffusion,
     )
 
     scheduler = client.diffusion_scheduler
@@ -723,7 +729,10 @@ def inference(  # noqa: PLR0915
         trunk_seed = cfg.infer.seed + i_trunk
         client.logger.info(
             "Building Batch from spec %s (trunk %d/%d, seed=%d)",
-            data_path, i_trunk + 1, n_trunk, trunk_seed,
+            data_path,
+            i_trunk + 1,
+            n_trunk,
+            trunk_seed,
         )
         batch = build_inference_batch(
             spec,
@@ -735,7 +744,10 @@ def inference(  # noqa: PLR0915
         if i_trunk == 0:
             client.logger.info(
                 "Built batch %s | n_tokens=%d n_atoms=%d n_msa=%d",
-                name, batch.token_length, batch.atom_length, batch.msa_count,
+                name,
+                batch.token_length,
+                batch.atom_length,
+                batch.msa_count,
             )
 
         wrapper, batch = client.prepare(batch)
@@ -747,7 +759,8 @@ def inference(  # noqa: PLR0915
             # always reproduces the same N1*N2 structures.
             torch.manual_seed(trunk_seed * 100003 + chunk_start * 1009)
             output = client.sample(
-                wrapper, batch,
+                wrapper,
+                batch,
                 n_samples=cur_chunk,
                 timesteps=cfg.infer.timesteps,
                 no_rt=cfg.infer.no_rt,
@@ -758,7 +771,7 @@ def inference(  # noqa: PLR0915
             for k in range(cur_chunk):
                 j_diff = chunk_start + k
                 tag_ij = f"t{i_trunk:02d}_d{j_diff:02d}"
-                pred_k = output.atom_pos_pred[k:k + 1]
+                pred_k = output.atom_pos_pred[k : k + 1]
                 batch_to_cif(batch, pred_k, cif_dir / f"{name}_{tag_ij}_pred.cif")
 
                 if not save_traj:
@@ -777,15 +790,20 @@ def inference(  # noqa: PLR0915
                     tag = f"step{t:03d}_sigma{sigmas_y[t]:.4f}"
                     x0_hat_t = torch.from_numpy(model_traj_k[t]).unsqueeze(0).to(device)
                     xt = torch.from_numpy(inter_traj_k[t]).unsqueeze(0).to(device)
-                    x_with_noise_t = torch.from_numpy(input_traj_k[t]).unsqueeze(0).to(device)
+                    x_with_noise_t = (
+                        torch.from_numpy(input_traj_k[t]).unsqueeze(0).to(device)
+                    )
                     batch_to_cif(batch, x0_hat_t, traj_x0hat_dir / f"{tag}.cif")
                     batch_to_cif(batch, xt, traj_xt_dir / f"{tag}.cif")
                     batch_to_cif(batch, x_with_noise_t, traj_input_dir / f"{tag}.cif")
 
             client.logger.info(
                 "Trunk %d/%d, diffusion samples %d-%d/%d done",
-                i_trunk + 1, n_trunk,
-                chunk_start + 1, chunk_start + cur_chunk, n_diffusion,
+                i_trunk + 1,
+                n_trunk,
+                chunk_start + 1,
+                chunk_start + cur_chunk,
+                n_diffusion,
             )
 
     client.logger.info("Inference complete. Results saved to %s", run_sub_dir)

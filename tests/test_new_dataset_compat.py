@@ -85,7 +85,9 @@ def run_compat(db_path: Path) -> bool:  # noqa: C901, PLR0915
     # ---- 1. LMDB opens and has entries -------------------------------------
     try:
         keys = extract_lmdb_keys(db_path)
-        r.check("lmdb opens & has keys", len(keys) > 0, f"{len(keys)} keys, e.g. {keys[:3]}")
+        r.check(
+            "lmdb opens & has keys", len(keys) > 0, f"{len(keys)} keys, e.g. {keys[:3]}"
+        )
     except Exception as exc:  # noqa: BLE001
         r.check("lmdb opens & has keys", False, repr(exc))
         return r.summary()
@@ -96,9 +98,7 @@ def run_compat(db_path: Path) -> bool:  # noqa: C901, PLR0915
 
     # ---- 2. Value layout matches load_cifmol() expectations ----------------
     # load_cifmol does: value.get(f"{assembly_id}_{model_id}_{alt_id}")["cifmol_attached_dict"]
-    has_inner = any(
-        isinstance(v, dict) and EXPECTED_INNER in v for v in value.values()
-    )
+    has_inner = any(isinstance(v, dict) and EXPECTED_INNER in v for v in value.values())
     r.check(
         "value wrapped as {assembly}_{model}_{alt} -> 'cifmol_attached_dict'",
         has_inner,
@@ -111,7 +111,9 @@ def run_compat(db_path: Path) -> bool:  # noqa: C901, PLR0915
     cifmol_dict = None
     if has_inner:
         cifmol_dict = next(
-            v[EXPECTED_INNER] for v in value.values() if isinstance(v, dict) and EXPECTED_INNER in v
+            v[EXPECTED_INNER]
+            for v in value.values()
+            if isinstance(v, dict) and EXPECTED_INNER in v
         )
     elif "cifmol_dict" in value:
         cifmol_dict = value["cifmol_dict"]
@@ -161,7 +163,10 @@ def run_compat(db_path: Path) -> bool:  # noqa: C901, PLR0915
     atom_to_token = token_to_res = None
     try:
         atom_to_token, token_to_res = tokenizer.tokenize(
-            cifmol, focus=focus, fragmented_ccd_mols=ccd_cache, config=dyn_cfg,
+            cifmol,
+            focus=focus,
+            fragmented_ccd_mols=ccd_cache,
+            config=dyn_cfg,
         )
         r.check(
             "tokenize() succeeds",
@@ -176,11 +181,18 @@ def run_compat(db_path: Path) -> bool:  # noqa: C901, PLR0915
     if atom_to_token is not None:
         try:
             crop_indices = crop_spatial_segment_token(
-                cifmol, focus, tokens_to_res=token_to_res,
-                segment_size=21, max_tokens=384, max_atoms=4096,
+                cifmol,
+                focus,
+                tokens_to_res=token_to_res,
+                segment_size=21,
+                max_tokens=384,
+                max_atoms=4096,
             )
-            r.check("crop_spatial_segment_token() succeeds", crop_indices.shape[0] > 0,
-                    f"{crop_indices.shape[0]} cropped residues")
+            r.check(
+                "crop_spatial_segment_token() succeeds",
+                crop_indices.shape[0] > 0,
+                f"{crop_indices.shape[0]} cropped residues",
+            )
         except Exception as exc:  # noqa: BLE001
             r.check("crop_spatial_segment_token() succeeds", False, repr(exc))
 
@@ -189,19 +201,29 @@ def run_compat(db_path: Path) -> bool:  # noqa: C901, PLR0915
     chain_id_to_crop = {c: np.arange(0) for c in chain_ids}
     # give the first chain its full residue range
     first = chain_ids[0]
-    n_res_first = int((cifmol.residues.chain_id.value == first).sum()) if "chain_id" in \
-        list(cifmol.residues.mol.get_container("residue").keys()) else len(cifmol.residues)
+    n_res_first = (
+        int((cifmol.residues.chain_id.value == first).sum())
+        if "chain_id" in list(cifmol.residues.mol.get_container("residue").keys())
+        else len(cifmol.residues)
+    )
     chain_id_to_crop[first] = np.arange(n_res_first)
     try:
-        load_msa(cifmol=cifmol, chain_id_to_crop_indices=chain_id_to_crop, env_path=A3M_PATH)
+        load_msa(
+            cifmol=cifmol, chain_id_to_crop_indices=chain_id_to_crop, env_path=A3M_PATH
+        )
         r.check("load_msa() succeeds", True)
     except Exception as exc:  # noqa: BLE001
         r.check("load_msa() succeeds", False, f"{type(exc).__name__}: {exc}")
 
     # ---- 9. Template loading (needs seq_id) --------------------------------
     try:
-        load_templates(cifmol=cifmol, chain_id_to_crop_indices=chain_id_to_crop,
-                       env_path=TEMPLATE_PATH, n_templates=4, rng=rng)
+        load_templates(
+            cifmol=cifmol,
+            chain_id_to_crop_indices=chain_id_to_crop,
+            env_path=TEMPLATE_PATH,
+            n_templates=4,
+            rng=rng,
+        )
         r.check("load_templates() succeeds", True)
     except Exception as exc:  # noqa: BLE001
         r.check("load_templates() succeeds", False, f"{type(exc).__name__}: {exc}")

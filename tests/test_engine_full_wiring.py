@@ -22,7 +22,9 @@ def reference_backends(module):
     return reference
 
 
-def check_outputs_and_gradients(native, reference, inputs, *, output_tol=0.03, output_dtype=None):
+def check_outputs_and_gradients(
+    native, reference, inputs, *, output_tol=0.03, output_dtype=None
+):
     refs = [x.detach().clone().requires_grad_(x.requires_grad) for x in inputs]
     with torch.autocast("cuda", dtype=torch.bfloat16):
         actual = native(*inputs)

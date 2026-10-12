@@ -9,6 +9,7 @@ from .data import (
     TokenEmbeddingConfig,
     TokenizerConfig,
 )
+
 try:
     from .diffusion import (
         EDMDiffuserConfig,

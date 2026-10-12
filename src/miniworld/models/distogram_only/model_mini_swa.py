@@ -117,7 +117,9 @@ class MiniSWAModel(nn.Module):
         self.config = config
         self.n_recycle_max = config.trunk.n_recycle_max
         if config.trunk.diffusion is not None and self.n_recycle_max != 1:
-            raise ValueError("Distogram diffusion runs one denoising trunk pass; set n_recycle_max=1")
+            raise ValueError(
+                "Distogram diffusion runs one denoising trunk pass; set n_recycle_max=1"
+            )
 
         # ESMFold2-style SWA/3D-RoPE atom input embedder (pair-only trunk -> no single init)
         self.input_feature_embedder = InputFeatureEmbedderESMFold2Style(
@@ -128,18 +130,22 @@ class MiniSWAModel(nn.Module):
         )
 
         # Pair recycle layer (single recycle dropped — single track is gone)
-        self.add_pair_recycle = None if config.trunk.diffusion is not None else nn.Sequential(
-            LayerNorm(
-                config.shared.d_pair,
-                dtype=torch.bfloat16,
-                implementation=to_engine_impl(config.shared.implementation),
-            ),
-            Linear(
-                config.shared.d_pair,
-                config.shared.d_pair,
-                init="zero",
-                dtype=torch.bfloat16,
-            ),
+        self.add_pair_recycle = (
+            None
+            if config.trunk.diffusion is not None
+            else nn.Sequential(
+                LayerNorm(
+                    config.shared.d_pair,
+                    dtype=torch.bfloat16,
+                    implementation=to_engine_impl(config.shared.implementation),
+                ),
+                Linear(
+                    config.shared.d_pair,
+                    config.shared.d_pair,
+                    init="zero",
+                    dtype=torch.bfloat16,
+                ),
+            )
         )
 
         # AF3 template embedder — adds to the pair rep each recycle (uses the
@@ -253,10 +259,21 @@ class MiniSWAModel(nn.Module):
         """
         if self.diffusion is not None:
             return self._diffusion_forward(
-                msa, reference, scheme, sequence, structure, template, interchain_weight,
+                msa,
+                reference,
+                scheme,
+                sequence,
+                structure,
+                template,
+                interchain_weight,
             )
         token_pair = self._run_trunk(
-            msa, reference, scheme, sequence, structure, template,
+            msa,
+            reference,
+            scheme,
+            sequence,
+            structure,
+            template,
         )
         return self.distogram_head(token_pair)
 
@@ -278,7 +295,9 @@ class MiniSWAModel(nn.Module):
         The diffusion ALWAYS uses the CB rep-atom target (sigma_data measured on it).
         """
         if structure.atom_is_rep is None:
-            raise ValueError("Representative-atom distogram requires atom_is_rep features.")
+            raise ValueError(
+                "Representative-atom distogram requires atom_is_rep features."
+            )
         (
             token_pair_init,
             token_single_input,
@@ -296,7 +315,9 @@ class MiniSWAModel(nn.Module):
             rep_atom_mask=structure.atom_is_rep,
         )
         input_mask = token_mask[:, :, None] & token_mask[:, None, :]
-        input_mask = input_mask & ~torch.eye(token_mask.shape[1], device=token_mask.device, dtype=torch.bool)
+        input_mask = input_mask & ~torch.eye(
+            token_mask.shape[1], device=token_mask.device, dtype=torch.bool
+        )
         pair_mask = pair_mask & input_mask
         # Unknown target entries carry no clean signal; do not inject the overflow
         # sentinel as if it were an observed distance. Padding and diagonal are zero.
@@ -305,18 +326,35 @@ class MiniSWAModel(nn.Module):
         x_t = self.diffusion.add_noise(x0, sigma).masked_fill(~input_mask, 0)
 
         token_pair = self._diffusion_trunk(
-            token_pair_init, x_t, sigma, token_single_input,
-            msa_feat, msa_mask, token_mask, scheme.token_asym_id, template,
+            token_pair_init,
+            x_t,
+            sigma,
+            token_single_input,
+            msa_feat,
+            msa_mask,
+            token_mask,
+            scheme.token_asym_id,
+            template,
         )
         x0_hat = self.diffusion.decode_output(token_pair, x_t, sigma)
         return self.diffusion.loss(
-            x0_hat, x0, pair_mask, sigma,
-            token_asym_id=scheme.token_asym_id, interchain_weight=interchain_weight,
+            x0_hat,
+            x0,
+            pair_mask,
+            sigma,
+            token_asym_id=scheme.token_asym_id,
+            interchain_weight=interchain_weight,
         )
 
     @torch.no_grad()
     def sample_distogram(
-        self, msa, reference, scheme, sequence, structure, template=None,
+        self,
+        msa,
+        reference,
+        scheme,
+        sequence,
+        structure,
+        template=None,
         num_steps: int | None = None,
     ) -> torch.Tensor:
         """Generate bins from noise and conditioning, without reading target coordinates.
@@ -328,21 +366,38 @@ class MiniSWAModel(nn.Module):
             raise ValueError("sample_distogram requires a diffusion model in eval mode")
         with model_autocast(self):
             pair, single, msa_feat, msa_mask, token_mask = self._embed(
-                msa, reference, scheme, sequence, structure,
+                msa,
+                reference,
+                scheme,
+                sequence,
+                structure,
             )
         msa_feat, msa_mask = self._msa_for_step(msa_feat, msa_mask)
 
         def denoise(x_t, sigma):
-            with model_autocast(self):      # the trunk under its training precision; the Heun arithmetic stays fp32
+            with model_autocast(
+                self
+            ):  # the trunk under its training precision; the Heun arithmetic stays fp32
                 features = self._diffusion_trunk(
-                    pair, x_t, sigma, single, msa_feat, msa_mask,
-                    token_mask, scheme.token_asym_id, template,
+                    pair,
+                    x_t,
+                    sigma,
+                    single,
+                    msa_feat,
+                    msa_mask,
+                    token_mask,
+                    scheme.token_asym_id,
+                    template,
                 )
                 return self.diffusion.decode_output(features, x_t, sigma)
 
         return self.diffusion.sample(
-            denoise, pair.shape[0], pair.shape[1], pair.device,
-            num_steps=num_steps, token_mask=token_mask,
+            denoise,
+            pair.shape[0],
+            pair.shape[1],
+            pair.device,
+            num_steps=num_steps,
+            token_mask=token_mask,
         )
 
     def _diffusion_trunk(
@@ -360,19 +415,29 @@ class MiniSWAModel(nn.Module):
         """One trunk pass as the denoiser: inject the noised bin image (+ noise level)
         into the pair input, then MSA module + Pairformer."""
         pair_inj = self.diffusion.encode_input(
-            x_t, sigma, dtype=token_pair_init.dtype,
+            x_t,
+            sigma,
+            dtype=token_pair_init.dtype,
         )
         token_pair = token_pair_init + pair_inj
         # v1.2.0: draw this pass's MSA subset from the raw pool (legacy: pass-through).
         msa_feat, msa_mask = self._msa_for_step(msa_feat, msa_mask)
         if self.use_template:
             token_pair = token_pair + self.temp_embedder(
-                token_pair, template, token_asym_id, token_mask,
+                token_pair,
+                template,
+                token_asym_id,
+                token_mask,
             )
         # MiniMSAModule owns its residual (OPM adds residual=token_pair internally), so
         # do NOT re-add token_pair here — matches main's 3d8b666 owns-residual fix.
         token_pair = self.msa_module(
-            msa_feat, msa_mask, token_pair, token_single_input, token_mask, token_asym_id,
+            msa_feat,
+            msa_mask,
+            token_pair,
+            token_single_input,
+            token_mask,
+            token_asym_id,
         )
         return self.pairformer_blocks(token_pair, token_mask)
 
@@ -436,7 +501,9 @@ class MiniSWAModel(nn.Module):
         """
         if not isinstance(msa_feat, MSAFeatures):
             return msa_feat, msa_mask
-        subset = subsample_msa_rows(msa_feat, self.config.trunk.msa_subsample_per_recycle)
+        subset = subsample_msa_rows(
+            msa_feat, self.config.trunk.msa_subsample_per_recycle
+        )
         return init_msa(
             subset,
             num_res_class=self.config.shared.num_res_class,

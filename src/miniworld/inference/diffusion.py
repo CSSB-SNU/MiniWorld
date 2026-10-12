@@ -71,11 +71,11 @@ def diffusion_step(
     num_aug = x_t.shape[0]
     # Inject the model's B=1 axis: existing forward operates on (A, B, L_atom, 3).
     x_t_b = x_t.unsqueeze(1)
-    atom_mask = cache.atom_mask                              # (B, L_atom) bool
+    atom_mask = cache.atom_mask  # (B, L_atom) bool
     x_mask = atom_mask.unsqueeze(0).expand(num_aug, -1, -1)  # (A, B, L_atom)
 
     # ----- Atom encoder: only the noisy-x_t branch is recomputed -----
-    atom_single_cond = cache.atom_single_cond_base           # (B, L_atom, d)
+    atom_single_cond = cache.atom_single_cond_base  # (B, L_atom, d)
     atom_single_cond_aug = atom_single_cond.unsqueeze(0).expand(num_aug, -1, -1, -1)
     to_add = enc.noisy_to_atom_single_rep(x_t_b.to(torch.float32))  # (A, B, L_atom, d)
     to_add = to_add * x_mask.unsqueeze(-1)
@@ -84,12 +84,12 @@ def diffusion_step(
     atom_single_rep = enc.atom_transformer(
         atom_single_rep,
         atom_single_cond_aug,
-        cache.atom_pair,                                     # (B, L_atom, L_atom, d_pair_atom)
-        atom_mask,                                           # (B, L_atom)
+        cache.atom_pair,  # (B, L_atom, L_atom, d_pair_atom)
+        atom_mask,  # (B, L_atom)
     )
 
     # ----- Scatter atom -> token (cached mapping/count) -----
-    am = atom_mask.unsqueeze(0).unsqueeze(-1)                # (1, B, L_atom, 1)
+    am = atom_mask.unsqueeze(0).unsqueeze(-1)  # (1, B, L_atom, 1)
     atom_single_rep_masked = torch.where(
         am,
         atom_single_rep,
@@ -109,7 +109,9 @@ def diffusion_step(
 
     # ----- Token DiT (cond + pair cached, with leading-1 A broadcast) -----
     token_single_rep = token_single_rep + schedule.added_token_cond[t_index].unsqueeze(0)
-    token_single_cond_t = schedule.token_single_cond[t_index].unsqueeze(0)  # (1, B, L_token, d_single)
+    token_single_cond_t = schedule.token_single_cond[t_index].unsqueeze(
+        0
+    )  # (1, B, L_token, d_single)
     token_mask_aug = cache.token_mask.unsqueeze(0).expand(num_aug, -1, -1)
     token_single_rep = dm.diffusion_transformer(
         token_single_rep,
@@ -139,14 +141,15 @@ def diffusion_step(
     atom_to_token_idx_map_e = atom_to_token_idx_map.unsqueeze(0).expand(num_aug, -1, -1)
 
     _to_add_single = dec.add_token_info(token_single_rep)
-    atom_single_rep = atom_single_rep + _to_add_single[
-        aug_1d_idx, batch_1d_idx, atom_to_token_idx_map_e
-    ]
+    atom_single_rep = (
+        atom_single_rep
+        + _to_add_single[aug_1d_idx, batch_1d_idx, atom_to_token_idx_map_e]
+    )
     atom_single_rep = dec.atom_transformer(
         atom_single_rep,
         atom_single_cond_aug,
         cache.atom_pair,
         mask=atom_mask,
     )
-    out = dec.final_denoising(atom_single_rep)               # (A, B, L_atom, 3)
-    return out.squeeze(1)                                    # (A, L_atom, 3)
+    out = dec.final_denoising(atom_single_rep)  # (A, B, L_atom, 3)
+    return out.squeeze(1)  # (A, L_atom, 3)

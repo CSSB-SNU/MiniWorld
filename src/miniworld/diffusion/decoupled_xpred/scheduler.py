@@ -340,4 +340,3 @@ class DecoupledXPredScheduler(DiffusionScheduler):
     ) -> Float[torch.Tensor, ...]:
         """Generate a schedule of scaling factor derivatives for sampling."""
         return torch.zeros_like(time_steps)
-

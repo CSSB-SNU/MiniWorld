@@ -195,11 +195,18 @@ def atom_distogram_target(
         distances, pairs = get_representative_distances(
             atom_pos.reshape(batch * conformers, atoms, 3),
             atom_pos_mask.reshape(batch * conformers, atoms),
-            token_map.reshape(batch * conformers, atoms), token_num,
-            rep.reshape(batch * conformers, atoms), min_distance, _no_clamp_max,
+            token_map.reshape(batch * conformers, atoms),
+            token_num,
+            rep.reshape(batch * conformers, atoms),
+            min_distance,
+            _no_clamp_max,
         )
-        residue_dists = distances.reshape(batch, conformers, token_num, token_num).amin(dim=1)
-        residue_pair_mask = pairs.reshape(batch, conformers, token_num, token_num).any(dim=1)
+        residue_dists = distances.reshape(batch, conformers, token_num, token_num).amin(
+            dim=1
+        )
+        residue_pair_mask = pairs.reshape(batch, conformers, token_num, token_num).any(
+            dim=1
+        )
     else:
         # Multi-structure: keep the legacy mask-then-shortest path (CB collapses to CB-CB
         # once the atom mask is restricted to representatives).
@@ -260,7 +267,9 @@ def cal_atom_distogram_loss(
     if interchain_weight != 1.0 and token_asym_id is None:
         raise ValueError("Interchain weighting requires token_asym_id")
     if token_asym_id is not None and token_asym_id.shape != logit_pred.shape[:-2]:
-        raise ValueError("token_asym_id must match the logit's batch and token dimensions")
+        raise ValueError(
+            "token_asym_id must match the logit's batch and token dimensions"
+        )
     device = logit_pred.device
     target, residue_pair_mask = atom_distogram_target(
         atom_pos=atom_pos,
@@ -316,12 +325,16 @@ def distogram_pair_class_masks(
     def either(flag):
         return flag[..., :, None] | flag[..., None, :]
 
-    antibody, antigen = et == ENTITY_ANTIBODY, (et == ENTITY_PROTEIN) | (et == ENTITY_DPROTEIN)
+    antibody, antigen = (
+        et == ENTITY_ANTIBODY,
+        (et == ENTITY_PROTEIN) | (et == ENTITY_DPROTEIN),
+    )
     return {
         "dna": either(et == ENTITY_DNA),
         "rna": either((et == ENTITY_RNA) | (et == ENTITY_NA)),
         "ligand": either((et == ENTITY_LIGAND) | (et == ENTITY_BRANCHED)),
-        "ab_ag": (antibody[..., :, None] & antigen[..., None, :]) | (antigen[..., :, None] & antibody[..., None, :]),
+        "ab_ag": (antibody[..., :, None] & antigen[..., None, :])
+        | (antigen[..., :, None] & antibody[..., None, :]),
     }
 
 
@@ -342,11 +355,21 @@ def distogram_pair_weight(
     per-atom ``w_l = 1 + is_dna a_dna + is_rna a_rna + is_ligand a_ligand`` carried over to pairs, then the
     antibody-antigen interface factor. The defaults give weight 1 everywhere.
     """
-    for name, value in (("alpha_dna", alpha_dna), ("alpha_rna", alpha_rna), ("alpha_ligand", alpha_ligand), ("ab_ag_weight", ab_ag_weight)):
+    for name, value in (
+        ("alpha_dna", alpha_dna),
+        ("alpha_rna", alpha_rna),
+        ("alpha_ligand", alpha_ligand),
+        ("ab_ag_weight", ab_ag_weight),
+    ):
         if not 0 <= value < float("inf"):
             raise ValueError(f"{name} must be finite and nonnegative")
     cls = distogram_pair_class_masks(entity_type, token_asym_id)
-    w = (1.0 + alpha_dna * cls["dna"].float() + alpha_rna * cls["rna"].float() + alpha_ligand * cls["ligand"].float())
+    w = (
+        1.0
+        + alpha_dna * cls["dna"].float()
+        + alpha_rna * cls["rna"].float()
+        + alpha_ligand * cls["ligand"].float()
+    )
     return w * torch.where(cls["ab_ag"], ab_ag_weight, 1.0)
 
 
@@ -368,16 +391,26 @@ def distogram_class_ce(
     """
     *lead, L, _, D = logit_pred.shape
     target, residue_pair_mask = atom_distogram_target(
-        atom_pos=atom_pos, atom_pos_mask=atom_pos_mask, atom_to_token_idx_map=atom_to_token_idx_map,
-        num_bins=D, token_num=L, rep_atom_mask=rep_atom_mask,
+        atom_pos=atom_pos,
+        atom_pos_mask=atom_pos_mask,
+        atom_to_token_idx_map=atom_to_token_idx_map,
+        num_bins=D,
+        token_num=L,
+        rep_atom_mask=rep_atom_mask,
     )
-    tri = torch.triu(torch.ones(L, L, dtype=torch.bool, device=logit_pred.device), diagonal=1)
+    tri = torch.triu(
+        torch.ones(L, L, dtype=torch.bool, device=logit_pred.device), diagonal=1
+    )
     valid = residue_pair_mask & tri
-    ce = F.cross_entropy(logit_pred.float().permute(*range(len(lead)), -1, -3, -2), target, reduction="none")
+    ce = F.cross_entropy(
+        logit_pred.float().permute(*range(len(lead)), -1, -3, -2),
+        target,
+        reduction="none",
+    )
     cls = distogram_pair_class_masks(entity_type, token_asym_id)
     chain = token_asym_id.clamp(min=0, max=entity_type.shape[-1] - 1).long()
     et = torch.gather(entity_type, -1, chain)
-    polymer_protein = (et <= ENTITY_DPROTEIN)
+    polymer_protein = et <= ENTITY_DPROTEIN
     masks = {
         "protein": polymer_protein[..., :, None] & polymer_protein[..., None, :],
         "na": cls["dna"] | cls["rna"],

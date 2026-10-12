@@ -11,6 +11,7 @@ verify cache hits. Repeated stacks are shortened to two blocks, preserving the
 first/repeated layer layouts, widths, dtypes, dropout and template/MSA paths.
 This is workload coverage, not a model accuracy or speed benchmark.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,8 +30,13 @@ def worker(args):
     from miniworld_engine.autotune.configs import CONFIG_ROOT, use_config_dir
 
     tuning = args.mode == "tune"
-    settings.configure(engine_backend="triton", run_autotune=tuning,
-                       capture=tuning, fill_gaps=True, compile_jobs=12)
+    settings.configure(
+        engine_backend="triton",
+        run_autotune=tuning,
+        capture=tuning,
+        fill_gaps=True,
+        compile_jobs=12,
+    )
     use_config_dir(CONFIG_ROOT / "grid", require_all=False)
     if tuning:
         capture.install()
@@ -42,8 +48,9 @@ def worker(args):
     from miniworld.models.distogram_only import MiniSWAModel
     from miniworld.loss.auxiliary import cal_atom_distogram_loss
 
-    cfg = Config.model_validate(OmegaConf.to_container(
-        OmegaConf.load(args.config), resolve=True))
+    cfg = Config.model_validate(
+        OmegaConf.to_container(OmegaConf.load(args.config), resolve=True)
+    )
     cfg.model.trunk.pairformer.n_block = 2
     cfg.model.trunk.msa_module.n_block = 2
     cfg.model.input_feat_embbeder.n_block = 2
@@ -55,41 +62,74 @@ def worker(args):
     backends = {m._backend.value for m in model.modules() if hasattr(m, "_backend")}
     assert backends == {"triton"}, backends
     batch = _build_precompile_batch(
-        device=torch.device("cuda"), msa_depth=2048, n_tokens=args.length,
-        n_atoms=4096, n_templates=4, num_res_class=cfg.model.shared.num_res_class)
+        device=torch.device("cuda"),
+        msa_depth=2048,
+        n_tokens=args.length,
+        n_atoms=4096,
+        n_templates=4,
+        num_res_class=cfg.model.shared.num_res_class,
+    )
     mapping = batch.scheme.atom_to_token_idx_map
     batch.structure.atom_is_rep = torch.cat(
-        (torch.ones_like(mapping[:, :1], dtype=torch.bool),
-         mapping[:, 1:] != mapping[:, :-1]), dim=1)
-    batch.scheme.token_asym_id[:, args.length // 2:] = 1
+        (
+            torch.ones_like(mapping[:, :1], dtype=torch.bool),
+            mapping[:, 1:] != mapping[:, :-1],
+        ),
+        dim=1,
+    )
+    batch.scheme.token_asym_id[:, args.length // 2 :] = 1
     # Match the active Fabric job: explicit model dtypes, no blanket autocast.
     model.compile(dynamic=False, options={"triton.cudagraphs": False})
     cache.clear_cache_misses()
-    report = {"mode": args.mode, "length": args.length, "msa_depth": 2048,
-              "atoms": 4096, "templates": 4, "blocks_per_stack": 2,
-              "recycles": 1, "compiled": True, "complete": False}
+    report = {
+        "mode": args.mode,
+        "length": args.length,
+        "msa_depth": 2048,
+        "atoms": 4096,
+        "templates": 4,
+        "blocks_per_stack": 2,
+        "recycles": 1,
+        "compiled": True,
+        "complete": False,
+    }
     start = time.monotonic()
     try:
-        logits = model(msa=batch.msa, reference=batch.reference, scheme=batch.scheme,
-                       sequence=batch.sequence, structure=batch.structure,
-                       template=batch.template)
+        logits = model(
+            msa=batch.msa,
+            reference=batch.reference,
+            scheme=batch.scheme,
+            sequence=batch.sequence,
+            structure=batch.structure,
+            template=batch.template,
+        )
         loss = cfg.loss.distogram_loss * cal_atom_distogram_loss(
-            logits, batch.structure.atom_pos, batch.structure.atom_pos_mask, mapping,
+            logits,
+            batch.structure.atom_pos,
+            batch.structure.atom_pos_mask,
+            mapping,
             rep_atom_mask=batch.structure.atom_is_rep,
             token_asym_id=batch.scheme.token_asym_id,
-            interchain_weight=cfg.loss.distogram_interchain_weight)
+            interchain_weight=cfg.loss.distogram_interchain_weight,
+        )
         loss.backward()
         torch.cuda.synchronize()
         assert torch.isfinite(loss), "nonfinite loss"
-        assert all(torch.isfinite(p.grad).all() for p in model.parameters()
-                   if p.grad is not None), "nonfinite gradients"
+        assert all(
+            torch.isfinite(p.grad).all()
+            for p in model.parameters()
+            if p.grad is not None
+        ), "nonfinite gradients"
         misses = sorted(cache.cache_misses())
-        report.update(loss=loss.item(), misses=misses,
-                      peak_gib=torch.cuda.max_memory_allocated() / 2**30)
+        report.update(
+            loss=loss.item(),
+            misses=misses,
+            peak_gib=torch.cuda.max_memory_allocated() / 2**30,
+        )
         if tuning:
             assert not capture.record_errors(), capture.record_errors()
-            capture.dump_shard(str(args.output.with_suffix(".shard.json")),
-                               unit_complete=True)
+            capture.dump_shard(
+                str(args.output.with_suffix(".shard.json")), unit_complete=True
+            )
         else:
             assert not misses, f"{len(misses)} unresolved runtime cache misses"
         report["complete"] = True
@@ -115,21 +155,41 @@ def orchestrate(args):
         processes = []
         for device, length in zip(devices, lengths):
             log = (out / f"{mode}-L{length}.log").open("w")
-            env = {**os.environ, "CUDA_VISIBLE_DEVICES": device,
-                   "OMP_NUM_THREADS": "4", "MKL_NUM_THREADS": "4"}
+            env = {
+                **os.environ,
+                "CUDA_VISIBLE_DEVICES": device,
+                "OMP_NUM_THREADS": "4",
+                "MKL_NUM_THREADS": "4",
+            }
             proc = subprocess.Popen(
-                [sys.executable, str(Path(__file__).resolve()), "--mode", mode,
-                 "--length", str(length), "--config", str(args.config),
-                 "--output", str(out / f"{mode}-L{length}.json")],
-                env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+                [
+                    sys.executable,
+                    str(Path(__file__).resolve()),
+                    "--mode",
+                    mode,
+                    "--length",
+                    str(length),
+                    "--config",
+                    str(args.config),
+                    "--output",
+                    str(out / f"{mode}-L{length}.json"),
+                ],
+                env=env,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+            )
             log.close()
             processes.append((length, proc))
         # All children are launched first; wait does not serialize GPU work.
         results = {str(length): proc.wait() for length, proc in processes}
         stages[mode] = results
         if mode == "tune":
-            shards = [out / f"tune-L{length}.shard.json" for length in lengths
-                      if results[str(length)] == 0]
+            shards = [
+                out / f"tune-L{length}.shard.json"
+                for length in lengths
+                if results[str(length)] == 0
+            ]
             capture.merge_shards(shards, gpu="NVIDIA H100 80GB HBM3 (sm90)")
             stages["merge_rejected"] = list(capture._MERGE_SKIPPED)
         (out / "status.json").write_text(json.dumps(stages, indent=2) + "\n")
@@ -138,13 +198,16 @@ def orchestrate(args):
 
     # Exact keys observed in the real medium job must also exist after merging.
     import miniworld_engine
+
     data = Path(miniworld_engine.__file__).parent / "autotune/data"
     missing = []
     if args.required_keys:
         required = json.loads(args.required_keys.read_text())["kernels"]
         for op, keys in required.items():
             path = data / op / "NVIDIA H100 80GB HBM3 (sm90).json"
-            entries = json.loads(path.read_text()).get("entries", {}) if path.exists() else {}
+            entries = (
+                json.loads(path.read_text()).get("entries", {}) if path.exists() else {}
+            )
             missing.extend([op, key] for key in keys if not entries.get(key))
     stages["required_keys_missing"] = missing
     stages["complete"] = not missing

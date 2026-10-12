@@ -143,13 +143,20 @@ def validate_empty_template(model, static, original):
         expected = module._graph_original_forward(
             pair, empty, static.scheme.token_asym_id, static.structure.token_mask
         )
-    ref = torch.autograd.grad(expected.sum(), params, allow_unused=True) if params else ()
+    ref = (
+        torch.autograd.grad(expected.sum(), params, allow_unused=True) if params else ()
+    )
     static.template._graph_present.fill_(False)
     with model_autocast(model):
         actual = module(
-            pair, static.template, static.scheme.token_asym_id, static.structure.token_mask
+            pair,
+            static.template,
+            static.scheme.token_asym_id,
+            static.structure.token_mask,
         )
-    grads = torch.autograd.grad(actual.sum(), params, allow_unused=True) if params else ()
+    grads = (
+        torch.autograd.grad(actual.sum(), params, allow_unused=True) if params else ()
+    )
     torch.testing.assert_close(actual, expected, rtol=0, atol=0)
     for a, b in zip(grads, ref):
         if a is not None:
@@ -273,7 +280,9 @@ class RecycleGraphs:
         with (
             torch.autocast("cuda", dtype=torch.bfloat16)
             if os.environ.get("MW_GRAPH_AMP") == "1"
-            else model_autocast(self.model)    # bf16 autocast for an fp32-master (bf16-mixed) model
+            else model_autocast(
+                self.model
+            )  # bf16 autocast for an fp32-master (bf16-mixed) model
         ):
             y = self.model(
                 msa=b.msa,
@@ -324,7 +333,9 @@ def graph_objective(cfg):
     """Keep the captured objective identical to the ordinary training client."""
     if getattr(cfg.model.trunk, "diffusion", None) is not None:
         if cfg.model.trunk.n_recycle_max != 1 or not cfg.loss.distogram_cb_target:
-            raise ValueError("Diffusion graphs require one trunk pass and pseudo-beta targets")
+            raise ValueError(
+                "Diffusion graphs require one trunk pass and pseudo-beta targets"
+            )
         return (
             lambda output, batch: cfg.loss.distogram_loss * output[0],
             {"interchain_weight": cfg.loss.distogram_interchain_weight},
@@ -333,9 +344,13 @@ def graph_objective(cfg):
 
     def loss_fn(y, b):
         return cfg.loss.distogram_loss * cal_atom_distogram_loss(
-            y, b.structure.atom_pos, b.structure.atom_pos_mask,
+            y,
+            b.structure.atom_pos,
+            b.structure.atom_pos_mask,
             b.scheme.atom_to_token_idx_map,
-            rep_atom_mask=b.structure.atom_is_rep if cfg.loss.distogram_cb_target else None,
+            rep_atom_mask=b.structure.atom_is_rep
+            if cfg.loss.distogram_cb_target
+            else None,
             token_asym_id=b.scheme.token_asym_id,
             interchain_weight=cfg.loss.distogram_interchain_weight,
             pair_weight=getattr(b, "pair_weight", None),
@@ -349,7 +364,10 @@ def attach_pair_weight(static, loss_cfg):
 
     ``copy_static`` keeps it current: the weight depends on chain features whose size changes from batch to batch, so it is
     computed eagerly per batch and copied into one fixed [B, L, L] buffer that the captured loss reads."""
-    from miniworld.models.distogram_only.client import _pair_weight, _pair_weights_enabled
+    from miniworld.models.distogram_only.client import (
+        _pair_weight,
+        _pair_weights_enabled,
+    )
 
     if not _pair_weights_enabled(loss_cfg):
         return False
@@ -371,7 +389,11 @@ def resolve_run_directory(cfg, ckpt, run_dir, state):
     root = Path(cfg.train.run_dir).resolve()
     if (root / "wandb_run_id.txt").exists() or (root / "latest_run.txt").exists():
         raise ValueError(f"Existing training run in {root}; pass --ckpt to resume it")
-    return root / time.strftime("%Y-%m-%d") / f"{time.strftime('%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    return (
+        root
+        / time.strftime("%Y-%m-%d")
+        / f"{time.strftime('%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    )
 
 
 def prepare_wandb_id(root, run_dir, state, fresh, generate_id):
@@ -392,8 +414,12 @@ def prepare_wandb_id(root, run_dir, state, fresh, generate_id):
 
 
 def capture_rng_state():
-    return dict(torch=torch.get_rng_state(), cuda=torch.cuda.get_rng_state(),
-                numpy=np.random.get_state(), python=random.getstate())
+    return dict(
+        torch=torch.get_rng_state(),
+        cuda=torch.cuda.get_rng_state(),
+        numpy=np.random.get_state(),
+        python=random.getstate(),
+    )
 
 
 def restore_rng_state(state):
@@ -485,16 +511,24 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
     )
     if ckpt is None:
         state = {
-            "model_state_dict": {k: v.detach().cpu().clone() for k, v in model.state_dict().items()},
+            "model_state_dict": {
+                k: v.detach().cpu().clone() for k, v in model.state_dict().items()
+            },
             "optimizer_state_dict": opt.state_dict(),
             "scheduler_state_dict": sched.state_dict() if sched else None,
-            "ema_state_dict": {k: v.detach().float().cpu().clone() for k, v in model.named_parameters()}
-            if cfg.train.use_ema else {},
-            "epoch": 0, "global_step": 0,
+            "ema_state_dict": {
+                k: v.detach().float().cpu().clone() for k, v in model.named_parameters()
+            }
+            if cfg.train.use_ema
+            else {},
+            "epoch": 0,
+            "global_step": 0,
         }
     else:
         state = torch.load(ckpt, map_location="cpu", weights_only=False)
-    selection = [str(resolve_run_directory(cfg, ckpt, run_dir, state)) if rank == 0 else None]
+    selection = [
+        str(resolve_run_directory(cfg, ckpt, run_dir, state)) if rank == 0 else None
+    ]
     if world > 1:
         dist.broadcast_object_list(selection, src=0)
     run_dir = Path(selection[0])
@@ -518,7 +552,10 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
     elif saved_rng:
         torch.manual_seed((cfg.train.seed or 0) + global_step * world + rank)
         if rank == 0:
-            log.warning("World size changed; starting independent RNG streams for %d ranks", world)
+            log.warning(
+                "World size changed; starting independent RNG streams for %d ranks",
+                world,
+            )
     startup_rng = capture_rng_state()
     if rank == 0:
         print(
@@ -597,13 +634,20 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
             it = itertools.cycle([first, second])
     static = first.to(device=dev)
     if attach_pair_weight(static, cfg.loss) and rank == 0:
-        print("[graph] distogram chemistry pair weights ride in the static batch", flush=True)
+        print(
+            "[graph] distogram chemistry pair weights ride in the static batch",
+            flush=True,
+        )
     unused_if_empty = prepare_template_graph(model, static, TemplateConfig().n_templates)
     validate_empty_template(model, static, first)
 
     loss_fn, forward_kwargs = graph_objective(cfg)
     graphs = RecycleGraphs(
-        model, static, loss_fn, cfg.train.grad_accum_steps, cfg.model.trunk.n_recycle_max,
+        model,
+        static,
+        loss_fn,
+        cfg.train.grad_accum_steps,
+        cfg.model.trunk.n_recycle_max,
         forward_kwargs=forward_kwargs,
     )
     run_dir = Path(run_dir)
@@ -723,14 +767,23 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
                 )
             details.sort(key=lambda x: x["relative_l2"], reverse=True)
             if fresh and is_diffusion and stage == "after_optimizer":
-                assert any(d["name"] == "diffusion.encoder.weight" and d["reference_norm"] > 0 for d in details)
-                assert any(d["name"].startswith("pairformer_blocks.") and d["reference_norm"] > 0 for d in details)
+                assert any(
+                    d["name"] == "diffusion.encoder.weight" and d["reference_norm"] > 0
+                    for d in details
+                )
+                assert any(
+                    d["name"].startswith("pairformer_blocks.")
+                    and d["reference_norm"] > 0
+                    for d in details
+                )
             failed_gradients = [
                 d
                 for d in details
                 if not np.isfinite(d["relative_l2"])
-                or (d["relative_l2"] >= 1e-3
-                    and not (d["max_abs"] <= 1e-8 and d["reference_max"] <= 1e-6))
+                or (
+                    d["relative_l2"] >= 1e-3
+                    and not (d["max_abs"] <= 1e-8 and d["reference_max"] <= 1e-6)
+                )
             ]
             if failed_gradients:
                 graph_grads = [p.grad.clone() for p in graphs.params]
@@ -770,12 +823,15 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
                 for p, g in zip(graphs.params, graph_grads):
                     p.grad.copy_(g)
                 del graph_grads
-            sigma_ok = (
-                not expected_sigma
-                or (np.allclose(actual_sigma, expected_sigma, rtol=0, atol=0)
-                    and len(set(actual_sigma)) > 1)
+            sigma_ok = not expected_sigma or (
+                np.allclose(actual_sigma, expected_sigma, rtol=0, atol=0)
+                and len(set(actual_sigma)) > 1
             )
-            if not np.allclose(actual, expected, rtol=0, atol=1e-6) or failed_gradients or not sigma_ok:
+            if (
+                not np.allclose(actual, expected, rtol=0, atol=1e-6)
+                or failed_gradients
+                or not sigma_ok
+            ):
                 (run_dir / f"validation-failure-rank{rank}.json").write_text(
                     json.dumps(
                         dict(
@@ -823,15 +879,22 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
 
     wandb_id = state.get("wandb_run_id")
     if rank == 0 and cfg.train.use_wandb and not diagnostic_steps:
-        wandb_id = prepare_wandb_id(cfg.train.run_dir, run_dir, state, fresh, new_wandb_run_id)
+        wandb_id = prepare_wandb_id(
+            cfg.train.run_dir, run_dir, state, fresh, new_wandb_run_id
+        )
 
     def checkpoint_payload(rng_states):
         return {
-            "config": cfg.model_dump(mode="json"), "run_dir": str(run_dir),
-            "wandb_run_id": wandb_id, "rng_states": rng_states,
-            "model_state_dict": model.state_dict(), "optimizer_state_dict": opt.state_dict(),
+            "config": cfg.model_dump(mode="json"),
+            "run_dir": str(run_dir),
+            "wandb_run_id": wandb_id,
+            "rng_states": rng_states,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": opt.state_dict(),
             "scheduler_state_dict": sched.state_dict() if sched else None,
-            "ema_state_dict": ema, "epoch": epoch, "global_step": global_step,
+            "ema_state_dict": ema,
+            "epoch": epoch,
+            "global_step": global_step,
         }
 
     if not diagnostic_steps:
@@ -843,10 +906,13 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
             root.mkdir(parents=True, exist_ok=True)
             (root / "latest_run.txt").write_text(str(run_dir) + "\n")
             if cfg.train.use_wandb:
-                wandb.init(project=cfg.train.wandb_project, id=wandb_id,
-                           name=job_name or cfg.train.comment,
-                           resume="allow" if (is_diffusion or fresh) else "must",
-                           config=cfg.model_dump(mode="json"))
+                wandb.init(
+                    project=cfg.train.wandb_project,
+                    id=wandb_id,
+                    name=job_name or cfg.train.comment,
+                    resume="allow" if (is_diffusion or fresh) else "must",
+                    config=cfg.model_dump(mode="json"),
+                )
         if world > 1:
             dist.barrier()
     del state
@@ -943,7 +1009,9 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
             if diagnostic_steps:
                 records.append(timing)
             metrics_dir = os.environ.get("MW_GRAPH_METRICS_DIR")
-            if metrics_dir and done <= int(os.environ.get("MW_GRAPH_METRICS_STEPS", "100")):
+            if metrics_dir and done <= int(
+                os.environ.get("MW_GRAPH_METRICS_STEPS", "100")
+            ):
                 destination = Path(metrics_dir)
                 destination.mkdir(parents=True, exist_ok=True)
                 with (destination / f"rank{rank}.jsonl").open("a") as handle:
@@ -987,7 +1055,11 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
                     },
                     step=global_step,
                 )
-            save_checkpoint(run_dir, checkpoint_payload(epoch_rng), archive=epoch % cfg.train.save_freq == 0)
+            save_checkpoint(
+                run_dir,
+                checkpoint_payload(epoch_rng),
+                archive=epoch % cfg.train.save_freq == 0,
+            )
         if world > 1:
             dist.barrier()
     if rank == 0 and cfg.train.use_wandb and not diagnostic_steps:

@@ -8,7 +8,12 @@ import torch
 from jaxtyping import Int
 
 from miniworld.data.constants import CANONICAL_CHEMCOMPS, AtomMapping, EntityMapping
-from miniworld.data.reference import augment_reference, map_reference, parse_coordinates, resolve_reference
+from miniworld.data.reference import (
+    augment_reference,
+    map_reference,
+    parse_coordinates,
+    resolve_reference,
+)
 from miniworld.data.pipeline.template import ProteinTemplate
 from miniworld.utils.structure import SE3_oper
 
@@ -163,12 +168,17 @@ def to_reference_features(
                 # training CIF has been cropped and terminal atoms removed.
                 if component not in resolved_components:
                     full = ccd_mols[component][0]
-                    resolved_components[component] = (full, resolve_reference(full, component))
+                    resolved_components[component] = (
+                        full,
+                        resolve_reference(full, component),
+                    )
                 full, reference = resolved_components[component]
                 # Check the full component even when cropping removed every
                 # missing atom: inference regenerates that same full component.
                 if reference.source == "rdkit" or not ref_mask[atom_indices].all():
-                    resolved = map_reference(full, reference, cifmol.atoms.id.value[atom_indices])
+                    resolved = map_reference(
+                        full, reference, cifmol.atoms.id.value[atom_indices]
+                    )
                     _ref_pos = resolved.pos
                     ref_mask[atom_indices] = resolved.mask
         _ref_pos = augment_reference(_ref_pos, ref_mask[atom_indices], R, T)
@@ -232,13 +242,18 @@ def to_structure_features(
     # instead of scattering the variable-length token_bond inside the CUDA graph.
     tb = token_bond.astype(np.int64).reshape(-1, 2)
     token_bond_feat = torch.zeros(
-        (cropped_token_len, cropped_token_len), dtype=torch.bool,
+        (cropped_token_len, cropped_token_len),
+        dtype=torch.bool,
     )
     if tb.shape[0] > 0:
         bi = torch.from_numpy(tb[:, 0])
         bj = torch.from_numpy(tb[:, 1])
-        keep = (bi != bj) & (bi >= 0) & (bj >= 0) & (bi < cropped_token_len) & (
-            bj < cropped_token_len
+        keep = (
+            (bi != bj)
+            & (bi >= 0)
+            & (bj >= 0)
+            & (bi < cropped_token_len)
+            & (bj < cropped_token_len)
         )
         bi, bj = bi[keep], bj[keep]
         token_bond_feat[bi, bj] = True
@@ -373,16 +388,17 @@ def _build_atom_is_rep(
     names = np.char.strip(np.char.upper(np.asarray(cifmol.atoms.id).astype(str)))
     tok = np.asarray(atom_to_token_idx_map, dtype=np.int64)
     atom_res = np.asarray(cifmol.index_table.atom_to_res, dtype=np.int64)
-    residue_names = np.char.strip(np.char.upper(
-        np.asarray(cifmol.residues.chem_comp_id.value).astype(str)))
+    residue_names = np.char.strip(
+        np.char.upper(np.asarray(cifmol.residues.chem_comp_id.value).astype(str))
+    )
     components = residue_names[atom_res]
     valid = np.asarray(atom_pos_mask, dtype=bool)
     in_range = (tok >= 0) & (tok < n_tokens)
     canonical = np.isin(components, list(CANONICAL_CHEMCOMPS))
-    desired = np.full(names.shape, 'CB', dtype='<U2')
-    desired[components == 'GLY'] = 'CA'
-    desired[np.isin(components, ['A', 'G', 'DA', 'DG'])] = 'C4'
-    desired[np.isin(components, ['C', 'U', 'DC', 'DT'])] = 'C2'
+    desired = np.full(names.shape, "CB", dtype="<U2")
+    desired[components == "GLY"] = "CA"
+    desired[np.isin(components, ["A", "G", "DA", "DG"])] = "C4"
+    desired[np.isin(components, ["C", "U", "DC", "DT"])] = "C2"
     eligible = in_range & (~canonical | (names == desired))
 
     # Select before applying the observed-coordinate mask, so missing atoms do

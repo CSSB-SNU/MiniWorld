@@ -110,6 +110,7 @@ class Client(DiffusionClient):
 
     def __init__(self, config: Config) -> None:
         from miniworld.training.engine_backend import configure_engine_backend
+
         configure_engine_backend(config.train.engine_backend)
         # Bypass DiffusionClient.__init__ (which registers a DiffusionModel); replicate its
         # setup but register the ConfidenceModel instead.
@@ -118,7 +119,9 @@ class Client(DiffusionClient):
         BaseClient.__init__(self, config)
         self.config = config
         self.set_seed(config.train.seed)
-        self.register_model(apply_precision(ConfidenceModel(config.model), config.train.precision))
+        self.register_model(
+            apply_precision(ConfidenceModel(config.model), config.train.precision)
+        )
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
@@ -151,7 +154,9 @@ class Client(DiffusionClient):
         count (``timesteps``) and whether to run inline vs. read a precomputed cache
         are open decisions; change them here only.
         """
-        steps = timesteps if timesteps is not None else self.config.train.predict_timesteps
+        steps = (
+            timesteps if timesteps is not None else self.config.train.predict_timesteps
+        )
         raw_model = cast("ConfidenceModel", getattr(self.model, "module", self.model))
         wrapper = ModelWrapper(raw_model)
         batch = batch.to(device=self.device)
@@ -179,18 +184,20 @@ class Client(DiffusionClient):
     def _confidence_targets_and_logits(
         self,
         batch: Batch,
-        x_pred: torch.Tensor,          # [B, L_atom, 3]
+        x_pred: torch.Tensor,  # [B, L_atom, 3]
         token_single_input: torch.Tensor,  # [B, L, d_in]
-        token_pair: torch.Tensor,      # [B, L, L, d_pair]
-    ) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor], dict[str, torch.Tensor]]:
+        token_pair: torch.Tensor,  # [B, L, L, d_pair]
+    ) -> tuple[
+        dict[str, torch.Tensor], dict[str, torch.Tensor], dict[str, torch.Tensor]
+    ]:
         """Build head logits + bucketed targets + masks (targets under no_grad)."""
         structure = batch.structure
         scheme = batch.scheme
-        token_mask = structure.token_mask                 # [B, L]
-        atom_to_token = scheme.atom_to_token_idx_map       # [B, L_atom]
-        atom_pos_mask = structure.atom_pos_mask.bool()     # [B, L_atom]
-        atom_mask = structure.atom_mask                    # [B, L_atom]
-        atom_is_rep = structure.atom_is_rep                # [B, L_atom] | None
+        token_mask = structure.token_mask  # [B, L]
+        atom_to_token = scheme.atom_to_token_idx_map  # [B, L_atom]
+        atom_pos_mask = structure.atom_pos_mask.bool()  # [B, L_atom]
+        atom_mask = structure.atom_mask  # [B, L_atom]
+        atom_is_rep = structure.atom_is_rep  # [B, L_atom] | None
         token_num = int(token_mask.shape[1])
         n = x_pred.shape[0]
 
@@ -200,19 +207,31 @@ class Client(DiffusionClient):
             gt_pos = structure.atom_pos
             if self.config.loss.align_symmetry_targets:
                 from miniworld.loss.symmetry import align_confidence_targets
+
                 gt_pos, atom_pos_mask = align_confidence_targets(batch, x_pred)
             # Representative positions (predicted + ground truth).
             if atom_is_rep is None:
                 msg = "structure.atom_is_rep is required for PDE/PAE targets."
                 raise ValueError(msg)
             pred_rep_pos, tok_valid = conf.representative_positions(
-                x_pred, atom_mask.bool(), atom_to_token, atom_is_rep, token_num,
+                x_pred,
+                atom_mask.bool(),
+                atom_to_token,
+                atom_is_rep,
+                token_num,
             )
             gt_rep_pos, gt_tok_valid = conf.representative_positions(
-                gt_pos, atom_pos_mask, atom_to_token, atom_is_rep, token_num,
+                gt_pos,
+                atom_pos_mask,
+                atom_to_token,
+                atom_is_rep,
+                token_num,
             )
             pred_rep_dist = conf.pred_rep_distance(
-                pred_rep_pos, tok_valid, cfg.dist_min, cfg.dist_max,
+                pred_rep_pos,
+                tok_valid,
+                cfg.dist_min,
+                cfg.dist_max,
             )
             tok_valid = tok_valid & gt_tok_valid
             # Per-atom molecule-type masks (AF3 §4.3.1): entity_type ints
@@ -220,21 +239,32 @@ class Client(DiffusionClient):
             et = batch.chain.entity_type  # [B, L_chain]
             a2c = scheme.atom_to_chain_id  # [B, L_atom]
             atom_is_nuc = torch.gather(
-                ((et == 3) | (et == 4) | (et == 5)), 1, a2c,
+                ((et == 3) | (et == 4) | (et == 5)),
+                1,
+                a2c,
             )  # [B, L_atom]
             atom_is_ligand = torch.gather(
-                ((et == 6) | (et == 7)), 1, a2c,
+                ((et == 6) | (et == 7)),
+                1,
+                a2c,
             )  # [B, L_atom]
             # pLDDT (per-atom lDDT vs GT): NA neighbors 30 Å, ligand polymer-only.
             lddt, atom_valid = conf.per_atom_lddt(
-                x_pred, gt_pos, atom_pos_mask,
-                atom_is_nuc=atom_is_nuc, atom_is_ligand=atom_is_ligand,
+                x_pred,
+                gt_pos,
+                atom_pos_mask,
+                atom_is_nuc=atom_is_nuc,
+                atom_is_ligand=atom_is_ligand,
             )
             plddt_bins = conf.plddt_target_bins(lddt, cfg.n_plddt_bins)
             plddt_mask = atom_valid.expand(n, -1)
             # PDE (representative distance error).
             pde_bins, pde_mask = conf.pde_target_bins(
-                pred_rep_pos, gt_rep_pos, tok_valid, cfg.n_pde_bins, cfg.pde_max,
+                pred_rep_pos,
+                gt_rep_pos,
+                tok_valid,
+                cfg.n_pde_bins,
+                cfg.pde_max,
             )
             # PAE (frame-aligned): build per-token frames (N/CA/C or C1'/C3'/C4')
             # for pred + GT, then the frame-relative error target. Needs the
@@ -243,22 +273,37 @@ class Client(DiffusionClient):
             tfm = structure.token_frame_mask
             pae = None
             if self.config.loss.pae_loss > 0 and tfa is not None and tfm is not None:
+
                 def _gather_frame(pos: torch.Tensor) -> torch.Tensor:
                     # pos [M, L_atom, 3] -> frame atoms [M, L, 3, 3]
                     fa = tfa.clamp(min=0).reshape(tfa.shape[0], -1)
                     index = fa.expand(pos.shape[0], -1)[..., None].expand(-1, -1, 3)
-                    return torch.gather(pos, 1, index).reshape(pos.shape[0], token_num, 3, 3)
+                    return torch.gather(pos, 1, index).reshape(
+                        pos.shape[0], token_num, 3, 3
+                    )
 
                 pred_frame = conf.token_frames(_gather_frame(x_pred), tfm)
-                frame_observed = torch.gather(
-                    atom_pos_mask, 1, tfa.clamp(min=0).reshape(tfa.shape[0], -1),
-                ).reshape(tfa.shape[0], token_num, 3).all(dim=-1)
+                frame_observed = (
+                    torch.gather(
+                        atom_pos_mask,
+                        1,
+                        tfa.clamp(min=0).reshape(tfa.shape[0], -1),
+                    )
+                    .reshape(tfa.shape[0], token_num, 3)
+                    .all(dim=-1)
+                )
                 gt_frame = conf.token_frames(
-                    _gather_frame(gt_pos), tfm & frame_observed,
+                    _gather_frame(gt_pos),
+                    tfm & frame_observed,
                 )
                 pae = conf.pae_target_bins(
-                    pred_rep_pos, gt_rep_pos, tok_valid,
-                    pred_frame, gt_frame, cfg.n_pae_bins, cfg.pae_max,
+                    pred_rep_pos,
+                    gt_rep_pos,
+                    tok_valid,
+                    pred_frame,
+                    gt_frame,
+                    cfg.n_pae_bins,
+                    cfg.pae_max,
                 )
 
         # Route through self.model (the DDP/Fabric wrapper) so confidence-head grads
@@ -310,7 +355,10 @@ class Client(DiffusionClient):
         # Frozen structure prediction (no grad) — the diffusion-step seam.
         x_pred, token_single_input, token_pair = self.predict_structure(batch)
         logits, targets, masks = self._confidence_targets_and_logits(
-            batch, x_pred, token_single_input, token_pair,
+            batch,
+            x_pred,
+            token_single_input,
+            token_pair,
         )
         loss, loss_dict = self.loss_fn(logits, targets, masks)
         self.backward(loss)
@@ -334,14 +382,22 @@ class Client(DiffusionClient):
             msg = "structure.atom_is_rep is required for confidence inference."
             raise ValueError(msg)
         rep_pos, tok_valid = conf.representative_positions(
-            x_pred, structure.atom_mask.bool(), atom_to_token,
-            structure.atom_is_rep, int(token_mask.shape[1]),
+            x_pred,
+            structure.atom_mask.bool(),
+            atom_to_token,
+            structure.atom_is_rep,
+            int(token_mask.shape[1]),
         )
         cfg = raw_model.config.confidence
-        pred_rep_dist = conf.pred_rep_distance(rep_pos, tok_valid, cfg.dist_min, cfg.dist_max)
+        pred_rep_dist = conf.pred_rep_distance(
+            rep_pos, tok_valid, cfg.dist_min, cfg.dist_max
+        )
         logits = raw_model.confidence_forward(
-            token_single_input, token_pair, pred_rep_dist,
-            token_mask.expand(n, -1), atom_to_token.expand(n, -1),
+            token_single_input,
+            token_pair,
+            pred_rep_dist,
+            token_mask.expand(n, -1),
+            atom_to_token.expand(n, -1),
         )
         head = raw_model.confidence_head
         return ConfidenceOutput(
@@ -359,7 +415,10 @@ class Client(DiffusionClient):
             return {key: sum(v[key] for v in values) / len(values) for key in values[0]}
         x_pred, token_single_input, token_pair = self.predict_structure(batch)
         logits, targets, masks = self._confidence_targets_and_logits(
-            batch, x_pred, token_single_input, token_pair,
+            batch,
+            x_pred,
+            token_single_input,
+            token_pair,
         )
         _, loss_dict = self.loss_fn(logits, targets, masks)
         return loss_dict

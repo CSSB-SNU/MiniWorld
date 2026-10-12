@@ -243,7 +243,9 @@ class Model(nn.Module):
                 if self.use_contact:
                     token_pair = token_pair + self.proj_contact(contact_feat)
                 if self.use_template:
-                    token_pair = token_pair + self.temp_embedder(token_pair, template_feat)
+                    token_pair = token_pair + self.temp_embedder(
+                        token_pair, template_feat
+                    )
 
                 token_pair = self.msa_module(
                     msa_feat,
@@ -414,7 +416,9 @@ class ModelWrapper(nn.Module):
             structure=self.condition["structure"],
             x_t=x_t.unsqueeze(1),  # (N_str, L, 3) -> (A=N_str, B=1, L, 3)
             x_mask=x_mask,
-            t_emb=t_emb[None, None, None, None],  # (,) -> (1, 1, 1, 1), broadcasts over A,B
+            t_emb=t_emb[
+                None, None, None, None
+            ],  # (,) -> (1, 1, 1, 1), broadcasts over A,B
             token_single_input=self.condition["token_single_input"],
             token_single_trunk=self.condition["token_single_trunk"],
             token_pair_trunk=self.condition["token_pair_trunk"],

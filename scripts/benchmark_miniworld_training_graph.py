@@ -42,10 +42,17 @@ def main():
     parser.add_argument("--grad-accum", type=int, default=32)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--batch", type=Path, required=True)
-    parser.add_argument("--config", default="phase1a_distogram_v110",
-                        help="Hydra config name under configs/miniworld (e.g. phase1a_distogram_v120)")
-    parser.add_argument("--override", nargs="*", default=[],
-                        help="Extra Hydra overrides, e.g. data.train_db.catalog_cache_path=...")
+    parser.add_argument(
+        "--config",
+        default="phase1a_distogram_v110",
+        help="Hydra config name under configs/miniworld (e.g. phase1a_distogram_v120)",
+    )
+    parser.add_argument(
+        "--override",
+        nargs="*",
+        default=[],
+        help="Extra Hydra overrides, e.g. data.train_db.catalog_cache_path=...",
+    )
     args = parser.parse_args()
     from run_miniworld_distogram_train import Config
     from miniworld.data.dataloader.dataloader import (
@@ -71,10 +78,12 @@ def main():
                 overrides=["train.engine_backend=triton", *args.override],
             )
         )
-    log(f"config={args.config} bucket_msa={cfg.train.bucket_msa_multiple} "
+    log(
+        f"config={args.config} bucket_msa={cfg.train.bucket_msa_multiple} "
         f"msa_subsample_per_recycle={cfg.model.trunk.msa_subsample_per_recycle} "
         f"pool_by_source={dict(cfg.data.msa.max_msa_depth_by_source)} "
-        f"policy_by_source={dict(cfg.data.msa.sample_depth_by_source)}")
+        f"policy_by_source={dict(cfg.data.msa.sample_depth_by_source)}"
+    )
     configure_engine_backend("triton")
     if not args.batch.exists():
         log("Loading real training batches from the existing catalog (read only)")
@@ -282,11 +291,15 @@ def main():
             log(json.dumps(record))
         import gc
         from triton.runtime.autotuner import Autotuner
-        choices = sorted(set(
-            (o.base_fn.__module__ + "." + o.base_fn.__name__, str(key), str(config))
-            for o in gc.get_objects() if type(o) is Autotuner
-            for key, config in o.cache.items()
-        ))
+
+        choices = sorted(
+            set(
+                (o.base_fn.__module__ + "." + o.base_fn.__name__, str(key), str(config))
+                for o in gc.get_objects()
+                if type(o) is Autotuner
+                for key, config in o.cache.items()
+            )
+        )
         result = dict(
             graph=args.graph,
             recycles=args.recycles,
@@ -313,9 +326,15 @@ def main():
             preparation_seconds=prepare_seconds,
             capture_seconds=capture_seconds,
             autotune_choices=choices,
-            autotune_choices_sha256=hashlib.sha256(json.dumps(choices).encode()).hexdigest(),
-            peak_allocated_including_preparation_gib=max(preparation_peak_allocated, torch.cuda.max_memory_allocated()) / 2**30,
-            device_used_gib=(torch.cuda.mem_get_info()[1]-torch.cuda.mem_get_info()[0])/2**30,
+            autotune_choices_sha256=hashlib.sha256(
+                json.dumps(choices).encode()
+            ).hexdigest(),
+            peak_allocated_including_preparation_gib=max(
+                preparation_peak_allocated, torch.cuda.max_memory_allocated()
+            )
+            / 2**30,
+            device_used_gib=(torch.cuda.mem_get_info()[1] - torch.cuda.mem_get_info()[0])
+            / 2**30,
             peak_allocated_gib=torch.cuda.max_memory_allocated() / 2**30,
             peak_reserved_gib=torch.cuda.max_memory_reserved() / 2**30,
             warmup_loss=warm_loss.item(),

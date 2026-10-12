@@ -96,7 +96,9 @@ def main() -> None:
         .item()
         for k in acc
     )
-    print(f"max |SWA - epoch{epochs[-1]}| = {delta:.4g}  ({len(acc)} float + {len(nonfloat)} other tensors)")
+    print(
+        f"max |SWA - epoch{epochs[-1]}| = {delta:.4g}  ({len(acc)} float + {len(nonfloat)} other tensors)"
+    )
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)

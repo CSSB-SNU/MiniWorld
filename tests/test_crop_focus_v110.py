@@ -21,11 +21,13 @@ def setup_pair(monkeypatch, tags, *, draw=0.25, **overrides):
     }
     mol = NS(id="test", chains=NS(select=lambda *, chain_id: chains[chain_id]))
     pre = Preprocessor.__new__(Preprocessor)
-    pre.crop_config = CropConfig(**{
-        "ab_ag_interface_only": True,
-        "prefer_nonprotein_focus": True,
-        **overrides,
-    })
+    pre.crop_config = CropConfig(
+        **{
+            "ab_ag_interface_only": True,
+            "prefer_nonprotein_focus": True,
+            **overrides,
+        }
+    )
     rng = NS(random=Mock(return_value=draw), choice=Mock(side_effect=lambda xs: xs[-1]))
     interface = Mock(return_value=NS(atoms=object()))
     monkeypatch.setattr(module, "find_interface_residues", interface)
@@ -36,9 +38,15 @@ def setup_pair(monkeypatch, tags, *, draw=0.25, **overrides):
 @pytest.mark.parametrize("draw", [0.0, 0.5, 0.99])
 def test_ab_ag_always_interface(monkeypatch, tags, draw):
     pre, mol, _, rng, interface = setup_pair(
-        monkeypatch, tags, draw=draw, chain_crop_prob=1.0,
+        monkeypatch,
+        tags,
+        draw=draw,
+        chain_crop_prob=1.0,
     )
-    assert pre._select_focus_atoms(mol, ["left", "right"], rng) is interface.return_value.atoms
+    assert (
+        pre._select_focus_atoms(mol, ["left", "right"], rng)
+        is interface.return_value.atoms
+    )
     interface.assert_called_once_with(mol, "left", "right")
     rng.random.assert_not_called()
     rng.choice.assert_not_called()
@@ -68,7 +76,10 @@ def test_two_proteins_or_two_nonproteins_keep_uniform_choice(monkeypatch, tags):
 @pytest.mark.parametrize("draw", [0.5, 0.99])
 def test_other_pairs_retain_interface_half(monkeypatch, tags, draw):
     pre, mol, _, rng, interface = setup_pair(monkeypatch, tags, draw=draw)
-    assert pre._select_focus_atoms(mol, ["left", "right"], rng) is interface.return_value.atoms
+    assert (
+        pre._select_focus_atoms(mol, ["left", "right"], rng)
+        is interface.return_value.atoms
+    )
     rng.choice.assert_not_called()
 
 
@@ -91,8 +102,11 @@ def test_other_missing_interface_fallback_uses_nonprotein(monkeypatch):
 @pytest.mark.parametrize("draw", [0.25, 0.75])
 def test_old_configs_keep_uniform_chain_and_fallback(monkeypatch, tags, draw):
     pre, mol, chains, rng, interface = setup_pair(
-        monkeypatch, tags, draw=draw,
-        ab_ag_interface_only=False, prefer_nonprotein_focus=False,
+        monkeypatch,
+        tags,
+        draw=draw,
+        ab_ag_interface_only=False,
+        prefer_nonprotein_focus=False,
     )
     interface.side_effect = NoInterfaceError("no contact")
     assert pre._select_focus_atoms(mol, ["left", "right"], rng) is chains["right"].atoms

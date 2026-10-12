@@ -19,6 +19,7 @@ Usage:
     python scripts/eval_2oxs_docking.py --run-dir runs/outputs/<...>/<job>/
     python scripts/eval_2oxs_docking.py --root runs/outputs/miniworld_test/2026-05-11/2oxs/
 """
+
 from __future__ import annotations
 
 import json
@@ -51,12 +52,18 @@ def _gt_chain_residues(cifmol_chain) -> list[tuple[str, dict[str, np.ndarray]]]:
         for i, name in enumerate(atom_ids):
             if np.isfinite(xyz[i]).all():
                 atoms[name] = xyz[i]
-        resname = str(np.asarray(r.chem_comp_id.value).item()) if hasattr(r, "chem_comp_id") else ""
+        resname = (
+            str(np.asarray(r.chem_comp_id.value).item())
+            if hasattr(r, "chem_comp_id")
+            else ""
+        )
         out.append((resname, atoms))
     return out
 
 
-def _parse_pred_cif(cif_path: Path) -> dict[str, list[tuple[int, str, dict[str, np.ndarray]]]]:
+def _parse_pred_cif(
+    cif_path: Path,
+) -> dict[str, list[tuple[int, str, dict[str, np.ndarray]]]]:
     """Parse a single-model CIF, grouping by label_asym_id.
 
     Returns ``{chain_id: [(seq_id, resname, {atom_name: xyz}), ...]}`` with
@@ -226,7 +233,7 @@ def _evaluate_one(
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     default=None,
     help="Root containing many run subdirectories — recursively process every "
-         "subdir that has structures/*_pred.cif inside.",
+    "subdir that has structures/*_pred.cif inside.",
 )
 @click.option(
     "--cif-db",
@@ -239,24 +246,33 @@ def _evaluate_one(
 @click.option("--model-id", default="1", show_default=True)
 @click.option("--alt-id", default=".", show_default=True)
 @click.option(
-    "--gt-protein-chain", default="A_1", show_default=True,
+    "--gt-protein-chain",
+    default="A_1",
+    show_default=True,
     help="BioMolDB chain id for the GT protein chain.",
 )
 @click.option(
-    "--gt-ligand-chain", default="D_1", show_default=True,
+    "--gt-ligand-chain",
+    default="D_1",
+    show_default=True,
     help="BioMolDB chain id for the GT ligand chain.",
 )
 @click.option(
-    "--pred-protein-chain", default="0", show_default=True,
+    "--pred-protein-chain",
+    default="0",
+    show_default=True,
     help="label_asym_id of the protein chain in the predicted CIF.",
 )
 @click.option(
-    "--pred-ligand-chain", default="1", show_default=True,
+    "--pred-ligand-chain",
+    default="1",
+    show_default=True,
     help="label_asym_id of the ligand chain in the predicted CIF.",
 )
 @click.option(
     "--skip-existing/--rewrite",
-    default=False, show_default=True,
+    default=False,
+    show_default=True,
     help="If set, skip run dirs that already have metrics.json.",
 )
 def main(  # noqa: PLR0913
@@ -291,9 +307,7 @@ def main(  # noqa: PLR0913
     if run_dir is not None:
         run_dirs = [run_dir]
     else:
-        run_dirs = sorted(
-            p.parent for p in root.glob("**/structures") if p.is_dir()
-        )
+        run_dirs = sorted(p.parent for p in root.glob("**/structures") if p.is_dir())
     if not run_dirs:
         click.echo("no run directories found")
         return
@@ -334,7 +348,8 @@ def main(  # noqa: PLR0913
             )
             summary = {f"min_{k}": min(m[k] for m in ok) for k in keys}
             summary["best_pose_cif"] = min(
-                ok, key=lambda m: m["ben_rmsd_post_protein_align"],
+                ok,
+                key=lambda m: m["ben_rmsd_post_protein_align"],
             )["cif"]
         out = {
             "gt": {

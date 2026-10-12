@@ -44,7 +44,7 @@ class ConfidenceHead(nn.Module):
         """Configuration for the confidence head."""
 
         d_pair: int = 128
-        d_single: int = 384        # confidence single track (seeded from d_single_input)
+        d_single: int = 384  # confidence single track (seeded from d_single_input)
         d_single_input: int = 441  # d_single_token_input (input-embedder single)
         # confidence mini-trunk: MiniPairformer WITH its single track (use_single) —
         # lightweight pair core (bidir trimul) + AttentionPairBias single per block,
@@ -55,9 +55,9 @@ class ConfidenceHead(nn.Module):
         p_drop: float = 0.0
         implementation: ImplementationType = ImplementationType.PYTORCH
         # output bins
-        n_plddt_bins: int = 50   # lDDT in [0, 1] -> 50 bins (0.02 each)
-        n_pae_bins: int = 64     # aligned error [0, pae_max] Å
-        n_pde_bins: int = 64     # distance error [0, pde_max] Å
+        n_plddt_bins: int = 50  # lDDT in [0, 1] -> 50 bins (0.02 each)
+        n_pae_bins: int = 64  # aligned error [0, pae_max] Å
+        n_pde_bins: int = 64  # distance error [0, pde_max] Å
         pae_max: float = 32.0
         pde_max: float = 32.0
         # predicted-structure distance embedding (input signal)
@@ -72,13 +72,19 @@ class ConfidenceHead(nn.Module):
         d_single = config.d_single
 
         # AF3 single re-injection into the pair track.
-        self.to_pair_single_i = Linear(config.d_single_input, d_pair, bias=False, init="normal")
-        self.to_pair_single_j = Linear(config.d_single_input, d_pair, bias=False, init="normal")
+        self.to_pair_single_i = Linear(
+            config.d_single_input, d_pair, bias=False, init="normal"
+        )
+        self.to_pair_single_j = Linear(
+            config.d_single_input, d_pair, bias=False, init="normal"
+        )
         # Predicted-structure distance embedding.
         self.to_pair_dist = Linear(config.n_dist_bins, d_pair, bias=False, init="normal")
         # Seed the confidence single track from the input single (the pair-only trunk
         # has no d_single track, so we project s_inputs -> d_single here).
-        self.to_single_init = Linear(config.d_single_input, d_single, bias=False, init="normal")
+        self.to_single_init = Linear(
+            config.d_single_input, d_single, bias=False, init="normal"
+        )
 
         # Confidence mini-trunk: MiniPairformer with its single track enabled — updates
         # both single s and pair z per block. The engine trimul/attention ops hold bf16
@@ -117,7 +123,9 @@ class ConfidenceHead(nn.Module):
         """Bin the predicted representative-atom distances and embed them."""
         edges = self._dist_edges.to(pred_rep_dist.device)
         binned = torch.bucketize(pred_rep_dist, edges)  # [N, L, L] in [0, n_dist_bins-1]
-        onehot = F.one_hot(binned, num_classes=self.config.n_dist_bins).to(pred_rep_dist.dtype)
+        onehot = F.one_hot(binned, num_classes=self.config.n_dist_bins).to(
+            pred_rep_dist.dtype
+        )
         onehot = onehot * pair_mask.unsqueeze(-1)
         return self.to_pair_dist(onehot)
 
@@ -143,7 +151,7 @@ class ConfidenceHead(nn.Module):
         z = z + self.to_pair_single_j(s_in)[:, None, :, :]
         z = z + self._embed_pred_distance(pred_rep_dist, pair_mask)
         z = z * pair_mask.unsqueeze(-1)
-        s = self.to_single_init(s_in)                     # seed single [N, L, d_single]
+        s = self.to_single_init(s_in)  # seed single [N, L, d_single]
 
         # The Pairformer engine ops hold bf16 weights (as in the trunk); run the
         # mini-trunk in bf16 and cast s/z back to fp32 for the head projections + CE.
@@ -151,9 +159,9 @@ class ConfidenceHead(nn.Module):
         z = z.float()
         s = s.float()  # [N, L, d_single] — refined single track
 
-        pae_logits = self.to_pae(z)                       # asymmetric
+        pae_logits = self.to_pae(z)  # asymmetric
         pde_logits = self.to_pde((z + z.transpose(-2, -3)) / 2)  # symmetric
-        plddt_tok = self.to_plddt(s)                      # [N, L, n_plddt_bins] from single
+        plddt_tok = self.to_plddt(s)  # [N, L, n_plddt_bins] from single
 
         # Broadcast per-token pLDDT logits to atoms.
         idx = atom_to_token_idx.clamp(min=0, max=plddt_tok.shape[1] - 1)  # [N, L_atom]
@@ -164,10 +172,14 @@ class ConfidenceHead(nn.Module):
 
     # -- expected-value decoders (inference-time scalar confidences) ---------
     @torch.no_grad()
-    def expected_plddt(self, plddt_logits: Float[torch.Tensor, "N L_atom B"]) -> torch.Tensor:
+    def expected_plddt(
+        self, plddt_logits: Float[torch.Tensor, "N L_atom B"]
+    ) -> torch.Tensor:
         """Expected per-atom lDDT in [0, 100] from the pLDDT logits."""
         n = self.config.n_plddt_bins
-        centers = (torch.arange(n, device=plddt_logits.device) + 0.5) / n  # bin centers in [0,1]
+        centers = (
+            torch.arange(n, device=plddt_logits.device) + 0.5
+        ) / n  # bin centers in [0,1]
         p = torch.softmax(plddt_logits.float(), dim=-1)
         return (p * centers).sum(dim=-1) * 100.0
 

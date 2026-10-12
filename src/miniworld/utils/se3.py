@@ -110,15 +110,12 @@ def apply_chain_rt(
 
     # gather per-atom RT: R_atom/T_atom shape (B, N_atom, 3, 3)/(B, N_atom, 3)
     batch_idx = torch.arange(x.shape[0], device=x.device).unsqueeze(1)  # (B, 1)
-    R_atom = R[batch_idx, atom_to_combine]   # (B, N_atom, 3, 3)
-    T_atom = T[batch_idx, atom_to_combine]   # (B, N_atom, 3)
+    R_atom = R[batch_idx, atom_to_combine]  # (B, N_atom, 3, 3)
+    T_atom = T[batch_idx, atom_to_combine]  # (B, N_atom, 3)
     if inverse:
-        R_atom = R_atom.transpose(-1, -2)    # R^T
+        R_atom = R_atom.transpose(-1, -2)  # R^T
         T_atom = torch.matmul(R_atom, -T_atom.unsqueeze(-1)).squeeze(-1)  # -R^T T
-    return (
-        torch.matmul(x.unsqueeze(-2), R_atom.transpose(-1, -2)).squeeze(-2)
-        + T_atom
-    )
+    return torch.matmul(x.unsqueeze(-2), R_atom.transpose(-1, -2)).squeeze(-2) + T_atom
 
 
 def log_so3(R: Tensor) -> Tensor:
@@ -214,7 +211,11 @@ class _IGSO3Sampler:
     def _precompute(self, device: torch.device) -> None:
         """Build the 2D CDF table ``(n_eps, n_omega)`` once."""
         omega = torch.linspace(
-            1e-6, pi, self.n_omega, dtype=torch.float64, device=device,
+            1e-6,
+            pi,
+            self.n_omega,
+            dtype=torch.float64,
+            device=device,
         )
         log_eps = torch.linspace(
             math.log(self.eps_min),
@@ -296,7 +297,8 @@ class _IGSO3Sampler:
             eps = (sigma_l**2).clamp(self.eps_min, self.eps_max)
             log_eps = torch.log(eps).float()
             idx = torch.searchsorted(self._log_eps_grid, log_eps).clamp(
-                0, self.n_eps - 1,
+                0,
+                self.n_eps - 1,
             )
             cdf_rows = self._cdf_table[idx]  # (n_l, n_omega)
 

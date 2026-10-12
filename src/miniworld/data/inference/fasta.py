@@ -23,10 +23,26 @@ class EntityType(str, Enum):
 
 # Standard 20 amino acids: 1-letter -> 3-letter CCD code.
 _AA_1TO3: dict[str, str] = {
-    "A": "ALA", "R": "ARG", "N": "ASN", "D": "ASP", "C": "CYS",
-    "Q": "GLN", "E": "GLU", "G": "GLY", "H": "HIS", "I": "ILE",
-    "L": "LEU", "K": "LYS", "M": "MET", "F": "PHE", "P": "PRO",
-    "S": "SER", "T": "THR", "W": "TRP", "Y": "TYR", "V": "VAL",
+    "A": "ALA",
+    "R": "ARG",
+    "N": "ASN",
+    "D": "ASP",
+    "C": "CYS",
+    "Q": "GLN",
+    "E": "GLU",
+    "G": "GLY",
+    "H": "HIS",
+    "I": "ILE",
+    "L": "LEU",
+    "K": "LYS",
+    "M": "MET",
+    "F": "PHE",
+    "P": "PRO",
+    "S": "SER",
+    "T": "THR",
+    "W": "TRP",
+    "Y": "TYR",
+    "V": "VAL",
 }
 
 # Modified / non-standard protein residues that may appear inline in a
@@ -57,7 +73,9 @@ _RNA_1TO_CCD: dict[str, str] = {"A": "A", "U": "U", "G": "G", "C": "C"}
 _DNA_1TO_CCD: dict[str, str] = {"A": "DA", "T": "DT", "G": "DG", "C": "DC"}
 
 
-_HEADER_RE = re.compile(r"^>\s*(?P<id>\S+)\s*\|\s*(?P<type>[^|]+?)\s*\|\s*Chain:(?P<chain>\S+)\s*$")
+_HEADER_RE = re.compile(
+    r"^>\s*(?P<id>\S+)\s*\|\s*(?P<type>[^|]+?)\s*\|\s*Chain:(?P<chain>\S+)\s*$"
+)
 _CCD_PAREN_RE = re.compile(r"\(([^()]+)\)")
 _BRANCHED_BOND_RE = re.compile(r"\((\d+)\s*,\s*(\d+)\)")
 
@@ -119,13 +137,17 @@ def _auto_detect_entity_type(body: str) -> EntityType:
 class ChainSpec:
     """One chain parsed from a single fasta file."""
 
-    chain_index: int                  # 0-based chain index from the JSON spec
-    chain_letter: str                 # chain letter declared via ``Chain:<X>`` in the header
-    fasta_id: str                     # raw header id (e.g., "5CCX_A_A")
+    chain_index: int  # 0-based chain index from the JSON spec
+    chain_letter: str  # chain letter declared via ``Chain:<X>`` in the header
+    fasta_id: str  # raw header id (e.g., "5CCX_A_A")
     entity_type: EntityType
-    chemcomp_ids: list[str]           # per-residue CCD codes
-    one_letter_seq: list[str]         # per-residue 1-letter (or 'X' for ligand) — used for MSA encoding
-    branched_bonds: list[tuple[int, int]]  # 0-based residue index pairs, polymer/branched only
+    chemcomp_ids: list[str]  # per-residue CCD codes
+    one_letter_seq: list[
+        str
+    ]  # per-residue 1-letter (or 'X' for ligand) — used for MSA encoding
+    branched_bonds: list[
+        tuple[int, int]
+    ]  # 0-based residue index pairs, polymer/branched only
 
 
 def parse_fasta_file(path: Path, chain_index: int) -> ChainSpec:
@@ -165,10 +187,7 @@ def parse_fasta_file(path: Path, chain_index: int) -> ChainSpec:
             entity_type = EntityType(type_str)
         except ValueError as e:
             valid = [t.value for t in EntityType]
-            msg = (
-                f"Unknown entity_type {type_str!r} in {path}; "
-                f"expected one of {valid}."
-            )
+            msg = f"Unknown entity_type {type_str!r} in {path}; expected one of {valid}."
             raise ValueError(msg) from e
     else:
         # Free-form header: derive everything from order + body content.
@@ -233,7 +252,7 @@ def _parse_protein_body(body: str, path: Path) -> tuple[list[str], list[str]]:
             if close == -1:
                 msg = f"Unterminated '(' in protein body of {path}: {body!r}."
                 raise ValueError(msg)
-            code = body[i + 1:close].strip().upper()
+            code = body[i + 1 : close].strip().upper()
             if not code:
                 msg = f"Empty '()' CCD token in protein body of {path}."
                 raise ValueError(msg)
@@ -281,7 +300,7 @@ def _parse_nucleic_body(
             if close == -1:
                 msg = f"Unterminated '(' in {label} body of {path}: {body!r}."
                 raise ValueError(msg)
-            code = body[i + 1:close].strip().upper()
+            code = body[i + 1 : close].strip().upper()
             if not code:
                 msg = f"Empty '()' CCD token in {label} body of {path}."
                 raise ValueError(msg)
@@ -323,7 +342,9 @@ def _parse_non_polymer_body(body: str, path: Path) -> tuple[list[str], list[str]
     return [ccd], ["X"]
 
 
-def _parse_branched_body(body: str, path: Path) -> tuple[list[str], list[str], list[tuple[int, int]]]:
+def _parse_branched_body(
+    body: str, path: Path
+) -> tuple[list[str], list[str], list[tuple[int, int]]]:
     parts = body.split("|", 1)
     ccd_section = parts[0]
     bond_section = parts[1] if len(parts) > 1 else ""

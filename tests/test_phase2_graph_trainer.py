@@ -30,7 +30,11 @@ def test_graph_fabric_reads_the_torchrun_environment(trainer, monkeypatch):
     monkeypatch.setenv("WORLD_SIZE", "4")
     monkeypatch.setenv("LOCAL_RANK", "1")
     fabric = trainer.GraphFabric()
-    assert (fabric.global_rank, fabric.world_size, fabric.device) == (3, 4, torch.device("cuda", 1))
+    assert (fabric.global_rank, fabric.world_size, fabric.device) == (
+        3,
+        4,
+        torch.device("cuda", 1),
+    )
     assert not fabric.is_global_zero
 
 
@@ -49,5 +53,7 @@ def test_graph_fabric_is_a_noop_without_a_process_group(trainer, monkeypatch):
 
 def test_the_training_script_selects_the_graph_trainer_with_train_cuda_graph():
     source = (ROOT / "scripts/run_miniworld_diffusion_train.py").read_text()
-    assert "cfg.train.cuda_graph" in source and "Phase2GraphTrainer(client, cfg)" in source
+    assert (
+        "cfg.train.cuda_graph" in source and "Phase2GraphTrainer(client, cfg)" in source
+    )
     assert os.path.exists(ROOT / "scripts/phase2_graph_trainer.py")

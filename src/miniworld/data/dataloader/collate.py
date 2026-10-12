@@ -14,7 +14,13 @@ def _pad_like(value, prototype):
     if isinstance(value, torch.Tensor):
         if not isinstance(prototype, torch.Tensor) or value.ndim != prototype.ndim:
             raise ValueError("Incompatible tensor schema while padding a batch")
-        shape = (value.shape[0], *(max(a, b) for a, b in zip(value.shape[1:], prototype.shape[1:], strict=True)))
+        shape = (
+            value.shape[0],
+            *(
+                max(a, b)
+                for a, b in zip(value.shape[1:], prototype.shape[1:], strict=True)
+            ),
+        )
         # The former dummy/cat path also promoted dtypes against Batch.empty.
         dtype = torch.promote_types(value.dtype, prototype.dtype)
         if tuple(value.shape) == shape and value.dtype == dtype:
@@ -23,10 +29,15 @@ def _pad_like(value, prototype):
         output[tuple(slice(0, size) for size in value.shape)].copy_(value)
         return output
     if is_dataclass(value):
-        return replace(value, **{
-            field.name: _pad_like(getattr(value, field.name), getattr(prototype, field.name))
-            for field in fields(value)
-        })
+        return replace(
+            value,
+            **{
+                field.name: _pad_like(
+                    getattr(value, field.name), getattr(prototype, field.name)
+                )
+                for field in fields(value)
+            },
+        )
     if isinstance(value, list):
         return value[:]
     if value is None and prototype is None:

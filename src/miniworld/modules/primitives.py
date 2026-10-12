@@ -302,7 +302,9 @@ class LayerNorm(_Fp32ParamsMixin, nn.LayerNorm):
         if self.elementwise_affine:
             self.weight = Parameter(torch.empty(self.normalized_shape, **factory_kwargs))
             if bias:
-                self.bias = Parameter(torch.empty(self.normalized_shape, **factory_kwargs))
+                self.bias = Parameter(
+                    torch.empty(self.normalized_shape, **factory_kwargs)
+                )
             else:
                 self.register_parameter("bias", None)
         else:

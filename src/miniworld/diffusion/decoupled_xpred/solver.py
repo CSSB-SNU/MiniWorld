@@ -86,7 +86,9 @@ class XPredDecoupledSolver(DiffusionSolver):
         mask = self._prepare_weight(x, mask)
 
         denom = mask.sum(dim=-1, keepdim=True).clamp(min=1.0)
-        centroid = (x * mask.unsqueeze(-1)).sum(dim=-2, keepdim=True) / denom.unsqueeze(-1)
+        centroid = (x * mask.unsqueeze(-1)).sum(dim=-2, keepdim=True) / denom.unsqueeze(
+            -1
+        )
         x_centered = x - centroid
         return x_centered * mask.unsqueeze(-1)
 
@@ -185,10 +187,7 @@ class XPredDecoupledSolver(DiffusionSolver):
         elif update_rule == "ode_aligned":
             y_aligned = self._align_to_prediction(y, x_pred, mask)
             v = (y_aligned - x_pred) / sigma_hat
-            y_next = (
-                y_aligned
-                + self.config.step_scale * (sigma_next - sigma_hat) * v
-            )
+            y_next = y_aligned + self.config.step_scale * (sigma_next - sigma_hat) * v
         elif update_rule == "x0_centered":
             x_pred = self._center_to_origin(x_pred, mask)
             is_last_step = t_index + 1 == time_steps.shape[0] - 1
@@ -196,9 +195,8 @@ class XPredDecoupledSolver(DiffusionSolver):
                 y_next = x_pred
             else:
                 noise_scale = (
-                    (1.0 - self.config.step_scale) * sigma_hat
-                    + self.config.step_scale * sigma_next
-                )
+                    1.0 - self.config.step_scale
+                ) * sigma_hat + self.config.step_scale * sigma_next
                 y_next = x_pred + noise_scale * torch.randn_like(y)
         else:
             msg = f"Unsupported update_rule: {update_rule}"
@@ -269,7 +267,8 @@ class XPredDecoupledSolver(DiffusionSolver):
             if start_sigma_y is None:
                 start_sigma_y = self.scheduler.phase_1_boundary
             time_steps = self.scheduler.sampling_time_steps(
-                num_steps, start_sigma_y=start_sigma_y,
+                num_steps,
+                start_sigma_y=start_sigma_y,
             ).to(device)
         else:
             time_steps = self.scheduler.sampling_time_steps(num_steps).to(device)

@@ -85,13 +85,17 @@ def _catalog_fingerprint(db_config: object, sampler_config: object) -> str:
     db = dict(_dump(db_config)) if isinstance(_dump(db_config), dict) else {}
     for k in ("source_weights", "default_source_weight", "catalog_cache_path"):
         db.pop(k, None)
-    blob = json.dumps({"db": db, "sampler": _dump(sampler_config)},
-                      sort_keys=True, default=str)
+    blob = json.dumps(
+        {"db": db, "sampler": _dump(sampler_config)}, sort_keys=True, default=str
+    )
     return hashlib.sha256(blob.encode()).hexdigest()
 
 
 def _write_catalog_arrow(
-    path: Path, items: list[DataRecord], weights: list[float], fingerprint: str,
+    path: Path,
+    items: list[DataRecord],
+    weights: list[float],
+    fingerprint: str,
 ) -> None:
     """Serialize the item catalog to an Arrow IPC file (chunked to bound memory).
 
@@ -101,26 +105,29 @@ def _write_catalog_arrow(
     """
     import pyarrow as pa
 
-    schema = pa.schema([
-        ("item_id", pa.string()),
-        ("source", pa.string()),
-        ("record_id", pa.string()),
-        ("cif_db_path", pa.string()),
-        ("assembly_id", pa.string()),
-        ("model_id", pa.string()),
-        ("alt_id", pa.string()),
-        ("chain_ids", pa.list_(pa.string())),
-        ("feature_keys", pa.list_(pa.string())),
-        ("seq_ids", pa.list_(pa.string())),
-        ("msa_db_paths", pa.list_(pa.list_(pa.string()))),
-        ("template_db_paths", pa.list_(pa.string())),
-        ("item_kind", pa.string()),
-        ("weight_group", pa.string()),
-        ("weight", pa.float64()),
-    ], metadata={  # RAW (pre-source_weights) weights, balanced on load; fingerprint invalidates
-        b"weight_kind": b"raw",
-        b"build_fingerprint": fingerprint.encode(),
-    })
+    schema = pa.schema(
+        [
+            ("item_id", pa.string()),
+            ("source", pa.string()),
+            ("record_id", pa.string()),
+            ("cif_db_path", pa.string()),
+            ("assembly_id", pa.string()),
+            ("model_id", pa.string()),
+            ("alt_id", pa.string()),
+            ("chain_ids", pa.list_(pa.string())),
+            ("feature_keys", pa.list_(pa.string())),
+            ("seq_ids", pa.list_(pa.string())),
+            ("msa_db_paths", pa.list_(pa.list_(pa.string()))),
+            ("template_db_paths", pa.list_(pa.string())),
+            ("item_kind", pa.string()),
+            ("weight_group", pa.string()),
+            ("weight", pa.float64()),
+        ],
+        metadata={  # RAW (pre-source_weights) weights, balanced on load; fingerprint invalidates
+            b"weight_kind": b"raw",
+            b"build_fingerprint": fingerprint.encode(),
+        },
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     with pa.OSFile(str(tmp), "wb") as sink, pa.ipc.new_file(sink, schema) as writer:
@@ -152,8 +159,10 @@ def _write_catalog_arrow(
                         ),
                         pa.array(
                             [
-                                [str(p) if p is not None else None
-                                 for p in r.template_db_paths]
+                                [
+                                    str(p) if p is not None else None
+                                    for p in r.template_db_paths
+                                ]
                                 for r in chunk
                             ],
                         ),
@@ -179,7 +188,9 @@ class _LazyArrowCatalog:
         self._t = table
         self._c = {name: table.column(name) for name in table.schema.names}
         self._path = path.resolve() if path is not None else None
-        self._file_identity = self._identity(self._path) if self._path is not None else None
+        self._file_identity = (
+            self._identity(self._path) if self._path is not None else None
+        )
 
     @staticmethod
     def _identity(path: Path) -> tuple[int, int, int]:
@@ -219,8 +230,7 @@ class _LazyArrowCatalog:
             tuple(Path(p) for p in chain) for chain in c["msa_db_paths"][i].as_py()
         )
         tmpl = tuple(
-            Path(p) if p is not None else None
-            for p in c["template_db_paths"][i].as_py()
+            Path(p) if p is not None else None for p in c["template_db_paths"][i].as_py()
         )
         return DataRecord(
             item_id=c["item_id"][i].as_py(),
@@ -355,25 +365,33 @@ class BioMolData(torch.utils.data.Dataset):
         # source_weights. ``sources`` is the per-item source array (cheap, straight off the
         # Arrow ``source`` column on a hit; from the records on a miss).
         expected_fp = _catalog_fingerprint(
-            self.config.DB_config, self.config.sampler_config,
+            self.config.DB_config,
+            self.config.sampler_config,
         )
         sources: Sequence[str] | None = None
         if cache is not None and Path(cache).exists():
             # mmap the prebuilt Arrow catalog: instant, zero Python-object build,
             # shared across DDP ranks via the OS page cache.
-            items, raw_weights, cache_sources, is_raw, fp = _load_catalog_arrow(Path(cache))
+            items, raw_weights, cache_sources, is_raw, fp = _load_catalog_arrow(
+                Path(cache)
+            )
             if is_raw and fp == expected_fp:
                 self.items, self.weights, sources = items, raw_weights, cache_sources
                 logger.info(
-                    "loaded catalog from Arrow cache %s (%d items)", cache, len(self.items),
+                    "loaded catalog from Arrow cache %s (%d items)",
+                    cache,
+                    len(self.items),
                 )
             else:
                 reason = (
-                    "legacy (source-balanced) format" if not is_raw
+                    "legacy (source-balanced) format"
+                    if not is_raw
                     else "stale (DB/sampler config changed since it was built)"
                 )
                 logger.warning(
-                    "catalog cache %s is %s — ignoring and rebuilding.", cache, reason,
+                    "catalog cache %s is %s — ignoring and rebuilding.",
+                    cache,
+                    reason,
                 )
 
         if sources is None:  # cache miss, or legacy cache we chose to rebuild
@@ -393,7 +411,9 @@ class BioMolData(torch.utils.data.Dataset):
                 )
                 self.items.extend(records)
                 self.weights.extend(weights)
-            elif self.config.DB_config.items_path and self.config.DB_config.resources_path:
+            elif (
+                self.config.DB_config.items_path and self.config.DB_config.resources_path
+            ):
                 records, weights = load_manifest_items(
                     self.config.DB_config.items_path,
                     self.config.DB_config.resources_path,
@@ -412,7 +432,8 @@ class BioMolData(torch.utils.data.Dataset):
                 _write_catalog_arrow(Path(cache), self.items, self.weights, expected_fp)
                 logger.info(
                     "wrote catalog Arrow cache %s (%d items) — future inits mmap it",
-                    cache, len(self.items),
+                    cache,
+                    len(self.items),
                 )
 
         # ALWAYS (re)apply source-first balancing from the CURRENT config source_weights, so
@@ -501,7 +522,11 @@ class BioMolData(torch.utils.data.Dataset):
             single: tuple[Path, ...] = (shards[0],) if shards else ()
             for key in keys:
                 self._append_distillation_record(
-                    source, key, source.cif_db_path, single, source.template_db_path,
+                    source,
+                    key,
+                    source.cif_db_path,
+                    single,
+                    source.template_db_path,
                 )
             return
         # Multi-shard: resolve each key's MSA shard by enumerating the shards once.
@@ -515,7 +540,11 @@ class BioMolData(torch.utils.data.Dataset):
                 (resolved_shard,) if resolved_shard is not None else ()
             )
             self._append_distillation_record(
-                source, key, source.cif_db_path, msa_paths_for_key, source.template_db_path,
+                source,
+                key,
+                source.cif_db_path,
+                msa_paths_for_key,
+                source.template_db_path,
             )
 
     def _append_distillation_record(

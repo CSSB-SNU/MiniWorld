@@ -6,6 +6,7 @@ all-reduced gradients against ordinary compiled execution. No W&B run or trainin
 checkpoint is created. The two final diagnostic optimizer steps use cached inputs;
 their timings do not measure data-loader throughput.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,8 +24,11 @@ from random_recycle_graph_trainer import train
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=Path,
-                        default=Path("configs/miniworld/distogram_diffusion_medium_v130_bioai.yaml"))
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=Path("configs/miniworld/distogram_diffusion_medium_v130_bioai.yaml"),
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--override", action="append", default=[])
     args = parser.parse_args()
@@ -48,30 +52,49 @@ def main():
     os.environ["WANDB_MODE"] = "disabled"
     rank = int(os.environ.get("RANK", "0"))
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    (args.output_dir / f"config-rank{rank}.json").write_text(cfg.model_dump_json(indent=2))
-    print(f"[v130 graph] rank={rank} L={cfg.data.crop.max_tokens} "
-          f"accumulation={cfg.train.grad_accum_steps}; real batches, no recycling", flush=True)
+    (args.output_dir / f"config-rank{rank}.json").write_text(
+        cfg.model_dump_json(indent=2)
+    )
+    print(
+        f"[v130 graph] rank={rank} L={cfg.data.crop.max_tokens} "
+        f"accumulation={cfg.train.grad_accum_steps}; real batches, no recycling",
+        flush=True,
+    )
     train(cfg, None, args.output_dir, diagnostic_steps=2, validate=True)
     checks = json.loads((args.output_dir / f"validation-rank{rank}.json").read_text())
     after = next(x for x in checks if x["stage"] == "after_optimizer")
     grads = after["gradient_details"]
-    assert any(x["name"] == "diffusion.encoder.weight" and x["reference_norm"] > 0 for x in grads)
-    assert any(x["name"].startswith("pairformer_blocks.") and x["reference_norm"] > 0 for x in grads)
+    assert any(
+        x["name"] == "diffusion.encoder.weight" and x["reference_norm"] > 0
+        for x in grads
+    )
+    assert any(
+        x["name"].startswith("pairformer_blocks.") and x["reference_norm"] > 0
+        for x in grads
+    )
     result = {
-        "passed": True, "rank": rank, "tokens": cfg.data.crop.max_tokens,
-        "atoms": cfg.data.crop.max_atoms, "accumulation": cfg.train.grad_accum_steps,
+        "passed": True,
+        "rank": rank,
+        "tokens": cfg.data.crop.max_tokens,
+        "atoms": cfg.data.crop.max_atoms,
+        "accumulation": cfg.train.grad_accum_steps,
         "interchain_weight": cfg.loss.distogram_interchain_weight,
         "diagnostic_lr": cfg.train.max_lr,
         "timing_scope": "compiled fwd+EDM loss+bwd per microbatch; excludes H2D/NCCL/optimizer",
-        "checks": [{
-            "stage": x["stage"],
-            "max_gradient_relative_l2": x["max_gradient_relative_l2"],
-            "distinct_sigma": len(set(x["actual_sigma"])),
-            "compile_ms_median": statistics.median(x["reference_compute_ms"]),
-            "graph_ms_median": statistics.median(x["graph_compute_ms"]),
-        } for x in checks],
+        "checks": [
+            {
+                "stage": x["stage"],
+                "max_gradient_relative_l2": x["max_gradient_relative_l2"],
+                "distinct_sigma": len(set(x["actual_sigma"])),
+                "compile_ms_median": statistics.median(x["reference_compute_ms"]),
+                "graph_ms_median": statistics.median(x["graph_compute_ms"]),
+            }
+            for x in checks
+        ],
     }
-    (args.output_dir / f"summary-rank{rank}.json").write_text(json.dumps(result, indent=2) + "\n")
+    (args.output_dir / f"summary-rank{rank}.json").write_text(
+        json.dumps(result, indent=2) + "\n"
+    )
     print(json.dumps(result), flush=True)
 
 

@@ -37,10 +37,20 @@ def apply_precision(model: nn.Module, precision: Precision) -> nn.Module:
 
 def is_bf16_mixed(model: nn.Module) -> bool:
     """Whether :func:`apply_precision` put ``model`` in ``bf16-mixed``. ``model`` may be the Fabric / DDP / compile wrapper."""
-    return any(m is not None and getattr(m, _AMP_FLAG, False)
-               for m in (model, getattr(model, "module", None), getattr(model, "_orig_mod", None)))
+    return any(
+        m is not None and getattr(m, _AMP_FLAG, False)
+        for m in (
+            model,
+            getattr(model, "module", None),
+            getattr(model, "_orig_mod", None),
+        )
+    )
 
 
 def model_autocast(model: nn.Module) -> contextlib.AbstractContextManager:
     """The context ``model``'s forward runs in: bf16 autocast for a ``bf16-mixed`` model, nothing otherwise."""
-    return torch.autocast("cuda", dtype=torch.bfloat16) if is_bf16_mixed(model) else contextlib.nullcontext()
+    return (
+        torch.autocast("cuda", dtype=torch.bfloat16)
+        if is_bf16_mixed(model)
+        else contextlib.nullcontext()
+    )

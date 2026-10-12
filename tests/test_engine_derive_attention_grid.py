@@ -1,4 +1,5 @@
 """The cache planner must record attention backward without launching a GPU kernel."""
+
 import os
 import subprocess
 import sys
@@ -10,7 +11,7 @@ import pytest
 def test_attention_backward_derivation_runs_grid_callback(chunked):
     # compile_wrap is read at import time. A subprocess keeps recorder monkey
     # patches and opaque-op registration isolated from normal kernel tests.
-    code = '''
+    code = """
 import torch
 from miniworld_engine.autotune import derive
 from miniworld_engine.kernels.augmented_attention.triton import main
@@ -30,10 +31,12 @@ assert len(sink) == (7 if CHUNKED else 3), sink
 assert all(not op.startswith("<") and not bucket.startswith("<") for op, dtype, bucket in sink), sink
 assert all(dtype for op, dtype, bucket in sink)
 print(sink)
-'''.replace("CHUNKED", repr(chunked))
+""".replace("CHUNKED", repr(chunked))
     result = subprocess.run(
         [sys.executable, "-c", code],
         env={**os.environ, "MINIWORLD_COMPILE_WRAP": "disable"},
-        capture_output=True, text=True, timeout=120,
+        capture_output=True,
+        text=True,
+        timeout=120,
     )
     assert result.returncode == 0, result.stdout + result.stderr

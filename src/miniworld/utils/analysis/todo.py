@@ -6,6 +6,7 @@ from jaxtyping import Float, Bool, Int
 
 from miniworld.typing import typecheck
 
+
 @typecheck
 def get_shortest_distances(
     atom_pos: Float[torch.Tensor, "* N L 3"],
@@ -36,9 +37,9 @@ def get_shortest_distances(
     dist = torch.linalg.norm(diff, dim=-1)  # (B, N, L, L)
 
     # Apply atom mask
-    mask_i = atom_pos_mask[:, :, :, None]   # (B, N, L, 1)
-    mask_j = atom_pos_mask[:, :, None, :]   # (B, N, 1, L)
-    valid_atom_mask = mask_i & mask_j       # (B, N, L, L)
+    mask_i = atom_pos_mask[:, :, :, None]  # (B, N, L, 1)
+    mask_j = atom_pos_mask[:, :, None, :]  # (B, N, 1, L)
+    valid_atom_mask = mask_i & mask_j  # (B, N, L, L)
 
     dist = dist.masked_fill(~valid_atom_mask, max_distance)
     dist = dist.clamp(min=min_distance, max=max_distance)
@@ -67,23 +68,23 @@ def get_shortest_distances(
     # Residue pair mask: both residues must exist
     mask_i_res = residue_exists.unsqueeze(2)  # (B, R_max, 1)
     mask_j_res = residue_exists.unsqueeze(1)  # (B, 1, R_max)
-    residue_mask = mask_i_res & mask_j_res    # (B, R_max, R_max)
+    residue_mask = mask_i_res & mask_j_res  # (B, R_max, R_max)
 
     # 3) Aggregate shortest distances to residue level using scatter-reduce (min)
     # Map (i, j) residue pairs to flat indices per batch
     ri = atom_to_res_idx.unsqueeze(2).expand(B, L, L)  # (B, L, L)
     rj = atom_to_res_idx.unsqueeze(1).expand(B, L, L)  # (B, L, L)
-    pair_idx = ri * R_max + rj                  # (B, L, L)
+    pair_idx = ri * R_max + rj  # (B, L, L)
 
     block_size = R_max * R_max
-    batch_offsets = (torch.arange(B, device=device)
-                     .view(B, 1, 1)
-                     * block_size)             # (B, 1, 1)
+    batch_offsets = (
+        torch.arange(B, device=device).view(B, 1, 1) * block_size
+    )  # (B, 1, 1)
 
-    scatter_idx = batch_offsets + pair_idx      # (B, L, L)
+    scatter_idx = batch_offsets + pair_idx  # (B, L, L)
     scatter_idx_flat = scatter_idx.reshape(-1)  # (B * L * L,)
 
-    src = shortest_dist.reshape(-1)             # (B * L * L,)
+    src = shortest_dist.reshape(-1)  # (B * L * L,)
 
     out = torch.full(
         (B * block_size,),
@@ -105,10 +106,11 @@ def get_shortest_distances(
 
     return residue_dists, residue_mask
 
+
 def pairwise_kabsch_rmsd(
-    pred: torch.Tensor,          # (S, L, 3)
-    true: torch.Tensor,          # (N, L, 3)
-    true_mask: torch.Tensor,     # (N, L) (bool or 0/1)
+    pred: torch.Tensor,  # (S, L, 3)
+    true: torch.Tensor,  # (N, L, 3)
+    true_mask: torch.Tensor,  # (N, L) (bool or 0/1)
 ) -> torch.Tensor:
     """
     Compute (S, N) RMSD between S predicted structures and N true structures
@@ -136,37 +138,38 @@ def pairwise_kabsch_rmsd(
             rmsd_list.append(torch.full((S,), float("nan"), device=device))
             continue
 
-        xyz_t = true[j, valid]      # (M, 3)
-        xyz_p = pred[:, valid]      # (S, M, 3)
+        xyz_t = true[j, valid]  # (M, 3)
+        xyz_p = pred[:, valid]  # (S, M, 3)
 
         # Center
-        t_c = xyz_t - xyz_t.mean(dim=0, keepdim=True)        # (M, 3)
-        p_c = xyz_p - xyz_p.mean(dim=1, keepdim=True)        # (S, M, 3)
+        t_c = xyz_t - xyz_t.mean(dim=0, keepdim=True)  # (M, 3)
+        p_c = xyz_p - xyz_p.mean(dim=1, keepdim=True)  # (S, M, 3)
 
         # Covariance
-        t_c_exp = t_c.unsqueeze(0).expand(S, -1, -1)         # (S, M, 3)
-        C = torch.bmm(p_c.transpose(1, 2), t_c_exp)          # (S, 3, 3)
+        t_c_exp = t_c.unsqueeze(0).expand(S, -1, -1)  # (S, M, 3)
+        C = torch.bmm(p_c.transpose(1, 2), t_c_exp)  # (S, 3, 3)
 
         # SVD
         U, _, Vh = torch.linalg.svd(C, full_matrices=False)  # U,Vh: (S,3,3)
-        V = Vh.transpose(-2, -1)                              # (S, 3, 3)
+        V = Vh.transpose(-2, -1)  # (S, 3, 3)
 
         # Reflection correction using det(V U^T)
-        detVU = torch.linalg.det(V @ U.transpose(-2, -1))     # (S,)
+        detVU = torch.linalg.det(V @ U.transpose(-2, -1))  # (S,)
         sign = torch.where(detVU < 0, -torch.ones_like(detVU), torch.ones_like(detVU))
         D = torch.zeros_like(C)
         D[..., 0, 0] = 1.0
         D[..., 1, 1] = 1.0
         D[..., 2, 2] = sign
-        R = V @ D @ U.transpose(-2, -1)                       # (S, 3, 3)
+        R = V @ D @ U.transpose(-2, -1)  # (S, 3, 3)
 
         # Align and RMSD
-        p_aligned = torch.bmm(p_c, R)                         # (S, M, 3)
-        diff2 = (p_aligned - t_c_exp).pow(2).sum(dim=-1)      # (S, M)
-        rmsd_j = torch.sqrt(diff2.mean(dim=-1))               # (S,)
+        p_aligned = torch.bmm(p_c, R)  # (S, M, 3)
+        diff2 = (p_aligned - t_c_exp).pow(2).sum(dim=-1)  # (S, M)
+        rmsd_j = torch.sqrt(diff2.mean(dim=-1))  # (S,)
         rmsd_list.append(rmsd_j)
 
-    return torch.stack(rmsd_list, dim=1)                      # (S, N)
+    return torch.stack(rmsd_list, dim=1)  # (S, N)
+
 
 def save_rmsd_boxplot(
     data_2d: np.ndarray | torch.Tensor,
@@ -192,7 +195,7 @@ def save_rmsd_boxplot(
     num_boxes = data_sorted.shape[0]
     ylim = [0, np.nanmax(data_2d) * 1.1]
 
-    fig, ax = plt.subplots(figsize=(num_boxes * 0.25+2, 4))
+    fig, ax = plt.subplots(figsize=(num_boxes * 0.25 + 2, 4))
     ax.set_ylim(ylim)
     min_vals = np.nanmin(data_2d, axis=1)
     min_sorted = min_vals[order]
@@ -261,6 +264,7 @@ def plot_rmsd_heatmap(rmsd_pp, save_path: str | Path, title: str = "Pred–Pred 
     fig.savefig(save_path, dpi=300)
     plt.close(fig)
 
+
 def cal_radius_of_gyration(
     atom_pos: Float[torch.Tensor, "* N L 3"],
     atom_pos_mask: Bool[torch.Tensor, "* N L"],
@@ -280,18 +284,21 @@ def cal_radius_of_gyration(
 
     # Compute center of mass for each structure
     masked_atom_pos = atom_pos * atom_pos_mask.unsqueeze(-1)  # (N, L, 3)
-    num_valid_atoms = atom_pos_mask.sum(dim=1).unsqueeze(-1)   # (N, 1)
+    num_valid_atoms = atom_pos_mask.sum(dim=1).unsqueeze(-1)  # (N, 1)
 
     center_of_mass = masked_atom_pos.sum(dim=1) / num_valid_atoms  # (N, 3)
 
     # Compute squared distances from center of mass
     diff = masked_atom_pos - center_of_mass.unsqueeze(1)  # (N, L, 3)
-    sq_distances = (diff ** 2).sum(dim=-1) * atom_pos_mask  # (N, L)
+    sq_distances = (diff**2).sum(dim=-1) * atom_pos_mask  # (N, L)
 
     # Compute radius of gyration
-    radius_of_gyration = torch.sqrt(sq_distances.sum(dim=1) / num_valid_atoms.squeeze(-1))  # (N,)
+    radius_of_gyration = torch.sqrt(
+        sq_distances.sum(dim=1) / num_valid_atoms.squeeze(-1)
+    )  # (N,)
 
     return radius_of_gyration
+
 
 def compare_radius_of_gyration_distributions(
     true_rg_values: np.ndarray | torch.Tensor,

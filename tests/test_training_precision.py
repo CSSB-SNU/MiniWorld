@@ -9,7 +9,7 @@ from miniworld.training.precision import apply_precision, is_bf16_mixed, model_a
 
 def _model() -> nn.Module:
     m = nn.Sequential(nn.Linear(8, 8), nn.LayerNorm(8))
-    m[0].to(torch.bfloat16)                          # a bf16-pinned part, as the trunk builds it
+    m[0].to(torch.bfloat16)  # a bf16-pinned part, as the trunk builds it
     m.register_buffer("table", torch.zeros(4, dtype=torch.bfloat16))
     return m
 
@@ -33,7 +33,7 @@ def test_native_keeps_dtypes_and_no_autocast():
 def test_wrappers_reach_the_flag():
     m = apply_precision(_model(), "bf16-mixed")
 
-    class Wrapper(nn.Module):                        # Fabric / DDP keep the model as .module
+    class Wrapper(nn.Module):  # Fabric / DDP keep the model as .module
         def __init__(self, module):
             super().__init__()
             self.module = module

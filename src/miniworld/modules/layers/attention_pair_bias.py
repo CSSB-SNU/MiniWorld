@@ -87,9 +87,7 @@ class AttentionPairBias(nn.Module):
         bias = self.to_bias(pair)
         bias = rearrange(bias, "B L L2 H -> B H L L2")
         if mask is not None:
-            bias = bias.masked_fill(
-                ~mask[:, None, None, :], torch.finfo(bias.dtype).min
-            )
+            bias = bias.masked_fill(~mask[:, None, None, :], torch.finfo(bias.dtype).min)
         out = F.scaled_dot_product_attention(query, key, value, bias)
 
         gate = self.to_gate(single)

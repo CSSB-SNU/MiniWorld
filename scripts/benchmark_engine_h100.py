@@ -8,7 +8,11 @@ import json
 import statistics
 from pathlib import Path
 import torch
-from miniworld_engine.modules import Transition, TriangleAttention, TriangleMultiplication
+from miniworld_engine.modules import (
+    Transition,
+    TriangleAttention,
+    TriangleMultiplication,
+)
 from miniworld_engine.modules.triangle_multiplication import (
     BidirectionalTriangleMultiplication,
 )
@@ -24,13 +28,21 @@ FAMILIES = ["outgoing", "bidir", "transition", "triattn", "triattn_qk"]
 parser.add_argument("--family", default="all", choices=["all", *FAMILIES])
 parser.add_argument("--families", default="", help="comma list; overrides --family")
 parser.add_argument(
-    "--implementation", choices=["miniworld", "pytorch", "cuequivariance"], default="miniworld",
+    "--implementation",
+    choices=["miniworld", "pytorch", "cuequivariance"],
+    default="miniworld",
     help="engine ImplementationType; 'cuequivariance' routes TriMul/TriAttn to cuequivariance_torch",
 )
-parser.add_argument("--dropout", type=float, default=0.25,
-                    help="training-time module dropout (TriMul/TriAttn own it); 0 disables")
+parser.add_argument(
+    "--dropout",
+    type=float,
+    default=0.25,
+    help="training-time module dropout (TriMul/TriAttn own it); 0 disables",
+)
 parser.add_argument("--compile", action="store_true")
-parser.add_argument("--lengths", type=int, nargs="+", default=[256, 384, 512, 768, 1024, 1536, 2048])
+parser.add_argument(
+    "--lengths", type=int, nargs="+", default=[256, 384, 512, 768, 1024, 1536, 2048]
+)
 parser.add_argument("--mode", choices=["both", "training", "inference"], default="both")
 args = parser.parse_args()
 torch.backends.cuda.matmul.allow_tf32 = False
@@ -92,9 +104,13 @@ def case(family, length, width, training):
         shape = (1, length, length, width)
     elif family.startswith("triattn"):
         model = TriangleAttention(
-            width, n_head=4, d_hidden=128, starting=True,
+            width,
+            n_head=4,
+            d_hidden=128,
+            starting=True,
             use_self_attention=family == "triattn_qk",
-            implementation=args.implementation, p_drop=args.dropout if training else 0,
+            implementation=args.implementation,
+            p_drop=args.dropout if training else 0,
         )
         shape = (1, length, length, width)
     else:
@@ -104,7 +120,9 @@ def case(family, length, width, training):
             else TriangleMultiplication
         )
         model = cls(
-            width, implementation=args.implementation, p_drop=args.dropout if training else 0
+            width,
+            implementation=args.implementation,
+            p_drop=args.dropout if training else 0,
         )
         shape = (1, length, length, width)
     model = model.cuda().bfloat16().train(training)
@@ -123,7 +141,9 @@ def case(family, length, width, training):
         # dynamic=False as the trainer compiles: sweeping L in one process otherwise promotes L to
         # a SymInt on the second shape, and the engine's L-dependent dispatch (a python threshold)
         # then fails to trace ("SymNodeVariable() is not a constant").
-        model.compile(fullgraph=True, dynamic=False, options={"triton.cudagraphs": False})
+        model.compile(
+            fullgraph=True, dynamic=False, options={"triton.cudagraphs": False}
+        )
     x = torch.randn(shape, device="cuda", dtype=torch.bfloat16, requires_grad=training)
     mask = torch.ones(1, length, device="cuda", dtype=torch.bool)
     mask[:, ::3] = False
@@ -141,7 +161,11 @@ def case(family, length, width, training):
 
     with torch.set_grad_enabled(training):
         ms, samples, warm_seconds, dropout_advances, graph_count = measure(
-            step, model, x, training, training and family != "transition" and args.dropout > 0
+            step,
+            model,
+            x,
+            training,
+            training and family != "transition" and args.dropout > 0,
         )
     row = dict(
         label=args.label,
@@ -170,7 +194,11 @@ def case(family, length, width, training):
     Path(args.output).write_text(json.dumps(results, indent=2))
 
 
-selected = args.families.split(",") if args.families else (FAMILIES if args.family == "all" else [args.family])
+selected = (
+    args.families.split(",")
+    if args.families
+    else (FAMILIES if args.family == "all" else [args.family])
+)
 for family in selected:
     for length in args.lengths:
         for training in (False, True):
@@ -179,9 +207,16 @@ for family in selected:
             try:
                 case(family, length, 512 if family == "transition" else 128, training)
             except Exception as exc:  # noqa: BLE001  (OOM at the top of the ladder is expected)
-                row = dict(label=args.label, implementation=args.implementation, compiled=args.compile,
-                           family=family, length=length, training=training, ms=None,
-                           error=f"{type(exc).__name__}: {str(exc)[:200]}")
+                row = dict(
+                    label=args.label,
+                    implementation=args.implementation,
+                    compiled=args.compile,
+                    family=family,
+                    length=length,
+                    training=training,
+                    ms=None,
+                    error=f"{type(exc).__name__}: {str(exc)[:200]}",
+                )
                 results.append(row)
                 print(json.dumps(row), flush=True)
                 Path(args.output).write_text(json.dumps(results, indent=2))

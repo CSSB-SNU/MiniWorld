@@ -75,7 +75,11 @@ class XPredDecoupledDiffuser(Diffuser):
         pair_idx = labels.unsqueeze(1) * n + labels.unsqueeze(0)
         chain_min_dist = torch.full((n * n,), float("inf"), device=device)
         chain_min_dist.scatter_reduce_(
-            0, pair_idx.flatten(), D.flatten(), reduce="amin", include_self=True,
+            0,
+            pair_idx.flatten(),
+            D.flatten(),
+            reduce="amin",
+            include_self=True,
         )
         contact = chain_min_dist.view(n, n) <= dist_cutoff
         contact.fill_diagonal_(fill_value=False)
@@ -224,13 +228,17 @@ class XPredDecoupledDiffuser(Diffuser):
             x0 = x0.unsqueeze(0).expand(num_augment, -1, -1, -1)
             x0 = x0.reshape(num_augment * batch_size, *x0.shape[2:])
             atom_to_chain_idx = atom_to_chain_idx.expand(
-                batch_size, *atom_to_chain_idx.shape[1:],
+                batch_size,
+                *atom_to_chain_idx.shape[1:],
             )
             atom_to_chain_idx = atom_to_chain_idx.unsqueeze(0).expand(
-                num_augment, -1, *atom_to_chain_idx.shape[1:],
+                num_augment,
+                -1,
+                *atom_to_chain_idx.shape[1:],
             )
             atom_to_chain_idx = atom_to_chain_idx.reshape(
-                num_augment * batch_size, *atom_to_chain_idx.shape[2:],
+                num_augment * batch_size,
+                *atom_to_chain_idx.shape[2:],
             )
             if mask is not None:
                 mask = mask.unsqueeze(0).expand(num_augment, -1, -1)
@@ -239,10 +247,13 @@ class XPredDecoupledDiffuser(Diffuser):
             num_expand = num_augment // x0.shape[1]
             num_augment = num_expand * x0.shape[1]
             atom_to_chain_idx = atom_to_chain_idx.unsqueeze(1).expand(
-                -1, x0.shape[1], -1,
+                -1,
+                x0.shape[1],
+                -1,
             )
             atom_to_chain_idx = atom_to_chain_idx.reshape(
-                -1, atom_to_chain_idx.shape[-1],
+                -1,
+                atom_to_chain_idx.shape[-1],
             ).repeat(num_expand, 1)
             x0 = x0.reshape(-1, *x0.shape[2:]).repeat(num_expand, 1, 1)
             if mask is not None:
@@ -255,7 +266,9 @@ class XPredDecoupledDiffuser(Diffuser):
 
         # -- Chain splitting --------------------------------------------------
         atom_to_combine = self._randomly_split_chains(
-            x0, mask, atom_to_chain_idx,
+            x0,
+            mask,
+            atom_to_chain_idx,
         )
         group_num = int(atom_to_combine.max().item()) + 1
 
@@ -272,18 +285,25 @@ class XPredDecoupledDiffuser(Diffuser):
 
         # -- R/T --------------------------------------------------------------
         rotation_matrix, translation_vector = sample_rigid(
-            sigma_rotation, sigma_translation,
-            C=group_num, device=device, dtype=dtype,
+            sigma_rotation,
+            sigma_translation,
+            C=group_num,
+            device=device,
+            dtype=dtype,
         )
         noisy_x = apply_chain_rt(
-            noisy_x, rotation_matrix, translation_vector, atom_to_combine,
+            noisy_x,
+            rotation_matrix,
+            translation_vector,
+            atom_to_combine,
         )
 
         # -- c_in (EDM) -------------------------------------------------------
         sigma_y = sigma_y.view(sigma_shape)
         sigma_translation = sigma_translation.view(sigma_shape)
         input_scaling = self.scheduler.input_scale(sigma_y, sigma_translation).to(
-            device=device, dtype=dtype,
+            device=device,
+            dtype=dtype,
         )
         x_input = noisy_x * input_scaling
         t_emb = self.scheduler.noise_condition(sigma_y).to(device=device, dtype=dtype)
@@ -297,8 +317,14 @@ class XPredDecoupledDiffuser(Diffuser):
         t_emb = t_emb.view(num_augment, batch_size, *t_emb.shape[1:])
 
         return (
-            x0, x_input, mask, t_emb, sigma_y,
-            rotation_matrix, translation_vector, atom_to_combine,
+            x0,
+            x_input,
+            mask,
+            t_emb,
+            sigma_y,
+            rotation_matrix,
+            translation_vector,
+            atom_to_combine,
         )
 
     # ── prediction ──────────────────────────────────────────────────────────
@@ -354,8 +380,8 @@ class XPredDecoupledDiffuser(Diffuser):
 
         x0 = x0.to(dtype=dtype)
         x0_aligned = weighted_align(x0, x_pred, weight=mask_f)
-        per_sample_loss = (
-            ((x_pred - x0_aligned) / sd).pow(2) * weight
-        ).sum(dim=(-2, -1))
+        per_sample_loss = (((x_pred - x0_aligned) / sd).pow(2) * weight).sum(
+            dim=(-2, -1)
+        )
         n_valid = mask.sum(dim=-1).clamp(min=1) * 3
         return (per_sample_loss / n_valid).mean()

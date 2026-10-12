@@ -23,7 +23,10 @@ def test_old_engine_requires_reinstallation(tmp_path):
 def test_wrong_pinned_revision_is_rejected(tmp_path):
     with pytest.raises(RuntimeError, match="revision mismatch"):
         checker.check_installation(
-            tmp_path, "2.0.0", {"vcs_info": {"commit_id": "b" * 40}}, "a" * 40,
+            tmp_path,
+            "2.0.0",
+            {"vcs_info": {"commit_id": "b" * 40}},
+            "a" * 40,
         )
 
 
@@ -33,7 +36,10 @@ def test_incomplete_new_engine_is_rejected(tmp_path):
 
 
 def test_source_checkout_contains_required_engine_files():
-    package = Path(__file__).resolve().parents[1] / ".engine-release-2.0.0/src/miniworld_engine"
+    package = (
+        Path(__file__).resolve().parents[1]
+        / ".engine-release-2.0.0/src/miniworld_engine"
+    )
     if not package.exists():
         pytest.skip("local engine source checkout is optional")
     checker.check_installation(package, "2.0.0", {}, "a" * 40)

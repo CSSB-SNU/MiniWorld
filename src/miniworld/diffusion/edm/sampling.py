@@ -190,9 +190,7 @@ class EulerSampler:
                 denoised_trajectory.append(
                     None if denoised is None else denoised.clone()
                 )
-        return (
-            (coords, trajectory, denoised_trajectory) if return_trajectory else coords
-        )
+        return (coords, trajectory, denoised_trajectory) if return_trajectory else coords
 
     def sample(
         self,

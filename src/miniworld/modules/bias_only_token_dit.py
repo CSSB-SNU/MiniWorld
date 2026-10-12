@@ -160,10 +160,16 @@ class BiasOnlyTokenDiTBlock(BiasOnlyDiTBlock):
         impl = to_engine_impl(implementation)
         super().__init__(d_single, d_cond, d_pair, n_head, implementation=impl)
         self.attention = BiasOnlyAttention(
-            d_single, d_cond, d_pair, n_head, implementation=implementation,
+            d_single,
+            d_cond,
+            d_pair,
+            n_head,
+            implementation=implementation,
         )
         self.transition = ConditionedTransition(
-            d_hidden=d_single, d_cond=d_cond, implementation=impl,
+            d_hidden=d_single,
+            d_cond=d_cond,
+            implementation=impl,
         )
 
 
@@ -187,13 +193,18 @@ class BiasOnlyTokenDiT(nn.Module):
     def __init__(self, config: Config) -> None:
         super().__init__()
         self.config = config
-        self.blocks = nn.ModuleList([
-            BiasOnlyTokenDiTBlock(
-                config.d_single, config.d_cond, config.d_pair, config.n_head,
-                implementation=config.implementation,
-            )
-            for _ in range(config.n_block)
-        ])
+        self.blocks = nn.ModuleList(
+            [
+                BiasOnlyTokenDiTBlock(
+                    config.d_single,
+                    config.d_cond,
+                    config.d_pair,
+                    config.n_head,
+                    implementation=config.implementation,
+                )
+                for _ in range(config.n_block)
+            ]
+        )
 
     @typecheck
     def forward(
@@ -211,14 +222,23 @@ class BiasOnlyTokenDiT(nn.Module):
             # imported here: only an engine with the hoist (89f5ab28 and later) has it; the default path keeps working
             # with older pinned engines
             from miniworld_engine.modules.bias_only_dit import pair_bias_all
+
             biases = pair_bias_all(self.blocks, pair)
-            block_fns = [(lambda s, block=b, bias=bb: block(s, cond, None, mask, bias=bias))
-                         for b, bb in zip(self.blocks, biases, strict=True)]
+            block_fns = [
+                (lambda s, block=b, bias=bb: block(s, cond, None, mask, bias=bias))
+                for b, bb in zip(self.blocks, biases, strict=True)
+            ]
         else:
-            block_fns = [(lambda s, block=b: block(s, cond, pair, mask)) for b in self.blocks]
+            block_fns = [
+                (lambda s, block=b: block(s, cond, pair, mask)) for b in self.blocks
+            ]
         if self.config.n_checkpoint_segments is None:
             for fn in block_fns:
                 single = fn(single)
             return single
-        return checkpoint_sequential(block_fns, self.config.n_checkpoint_segments,
-                                     input=single, use_reentrant=False)
+        return checkpoint_sequential(
+            block_fns,
+            self.config.n_checkpoint_segments,
+            input=single,
+            use_reentrant=False,
+        )

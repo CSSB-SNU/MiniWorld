@@ -99,20 +99,27 @@ def test_pair_bias_projection_is_mp_under_flag():
     mp = AugmentedAttentionPairBias(16, 8, 4, 2, magnitude_preserving=True)
     assert isinstance(mp.to_bias, MPLinear)  # pair-bias projection now forced-WN
     rows = torch.linalg.vector_norm(mp.to_bias.weight, dim=1)
-    assert torch.allclose(rows, torch.full_like(rows, math.sqrt(mp.to_bias.in_features)), atol=5e-2)
+    assert torch.allclose(
+        rows, torch.full_like(rows, math.sqrt(mp.to_bias.in_features)), atol=5e-2
+    )
 
 
 def test_mp_swish_gate_preserves_variance():
     a = torch.randn(200_000)
     b = torch.randn(200_000)
-    assert abs(mp_swish_gate(a, b).var().item() - 1.0) < 0.03, mp_swish_gate(a, b).var().item()
+    assert abs(mp_swish_gate(a, b).var().item() - 1.0) < 0.03, (
+        mp_swish_gate(a, b).var().item()
+    )
 
 
 def test_convert_linears_to_mp_excludes_final_denoising():
     import torch.nn as nn
+
     root = nn.Module()
     root.proj = Linear(8, 8, init="default")
-    root.final_denoising = nn.Sequential(nn.LayerNorm(8), Linear(8, 3, bias=False, init="zero"))
+    root.final_denoising = nn.Sequential(
+        nn.LayerNorm(8), Linear(8, 3, bias=False, init="zero")
+    )
     n = convert_linears_to_mp(root, exclude_substrings=("final_denoising",))
     assert n == 1  # only root.proj converted
     assert isinstance(root.proj, MPLinear)

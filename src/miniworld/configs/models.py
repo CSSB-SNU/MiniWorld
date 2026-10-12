@@ -53,5 +53,3 @@ class AtomSWAConfig(BaseModel):
     n_uid_rope_pairs: int = 10
     spatial_rope_base_frequency: float = 20.0
     uid_rope_base_frequency: float = 10000.0
-
-

@@ -71,9 +71,7 @@ class MSAPairWeightedAveraging(nn.Module):
         bias = rearrange(bias, "B L1 L2 H -> B H L1 L2")
 
         if mask is not None:
-            bias = bias.masked_fill(
-                ~mask[:, None, None, :], torch.finfo(bias.dtype).min
-            )
+            bias = bias.masked_fill(~mask[:, None, None, :], torch.finfo(bias.dtype).min)
 
         attention = F.softmax(bias, dim=-1)
         out = torch.einsum("bhij,bmjhd->bmihd", attention, value)

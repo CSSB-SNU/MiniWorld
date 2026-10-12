@@ -217,9 +217,7 @@ class Preprocessor:
             # while manifest complexes keep per-chain paths.
             index_of = {c: i for i, c in enumerate(record.chain_ids)}
             base_msa = record.msa_db_paths[0] if record.msa_db_paths else ()
-            base_tmpl = (
-                record.template_db_paths[0] if record.template_db_paths else None
-            )
+            base_tmpl = record.template_db_paths[0] if record.template_db_paths else None
 
             def msa_of(chain_id: str) -> tuple[Path, ...]:
                 i = index_of.get(chain_id)
@@ -393,7 +391,10 @@ class Preprocessor:
                         # Both nonprotein: choose uniformly among both. Both
                         # protein: retain the existing uniform chain choice.
                         candidates = nonprotein or candidates
-                if not interface_only and rng.random() < self.crop_config.chain_crop_prob:
+                if (
+                    not interface_only
+                    and rng.random() < self.crop_config.chain_crop_prob
+                ):
                     chain_id = rng.choice(candidates)
                     return cifmol.chains.select(chain_id=chain_id).atoms
                 try:

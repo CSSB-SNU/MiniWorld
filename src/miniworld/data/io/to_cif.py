@@ -133,7 +133,8 @@ def batch_to_cif(  # noqa: PLR0915
     raw_entity_ids = [int(e) for e in label_entity_id_list.cpu().numpy()]
     raw_seq_ids = [int(v) for v in label_seq_id_list.cpu().numpy()]
     asym_strs = [
-        str(a) for a in (
+        str(a)
+        for a in (
             label_asym_id_list
             if isinstance(label_asym_id_list, list)
             else label_asym_id_list.cpu().numpy()
@@ -176,8 +177,7 @@ def batch_to_cif(  # noqa: PLR0915
         for e, t in entity_mol_type.items()
     }
     seq_num = {
-        a: {old: n + 1 for n, (old, _) in enumerate(seq)}
-        for a, seq in chain_seq.items()
+        a: {old: n + 1 for n, (old, _) in enumerate(seq)} for a, seq in chain_seq.items()
     }
     label_entity_id_list = [entity_id_1based[e] for e in raw_entity_ids]
     label_seq_id_list = [
@@ -188,7 +188,8 @@ def batch_to_cif(  # noqa: PLR0915
     output += "#\nloop_\n_entity.id\n_entity.type\n"
     for e in entity_order:
         etype = (
-            "polymer" if is_polymer[e]
+            "polymer"
+            if is_polymer[e]
             else ("branched" if entity_mol_type[e] == 7 else "non-polymer")
         )
         output += f"{entity_id_1based[e]} {etype}\n"

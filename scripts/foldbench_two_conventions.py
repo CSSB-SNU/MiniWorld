@@ -18,6 +18,7 @@ split into two kinds, which the overlap tells apart:
 Ours is scored the same way in both. Under the strict convention our not-yet-run
 targets count as failures too, so that column is a lower bound until the sweep ends.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -28,9 +29,12 @@ from pathlib import Path
 FB = Path("/home/psk6950/data/foldbench")
 MODELS = ["af3", "Protenix", "Boltz-1", "Chai-1", "HF3"]
 CATS = [
-    ("interface_protein_protein", "ost"), ("interface_protein_ligand", "lig"),
-    ("interface_protein_peptide", "ost"), ("interface_antibody_antigen", "ost"),
-    ("interface_protein_dna", "dockqv2"), ("interface_protein_rna", "dockqv2"),
+    ("interface_protein_protein", "ost"),
+    ("interface_protein_ligand", "lig"),
+    ("interface_protein_peptide", "ost"),
+    ("interface_antibody_antigen", "ost"),
+    ("interface_protein_dna", "dockqv2"),
+    ("interface_protein_rna", "dockqv2"),
 ]
 
 
@@ -48,12 +52,15 @@ def paper_sections():
     for n, i in enumerate(starts):
         hdr = rows[i + 1]
         end = starts[n + 1] if n + 1 < len(starts) else len(rows)
-        out[rows[i][0]] = [dict(zip(hdr, r, strict=False)) for r in rows[i + 2:end] if r and r[0]]
+        out[rows[i][0]] = [
+            dict(zip(hdr, r, strict=False)) for r in rows[i + 2 : end] if r and r[0]
+        ]
     return out
 
 
-def ours_successes(raw_dir: Path, cat: str, src: str,
-                   allowed: set | None = None) -> tuple[int, int, int, int]:
+def ours_successes(
+    raw_dir: Path, cat: str, src: str, allowed: set | None = None
+) -> tuple[int, int, int, int]:
     """(worst, @1, best, interfaces scored) success counts.
 
     The three columns bracket every possible ranking head, since all it can do is
@@ -78,9 +85,11 @@ def ours_successes(raw_dir: Path, cat: str, src: str,
     by = collections.defaultdict(list)
     with p.open() as f:
         for r in csv.DictReader(f):
-            k = (r["pdb_id"],
-                 r.get("interface_chain_id_1") or r.get("native_chain_id_1"),
-                 r.get("interface_chain_id_2") or r.get("native_chain_id_2"))
+            k = (
+                r["pdb_id"],
+                r.get("interface_chain_id_1") or r.get("native_chain_id_1"),
+                r.get("interface_chain_id_2") or r.get("native_chain_id_2"),
+            )
             if src == "lig":
                 a, b = fnum(r.get("rmsd")), fnum(r.get("lddt-pli"))
                 if a is not None and b is not None:
@@ -91,37 +100,56 @@ def ours_successes(raw_dir: Path, cat: str, src: str,
                     by[k].append(v >= 0.23)
     if allowed is not None:
         by = {k: v for k, v in by.items() if k in allowed}
-    return (sum(1 for v in by.values() if all(v)),
-            sum(1 for v in by.values() if v[0]),
-            sum(1 for v in by.values() if any(v)),
-            len(by))
+    return (
+        sum(1 for v in by.values() if all(v)),
+        sum(1 for v in by.values() if v[0]),
+        sum(1 for v in by.values() if any(v)),
+        len(by),
+    )
 
 
 def bench_keys(cat: str) -> set:
     with (FB / "targets" / f"{cat}.csv").open() as f:
-        return {(r["pdb_id"],
-                 r.get("interface_chain_id_1") or r.get("native_chain_id_1"),
-                 r.get("interface_chain_id_2") or r.get("native_chain_id_2"))
-                for r in csv.DictReader(f)}
+        return {
+            (
+                r["pdb_id"],
+                r.get("interface_chain_id_1") or r.get("native_chain_id_1"),
+                r.get("interface_chain_id_2") or r.get("native_chain_id_2"),
+            )
+            for r in csv.DictReader(f)
+        }
 
 
 def covered_keys(sec, cat: str, model: str) -> set:
-    return {(r["pdb_id"], r.get("interface_Chai-1n_id_1"), r.get("interface_Chai-1n_id_2"))
-            for r in sec[cat] if r["model"] == model}
+    return {
+        (r["pdb_id"], r.get("interface_Chai-1n_id_1"), r.get("interface_Chai-1n_id_2"))
+        for r in sec[cat]
+        if r["model"] == model
+    }
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--raw", type=Path,
-                    default=Path("runs/eval_results/foldbench/p2b-swa-full-partial/raw"))
+    ap.add_argument(
+        "--raw",
+        type=Path,
+        default=Path("runs/eval_results/foldbench/p2b-swa-full-partial/raw"),
+    )
     args = ap.parse_args()
     sec = paper_sections()
 
-    for title, strict in (("A. FoldBench 공식 규약 (커버한 것만 분모)", False),
-                          ("B. 엄격 규약 (예측 못 낸 것 = 실패, 분모는 전체)", True)):
+    for title, strict in (
+        ("A. FoldBench 공식 규약 (커버한 것만 분모)", False),
+        ("B. 엄격 규약 (예측 못 낸 것 = 실패, 분모는 전체)", True),
+    ):
         print(f"\n{title}")
         head = "%-27s %6s %9s %9s %9s |" % (
-            "category", "total", "ours@worst", "ours@1", "ours@best")
+            "category",
+            "total",
+            "ours@worst",
+            "ours@1",
+            "ours@best",
+        )
         head += "".join(m.rjust(8) for m in MODELS)
         print(head)
         print("-" * len(head))
@@ -129,13 +157,20 @@ def main() -> None:
             bench = bench_keys(cat)
             # interfaces no method scored were never evaluated -- out of everyone's
             # denominator, including ours.
-            never = set.intersection(*(bench - covered_keys(sec, cat, m) for m in MODELS))
+            never = set.intersection(
+                *(bench - covered_keys(sec, cat, m) for m in MODELS)
+            )
             allowed = (bench - never) if strict else bench
             total = len(allowed)
             sw, s1, sb, scored = ours_successes(args.raw, cat, src, allowed)
             den = total if strict else max(scored, 1)
             row = "%-27s %6d %8.1f%% %8.1f%% %8.1f%% |" % (
-                cat, total, 100 * sw / den, 100 * s1 / den, 100 * sb / den)
+                cat,
+                total,
+                100 * sw / den,
+                100 * s1 / den,
+                100 * sb / den,
+            )
             for m in MODELS:
                 s = n = 0
                 for r in sec[cat]:

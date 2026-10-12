@@ -116,7 +116,8 @@ class EuclideanDiffuser(Diffuser, ABC):
         """
         dtype = x_update.dtype
         input_scaling = self.scheduler.input_scale(sigma).to(
-            device=x_input.device, dtype=self.dtype,
+            device=x_input.device,
+            dtype=self.dtype,
         )
         noisy_x = (x_input / input_scaling).to(dtype=dtype)
         c_skip = self.scheduler.skip_scale(sigma).to(dtype=dtype)
@@ -194,11 +195,12 @@ class EuclideanDiffuser(Diffuser, ABC):
             msg = "NaN detected in the loss calculation."
             raise ValueError(msg)
         squared_error = torch.where(
-            mask.unsqueeze(-1), (pred_safe - x0_aligned).pow(2), 0.0,
+            mask.unsqueeze(-1),
+            (pred_safe - x0_aligned).pow(2),
+            0.0,
         )
         # Average each sample/augmentation over resolved coordinates only.
         # Atom-type and sigma weights remain multipliers, not denominators.
         numerator = (squared_error * weight).sum(dim=(-2, -1))
         denominator = mask.sum(dim=-1).clamp_min(1).to(dtype) * x_pred.shape[-1]
         return (numerator / denominator).mean()
-

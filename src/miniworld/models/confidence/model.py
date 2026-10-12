@@ -99,7 +99,11 @@ class ConfidenceModel(DiffusionModel):
     ) -> dict[str, torch.Tensor]:
         """Alias for :meth:`forward` (used at inference, off the DDP path)."""
         return self.forward(
-            token_single_input, token_pair, pred_rep_dist, token_mask, atom_to_token_idx,
+            token_single_input,
+            token_pair,
+            pred_rep_dist,
+            token_mask,
+            atom_to_token_idx,
         )
 
 
@@ -111,8 +115,8 @@ Model = ConfidenceModel
 class ConfidenceOutput:
     """Confidence-head inference output (expected-value scalars + raw logits)."""
 
-    plddt: torch.Tensor        # [N, L_atom] expected per-atom lDDT (0-100)
-    pae: torch.Tensor          # [N, L, L] expected aligned error (Å)
+    plddt: torch.Tensor  # [N, L_atom] expected per-atom lDDT (0-100)
+    pae: torch.Tensor  # [N, L, L] expected aligned error (Å)
     plddt_logits: torch.Tensor
     pae_logits: torch.Tensor
     pde_logits: torch.Tensor

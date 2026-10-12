@@ -2,6 +2,7 @@
 so the default atom/residue path never imports the CCD-fragmentation machinery.
 Consumed only by Tokenizer.tokenize when level=="dynamic".
 """
+
 from __future__ import annotations
 
 import logging

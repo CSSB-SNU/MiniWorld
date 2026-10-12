@@ -89,6 +89,7 @@ def _model_config_variant(value: object) -> str:
         has_atom_swa = False
     return "mini_swa" if has_atom_swa else "model"
 
+
 torch.set_float32_matmul_precision("medium")
 torch.autograd.set_detect_anomaly(False)
 
@@ -124,7 +125,9 @@ class Config(BaseModel):
     loss: Client.LossConfig
 
 
-def _fabric_from_torchrun(find_unused_parameters: bool = True, **fabric_kwargs) -> Fabric:
+def _fabric_from_torchrun(
+    find_unused_parameters: bool = True, **fabric_kwargs
+) -> Fabric:
     """Create Fabric with node/device counts inherited from torchrun."""
     # DDP collective-sequence consistency: with the default
     # find_unused_parameters=False, data-dependent gradient flow makes a rank's
@@ -297,7 +300,9 @@ def _build_precompile_batch(  # noqa: PLR0915
     batch.scheme.atom_to_token_idx_map.copy_(atom_to_token.unsqueeze(0))
     batch.scheme.atom_to_chain_id.zero_()
 
-    msa_row_offset = torch.arange(msa_depth, device=device, dtype=torch.long).unsqueeze(1)
+    msa_row_offset = torch.arange(msa_depth, device=device, dtype=torch.long).unsqueeze(
+        1
+    )
     msa_sequences = (seq_token_type.unsqueeze(0) + msa_row_offset).remainder(20)
     batch.msa.aligned_sequences.copy_(msa_sequences.unsqueeze(0))
     # Real pipeline emits msa.mask as float32 (pipeline/msa.py); Batch.empty makes it
@@ -307,20 +312,26 @@ def _build_precompile_batch(  # noqa: PLR0915
     # Real batch's msa.has_deletion arrives as int32 (dynamo guard "actual Int");
     # match it so the compiled graph from warmup is reused instead of recompiling.
     batch.msa.has_deletion = torch.zeros_like(batch.msa.has_deletion, dtype=torch.int32)
-    msa_deletion = torch.linspace(
-        0.0,
-        1.0,
-        msa_depth,
-        device=device,
-        dtype=torch.float32,
-    ).unsqueeze(1).expand(-1, n_tokens)
+    msa_deletion = (
+        torch.linspace(
+            0.0,
+            1.0,
+            msa_depth,
+            device=device,
+            dtype=torch.float32,
+        )
+        .unsqueeze(1)
+        .expand(-1, n_tokens)
+    )
     # Real deletion_value is float64 (msa.py: 2*arctan(x/3)/pi in numpy double); match it.
     batch.msa.deletion_value = msa_deletion.unsqueeze(0).to(torch.float64)
     batch.msa.profile.copy_(
         torch.nn.functional.one_hot(
             seq_token_type,
             num_classes=num_res_class,
-        ).to(torch.float32).unsqueeze(0),
+        )
+        .to(torch.float32)
+        .unsqueeze(0),
     )
     batch.msa.deletion_mean.copy_(msa_deletion.mean(dim=0, keepdim=True))
 
@@ -366,8 +377,7 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
     rng_state = _capture_rng_state(raw_model)
     was_training = client.model.training
     param_snapshot = {
-        name: p.detach().to("cpu", copy=True)
-        for name, p in raw_model.named_parameters()
+        name: p.detach().to("cpu", copy=True) for name, p in raw_model.named_parameters()
     }
 
     def _to_cpu_copy(obj):  # noqa: ANN001, ANN202
@@ -486,10 +496,7 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
                 warmup_idx in {1, total_variants} or warmup_idx % 4 == 0
             ):
                 client.logger.info(
-                    (
-                        "Bucket warmup %d/%d: msa=%d tokens=%d atoms=%d "
-                        "recycle=%d"
-                    ),
+                    ("Bucket warmup %d/%d: msa=%d tokens=%d atoms=%d recycle=%d"),
                     warmup_idx,
                     total_variants,
                     msa_depth,
@@ -589,7 +596,8 @@ def _run_cudagraph_path(cfg: Config, job_name: str | None, ckpt: Path | None) ->
     if not job_name:
         job_name = cfg.train.comment
     run_sub_dir = (
-        Path(cfg.train.run_dir) / time.strftime("%Y-%m-%d")
+        Path(cfg.train.run_dir)
+        / time.strftime("%Y-%m-%d")
         / f"{time.strftime('%H%M%S')}_{job_name}"
     )
     cg_log.setLevel(logging.INFO)
@@ -614,8 +622,11 @@ def _run_cudagraph_path(cfg: Config, job_name: str | None, ckpt: Path | None) ->
                 wandb_id_file.parent.mkdir(parents=True, exist_ok=True)
                 wandb_id_file.write_text(wandb_id)
             wandb.init(
-                project=cfg.train.wandb_project, name=job_name,
-                id=wandb_id, resume="allow", config=config_dict,
+                project=cfg.train.wandb_project,
+                name=job_name,
+                id=wandb_id,
+                resume="allow",
+                config=config_dict,
             )
             _define_loss_metrics()
     cg_log.info(
@@ -679,7 +690,9 @@ def train(  # noqa: PLR0912, PLR0915
     # force_trainer: auto | cudagraph (legacy fixed path) | random_cudagraph | fabric.
     n_recycle_max = getattr(getattr(cfg.model, "trunk", None), "n_recycle_max", None)
     _force = cfg.train.force_trainer
-    is_distogram_diffusion = getattr(getattr(cfg.model, "trunk", None), "diffusion", None) is not None
+    is_distogram_diffusion = (
+        getattr(getattr(cfg.model, "trunk", None), "diffusion", None) is not None
+    )
     if is_distogram_diffusion:
         torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction = False
         if _force != "fabric":
@@ -687,17 +700,24 @@ def train(  # noqa: PLR0912, PLR0915
             # fresh initialization and full-state resume; the legacy CE path is
             # never used for this objective.
             from random_recycle_graph_trainer import train as train_diffusion_graph
-            train_diffusion_graph(cfg, ckpt, os.environ.get("MW_RESUME_RUN_SUBDIR"),
-                                  job_name=job_name)
+
+            train_diffusion_graph(
+                cfg, ckpt, os.environ.get("MW_RESUME_RUN_SUBDIR"), job_name=job_name
+            )
             return
     if _force == "random_cudagraph":
         # One CUDA graph per recycle count. Continuing a run needs both --ckpt and MW_RESUME_RUN_SUBDIR (the run/log
         # identity is preserved); neither starts a fresh run.
         from random_recycle_graph_trainer import train as train_random_graph
+
         existing_run = os.environ.get("MW_RESUME_RUN_SUBDIR")
         if (ckpt is None) != (not existing_run):
-            raise ValueError("random_cudagraph: pass both --ckpt and MW_RESUME_RUN_SUBDIR to continue a run, or neither to start one")
-        train_random_graph(cfg, ckpt, Path(existing_run) if existing_run else None, job_name=job_name)
+            raise ValueError(
+                "random_cudagraph: pass both --ckpt and MW_RESUME_RUN_SUBDIR to continue a run, or neither to start one"
+            )
+        train_random_graph(
+            cfg, ckpt, Path(existing_run) if existing_run else None, job_name=job_name
+        )
         return
     use_cudagraph = _force == "cudagraph" or (_force == "auto" and n_recycle_max == 1)
     if use_cudagraph:
@@ -839,7 +859,7 @@ def train(  # noqa: PLR0912, PLR0915
             "pairformer_blocks": getattr(_raw, "pairformer_blocks", None),
             "distogram_head": getattr(_raw, "distogram_head", None),
         }
-        _GB = 1024 ** 3
+        _GB = 1024**3
 
         def _mk_hooks(nm, mod):  # noqa: ANN001, ANN202
             def _pre(m, inp):  # noqa: ANN001, ANN202
@@ -864,8 +884,16 @@ def train(  # noqa: PLR0912, PLR0915
         client.logger.info(
             "[memprof] hooks on: %s (grad-ckpt pf=%s msa=%s)",
             [k for k, v in _targets.items() if v is not None],
-            getattr(getattr(cfg.model.trunk, "pairformer", None), "n_checkpoint_segments", None),
-            getattr(getattr(cfg.model.trunk, "msa_module", None), "n_checkpoint_segments", None),
+            getattr(
+                getattr(cfg.model.trunk, "pairformer", None),
+                "n_checkpoint_segments",
+                None,
+            ),
+            getattr(
+                getattr(cfg.model.trunk, "msa_module", None),
+                "n_checkpoint_segments",
+                None,
+            ),
         )
         _warmup_bucket_shapes(client, cfg)
         client.logger.info(
@@ -881,7 +909,10 @@ def train(  # noqa: PLR0912, PLR0915
     # the fork+SIGKILL compile-timeout guard so monster configs can't stall — then flush
     # the cache and exit WITHOUT training. Used to pre-fill the 768-token (2x crop) shapes.
     _capture_cache = os.getenv("MW_CAPTURE_CACHE", "0").strip().lower() in {
-        "1", "true", "yes", "on",
+        "1",
+        "true",
+        "yes",
+        "on",
     }
     if _capture_cache:
         from miniworld_engine.autotune import capture
@@ -897,7 +928,9 @@ def train(  # noqa: PLR0912, PLR0915
         from miniworld_engine.autotune import capture
 
         capture.flush(top_k=5)
-        client.logger.info("[capture] flushed autotune cache; exiting (cache-build mode)")
+        client.logger.info(
+            "[capture] flushed autotune cache; exiting (cache-build mode)"
+        )
         return
 
     world_size = fabric.world_size

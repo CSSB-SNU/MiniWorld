@@ -194,7 +194,11 @@ class SWAAtomBlock(nn.Module):
 
 def _pads_atoms(q: torch.Tensor, s: int) -> bool:
     """Whether the fused block call pads the atom axis: bf16 on B200 (the engine's sm_100a block wants S % 128 == 0)."""
-    return s % 128 != 0 and q.dtype == torch.bfloat16 and torch.cuda.get_device_capability(q.device) == (10, 0)
+    return (
+        s % 128 != 0
+        and q.dtype == torch.bfloat16
+        and torch.cuda.get_device_capability(q.device) == (10, 0)
+    )
 
 
 class SWAAtomTransformer(nn.Module):
@@ -312,9 +316,15 @@ class SWAAtomTransformer(nn.Module):
             return False
         return is_global(self.config.swa_window_size // 2)
 
-    def _fused_ok(self, q: torch.Tensor, c: torch.Tensor, attention_params: tuple) -> bool:
+    def _fused_ok(
+        self, q: torch.Tensor, c: torch.Tensor, attention_params: tuple
+    ) -> bool:
         cfg = self.config
-        want = cfg.fused_triton if cfg.fused_triton is not None else os.environ.get("MINIWORLD_SWA_FUSED", "0") == "1"
+        want = (
+            cfg.fused_triton
+            if cfg.fused_triton is not None
+            else os.environ.get("MINIWORLD_SWA_FUSED", "0") == "1"
+        )
         if not want or not q.is_cuda:
             return False
         blk = self.blocks[0]
@@ -329,16 +339,31 @@ class SWAAtomTransformer(nn.Module):
         # engine casts them for its kernels outside autograd); the global cast makes
         # the fp32 caller's operands bf16.
         return (
-            q.dtype in (torch.bfloat16, torch.float32) and c.dtype == q.dtype
-            and cfg.d_atom == 128 and cfg.d_cond == 128 and cfg.n_head == 4 and (cfg.swa_window_size == 128 or is_global)
-            and not (cfg.magnitude_preserving or cfg.mp_full or cfg.mp_residual or cfg.use_rotation)
+            q.dtype in (torch.bfloat16, torch.float32)
+            and c.dtype == q.dtype
+            and cfg.d_atom == 128
+            and cfg.d_cond == 128
+            and cfg.n_head == 4
+            and (cfg.swa_window_size == 128 or is_global)
+            and not (
+                cfg.magnitude_preserving
+                or cfg.mp_full
+                or cfg.mp_residual
+                or cfg.use_rotation
+            )
             and blk.ffn.w_down.weight.shape[1] == 256
             and len(attention_params) == 6
             and all(
                 w.dtype in (q.dtype, torch.float32) or cast
                 for b in self.blocks
-                for w in (b.adaln_modulation[1].weight, b.attn.Wqkv.weight, b.attn.gate_proj.weight,
-                          b.attn.out_proj.weight, b.ffn.w_up.weight, b.ffn.w_down.weight)
+                for w in (
+                    b.adaln_modulation[1].weight,
+                    b.attn.Wqkv.weight,
+                    b.attn.gate_proj.weight,
+                    b.attn.out_proj.weight,
+                    b.ffn.w_up.weight,
+                    b.ffn.w_down.weight,
+                )
             )
         )
 
@@ -348,9 +373,12 @@ class SWAAtomTransformer(nn.Module):
             swa_dit_block,
             swa_dit_hoist_modulation,
         )
+
         cos, sin, seqused, _cu, _max, _valid = attention_params
         n, s, _ = q.shape
-        if c_base is None:                                     # no augment structure known: one modulation row per (n, atom)
+        if (
+            c_base is None
+        ):  # no augment structure known: one modulation row per (n, atom)
             c_base = c
         out_dtype = q.dtype
         cast = self._global_cast(q)
@@ -363,8 +391,13 @@ class SWAAtomTransformer(nn.Module):
             # the engine's B200 block takes a multiple of 128 atoms (callers pad; it refuses otherwise): zero rows appended,
             # seqused unchanged, so the padded atoms are never keys and the first s rows come back unchanged
             s = (s + 127) // 128 * 128
-            q, c_base, cos, sin = (torch.nn.functional.pad(t, (0, 0, 0, s - s_in)) for t in (q, c_base, cos, sin))
-        cos_b = cos.reshape(b * s, -1).contiguous()            # build_attention_params repeats the per-batch RoPE over augments
+            q, c_base, cos, sin = (
+                torch.nn.functional.pad(t, (0, 0, 0, s - s_in))
+                for t in (q, c_base, cos, sin)
+            )
+        cos_b = cos.reshape(
+            b * s, -1
+        ).contiguous()  # build_attention_params repeats the per-batch RoPE over augments
         sin_b = sin.reshape(b * s, -1).contiguous()
         hw = self.config.swa_window_size // 2
 
@@ -387,7 +420,10 @@ class SWAAtomTransformer(nn.Module):
                 q = run(block, q.contiguous())
         else:
             from torch.utils.checkpoint import checkpoint
-            for block in self.blocks:                          # per-block activation checkpointing (the n_checkpoint_segments knob)
+
+            for block in (
+                self.blocks
+            ):  # per-block activation checkpointing (the n_checkpoint_segments knob)
                 q = checkpoint(run, block, q.contiguous(), use_reentrant=False)
         q = q if s == s_in else q[:, :s_in].contiguous()
         return q.to(out_dtype) if cast else q

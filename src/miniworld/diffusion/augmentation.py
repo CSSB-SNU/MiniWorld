@@ -185,7 +185,9 @@ def uniform_random_rotation(
 def gram_schmidt_rotation(device, dtype, batch_shape=()):
     # Create a random rotation (Gram-Schmidt orthogonalization of two
     # random normal vectors)
-    v0, v1 = torch.randn(size=(*batch_shape, 2, 3), dtype=dtype, device=device).unbind(-2)
+    v0, v1 = torch.randn(size=(*batch_shape, 2, 3), dtype=dtype, device=device).unbind(
+        -2
+    )
     e0 = v0 / torch.clamp(torch.linalg.norm(v0, dim=-1, keepdim=True), min=1e-10)
     v1 = v1 - e0 * (v1 * e0).sum(dim=-1, keepdim=True)
     e1 = v1 / torch.clamp(torch.linalg.norm(v1, dim=-1, keepdim=True), min=1e-10)

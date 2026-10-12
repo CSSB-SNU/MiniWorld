@@ -98,7 +98,8 @@ def _make_mock_batch(
     """A SimpleNamespace mock that satisfies the fields the inference path reads."""
     g = torch.Generator().manual_seed(seed)
     base_map = torch.tensor(
-        [i % L_token for i in range(L_atom)], dtype=torch.long,
+        [i % L_token for i in range(L_atom)],
+        dtype=torch.long,
     ).unsqueeze(0)
     scheme = SimpleNamespace(
         token_asym_id=torch.zeros(1, L_token, dtype=torch.long),
@@ -149,7 +150,7 @@ def _build_step_schedule_for_single_t(
     t_emb_scalar = sigma_t_tensor.log() / 4.0
     # Build the (B=1, L_token, d_single) single-cond tensor — same ops as in
     # build_step_schedule but for a single t.
-    time_embedding = fourier_embedding(t_emb_scalar)            # (1, d_time)
+    time_embedding = fourier_embedding(t_emb_scalar)  # (1, d_time)
     pre_time = cond.linear_token_single(
         torch.cat([token_single_input, token_single_trunk], dim=-1),
     )
@@ -270,9 +271,13 @@ def test_diffusion_step_matches_canonical() -> None:
             sigma_hat=sigma_hat,
         )
 
-        x_t_A = x_t_AB.squeeze(1)              # (A, L_atom, 3)
+        x_t_A = x_t_AB.squeeze(1)  # (A, L_atom, 3)
         out_inference_A = diffusion_step(
-            fake_model, cache, schedule, x_t_A, t_index=0,
+            fake_model,
+            cache,
+            schedule,
+            x_t_A,
+            t_index=0,
         )
         # Reinject the B=1 axis dropped by diffusion_step so shapes line up
         # with the canonical (A, B, L_atom, 3) return.

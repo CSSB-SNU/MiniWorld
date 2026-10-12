@@ -214,24 +214,32 @@ def _build_precompile_batch(
     batch.scheme.atom_to_token_idx_map.copy_(atom_to_token.unsqueeze(0))
     batch.scheme.atom_to_chain_id.zero_()
 
-    msa_row_offset = torch.arange(msa_depth, device=device, dtype=torch.long).unsqueeze(1)
+    msa_row_offset = torch.arange(msa_depth, device=device, dtype=torch.long).unsqueeze(
+        1
+    )
     msa_sequences = (seq_token_type.unsqueeze(0) + msa_row_offset).remainder(20)
     batch.msa.aligned_sequences.copy_(msa_sequences.unsqueeze(0))
     batch.msa.mask.fill_(True)
     batch.msa.has_deletion.zero_()
-    msa_deletion = torch.linspace(
-        0.0,
-        1.0,
-        msa_depth,
-        device=device,
-        dtype=torch.float32,
-    ).unsqueeze(1).expand(-1, n_tokens)
+    msa_deletion = (
+        torch.linspace(
+            0.0,
+            1.0,
+            msa_depth,
+            device=device,
+            dtype=torch.float32,
+        )
+        .unsqueeze(1)
+        .expand(-1, n_tokens)
+    )
     batch.msa.deletion_value.copy_(msa_deletion.unsqueeze(0))
     batch.msa.profile.copy_(
         torch.nn.functional.one_hot(
             seq_token_type,
             num_classes=num_res_class,
-        ).to(torch.float32).unsqueeze(0),
+        )
+        .to(torch.float32)
+        .unsqueeze(0),
     )
     batch.msa.deletion_mean.copy_(msa_deletion.mean(dim=0, keepdim=True))
 
@@ -277,8 +285,7 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
     rng_state = _capture_rng_state(raw_model)
     was_training = client.model.training
     param_snapshot = {
-        name: p.detach().to("cpu", copy=True)
-        for name, p in raw_model.named_parameters()
+        name: p.detach().to("cpu", copy=True) for name, p in raw_model.named_parameters()
     }
 
     def _to_cpu_copy(obj):
@@ -355,15 +362,10 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
 
             warmup_idx += 1
             if client.is_global_zero and (
-                warmup_idx == 1
-                or warmup_idx == total_variants
-                or warmup_idx % 4 == 0
+                warmup_idx == 1 or warmup_idx == total_variants or warmup_idx % 4 == 0
             ):
                 client.logger.info(
-                    (
-                        "Bucket warmup %d/%d: msa=%d tokens=%d atoms=%d "
-                        "recycle=%d"
-                    ),
+                    ("Bucket warmup %d/%d: msa=%d tokens=%d atoms=%d recycle=%d"),
                     warmup_idx,
                     total_variants,
                     msa_depth,

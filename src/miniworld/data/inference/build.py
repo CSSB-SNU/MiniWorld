@@ -29,7 +29,11 @@ from miniworld.data.features.features import (
     StructureFeatures,
     TemplateFeatures,
 )
-from miniworld.data.features.convert import to_template_features, _build_atom_is_rep, _build_token_frame_atoms
+from miniworld.data.features.convert import (
+    to_template_features,
+    _build_atom_is_rep,
+    _build_token_frame_atoms,
+)
 from miniworld.data.io.load import load_a3m, load_template
 from miniworld.data.pipeline import ComplexMSA, MSA, ProteinTemplate, sample_msa
 from miniworld.data.reference import augment_reference
@@ -80,22 +84,28 @@ class _ChainExpansion:
     """Per-chain quantities pre-computed before assembling the Batch."""
 
     spec: ChainSpec
-    residues: list[CCDResidue]            # one CCDResidue per residue
+    residues: list[CCDResidue]  # one CCDResidue per residue
     n_residues: int
     n_atoms: int
-    n_tokens: int                          # token count for this chain (>= n_residues)
-    atom_offset: int                       # global atom offset (start)
-    token_offset: int                      # global token offset (start)
-    msa: MSA                               # residue-level MSA for this chain
-    atom_to_token_local: np.ndarray        # (n_atoms,) local atom -> local token [0..n_tokens-1]
-    token_to_residue_local: np.ndarray     # (n_tokens,) local token -> local residue [0..n_residues-1]
-    residue_token_offsets: np.ndarray      # (n_residues+1,) cum token count per residue (within chain)
+    n_tokens: int  # token count for this chain (>= n_residues)
+    atom_offset: int  # global atom offset (start)
+    token_offset: int  # global token offset (start)
+    msa: MSA  # residue-level MSA for this chain
+    atom_to_token_local: (
+        np.ndarray
+    )  # (n_atoms,) local atom -> local token [0..n_tokens-1]
+    token_to_residue_local: (
+        np.ndarray
+    )  # (n_tokens,) local token -> local residue [0..n_residues-1]
+    residue_token_offsets: (
+        np.ndarray
+    )  # (n_residues+1,) cum token count per residue (within chain)
     # Per-residue "original" residue index used by the relpos head (mirrors
     # the dataloader's ``cifmol.residues.cif_idx`` after spatial cropping).
     # Defaults to 0..n_residues-1 (contiguous within the chain); the user's
     # ``InferenceSpec.residue_indices`` override replaces it with the
     # original positions for a spatially-cropped chain.
-    residue_idx_for_relpos: np.ndarray     # (n_residues,) int64
+    residue_idx_for_relpos: np.ndarray  # (n_residues,) int64
 
 
 def build_inference_batch(
@@ -135,11 +145,14 @@ def build_inference_batch(
         letter = final_chain_letter[ci]
         if letter not in parsed_per_letter:
             parsed_per_letter[letter] = parse_fasta_file(
-                spec.fasta[letter], chain_index=ci,
+                spec.fasta[letter],
+                chain_index=ci,
             )
         base = parsed_per_letter[letter]
         chain_specs[ci] = dataclasses.replace(
-            base, chain_index=ci, chain_letter=letter,
+            base,
+            chain_index=ci,
+            chain_letter=letter,
         )
     letter_to_chains = _build_letter_to_chains(final_chain_letter, chain_indices)
 
@@ -167,7 +180,9 @@ def build_inference_batch(
         )
         n_tokens_chain = int(residue_token_offsets[-1])
         residue_idx_relpos = _resolve_residue_idx_for_relpos(
-            spec=spec, chain_index=ci, n_res=n_res,
+            spec=spec,
+            chain_index=ci,
+            n_res=n_res,
             chain_res_offset=residue_offset,
         )
         expansions.append(
@@ -234,13 +249,15 @@ def build_inference_batch(
 
         atom_lo = exp.atom_offset
         atom_hi = atom_lo + exp.n_atoms
-        atom_to_token_idx_map[atom_lo:atom_hi] = exp.atom_to_token_local + exp.token_offset
+        atom_to_token_idx_map[atom_lo:atom_hi] = (
+            exp.atom_to_token_local + exp.token_offset
+        )
         atom_to_chain_id[atom_lo:atom_hi] = chain_local_idx
 
         atom_cursor = atom_lo
         for res_local_idx, res in enumerate(exp.residues):
             global_residue = chain_res_offset + res_local_idx
-            atom_to_residue[atom_cursor:atom_cursor + res.n_atoms] = global_residue
+            atom_to_residue[atom_cursor : atom_cursor + res.n_atoms] = global_residue
             atom_cursor += res.n_atoms
 
     # ``atom_to_chain_id`` doubles as the solver's ``atom_to_combine`` argument
@@ -266,10 +283,17 @@ def build_inference_batch(
     ref_pos, ref_element, ref_charge = _build_reference_arrays(expansions, rng)
     reference = ReferenceFeatures.from_sample(
         pos=torch.from_numpy(ref_pos.astype(np.float32)),
-        mask=torch.from_numpy(np.concatenate([
-            res.atom_mask if res.atom_mask is not None else np.isfinite(res.atom_xyz).all(axis=1)
-            for exp in expansions for res in exp.residues
-        ])),
+        mask=torch.from_numpy(
+            np.concatenate(
+                [
+                    res.atom_mask
+                    if res.atom_mask is not None
+                    else np.isfinite(res.atom_xyz).all(axis=1)
+                    for exp in expansions
+                    for res in exp.residues
+                ]
+            )
+        ),
         element=torch.from_numpy(ref_element.astype(np.int64)),
         charge=torch.from_numpy(ref_charge.astype(np.float32)),
         space_uid=torch.from_numpy(atom_to_residue.astype(np.int64)),
@@ -296,12 +320,16 @@ def build_inference_batch(
     # alignment as well. Note AF3 does NOT do this — its MSA.compute_features takes
     # no random_state — so this is a deliberate deviation, not a fidelity fix.
     msa_residue = sample_msa(
-        complex_msa, max_msa_depth=max_msa_depth, rng=rng,
+        complex_msa,
+        max_msa_depth=max_msa_depth,
+        rng=rng,
         sample_depth="random" if msa_subsample else "fixed",
     )
     msa_features = MSAFeatures(
         aligned_sequences=msa_residue.aligned_sequences[
-            :, :, token_to_residue_idx_map,
+            :,
+            :,
+            token_to_residue_idx_map,
         ],
         mask=msa_residue.mask,
         has_deletion=msa_residue.has_deletion[:, :, token_to_residue_idx_map],
@@ -320,7 +348,8 @@ def build_inference_batch(
     # ``as_contact`` is True. Per-entry override means we can no longer gate
     # on the single ``spec.template_as_contact`` flag alone.
     contact_template_count = sum(
-        1 for ct in spec.complex_templates
+        1
+        for ct in spec.complex_templates
         if ct.resolves_as_contact(spec.template_as_contact)
     )
     if contact_template_count and spec.complex_templates:
@@ -328,7 +357,9 @@ def build_inference_batch(
         from .spec import ContactsSpec
 
         extra_pos, extra_neg = derive_contacts_from_complex_templates(
-            spec, expansions=expansions, mode="all",
+            spec,
+            expansions=expansions,
+            mode="all",
         )
         if extra_pos or extra_neg:
             # Dedupe while preserving the user's explicit contacts first.
@@ -345,7 +376,13 @@ def build_inference_batch(
     if _tb.shape[0] > 0:
         _bi = torch.from_numpy(_tb[:, 0])
         _bj = torch.from_numpy(_tb[:, 1])
-        _keep = (_bi != _bj) & (_bi >= 0) & (_bj >= 0) & (_bi < total_tokens) & (_bj < total_tokens)
+        _keep = (
+            (_bi != _bj)
+            & (_bi >= 0)
+            & (_bj >= 0)
+            & (_bi < total_tokens)
+            & (_bj < total_tokens)
+        )
         _bi, _bj = _bi[_keep], _bj[_keep]
         token_bond_feat[_bi, _bj] = True
         token_bond_feat[_bj, _bi] = True
@@ -405,9 +442,15 @@ def build_inference_batch(
         residues=SimpleNamespace(chem_comp_id=SimpleNamespace(value=chem_comp_ids)),
         index_table=SimpleNamespace(atom_to_res=atom_to_residue),
     )
-    selection = dict(cifmol=proxy, atom_to_token_idx_map=atom_to_token_idx_map,
-                     atom_pos_mask=np.ones(total_atoms, dtype=bool), n_tokens=total_tokens)
-    structure.atom_is_rep = torch.from_numpy(_build_atom_is_rep(**selection)).unsqueeze(0)
+    selection = dict(
+        cifmol=proxy,
+        atom_to_token_idx_map=atom_to_token_idx_map,
+        atom_pos_mask=np.ones(total_atoms, dtype=bool),
+        n_tokens=total_tokens,
+    )
+    structure.atom_is_rep = torch.from_numpy(_build_atom_is_rep(**selection)).unsqueeze(
+        0
+    )
     frames, frame_mask = _build_token_frame_atoms(**selection)
     structure.token_frame_atoms = torch.from_numpy(frames).unsqueeze(0)
     structure.token_frame_mask = torch.from_numpy(frame_mask).unsqueeze(0)
@@ -579,7 +622,9 @@ def _load_or_build_chain_msa(
                     return msa
             logger.warning(
                 "chain %d: a3m_key %s not found in %s; falling back",
-                chain_index, key, [str(d) for d in dbs],
+                chain_index,
+                key,
+                [str(d) for d in dbs],
             )
     letter = spec.chain_letters[str(chain_index)]
     a3m_path = spec.a3m.get(letter)
@@ -645,12 +690,19 @@ def _build_reference_arrays(
         for res in exp.residues:
             R, T = Rs[res_global], Ts[res_global]
             xyz = res.atom_xyz.astype(np.float32, copy=False)
-            valid = res.atom_mask if res.atom_mask is not None else np.isfinite(xyz).all(axis=1)
-            ref_pos[atom_cursor:atom_cursor + res.n_atoms] = augment_reference(
-                np.where(valid[:, None], xyz, 0.0), valid, R, T,
+            valid = (
+                res.atom_mask
+                if res.atom_mask is not None
+                else np.isfinite(xyz).all(axis=1)
             )
-            ref_element_str[atom_cursor:atom_cursor + res.n_atoms] = res.atom_elements
-            ref_charge[atom_cursor:atom_cursor + res.n_atoms] = res.atom_charges
+            ref_pos[atom_cursor : atom_cursor + res.n_atoms] = augment_reference(
+                np.where(valid[:, None], xyz, 0.0),
+                valid,
+                R,
+                T,
+            )
+            ref_element_str[atom_cursor : atom_cursor + res.n_atoms] = res.atom_elements
+            ref_charge[atom_cursor : atom_cursor + res.n_atoms] = res.atom_charges
             atom_cursor += res.n_atoms
             res_global += 1
 
@@ -686,10 +738,7 @@ def _build_single_chain_template_layers(
     for chain_local_idx, exp in enumerate(expansions):
         chain_idx_str = str(exp.spec.chain_index)
         seq_id = spec.template.get(chain_idx_str)
-        if (
-            seq_id is None
-            or exp.spec.entity_type not in _TEMPLATE_ELIGIBLE_ENTITIES
-        ):
+        if seq_id is None or exp.spec.entity_type not in _TEMPLATE_ELIGIBLE_ENTITIES:
             out.append(ProteinTemplate.empty(exp.n_residues))
             continue
         loaded = load_template(
@@ -728,10 +777,7 @@ def _build_template_features(
     """
     from .complex_template import load_complex_template_layers, stack_slots
 
-    if (
-        (spec.template_db is None or not spec.template)
-        and not spec.complex_templates
-    ):
+    if (spec.template_db is None or not spec.template) and not spec.complex_templates:
         return None
 
     single_chain_layers = _build_single_chain_template_layers(spec, expansions, rng)
@@ -837,7 +883,7 @@ def _tokenize_chain(
             resolution=resolution,
             ccd_lookup=ccd_lookup,
         )
-        atom_to_token_local[atom_cursor:atom_cursor + residue.n_atoms] = (
+        atom_to_token_local[atom_cursor : atom_cursor + residue.n_atoms] = (
             atom_to_frag_local + residue_token_offsets[-1]
         )
         token_to_residue_local.extend([r_local] * n_frags)
@@ -930,24 +976,41 @@ def _build_token_contacts(
     triples: set[tuple[int, int, int]] = set()
     n_chains = len(expansions)
     n_residues_per_chain = [exp.n_residues for exp in expansions]
-    for kind, pairs in (("positive", contacts.positive), ("negative", contacts.negative)):
+    for kind, pairs in (
+        ("positive", contacts.positive),
+        ("negative", contacts.negative),
+    ):
         type_id = 0 if kind == "positive" else 1
         for s in pairs:
             chain_a, res_a, tok_a, chain_b, res_b, tok_b = contacts.parse_pair(s)
             chains_a = _resolve_chain_refs(
-                chain_a, letter_to_chains, n_chains, where=f"contact {s!r}",
+                chain_a,
+                letter_to_chains,
+                n_chains,
+                where=f"contact {s!r}",
             )
             chains_b = _resolve_chain_refs(
-                chain_b, letter_to_chains, n_chains, where=f"contact {s!r}",
+                chain_b,
+                letter_to_chains,
+                n_chains,
+                where=f"contact {s!r}",
             )
             for ci_a in chains_a:
                 ti = _resolve_global_token(
-                    ci_a, res_a, expansions, n_residues_per_chain, s,
+                    ci_a,
+                    res_a,
+                    expansions,
+                    n_residues_per_chain,
+                    s,
                     local_tok=tok_a,
                 )
                 for ci_b in chains_b:
                     tj = _resolve_global_token(
-                        ci_b, res_b, expansions, n_residues_per_chain, s,
+                        ci_b,
+                        res_b,
+                        expansions,
+                        n_residues_per_chain,
+                        s,
                         local_tok=tok_b,
                     )
                     if ti == tj:

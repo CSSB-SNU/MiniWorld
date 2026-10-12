@@ -17,6 +17,7 @@ testing, inside each crop, which inter-entity contacts actually exist.
 
 CPU only, but heavy (each item reads a CIF and its MSA): run it as a batch job.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -58,39 +59,58 @@ def main() -> None:
     cfg.data.train_db.source_weights = {"pdb": 1.0}
 
     print(f"config       : {cfg_path.name}")
-    print(f"crop         : {cfg.data.crop.max_tokens} tokens / {cfg.data.crop.max_atoms} atoms")
-    print(f"chain_crop_prob: {cfg.data.crop.chain_crop_prob}  "
-          f"(prob the focus IGNORES the interface and sits anywhere in one chain)")
+    print(
+        f"crop         : {cfg.data.crop.max_tokens} tokens / {cfg.data.crop.max_atoms} atoms"
+    )
+    print(
+        f"chain_crop_prob: {cfg.data.crop.chain_crop_prob}  "
+        f"(prob the focus IGNORES the interface and sits anywhere in one chain)"
+    )
 
-    data = BioMolData(BioMolData.BioMolConfig(
-        crop_config=cfg.data.crop, msa_config=cfg.data.msa,
-        DB_config=cfg.data.train_db, sampler_config=cfg.data.sampler,
-        tokenizer_config=cfg.data.tokenizer))
+    data = BioMolData(
+        BioMolData.BioMolConfig(
+            crop_config=cfg.data.crop,
+            msa_config=cfg.data.msa,
+            DB_config=cfg.data.train_db,
+            sampler_config=cfg.data.sampler,
+            tokenizer_config=cfg.data.tokenizer,
+        )
+    )
     loader = data.create_ddp_dataloader(
-        world_size=1, rank=0, seed=0, drop_last=False, batch_size=1,
-        num_workers=args.workers, num_samples_per_rank=args.n, shuffle=True,
-        bucket_msa_multiple=None, bucket_token_multiple=None,
-        bucket_atom_multiple=None, bucket_template_multiple=4)
+        world_size=1,
+        rank=0,
+        seed=0,
+        drop_last=False,
+        batch_size=1,
+        num_workers=args.workers,
+        num_samples_per_rank=args.n,
+        shuffle=True,
+        bucket_msa_multiple=None,
+        bucket_token_multiple=None,
+        bucket_atom_multiple=None,
+        bucket_template_multiple=4,
+    )
     data.set_epoch(0)
 
     def contact(pos_a: np.ndarray, pos_b: np.ndarray) -> bool:
         if len(pos_a) == 0 or len(pos_b) == 0:
             return False
-        return len(cKDTree(pos_a).query_ball_point(pos_b, CONTACT_A, return_sorted=False)) > 0 \
-            and any(len(x) for x in cKDTree(pos_a).query_ball_point(pos_b, CONTACT_A))
+        return len(
+            cKDTree(pos_a).query_ball_point(pos_b, CONTACT_A, return_sorted=False)
+        ) > 0 and any(len(x) for x in cKDTree(pos_a).query_ball_point(pos_b, CONTACT_A))
 
     tally = collections.Counter()
     tok = collections.Counter()
     n = 0
     for batch in loader:
-        et = batch.chain.entity_type[0]                  # [L_chain]
-        asym = batch.scheme.token_asym_id[0]             # [L_token] -> chain idx
+        et = batch.chain.entity_type[0]  # [L_chain]
+        asym = batch.scheme.token_asym_id[0]  # [L_token] -> chain idx
         tmask = batch.structure.token_mask[0].bool()
-        a2t = batch.scheme.atom_to_token_idx_map[0]      # [L_atom] -> token
+        a2t = batch.scheme.atom_to_token_idx_map[0]  # [L_atom] -> token
         apos = batch.structure.atom_pos[0].numpy()
         amask = batch.structure.atom_pos_mask[0].bool().numpy()
 
-        tok_ent = et[asym]                               # [L_token]
+        tok_ent = et[asym]  # [L_token]
         atom_ent = tok_ent[a2t].numpy()
         atom_chain = asym[a2t].numpy()
         valid = amask & np.isfinite(apos).all(-1)
@@ -119,8 +139,8 @@ def main() -> None:
             if ab_ab:
                 break
         tally["Ab-Ab contact in crop"] += ab_ab
-        tally["Ab-Ab ONLY (no Ab-Ag)"] += (ab_ab and not ab_ag)
-        tally["NO interface at all"] += (not ab_ab and not ab_ag)
+        tally["Ab-Ab ONLY (no Ab-Ag)"] += ab_ab and not ab_ag
+        tally["NO interface at all"] += not ab_ab and not ab_ag
         tally["antigen tokens"] += int((tok_ent[tmask] == PROTEIN).sum())
         tally["antibody tokens"] += int((tok_ent[tmask] == ANTIBODY).sum())
         tally["tokens"] += int(tmask.sum())
@@ -130,13 +150,21 @@ def main() -> None:
     print(f"\nantibody_protein items drawn: {n}\n")
     print(f"{'outcome':<26}{'items':>8}{'% of items':>13}")
     print("-" * 47)
-    for k in ("has_antibody", "has_antigen", "Ab-Ag contact in crop",
-              "Ab-Ab contact in crop", "Ab-Ab ONLY (no Ab-Ag)", "NO interface at all"):
+    for k in (
+        "has_antibody",
+        "has_antigen",
+        "Ab-Ag contact in crop",
+        "Ab-Ab contact in crop",
+        "Ab-Ab ONLY (no Ab-Ag)",
+        "NO interface at all",
+    ):
         print(f"{k:<26}{tally[k]:>8}{100 * tally[k] / n:>12.1f}%")
     t = tally["tokens"]
-    print(f"\ntoken composition: antibody {100*tally['antibody tokens']/t:.1f}%  "
-          f"antigen {100*tally['antigen tokens']/t:.1f}%  "
-          f"other {100*(t-tally['antibody tokens']-tally['antigen tokens'])/t:.1f}%")
+    print(
+        f"\ntoken composition: antibody {100 * tally['antibody tokens'] / t:.1f}%  "
+        f"antigen {100 * tally['antigen tokens'] / t:.1f}%  "
+        f"other {100 * (t - tally['antibody tokens'] - tally['antigen tokens']) / t:.1f}%"
+    )
 
 
 if __name__ == "__main__":

@@ -38,7 +38,9 @@ def configure_fused_msa_train(enabled: bool) -> None:
         else:
             # Engine 2 defaults to native MSA: absence no longer means disabled.
             os.environ[key] = "0"
-    logging.getLogger(__name__).info("Fused MSA training paths (PWA/OPM kernels): %s", "on" if enabled else "off")
+    logging.getLogger(__name__).info(
+        "Fused MSA training paths (PWA/OPM kernels): %s", "on" if enabled else "off"
+    )
 
 
 def align_engine_optimizer_state(optimizer) -> int:
@@ -46,10 +48,15 @@ def align_engine_optimizer_state(optimizer) -> int:
     try:
         from miniworld_engine.integrations.optimizer import align_optimizer_state_layout_
     except ModuleNotFoundError as exc:
-        if exc.name in {"miniworld_engine.integrations", "miniworld_engine.integrations.optimizer"}:
+        if exc.name in {
+            "miniworld_engine.integrations",
+            "miniworld_engine.integrations.optimizer",
+        }:
             return 0  # Older engines do not change the parameter layout.
         raise
     changed = align_optimizer_state_layout_(optimizer)
     if changed:
-        logging.getLogger(__name__).info("Aligned %d engine optimizer state tensors", changed)
+        logging.getLogger(__name__).info(
+            "Aligned %d engine optimizer state tensors", changed
+        )
     return changed

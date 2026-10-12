@@ -101,10 +101,26 @@ def _load_assembly_cifmol(
 
 # Reuse the same 3-letter <-> 1-letter table as the fasta parser.
 _AA_3TO1: dict[str, str] = {
-    "ALA": "A", "ARG": "R", "ASN": "N", "ASP": "D", "CYS": "C",
-    "GLN": "Q", "GLU": "E", "GLY": "G", "HIS": "H", "ILE": "I",
-    "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F", "PRO": "P",
-    "SER": "S", "THR": "T", "TRP": "W", "TYR": "Y", "VAL": "V",
+    "ALA": "A",
+    "ARG": "R",
+    "ASN": "N",
+    "ASP": "D",
+    "CYS": "C",
+    "GLN": "Q",
+    "GLU": "E",
+    "GLY": "G",
+    "HIS": "H",
+    "ILE": "I",
+    "LEU": "L",
+    "LYS": "K",
+    "MET": "M",
+    "PHE": "F",
+    "PRO": "P",
+    "SER": "S",
+    "THR": "T",
+    "TRP": "W",
+    "TYR": "Y",
+    "VAL": "V",
 }
 
 
@@ -223,7 +239,9 @@ def _load_chain_backbone_from_lmdb(
         )
         raise ValueError(msg)
     pdb_id, assembly_id, model_id, alt_id = parts
-    cifmol = _load_assembly_cifmol(cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id)
+    cifmol = _load_assembly_cifmol(
+        cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id
+    )
     chain_view = cifmol.chains[cifmol.chains.chain_id == template_chain_id]
     if len(chain_view) == 0:
         available = [str(c) for c in np.asarray(cifmol.chains.chain_id.value)]
@@ -258,7 +276,7 @@ def _load_chain_backbone_from_lmdb(
 
 
 def _align_template_to_query(
-    template_bb: np.ndarray,           # (T, 4, 3)
+    template_bb: np.ndarray,  # (T, 4, 3)
     template_one_letter: list[str],
     query_one_letter: list[str],
     *,
@@ -277,8 +295,10 @@ def _align_template_to_query(
     use an HMM-derived alignment (per ``ComplexTemplateSpec.alignment``).
     """
     q_to_t = _query_to_template_index_map(
-        template_one_letter, query_one_letter,
-        where=where, precomputed=precomputed,
+        template_one_letter,
+        query_one_letter,
+        where=where,
+        precomputed=precomputed,
     )
     n_q = len(query_one_letter)
     out_bb = np.full((n_q, *template_bb.shape[1:]), np.nan, dtype=template_bb.dtype)
@@ -399,7 +419,9 @@ def _kalign_index_map(
         try:
             subprocess.run(
                 ["kalign", "-i", str(in_path), "-o", str(out_path), "-f", "fasta"],
-                check=True, capture_output=True, text=True,
+                check=True,
+                capture_output=True,
+                text=True,
             )
         except subprocess.CalledProcessError as e:
             msg = (
@@ -472,8 +494,8 @@ def _make_complex_slot_for_chain(
     n_res = bb.shape[0]
     rm = ResidueMapping()
     res_type = rm.protein.map(np.array(one_letter, dtype=object)).astype(np.int32)
-    cb_xyz = bb[:, 3, :]                  # (n_res, 3)
-    bb_xyz_arr = bb[:, :3, :]             # (n_res, 3, 3) for N, CA, C
+    cb_xyz = bb[:, 3, :]  # (n_res, 3)
+    bb_xyz_arr = bb[:, :3, :]  # (n_res, 3, 3) for N, CA, C
     cb_mask = np.isfinite(cb_xyz).all(axis=-1)
     bb_mask = np.isfinite(bb_xyz_arr).all(axis=(-1, -2))
     return ProteinTemplate._from_arrays(  # noqa: SLF001
@@ -538,7 +560,9 @@ def _load_complex_chain(
         msg = "ComplexTemplateSpec missing both cif and cif_id."
         raise ValueError(msg)
     return _load_chain_backbone_from_lmdb(
-        cif_db, complex_spec.cif_id, template_chain_id,
+        cif_db,
+        complex_spec.cif_id,
+        template_chain_id,
     )
 
 
@@ -549,10 +573,7 @@ def _residue_heavy_atom_centroid_biopy(residue) -> np.ndarray:  # noqa: ANN001
     is exact for standard amino acids (only H-prefixed atoms there are
     hydrogens). Returns NaN[3] if the residue has no heavy atoms.
     """
-    xyz = [
-        atom.get_coord() for atom in residue
-        if not atom.get_name().startswith("H")
-    ]
+    xyz = [atom.get_coord() for atom in residue if not atom.get_name().startswith("H")]
     if not xyz:
         return np.full(3, np.nan, dtype=np.float32)
     return np.asarray(xyz, dtype=np.float32).mean(axis=0)
@@ -618,7 +639,9 @@ def _load_chain_centroid_from_lmdb(
         )
         raise ValueError(msg)
     pdb_id, assembly_id, model_id, alt_id = parts
-    cifmol = _load_assembly_cifmol(cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id)
+    cifmol = _load_assembly_cifmol(
+        cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id
+    )
     chain_view = cifmol.chains[cifmol.chains.chain_id == template_chain_id]
     if len(chain_view) == 0:
         available = [str(c) for c in np.asarray(cifmol.chains.chain_id.value)]
@@ -636,7 +659,8 @@ def _load_chain_centroid_from_lmdb(
         atom_ids = np.asarray(residue.atoms.id.value)
         xyz = np.asarray(residue.atoms.xyz.value, dtype=np.float32)
         heavy = np.array(
-            [not str(a).startswith("H") for a in atom_ids], dtype=bool,
+            [not str(a).startswith("H") for a in atom_ids],
+            dtype=bool,
         )
         if heavy.any():
             centroid[ri, 0] = xyz[heavy].mean(axis=0)
@@ -662,7 +686,9 @@ def _load_complex_chain_centroid(
         msg = "ComplexTemplateSpec missing both cif and cif_id."
         raise ValueError(msg)
     return _load_chain_centroid_from_lmdb(
-        cif_db, complex_spec.cif_id, template_chain_id,
+        cif_db,
+        complex_spec.cif_id,
+        template_chain_id,
     )
 
 
@@ -732,7 +758,9 @@ def _load_chain_atoms_from_lmdb(
         )
         raise ValueError(msg)
     pdb_id, assembly_id, model_id, alt_id = parts
-    cifmol = _load_assembly_cifmol(cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id)
+    cifmol = _load_assembly_cifmol(
+        cif_db_path, pdb_id.lower(), assembly_id, model_id, alt_id
+    )
     chain_view = cifmol.chains[cifmol.chains.chain_id == template_chain_id]
     if len(chain_view) == 0:
         available = [str(c) for c in np.asarray(cifmol.chains.chain_id.value)]
@@ -777,7 +805,9 @@ def _load_complex_chain_atoms(
         msg = "ComplexTemplateSpec missing both cif and cif_id."
         raise ValueError(msg)
     return _load_chain_atoms_from_lmdb(
-        cif_db, complex_spec.cif_id, template_chain_id,
+        cif_db,
+        complex_spec.cif_id,
+        template_chain_id,
     )
 
 
@@ -815,11 +845,14 @@ def _build_derivation_expansions(spec: "InferenceSpec") -> list:
         letter = final_chain_letter[ci]
         if letter not in parsed_per_letter:
             parsed_per_letter[letter] = parse_fasta_file(
-                spec.fasta[letter], chain_index=ci,
+                spec.fasta[letter],
+                chain_index=ci,
             )
         base = parsed_per_letter[letter]
         chain_specs[ci] = dataclasses.replace(
-            base, chain_index=ci, chain_letter=letter,
+            base,
+            chain_index=ci,
+            chain_letter=letter,
         )
 
     expansions: list = []
@@ -925,7 +958,8 @@ def derive_contacts_from_complex_templates(
     # in the spec — the template module still consumes them as frame
     # templates — they just don't seed contact constraints here.
     contact_entries = [
-        (ki, ct) for ki, ct in enumerate(spec.complex_templates)
+        (ki, ct)
+        for ki, ct in enumerate(spec.complex_templates)
         if ct.resolves_as_contact(spec.template_as_contact)
     ]
     if not contact_entries:
@@ -955,7 +989,7 @@ def derive_contacts_from_complex_templates(
             except ValueError as e:
                 msg = (
                     f"Complex template[{ki}] chain_map key {chain_idx_str!r} "
-                    f"is not a chain index. Use numeric keys (e.g. \"0\", \"1\")."
+                    f'is not a chain index. Use numeric keys (e.g. "0", "1").'
                 )
                 raise ValueError(msg) from e
             if not (0 <= ci < n_chains):
@@ -971,14 +1005,17 @@ def derive_contacts_from_complex_templates(
             q_one_letter = exp.spec.one_letter_seq
 
             t_atoms_per_res, t_letters = _load_complex_chain_atoms(
-                complex_spec, t_chain_id, spec.cif_db,
+                complex_spec,
+                t_chain_id,
+                spec.cif_db,
             )
             precomputed = None
             if complex_spec.alignment and chain_idx_str in complex_spec.alignment:
                 a = complex_spec.alignment[chain_idx_str]
                 precomputed = (a["query"], a["template"])
             q_to_t = _query_to_template_index_map(
-                t_letters, q_one_letter,
+                t_letters,
+                q_one_letter,
                 where=f"complex_templates[{ki}].chain_map['{chain_idx_str}']",
                 precomputed=precomputed,
             )
@@ -1006,7 +1043,8 @@ def derive_contacts_from_complex_templates(
                     "%s: seq_id=%.3f < 1.0 -> deriving contacts from a "
                     "non-identical template (as_contact opt-in trusts the "
                     "caller; gate the entry with as_contact=false if undesired)",
-                    tag, seq_id,
+                    tag,
+                    seq_id,
                 )
             else:
                 LOGGER.info("%s: seq_id=1.000", tag)
@@ -1019,7 +1057,7 @@ def derive_contacts_from_complex_templates(
                 tok_end = int(exp.residue_token_offsets[r_idx + 1])
                 n_tok_in_res = tok_end - tok_start
                 atom_to_frag = (
-                    exp.atom_to_token_local[atom_cursor: atom_cursor + n_atoms_res]
+                    exp.atom_to_token_local[atom_cursor : atom_cursor + n_atoms_res]
                     - tok_start
                 )
                 atom_cursor += n_atoms_res
@@ -1037,7 +1075,8 @@ def derive_contacts_from_complex_templates(
                         continue
                     atom_names = [str(residue.atom_ids[i]) for i in atom_pos]
                     xyz = [
-                        template_atoms[name] for name in atom_names
+                        template_atoms[name]
+                        for name in atom_names
                         if name in template_atoms
                     ]
                     if not xyz:
@@ -1147,7 +1186,7 @@ def load_complex_template_layers(
             except ValueError as e:
                 msg = (
                     f"Complex template[{ki}] chain_map key {chain_idx_str!r} "
-                    f"is not a chain index. Use numeric keys (e.g. \"0\", \"1\")."
+                    f'is not a chain index. Use numeric keys (e.g. "0", "1").'
                 )
                 raise ValueError(msg) from e
             if not (0 <= ci < n_chains):

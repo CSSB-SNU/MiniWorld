@@ -125,7 +125,9 @@ class MiniMSAModuleBlock(nn.Module):
 
         pair = self.outer_product_mean(msa, opm_mask, token_asym_id, residual=pair)
         if not self.last_block:
-            msa = self.msa_pair_weighted_averaging(msa, pair, mask)  # owns residual + drop_msa
+            msa = self.msa_pair_weighted_averaging(
+                msa, pair, mask
+            )  # owns residual + drop_msa
             msa = self.transition_msa(msa)
         pair = self.tri_multi(pair, mask)
         pair = self.transition_pair(pair)

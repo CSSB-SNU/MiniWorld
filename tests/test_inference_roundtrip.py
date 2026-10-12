@@ -88,10 +88,26 @@ def _disable_cropping(args: ItemOptions) -> ItemOptions:
 
 def _aa3_to_aa1() -> dict[str, str]:
     return {
-        "ALA": "A", "ARG": "R", "ASN": "N", "ASP": "D", "CYS": "C",
-        "GLN": "Q", "GLU": "E", "GLY": "G", "HIS": "H", "ILE": "I",
-        "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F", "PRO": "P",
-        "SER": "S", "THR": "T", "TRP": "W", "TYR": "Y", "VAL": "V",
+        "ALA": "A",
+        "ARG": "R",
+        "ASN": "N",
+        "ASP": "D",
+        "CYS": "C",
+        "GLN": "Q",
+        "GLU": "E",
+        "GLY": "G",
+        "HIS": "H",
+        "ILE": "I",
+        "LEU": "L",
+        "LYS": "K",
+        "MET": "M",
+        "PHE": "F",
+        "PRO": "P",
+        "SER": "S",
+        "THR": "T",
+        "TRP": "W",
+        "TYR": "Y",
+        "VAL": "V",
     }
 
 
@@ -128,7 +144,9 @@ def _decode_msa_letter(token_int: int, entity_int: int) -> str:
         return _DNA_NUM_TO_LETTER.get(token_int, "X")
     if entity_int in (6, 7):  # ligand / branched
         return "X"
-    return _AA_NUM_TO_LETTER[token_int] if 0 <= token_int < len(_AA_NUM_TO_LETTER) else "X"
+    return (
+        _AA_NUM_TO_LETTER[token_int] if 0 <= token_int < len(_AA_NUM_TO_LETTER) else "X"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -226,7 +244,9 @@ def _polymer_one_letter(chain: ChainSlice, batch: Batch) -> str:
     aa_lookup = _aa3_to_aa1()
     dna_lookup = _dna_ccd_to_one()
 
-    query = batch.msa.aligned_sequences[0, 0, chain.token_lo: chain.token_hi].cpu().numpy()
+    query = (
+        batch.msa.aligned_sequences[0, 0, chain.token_lo : chain.token_hi].cpu().numpy()
+    )
     out = []
     for pos, ccd in enumerate(chain.chemcomp_ids):
         token_int = int(query[pos])
@@ -297,9 +317,13 @@ def chain_to_a3m(chain: ChainSlice, batch: Batch) -> str:
     ``ComplexMSA`` drops it during pair-and-sample, so headers are minimal.
     """
     n_msa = batch.msa.aligned_sequences.shape[1]
-    aligned = batch.msa.aligned_sequences[0, :, chain.token_lo: chain.token_hi].cpu().numpy()
-    has_del = batch.msa.has_deletion[0, :, chain.token_lo: chain.token_hi].cpu().numpy()
-    del_val = batch.msa.deletion_value[0, :, chain.token_lo: chain.token_hi].cpu().numpy()
+    aligned = (
+        batch.msa.aligned_sequences[0, :, chain.token_lo : chain.token_hi].cpu().numpy()
+    )
+    has_del = batch.msa.has_deletion[0, :, chain.token_lo : chain.token_hi].cpu().numpy()
+    del_val = (
+        batch.msa.deletion_value[0, :, chain.token_lo : chain.token_hi].cpu().numpy()
+    )
     msa_mask = batch.msa.mask[0].cpu().numpy()
 
     lines = []
@@ -338,8 +362,8 @@ def chain_to_a3m_lmdb(
     if msa is None:
         return None
     aligned = msa.aligned_sequences  # (N, L) int
-    deletions = msa.deletions        # (N, L) uint8
-    species = msa.species            # (N,) object/str
+    deletions = msa.deletions  # (N, L) uint8
+    species = msa.species  # (N,) object/str
 
     n_seqs, L = aligned.shape
     if expected_len is not None and L != expected_len:
@@ -365,10 +389,7 @@ def chain_to_a3m_lmdb(
             # UniProt-pipe layout matches StructCooker's parse_headers Pattern 2,
             # so the species field round-trips through ``parse_a3m_file``.
             db_id = f"{seq_id}_{k}"
-            header = (
-                f">tr|{db_id}|{db_id}_LMDB sequence "
-                f"OS={sp} GN=N/A PE=3 SV=1"
-            )
+            header = f">tr|{db_id}|{db_id}_LMDB sequence OS={sp} GN=N/A PE=3 SV=1"
         lines.append(header)
         lines.append("".join(chars))
     return "\n".join(lines) + "\n"
@@ -525,7 +546,9 @@ def dump_inference_spec(
 
     chains = extract_chain_slices(batch)
     seq_ids = _resolve_chain_seq_ids(batch, cif_db_path, chains)
-    chain_letters_map: dict[str, str] = {str(c.chain_idx): c.chain_letter for c in chains}
+    chain_letters_map: dict[str, str] = {
+        str(c.chain_idx): c.chain_letter for c in chains
+    }
     # fasta / a3m are letter-keyed; dataloader-extracted chains all have
     # distinct letters (chain_index_to_letter is unique per index), so
     # the loops below write one file per letter without collisions.
@@ -538,12 +561,19 @@ def dump_inference_spec(
 
         # Only emit a3m for polymers (RNA/DNA/protein); ligand/branched a3m is
         # built on-the-fly via ``MSA.from_query`` in the inference path.
-        if c.entity_fasta in ("polypeptide(L)", "polyribonucleotide", "polydeoxyribonucleotide"):
+        if c.entity_fasta in (
+            "polypeptide(L)",
+            "polyribonucleotide",
+            "polydeoxyribonucleotide",
+        ):
             a3m_text: str | None = None
             if seq_id is not None and a3m_db_path is not None:
                 expected_len = c.token_hi - c.token_lo  # residue-level tokenization
                 a3m_text = chain_to_a3m_lmdb(
-                    seq_id, a3m_db_path, c.entity_int, expected_len=expected_len,
+                    seq_id,
+                    a3m_db_path,
+                    c.entity_int,
+                    expected_len=expected_len,
                 )
             if a3m_text is None:
                 a3m_text = chain_to_a3m(c, batch)
@@ -551,7 +581,11 @@ def dump_inference_spec(
             a3m_path.write_text(a3m_text)
             a3m_paths[c.chain_letter] = str(a3m_path)
 
-    contacts = contacts_override if contacts_override is not None else batch_to_contacts(batch, chains)
+    contacts = (
+        contacts_override
+        if contacts_override is not None
+        else batch_to_contacts(batch, chains)
+    )
 
     # Templates: when ``template_db_path`` is set, populate spec.template with
     # each polymer chain's seq_id (the LMDB key in the StructCooker template
@@ -563,7 +597,9 @@ def dump_inference_spec(
             if seq_id is None:
                 continue
             if c.entity_fasta not in (
-                "polypeptide(L)", "polyribonucleotide", "polydeoxyribonucleotide",
+                "polypeptide(L)",
+                "polyribonucleotide",
+                "polydeoxyribonucleotide",
             ):
                 continue
             template_map[str(c.chain_idx)] = seq_id
@@ -634,8 +670,12 @@ def compare_batches(orig: Batch, rebuilt: Batch) -> list[FieldDiff]:
 
     diffs: list[FieldDiff] = []
 
-    def add(name: str, ok: bool, *, expected_diff: bool = False, detail: str = "") -> None:
-        diffs.append(FieldDiff(name=name, ok=ok, expected_diff=expected_diff, detail=detail))
+    def add(
+        name: str, ok: bool, *, expected_diff: bool = False, detail: str = ""
+    ) -> None:
+        diffs.append(
+            FieldDiff(name=name, ok=ok, expected_diff=expected_diff, detail=detail)
+        )
 
     n_atoms_orig = int(orig.structure.atom_mask.shape[1])
     n_atoms_new = int(rebuilt.structure.atom_mask.shape[1])
@@ -646,13 +686,22 @@ def compare_batches(orig: Batch, rebuilt: Batch) -> list[FieldDiff]:
         a = getattr(orig.scheme, k).cpu()
         b = getattr(rebuilt.scheme, k).cpu()
         ok = _eq_tensor(a, b)
-        add(f"scheme.{k}", ok, detail="" if ok else f"orig={a.tolist()[:8]}... rebuilt={b.tolist()[:8]}...")
+        add(
+            f"scheme.{k}",
+            ok,
+            detail="" if ok else f"orig={a.tolist()[:8]}... rebuilt={b.tolist()[:8]}...",
+        )
 
     for k in ("token_residue_idx", "token_entity_id"):
         a = getattr(orig.scheme, k).cpu()
         b = getattr(rebuilt.scheme, k).cpu()
         ok = _eq_tensor(a, b)
-        add(f"scheme.{k}", ok, expected_diff=True, detail="" if ok else "convention/offset difference (informational)")
+        add(
+            f"scheme.{k}",
+            ok,
+            expected_diff=True,
+            detail="" if ok else "convention/offset difference (informational)",
+        )
 
     for k in ("atom_to_token_idx_map", "atom_to_chain_id"):
         a = getattr(orig.scheme, k).cpu()
@@ -662,7 +711,9 @@ def compare_batches(orig: Batch, rebuilt: Batch) -> list[FieldDiff]:
             f"scheme.{k}",
             ok,
             expected_diff=atom_count_diverges,
-            detail="" if ok else f"shape orig={tuple(a.shape)} vs rebuilt={tuple(b.shape)}",
+            detail=""
+            if ok
+            else f"shape orig={tuple(a.shape)} vs rebuilt={tuple(b.shape)}",
         )
 
     add(
@@ -693,7 +744,9 @@ def compare_batches(orig: Batch, rebuilt: Batch) -> list[FieldDiff]:
     add(
         "structure.token_bond (set, ignoring [0,0] placeholder)",
         a_real == b_real,
-        detail="" if a_real == b_real else f"only_in_orig={a_real - b_real}, only_in_rebuilt={b_real - a_real}",
+        detail=""
+        if a_real == b_real
+        else f"only_in_orig={a_real - b_real}, only_in_rebuilt={b_real - a_real}",
     )
 
     # token_contacts: same set after canonicalizing (a < b, type).
@@ -704,12 +757,15 @@ def compare_batches(orig: Batch, rebuilt: Batch) -> list[FieldDiff]:
             a, b = (i, j) if i < j else (j, i)
             out.add((a, b, ttype))
         return out
+
     a_set = _norm_contacts(orig.structure.token_contacts)
     b_set = _norm_contacts(rebuilt.structure.token_contacts)
     add(
         "structure.token_contacts (set)",
         a_set == b_set,
-        detail="" if a_set == b_set else f"only_in_orig={a_set - b_set}, only_in_rebuilt={b_set - a_set}",
+        detail=""
+        if a_set == b_set
+        else f"only_in_orig={a_set - b_set}, only_in_rebuilt={b_set - a_set}",
     )
 
     for k in ("element", "charge", "space_uid"):
@@ -720,7 +776,9 @@ def compare_batches(orig: Batch, rebuilt: Batch) -> list[FieldDiff]:
             f"reference.{k}",
             ok,
             expected_diff=atom_count_diverges,
-            detail="" if ok else f"shape orig={tuple(a.shape)} vs rebuilt={tuple(b.shape)}",
+            detail=""
+            if ok
+            else f"shape orig={tuple(a.shape)} vs rebuilt={tuple(b.shape)}",
         )
 
     return diffs
@@ -998,7 +1056,7 @@ def _read_multi_fasta(path: Path) -> list[tuple[str, str]]:
     type=str,
     default="*_{letter}.a3m",
     help="Glob pattern for per-chain a3m. ``{letter}`` is substituted with "
-         "the auto-assigned chain letter (a, b, c, ...).",
+    "the auto-assigned chain letter (a, b, c, ...).",
 )
 @click.option(
     "--ccd-db-path",
@@ -1017,7 +1075,7 @@ def _read_multi_fasta(path: Path) -> list[tuple[str, str]]:
     type=str,
     default=None,
     help="Comma-separated seq_ids per chain (in fasta order). Empty entries "
-         "leave that chain without templates. Only used when --template-db-path is set.",
+    "leave that chain without templates. Only used when --template-db-path is set.",
 )
 @click.option(
     "--out-dir",
@@ -1025,7 +1083,9 @@ def _read_multi_fasta(path: Path) -> list[tuple[str, str]]:
     required=True,
     help="Directory to write fasta/a3m/spec.yaml into.",
 )
-@click.option("--name", type=str, default=None, help="Optional spec name (default: query stem).")
+@click.option(
+    "--name", type=str, default=None, help="Optional spec name (default: query stem)."
+)
 def from_fasta(
     query_path: Path,
     a3m_dir: Path | None,
@@ -1074,7 +1134,9 @@ def from_fasta(
 
         # a3m matching by chain letter
         if a3m_dir is not None and entity in (
-            EntityType.PROTEIN, EntityType.RNA, EntityType.DNA,
+            EntityType.PROTEIN,
+            EntityType.RNA,
+            EntityType.DNA,
         ):
             pattern = a3m_pattern.format(letter=letter)
             matches = sorted(a3m_dir.glob(pattern))

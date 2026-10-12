@@ -132,9 +132,18 @@ def get_shortest_distances(
     max_distance: float = 22.0,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Compute residue-level shortest distances from atom positions."""
-    _key = (id(atom_pos), id(atom_pos_mask), id(atom_to_token_idx_map),
-            int(token_num), float(min_distance), float(max_distance))
-    if _SHORTEST_DIST_CACHE.get("k") == _key and _SHORTEST_DIST_CACHE.get("ap") is atom_pos:
+    _key = (
+        id(atom_pos),
+        id(atom_pos_mask),
+        id(atom_to_token_idx_map),
+        int(token_num),
+        float(min_distance),
+        float(max_distance),
+    )
+    if (
+        _SHORTEST_DIST_CACHE.get("k") == _key
+        and _SHORTEST_DIST_CACHE.get("ap") is atom_pos
+    ):
         return _SHORTEST_DIST_CACHE["v"]
     device = atom_pos.device
     B, L, _ = atom_pos.shape
@@ -240,8 +249,13 @@ def get_representative_distances(
     """
     device = atom_pos.device
     B, L, _ = atom_pos.shape
-    rep_valid = (atom_pos_mask & rep_atom_mask & torch.isfinite(atom_pos).all(dim=-1)
-                 & (atom_to_token_idx_map >= 0) & (atom_to_token_idx_map < token_num))
+    rep_valid = (
+        atom_pos_mask
+        & rep_atom_mask
+        & torch.isfinite(atom_pos).all(dim=-1)
+        & (atom_to_token_idx_map >= 0)
+        & (atom_to_token_idx_map < token_num)
+    )
     tok_idx = atom_to_token_idx_map.clamp(0, token_num - 1)  # (B, L)
 
     # Lowest-index valid representative atom per token (capture-safe: amin over atom ids,
@@ -251,10 +265,14 @@ def get_representative_distances(
     rep_idx = torch.full((B, token_num), L, dtype=cand.dtype, device=device)
     rep_idx.scatter_reduce_(1, tok_idx, cand, reduce="amin", include_self=True)  # (B, R)
     tok_valid = rep_idx < L  # (B, R): token has >=1 representative atom
-    gather_idx = rep_idx.clamp(max=L - 1)  # safe index for rep-less tokens (masked out below)
+    gather_idx = rep_idx.clamp(
+        max=L - 1
+    )  # safe index for rep-less tokens (masked out below)
 
     rep_pos = torch.gather(
-        atom_pos, 1, gather_idx.unsqueeze(-1).expand(B, token_num, 3),
+        atom_pos,
+        1,
+        gather_idx.unsqueeze(-1).expand(B, token_num, 3),
     )  # (B, R, 3)
 
     diff = rep_pos[:, :, None, :] - rep_pos[:, None, :, :]  # (B, R, R, 3)

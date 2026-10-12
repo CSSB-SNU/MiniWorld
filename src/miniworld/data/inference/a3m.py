@@ -185,8 +185,10 @@ def _parse_sequences(
     aligned_sequences = np.stack(sequences).astype(np.int32)
     deletions_arr = np.stack(deletions).astype(np.uint8)
     deletion_mean = (
-        2 * np.arctan(deletions_arr.astype(np.float32) / 3) / np.pi
-    ).mean(axis=0).astype(np.float32)
+        (2 * np.arctan(deletions_arr.astype(np.float32) / 3) / np.pi)
+        .mean(axis=0)
+        .astype(np.float32)
+    )
     profile = np.eye(max_idx + 1, dtype=np.int32)[aligned_sequences]
     profile = profile.mean(axis=0).astype(np.float32)
 

@@ -249,7 +249,9 @@ class BaseClient(ABC):
                 self.call_callbacks("on_train_batch_start", batch, batch_idx)
                 accumed_steps = (batch_idx + 1) % self.gradient_accumulation_steps
                 is_accumulating = accumed_steps != 0
-                with self.fabric.no_backward_sync(self.model, enabled=is_accumulating):  # ty: ignore[invalid-argument-type]
+                with self.fabric.no_backward_sync(
+                    self.model, enabled=is_accumulating
+                ):  # ty: ignore[invalid-argument-type]
                     result = self.training_step(batch)
                 self.call_callbacks("on_train_batch_end", batch, batch_idx, result)
 

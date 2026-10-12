@@ -98,9 +98,7 @@ class ModelEMA(Callback):
             self._replace_ema_params(client)
 
     @override
-    def on_save_checkpoint(
-        self, client: BaseClient, state_dict: dict[str, Any]
-    ) -> None:
+    def on_save_checkpoint(self, client: BaseClient, state_dict: dict[str, Any]) -> None:
         state_dict["ema_state_dict"] = self.ema_params
         if self.enable_ema:
             self._restore_original_params(client)
@@ -112,9 +110,7 @@ class ModelEMA(Callback):
             self._replace_ema_params(client)
 
     @override
-    def on_load_state_dict(
-        self, client: BaseClient, state_dict: dict[str, Any]
-    ) -> None:
+    def on_load_state_dict(self, client: BaseClient, state_dict: dict[str, Any]) -> None:
         ema_params = state_dict.get("ema_state_dict")
         if ema_params is None:
             client.logger.warning(
@@ -139,7 +135,8 @@ class ModelEMA(Callback):
         if dropped:
             client.logger.warning(
                 "[ema] dropping %d EMA key(s) absent from the model (e.g. %s)",
-                len(dropped), dropped[0],
+                len(dropped),
+                dropped[0],
             )
         # Promote to FP32 master (old checkpoints may hold BF16 EMA tensors).
         self._ema_params = {
@@ -164,7 +161,9 @@ class ModelEMA(Callback):
             self._ema_params = {
                 k: sd[k].detach().clone().float() for k in trainable_keys
             }
-        client.logger.info("EMA initialized (%d params, fp32 master)", len(self._ema_params))
+        client.logger.info(
+            "EMA initialized (%d params, fp32 master)", len(self._ema_params)
+        )
 
     def _update_ema(self, client: BaseClient) -> None:
         if client.is_global_zero:
@@ -190,7 +189,9 @@ class ModelEMA(Callback):
                 if self._dbg_step % 500 == 0 and self.ema_params:
                     drift /= len(self.ema_params)
                     client.logger.info(
-                        "[ema] step %d mean|ema-live|=%.5f", self._dbg_step, drift,
+                        "[ema] step %d mean|ema-live|=%.5f",
+                        self._dbg_step,
+                        drift,
                     )
                 self._dbg_step += 1
         if client.fabric.world_size > 1:

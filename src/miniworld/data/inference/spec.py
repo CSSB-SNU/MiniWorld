@@ -450,7 +450,10 @@ class InferenceSpec(BaseModel):
             with Path(v).open("r") as f:
                 return yaml.safe_load(f) or {}
         return v
-    tokenization: Path | None = None  # per-residue resolution JSON; None -> all residue-level
+
+    tokenization: Path | None = (
+        None  # per-residue resolution JSON; None -> all residue-level
+    )
     n_trunk_samples: int = Field(default=1, ge=1)
     n_diffusion_samples: int = Field(default=1, ge=1)
     diffusion_batch_size: int = Field(default=1, ge=1)

@@ -102,4 +102,3 @@ class DiffusionScheduler(ABC):
     ) -> Float[torch.Tensor, ...]:
         """Generate a schedule of scaling factor derivatives for sampling."""
         # t -> dscale(t)/dt
-

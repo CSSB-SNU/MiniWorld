@@ -20,8 +20,11 @@ A, L = 4, 256
 
 def _dit(dtype):
     torch.manual_seed(0)
-    dit = BiasOnlyTokenDiT(BiasOnlyTokenDiT.Config(
-        n_block=2, implementation=ImplementationType.MINIWORLD_ENGINE)).cuda()
+    dit = BiasOnlyTokenDiT(
+        BiasOnlyTokenDiT.Config(
+            n_block=2, implementation=ImplementationType.MINIWORLD_ENGINE
+        )
+    ).cuda()
     with torch.no_grad():  # to_out / to_bias start at zero: randomise everything
         for p in dit.parameters():
             p.normal_(std=p.shape[-1] ** -0.5 if p.dim() > 1 else 0.1)
@@ -34,7 +37,7 @@ def _inputs(dtype):
     cond = torch.randn(A, 1, L, 384, device="cuda", generator=g)
     pair = torch.randn(1, L, L, 128, device="cuda", generator=g)
     mask = torch.ones(1, L, dtype=torch.bool, device="cuda")
-    mask[:, L - 37:] = False
+    mask[:, L - 37 :] = False
     return [t.to(dtype).requires_grad_() for t in (single, cond, pair)], mask
 
 
@@ -42,16 +45,24 @@ def _train(dtype):
     dit = _dit(dtype)
     (single, cond, pair), mask = _inputs(dtype)
     out = dit(single, cond, pair, mask)
-    w = torch.randn(out.shape, device="cuda", generator=torch.Generator(device="cuda").manual_seed(2))
+    w = torch.randn(
+        out.shape, device="cuda", generator=torch.Generator(device="cuda").manual_seed(2)
+    )
     (out.float() * w).sum().backward()
-    res = {"out": out.detach().float(), "single": single.grad.float(), "cond": cond.grad.float(),
-           "pair": pair.grad.float()}
+    res = {
+        "out": out.detach().float(),
+        "single": single.grad.float(),
+        "cond": cond.grad.float(),
+        "pair": pair.grad.float(),
+    }
     res.update({n: p.grad.float() for n, p in dit.named_parameters()})
     return res
 
 
 def _rel(x, ref):
-    return float((x.double() - ref.double()).norm() / ref.double().norm().clamp_min(1e-30))
+    return float(
+        (x.double() - ref.double()).norm() / ref.double().norm().clamp_min(1e-30)
+    )
 
 
 @pytest.fixture
@@ -59,7 +70,11 @@ def calls(monkeypatch):
     seen = []
     for mod, name in ((bias_only_dit_train, "block"), (bias_only_dit, "update")):
         orig = getattr(mod, name)
-        monkeypatch.setattr(mod, name, (lambda o, n: lambda *a, **k: seen.append(n) or o(*a, **k))(orig, name))
+        monkeypatch.setattr(
+            mod,
+            name,
+            (lambda o, n: lambda *a, **k: seen.append(n) or o(*a, **k))(orig, name),
+        )
     return seen
 
 
@@ -79,7 +94,11 @@ def test_training_takes_the_fused_path(calls, monkeypatch):
 
 def test_inference_takes_the_fused_path(calls, monkeypatch):
     outs = {}
-    for key, dtype in (("truth", torch.float32), ("fused", torch.bfloat16), ("module", torch.bfloat16)):
+    for key, dtype in (
+        ("truth", torch.float32),
+        ("fused", torch.bfloat16),
+        ("module", torch.bfloat16),
+    ):
         if key == "module":
             monkeypatch.setenv("MINIWORLD_BIAS_ONLY_DIT", "0")
         dit = _dit(dtype)

@@ -1,4 +1,5 @@
 """Shared test setup."""
+
 import pytest
 import torch
 

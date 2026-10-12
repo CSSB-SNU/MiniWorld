@@ -33,8 +33,11 @@ PAPER = FB / "meta" / "paper_scores" / "Supplementary_Table_3.csv"
 
 # metric -> (higher is better?, success predicate or None)
 DOCKQ_CATS = {
-    "interface_antibody_antigen", "interface_protein_protein",
-    "interface_protein_peptide", "interface_protein_dna", "interface_protein_rna",
+    "interface_antibody_antigen",
+    "interface_protein_protein",
+    "interface_protein_peptide",
+    "interface_protein_dna",
+    "interface_protein_rna",
 }
 MONOMER_CATS = {"monomer_protein", "monomer_dna", "monomer_rna"}
 
@@ -47,7 +50,9 @@ def load_paper() -> dict[str, tuple[list[str], list[dict]]]:
         name = rows[idx][0]
         hdr = rows[idx + 1]
         end = starts[n + 1] if n + 1 < len(starts) else len(rows)
-        recs = [dict(zip(hdr, r, strict=False)) for r in rows[idx + 2 : end] if r and r[0]]
+        recs = [
+            dict(zip(hdr, r, strict=False)) for r in rows[idx + 2 : end] if r and r[0]
+        ]
         out[name] = (hdr, recs)
     return out
 
@@ -63,14 +68,22 @@ def key_of(row: dict, cat: str) -> tuple:
     pid = row["pdb_id"]
     if cat in MONOMER_CATS:
         return (pid,)
-    c1 = row.get("interface_chain_id_1") or row.get("native_chain_id_1") \
+    c1 = (
+        row.get("interface_chain_id_1")
+        or row.get("native_chain_id_1")
         or row.get("interface_Chai-1n_id_1")
-    c2 = row.get("interface_chain_id_2") or row.get("native_chain_id_2") \
+    )
+    c2 = (
+        row.get("interface_chain_id_2")
+        or row.get("native_chain_id_2")
         or row.get("interface_Chai-1n_id_2")
+    )
     return (pid, c1, c2)
 
 
-def reduce_ours(rows: list[dict], cat: str) -> tuple[dict[tuple, dict], dict[tuple, dict]]:
+def reduce_ours(
+    rows: list[dict], cat: str
+) -> tuple[dict[tuple, dict], dict[tuple, dict]]:
     """One row per interface: an arbitrary sample, and the best sample."""
     by_key: dict[tuple, list[dict]] = defaultdict(list)
     for r in rows:
@@ -78,8 +91,13 @@ def reduce_ours(rows: list[dict], cat: str) -> tuple[dict[tuple, dict], dict[tup
     first, best = {}, {}
     # "best" is selected by the same metric task_score_summary selects on:
     # DockQ (max) for interfaces, RMSD (min) for ligands, lDDT (max) for monomers.
-    sel, hi = ("dockq_score", True) if cat in DOCKQ_CATS else \
-              ("rmsd", False) if cat == "interface_protein_ligand" else ("lddt", True)
+    sel, hi = (
+        ("dockq_score", True)
+        if cat in DOCKQ_CATS
+        else ("rmsd", False)
+        if cat == "interface_protein_ligand"
+        else ("lddt", True)
+    )
     for k, rs in by_key.items():
         first[k] = rs[0]
         scored = [r for r in rs if fnum(r.get(sel)) is not None]
@@ -102,24 +120,38 @@ def category_metrics(rows: list[dict], cat: str) -> dict[str, float | None]:
         d = [x for x in d if x is not None]
         return {
             "DockQ success %": 100 * sum(x >= 0.23 for x in d) / len(d) if d else None,
-            "iRMSD": avg("irmsd"), "LRMSD": avg("lrmsd"), "lDDT": avg("lddt"),
+            "iRMSD": avg("irmsd"),
+            "LRMSD": avg("lrmsd"),
+            "lDDT": avg("lddt"),
         }
     if cat == "interface_protein_ligand":
         pairs = [(fnum(r.get("rmsd")), fnum(r.get("lddt-pli"))) for r in rows]
         pairs = [(a, b) for a, b in pairs if a is not None and b is not None]
         return {
-            "RMSD<2 & lDDT-PLI>0.8 %":
-                100 * sum(a < 2.0 and b > 0.8 for a, b in pairs) / len(pairs) if pairs else None,
-            "lDDT-LP": avg("lddt-lp"), "lDDT-PLI": avg("lddt-pli"),
+            "RMSD<2 & lDDT-PLI>0.8 %": 100
+            * sum(a < 2.0 and b > 0.8 for a, b in pairs)
+            / len(pairs)
+            if pairs
+            else None,
+            "lDDT-LP": avg("lddt-lp"),
+            "lDDT-PLI": avg("lddt-pli"),
         }
-    return {"GDT-TS": avg("gdt-ts"), "TM-score": avg("tm-score"),
-            "RMSD": avg("rmsd"), "lDDT": avg("lddt")}
+    return {
+        "GDT-TS": avg("gdt-ts"),
+        "TM-score": avg("tm-score"),
+        "RMSD": avg("rmsd"),
+        "lDDT": avg("lddt"),
+    }
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--eval-dir", type=Path, required=True,
-                    help="<eval-dir>/<name>/raw/*.csv from foldbench_evaluate.py")
+    ap.add_argument(
+        "--eval-dir",
+        type=Path,
+        required=True,
+        help="<eval-dir>/<name>/raw/*.csv from foldbench_evaluate.py",
+    )
     ap.add_argument("--name", required=True)
     ap.add_argument("--out", type=Path, default=None)
     args = ap.parse_args()
@@ -133,8 +165,14 @@ def main() -> None:
         dockq_csv = raw_dir / f"{cat}_dockqv2.csv"
         # FoldBench reports DockQ for nucleic interfaces from DockQv2, not OST —
         # but lDDT is only in the OST csv, so merge the two rather than picking one.
-        src = dockq_csv if (cat in {"interface_protein_dna", "interface_protein_rna"}
-                            and dockq_csv.exists()) else ours_csv
+        src = (
+            dockq_csv
+            if (
+                cat in {"interface_protein_dna", "interface_protein_rna"}
+                and dockq_csv.exists()
+            )
+            else ours_csv
+        )
         if not src.exists():
             continue
         with src.open() as f:
@@ -169,8 +207,10 @@ def main() -> None:
         n_t = len({k[0] for k in keys})
         lines.append(f"\n{cat}  —  {len(keys)} interfaces over {n_t} targets")
         if cat in {"interface_protein_dna", "interface_protein_rna"} and src is ours_csv:
-            lines.append("    note: our DockQ is OST's, not DockQv2's — FoldBench reports "
-                         "DockQv2 here, so this column is not strictly comparable")
+            lines.append(
+                "    note: our DockQ is OST's, not DockQv2's — FoldBench reports "
+                "DockQv2 here, so this column is not strictly comparable"
+            )
         metrics = list(cols[f"ours@1"])
         head = "  " + "metric".ljust(26) + "".join(c.rjust(12) for c in cols)
         lines.append(head)
@@ -184,8 +224,10 @@ def main() -> None:
         # paper coverage warning: a method missing rows for some interfaces
         for model, rs in by_model.items():
             if len({key_of(r, cat) for r in rs}) != len(keys):
-                lines.append(f"    note: {model} covers "
-                             f"{len({key_of(r, cat) for r in rs})}/{len(keys)} interfaces")
+                lines.append(
+                    f"    note: {model} covers "
+                    f"{len({key_of(r, cat) for r in rs})}/{len(keys)} interfaces"
+                )
 
     text = "\n".join(lines)
     print(text)

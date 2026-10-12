@@ -83,9 +83,7 @@ class RoPESWAAttentionAF3(nn.Module):
         self.ada_ln_in = AdaptiveLayerNorm(
             d_single, d_cond, implementation=to_engine_impl(implementation)
         )
-        self.to_query = dense(
-            d_single, self.head_dim * n_head, bias=True, init="normal"
-        )
+        self.to_query = dense(d_single, self.head_dim * n_head, bias=True, init="normal")
         self.to_key = dense(d_single, self.head_dim * n_head, bias=False, init="normal")
         self.to_value = dense(
             d_single, self.head_dim * n_head, bias=False, init="normal"

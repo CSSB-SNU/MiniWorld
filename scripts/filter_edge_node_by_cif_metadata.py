@@ -96,7 +96,9 @@ def load_cif_metadata(metadata_path: Path) -> dict[str, CifMetadata]:
     metadata: dict[str, CifMetadata] = {}
     with metadata_path.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
-        require_columns(reader.fieldnames, METADATA_REQUIRED_COLUMNS, label=str(metadata_path))
+        require_columns(
+            reader.fieldnames, METADATA_REQUIRED_COLUMNS, label=str(metadata_path)
+        )
 
         for row in reader:
             cif_id = normalize_cif_id(row["cif_id"])
@@ -105,7 +107,9 @@ def load_cif_metadata(metadata_path: Path) -> dict[str, CifMetadata]:
                 raise click.ClickException(msg)
             metadata[cif_id] = CifMetadata(
                 cif_id=cif_id,
-                chain_num=parse_int(row.get("chain_num"), column="chain_num", row_name=cif_id),
+                chain_num=parse_int(
+                    row.get("chain_num"), column="chain_num", row_name=cif_id
+                ),
                 residue_num=parse_int(
                     row.get("residue_num"),
                     column="residue_num",
@@ -121,9 +125,8 @@ def metadata_passes_limits(
     max_residue_num: int | None,
     max_chain_num: int | None,
 ) -> bool:
-    return (
-        (max_residue_num is None or metadata.residue_num <= max_residue_num)
-        and (max_chain_num is None or metadata.chain_num <= max_chain_num)
+    return (max_residue_num is None or metadata.residue_num <= max_residue_num) and (
+        max_chain_num is None or metadata.chain_num <= max_chain_num
     )
 
 

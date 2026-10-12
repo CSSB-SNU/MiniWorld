@@ -10,6 +10,7 @@ has to be measured, not assumed.
 Re-injects the checkpoint's bias into every DiT block by wrapping `ln_pair`, and compares
 the full diffusion output against the same model without it.
 """
+
 from __future__ import annotations
 
 import sys
@@ -41,21 +42,31 @@ def main() -> None:
         cfg = Config.model_validate(compose(config_name=cfg_path.name))
 
     from miniworld.models.diffusion.model import DiffusionModel
+
     torch.manual_seed(0)
     model = DiffusionModel(cfg.model).cuda().eval()
 
-    ck = sorted(Path("runs/v1.0.1/phase2b/large_diffusion_L768")
-                .glob("*/*/checkpoints/last.pt"))[-1]
+    ck = sorted(
+        Path("runs/v1.0.1/phase2b/large_diffusion_L768").glob("*/*/checkpoints/last.pt")
+    )[-1]
     sd = torch.load(ck, map_location="cpu", weights_only=False)["model_state_dict"]
     model.load_state_dict(sd, strict=False)
-    biases = {k: v for k, v in sd.items()
-              if k.endswith("attention_pair_bias.ln_pair.bias")}
+    biases = {
+        k: v for k, v in sd.items() if k.endswith("attention_pair_bias.ln_pair.bias")
+    }
     print(f"ckpt: {ck}")
-    print(f"re-injecting {len(biases)} ln_pair biases, "
-          f"max|b| = {max(v.abs().max().item() for v in biases.values()):.3f}")
+    print(
+        f"re-injecting {len(biases)} ln_pair biases, "
+        f"max|b| = {max(v.abs().max().item() for v in biases.values()):.3f}"
+    )
 
     blocks = model.diffusion_module.diffusion_transformer.blocks
-    n_aug, n_tok, d_single, d_pair = 2, 256, cfg.model.shared.d_single_token, cfg.model.shared.d_pair
+    n_aug, n_tok, d_single, d_pair = (
+        2,
+        256,
+        cfg.model.shared.d_single_token,
+        cfg.model.shared.d_pair,
+    )
     d_cond = cfg.model.shared.d_single
     dev = "cuda"
     g = torch.Generator(device=dev).manual_seed(1234)
@@ -76,8 +87,10 @@ def main() -> None:
         diff = (a - b).abs()
         scale = b.abs().mean()
         rel = (diff.max() / scale).item()
-        print(f"{tag:<26} mean|x|={scale:>12.4f}  absdiff max={diff.max():.3e} "
-              f"mean={diff.mean():.3e}  reldiff max={rel:.3e}")
+        print(
+            f"{tag:<26} mean|x|={scale:>12.4f}  absdiff max={diff.max():.3e} "
+            f"mean={diff.mean():.3e}  reldiff max={rel:.3e}"
+        )
         return rel
 
     # (1) THE ALGEBRA. The removed bias b enters only as to_bias(ln(pair) + b), and
@@ -93,10 +106,14 @@ def main() -> None:
         ln = apb0.ln_pair(pair)
         d_bias = (apb0.to_bias(ln + b0) - apb0.to_bias(ln)).float()
     per_head_spread = (d_bias - d_bias.mean(dim=(1, 2), keepdim=True)).abs().max()
-    print(f"\n[algebra] to_bias shift: mean per head = "
-          f"{d_bias.mean(dim=(1, 2)).flatten()[:4].tolist()}")
-    print(f"[algebra] deviation from constant over (i,j): {per_head_spread:.3e}"
-          f"   -> {'CONSTANT (softmax-invariant)' if per_head_spread < 1e-1 else 'NOT CONSTANT'}")
+    print(
+        f"\n[algebra] to_bias shift: mean per head = "
+        f"{d_bias.mean(dim=(1, 2)).flatten()[:4].tolist()}"
+    )
+    print(
+        f"[algebra] deviation from constant over (i,j): {per_head_spread:.3e}"
+        f"   -> {'CONSTANT (softmax-invariant)' if per_head_spread < 1e-1 else 'NOT CONSTANT'}"
+    )
 
     # (2) ONE block: the honest per-block effect, free of depth amplification.
     out_new1 = run(1)
@@ -112,7 +129,8 @@ def main() -> None:
             continue
         key = f"diffusion_module.diffusion_transformer.blocks.{i}.attention_pair_bias.ln_pair.bias"
         blk.attention_pair_bias.ln_pair = _LNPlusBias(
-            blk.attention_pair_bias.ln_pair, biases[key].to(dev))
+            blk.attention_pair_bias.ln_pair, biases[key].to(dev)
+        )
     out_old = run()
     for i, blk in enumerate(blocks):
         blk.attention_pair_bias.ln_pair = blk.attention_pair_bias.ln_pair.ln
@@ -130,9 +148,11 @@ def main() -> None:
     print(f"\n1-block rel diff      : {rel1:.3e}")
     print(f"24-block rel diff     : {rel_all:.3e}")
     print(f"24-block 1e-3 control : {rel_eps:.3e}")
-    verdict = ("NO-OP (exact invariance; depth amplifies bf16 rounding only)"
-               if per_head_spread < 1e-1 and rel1 < 1e-2
-               else "CHANGES OUTPUT")
+    verdict = (
+        "NO-OP (exact invariance; depth amplifies bf16 rounding only)"
+        if per_head_spread < 1e-1 and rel1 < 1e-2
+        else "CHANGES OUTPUT"
+    )
     print(f"\nVERDICT: {verdict}")
 
 

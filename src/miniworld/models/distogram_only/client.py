@@ -21,7 +21,12 @@ from miniworld.loss.auxiliary import (
 )
 from miniworld.models.distogram_only.model import Model
 from miniworld.models.distogram_only.model_mini_swa import MiniSWAModel
-from miniworld.training.engine_backend import EngineBackend, configure_engine_backend, configure_fused_msa_train, align_engine_optimizer_state
+from miniworld.training.engine_backend import (
+    EngineBackend,
+    configure_engine_backend,
+    configure_fused_msa_train,
+    align_engine_optimizer_state,
+)
 from miniworld.training.precision import Precision, apply_precision, model_autocast
 
 
@@ -41,6 +46,7 @@ def _model_variant_discriminator(value: object) -> str:
         has_atom_swa = False
     return "mini_swa" if has_atom_swa else "model"
 
+
 if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
@@ -49,8 +55,12 @@ if TYPE_CHECKING:
 def _pair_weights_enabled(lc) -> bool:
     """True when any chemistry weight of the distogram CE differs from 1 (``lc`` is a ``Client.LossConfig``)."""
     # getattr: duck-typed loss configs without the chemistry fields (older tests and stubs) mean "off"
-    return bool(getattr(lc, "distogram_alpha_dna", 0.0) or getattr(lc, "distogram_alpha_rna", 0.0)
-                or getattr(lc, "distogram_alpha_ligand", 0.0) or getattr(lc, "distogram_ab_ag_weight", 1.0) != 1.0)
+    return bool(
+        getattr(lc, "distogram_alpha_dna", 0.0)
+        or getattr(lc, "distogram_alpha_rna", 0.0)
+        or getattr(lc, "distogram_alpha_ligand", 0.0)
+        or getattr(lc, "distogram_ab_ag_weight", 1.0) != 1.0
+    )
 
 
 def _pair_weight(lc, batch: Batch) -> torch.Tensor | None:
@@ -58,8 +68,11 @@ def _pair_weight(lc, batch: Batch) -> torch.Tensor | None:
     if not _pair_weights_enabled(lc):
         return None
     return distogram_pair_weight(
-        batch.chain.entity_type, batch.scheme.token_asym_id,
-        alpha_dna=lc.distogram_alpha_dna, alpha_rna=lc.distogram_alpha_rna, alpha_ligand=lc.distogram_alpha_ligand,
+        batch.chain.entity_type,
+        batch.scheme.token_asym_id,
+        alpha_dna=lc.distogram_alpha_dna,
+        alpha_rna=lc.distogram_alpha_rna,
+        alpha_ligand=lc.distogram_alpha_ligand,
         ab_ag_weight=lc.distogram_ab_ag_weight,
     )
 
@@ -98,7 +111,9 @@ class Client(BaseClient):
         forbid_triton: bool = False
         # Trainer dispatch (was MW_FORCE_CUDAGRAPH / MW_FORCE_FABRIC): "auto" picks
         # CUDA-graph for fixed recycle (n_recycle_max==1) else Fabric; force either.
-        force_trainer: Literal["auto", "cudagraph", "random_cudagraph", "fabric"] = "auto"
+        force_trainer: Literal["auto", "cudagraph", "random_cudagraph", "fabric"] = (
+            "auto"
+        )
         # torch.compile mode for the Fabric path (was MW_COMPILE_MODE); None = default.
         compile_mode: str | None = None
         # DDP find_unused_parameters (was MW_DDP_FIND_UNUSED); recycle skips some params
@@ -129,7 +144,9 @@ class Client(BaseClient):
         # CB/pseudo-beta distogram target (rep-atom mask); False keeps the legacy
         # shortest-inter-atom-distance target. Was MW_DISTOGRAM_CB.
         distogram_cb_target: bool = False
-        distogram_interchain_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+        distogram_interchain_weight: float = Field(
+            default=1.0, ge=0, allow_inf_nan=False
+        )
         # Per token-pair CE multiplier by chemistry (see miniworld.loss.auxiliary.distogram_pair_weight): AF3 Eq. 4's
         # w = 1 + is_dna a_dna + is_rna a_rna + is_ligand a_ligand with "is_x" = either token of the pair is x, times
         # ``distogram_ab_ag_weight`` for antibody-antigen pairs. The alphas default to the AF3 values 5 / 5 / 10 (set them to 0 for the
@@ -150,7 +167,8 @@ class Client(BaseClient):
         """
 
         model: Annotated[
-            Annotated[Model.Config, Tag("model")] | Annotated[MiniSWAModel.Config, Tag("mini_swa")],
+            Annotated[Model.Config, Tag("model")]
+            | Annotated[MiniSWAModel.Config, Tag("mini_swa")],
             Discriminator(_model_variant_discriminator),
         ]
         train: Client.TrainConfig
@@ -163,9 +181,13 @@ class Client(BaseClient):
         self.config = config
         self.set_seed(config.train.seed)
         if isinstance(config.model, MiniSWAModel.Config):
-            self.register_model(apply_precision(MiniSWAModel(config.model), config.train.precision))
+            self.register_model(
+                apply_precision(MiniSWAModel(config.model), config.train.precision)
+            )
         else:
-            self.register_model(apply_precision(Model(config.model), config.train.precision))
+            self.register_model(
+                apply_precision(Model(config.model), config.train.precision)
+            )
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
@@ -217,10 +239,7 @@ class Client(BaseClient):
         if incompatible_keys:
             limit = 20
             lines.extend(
-                (
-                    f"  - {key} "
-                    f"(checkpoint={checkpoint_shape}, current={current_shape})"
-                )
+                (f"  - {key} (checkpoint={checkpoint_shape}, current={current_shape})")
                 for key, checkpoint_shape, current_shape in incompatible_keys[:limit]
             )
             if len(incompatible_keys) > limit:
@@ -376,20 +395,37 @@ class Client(BaseClient):
             if not self.config.loss.distogram_cb_target:
                 raise ValueError("Distogram diffusion requires the pseudo-beta target")
             if _pair_weights_enabled(self.config.loss):
-                if self.config.loss.model_fields_set & {"distogram_alpha_dna", "distogram_alpha_rna", "distogram_alpha_ligand", "distogram_ab_ag_weight"}:
-                    raise ValueError("The chemistry pair weights (distogram_alpha_*, distogram_ab_ag_weight) are not wired into distogram diffusion")
-                warnings.warn("distogram diffusion does not apply the chemistry pair weights; the AF3 defaults of distogram_alpha_* are ignored", stacklevel=2)
-            with model_autocast(self.model):    # the EDM loss inside is fp32 elementwise math either way
+                if self.config.loss.model_fields_set & {
+                    "distogram_alpha_dna",
+                    "distogram_alpha_rna",
+                    "distogram_alpha_ligand",
+                    "distogram_ab_ag_weight",
+                }:
+                    raise ValueError(
+                        "The chemistry pair weights (distogram_alpha_*, distogram_ab_ag_weight) are not wired into distogram diffusion"
+                    )
+                warnings.warn(
+                    "distogram diffusion does not apply the chemistry pair weights; the AF3 defaults of distogram_alpha_* are ignored",
+                    stacklevel=2,
+                )
+            with model_autocast(
+                self.model
+            ):  # the EDM loss inside is fp32 elementwise math either way
                 diff_loss, stats = self.model(
-                    msa=batch.msa, reference=batch.reference, scheme=batch.scheme,
-                    sequence=batch.sequence, structure=batch.structure, template=batch.template,
+                    msa=batch.msa,
+                    reference=batch.reference,
+                    scheme=batch.scheme,
+                    sequence=batch.sequence,
+                    structure=batch.structure,
+                    template=batch.template,
                     interchain_weight=self.config.loss.distogram_interchain_weight,
                 )
             loss = self.config.loss.distogram_loss * diff_loss
             return loss, {
                 **{key: value.item() for key, value in stats.items()},
                 "distogram_loss": diff_loss.item(),
-                "total_loss": loss.item(), "main_loss": loss.item(),
+                "total_loss": loss.item(),
+                "main_loss": loss.item(),
             }
         with model_autocast(self.model):
             distogram_logit = self.model.forward(
@@ -405,7 +441,9 @@ class Client(BaseClient):
         # keeps the legacy shortest-inter-atom-distance target.
         _use_cb = self.config.loss.distogram_cb_target
         if _use_cb and batch.structure.atom_is_rep is None:
-            raise ValueError("Representative-atom distogram requires atom_is_rep features.")
+            raise ValueError(
+                "Representative-atom distogram requires atom_is_rep features."
+            )
         distogram_loss = cal_atom_distogram_loss(
             distogram_logit,
             batch.structure.atom_pos,
@@ -426,11 +464,22 @@ class Client(BaseClient):
         }
         if getattr(self.config.loss, "distogram_class_metrics", False):
             ce = distogram_class_ce(
-                distogram_logit.detach(), batch.structure.atom_pos, batch.structure.atom_pos_mask,
-                batch.scheme.atom_to_token_idx_map, batch.chain.entity_type, batch.scheme.token_asym_id,
+                distogram_logit.detach(),
+                batch.structure.atom_pos,
+                batch.structure.atom_pos_mask,
+                batch.scheme.atom_to_token_idx_map,
+                batch.chain.entity_type,
+                batch.scheme.token_asym_id,
                 rep_atom_mask=batch.structure.atom_is_rep if _use_cb else None,
             )
-            stats.update({f"distogram_ce_{k}" if not k.startswith("frac_") else f"distogram_{k}": v for k, v in ce.items()})
+            stats.update(
+                {
+                    f"distogram_ce_{k}"
+                    if not k.startswith("frac_")
+                    else f"distogram_{k}": v
+                    for k, v in ce.items()
+                }
+            )
         return loss, stats
 
     def training_step(self, batch: Batch) -> dict[str, float]:

@@ -61,8 +61,11 @@ def summarize(c):
     prec = g("contact_hit") / max(g("contact_pred"), 1)
     rec = g("contact_hit") / max(g("contact_true"), 1)
     return {
-        "pairs": g("pairs"), "contact_pairs_true": g("contact_true"), "contact_pairs_pred": g("contact_pred"),
-        "contact8A_precision": round(prec, 4), "contact8A_recall": round(rec, 4),
+        "pairs": g("pairs"),
+        "contact_pairs_true": g("contact_true"),
+        "contact_pairs_pred": g("contact_pred"),
+        "contact8A_precision": round(prec, 4),
+        "contact8A_recall": round(rec, 4),
         "contact8A_f1": round(2 * prec * rec / max(prec + rec, 1e-9), 4),
         "near_mean_abs_err_A": round(0.25 * g("near_abs_bin") / max(g("near"), 1), 3),
         "near_within_1A": round(g("near_within_1A") / max(g("near"), 1), 4),
@@ -77,11 +80,25 @@ def main():
     ap.add_argument("--weights", choices=["ema", "raw"], default="ema")
     ap.add_argument("--samples", type=int, default=16)
     ap.add_argument("--steps", type=int, default=None)
-    ap.add_argument("--seeds", type=int, default=1, help="generations per sample (>1 adds the diversity analysis)")
+    ap.add_argument(
+        "--seeds",
+        type=int,
+        default=1,
+        help="generations per sample (>1 adds the diversity analysis)",
+    )
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--require-interface", type=int, default=0,
-                    help="skip samples with fewer than this many true interface contacts (still counts toward --samples kept)")
-    ap.add_argument("--max-load", type=int, default=400, help="samples to draw while looking for --samples kept ones")
+    ap.add_argument(
+        "--require-interface",
+        type=int,
+        default=0,
+        help="skip samples with fewer than this many true interface contacts (still counts toward --samples kept)",
+    )
+    ap.add_argument(
+        "--max-load",
+        type=int,
+        default=400,
+        help="samples to draw while looking for --samples kept ones",
+    )
     args = ap.parse_args()
 
     root = Path(__file__).resolve().parents[2]
@@ -89,23 +106,43 @@ def main():
         cfg = Config.model_validate(compose(config_name=args.config))
     state = torch.load(args.ckpt, map_location="cpu", weights_only=False)
     model = MiniSWAModel(cfg.model)
-    weights = state["ema_state_dict"] if args.weights == "ema" else state["model_state_dict"]
+    weights = (
+        state["ema_state_dict"] if args.weights == "ema" else state["model_state_dict"]
+    )
     model.load_state_dict({**state["model_state_dict"], **weights}, strict=True)
     device = torch.device("cuda")
     model = model.to(device).eval()
     nb = cfg.model.shared.n_distogram_bins
-    print(f"loaded {args.weights} weights of epoch {state['epoch']} step {state['global_step']}", flush=True)
+    print(
+        f"loaded {args.weights} weights of epoch {state['epoch']} step {state['global_step']}",
+        flush=True,
+    )
 
-    ds = BioMolData(BioMolData.BioMolConfig(
-        crop_config=cfg.data.crop, msa_config=cfg.data.msa, DB_config=cfg.data.train_db,
-        sampler_config=cfg.data.sampler, tokenizer_config=cfg.data.tokenizer,
-    ))
+    ds = BioMolData(
+        BioMolData.BioMolConfig(
+            crop_config=cfg.data.crop,
+            msa_config=cfg.data.msa,
+            DB_config=cfg.data.train_db,
+            sampler_config=cfg.data.sampler,
+            tokenizer_config=cfg.data.tokenizer,
+        )
+    )
     train = cfg.train
     loader = ds.create_ddp_dataloader(
-        world_size=1, rank=0, seed=args.seed, drop_last=True, batch_size=1, num_workers=4, prefetch_factor=2,
-        num_samples_per_rank=args.max_load if args.require_interface else args.samples, persistent_workers=False, shuffle=True,
-        bucket_msa_multiple=train.bucket_msa_multiple, bucket_token_multiple=train.bucket_token_multiple,
-        bucket_atom_multiple=train.bucket_atom_multiple, bucket_template_multiple=1,
+        world_size=1,
+        rank=0,
+        seed=args.seed,
+        drop_last=True,
+        batch_size=1,
+        num_workers=4,
+        prefetch_factor=2,
+        num_samples_per_rank=args.max_load if args.require_interface else args.samples,
+        persistent_workers=False,
+        shuffle=True,
+        bucket_msa_multiple=train.bucket_msa_multiple,
+        bucket_token_multiple=train.bucket_token_multiple,
+        bucket_atom_multiple=train.bucket_atom_multiple,
+        bucket_template_multiple=1,
     )
     loader.sampler.set_epoch(0)
     ds.set_epoch(0)
@@ -119,9 +156,12 @@ def main():
             break
         batch = batch.to(device=device)
         target, pair_mask = atom_distogram_target(
-            atom_pos=batch.structure.atom_pos, atom_pos_mask=batch.structure.atom_pos_mask,
+            atom_pos=batch.structure.atom_pos,
+            atom_pos_mask=batch.structure.atom_pos_mask,
             atom_to_token_idx_map=batch.scheme.atom_to_token_idx_map,
-            num_bins=nb, token_num=batch.structure.token_mask.shape[1], rep_atom_mask=batch.structure.atom_is_rep,
+            num_bins=nb,
+            token_num=batch.structure.token_mask.shape[1],
+            rep_atom_mask=batch.structure.atom_is_rep,
         )
         tm = batch.structure.token_mask
         asym = batch.scheme.token_asym_id
@@ -129,16 +169,26 @@ def main():
         valid &= ~torch.eye(tm.shape[1], device=device, dtype=torch.bool)
         interface = valid & (asym[:, :, None] != asym[:, None, :])
         masks = {"all": valid, "interface": interface, "intra_chain": valid & ~interface}
-        if args.require_interface and int((interface & (target <= CONTACT_BIN)).sum()) < args.require_interface:
+        if (
+            args.require_interface
+            and int((interface & (target <= CONTACT_BIN)).sum()) < args.require_interface
+        ):
             continue
         preds = []
         for s in range(args.seeds):
             torch.manual_seed(1000 * args.seed + 17 * i + s)
             with torch.no_grad():
-                preds.append(model.sample_distogram(
-                    batch.msa, batch.reference, batch.scheme, batch.sequence, batch.structure, batch.template,
-                    num_steps=args.steps,
-                ))
+                preds.append(
+                    model.sample_distogram(
+                        batch.msa,
+                        batch.reference,
+                        batch.scheme,
+                        batch.sequence,
+                        batch.structure,
+                        batch.template,
+                        num_steps=args.steps,
+                    )
+                )
         for p in preds:
             for name, m in masks.items():
                 accumulate(acc[name], p, target, m, nb)
@@ -164,34 +214,53 @@ def main():
                 m = masks[name]
                 if not m.any():
                     continue
-                for p, q, ap_, aq in ((preds[x], preds[y], a_all[x], a_all[y])
-                                      for x, y in itertools.combinations(range(args.seeds), 2)):
+                for p, q, ap_, aq in (
+                    (preds[x], preds[y], a_all[x], a_all[y])
+                    for x, y in itertools.combinations(range(args.seeds), 2)
+                ):
                     both_near = m & (p < nb - 1) & (q < nb - 1)
                     pc, qc = m & (p <= CONTACT_BIN), m & (q <= CONTACT_BIN)
                     div[name].add("pairs", int(m.sum()))
                     div[name].add("bin_differs", int(((p != q) & m).sum()))
                     div[name].add("both_near", int(both_near.sum()))
-                    div[name].add("abs_diff_A_near", float((ap_ - aq).abs()[both_near].sum()))
+                    div[name].add(
+                        "abs_diff_A_near", float((ap_ - aq).abs()[both_near].sum())
+                    )
                     div[name].add("contact_inter", int((pc & qc).sum()))
                     div[name].add("contact_union", int((pc | qc).sum()))
-        print(f"sample {i}: tokens={int(tm.sum())} chains={n_chains[-1]} interface_pairs={int(interface.sum())} "
-              f"true_interface_contacts={int((interface & (target <= CONTACT_BIN)).sum())}", flush=True)
+        print(
+            f"sample {i}: tokens={int(tm.sum())} chains={n_chains[-1]} interface_pairs={int(interface.sum())} "
+            f"true_interface_contacts={int((interface & (target <= CONTACT_BIN)).sum())}",
+            flush=True,
+        )
 
-    out = {"weights": args.weights, "epoch": state["epoch"],
-           "steps": args.steps or cfg.model.trunk.diffusion.num_sampling_steps,
-           "samples": n_samples, "samples_with_interface": with_interface, "generations_per_sample": args.seeds,
-           "accuracy": {k: summarize(v) for k, v in acc.items()}}
+    out = {
+        "weights": args.weights,
+        "epoch": state["epoch"],
+        "steps": args.steps or cfg.model.trunk.diffusion.num_sampling_steps,
+        "samples": n_samples,
+        "samples_with_interface": with_interface,
+        "generations_per_sample": args.seeds,
+        "accuracy": {k: summarize(v) for k, v in acc.items()},
+    }
     if args.seeds > 1:
         out["diversity_across_seeds_of_one_sample"] = {
             k: {
                 "pairs_compared": v.get("pairs", 0),
-                "fraction_of_pairs_with_different_bin": round(v.get("bin_differs", 0) / max(v.get("pairs", 1), 1), 4),
+                "fraction_of_pairs_with_different_bin": round(
+                    v.get("bin_differs", 0) / max(v.get("pairs", 1), 1), 4
+                ),
                 "mean_abs_distance_diff_A_on_near_pairs": round(
-                    v.get("abs_diff_A_near", 0) / max(v.get("both_near", 1), 1), 3),
-                "contact_set_jaccard_between_seeds": round(v.get("contact_inter", 0) / max(v.get("contact_union", 1), 1), 4),
-            } for k, v in div.items()
+                    v.get("abs_diff_A_near", 0) / max(v.get("both_near", 1), 1), 3
+                ),
+                "contact_set_jaccard_between_seeds": round(
+                    v.get("contact_inter", 0) / max(v.get("contact_union", 1), 1), 4
+                ),
+            }
+            for k, v in div.items()
         }
     if args.seeds > 1 and per_sample:
+
         def f1(hit, pred, true):
             p, r = hit / max(pred, 1), hit / max(true, 1)
             return 2 * p * r / max(p + r, 1e-9)
@@ -203,13 +272,25 @@ def main():
                 continue
             curve = {}
             for k in [x for x in (1, 2, 4, 8, 16, 32) if x <= args.seeds]:
-                singles = [sum(f1(h, p, r_["true"]) for h, p in r_["seeds"][:k]) / k for r_ in rows]
-                bests = [max(f1(h, p, r_["true"]) for h, p in r_["seeds"][:k]) for r_ in rows]
-                curve[f"K={k}"] = {"mean_single_seed_f1": round(sum(singles) / len(rows), 4),
-                                   "best_of_K_f1": round(sum(bests) / len(rows), 4)}
+                singles = [
+                    sum(f1(h, p, r_["true"]) for h, p in r_["seeds"][:k]) / k
+                    for r_ in rows
+                ]
+                bests = [
+                    max(f1(h, p, r_["true"]) for h, p in r_["seeds"][:k]) for r_ in rows
+                ]
+                curve[f"K={k}"] = {
+                    "mean_single_seed_f1": round(sum(singles) / len(rows), 4),
+                    "best_of_K_f1": round(sum(bests) / len(rows), 4),
+                }
             cons = [f1(*r_["consensus"], r_["true"]) for r_ in rows]
-            best[name] = {"samples_with_true_contacts": len(rows), "curve": curve,
-                          f"majority_vote_over_{args.seeds}_seeds_f1": round(sum(cons) / len(rows), 4)}
+            best[name] = {
+                "samples_with_true_contacts": len(rows),
+                "curve": curve,
+                f"majority_vote_over_{args.seeds}_seeds_f1": round(
+                    sum(cons) / len(rows), 4
+                ),
+            }
         out["best_of_K_per_sample_f1"] = best
     print(json.dumps(out, indent=1))
 

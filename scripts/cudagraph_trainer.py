@@ -62,7 +62,11 @@ def _load_static(dst, src) -> None:
 
 def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) -> None:
     """Manual-DDP + CUDA-graph training loop for the fixed-recycle model."""
-    from miniworld.training.engine_backend import configure_engine_backend, configure_fused_msa_train
+    from miniworld.training.engine_backend import (
+        configure_engine_backend,
+        configure_fused_msa_train,
+    )
+
     configure_engine_backend(cfg.train.engine_backend)
     configure_fused_msa_train(getattr(cfg.train, "fused_msa_train", False))
     rank = int(os.environ.get("RANK", "0"))
@@ -79,9 +83,11 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
             log.info(msg)
 
     n_rec = cfg.model.trunk.n_recycle_max
-    info(f"[cudagraph] FIXED recycle={n_rec}  world={world}  "
-         f"grad_accum={cfg.train.grad_accum_steps}  eff_batch="
-         f"{cfg.train.num_batch * cfg.train.grad_accum_steps * world}")
+    info(
+        f"[cudagraph] FIXED recycle={n_rec}  world={world}  "
+        f"grad_accum={cfg.train.grad_accum_steps}  eff_batch="
+        f"{cfg.train.num_batch * cfg.train.grad_accum_steps * world}"
+    )
 
     torch.manual_seed(cfg.train.seed or 0)
     from miniworld.training.precision import apply_precision
@@ -99,14 +105,20 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
         else torch.optim.AdamW(model.parameters(), cfg.train.max_lr)
     )
     sched = get_step_decay_scheduler_with_warmup(
-        optimizer=opt, warmup_steps=cfg.train.warmup_steps,
-        decay_steps=cfg.train.decay_steps, decay_factor=cfg.train.decay_factor,
+        optimizer=opt,
+        warmup_steps=cfg.train.warmup_steps,
+        decay_steps=cfg.train.decay_steps,
+        decay_factor=cfg.train.decay_factor,
     )
     w = cfg.loss.distogram_loss
 
     # EMA (rank-0 maintains, broadcast so all ranks agree; saved in ckpt)
     use_ema = cfg.train.use_ema
-    ema = {k: v.detach().clone() for k, v in model.state_dict().items()} if use_ema else None
+    ema = (
+        {k: v.detach().clone() for k, v in model.state_dict().items()}
+        if use_ema
+        else None
+    )
 
     epoch = 0
     global_step = 0
@@ -125,18 +137,31 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
 
     # ---- dataloader (real bucket shape; same as Fabric path) ----
     world_item = cfg.train.train_item // world
-    ds = BioMolData(BioMolData.BioMolConfig(
-        crop_config=cfg.data.crop, msa_config=cfg.data.msa, DB_config=cfg.data.train_db,
-        sampler_config=cfg.data.sampler, tokenizer_config=cfg.data.tokenizer))
+    ds = BioMolData(
+        BioMolData.BioMolConfig(
+            crop_config=cfg.data.crop,
+            msa_config=cfg.data.msa,
+            DB_config=cfg.data.train_db,
+            sampler_config=cfg.data.sampler,
+            tokenizer_config=cfg.data.tokenizer,
+        )
+    )
     dl = ds.create_ddp_dataloader(
-        world_size=world, rank=rank, seed=cfg.train.seed, drop_last=True,
-        batch_size=cfg.train.num_batch, num_workers=cfg.train.num_workers,
-        prefetch_factor=cfg.train.prefetch_factor, num_samples_per_rank=world_item,
-        persistent_workers=cfg.train.num_workers > 0, shuffle=True,
+        world_size=world,
+        rank=rank,
+        seed=cfg.train.seed,
+        drop_last=True,
+        batch_size=cfg.train.num_batch,
+        num_workers=cfg.train.num_workers,
+        prefetch_factor=cfg.train.prefetch_factor,
+        num_samples_per_rank=world_item,
+        persistent_workers=cfg.train.num_workers > 0,
+        shuffle=True,
         bucket_msa_multiple=cfg.train.bucket_msa_multiple,
         bucket_token_multiple=cfg.train.bucket_token_multiple,
         bucket_atom_multiple=cfg.train.bucket_atom_multiple,
-        bucket_template_multiple=TemplateConfig().n_templates)
+        bucket_template_multiple=TemplateConfig().n_templates,
+    )
     it = iter(dl)
     static = next(it).to(device=dev)
 
@@ -146,35 +171,51 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
     if _use_cb and static.structure.atom_is_rep is None:
         raise ValueError("Representative-atom distogram requires atom_is_rep features.")
     if is_zero:
-        log.info("[cudagraph] distogram target = %s",
-                 "CB/pseudo-beta (rep atom)" if _use_cb else "shortest inter-atom")
+        log.info(
+            "[cudagraph] distogram target = %s",
+            "CB/pseudo-beta (rep atom)" if _use_cb else "shortest inter-atom",
+        )
 
     def step():
         rep = static.structure.atom_is_rep if _use_cb else None
         with torch.autocast("cuda", dtype=torch.bfloat16):
             logit = model.forward(
-                msa=static.msa, reference=static.reference, scheme=static.scheme,
-                sequence=static.sequence, structure=static.structure, template=static.template)
+                msa=static.msa,
+                reference=static.reference,
+                scheme=static.scheme,
+                sequence=static.sequence,
+                structure=static.structure,
+                template=static.template,
+            )
             loss = w * cal_atom_distogram_loss(
-                logit, static.structure.atom_pos, static.structure.atom_pos_mask,
-                static.scheme.atom_to_token_idx_map, rep_atom_mask=rep,
+                logit,
+                static.structure.atom_pos,
+                static.structure.atom_pos_mask,
+                static.scheme.atom_to_token_idx_map,
+                rep_atom_mask=rep,
                 token_asym_id=static.scheme.token_asym_id,
-                interchain_weight=cfg.loss.distogram_interchain_weight)
+                interchain_weight=cfg.loss.distogram_interchain_weight,
+            )
         loss.backward()
         return loss
 
     # ---- warmup on side stream (JIT kernels, allocate grads), then capture ----
     info("[cudagraph] warmup + capture (torch.cuda.CUDAGraph, fwd+loss+bwd)")
-    s = torch.cuda.Stream(); s.wait_stream(torch.cuda.current_stream())
+    s = torch.cuda.Stream()
+    s.wait_stream(torch.cuda.current_stream())
     with torch.cuda.stream(s):
         for _ in range(3):
-            opt.zero_grad(set_to_none=True); step()
-    torch.cuda.current_stream().wait_stream(s); torch.cuda.synchronize()
+            opt.zero_grad(set_to_none=True)
+            step()
+    torch.cuda.current_stream().wait_stream(s)
+    torch.cuda.synchronize()
     opt.zero_grad(set_to_none=False)  # static grad buffers for capture
     graph = torch.cuda.CUDAGraph()
     with torch.cuda.graph(graph):
         static_loss = step()
-    info(f"[cudagraph] CAPTURE OK  peak={torch.cuda.max_memory_allocated()/1024**3:.1f}GB")
+    info(
+        f"[cudagraph] CAPTURE OK  peak={torch.cuda.max_memory_allocated() / 1024**3:.1f}GB"
+    )
 
     ckpt_dir = run_sub_dir / "checkpoints"
     if is_zero:
@@ -183,14 +224,18 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
     def save_ckpt(path: Path) -> None:
         if not is_zero:
             return
-        torch.save({
-            "config": cfg.model_dump(mode="json"),
-            "model_state_dict": model.state_dict(),
-            "optimizer_state_dict": opt.state_dict(),
-            "scheduler_state_dict": sched.state_dict() if sched else None,
-            "epoch": epoch, "global_step": global_step,
-            "ema": ema if use_ema else None,
-        }, path)
+        torch.save(
+            {
+                "config": cfg.model_dump(mode="json"),
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": opt.state_dict(),
+                "scheduler_state_dict": sched.state_dict() if sched else None,
+                "epoch": epoch,
+                "global_step": global_step,
+                "ema": ema if use_ema else None,
+            },
+            path,
+        )
 
     def next_batch():
         nonlocal it
@@ -226,8 +271,11 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
             if world > 1:  # eager cross-rank grad average (once per opt-step)
                 for p in model.parameters():
                     if p.grad is not None:
-                        dist.all_reduce(p.grad); p.grad /= world
-            torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.train.grad_clip_max_norm)
+                        dist.all_reduce(p.grad)
+                        p.grad /= world
+            torch.nn.utils.clip_grad_norm_(
+                model.parameters(), cfg.train.grad_clip_max_norm
+            )
             opt.step()
             if sched:
                 sched.step()
@@ -245,7 +293,9 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
             if is_zero:  # per-step (step-wise) loss, like the Fabric/Client path
                 log.info(
                     "Step %8d (Epoch %5d) │ train/distogram_loss_step=%.4f",
-                    global_step, epoch + 1, step_loss,
+                    global_step,
+                    epoch + 1,
+                    step_loss,
                 )
                 if cfg.train.use_wandb:
                     # Two explicit curves: *_step (per opt-step, noisy) on the global_step
@@ -254,21 +304,31 @@ def train_cudagraph(cfg, job_name: str, run_sub_dir: Path, ckpt: Path | None) ->
                     # of one overlaid jagged curve. Log global_step as a key so the step
                     # curve has its own x-axis.
                     wandb.log(
-                        {"train/distogram_loss_step": step_loss,
-                         "global_step": global_step},
+                        {
+                            "train/distogram_loss_step": step_loss,
+                            "global_step": global_step,
+                        },
                         step=global_step,
                     )
         torch.cuda.synchronize()
         epoch += 1
         mean_loss = sum(losses) / max(len(losses), 1)
         ep_time = time.perf_counter() - ep_t0
-        info(f"Epoch {epoch:5d} │ train/distogram_loss={mean_loss:.3f}  "
-             f"train/epoch_time={ep_time:.0f}  step={global_step}")
+        info(
+            f"Epoch {epoch:5d} │ train/distogram_loss={mean_loss:.3f}  "
+            f"train/epoch_time={ep_time:.0f}  step={global_step}"
+        )
         if is_zero and cfg.train.use_wandb:
             # per-step loop already logged the loss at each step; only add the
             # epoch-level metrics here (same step -> wandb merges).
-            wandb.log({"train/epoch_time": ep_time, "epoch": epoch,
-                       "train/distogram_loss_epoch": mean_loss}, step=global_step)
+            wandb.log(
+                {
+                    "train/epoch_time": ep_time,
+                    "epoch": epoch,
+                    "train/distogram_loss_epoch": mean_loss,
+                },
+                step=global_step,
+            )
         save_ckpt(ckpt_dir / "last.pt")
         if epoch % cfg.train.save_freq == 0:
             save_ckpt(ckpt_dir / f"epoch={epoch:04d}.pt")

@@ -90,10 +90,12 @@ def _load_cif_chains(cif_path: Path) -> dict[str, list[_CifResidue]]:
             atoms: dict[str, np.ndarray] = {}
             for atom in res:
                 atoms[atom.get_name()] = atom.get_coord().astype(np.float32)
-            residues.append(_CifResidue(
-                chem_comp_id=res.resname.upper(),
-                atoms=atoms,
-            ))
+            residues.append(
+                _CifResidue(
+                    chem_comp_id=res.resname.upper(),
+                    atoms=atoms,
+                )
+            )
         if residues:
             chains[chain.id] = residues
     return chains
@@ -103,10 +105,10 @@ def _load_cif_chains(cif_path: Path) -> dict[str, list[_CifResidue]]:
 class _BatchAtomLayout:
     """Pre-computed views into ``Batch`` used by the per-chain filler."""
 
-    atom_names: np.ndarray             # (N_atom,) str
-    chem_comp_ids: np.ndarray          # (N_res_global,) str
-    atom_chain_local: np.ndarray       # (N_atom,) chain_local_idx
-    atom_residue: np.ndarray           # (N_atom,) global residue idx
+    atom_names: np.ndarray  # (N_atom,) str
+    chem_comp_ids: np.ndarray  # (N_res_global,) str
+    atom_chain_local: np.ndarray  # (N_atom,) chain_local_idx
+    atom_residue: np.ndarray  # (N_atom,) global residue idx
     chain_idx_to_local: dict[int, int]
     n_atom: int
 
@@ -157,16 +159,14 @@ def _fill_chain_init_x0(
     chain_local = layout.chain_idx_to_local[query_chain_idx]
     atom_indices_for_chain = np.where(layout.atom_chain_local == chain_local)[0]
     if atom_indices_for_chain.size == 0:
-        msg = (
-            f"{where}: query chain index {query_chain_idx} has no atoms in "
-            f"the batch."
-        )
+        msg = f"{where}: query chain index {query_chain_idx} has no atoms in the batch."
         raise ValueError(msg)
 
     residue_to_atom_idxs: dict[int, list[int]] = {}
     for a in atom_indices_for_chain:
         residue_to_atom_idxs.setdefault(
-            int(layout.atom_residue[a]), [],
+            int(layout.atom_residue[a]),
+            [],
         ).append(int(a))
     query_residues = list(residue_to_atom_idxs.keys())
 

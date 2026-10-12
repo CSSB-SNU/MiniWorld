@@ -7,6 +7,7 @@ from miniworld.typing import typecheck
 
 from MiniWorld.utils.structure.sdist import get_shortest_distances
 
+
 @typecheck
 def cal_shortest_distogram_loss(
     logit_pred: Float[torch.Tensor, "* L L D"],

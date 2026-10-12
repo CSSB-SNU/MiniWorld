@@ -243,10 +243,7 @@ class Client(BaseClient):
         if incompatible_keys:
             limit = 20
             lines.extend(
-                (
-                    f"  - {key} "
-                    f"(checkpoint={checkpoint_shape}, current={current_shape})"
-                )
+                (f"  - {key} (checkpoint={checkpoint_shape}, current={current_shape})")
                 for key, checkpoint_shape, current_shape in incompatible_keys[:limit]
             )
             if len(incompatible_keys) > limit:
@@ -287,7 +284,10 @@ class Client(BaseClient):
             state_dict.get("model_state_dict") if state_dict is not None else None
         )
         summary = apply_param_policy(
-            self.model, ckpt_model_sd, policy, log=self.logger,
+            self.model,
+            ckpt_model_sd,
+            policy,
+            log=self.logger,
         )
         self.logger.info("Param policy applied:\n%s", format_summary(summary))
 
@@ -481,7 +481,9 @@ class Client(BaseClient):
             + lc.alpha_ligand * ((et == 6) | (et == 7)).to(x_pred.dtype)
         )  # [B, L_chain]
         atom_weight = torch.gather(
-            w_chain, dim=1, index=batch.scheme.atom_to_chain_id,
+            w_chain,
+            dim=1,
+            index=batch.scheme.atom_to_chain_id,
         )  # [B, L_atom] -> broadcasts over the augment dim of x0/x_pred
 
         structure_loss = self.diffuser.cal_loss(
@@ -534,11 +536,7 @@ class Client(BaseClient):
         # AF3 Eq.5 bonded-ligand bond loss: MSE of bonded-atom-pair distances vs GT.
         # Read the eager (uncompiled) bond_atom_pairs field; B=1 in training.
         bond_pairs = batch.structure.bond_atom_pairs
-        if (
-            lc.bond_loss > 0
-            and bond_pairs is not None
-            and bond_pairs.shape[1] > 0
-        ):
+        if lc.bond_loss > 0 and bond_pairs is not None and bond_pairs.shape[1] > 0:
             bi = bond_pairs[0, :, 0].long()
             bj = bond_pairs[0, :, 1].long()
             d_pred = (x_pred[:, bi] - x_pred[:, bj]).norm(dim=-1)  # [A, n_bond]

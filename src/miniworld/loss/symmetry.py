@@ -4,6 +4,7 @@ Match equivalent, identically cropped chains and standard residue name symmetrie
 This is not a general ligand automorphism solver: arbitrary CCD graph symmetries
 need topology metadata which the current Batch does not retain.
 """
+
 from __future__ import annotations
 
 from itertools import permutations, product
@@ -14,16 +15,18 @@ import torch
 
 # Coupled aromatic swaps must move both sides together.
 _RESIDUE_SWAPS = {
-    'ASP': [('OD1', 'OD2')], 'GLU': [('OE1', 'OE2')],
-    'ARG': [('NH1', 'NH2')], 'LEU': [('CD1', 'CD2')],
-    'VAL': [('CG1', 'CG2')],
-    'PHE': [('CD1', 'CD2'), ('CE1', 'CE2')],
-    'TYR': [('CD1', 'CD2'), ('CE1', 'CE2')],
+    "ASP": [("OD1", "OD2")],
+    "GLU": [("OE1", "OE2")],
+    "ARG": [("NH1", "NH2")],
+    "LEU": [("CD1", "CD2")],
+    "VAL": [("CG1", "CG2")],
+    "PHE": [("CD1", "CD2"), ("CE1", "CE2")],
+    "TYR": [("CD1", "CD2"), ("CE1", "CE2")],
 }
 
 
 def _values(value):
-    return np.asarray(getattr(value, 'value', value))
+    return np.asarray(getattr(value, "value", value))
 
 
 @torch.no_grad()
@@ -58,7 +61,7 @@ def align_confidence_targets(batch, prediction):
         resid = batch.scheme.token_residue_idx[b].cpu().numpy()[a2t]
         entity = batch.scheme.token_entity_id[b].cpu().numpy()[a2t]
         uid = batch.reference.space_uid[b].cpu().numpy()
-        bonds = getattr(batch.structure, 'bond_atom_pairs', None)
+        bonds = getattr(batch.structure, "bond_atom_pairs", None)
         bonded = set()
         if bonds is not None:
             for i, j in bonds[b].cpu().tolist():
@@ -69,13 +72,20 @@ def align_confidence_targets(batch, prediction):
         chain_atoms = {}
         for c in sorted(set(chain[ids].tolist())):
             members = [i for i in ids if chain[i] == c]
-            ordered = sorted(members, key=lambda i: (resid[i], components[uid[i]], names[i]))
-            signature = tuple((int(resid[i]), components[uid[i]], names[i]) for i in ordered)
-            groups.setdefault((int(entity[ordered[0]]), signature, c if c in protected_chains else -1), []).append(c)
+            ordered = sorted(
+                members, key=lambda i: (resid[i], components[uid[i]], names[i])
+            )
+            signature = tuple(
+                (int(resid[i]), components[uid[i]], names[i]) for i in ordered
+            )
+            groups.setdefault(
+                (int(entity[ordered[0]]), signature, c if c in protected_chains else -1),
+                [],
+            ).append(c)
             chain_atoms[c] = torch.tensor(ordered, device=coords.device)
         groups = [g for g in groups.values() if len(g) > 1]
         base = torch.arange(coords.shape[1], device=coords.device)
-        gt = torch.where(masks[b, :, None], coords[b], 0.).float()
+        gt = torch.where(masks[b, :, None], coords[b], 0.0).float()
         pred = prediction[b].float()
 
         def score(p):
@@ -99,7 +109,7 @@ def align_confidence_targets(batch, prediction):
                 improved = False
                 for group in groups:
                     for j, dst in enumerate(group):
-                        for src in group[j + 1:]:
+                        for src in group[j + 1 :]:
                             candidate = best.clone()
                             candidate[chain_atoms[dst]] = best[chain_atoms[src]]
                             candidate[chain_atoms[src]] = best[chain_atoms[dst]]
@@ -119,8 +129,12 @@ def align_confidence_targets(batch, prediction):
             right = [members[z] for a, z in pairs] + [members[a] for a, z in pairs]
             if bonded.intersection(left):
                 continue
-            current = ((aligned[left] - pred[left]).square().sum(-1) * masks[b, left]).sum()
-            swapped = ((aligned[right] - pred[left]).square().sum(-1) * masks[b, right]).sum()
+            current = (
+                (aligned[left] - pred[left]).square().sum(-1) * masks[b, left]
+            ).sum()
+            swapped = (
+                (aligned[right] - pred[left]).square().sum(-1) * masks[b, right]
+            ).sum()
             if swapped < current:
                 coords[b, left] = coords[b, right].clone()
                 masks[b, left] = masks[b, right].clone()

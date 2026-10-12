@@ -22,10 +22,10 @@ class CCDResidue:
     """
 
     chemcomp_id: str
-    atom_ids: np.ndarray         # (n_atoms,) object/str
-    atom_elements: np.ndarray    # (n_atoms,) object/str
-    atom_charges: np.ndarray     # (n_atoms,) float
-    atom_xyz: np.ndarray         # (n_atoms, 3) float
+    atom_ids: np.ndarray  # (n_atoms,) object/str
+    atom_elements: np.ndarray  # (n_atoms,) object/str
+    atom_charges: np.ndarray  # (n_atoms,) float
+    atom_xyz: np.ndarray  # (n_atoms, 3) float
     atom_mask: np.ndarray | None = None  # Missing coordinates are never valid padding.
 
     @property

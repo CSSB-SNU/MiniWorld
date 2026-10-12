@@ -1,55 +1,133 @@
 """Render a self-contained, mobile-friendly dashboard from the measured campaign."""
+
 import html
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN = ROOT / 'runs/anthropic_adoption_20260919'
-rows = json.loads((RUN / 'all-results.json').read_text())
-profiles = json.loads((RUN / 'ncu-summary.json').read_text())
+RUN = ROOT / "runs/anthropic_adoption_20260919"
+rows = json.loads((RUN / "all-results.json").read_text())
+profiles = json.loads((RUN / "ncu-summary.json").read_text())
 E = html.escape
 
+
 def match(f, length, width, row, module=False):
-    return next((r for r in rows if r['family']==f and r['length']==length and r['width']==width and r['row']==row and r['module']==module and r['direction']=='outgoing' and r.get('status')=='passed'), None)
+    return next(
+        (
+            r
+            for r in rows
+            if r["family"] == f
+            and r["length"] == length
+            and r["width"] == width
+            and r["row"] == row
+            and r["module"] == module
+            and r["direction"] == "outgoing"
+            and r.get("status") == "passed"
+        ),
+        None,
+    )
 
-specs = [('trimul',128,'native_rebuilt',False,'TriMul · outgoing 전체'),
-         ('triattn',128,'block:triattn_native',True,'TriangleAttention · 전체'),
-         ('triattn',128,'triattn_native',False,'TriangleAttention · core 단독'),
-         ('transition',128,'v2',False,'Transition'),('transition',256,'esm_t16',False,'Transition'),
-         ('transition',384,'pf',False,'Transition'),('transition',512,None,False,'Transition')]
-comparisons=[]
-for f,c,row,mod,title in specs:
-    for length in (384,768):
-        base=match(f,length,c,'engine_triton',mod)
-        candidate=match(f,length,c,row,mod) if row else None
-        ratio=base['ms']/candidate['ms'] if candidate else None
-        decision='미지원 · 기존 유지' if ratio is None else ('채택 후보' if ratio>1.1 else ('기존 유지' if ratio<.9 else '거의 동률'))
-        comparisons.append(dict(family=f,L=length,C=c,title=title,row=row,base=base['ms'],ms=candidate['ms'] if candidate else None,ratio=ratio,decision=decision))
 
-summary_rows=[]
+specs = [
+    ("trimul", 128, "native_rebuilt", False, "TriMul · outgoing 전체"),
+    ("triattn", 128, "block:triattn_native", True, "TriangleAttention · 전체"),
+    ("triattn", 128, "triattn_native", False, "TriangleAttention · core 단독"),
+    ("transition", 128, "v2", False, "Transition"),
+    ("transition", 256, "esm_t16", False, "Transition"),
+    ("transition", 384, "pf", False, "Transition"),
+    ("transition", 512, None, False, "Transition"),
+]
+comparisons = []
+for f, c, row, mod, title in specs:
+    for length in (384, 768):
+        base = match(f, length, c, "engine_triton", mod)
+        candidate = match(f, length, c, row, mod) if row else None
+        ratio = base["ms"] / candidate["ms"] if candidate else None
+        decision = (
+            "미지원 · 기존 유지"
+            if ratio is None
+            else (
+                "채택 후보"
+                if ratio > 1.1
+                else ("기존 유지" if ratio < 0.9 else "거의 동률")
+            )
+        )
+        comparisons.append(
+            dict(
+                family=f,
+                L=length,
+                C=c,
+                title=title,
+                row=row,
+                base=base["ms"],
+                ms=candidate["ms"] if candidate else None,
+                ratio=ratio,
+                decision=decision,
+            )
+        )
+
+summary_rows = []
 for r in comparisons:
-    color='green' if r['ratio'] and r['ratio']>1.1 else ('red' if r['ratio'] and r['ratio']<.9 else 'amber')
-    speed=f"{r['ratio']:.2f}×" if r['ratio'] else '—'
-    up=f"{r['ms']:.4f}" if r['ms'] else '미지원'
-    summary_rows.append(f'<tr data-l="{r["L"]}"><td>{r["title"]}</td><td>{r["L"]}</td><td>{r["C"]}</td><td>{r["base"]:.4f}</td><td>{up}</td><td><strong class="{color}">{speed}</strong></td><td><span class="pill {color}">{r["decision"]}</span></td></tr>')
+    color = (
+        "green"
+        if r["ratio"] and r["ratio"] > 1.1
+        else ("red" if r["ratio"] and r["ratio"] < 0.9 else "amber")
+    )
+    speed = f"{r['ratio']:.2f}×" if r["ratio"] else "—"
+    up = f"{r['ms']:.4f}" if r["ms"] else "미지원"
+    summary_rows.append(
+        f'<tr data-l="{r["L"]}"><td>{r["title"]}</td><td>{r["L"]}</td><td>{r["C"]}</td><td>{r["base"]:.4f}</td><td>{up}</td><td><strong class="{color}">{speed}</strong></td><td><span class="pill {color}">{r["decision"]}</span></td></tr>'
+    )
 
-family_labels={'trimul':'TriMul','triattn':'TriangleAttention','transition':'Transition','ln':'LayerNorm','apb':'Pair-bias attention','atom_window':'Atom-window','gather':'Gather attention','template':'Template embedding','adaln':'AdaLN modulation','swiglu':'SwiGLU','dtk':'Gate + residual','ln_linear':'LN + linear','msa_ln':'MSA LN + projection','opm':'OPM output projection','opm_core':'OPM contraction + projection','pwa':'MSA pair-weighted averaging'}
-coverage=[]
-for f,name in family_labels.items():
-    rr=[r for r in rows if r['family']==f]
-    passed=sum(r['status']=='passed' for r in rr);refused=len(rr)-passed
-    level='엔진 모듈 연결' if f in ('trimul','triattn','transition') else ('operation 접근' if f in ('msa_ln','opm','opm_core','pwa') else 'primitive 접근')
-    coverage.append(f'<tr><td>{name}</td><td>{level}</td><td>{passed}</td><td>{refused}</td><td><span class="pill green">NCU 완료</span></td></tr>')
+family_labels = {
+    "trimul": "TriMul",
+    "triattn": "TriangleAttention",
+    "transition": "Transition",
+    "ln": "LayerNorm",
+    "apb": "Pair-bias attention",
+    "atom_window": "Atom-window",
+    "gather": "Gather attention",
+    "template": "Template embedding",
+    "adaln": "AdaLN modulation",
+    "swiglu": "SwiGLU",
+    "dtk": "Gate + residual",
+    "ln_linear": "LN + linear",
+    "msa_ln": "MSA LN + projection",
+    "opm": "OPM output projection",
+    "opm_core": "OPM contraction + projection",
+    "pwa": "MSA pair-weighted averaging",
+}
+coverage = []
+for f, name in family_labels.items():
+    rr = [r for r in rows if r["family"] == f]
+    passed = sum(r["status"] == "passed" for r in rr)
+    refused = len(rr) - passed
+    level = (
+        "엔진 모듈 연결"
+        if f in ("trimul", "triattn", "transition")
+        else (
+            "operation 접근"
+            if f in ("msa_ln", "opm", "opm_core", "pwa")
+            else "primitive 접근"
+        )
+    )
+    coverage.append(
+        f'<tr><td>{name}</td><td>{level}</td><td>{passed}</td><td>{refused}</td><td><span class="pill green">NCU 완료</span></td></tr>'
+    )
 
-allrows=[]
+allrows = []
 for r in rows:
-    timing=f'{r["ms"]:.4f}' if r.get('ms') is not None else '—'
-    err=f'{r["error"]["rel_rms"]*100:.4f}%' if r.get('error') else '—'
-    status='통과' if r['status']=='passed' else '지원범위 거절'
-    module='전체' if r['module'] or r['family'] in ('trimul','transition') else '부분연산'
-    allrows.append(f'<tr data-family="{r["family"]}" data-status="{r["status"]}" data-l="{r["length"]}"><td>{E(family_labels[r["family"]])}<small>{module} · {r["direction"]}</small></td><td>{r["length"]} / {r["width"]}</td><td><code>{E(r["row"])}</code></td><td>{status}</td><td>{timing}</td><td>{err}</td><td class="reason">{E(r.get("reason", ""))}</td></tr>')
+    timing = f"{r['ms']:.4f}" if r.get("ms") is not None else "—"
+    err = f"{r['error']['rel_rms'] * 100:.4f}%" if r.get("error") else "—"
+    status = "통과" if r["status"] == "passed" else "지원범위 거절"
+    module = (
+        "전체" if r["module"] or r["family"] in ("trimul", "transition") else "부분연산"
+    )
+    allrows.append(
+        f'<tr data-family="{r["family"]}" data-status="{r["status"]}" data-l="{r["length"]}"><td>{E(family_labels[r["family"]])}<small>{module} · {r["direction"]}</small></td><td>{r["length"]} / {r["width"]}</td><td><code>{E(r["row"])}</code></td><td>{status}</td><td>{timing}</td><td>{err}</td><td class="reason">{E(r.get("reason", ""))}</td></tr>'
+    )
 
-page=r'''<!doctype html>
+page = r"""<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>MiniWorld · Anthropic 추론 통합 현황</title>
 <style>
 :root{--ink:#152d3c;--sub:#536977;--border:#dbe4e8;--green:#087c66;--blue:#345ec0;--purple:#7052a0;--amber:#a3650a;--red:#b44137}*{box-sizing:border-box}body{margin:0;background:#f3f6f7;color:var(--ink);font:15px/1.65 system-ui,-apple-system,'Noto Sans KR',sans-serif}a{color:#205b9b;text-underline-offset:4px}header{background:#132f3d;color:white;padding:38px max(20px,calc((100vw - 1220px)/2)) 30px}.eyebrow{font-size:12px;letter-spacing:.15em;color:#8eddc6;font-weight:700}h1{font-size:clamp(26px,4vw,40px);margin:8px 0 12px;letter-spacing:-.04em;line-height:1.25}header p{max-width:850px;color:#cbdade;margin:8px 0}.snapshot{font-size:12px;color:#a7bec7;margin-top:20px}nav{position:sticky;top:0;z-index:4;background:#fffffff5;backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;gap:20px;overflow:auto;padding:12px max(20px,calc((100vw - 1220px)/2));white-space:nowrap}nav a{color:var(--ink);text-decoration:none;font-size:13px;font-weight:700}main{max-width:1260px;margin:auto;padding:24px 20px 60px}section{scroll-margin-top:70px;margin:26px 0}h2{font-size:23px;letter-spacing:-.03em;margin:0 0 6px}h3{font-size:17px;margin:0 0 12px}p{margin:6px 0 14px}.muted,small{color:var(--sub)}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.panel{background:white;border:1px solid var(--border);border-radius:14px;padding:22px}.card strong{display:block;font-size:32px;line-height:1.3;margin:6px 0}.card .label{font-size:12px;color:var(--sub)}.card p{font-size:12px;margin:0}.green{color:var(--green)}.red{color:var(--red)}.amber{color:var(--amber)}.pill{display:inline-block;padding:3px 9px;border-radius:30px;font-size:11px;font-weight:750;white-space:nowrap;background:#eef3f5}.pill.green{background:#e7f5ee}.pill.red{background:#fff0ed}.pill.amber{background:#fff5e5}.notice{border-left:4px solid var(--green);background:#eaf5f0;border-radius:0 9px 9px 0;padding:16px 20px;margin:18px 0}.notice.amber{border-color:#cf972e;background:#fff5e5;color:var(--ink)}.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0}button,select,input{font:inherit;border:1px solid #b9cbd2;border-radius:8px;background:white;padding:7px 12px;color:var(--ink)}button{cursor:pointer}button.active{background:var(--ink);color:white;border-color:var(--ink)}:focus-visible{outline:3px solid #d19b2b;outline-offset:3px}.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:white}table{width:100%;border-collapse:collapse;text-align:left;font-variant-numeric:tabular-nums}th{font-size:12px;font-weight:700;color:var(--sub);background:#edf3f4;padding:12px 16px;white-space:nowrap}td{padding:12px 16px;border-top:1px solid #e5ecef;font-size:13px}td:first-child{font-weight:650}tr:hover td{background:#f7fafb}small{display:block;font-size:11px;font-weight:400}code{font-size:11px;overflow-wrap:anywhere}#chart{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.chart-title{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:700;margin-bottom:12px}.barline{display:grid;grid-template-columns:74px 1fr 72px;gap:10px;align-items:center;font-size:12px;margin:9px 0}.track{height:15px;background:#edf2f4;border-radius:4px;overflow:hidden}.fill{height:100%;background:#a5b7c1;border-radius:4px;min-width:2px}.fill.up{background:#1a967e}.fill.slow{background:#c47d56}.flow{display:flex;align-items:stretch;gap:8px;margin:16px 0;flex-wrap:wrap}.node{flex:1;min-width:150px;border:2px solid #83baa9;background:#f0faf5;border-radius:10px;padding:14px;font-size:13px}.node b{display:block;margin-bottom:5px}.node.purple{border-color:#b19bce;background:#f6f0fd}.node.gray{border:2px dashed #aab6bd;background:#f5f7f8}.arrow{align-self:center;color:#879ba6;font-size:20px}.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px}.legend span::before{content:'';display:inline-block;width:12px;height:12px;background:#b8dbc9;margin-right:6px;border-radius:3px}.legend .lib::before{background:#ccb9e7}.legend .ordinary::before{background:#cbd3d8}.stack{display:flex;min-height:32px;border-radius:6px;overflow:hidden;margin:12px 0}.stack span{display:flex;align-items:center;justify-content:center;color:white;font-size:11px;min-width:1px;overflow:hidden;white-space:nowrap}.st-0{background:#177d70}.st-1{background:#7355a4}.st-2{background:#2e71ab}.st-3{background:#81949d}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.metric{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:12px}.metric label{width:90px}.metric .track{flex:1;height:9px}.metric strong{width:46px;text-align:right}.metric .fill{background:#607ca5}.tiny{font-size:12px}.reason{max-width:380px;overflow-wrap:anywhere;font-size:11px;font-weight:400}details summary{cursor:pointer;font-weight:700;padding:12px 0}#cases td{vertical-align:top}footer{font-size:12px;color:var(--sub);padding-top:18px;border-top:1px solid var(--border)}.steps{padding-left:22px}.steps li{margin:12px 0}.status-list{display:grid;grid-template-columns:110px 1fr;gap:12px;font-size:14px}.status-list div{padding:8px 0;border-bottom:1px solid var(--border)}@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.split,#chart{grid-template-columns:1fr}.panel,.card{padding:16px}td,th{padding:10px}.flow{display:block}.arrow{text-align:center;transform:rotate(90deg);height:24px}.node{min-width:0}.status-list{grid-template-columns:78px 1fr}.toolbar{gap:8px}nav{gap:17px}.card strong{font-size:28px}}@media print{nav,.toolbar,button{display:none}body{background:white}.panel,.card{break-inside:avoid}details{display:none}header{background:white;color:#123}header p{color:#456}#chart{display:none}}
@@ -93,9 +171,29 @@ function showProfile(){const p=data.profiles.find(p=>p.profile===byId('profile-s
 function filterCases(){const f=byId('family-filter').value,s=byId('status-filter').value;let n=0;document.querySelectorAll('#cases tbody tr').forEach(tr=>{tr.hidden=!(f==='all'||tr.dataset.family===f)||!(s==='all'||tr.dataset.status===s);if(!tr.hidden)n++;});byId('case-count').textContent=n+' / 218개 표시 · L384/768 모두';}
 function download(value,name){const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 document.querySelectorAll('[data-length]').forEach(b=>b.addEventListener('click',()=>{length=Number(b.dataset.length);refresh();}));byId('profile-select').addEventListener('change',showProfile);['family-filter','status-filter'].forEach(id=>byId(id).addEventListener('change',filterCases));byId('download-json').addEventListener('click',()=>download(data.rows,'anthropic-h100-results.json'));byId('download-ncu').addEventListener('click',()=>download(data.profiles,'anthropic-h100-ncu.json'));refresh();filterCases();
-</script></body></html>'''
-page=page.replace('__COMPARISONS__','\n'.join(summary_rows)).replace('__COVERAGE__','\n'.join(coverage)).replace('__CASES__','\n'.join(allrows)).replace('__OPTIONS__',''.join(f'<option value="{f}">{E(name)}</option>' for f,name in family_labels.items()))
-page=page.replace('__DATA__',json.dumps(dict(rows=rows,profiles=profiles,comparisons=comparisons),ensure_ascii=False,separators=(',',':')).replace('<','\\u003c'))
-(ROOT/'ANTHROPIC_STATUS.html').write_text(page)
-web=RUN/'web';web.mkdir(exist_ok=True);(web/'index.html').write_text(page)
-print(f'{ROOT / "ANTHROPIC_STATUS.html"}: {len(page.encode()):,} bytes')
+</script></body></html>"""
+page = (
+    page.replace("__COMPARISONS__", "\n".join(summary_rows))
+    .replace("__COVERAGE__", "\n".join(coverage))
+    .replace("__CASES__", "\n".join(allrows))
+    .replace(
+        "__OPTIONS__",
+        "".join(
+            f'<option value="{f}">{E(name)}</option>'
+            for f, name in family_labels.items()
+        ),
+    )
+)
+page = page.replace(
+    "__DATA__",
+    json.dumps(
+        dict(rows=rows, profiles=profiles, comparisons=comparisons),
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).replace("<", "\\u003c"),
+)
+(ROOT / "ANTHROPIC_STATUS.html").write_text(page)
+web = RUN / "web"
+web.mkdir(exist_ok=True)
+(web / "index.html").write_text(page)
+print(f"{ROOT / 'ANTHROPIC_STATUS.html'}: {len(page.encode()):,} bytes")

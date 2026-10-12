@@ -45,8 +45,14 @@ def _remap_strings(arr: pa.Array, mapping: list[tuple[str, str]]) -> pa.Array:
     out = arr
     done = pc.is_null(arr)  # nulls stay null
     for old, new in mapping:
-        hit = pc.and_(pc.invert(done), pc.fill_null(pc.starts_with(arr, old), fill_value=False))
-        out = pc.if_else(hit, pc.binary_join_element_wise(new, pc.utf8_slice_codeunits(arr, len(old)), ""), out)
+        hit = pc.and_(
+            pc.invert(done), pc.fill_null(pc.starts_with(arr, old), fill_value=False)
+        )
+        out = pc.if_else(
+            hit,
+            pc.binary_join_element_wise(new, pc.utf8_slice_codeunits(arr, len(old)), ""),
+            out,
+        )
         done = pc.or_(done, hit)
     missed = pc.invert(done)
     if pc.sum(missed.cast(pa.int64())).as_py():
@@ -61,17 +67,35 @@ def _remap(arr: pa.Array, mapping: list[tuple[str, str]]) -> pa.Array:
     if isinstance(arr, pa.ChunkedArray):
         return pa.chunked_array([_remap(c, mapping) for c in arr.chunks], type=arr.type)
     if pa.types.is_list(arr.type):
-        return pa.ListArray.from_arrays(arr.offsets, _remap(arr.values, mapping), mask=arr.is_null())
+        return pa.ListArray.from_arrays(
+            arr.offsets, _remap(arr.values, mapping), mask=arr.is_null()
+        )
     return _remap_strings(arr, mapping)
 
 
 @click.command()
 @click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument("dst", type=click.Path(dir_okay=False, path_type=Path))
-@click.option("--from-data", required=True, help="data config the cache was built with (e.g. H100_default)")
-@click.option("--to-data", required=True, help="data config to stamp the cache for (e.g. B200_default)")
-@click.option("--map", "maps", multiple=True, required=True, help="OLD_PREFIX=NEW_PREFIX (repeatable)")
-def main(src: Path, dst: Path, from_data: str, to_data: str, maps: tuple[str, ...]) -> None:
+@click.option(
+    "--from-data",
+    required=True,
+    help="data config the cache was built with (e.g. H100_default)",
+)
+@click.option(
+    "--to-data",
+    required=True,
+    help="data config to stamp the cache for (e.g. B200_default)",
+)
+@click.option(
+    "--map",
+    "maps",
+    multiple=True,
+    required=True,
+    help="OLD_PREFIX=NEW_PREFIX (repeatable)",
+)
+def main(
+    src: Path, dst: Path, from_data: str, to_data: str, maps: tuple[str, ...]
+) -> None:
     mapping = [tuple(m.split("=", 1)) for m in maps]
     with pa.memory_map(str(src)) as source:
         reader = pa.ipc.open_file(source)
@@ -91,12 +115,18 @@ def main(src: Path, dst: Path, from_data: str, to_data: str, maps: tuple[str, ..
         with pa.OSFile(str(tmp), "wb") as sink, pa.ipc.new_file(sink, schema) as writer:
             for i in range(reader.num_record_batches):
                 batch = reader.get_batch(i)
-                cols = [_remap(batch.column(n), mapping) if n in PATH_COLUMNS else batch.column(n)
-                        for n in schema.names]
+                cols = [
+                    _remap(batch.column(n), mapping)
+                    if n in PATH_COLUMNS
+                    else batch.column(n)
+                    for n in schema.names
+                ]
                 writer.write_table(pa.table(cols, schema=schema))
                 rows += batch.num_rows
         tmp.replace(dst)
-    click.echo(f"{dst}: {rows} items, fingerprint {meta[b'build_fingerprint'].decode()[:12]} ({to_data})")
+    click.echo(
+        f"{dst}: {rows} items, fingerprint {meta[b'build_fingerprint'].decode()[:12]} ({to_data})"
+    )
 
 
 if __name__ == "__main__":

@@ -229,7 +229,9 @@ def _collect_resource_paths(resources: ResourceIndex) -> set[Path]:
 
 def _validate_manifest_paths(resources: ResourceIndex) -> None:
     """Raise if any LMDB path referenced by the manifest does not exist."""
-    missing = sorted(str(p) for p in _collect_resource_paths(resources) if not p.exists())
+    missing = sorted(
+        str(p) for p in _collect_resource_paths(resources) if not p.exists()
+    )
     if missing:
         preview = "\n  ".join(missing[:10])
         more = f"\n  ... (+{len(missing) - 10} more)" if len(missing) > 10 else ""
@@ -267,7 +269,11 @@ def _validate_manifest_keys(
             continue
 
         for chain_idx, feature_key in enumerate(record.feature_keys):
-            for msa_path in record.msa_db_paths[chain_idx] if chain_idx < len(record.msa_db_paths) else ():
+            for msa_path in (
+                record.msa_db_paths[chain_idx]
+                if chain_idx < len(record.msa_db_paths)
+                else ()
+            ):
                 if feature_key not in keys_of(msa_path):
                     msa_misses += 1
             template_path_val = (
@@ -275,7 +281,9 @@ def _validate_manifest_keys(
                 if chain_idx < len(record.template_db_paths)
                 else None
             )
-            if template_path_val is not None and feature_key not in keys_of(template_path_val):
+            if template_path_val is not None and feature_key not in keys_of(
+                template_path_val
+            ):
                 template_misses += 1
 
         kept_records.append(record)
@@ -287,9 +295,13 @@ def _validate_manifest_keys(
         f"template_key_misses={template_misses}",
     )
     if dropped:
-        preview = "\n  ".join(f"{item_id}  (cif={path})" for item_id, path in dropped[:5])
+        preview = "\n  ".join(
+            f"{item_id}  (cif={path})" for item_id, path in dropped[:5]
+        )
         more = f"\n  ... (+{len(dropped) - 5} more)" if len(dropped) > 5 else ""
-        print(f"[manifest] dropped items (record_id absent from cif shard):\n  {preview}{more}")  # noqa: T201
+        print(
+            f"[manifest] dropped items (record_id absent from cif shard):\n  {preview}{more}"
+        )  # noqa: T201
 
     return kept_records, kept_weights
 
@@ -546,7 +558,8 @@ def read_train_items(
                 source_edges[edge_id] = []
                 if source == "pdb":
                     counts = type_counts.setdefault(
-                        source, dict.fromkeys(_PDB_INTERFACE_TYPES, 0),
+                        source,
+                        dict.fromkeys(_PDB_INTERFACE_TYPES, 0),
                     )
                     counts[_pdb_edge_type(edge_id)] += 1
             source_edges[edge_id].append(row_index)
@@ -665,8 +678,11 @@ def source_balanced_weights(
     if len(records) == 0:
         return []
     return _balance_by_indices(
-        _indices_by_source(records), len(records),
-        raw_weights, source_weights, default_source_weight,
+        _indices_by_source(records),
+        len(records),
+        raw_weights,
+        source_weights,
+        default_source_weight,
     )
 
 
@@ -689,6 +705,9 @@ def source_balanced_weights_from_sources(
     for idx, source in enumerate(sources):
         source_to_indices.setdefault(source, []).append(idx)
     return _balance_by_indices(
-        source_to_indices, len(sources),
-        raw_weights, source_weights, default_source_weight,
+        source_to_indices,
+        len(sources),
+        raw_weights,
+        source_weights,
+        default_source_weight,
     )

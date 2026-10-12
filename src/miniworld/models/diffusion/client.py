@@ -150,7 +150,9 @@ class Client(BaseClient):
         super().__init__(config)
         self.config = config
         self.set_seed(config.train.seed)
-        self.register_model(apply_precision(DiffusionModel(config.model), config.train.precision))
+        self.register_model(
+            apply_precision(DiffusionModel(config.model), config.train.precision)
+        )
 
         if config.train.use_ema:
             self.add_callback(ModelEMA(config.train.ema_decay))
@@ -213,10 +215,7 @@ class Client(BaseClient):
         if incompatible_keys:
             limit = 20
             lines.extend(
-                (
-                    f"  - {key} "
-                    f"(checkpoint={checkpoint_shape}, current={current_shape})"
-                )
+                (f"  - {key} (checkpoint={checkpoint_shape}, current={current_shape})")
                 for key, checkpoint_shape, current_shape in incompatible_keys[:limit]
             )
             if len(incompatible_keys) > limit:
@@ -250,7 +249,10 @@ class Client(BaseClient):
             state_dict.get("model_state_dict") if state_dict is not None else None
         )
         summary = apply_param_policy(
-            self.model, ckpt_model_sd, policy, log=self.logger,
+            self.model,
+            ckpt_model_sd,
+            policy,
+            log=self.logger,
         )
         self.logger.info("Param policy applied:\n%s", format_summary(summary))
 
@@ -365,7 +367,9 @@ class Client(BaseClient):
                 x_mask=x_mask,
                 t_emb=t_emb,
             )
-        atom_pos_update = atom_pos_update.float()  # the loss runs in fp32, outside autocast
+        atom_pos_update = (
+            atom_pos_update.float()
+        )  # the loss runs in fp32, outside autocast
 
         # AF3 Eq.4 per-atom weight w_l = 1 + is_dna*a_dna + is_rna*a_rna
         # + is_ligand*a_ligand, gathered from chain entity_type to atoms.
@@ -379,12 +383,21 @@ class Client(BaseClient):
             + lc.alpha_ligand * ((et == 6) | (et == 7)).to(atom_pos_update.dtype)
         )  # [B, L_chain]
         atom_weight = torch.gather(
-            w_chain, dim=1, index=batch.scheme.atom_to_chain_id,
+            w_chain,
+            dim=1,
+            index=batch.scheme.atom_to_chain_id,
         )  # [B, L_atom] -> broadcasts over the augment dim
 
         if lc.align_atom_weight:
             structure_loss = cal_loss_gs(
-                self.diffuser, x0, x_input, atom_pos_update, sigma, x_mask, atom_weight, align_atom_weight=True,
+                self.diffuser,
+                x0,
+                x_input,
+                atom_pos_update,
+                sigma,
+                x_mask,
+                atom_weight,
+                align_atom_weight=True,
             )
         else:
             structure_loss = self.diffuser.cal_loss(
@@ -403,14 +416,18 @@ class Client(BaseClient):
             # Same prediction the MSE term uses; both aux losses are distance-based and
             # therefore rigid-invariant, so no alignment is needed.
             x_pred = self.diffuser.get_x_pred(
-                x_input=x_input, x_update=atom_pos_update, sigma=sigma,
+                x_input=x_input,
+                x_update=atom_pos_update,
+                sigma=sigma,
             )
 
         if lc.smooth_lddt_loss > 0:
             # Nucleotide atoms get the wider 30A inclusion radius (entity_type 3/4/5).
             chain_is_nuc = ((et == 3) | (et == 4) | (et == 5)).bool()
             atom_is_nuc = torch.gather(
-                chain_is_nuc, dim=1, index=batch.scheme.atom_to_chain_id,
+                chain_is_nuc,
+                dim=1,
+                index=batch.scheme.atom_to_chain_id,
             )
             # Checkpointed per augment: A x [L_atom, L_atom] pair tensors would otherwise
             # dominate memory at num_augment 48.
@@ -504,7 +521,8 @@ class Client(BaseClient):
             values = [self.validation_step(batch[i]) for i in range(batch.shape[0])]
             return {key: sum(v[key] for v in values) / len(values) for key in values[0]}
         output = self.inference(
-            batch, timesteps=self.config.train.eval_timesteps,
+            batch,
+            timesteps=self.config.train.eval_timesteps,
             n_samples=self.config.train.eval_sample_num,
         )
         return self.test_inference_quality(batch, output)
@@ -559,11 +577,21 @@ class Client(BaseClient):
         from miniworld.loss import metrics
 
         batch = batch.to(device=self.device)
-        scores = [(
-            metrics.cal_aligned_rmsd(pred, batch.structure.atom_pos[0], batch.structure.atom_pos_mask[0]),
-            metrics.cal_atom_lddt(pred, batch.structure.atom_pos[0], batch.structure.atom_pos_mask[0]),
-        ) for pred in output.atom_pos_pred]
-        return {"best_rmsd": min(r for r, _ in scores), "best_lddt": max(lddt for _, lddt in scores)}
+        scores = [
+            (
+                metrics.cal_aligned_rmsd(
+                    pred, batch.structure.atom_pos[0], batch.structure.atom_pos_mask[0]
+                ),
+                metrics.cal_atom_lddt(
+                    pred, batch.structure.atom_pos[0], batch.structure.atom_pos_mask[0]
+                ),
+            )
+            for pred in output.atom_pos_pred
+        ]
+        return {
+            "best_rmsd": min(r for r, _ in scores),
+            "best_lddt": max(lddt for _, lddt in scores),
+        }
 
     @torch.no_grad()
     def inference(

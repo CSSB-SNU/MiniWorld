@@ -28,8 +28,10 @@ from pathlib import Path
 
 FB = Path("/home/psk6950/data/foldbench")
 OST = FB / "upstream" / "bin" / "ost"
-CMD = ("{ost} compare-structures -m {model} -r {ref} -o {out} --fault-tolerant "
-       "--min-pep-length 4 --min-nuc-length 4 --lddt --rigid-scores --tm-score --dockq")
+CMD = (
+    "{ost} compare-structures -m {model} -r {ref} -o {out} --fault-tolerant "
+    "--min-pep-length 4 --min-nuc-length 4 --lddt --rigid-scores --tm-score --dockq"
+)
 
 
 def score_one(args: tuple[Path, Path, Path]) -> None:
@@ -39,7 +41,10 @@ def score_one(args: tuple[Path, Path, Path]) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         CMD.format(ost=OST, model=model, ref=ref, out=out),
-        shell=True, check=False, capture_output=True, executable="/bin/bash",
+        shell=True,
+        check=False,
+        capture_output=True,
+        executable="/bin/bash",
     )
 
 
@@ -70,7 +75,8 @@ def main() -> None:
     # metric -> {step: [values]}, and per (step, target) for the paired view
     agg: dict[int, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
     per_target: dict[tuple[int, str], dict[str, list[float]]] = defaultdict(
-        lambda: defaultdict(list))
+        lambda: defaultdict(list)
+    )
     for n, tid, out in index:
         if not out.exists():
             continue
@@ -80,9 +86,13 @@ def main() -> None:
             continue
         if d.get("status") != "SUCCESS":
             continue
-        vals = {"lDDT": d.get("lddt"), "TM": d.get("tm_score"),
-                "GDT-TS": d.get("oligo_gdtts"), "RMSD": d.get("rmsd"),
-                "clashes": float(len(d.get("model_clashes", [])))}
+        vals = {
+            "lDDT": d.get("lddt"),
+            "TM": d.get("tm_score"),
+            "GDT-TS": d.get("oligo_gdtts"),
+            "RMSD": d.get("rmsd"),
+            "clashes": float(len(d.get("model_clashes", []))),
+        }
         dq = d.get("dockq") or []
         if dq:
             vals["DockQ(max iface)"] = max(dq)

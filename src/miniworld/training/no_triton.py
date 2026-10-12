@@ -40,7 +40,9 @@ def install() -> None:
     original_add = kernel_side_table.add_kernel
 
     def name_of(kernel) -> str:  # noqa: ANN001
-        return getattr(kernel, "__name__", None) or getattr(getattr(kernel, "fn", None), "__name__", "?")
+        return getattr(kernel, "__name__", None) or getattr(
+            getattr(kernel, "fn", None), "__name__", "?"
+        )
 
     def forbidden_run(self, *args, **kwargs):  # noqa: ANN001, ANN002, ANN003, ANN202
         msg = f"Triton kernel '{name_of(self)}' launched while train.forbid_triton is on"

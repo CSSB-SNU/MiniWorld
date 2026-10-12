@@ -247,24 +247,32 @@ def _build_precompile_batch(
     batch.scheme.atom_to_token_idx_map.copy_(atom_to_token.unsqueeze(0))
     batch.scheme.atom_to_chain_id.zero_()
 
-    msa_row_offset = torch.arange(msa_depth, device=device, dtype=torch.long).unsqueeze(1)
+    msa_row_offset = torch.arange(msa_depth, device=device, dtype=torch.long).unsqueeze(
+        1
+    )
     msa_sequences = (seq_token_type.unsqueeze(0) + msa_row_offset).remainder(20)
     batch.msa.aligned_sequences.copy_(msa_sequences.unsqueeze(0))
     batch.msa.mask = torch.ones_like(batch.msa.mask, dtype=torch.float32)
     batch.msa.has_deletion = torch.zeros_like(batch.msa.has_deletion, dtype=torch.int32)
-    msa_deletion = torch.linspace(
-        0.0,
-        1.0,
-        msa_depth,
-        device=device,
-        dtype=torch.float32,
-    ).unsqueeze(1).expand(-1, n_tokens)
+    msa_deletion = (
+        torch.linspace(
+            0.0,
+            1.0,
+            msa_depth,
+            device=device,
+            dtype=torch.float32,
+        )
+        .unsqueeze(1)
+        .expand(-1, n_tokens)
+    )
     batch.msa.deletion_value = msa_deletion.unsqueeze(0).to(torch.float64)
     batch.msa.profile.copy_(
         torch.nn.functional.one_hot(
             seq_token_type,
             num_classes=num_res_class,
-        ).to(torch.float32).unsqueeze(0),
+        )
+        .to(torch.float32)
+        .unsqueeze(0),
     )
     batch.msa.deletion_mean.copy_(msa_deletion.mean(dim=0, keepdim=True))
 
@@ -310,8 +318,7 @@ def _warmup_bucket_shapes(client: Client, cfg: Config) -> None:
     rng_state = _capture_rng_state(raw_model)
     was_training = client.model.training
     param_snapshot = {
-        name: p.detach().to("cpu", copy=True)
-        for name, p in raw_model.named_parameters()
+        name: p.detach().to("cpu", copy=True) for name, p in raw_model.named_parameters()
     }
 
     def _to_cpu_copy(obj):  # noqa: ANN001, ANN202
@@ -612,7 +619,7 @@ def train(  # noqa: PLR0912, PLR0915
     # per-module 768 x num_augment footprint is visible even when a later module OOMs.
     if os.getenv("MW_MEM_PROFILE", "0").strip().lower() in {"1", "true", "yes", "on"}:
         _raw = _find_recycle_model(client.model)
-        _GB = 1024 ** 3
+        _GB = 1024**3
 
         def _mk_memhook(nm, mod):  # noqa: ANN001, ANN202
             def _pre(m, inp):  # noqa: ANN001, ANN202
@@ -633,7 +640,12 @@ def train(  # noqa: PLR0912, PLR0915
 
         for _nm, _mod in _raw.diffusion_module.named_children():
             _mk_memhook("diffusion." + _nm, _mod)
-        for _nm in ("input_feature_embedder", "msa_module", "pairformer_blocks", "temp_embedder"):
+        for _nm in (
+            "input_feature_embedder",
+            "msa_module",
+            "pairformer_blocks",
+            "temp_embedder",
+        ):
             _m = getattr(_raw, _nm, None)
             if _m is not None:
                 _mk_memhook("trunk." + _nm, _m)
@@ -645,14 +657,20 @@ def train(  # noqa: PLR0912, PLR0915
     # compile-timeout guard so register-spill "monster" configs (5-20 min ptxas at 768) get
     # killed at 60s instead of stalling the run. Then flush the cache and exit WITHOUT training.
     _capture_cache = os.getenv("MW_CAPTURE_CACHE", "0").strip().lower() in {
-        "1", "true", "yes", "on",
+        "1",
+        "true",
+        "yes",
+        "on",
     }
     # MW_COMPILE_TIMEOUT=1 (without capture-build): install ONLY the fork+SIGKILL compile
     # guard so 768 warmup autotune bounds each monster config to 60s and TRAINING CONTINUES
     # (no flush/exit). Lets a run get past the uncached-768 monster-compile stall without a
     # prebuilt cache. (capture.install patches _bench too — harmless overhead, never flushed.)
     _compile_timeout = os.getenv("MW_COMPILE_TIMEOUT", "0").strip().lower() in {
-        "1", "true", "yes", "on",
+        "1",
+        "true",
+        "yes",
+        "on",
     }
     if _capture_cache or _compile_timeout:
         from miniworld_engine.autotune import capture
@@ -671,13 +689,17 @@ def train(  # noqa: PLR0912, PLR0915
     if os.getenv("MW_WARMUP", "0").strip().lower() in {"1", "true", "yes", "on"}:
         _warmup_bucket_shapes(client, cfg)
     else:
-        client.logger.info("[warmup] skipped (phase 3 default; set MW_WARMUP=1 to enable)")
+        client.logger.info(
+            "[warmup] skipped (phase 3 default; set MW_WARMUP=1 to enable)"
+        )
 
     if _capture_cache:
         from miniworld_engine.autotune import capture
 
         capture.flush(top_k=5)
-        client.logger.info("[capture] flushed autotune cache; exiting (cache-build mode)")
+        client.logger.info(
+            "[capture] flushed autotune cache; exiting (cache-build mode)"
+        )
         return
 
     world_size = fabric.world_size

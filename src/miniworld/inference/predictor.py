@@ -52,11 +52,11 @@ class PredictorOutput:
     cif-writing / trajectory-dumping code.
     """
 
-    atom_pos_pred: torch.Tensor              # (n_samples, L_atom, 3)
-    distogram_logit: torch.Tensor            # (B, L, L, n_distogram_bins)
-    model_traj: np.ndarray                   # (n_samples, T, L_atom, 3)
-    inter_traj: np.ndarray                   # (n_samples, T, L_atom, 3)
-    input_traj: np.ndarray                   # (n_samples, T, L_atom, 3)
+    atom_pos_pred: torch.Tensor  # (n_samples, L_atom, 3)
+    distogram_logit: torch.Tensor  # (B, L, L, n_distogram_bins)
+    model_traj: np.ndarray  # (n_samples, T, L_atom, 3)
+    inter_traj: np.ndarray  # (n_samples, T, L_atom, 3)
+    input_traj: np.ndarray  # (n_samples, T, L_atom, 3)
 
 
 class Predictor:
@@ -81,6 +81,7 @@ class Predictor:
     def from_client(cls, client: "Client") -> "Predictor":
         """Wrap an already-loaded Client (EMA shadow, fabric, compile all OK)."""
         from miniworld.models.miniworld.model import Model
+
         raw_model = cast("Model", getattr(client.model, "module", client.model))
         return cls(
             model=raw_model,
@@ -126,6 +127,7 @@ class Predictor:
         start_sigma_y: float | None,
     ) -> StepSchedule:
         from miniworld.diffusion.decoupled_xpred.solver import XPredDecoupledSolver
+
         # We pass a transient solver instance only so build_step_schedule
         # can read its gamma_0 / gamma_min / step_scale config — it does
         # not call the solver's step().
@@ -210,6 +212,10 @@ class Predictor:
             atom_pos_pred=y_final,
             distogram_logit=cache.distogram_logit,
             model_traj=np.stack(hat_np, axis=1) if hat_np else np.zeros((n_samples, 0)),
-            inter_traj=np.stack(inter_np, axis=1) if inter_np else np.zeros((n_samples, 0)),
-            input_traj=np.stack(input_np, axis=1) if input_np else np.zeros((n_samples, 0)),
+            inter_traj=np.stack(inter_np, axis=1)
+            if inter_np
+            else np.zeros((n_samples, 0)),
+            input_traj=np.stack(input_np, axis=1)
+            if input_np
+            else np.zeros((n_samples, 0)),
         )

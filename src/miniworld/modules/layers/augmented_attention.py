@@ -104,11 +104,15 @@ class AugmentedAttentionPairBias(nn.Module):
         gate_cls = MPLinear if mp_full else Linear
         out_cls = MPLinear if mp_full else Linear
         self.to_gate = gate_cls(
-            d_single, d_hidden * n_head, bias=False,
+            d_single,
+            d_hidden * n_head,
+            bias=False,
             init="normal" if mp_full else "gating",
         )
         self.to_out = out_cls(
-            d_hidden * n_head, d_single, bias=False,
+            d_hidden * n_head,
+            d_single,
+            bias=False,
             init="normal" if mp_full else "zero",
         )
 

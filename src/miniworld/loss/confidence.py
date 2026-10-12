@@ -83,7 +83,7 @@ def per_atom_lddt(
     gt = gt_atom_pos.to(device=device, dtype=torch.float32)
     mask = atom_mask.to(device=device, dtype=torch.bool)
 
-    pred_dist = torch.cdist(pred, pred)                # [N, L, L]
+    pred_dist = torch.cdist(pred, pred)  # [N, L, L]
     gt_dist = torch.cdist(gt, gt)  # [L, L] or [B, L, L]
 
     pair_mask = mask[..., :, None] & mask[..., None, :]
@@ -91,8 +91,11 @@ def per_atom_lddt(
     # Per-neighbor (column j) inclusion radius: 30 Å for NA neighbors, else 15 Å.
     if atom_is_nuc is not None:
         is_nuc = atom_is_nuc.to(device=device, dtype=torch.bool)
-        radius_j = torch.where(is_nuc, gt_dist.new_tensor(nuc_max_distance),
-                               gt_dist.new_tensor(max_distance))  # [L]
+        radius_j = torch.where(
+            is_nuc,
+            gt_dist.new_tensor(nuc_max_distance),
+            gt_dist.new_tensor(max_distance),
+        )  # [L]
         pair_mask = pair_mask & (gt_dist < radius_j[..., None, :])
     else:
         pair_mask = pair_mask & (gt_dist < max_distance)
@@ -101,15 +104,15 @@ def per_atom_lddt(
         is_lig = atom_is_ligand.to(device=device, dtype=torch.bool)
         pair_mask = pair_mask & ~(is_lig[..., :, None] & is_lig[..., None, :])
 
-    delta = torch.abs(pred_dist - gt_dist)             # [N, L, L]
+    delta = torch.abs(pred_dist - gt_dist)  # [N, L, L]
     bins = torch.tensor(distance_bins, dtype=torch.float32, device=device)
     cond = (delta.unsqueeze(-1) <= bins) & pair_mask.unsqueeze(-1)  # [N, L, L, K]
-    num_in_bin = cond.sum(dim=-2)                       # [N, L, K]
-    total = pair_mask.sum(dim=-1, keepdim=True).float() # [L, 1]
-    frac = num_in_bin.float() / (total + 1e-8)          # [N, L, K]
-    lddt = frac.mean(dim=-1)                            # [N, L]
+    num_in_bin = cond.sum(dim=-2)  # [N, L, K]
+    total = pair_mask.sum(dim=-1, keepdim=True).float()  # [L, 1]
+    frac = num_in_bin.float() / (total + 1e-8)  # [N, L, K]
+    lddt = frac.mean(dim=-1)  # [N, L]
 
-    valid = mask & (pair_mask.sum(dim=-1) > 0)          # [L]
+    valid = mask & (pair_mask.sum(dim=-1) > 0)  # [L]
     return lddt, valid
 
 
@@ -133,7 +136,7 @@ def pde_target_bins(
 ) -> tuple[Int[torch.Tensor, "N L L"], Bool[torch.Tensor, "N L L"]]:
     """|d_ij^pred - d_ij^gt| bucketed over [0, ``pde_max``], with pair-valid mask."""
     pred_d = torch.cdist(pred_rep_pos, pred_rep_pos)  # [N, L, L]
-    gt_d = torch.cdist(gt_rep_pos, gt_rep_pos)        # [N, L, L]
+    gt_d = torch.cdist(gt_rep_pos, gt_rep_pos)  # [N, L, L]
     err = torch.abs(pred_d - gt_d)
     step = pde_max / n_bins
     bins = (err / step).clamp(0, n_bins - 1).long()
@@ -161,7 +164,11 @@ def token_frames(
     frame_atom_pos: Float[torch.Tensor, "N L 3 3"],
     frame_valid: torch.Tensor,
     colinear_cos: float = 0.9063,  # cos(25 deg): AF3 near-colinear invalidity
-) -> tuple[Float[torch.Tensor, "N L 3 3"], Float[torch.Tensor, "N L 3"], Bool[torch.Tensor, "N L"]]:
+) -> tuple[
+    Float[torch.Tensor, "N L 3 3"],
+    Float[torch.Tensor, "N L 3"],
+    Bool[torch.Tensor, "N L"],
+]:
     """Build per-token rigid frames (R, t) from three atoms (Gram-Schmidt).
 
     ``frame_atom_pos[..., k, :]`` are the k=0,1,2 frame atoms — (N, CA, C) for
@@ -204,18 +211,19 @@ def pae_target_bins(
     """
     r_pred, t_pred, fvalid_pred = pred_frame
     r_gt, t_gt, fvalid_gt = gt_frame
+
     # x_j in frame i: R_i^T (x_j - t_i). rep pos [N,L,3] -> broadcast j over i.
     def _local(rot: torch.Tensor, t: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
-        d = x[:, None, :, :] - t[:, :, None, :]        # [N, Li, Lj, 3]
+        d = x[:, None, :, :] - t[:, :, None, :]  # [N, Li, Lj, 3]
         # rot columns are the basis; R^T d = einsum over basis axis
         return torch.einsum("nikc,nijc->nijk", rot, d)  # [N, Li, Lj, 3]
 
     local_pred = _local(r_pred, t_pred, pred_rep_pos)
     local_gt = _local(r_gt, t_gt, gt_rep_pos)
-    err = (local_pred - local_gt).norm(dim=-1)          # [N, Li, Lj]
+    err = (local_pred - local_gt).norm(dim=-1)  # [N, Li, Lj]
     step = pae_max / n_bins
     bins = (err / step).clamp(0, n_bins - 1).long()
-    frame_valid = (fvalid_pred & fvalid_gt)             # [N, L] on i
+    frame_valid = fvalid_pred & fvalid_gt  # [N, L] on i
     pair_mask = frame_valid[:, :, None] & tok_valid[:, None, :]
     return bins, pair_mask
 
@@ -224,9 +232,9 @@ def pae_target_bins(
 # Cross-entropy losses (masked)
 # ---------------------------------------------------------------------------
 def masked_ce(
-    logits: torch.Tensor,        # [..., C]
-    target: torch.Tensor,        # [...]
-    mask: torch.Tensor,          # [...]
+    logits: torch.Tensor,  # [..., C]
+    target: torch.Tensor,  # [...]
+    mask: torch.Tensor,  # [...]
 ) -> torch.Tensor:
     """Mean cross-entropy over masked positions."""
     c = logits.shape[-1]

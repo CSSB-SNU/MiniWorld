@@ -53,14 +53,16 @@ class MSA:
             else:
                 order = np.argsort(species_arr, kind="stable")
                 sorted_sp = species_arr[order]
-                boundaries = np.concatenate((
-                    np.array([0], dtype=np.int64),
-                    np.nonzero(sorted_sp[1:] != sorted_sp[:-1])[0] + 1,
-                    np.array([n], dtype=np.int64),
-                ))
+                boundaries = np.concatenate(
+                    (
+                        np.array([0], dtype=np.int64),
+                        np.nonzero(sorted_sp[1:] != sorted_sp[:-1])[0] + 1,
+                        np.array([n], dtype=np.int64),
+                    )
+                )
                 uniques = sorted_sp[boundaries[:-1]].tolist()
                 self.species_to_idx = {
-                    uniques[i]: order[boundaries[i]:boundaries[i + 1]]
+                    uniques[i]: order[boundaries[i] : boundaries[i + 1]]
                     for i in range(len(uniques))
                 }
 
@@ -358,9 +360,9 @@ class ComplexMSA:
             # vectors per chain remain row-aligned, so the existing
             # downstream layout (one column-block per chain) just works.
             covered = {ii for g in self.condition_groups for ii in g}
-            groups_with_singletons = [
-                list(g) for g in self.condition_groups
-            ] + [[ii] for ii in MSAs if ii not in covered]
+            groups_with_singletons = [list(g) for g in self.condition_groups] + [
+                [ii] for ii in MSAs if ii not in covered
+            ]
             per_chain_indices: dict[int, list[int]] = {ii: [] for ii in MSAs}
             paired_num_of_seqs = 0
             for group in groups_with_singletons:
@@ -372,7 +374,8 @@ class ComplexMSA:
                     # Singleton group: no species pairing possible.
                     continue
                 grp_indices, _grp_species, grp_n = self._pairing_MSAs(
-                    group_msas, max_paired_depth=budget,
+                    group_msas,
+                    max_paired_depth=budget,
                 )
                 if grp_n <= 0:
                     continue
@@ -383,11 +386,14 @@ class ComplexMSA:
                         per_chain_indices[ii].extend([-1] * grp_n)
                 paired_num_of_seqs += grp_n
             paired_msa_indices = {
-                key: np.concatenate([
-                    np.asarray(query_indices[key], dtype=int),
-                    np.asarray(indices, dtype=int)
-                    if indices else np.empty((0,), dtype=int),
-                ])
+                key: np.concatenate(
+                    [
+                        np.asarray(query_indices[key], dtype=int),
+                        np.asarray(indices, dtype=int)
+                        if indices
+                        else np.empty((0,), dtype=int),
+                    ]
+                )
                 for key, indices in per_chain_indices.items()
             }
             paired_num_of_seqs += 1
@@ -411,9 +417,9 @@ class ComplexMSA:
             # by the tail. Groups fill in order; row indices grow until the
             # max_msa_depth budget is exhausted.
             covered = {ii for g in self.condition_groups for ii in g}
-            groups_with_singletons = [
-                list(g) for g in self.condition_groups
-            ] + [[ii] for ii in MSAs if ii not in covered]
+            groups_with_singletons = [list(g) for g in self.condition_groups] + [
+                [ii] for ii in MSAs if ii not in covered
+            ]
             tail_indices: dict[int, list[int]] = {ii: [] for ii in MSAs}
             total_budget = max(0, max_msa_depth - paired_num_of_seqs)
             # Fair-share the unpaired tail across groups so no single group
@@ -456,10 +462,12 @@ class ComplexMSA:
             # branch already pads in the same way (see below).
             final_msa_indices = {}
             for key in MSAs:
-                combined = np.concatenate([
-                    paired_msa_indices[key],
-                    np.asarray(tail_indices[key], dtype=int),
-                ])
+                combined = np.concatenate(
+                    [
+                        paired_msa_indices[key],
+                        np.asarray(tail_indices[key], dtype=int),
+                    ]
+                )
                 if combined.shape[0] < max_msa_depth:
                     pad = np.full(max_msa_depth - combined.shape[0], -1, dtype=int)
                     combined = np.concatenate([combined, pad])
@@ -483,7 +491,9 @@ class ComplexMSA:
                     if msa_depth < max_msa_depth:
                         missing_indices += [-1] * (max_msa_depth - msa_depth)
                     else:
-                        missing_indices = missing_indices[: max_msa_depth - paired_num_of_seqs]
+                        missing_indices = missing_indices[
+                            : max_msa_depth - paired_num_of_seqs
+                        ]
                 missing_indices = np.array(missing_indices)
                 final_msa_indices[key] = np.concatenate(
                     [paired_msa_indices[key], missing_indices],
@@ -535,9 +545,7 @@ class ComplexMSA:
         full_del = np.concatenate(del_blocks, axis=1)
 
         query_row = full_seq[0]
-        skip = (full_seq == query_row).all(axis=1) | (
-            full_seq == GAP_IDX
-        ).all(axis=1)
+        skip = (full_seq == query_row).all(axis=1) | (full_seq == GAP_IDX).all(axis=1)
         skip[0] = False  # row 0 defines the query and is always kept
         filtered_paired_num_of_seqs = paired_num_of_seqs - int(
             skip[:paired_num_of_seqs].sum(),

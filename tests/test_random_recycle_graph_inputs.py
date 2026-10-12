@@ -116,9 +116,12 @@ def test_mixed_workspace_configuration_is_rejected(monkeypatch):
 
 def diffusion_config(recycles=1, cb=True):
     return SimpleNamespace(
-        model=SimpleNamespace(trunk=SimpleNamespace(diffusion=object(), n_recycle_max=recycles)),
-        loss=SimpleNamespace(distogram_loss=0.25, distogram_cb_target=cb,
-                             distogram_interchain_weight=2.0),
+        model=SimpleNamespace(
+            trunk=SimpleNamespace(diffusion=object(), n_recycle_max=recycles)
+        ),
+        loss=SimpleNamespace(
+            distogram_loss=0.25, distogram_cb_target=cb, distogram_interchain_weight=2.0
+        ),
     )
 
 

@@ -6,6 +6,7 @@ know before picking a sampling batch size: the largest bucket decides whether au
 
 CPU only, and parallel -- run it as a batch job, not on the login node.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -24,29 +25,46 @@ FB = Path("/home/psk6950/data/foldbench")
 def one(tid: str) -> tuple[str, int, int, int, int] | None:
     from miniworld.data.inference.build import build_inference_batch
     from miniworld.data.inference.spec import InferenceSpec
+
     p = FB / "inputs" / tid / "data.yaml"
     if not p.exists():
         return None
     try:
         spec = InferenceSpec.from_yaml(p)
         spec = spec.model_copy(update={"no_pairing_msa": True})
-        b = build_inference_batch(spec, max_msa_depth=2048, missing_policy="query",
-                                  seed=0, msa_subsample=True)
-        return (tid, int(b.token_length), int(b.atom_length),
-                int(b.msa_depth), int(b.template_number))
+        b = build_inference_batch(
+            spec, max_msa_depth=2048, missing_policy="query", seed=0, msa_subsample=True
+        )
+        return (
+            tid,
+            int(b.token_length),
+            int(b.atom_length),
+            int(b.msa_depth),
+            int(b.template_number),
+        )
     except Exception:  # noqa: BLE001 - one bad target must not kill the scan
         return (tid, -1, -1, -1, -1)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--index", type=Path, default=Path("scripts/slurm/phase2b/foldbench_full_index.txt"))
-    ap.add_argument("--out", type=Path, default=Path("scripts/slurm/phase2b/foldbench_shapes.csv"))
-    ap.add_argument("--workers", type=int, default=int(os.environ.get("SLURM_CPUS_PER_TASK", "32")))
+    ap.add_argument(
+        "--index",
+        type=Path,
+        default=Path("scripts/slurm/phase2b/foldbench_full_index.txt"),
+    )
+    ap.add_argument(
+        "--out", type=Path, default=Path("scripts/slurm/phase2b/foldbench_shapes.csv")
+    )
+    ap.add_argument(
+        "--workers", type=int, default=int(os.environ.get("SLURM_CPUS_PER_TASK", "32"))
+    )
     args = ap.parse_args()
 
     from run_miniworld_diffusion_inference import (  # noqa: PLC0415
-        _ATOM_BUCKETS, _TOKEN_BUCKETS, _bucket,
+        _ATOM_BUCKETS,
+        _TOKEN_BUCKETS,
+        _bucket,
     )
 
     ids = [ln.strip() for ln in args.index.read_text().splitlines() if ln.strip()]
@@ -57,8 +75,17 @@ def main() -> None:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["target", "tokens", "atoms", "msa_depth", "n_template",
-                    "tok_bucket", "atom_bucket"])
+        w.writerow(
+            [
+                "target",
+                "tokens",
+                "atoms",
+                "msa_depth",
+                "n_template",
+                "tok_bucket",
+                "atom_bucket",
+            ]
+        )
         for tid, t, a, m, nt in rows:
             tb = _bucket(t, _TOKEN_BUCKETS) if t > 0 else -1
             ab = _bucket(a, _ATOM_BUCKETS) if a > 0 else -1
@@ -68,10 +95,15 @@ def main() -> None:
     for r in bad[:10]:
         print("   FAILED", r[0])
 
-    hist = Counter((_bucket(t, _TOKEN_BUCKETS), _bucket(a, _ATOM_BUCKETS))
-                   for _, t, a, _m, _nt in rows if t > 0)
+    hist = Counter(
+        (_bucket(t, _TOKEN_BUCKETS), _bucket(a, _ATOM_BUCKETS))
+        for _, t, a, _m, _nt in rows
+        if t > 0
+    )
     print(f"\n{len(hist)} distinct (token, atom) buckets:")
-    print("  %8s %8s %8s   %s" % ("tok_bkt", "atom_bkt", "targets", "largest real target"))
+    print(
+        "  %8s %8s %8s   %s" % ("tok_bkt", "atom_bkt", "targets", "largest real target")
+    )
     big = {}
     for _tid, t, a, _m, _nt in rows:
         if t < 0:

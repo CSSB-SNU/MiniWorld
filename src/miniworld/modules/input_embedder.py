@@ -1,4 +1,3 @@
-
 import torch
 from einops import rearrange
 from jaxtyping import Bool, Float, Int
@@ -344,9 +343,8 @@ class InputFeatureEmbedder(nn.Module):
         # Expand batch_idx to (B, n_bond) BEFORE masking so the per-bond batch
         # identity survives the flatten. Without this, batch_idx stays (B, 1)
         # and broadcasts every surviving bond into every batch row.
-        batch_idx = (
-            torch.arange(batch_size, device=device)[:, None]
-            .expand_as(token_bond_i)
+        batch_idx = torch.arange(batch_size, device=device)[:, None].expand_as(
+            token_bond_i
         )
         batch_idx = batch_idx[mask]
         token_bond_i = token_bond_i[mask]
@@ -373,7 +371,10 @@ class InputFeatureEmbedder(nn.Module):
         139-wide fp32 one-hot of the relative-position features (82 MB at 384 tokens) and does its sums in exact fp32."""
         import os
 
-        if os.environ.get("MINIWORLD_FUSED_PAIR_INIT", "1") == "0" or not token_left.is_cuda:
+        if (
+            os.environ.get("MINIWORLD_FUSED_PAIR_INIT", "1") == "0"
+            or not token_left.is_cuda
+        ):
             return None
         try:
             from miniworld_engine.kernels.token_pair_init import refusal, token_pair_init
@@ -382,11 +383,32 @@ class InputFeatureEmbedder(nn.Module):
 
         rel = self.relative_position_embedder
         w_rel, w_bond = rel.embed_rel_pos.weight, self.add_token_bond.weight
-        if refusal(token_left, token_right, w_rel, w_bond, structure.token_bond_feat, r_max=rel.r_max, s_max=rel.s_max) is not None:
+        if (
+            refusal(
+                token_left,
+                token_right,
+                w_rel,
+                w_bond,
+                structure.token_bond_feat,
+                r_max=rel.r_max,
+                s_max=rel.s_max,
+            )
+            is not None
+        ):
             return None
         return token_pair_init(
-            token_left, token_right, w_rel, w_bond, scheme.token_asym_id, scheme.token_residue_idx, scheme.token_idx,
-            scheme.token_entity_id, scheme.token_sym_id, structure.token_bond_feat, r_max=rel.r_max, s_max=rel.s_max,
+            token_left,
+            token_right,
+            w_rel,
+            w_bond,
+            scheme.token_asym_id,
+            scheme.token_residue_idx,
+            scheme.token_idx,
+            scheme.token_entity_id,
+            scheme.token_sym_id,
+            structure.token_bond_feat,
+            r_max=rel.r_max,
+            s_max=rel.s_max,
         )
 
     def forward(
@@ -439,7 +461,8 @@ class InputFeatureEmbedder(nn.Module):
         # carry ``token_bond_feat``.
         if structure.token_bond_feat is not None:
             bond_onehot = torch.nn.functional.one_hot(
-                structure.token_bond_feat.long(), num_classes=2,
+                structure.token_bond_feat.long(),
+                num_classes=2,
             )
         else:
             bond_onehot = self._gen_bond_feature(structure)

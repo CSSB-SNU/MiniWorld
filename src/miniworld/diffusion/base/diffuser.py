@@ -25,6 +25,7 @@ def _expand_to_trailing_dims(
         raise ValueError(msg)
     return value.reshape(*value.shape, *((1,) * (target.ndim - value.ndim)))
 
+
 class Diffuser(ABC):
     """Base class for defining a diffusion model. (use solver when sampling)."""
 
@@ -92,4 +93,3 @@ class Diffuser(ABC):
     @abstractmethod
     def cal_loss(self, *args: Any, **kwargs: Any) -> Float[torch.Tensor, 1]:
         """Compute loss between model output and ground truth."""
-

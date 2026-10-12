@@ -143,7 +143,9 @@ class DiffusionModel(MiniSWAModel):
 
         # Pair-only trunk has no single track: derive the diffusion single
         # conditioning from the trunk input single embedding.
-        self.dit_dtype = torch.bfloat16 if config.diffusion.dtype == "bf16" else torch.float32
+        self.dit_dtype = (
+            torch.bfloat16 if config.diffusion.dtype == "bf16" else torch.float32
+        )
         self.to_token_single_trunk = Linear(
             config.shared.d_single_token_input,
             config.shared.d_single,
@@ -417,9 +419,13 @@ class ModelWrapper(nn.Module):
             msg = "Conditioned forward is already done."
             raise ValueError(msg)
         with model_autocast(self.model):
-            self._prepare_condition(msa, template, reference, scheme, sequence, structure)
+            self._prepare_condition(
+                msa, template, reference, scheme, sequence, structure
+            )
 
-    def _prepare_condition(self, msa, template, reference, scheme, sequence, structure) -> None:
+    def _prepare_condition(
+        self, msa, template, reference, scheme, sequence, structure
+    ) -> None:
         token_single_input, token_pair_trunk = self.model.condition_forward(
             msa,
             reference,
@@ -436,8 +442,11 @@ class ModelWrapper(nn.Module):
             token_pair_trunk = token_pair_trunk.clone()
         token_single_trunk = self.model.to_token_single_trunk(token_single_input)
         # The conditioning's pair half does not depend on the noise level: once per structure.
-        token_pair_cond = self.model.diffusion_module.diffusion_conditioning.pair_conditioning(
-            scheme, token_pair_trunk,
+        token_pair_cond = (
+            self.model.diffusion_module.diffusion_conditioning.pair_conditioning(
+                scheme,
+                token_pair_trunk,
+            )
         )
         self.conditioned_forwarded = True
         self.condition = {
@@ -466,7 +475,7 @@ class ModelWrapper(nn.Module):
         with model_autocast(self.model):
             x_update = self._denoise(x_t, x_mask, t_emb)
         if is_bf16_mixed(self.model):
-            x_update = x_update.float()     # the solver's arithmetic stays fp32
+            x_update = x_update.float()  # the solver's arithmetic stays fp32
         return x_update.squeeze(1)  # (A=N_str, B=1, L, 3) -> (N_str, L, 3)
 
     def _denoise(self, x_t, x_mask, t_emb):

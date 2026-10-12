@@ -126,8 +126,12 @@ class AF3TemplateEmbedder(nn.Module):
         self.proj_query = Linear(d_pair, num_channels, bias=False, init="default")
         self.proj_dgram = Linear(dgram_bins, num_channels, bias=False, init="default")
         self.proj_pb_mask = Linear(1, num_channels, bias=False, init="default")
-        self.proj_aatype_i = Linear(num_res_class, num_channels, bias=False, init="default")
-        self.proj_aatype_j = Linear(num_res_class, num_channels, bias=False, init="default")
+        self.proj_aatype_i = Linear(
+            num_res_class, num_channels, bias=False, init="default"
+        )
+        self.proj_aatype_j = Linear(
+            num_res_class, num_channels, bias=False, init="default"
+        )
         self.proj_unit_vec = Linear(3, num_channels, bias=False, init="default")
         self.proj_bb_mask = Linear(1, num_channels, bias=False, init="default")
 
@@ -168,7 +172,9 @@ class AF3TemplateEmbedder(nn.Module):
             and ImplementationType[implementation] == ImplementationType.MINIWORLD_ENGINE
             and num_channels == 64
         )
-        self._batch_limit = _engine_batch_limit()  # asked once, here: a traced forward must not import or query the engine
+        self._batch_limit = (
+            _engine_batch_limit()
+        )  # asked once, here: a traced forward must not import or query the engine
         # The four small per-pair projections as ONE linear map (bf16 only, see ``forward``).
         self._fuse_projections = True
 
@@ -198,13 +204,15 @@ class AF3TemplateEmbedder(nn.Module):
 
         # Query pair + intra-chain mask are shared across templates (per-B).
         query = self.proj_query(self.ln_query(pair))  # [B, L, L, C]
-        multichain = (
-            token_asym_id[:, :, None] == token_asym_id[:, None, :]
-        ).to(dtype)[..., None]  # [B, L, L, 1]
+        multichain = (token_asym_id[:, :, None] == token_asym_id[:, None, :]).to(dtype)[
+            ..., None
+        ]  # [B, L, L, 1]
 
         summed = query.new_zeros((b, query.shape[1], query.shape[2], self.num_channels))
         batched = (
-            self._batch_templates and dtype == torch.bfloat16 and 1 < n_temp <= self._batch_limit
+            self._batch_templates
+            and dtype == torch.bfloat16
+            and 1 < n_temp <= self._batch_limit
         )
         acts: list[torch.Tensor] = []
         fuse = self._fuse_projections and dtype == torch.bfloat16
@@ -216,7 +224,12 @@ class AF3TemplateEmbedder(nn.Module):
             # template. The parameters (and so the state dict) are unchanged. Not in fp32: there the aligned GEMM would run
             # on tensor cores under the "medium" matmul precision the training scripts set, the misaligned ones do not.
             w_feat = torch.cat(
-                [self.proj_dgram.weight, self.proj_pb_mask.weight, self.proj_unit_vec.weight, self.proj_bb_mask.weight],
+                [
+                    self.proj_dgram.weight,
+                    self.proj_pb_mask.weight,
+                    self.proj_unit_vec.weight,
+                    self.proj_bb_mask.weight,
+                ],
                 dim=1,
             )
             w_feat = F.pad(w_feat, (0, -w_feat.shape[1] % 8)).to(dtype)
@@ -233,12 +246,18 @@ class AF3TemplateEmbedder(nn.Module):
             bb_mask = template.bb_mask[:, t] & template.mask[:, t, None]  # [B, L]
 
             dgram = _dgram_from_positions(
-                cb, self._dgram_lower, self._dgram_upper,
+                cb,
+                self._dgram_lower,
+                self._dgram_upper,
             ).to(dtype)
-            pb2d = (cb_mask[:, :, None] & cb_mask[:, None, :]).to(dtype)[..., None] * multichain
+            pb2d = (cb_mask[:, :, None] & cb_mask[:, None, :]).to(dtype)[
+                ..., None
+            ] * multichain
             aatype = F.one_hot(res_type, self.num_res_class).to(dtype)  # [B, L, C_res]
             unit_vec = _backbone_unit_vectors(bb).to(dtype)  # [B, L, L, 3]
-            bb2d = (bb_mask[:, :, None] & bb_mask[:, None, :]).to(dtype)[..., None] * multichain
+            bb2d = (bb_mask[:, :, None] & bb_mask[:, None, :]).to(dtype)[
+                ..., None
+            ] * multichain
 
             # AF3 masks the geometric features by the pseudo-beta / backbone masks
             # BEFORE projection: a missing residue's coord is nan_to_num->origin, so
@@ -278,9 +297,12 @@ class AF3TemplateEmbedder(nn.Module):
 
         if batched:
             # [T * B, L, L, C] templates-major: one pair stack over all templates, then the sum over T (same fixed-count average below)
-            stacked = self.ln_out(self.template_pairformer(
-                torch.cat(acts, dim=0), mask=token_mask.repeat(n_temp, 1),
-            ))
+            stacked = self.ln_out(
+                self.template_pairformer(
+                    torch.cat(acts, dim=0),
+                    mask=token_mask.repeat(n_temp, 1),
+                )
+            )
             summed = summed + stacked.view(n_temp, b, *stacked.shape[1:]).sum(dim=0)
 
         n_temp_div = template.mask.shape[1]

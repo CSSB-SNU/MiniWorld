@@ -24,11 +24,35 @@ from pathlib import Path
 
 # canonical one-letter for the standard monomers; anything else is X
 ONE = {
-    "ALA": "A", "ARG": "R", "ASN": "N", "ASP": "D", "CYS": "C", "GLN": "Q", "GLU": "E",
-    "GLY": "G", "HIS": "H", "ILE": "I", "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F",
-    "PRO": "P", "SER": "S", "THR": "T", "TRP": "W", "TYR": "Y", "VAL": "V",
-    "A": "A", "C": "C", "G": "G", "U": "U",
-    "DA": "A", "DC": "C", "DG": "G", "DT": "T", "DU": "U",
+    "ALA": "A",
+    "ARG": "R",
+    "ASN": "N",
+    "ASP": "D",
+    "CYS": "C",
+    "GLN": "Q",
+    "GLU": "E",
+    "GLY": "G",
+    "HIS": "H",
+    "ILE": "I",
+    "LEU": "L",
+    "LYS": "K",
+    "MET": "M",
+    "PHE": "F",
+    "PRO": "P",
+    "SER": "S",
+    "THR": "T",
+    "TRP": "W",
+    "TYR": "Y",
+    "VAL": "V",
+    "A": "A",
+    "C": "C",
+    "G": "G",
+    "U": "U",
+    "DA": "A",
+    "DC": "C",
+    "DG": "G",
+    "DT": "T",
+    "DU": "U",
 }
 
 
@@ -40,7 +64,8 @@ def build_blocks(text: str) -> str | None:
     m = re.search(
         r"#\nloop_\n_entity_poly\.entity_id\s*\n_entity_poly\.type\s*\n"
         r"_entity_poly\.pdbx_strand_id\s*\n(.*?)\n#\n",
-        text, re.S,
+        text,
+        re.S,
     )
     if m is None:
         return None
@@ -50,7 +75,8 @@ def build_blocks(text: str) -> str | None:
     ms = re.search(
         r"#\nloop_\n_entity_poly_seq\.entity_id\s*\n_entity_poly_seq\.num\s*\n"
         r"_entity_poly_seq\.mon_id\s*\n_entity_poly_seq\.hetero\s*\n(.*?)\n#\n",
-        text, re.S,
+        text,
+        re.S,
     )
     if ms is None:
         return None
@@ -62,10 +88,13 @@ def build_blocks(text: str) -> str | None:
     # _chem_comp: without it OST cannot tell that a modified residue is peptide- or
     # nucleotide-linking, reads its one-letter code as "?", and rejects the file even
     # when the sequence strings above are present. The ground truth always carries it.
-    link = {"polypeptide(L)": "L-peptide linking", "polypeptide(D)": "D-peptide linking",
-            "polyribonucleotide": "RNA linking",
-            "polydeoxyribonucleotide": "DNA linking",
-            "polydeoxyribonucleotide/polyribonucleotide hybrid": "DNA linking"}
+    link = {
+        "polypeptide(L)": "L-peptide linking",
+        "polypeptide(D)": "D-peptide linking",
+        "polyribonucleotide": "RNA linking",
+        "polydeoxyribonucleotide": "DNA linking",
+        "polydeoxyribonucleotide/polyribonucleotide hybrid": "DNA linking",
+    }
     comp: dict[str, str] = {}
     for eid, etype, _strand in poly_rows:
         t = link.get(etype.strip("'\""), "L-peptide linking")
@@ -78,9 +107,16 @@ def build_blocks(text: str) -> str | None:
     chem = ["#", "loop_", "_chem_comp.id", "_chem_comp.type", "_chem_comp.mon_nstd_flag"]
     chem += [f"{k} '{v}' {'y' if k in ONE else 'n'}" for k, v in sorted(comp.items())]
 
-    out = ["#", "loop_", "_entity_poly.entity_id", "_entity_poly.type",
-           "_entity_poly.nstd_monomer", "_entity_poly.pdbx_seq_one_letter_code",
-           "_entity_poly.pdbx_seq_one_letter_code_can", "_entity_poly.pdbx_strand_id"]
+    out = [
+        "#",
+        "loop_",
+        "_entity_poly.entity_id",
+        "_entity_poly.type",
+        "_entity_poly.nstd_monomer",
+        "_entity_poly.pdbx_seq_one_letter_code",
+        "_entity_poly.pdbx_seq_one_letter_code_can",
+        "_entity_poly.pdbx_strand_id",
+    ]
     for eid, etype, strand in poly_rows:
         mons = seqs.get(eid, [])
         nstd = "yes" if any(x not in ONE for x in mons) else "no"
@@ -88,8 +124,14 @@ def build_blocks(text: str) -> str | None:
         raw = "".join(ONE.get(x, f"({x})") for x in mons)
         can = "".join(ONE.get(x, "X") for x in mons)
         out += [f"{eid} {etype} {nstd}", f";{raw}", ";", f";{can}", ";", strand]
-    return (text[:m.start()] + "\n".join(chem) + "\n"
-            + "\n".join(out) + "\n#\n" + text[m.end():])
+    return (
+        text[: m.start()]
+        + "\n".join(chem)
+        + "\n"
+        + "\n".join(out)
+        + "\n#\n"
+        + text[m.end() :]
+    )
 
 
 def main() -> None:

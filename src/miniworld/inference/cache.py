@@ -49,31 +49,31 @@ class InferenceCache:
     batch: "Batch"
 
     # --- Trunk outputs (B, ...)
-    token_single_input: torch.Tensor          # (B, L_token, d_single_token_input)
-    token_single_trunk: torch.Tensor          # (B, L_token, d_single)
-    token_pair_trunk: torch.Tensor            # (B, L_token, L_token, d_pair)
-    distogram_logit: torch.Tensor             # (B, L, L, n_distogram_bins)
+    token_single_input: torch.Tensor  # (B, L_token, d_single_token_input)
+    token_single_trunk: torch.Tensor  # (B, L_token, d_single)
+    token_pair_trunk: torch.Tensor  # (B, L_token, L_token, d_pair)
+    distogram_logit: torch.Tensor  # (B, L, L, n_distogram_bins)
 
     # --- DiffusionConditioning, t-independent half
-    token_pair_cond: torch.Tensor             # (B, L_token, L_token, d_pair)
-    token_single_pre_time: torch.Tensor       # (B, L_token, d_single)
+    token_pair_cond: torch.Tensor  # (B, L_token, L_token, d_pair)
+    token_single_pre_time: torch.Tensor  # (B, L_token, d_single)
 
     # --- AtomAttentionEncoder, t/x_t-independent half
     # ``atom_single_cond_base`` already folds in the token->atom gather of
     # ``token_single_to_atom_single_cond(token_single_trunk)``; per step we
     # only need to add ``noisy_to_atom_single_rep(x_t) * x_mask`` on top.
-    atom_single_cond_base: torch.Tensor       # (B, L_atom, d_single_atom)
+    atom_single_cond_base: torch.Tensor  # (B, L_atom, d_single_atom)
     # ``atom_pair`` is the costly hoist: post ``mlp_atom_pair`` so each step
     # skips an [B, L_atom, L_atom, d_pair_atom] MLP pass.
-    atom_pair: torch.Tensor                   # (B, L_atom, L_atom, d_pair_atom)
+    atom_pair: torch.Tensor  # (B, L_atom, L_atom, d_pair_atom)
 
     # --- Scatter scaffolding for ``_scatter_atom_to_token``
-    scatter_mapping: torch.Tensor             # (B, L_atom, L_token) one-hot fp
-    scatter_count_inv: torch.Tensor           # (B, L_token, 1) 1.0/clamp(count, 1)
+    scatter_mapping: torch.Tensor  # (B, L_atom, L_token) one-hot fp
+    scatter_count_inv: torch.Tensor  # (B, L_token, 1) 1.0/clamp(count, 1)
 
     # --- Masks the per-step kernel needs in pre-expanded form
-    atom_mask: torch.Tensor                   # (B, L_atom) bool
-    token_mask: torch.Tensor                  # (B, L_token) bool
+    atom_mask: torch.Tensor  # (B, L_atom) bool
+    token_mask: torch.Tensor  # (B, L_token) bool
 
 
 @dataclass(frozen=True)
@@ -85,24 +85,24 @@ class StepSchedule:
     """
 
     # Solver-side scalars (all shape (T,))
-    sigma_i: torch.Tensor                     # noise level at start of step (pre-injection)
-    sigma_hat: torch.Tensor                   # sigma_i * (1 + gamma) — post-injection
-    sigma_next: torch.Tensor                  # sigma at end of step
-    sigma_t_hat: torch.Tensor                 # translation-noise scale at sigma_hat
-    c_in: torch.Tensor                        # input scaling 1/sqrt(sig^2 + sig_t^2 + sig_data^2)
-    gamma: torch.Tensor                       # per-step stochastic-injection scale
-    noise_scale: torch.Tensor                 # x0_centered update rule's residual noise scale
+    sigma_i: torch.Tensor  # noise level at start of step (pre-injection)
+    sigma_hat: torch.Tensor  # sigma_i * (1 + gamma) — post-injection
+    sigma_next: torch.Tensor  # sigma at end of step
+    sigma_t_hat: torch.Tensor  # translation-noise scale at sigma_hat
+    c_in: torch.Tensor  # input scaling 1/sqrt(sig^2 + sig_t^2 + sig_data^2)
+    gamma: torch.Tensor  # per-step stochastic-injection scale
+    noise_scale: torch.Tensor  # x0_centered update rule's residual noise scale
 
     # Precomputed conditioning per step
     # ``token_single_cond[t]`` is what ``DiffusionConditioning(... t_emb=t_emb_t ...)``
     # would have returned for the single branch; we run it once for all T.
-    token_single_cond: torch.Tensor           # (T, B, L_token, d_single)
+    token_single_cond: torch.Tensor  # (T, B, L_token, d_single)
     # ``added_token_cond[t]`` is ``add_single_token_cond(token_single_cond[t])``;
     # cached so the per-step kernel just adds a constant.
-    added_token_cond: torch.Tensor            # (T, B, L_token, d_single_token)
+    added_token_cond: torch.Tensor  # (T, B, L_token, d_single_token)
 
     # Original schedule, for downstream tooling (distogram plots etc.)
-    time_steps: torch.Tensor                  # (T+1,)
+    time_steps: torch.Tensor  # (T+1,)
 
 
 def build_inference_cache(
@@ -154,6 +154,7 @@ def build_inference_cache(
 
     # ``init_atom_features`` is pure-data and has its own no_grad guard.
     from miniworld.modules.diffusion_module import init_atom_features
+
     atom_single_init, atom_pair_init = init_atom_features(reference)
 
     atom_single_cond = enc.to_atom_single_cond(atom_single_init)
@@ -166,8 +167,13 @@ def build_inference_cache(
     _to_add_pair = enc.token_pair_to_atom_pair(token_pair_cond)
 
     atom_to_token_idx_map = scheme.atom_to_token_idx_map
-    batch_1d_idx = torch.arange(batch_size, device=device).view(batch_size, 1).expand(
-        -1, atom_length,
+    batch_1d_idx = (
+        torch.arange(batch_size, device=device)
+        .view(batch_size, 1)
+        .expand(
+            -1,
+            atom_length,
+        )
     )
     atom_single_cond = (
         atom_single_cond + _to_add_single[batch_1d_idx, atom_to_token_idx_map]
@@ -196,14 +202,20 @@ def build_inference_cache(
     # _before_atom_transformer{,_chunked} methods on AtomAttentionEncoder
     # are bypassed by the cached diffusion step. So the dump must go here.
     from miniworld.modules.diffusion_module import (
-        _next_call_idx, _pool_atom_pair_to_token, _should_dump, _dump_dir,
+        _next_call_idx,
+        _pool_atom_pair_to_token,
+        _should_dump,
+        _dump_dir,
     )
+
     dump = _should_dump("cache_build")
     snap_pools: dict[str, "torch.Tensor"] = {}
     L_token_for_pool = int(scheme.token_idx.shape[1])
     if dump:
         snap_pools["0_init"] = _pool_atom_pair_to_token(
-            atom_pair, atom_to_token_idx_map, L_token_for_pool,
+            atom_pair,
+            atom_to_token_idx_map,
+            L_token_for_pool,
         )
 
     # Dump path mirrors the exact ``add_`` sequence on atom_pair so each
@@ -220,32 +232,34 @@ def build_inference_cache(
             for s in range(0, atom_length, _ATOM_CHUNK):
                 e = min(s + _ATOM_CHUNK, atom_length)
                 row_tokens = atom_to_token_idx_map[:, s:e].unsqueeze(-1)
-                atom_pair[:, s:e].add_(
-                    _to_add_pair[b_arange, row_tokens, col_tokens]
-                )
+                atom_pair[:, s:e].add_(_to_add_pair[b_arange, row_tokens, col_tokens])
             snap_pools["1_token_cond"] = _pool_atom_pair_to_token(
-                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+                atom_pair,
+                atom_to_token_idx_map,
+                L_token_for_pool,
             )
             for s in range(0, atom_length, _ATOM_CHUNK):
                 e = min(s + _ATOM_CHUNK, atom_length)
                 atom_pair[:, s:e].add_(_left[:, s:e].unsqueeze(2))
             snap_pools["2_left"] = _pool_atom_pair_to_token(
-                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+                atom_pair,
+                atom_to_token_idx_map,
+                L_token_for_pool,
             )
             for s in range(0, atom_length, _ATOM_CHUNK):
                 e = min(s + _ATOM_CHUNK, atom_length)
                 atom_pair[:, s:e].add_(_right.unsqueeze(1))
             snap_pools["3_right"] = _pool_atom_pair_to_token(
-                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+                atom_pair,
+                atom_to_token_idx_map,
+                L_token_for_pool,
             )
         else:
             for s in range(0, atom_length, _ATOM_CHUNK):
                 e = min(s + _ATOM_CHUNK, atom_length)
                 row_tokens = atom_to_token_idx_map[:, s:e].unsqueeze(-1)
                 pair_slice = atom_pair[:, s:e]
-                pair_slice.add_(
-                    _to_add_pair[b_arange, row_tokens, col_tokens]
-                )
+                pair_slice.add_(_to_add_pair[b_arange, row_tokens, col_tokens])
                 pair_slice.add_(_left[:, s:e].unsqueeze(2))
                 pair_slice.add_(_right.unsqueeze(1))
         for s in range(0, atom_length, _ATOM_CHUNK):
@@ -260,15 +274,21 @@ def build_inference_cache(
         if dump:
             atom_pair = atom_pair + pair_cond
             snap_pools["1_token_cond"] = _pool_atom_pair_to_token(
-                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+                atom_pair,
+                atom_to_token_idx_map,
+                L_token_for_pool,
             )
             atom_pair = atom_pair + _left.unsqueeze(2)
             snap_pools["2_left"] = _pool_atom_pair_to_token(
-                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+                atom_pair,
+                atom_to_token_idx_map,
+                L_token_for_pool,
             )
             atom_pair = atom_pair + _right.unsqueeze(1)
             snap_pools["3_right"] = _pool_atom_pair_to_token(
-                atom_pair, atom_to_token_idx_map, L_token_for_pool,
+                atom_pair,
+                atom_to_token_idx_map,
+                L_token_for_pool,
             )
         else:
             atom_pair = atom_pair + pair_cond + _left.unsqueeze(2) + _right.unsqueeze(1)
@@ -276,12 +296,15 @@ def build_inference_cache(
 
     if dump:
         snap_pools["4_mlp"] = _pool_atom_pair_to_token(
-            atom_pair, atom_to_token_idx_map, L_token_for_pool,
+            atom_pair,
+            atom_to_token_idx_map,
+            L_token_for_pool,
         )
         out_dir = _dump_dir()
         assert out_dir is not None
         call_idx = _next_call_idx("cache_build")
         import numpy as np
+
         np.savez(
             out_dir / f"atom_pair_cache_build_call{call_idx:04d}.npz",
             **{k: v.numpy() for k, v in snap_pools.items()},
@@ -294,7 +317,7 @@ def build_inference_cache(
     mapping = torch.nn.functional.one_hot(
         atom_to_token_idx_map,
         num_classes=token_length,
-    ).to(atom_single_cond.dtype)              # (B, L_atom, L_token)
+    ).to(atom_single_cond.dtype)  # (B, L_atom, L_token)
     mask_f = atom_mask.to(atom_single_cond.dtype)
     count = torch.einsum("bal,ba->bl", mapping, mask_f)
     scatter_count_inv = 1.0 / count.unsqueeze(-1).clamp(min=1.0)
@@ -331,7 +354,9 @@ def build_step_schedule(
     ``step_scale`` config — we do not actually call its ``step`` here.
     """
     if start_sigma_y is not None:
-        time_steps = scheduler.sampling_time_steps(num_steps, start_sigma_y=start_sigma_y)
+        time_steps = scheduler.sampling_time_steps(
+            num_steps, start_sigma_y=start_sigma_y
+        )
     else:
         time_steps = scheduler.sampling_time_steps(num_steps)
     device = cache.token_single_pre_time.device
@@ -362,7 +387,7 @@ def build_step_schedule(
     # --- Precompute token_single_cond[t] and added_token_cond[t] ---
     dm = model.diffusion_module
     cond = dm.diffusion_conditioning
-    base = cache.token_single_pre_time            # (B, L_token, d_single)
+    base = cache.token_single_pre_time  # (B, L_token, d_single)
 
     token_single_cond_list = []
     added_token_cond_list = []
@@ -375,16 +400,21 @@ def build_step_schedule(
         # the LayerNorm+Linear in add_time_embedding.
         t_emb_t = scheduler.noise_condition(sigma_t).reshape(1)
         from miniworld.modules.layers import fourier_embedding
-        time_embedding = fourier_embedding(t_emb_t)     # (1, d_time)
-        single = base + cond.add_time_embedding(time_embedding)   # (B, L_token, d_single)
+
+        time_embedding = fourier_embedding(t_emb_t)  # (1, d_time)
+        single = base + cond.add_time_embedding(time_embedding)  # (B, L_token, d_single)
         for trans in cond.single_transitions:
-            single = trans(single)   # the engine Transition owns its residual (as in DiffusionConditioning)
+            single = trans(
+                single
+            )  # the engine Transition owns its residual (as in DiffusionConditioning)
         single = cond.final_layernorm_token_single(single)
         token_single_cond_list.append(single)
         added_token_cond_list.append(dm.add_single_token_cond(single))
 
-    token_single_cond = torch.stack(token_single_cond_list, dim=0)    # (T, B, L, d_single)
-    added_token_cond = torch.stack(added_token_cond_list, dim=0)      # (T, B, L, d_single_token)
+    token_single_cond = torch.stack(token_single_cond_list, dim=0)  # (T, B, L, d_single)
+    added_token_cond = torch.stack(
+        added_token_cond_list, dim=0
+    )  # (T, B, L, d_single_token)
 
     return StepSchedule(
         sigma_i=sigma_i,
