@@ -162,7 +162,7 @@ class DiffusionModel(MiniSWAModel):
             swa_atom_config=config.diffusion.atom_swa,
             token_dit_kind=config.diffusion.token_dit_kind,
         ).to(self.dit_dtype)  # engine norms keep fp32 affine params under this cast
-        # The relative-position embedder builds an fp32 one-hot internally (team-gm) and
+        # The relative-position embedder builds an fp32 one-hot internally (the engine's embedder) and
         # projects it with its own Linear; keep that tiny module fp32 and cast its OUTPUT
         # to the pair dtype in DiffusionConditioning.forward instead.
         self.diffusion_module.diffusion_conditioning.relative_position_embedder.float()

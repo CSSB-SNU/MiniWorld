@@ -150,7 +150,7 @@ def validate_policy(
 
 def _reinit_param_inplace(model: nn.Module, name: str) -> None:
     """Re-initialize a single parameter in-place using the project's init."""
-    # Lazy imports — the policy module shouldn't hard-depend on team_gm
+    # Lazy imports — the policy module shouldn't hard-depend on the training stack
     # at import time (callers may not have it installed for tests).
     from miniworld_engine.architecture.primitives import (
         InitType,

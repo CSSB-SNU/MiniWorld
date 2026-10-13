@@ -3,7 +3,7 @@
 Covers: magnitude_normalize / MPLinear (forced weight norm), mp_sum
 (variance preservation), apply_pairwise_rotation (norm preservation),
 AdaptiveLayerNorm rotation modulation and the MP pair-bias projection. The
-DiffusionTransformer MP/rotation options were removed in team-gm 26eeba9
+DiffusionTransformer MP/rotation options were removed (engine architecture package)
 (2026-08-03), so the block-level MP tests went with them.
 """
 

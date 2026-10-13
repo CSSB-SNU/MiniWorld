@@ -4,8 +4,8 @@ Each block is just **bidirectional triangle multiplication + pair transition** (
 triangle attention, no single track). Intended as a lightweight pair-only stack.
 
 This is a *model-specific* reduced block, so per the three-layer architecture
-(``libs/team-gm/docs/ARCHITECTURE.md``) it lives in the terminal (MiniWorld), not in
-team-gm. It composes ops straight from ``miniworld_engine.modules`` — the engine OWNS
+(see the engine's architecture package) it lives in the terminal (MiniWorld), not in
+the engine. It composes ops straight from ``miniworld_engine.modules`` — the engine OWNS
 the backend dispatch (picks the concrete kernel per shape+arch, LayerNorm folded into
 the fused kernel) AND the residual: ``BidirectionalTriangleMultiplication`` adds its
 own ``x + f(x)`` (fused into the kernel epilogue, row-dropout via ``p_drop`` applied

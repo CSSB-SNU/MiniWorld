@@ -8,7 +8,7 @@ representation is then refined by the minimal pair stack. The MSA self-update
 and is skipped on the last block, where the refreshed MSA would no longer be consumed.
 
 This is a *model-specific* reduced block, so per the three-layer architecture
-(``libs/team-gm/docs/ARCHITECTURE.md``) it lives in the terminal (MiniWorld). It
+(see the engine's architecture package) it lives in the terminal (MiniWorld). It
 composes ops straight from ``miniworld_engine.modules``. Residual placement follows
 the engine contract: ``OuterProductMean`` (cross-tensor) applies its residual via the
 ``residual=pair`` arg; ``MSAPairWeightedAveraging`` owns its residual + MSA dropout;

@@ -1,6 +1,6 @@
 """``BiasOnlyTokenDiT`` -- the v2.0.0 token DiT: attention logits are the pair bias alone.
 
-The v1 token DiT (``team_gm.DiffusionTransformer`` over the engine's
+The v1 token DiT (``miniworld_engine.architecture.blocks.DiffusionTransformer`` over the engine's
 ``AugmentedAttentionPairBias``) computes ``softmax(q k^T / sqrt(d) + bias(pair)) v`` in every
 block, for every augmentation: 24 blocks x 48 augments of [L, L] logits, two QK GEMMs per
 block, QK-norm on top. In the phase-2 profile that is 74-76% of the diffusion step
@@ -38,7 +38,7 @@ the pair (the engine's ``pair_bias_all``; ``ln_pair`` has no offset, so the per-
 weight folds into ``to_bias``) instead of a pair LayerNorm + ``to_bias`` in every block. Same
 parameters, the same result up to rounding; it saves the per-block pair LayerNorm, its backward
 and the 24 pair-gradient accumulations. The hoist runs outside the checkpointed blocks (as in
-team-gm's ``DiffusionTransformer``) and only under autograd: without it (sampling) the blocks
+the engine's ``DiffusionTransformer``) and only under autograd: without it (sampling) the blocks
 take the pair, and the engine's inference path makes each block's softmax once per pair for
 every solver step, which a per-call hoist could only repeat.
 """
@@ -214,11 +214,11 @@ class BiasOnlyTokenDiT(nn.Module):
         pair: Float[torch.Tensor, "B L L d_pair"],
         mask: Bool[torch.Tensor, "B L"] | Bool[torch.Tensor, "A B L"] | None = None,
     ) -> Float[torch.Tensor, "A B L d_single"]:
-        """Same call signature as ``team_gm.DiffusionTransformer`` (drop-in in ``DiffusionModule``)."""
+        """Same call signature as ``miniworld_engine.architecture.blocks.DiffusionTransformer`` (drop-in in ``DiffusionModule``)."""
         if mask is not None and mask.ndim == 3:
             mask = mask[0]  # augment-invariant key mask
         if self.config.hoist_pair_bias and torch.is_grad_enabled():
-            # one LayerNorm + one GEMM for every block's bias, OUTSIDE the checkpointed segments (team-gm's place)
+            # one LayerNorm + one GEMM for every block's bias, OUTSIDE the checkpointed segments (where ``DiffusionTransformer`` puts it)
             # imported here: only an engine with the hoist (89f5ab28 and later) has it; the default path keeps working
             # with older pinned engines
             from miniworld_engine.modules.bias_only_dit import pair_bias_all
