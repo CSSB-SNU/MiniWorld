@@ -1,6 +1,6 @@
 # MiniWorld 저장소와 개발 상태
 
-> 2026-10-12: team-gm은 MiniWorld에 흡수됐다(`miniworld.training`, `miniworld.diffusion`, `miniworld.modules`, `miniworld.utils`). `libs/team-gm` 서브모듈과 team-gm 의존성은 없다. 아래 team-gm 항목은 이력이다.
+> 2026-10-13: team-gm은 MiniWorld에 흡수됐고, 저장소는 **MiniWorld와 miniworld-engine 둘뿐**이다. `libs/team-gm`·`libs/structcooker` 서브모듈은 없다(코드 위치는 [docs/README.md](README.md)). 아래 team-gm 항목과 2026-09~10월 표는 이력이다.
 
 
 2026-09-27: MiniWorld, miniworld-engine, team-gm의 로컬·원격 작업 브랜치를 **main으로 통합**했다.
@@ -16,7 +16,7 @@ main에 포함된 로컬 브랜치 63개와 원격 브랜치 7개를 삭제했�
 |---|---|---|
 | MiniWorld | `/home/psk6950/MiniWorld` | `main` |
 | miniworld-engine | `/home/psk6950/miniworld-engine` | `main` |
-| team-gm | `MiniWorld/libs/team-gm` | `main` |
+| team-gm | (MiniWorld에 흡수, 2026-10-13) | - |
 
 `MiniWorld/.engine-release-2.0.0`은 이전 engine `3026c6bc`를 보존한 호환용 detached worktree다.
 현재 v2.1 main과는 다르며, 과거 성능 기준을 보존한다.
@@ -214,3 +214,20 @@ GPU 테스트 232 passed, CPU 테스트는 engine main 대비 새 실패 없음.
 2026-10-02: engine pin을 `75693b41422569e9d2a5e472adfd890493fffc3b`(engine main: token_pair_init 커널, FlashAttention-4 lse 저장, 배치 샘플 TriMul `MAX_BATCH`, B200 LayerNorm/RMSNorm PyTorch 정책 `b200_engine_triton`, RMSNorm dtype 수정)로, team-gm gitlink를 `exp/miniworld`의 `27dc853`(핀 갱신, B200 pointwise 정책, 전역 SWA opt-in)으로 올렸다. phase 2a v200 마이크로 스텝(B200, 컴파일, recycle 1~4 균등 평균)은 이전 핀 86.8 ms, 이 핀 82.6 ms(−4.8%)다. 같은 측정에서 엔진의 Triton norm 커널을 되살린 설정은 85.5 ms, 융합 token-pair init을 끈 설정은 82.3 ms로, 엔진 기본값이 가장 빠르거나 잡음 안에서 같다. 템플릿 임베더는 이 엔진에서 bf16 투영 융합과 템플릿 배치가 켜진다. 앞서 올린 임베더/템플릿/phase 2 변경(634a7e0까지)이 이 핀에서 처음 효과를 낸다.
 2026-10-04: engine pin을 `509160719d059039a8d1b165f8c09ac809ea105c`(engine main: B200 창(32 x 128) atom 블록과 tcgen05 어텐션, 은닉 폭이 pair 폭의 2배인 한 방향 TriMul(템플릿 블록), 그래프 캡처 단위 가중치 pack 캐시, token DiT 어텐션 P 배리어 분리, Triton 어텐션 memory-efficient 경로의 작은 헤드 패딩)로, team-gm gitlink를 `exp/miniworld`의 `a134753`(핀 갱신)로 올렸다. 캐시 수정 전에는 CUDA 그래프를 캡처한 뒤 가중치가 바뀌면 재생이 캡처 시점 가중치로 계산했다(token DiT·bias-only DiT·넓은 폭 TriAttn·APB 경로). MiniWorld 학습(`src/`)은 그래프를 쓰지 않아 영향이 없었다. B200에서 이전 핀과 이 핀의 MiniWorld 테스트는 474 passed로 같고, 같은 2건(`test_engine_adaln_alignment` config6, `test_triton_backend_option` mini model)이 둘 다 실패한다. phase 2a v200 마이크로 스텝(컴파일, recycle 1~4 균등 평균, 각 2회)은 이전 핀 82.3/82.5 ms, 이 핀 83.0/83.1 ms다. 차이(+0.8%)는 그래프 재생이 이제 가중치 pack을 다시 계산하는 몫으로 본다.
 2026-10-05: engine pin을 `135b796698080f39903706082e37aa06a830e888`(engine main: B200 학습 경로 전부가 bf16 활성값 위의 fp32 파라미터를 bf16 파라미터와 같은 커널·속도로 받고, 가중치 기울기를 반올림 없는 fp32로 돌려준다)로, team-gm gitlink를 `exp/miniworld`의 `731ec0c`(SWA atom 블록 게이트가 fp32 마스터 가중치를 받음, 핀 갱신)로 올렸다. 이 핀부터 v200 설정의 학습은 fp32 마스터 + bf16 autocast(`train.precision: bf16-mixed`)이고, 이전 방식은 `train.precision=native`다. phase 2a v200 전체 스텝 CUDA 그래프(recycle 1~4 평균)는 native 75.2 ms, bf16-mixed 76.5 ms다(`docs/phase2-b200-training-speed.md` 6절). B200 MiniWorld 테스트 479 passed, 46 skipped.
+
+## 2026-10-13: team-gm 흡수와 환경변수의 config 이전
+
+- **engine main `b7dd8462`**(원격 main `32c76bc9` smooth LDDT 위 커밋 6개): `miniworld_engine.architecture`(blocks, layers,
+  diffusion, geometry), 스위치 약 65개를 `settings` 필드로 이전, 미사용 환경변수 삭제, 제거된 변수 경고,
+  `rope_angles_bf16_compat`(수정 전 RoPE 각도로 학습한 체크포인트용).
+- **MiniWorld main**: team-gm을 `miniworld.training`·`miniworld.diffusion`·`miniworld.modules`·`miniworld.utils` 등으로 흡수,
+  `train.*` 옵션(`RunOptions`)과 `train.engine_settings`, ruff·pyright 게이트와 CI, 문서를 `docs/archive`로 정리.
+  엔진 핀은 `b7dd8462`, `pixi.lock`을 다시 만들었다.
+- 검증(B200): MiniWorld 전체 527 passed, 엔진 변경 테스트 통과(예외: 원격 main에서도 실패하는 `compile_wrap_coverage` 1건,
+  변경 전부터 실패하던 `swa_dit_tf32` compile 1건). H100 전용 경로는 B200에서 skip되어 검증하지 못했다.
+- 배선 점검(노드 2): phase 1 학습 스텝 recycle 4 — 2790 커널, wall 71.3 ms, GPU busy 53.7 ms; 엔진 51.6% /
+  cuBLAS 23.2% / inductor 8.0%. Python에서의 Triton 직접 실행 0건.
+- **기존 체크포인트 주의**: v2.0.0 phase 1·2a 체크포인트는 수정 전 RoPE 각도로 학습됐다. 이어서 학습하거나 평가할 때
+  `train.engine_settings={rope_angles_bf16_compat: true}`가 필요하다([known-issues](known-issues.md)).
+- 미커밋 작업이 있던 `team-gm` detached HEAD `b0ca024`(원격에 없는 커밋 4개)는 번들로 보존했다
+  (`team-gm-b0ca024-unpushed-20261013.bundle`).

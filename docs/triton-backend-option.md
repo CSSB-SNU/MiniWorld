@@ -1,5 +1,7 @@
 # 학습에서 엔진 Triton 경로 고정
 
+> 이 문서의 `team_gm` / `libs/team-gm` 경로는 작성 시점의 위치다. team-gm은 2026-10-13에 MiniWorld와 miniworld-engine으로 흡수됐다. 현재 위치는 [docs/README.md](README.md#where-the-team-gm-code-went).
+
 학습 명령 끝에 다음 override를 추가한다.
 
 ```bash

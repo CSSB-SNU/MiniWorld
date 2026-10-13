@@ -1,5 +1,7 @@
 # MiniWorld v2: data, targets, and inference consistency
 
+> 이 문서의 `team_gm` / `libs/team-gm` 경로는 작성 시점의 위치다. team-gm은 2026-10-13에 MiniWorld와 miniworld-engine으로 흡수됐다. 현재 위치는 [docs/README.md](README.md#where-the-team-gm-code-went).
+
 Status: **2.0.0.dev0**, development consolidation, 2026-09-25.
 This is the model/pipeline version, independent of miniworld-engine 2.0.0.
 No existing job, checkpoint, W&B run, frozen snapshot, or runtime environment was restarted or migrated.

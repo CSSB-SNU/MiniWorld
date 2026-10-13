@@ -1,5 +1,7 @@
 # Diffusion 학습 안정화 계획 — EDM2 magnitude preservation 적용
 
+> 이 문서의 `team_gm` / `libs/team-gm` 경로는 작성 시점의 위치다. team-gm은 2026-10-13에 MiniWorld와 miniworld-engine으로 흡수됐다. 현재 위치는 [docs/README.md](README.md#where-the-team-gm-code-went).
+
 > **한 줄 요약**: train loss는 정상인데 학습 후반(epoch ~526)에 샘플링 품질(lDDT 0.71→0.33)이 무너지는 문제의 원인은 **weight magnitude(‖w‖)의 무한 증가**로 확인됨. 이를 막는 EDM2 계열 기법들을 **비용·효과 순으로** 정리한다. rotation modulation은 [나중에 추가](#부록-나중에-추가-rotation-modulation)로 분리.
 
 ---

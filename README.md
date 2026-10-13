@@ -1,13 +1,13 @@
 # MiniWorld
 
-[Repository map, development branches, kernel status, and transfer checklist (2026-09-27)](docs/repositories.md).
+[Repository map, pins and validation notes](docs/repositories.md) · [documentation index](docs/README.md).
 
 | Path | Contents |
 |---|---|
 | `src/`, `configs/`, `tests/` | MiniWorld package, Hydra configs, tests |
 | `libs/` | `patches/` for FoldBench (StructCooker, which builds the databases, is a separate repository) |
 | `scripts/` | Python entry points and tools; `slurm/` holds sbatch launchers (mostly local, untracked) |
-| `docs/` | Guides and records; `kernels/` kernel diagrams and status reports; `history/` retired material |
+| `docs/` | Guides; `kernels/` kernel diagrams and status reports; `archive/` dated validation records ([index](docs/README.md)) |
 | `runs/` | Every run output: training runs, `logs/`, `outputs/`, `eval_results/`, `wandb/` (ignored by Git except reviewed benchmark records) |
 
 ## Development
@@ -54,23 +54,24 @@ Add `train.engine_backend=triton` to pin training to the engine Triton paths.
 See [backend selection and scope](docs/triton-backend-option.md), and the
 [full-model CUDA graph training comparison](docs/miniworld-training-cudagraph-ab.md).
 
-Check out the pinned submodules, install the selected Pixi environment, and
-check the pinned `miniworld-engine` package:
+miniworld-engine is a git dependency pinned by `rev` in [pyproject.toml](pyproject.toml); there are no submodules.
+Install the selected Pixi environment and check the pinned package:
 
 ```bash
-git submodule update --init --recursive
 pixi install -e cu128
 pixi run -e cu128 engine-setup
 ```
 
 The `cu128` environment keeps its historical name; since miniworld-engine v2.2.0 it
-installs torch 2.13.0+cu129 and cuequivariance 0.12.
+installs torch 2.13.0+cu129 and cuequivariance 0.12. On the B200 boxes the engine is the local checkout
+(`$W/mwenv`, see [docs/operations/b200-environment.md](docs/operations/b200-environment.md)) because they cannot fetch the GitHub pin.
 
 Run `engine-setup` again after reinstalling the engine dependency. It verifies
 the consolidated engine version, recorded Git pin and required source files.
-The old 1.x patch stack is historical and is not reapplied to main. FlashAttention and MathDx kernel
-prerequisites still need to be available for the selected GPU backend; see the
-environment comments in [pyproject.toml](pyproject.toml).
+FlashAttention-4 (a pre-release CuTeDSL JIT wheel) is left out of the lock on purpose and is installed by hand:
+`uv pip install --python .pixi/envs/cu128/bin/python --prerelease=allow "flash-attn-4[cu12]"`; without it the SWA
+atom attention falls back to O(S^2) SDPA on Blackwell. MathDx and the other kernel prerequisites are listed in the
+environment comments of [pyproject.toml](pyproject.toml).
 
 The integration preserves the SWA block equations and checkpoint layout.
 [The engine audit](docs/engine-wiring-audit.md) records H100 forward/backward

@@ -55,7 +55,7 @@ EMA accumulates the same early weights every step and never moves.
   A change to load EMA was made and then reverted after this measurement — see
   `models/diffusion/client.py` `maybe_apply_param_policy`.
 - A separate, defensive fix landed in
-  [ema.py](../libs/team-gm/src/team_gm/core/callbacks/ema.py): keep the EMA
+  [ema.py](../src/miniworld/training/callbacks/ema.py): keep the EMA
   master in FP32 (a BF16 accumulator would round away the decay update). This is
   correct but does **not** fix the compile/stale-read problem above.
 
@@ -64,7 +64,7 @@ under CUDA-graph capture (e.g. update EMA from `named_parameters()` tensors that
 the optimizer actually writes, or exclude the EMA update from capture / force a
 sync), then re-verify EMA distogram loss < raw before enabling EMA loading.
 
-**Files:** `libs/team-gm/src/team_gm/core/callbacks/ema.py`,
+**Files:** `src/miniworld/training/callbacks/ema.py`,
 `src/miniworld/models/diffusion/client.py`.
 
 ---
