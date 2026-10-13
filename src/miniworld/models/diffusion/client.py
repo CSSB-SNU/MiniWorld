@@ -64,6 +64,9 @@ class Client(BaseClient):
         name: str = "MiniWorld-phase2"
         run_dir: str = "runs/v1.0.0/phase2"
         engine_backend: EngineBackend = "auto"
+        # Forbid the engine's Triton kernels (miniworld.training.no_triton): a fallback from its CUDA kernels to its Triton family
+        # stops the run instead of running slowly. The kernels torch.compile's inductor generates are not affected.
+        forbid_triton: bool = False
         # fp32 master parameters with a bf16-autocast forward (miniworld.training.precision); "native" is the earlier setting
         precision: Precision = "bf16-mixed"
         overfitting: bool = False
@@ -104,6 +107,16 @@ class Client(BaseClient):
         seed: int = 0
         use_ema: bool = True
         ema_decay: float = 0.999
+        # Learning-rate multiplier of the TRUNK parameters (everything except diffusion_module / to_token_single_trunk) when
+        # the trunk is trained (model.freeze_trunk=false, train.param_policy.default=load_existing). 1.0 = one learning rate.
+        trunk_lr_scale: float = 1.0
+        # same for distogram_head (its gradient comes only from the auxiliary distogram loss; Adam ignores the loss scale)
+        distogram_head_lr_scale: float = 1.0
+        # name-keyed Adam moments ({name: {exp_avg, exp_avg_sq, step}}) to start from when --ckpt carries weights only
+        init_optimizer_state: str | None = None
+        # > 0: do not train; on this many batches report the trunk gradient of the diffusion + smooth lDDT terms and of the
+        # auxiliary distogram CE (norm ratio, cosine, per module group), then exit. Graph trainer only.
+        grad_diag_batches: int = 0
 
         bucket_msa_multiple: int | None = 128
         bucket_token_multiple: int | None = 128
@@ -122,6 +135,9 @@ class Client(BaseClient):
         """Configuration for loss weights — diffusion loss ONLY."""
 
         diffusion_loss: float = 4.0
+        # AF3 trains the distogram head jointly (alpha_distogram = 0.03). > 0 adds the phase-1 distogram CE on the trunk's pair
+        # representation (needs the trunk trained: model.freeze_trunk=false, distogram_head trainable). Graph trainer only.
+        distogram_loss: float = 0.0
         # AF3 Eq.4 per-atom MSE up-weighting w_l = 1 + is_dna*alpha_dna +
         # is_rna*alpha_rna + is_ligand*alpha_ligand. AF3 defaults 5/5/10.
         alpha_dna: float = 5.0

@@ -35,6 +35,7 @@ from random_recycle_graph_trainer import (
 )
 
 from miniworld.configs import TemplateConfig
+from miniworld.loss.auxiliary import cal_atom_distogram_loss
 from miniworld.training.phase2_graph_safe import (
     bond_loss_gs,
     cal_loss_gs,
@@ -42,6 +43,7 @@ from miniworld.training.phase2_graph_safe import (
     graph_safe_sampling,
 )
 from miniworld.training.precision import model_autocast
+from miniworld_engine.kernels.smooth_lddt import smooth_lddt as smooth_lddt_loss
 
 __all__ = ["GraphFabric", "Phase2GraphTrainer", "configure_graph_cublas"]
 
@@ -128,6 +130,7 @@ class Phase2GraphTrainer:
             + lc.alpha_ligand * ((et == 6) | (et == 7)).float()
         )
         self.atom_weight.copy_(torch.gather(w_chain, dim=1, index=atom_to_chain))
+        self.atom_nuc.copy_(torch.gather((et == 3) | (et == 4) | (et == 5), dim=1, index=atom_to_chain))
 
     def _fill_bond_pairs(self, batch) -> None:
         """AF3 Eq.5 bonded atom pairs of the micro-batch into the static, padded index buffers, outside the graph: their number
@@ -150,6 +153,7 @@ class Phase2GraphTrainer:
         """One micro-step on the static inputs; runs eagerly for the warm-up and the check, and once under capture."""
         client, b = self.client, self.static
         lc = client.config.loss
+        client.model.keep_trunk_pair = lc.distogram_loss > 0  # the model keeps the trunk pair rep for the auxiliary loss
         with graph_safe_sampling(client.diffuser):
             x0, x_input, x_mask, t_emb, sigma = client.diffuser.sample(
                 b.structure.atom_pos,
@@ -170,6 +174,18 @@ class Phase2GraphTrainer:
                 t_emb=t_emb,
             )
         update = update.float()
+        distogram = None
+        if lc.distogram_loss > 0:
+            raw = client.model
+            with model_autocast(raw):
+                logits = raw.distogram_head(raw._trunk_pair)  # noqa: SLF001
+            distogram = cal_atom_distogram_loss(
+                logits.float(),
+                b.structure.atom_pos,
+                b.structure.atom_pos_mask,
+                b.scheme.atom_to_token_idx_map,
+                rep_atom_mask=b.structure.atom_is_rep,
+            ).mean()
         structure = cal_loss_gs(
             client.diffuser,
             x0,
@@ -192,11 +208,97 @@ class Phase2GraphTrainer:
                 self.bond_j,
                 self.bond_valid,
             )
-        loss = lc.diffusion_loss * (structure + lc.bond_loss * bond)
+        smooth = torch.zeros((), device=self.device)
+        if lc.smooth_lddt_loss > 0:
+            # AF3 Alg. 27 on the denoised prediction: the engine's fused kernel (no [N, N] tensor per augment), inside
+            # alpha_diffusion and outside w(sigma), as in the eager client
+            x_pred = client.diffuser.get_x_pred(x_input=x_input, x_update=update, sigma=sigma)
+            smooth = smooth_lddt_loss(x_pred, x0[0], self.atom_nuc, b.structure.atom_pos_mask)
+        loss = lc.diffusion_loss * (structure + lc.bond_loss * bond + lc.smooth_lddt_loss * smooth)
+        if distogram is not None:
+            loss = loss + lc.distogram_loss * distogram
         (loss / client.gradient_accumulation_steps).backward()
-        return torch.stack(
-            [loss, structure, bond]
-        ).detach()  # total, EDM term, bond term
+        dist_term = distogram.detach() if distogram is not None else torch.zeros((), device=self.device)
+        # total, EDM term, bond term, smooth lDDT, distogram CE (unweighted)
+        return torch.stack([loss, structure, bond, smooth, dist_term]).detach()
+
+    def _build_diag(self, raw) -> None:
+        raw._forced_n_recycle = self.recycles[-1]  # noqa: SLF001
+        raw.train()
+        for _ in range(2):  # compile / autotune warm-up, a .grad on every parameter
+            self._clear_grads()
+            self._body()
+        torch.cuda.synchronize()
+        self.graphs = {r: None for r in self.recycles}
+        self.pointers = []
+
+    def _grad_diag_run(self, iterator) -> None:
+        """train.grad_diag_batches=K: on K batches, the gradient of the trunk from the diffusion + smooth lDDT terms and from the auxiliary
+        distogram CE separately (same noise and recycle draw): norm ratio, cosine, per module group, and the batch-to-batch cosine of each."""
+        client, raw = self.client, self.client.model
+        lc = client.config.loss
+        names = [n for n, p in raw.named_parameters() if p.requires_grad]
+        keep = [i for i, n in enumerate(names) if not n.startswith(("diffusion_module", "to_token_single_trunk", "distogram_head"))]
+        group_names = sorted({".".join(names[i].split(".")[:2]) for i in keep})
+        gid_of = {g: j for j, g in enumerate(group_names)}
+        gid = torch.cat([torch.full((self.params[i].numel(),), gid_of[".".join(names[i].split(".")[:2])], dtype=torch.long,
+                                    device=self.device) for i in keep])
+        ng = len(group_names)
+        raw.train()
+        raw._forced_n_recycle = self.recycles[-1]  # noqa: SLF001
+        K = int(client.config.train.grad_diag_batches)
+        w_diff, w_dist = lc.diffusion_loss, lc.distogram_loss
+        grads = {"diff": [], "dist": []}
+        for batch in itertools.islice(iterator, K):
+            copy_static(self.static, batch)
+            self._fill_atom_weight(batch)
+            state = torch.cuda.get_rng_state()
+            for mode, (wd, wg) in (("diff", (w_diff, 0.0)), ("dist", (0.0, w_dist))):
+                lc.diffusion_loss, lc.distogram_loss = wd, wg
+                torch.cuda.set_rng_state(state)
+                self._clear_grads()
+                self._body()
+                torch.cuda.synchronize()
+                grads[mode].append(torch.cat([self.params[i].grad.detach().float().flatten() for i in keep]).clone())
+            lc.diffusion_loss, lc.distogram_loss = w_diff, w_dist
+        n = len(grads["diff"])
+
+        def seg(a, b):  # per group sum of a * b
+            return torch.zeros(ng, device=self.device).index_add_(0, gid, (a * b).double().float()).cpu()
+
+        rows = []
+        for a, b in zip(grads["diff"], grads["dist"]):
+            dab, daa, dbb = seg(a, b), seg(a, a), seg(b, b)
+            rows.append((dab, daa, dbb))
+        tot = lambda t: float(t.sum())  # noqa: E731
+        log = print
+        log(f"[grad-diag] {n} batches, recycle depth {self.recycles[-1]}, weights: diffusion {w_diff}, distogram {w_dist}; trunk tensors {len(keep)}")
+        cos = [tot(d) / max((tot(a) * tot(b)) ** 0.5, 1e-30) for d, a, b in rows]
+        nd = [tot(a) ** 0.5 for _, a, _ in rows]   # weighted diffusion-term gradient norm
+        ng_ = [tot(b) ** 0.5 for _, _, b in rows]  # weighted distogram-term gradient norm
+        log("[grad-diag] per batch: |g_diffusion| (weighted)  |g_distogram| (weighted)  ratio dist/diff  cosine")
+        for i in range(n):
+            log(f"   {nd[i]:10.4e}  {ng_[i]:10.4e}  {ng_[i] / max(nd[i], 1e-30):8.3f}  {cos[i]:+.3f}")
+        mean = lambda v: sum(v) / len(v)  # noqa: E731
+        log(f"[grad-diag] mean ratio (weighted) {mean([g / max(d, 1e-30) for g, d in zip(ng_, nd)]):.3f}, "
+            f"unweighted dist/diff {mean([g / max(d, 1e-30) for g, d in zip(ng_, nd)]) * w_diff / max(w_dist, 1e-30):.2f}, mean cosine {mean(cos):+.3f}")
+        # batch-to-batch consistency (signal vs noise) of each term
+        for mode in ("diff", "dist"):
+            cs = []
+            for i in range(n):
+                for j in range(i + 1, n):
+                    a, b = grads[mode][i], grads[mode][j]
+                    cs.append(float((a * b).sum() / (a.norm() * b.norm()).clamp_min(1e-30)))
+            log(f"[grad-diag] cosine between different batches, {mode}: mean {mean(cs):+.3f} (min {min(cs):+.3f}, max {max(cs):+.3f}, {len(cs)} pairs)")
+        # per module group
+        dab = sum(r[0] for r in rows)
+        daa = sum(r[1] for r in rows)
+        dbb = sum(r[2] for r in rows)
+        order = sorted(range(ng), key=lambda j: -float(daa[j]))
+        log("[grad-diag] module group (summed over batches): |g_diff|  |g_dist|  ratio  cosine")
+        for j in order[:10]:
+            c = float(dab[j]) / max((float(daa[j]) * float(dbb[j])) ** 0.5, 1e-30)
+            log(f"   {group_names[j][:46]:46s} {float(daa[j]) ** 0.5:9.3e}  {float(dbb[j]) ** 0.5:9.3e}  {float(dbb[j]) ** 0.5 / max(float(daa[j]) ** 0.5, 1e-30):6.3f}  {c:+.3f}")
 
     def _clear_grads(self) -> None:
         with torch.no_grad():
@@ -207,10 +309,6 @@ class Phase2GraphTrainer:
     def _build(self, first) -> None:
         client = self.client
         lc = client.config.loss
-        if lc.smooth_lddt_loss != 0:
-            raise ValueError(
-                "The graph-safe loss covers the EDM and the bond terms; the smooth lDDT term is not implemented for graphs"
-            )
         self.use_bond = lc.bond_loss != 0
         raw = client.model
         first_dev = first.to(device=self.device)
@@ -224,6 +322,9 @@ class Phase2GraphTrainer:
             device=self.device,
             dtype=torch.float32,
         )
+        self.atom_nuc = torch.empty(
+            self.static.structure.atom_pos.shape[:2], device=self.device, dtype=torch.bool
+        )
         self._fill_atom_weight(first_dev)
         n_atom = self.static.structure.atom_pos.shape[1]
         self.bond_i = torch.zeros(n_atom, dtype=torch.long, device=self.device)
@@ -235,6 +336,9 @@ class Phase2GraphTrainer:
         self.stream = torch.cuda.Stream()
 
         self.recycles = recycles = self._recycle_depths(raw)
+        if client.config.train.grad_diag_batches > 0:  # diagnostic: no graphs, eager micro-steps only (see _grad_diag_run)
+            self._build_diag(raw)
+            return
         t0 = time.perf_counter()
         # One graph per recycle depth, all in ONE memory pool (a pool per graph holds the activations of every depth at once and
         # does not fit a B200): the graphs are replayed one at a time and each rewrites everything it reads, and the loss is copied
@@ -454,11 +558,13 @@ class Phase2GraphTrainer:
             first = next(iterator)
             self._build(first)
             iterator = itertools.chain([first], iterator)
+        if client.config.train.grad_diag_batches > 0:
+            self._grad_diag_run(iterator)
+            raise SystemExit(0)
         client.model.train()
         client.call_callbacks("on_train_epoch_start")
-        losses = torch.zeros(
-            ga, 3, device=self.device
-        )  # per micro-step: total, EDM term, bond term
+        # per micro-step: total, EDM term, bond term, smooth lDDT, distogram CE
+        losses = torch.zeros(ga, 5, device=self.device)
         has_template = False
         started = time.perf_counter()
         spent = {
@@ -517,11 +623,12 @@ class Phase2GraphTrainer:
                     time.perf_counter() - enqueued
                 )  # the GPU work still queued when the host got here, plus the step itself
                 result = {
-                    "diffusion_loss": 0.0,
-                    "smooth_lddt_loss": 0.0,
-                    "bond_loss": 0.0,
-                    "total_loss": 0.0,
-                    "main_loss": 0.0,
+                    "diffusion_loss": values[-1][1],
+                    "smooth_lddt_loss": values[-1][3],
+                    "distogram_loss": values[-1][4],
+                    "bond_loss": values[-1][2],
+                    "total_loss": values[-1][0],
+                    "main_loss": values[-1][0],
                 }
                 client.call_callbacks(
                     "on_train_step_end",
@@ -529,9 +636,6 @@ class Phase2GraphTrainer:
                     batch_idx,
                     {
                         **result,
-                        "total_loss": values[-1][0],
-                        "main_loss": values[-1][0],
-                        "bond_loss": values[-1][2],
                     },
                 )
                 if client.global_step % 50 == 0:
@@ -550,7 +654,8 @@ class Phase2GraphTrainer:
                 for v in values:
                     yield {
                         "diffusion_loss": v[1],
-                        "smooth_lddt_loss": 0.0,
+                        "smooth_lddt_loss": v[3],
+                        "distogram_loss": v[4],
                         "bond_loss": v[2],
                         "total_loss": v[0],
                         "main_loss": v[0],

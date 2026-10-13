@@ -498,6 +498,10 @@ def train(  # noqa: PLR0912, PLR0915
     from miniworld.training.engine_backend import apply_run_options
 
     apply_run_options(cfg.train)
+    if cfg.train.forbid_triton:
+        from miniworld.training import no_triton
+
+        no_triton.install()
 
     if cfg.train.cuda_graph:
         from phase2_graph_trainer import GraphFabric, configure_graph_cublas
@@ -598,6 +602,27 @@ def train(  # noqa: PLR0912, PLR0915
         else client.model.parameters()
     )
 
+    if cfg.train.trunk_lr_scale != 1.0 or cfg.train.distogram_head_lr_scale != 1.0:
+        # up to three groups: the diffusion head at max_lr, the (trained) trunk at max_lr * trunk_lr_scale, distogram_head at
+        # max_lr * distogram_head_lr_scale; the scheduler scales all of them
+        head_prefixes = ("diffusion_module.", "to_token_single_trunk.")
+        names = {id(p): n for n, p in client.model.named_parameters()}
+        head = [p for p in optim_params if names[id(p)].startswith(head_prefixes)]
+        dist = [p for p in optim_params if names[id(p)].startswith("distogram_head.")]
+        trunk = [
+            p for p in optim_params
+            if not names[id(p)].startswith(head_prefixes) and not names[id(p)].startswith("distogram_head.")
+        ]
+        scales = [
+            ("head", head, 1.0),
+            ("trunk", trunk, cfg.train.trunk_lr_scale),
+            ("distogram_head", dist, cfg.train.distogram_head_lr_scale),
+        ]
+        optim_params = [{"params": ps, "lr": cfg.train.max_lr * sc} for _, ps, sc in scales if ps]
+        client.logger.info(
+            "[lr groups] %s",
+            ", ".join("%s %d tensors at %g" % (n, len(ps), cfg.train.max_lr * sc) for n, ps, sc in scales if ps),
+        )
     if cfg.train.optimizer is None or cfg.train.optimizer == "AdamW":
         optimizer = torch.optim.AdamW(optim_params, cfg.train.max_lr)
     elif cfg.train.optimizer == "Adam":
@@ -646,6 +671,28 @@ def train(  # noqa: PLR0912, PLR0915
                         "[resume] seed ckpt (trunk optimizer) -> fresh diffusion optimizer/scheduler (%s)",
                         type(e).__name__,
                     )
+
+    if cfg.train.init_optimizer_state and (state_dict is None or state_dict.get("optimizer_state_dict") is None):
+        # weights-only start (a finished run's weights): continue from its Adam moments instead of a cold optimizer, which
+        # moves every parameter by about lr per step for the first steps (a shock for converged weights)
+        saved = torch.load(cfg.train.init_optimizer_state, map_location="cpu")
+        orig = getattr(client.model, "_original_module", client.model)
+        by_id = {id(p): n for n, p in orig.named_parameters()}
+        inner = getattr(client.optimizer, "optimizer", client.optimizer)
+        n_set = n_all = 0
+        for g in inner.param_groups:
+            for p in g["params"]:
+                n_all += 1
+                st = saved.get(by_id.get(id(p)))
+                if st is None:
+                    continue
+                inner.state[p] = {
+                    "step": st["step"].clone(),
+                    "exp_avg": st["exp_avg"].to(p.device, p.dtype),
+                    "exp_avg_sq": st["exp_avg_sq"].to(p.device, p.dtype),
+                }
+                n_set += 1
+        client.logger.info("[adam] restored the moments of %d of %d tensors from %s", n_set, n_all, cfg.train.init_optimizer_state)
 
     # Memory-PROFILE mode (guarded, off by default). train.mem_profile=true hooks the diffusion
     # sub-modules (+ trunk) and logs each one's retained-activation delta AS IT RUNS, so the

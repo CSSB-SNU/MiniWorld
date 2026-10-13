@@ -1,0 +1,24 @@
+# MiniWorld v2.0.0 phase 2a with the TRUNK UNFROZEN: the v2.0.0 phase-1b trunk and the diffusion head train together (AF3 trains them
+# jointly; MiniWorld's phase 2a froze the trunk). EVERYTHING else is phase2a_diffusion_medium_v200_b200: data, crop L384, loss (AF3
+# weights), lr 5e-3 / warm-up 1000 / x0.95 per 5e4 steps (one lr for all parameters: train.trunk_lr_scale = 1.0), bf16-mixed, CUDA
+# graph, random 1..4 recycles (the trunk takes gradients through the LAST recycle only, earlier ones run under no_grad).
+# Start from the weights of the finished 2a run (trunk + trained head, epoch 0, fresh optimizer):
+#   runs/b200/phase2a_v200_ep200_weights/epoch=0000_init.pt   (pass via --ckpt --no-ckpt-strict)
+defaults:
+  - phase2a_diffusion_medium_v200_b200
+  - _self_
+
+train:
+  comment: "v2.0.0-phase2a-diffusion-medium-L384-b200-joint"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase2a_v200_joint"
+  forbid_triton: true        # a fallback from the engine CUDA kernels to its Triton family stops the run
+  trunk_lr_scale: 1.0        # lr multiplier of the trunk parameters (1.0 = one lr for everything, as in 2a); override with train.trunk_lr_scale=
+  param_policy:
+    freeze: []               # distogram_head trains through the auxiliary distogram loss; with loss.distogram_loss=0 set freeze=[distogram_head]
+    default: load_existing   # the 2a default (freeze_loaded) froze every parameter present in the checkpoint = the whole trunk
+
+model:
+  freeze_trunk: false        # trunk modules in train mode, trunk forward with gradients (last recycle)
+
+loss:
+  distogram_loss: 0.03       # AF3 alpha_distogram: phase-1 distogram CE on the trunk pair rep, unweighted pairs, rides along the diffusion loss

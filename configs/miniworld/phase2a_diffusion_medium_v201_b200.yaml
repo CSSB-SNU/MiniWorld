@@ -1,0 +1,20 @@
+# MiniWorld v2.0.1 phase 2a, from the phase-1b seed with the TRUNK TRAINED (not frozen): the diffusion head starts from scratch like the
+# v2.0.0 phase 2a (lr 5e-3, 1000-step warm-up), the trunk (v2.0.0 phase-1b epoch-900 EMA) trains jointly with its phase-1b Adam moments
+# at 1.7e-3 and distogram_head at 1e-4. Losses: 4 x (EDM + 1.0 x smooth lDDT, the engine CUDA kernel) + 0.03 x distogram CE on the trunk pair rep.
+#   --ckpt runs/b200/v200_phase1b_ema900/epoch=0900_ema.pt  --no-ckpt-strict
+defaults:
+  - phase2a_diffusion_medium_v200_b200_joint
+  - _self_
+
+train:
+  comment: "v2.0.1-phase2a-diffusion-medium-L384-b200-joint-slddt-fromseed"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase2a_v201"
+  num_epoch: 200
+  max_lr: 5e-3
+  warmup_steps: 1000
+  trunk_lr_scale: 0.34
+  distogram_head_lr_scale: 0.02
+  init_optimizer_state: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase2a_v200_ep200_weights/adam_state_trunk.pt"
+
+loss:
+  smooth_lddt_loss: 1.0

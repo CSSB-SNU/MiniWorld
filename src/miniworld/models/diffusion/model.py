@@ -133,6 +133,8 @@ class DiffusionModel(MiniSWAModel):
         # Replace the trunk-only config the parent stored with the phase 2 config.
         self.config = config
         self.freeze_trunk = config.freeze_trunk
+        self.keep_trunk_pair = False  # the graph trainer sets it to read the trunk pair rep for the auxiliary distogram loss
+        self._trunk_pair = None
 
         # Optional compiled (inductor cudagraph-trees) frozen-trunk conditioning
         # callable. None = OFF (default): the normal eager/whole-model-compile path
@@ -372,6 +374,8 @@ class DiffusionModel(MiniSWAModel):
                 structure,
                 template,
             )
+        if self.keep_trunk_pair:
+            self._trunk_pair = token_pair_trunk
         # When the trunk runs under inductor cudagraph-trees, its outputs are
         # cudagraph-managed buffers that a later replay would overwrite. Clone
         # them before they flow into the (grad) diffusion path so the grad path
