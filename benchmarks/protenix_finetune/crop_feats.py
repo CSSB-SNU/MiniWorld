@@ -1,8 +1,10 @@
 """Crop a saved Protenix feature dict to its first C tokens (and their atoms), like a training crop of crop_size C.
 Token axes (size N_token) and atom axes (size N_atom) are sliced; atoms must be ordered by token so the kept atoms are a prefix."""
+import pfx_options
 import os, sys, torch
+sys.argv = pfx_options.parse(sys.argv)
 from pathlib import Path
-FEATS = Path(os.environ.get("PFX_FEATS", Path(__file__).resolve().parent / "feats"))
+FEATS = Path(pfx_options.OPTIONS.feats or Path(__file__).resolve().parent / "feats")
 src, C = sys.argv[1], int(sys.argv[2])
 d = torch.load(FEATS / f"{src}.pt", weights_only=False)
 f = d["input_feature_dict"]

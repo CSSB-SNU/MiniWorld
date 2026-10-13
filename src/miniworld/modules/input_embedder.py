@@ -367,14 +367,11 @@ class InputFeatureEmbedder(nn.Module):
     def _fused_token_pair_init(self, token_left, token_right, scheme, structure):
         """The pair stream ``left_i + right_j + Linear(relative-position one-hot) + Linear(bond one-hot)`` as one engine kernel
         pair (``miniworld_engine.kernels.token_pair_init``; B200, fp32, d_pair 128, dense ``token_bond_feat``), or None when it
-        does not serve the call (the unfused ops below run). ``MINIWORLD_FUSED_PAIR_INIT=0`` turns it off. It never builds the
+        does not serve the call (the unfused ops below run). ``settings.token_pair_init_fused=False`` turns it off. It never builds the
         139-wide fp32 one-hot of the relative-position features (82 MB at 384 tokens) and does its sums in exact fp32."""
-        import os
+        from miniworld_engine import settings
 
-        if (
-            os.environ.get("MINIWORLD_FUSED_PAIR_INIT", "1") == "0"
-            or not token_left.is_cuda
-        ):
+        if not settings.current().token_pair_init_fused or not token_left.is_cuda:
             return None
         try:
             from miniworld_engine.kernels.token_pair_init import refusal, token_pair_init

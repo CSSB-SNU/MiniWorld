@@ -30,14 +30,10 @@ def configure_fused_msa_train(enabled: bool) -> None:
     which enables supported native paths by default. Unsupported inputs still
     use each module's general implementation.
     """
-    import os
+    from miniworld_engine import settings
 
-    for key in ("MINIWORLD_PWA_TRAIN", "MINIWORLD_OPM_TRAIN"):
-        if enabled:
-            os.environ[key] = "1"
-        else:
-            # Engine 2 defaults to native MSA: absence no longer means disabled.
-            os.environ[key] = "0"
+    # Engine 2 defaults to native MSA: None (automatic) is not "disabled", so the choice is always explicit.
+    settings.configure(opm_train=enabled, pwa_train=enabled)
     logging.getLogger(__name__).info(
         "Fused MSA training paths (PWA/OPM kernels): %s", "on" if enabled else "off"
     )
@@ -60,3 +56,15 @@ def align_engine_optimizer_state(optimizer) -> int:
             "Aligned %d engine optimizer state tensors", changed
         )
     return changed
+
+
+def apply_run_options(options) -> None:
+    """Apply ``train.engine_settings`` and ``train.adaln_fwd``; call it before the model is built."""
+    if options.engine_settings:
+        from miniworld_engine import settings
+
+        settings.configure(**options.engine_settings)
+    if options.adaln_fwd:
+        from miniworld_engine.kernels.adaln.triton import training
+
+        training.set_forward_mode(options.adaln_fwd)

@@ -1,10 +1,12 @@
 """Is the whole-step graph right? From one saved state (parameters, Adam state, EMA), with the same seed: eager step vs graph
-replay -- loss, gradients, the parameter update -- next to eager vs eager. PFX_DET=1 replaces every random draw by a fixed
+replay -- loss, gradients, the parameter update -- next to eager vs eager. --det replaces every random draw by a fixed
 pattern."""
+import pfx_options
 import os, sys, runpy
+sys.argv = pfx_options.parse(sys.argv)
 from pathlib import Path
 import torch
-if os.environ.get("PFX_DET") == "1":
+if pfx_options.OPTIONS.det:
     def _pat(shape, dtype=None, device=None):
         n = 1
         for d in shape: n *= d
@@ -19,7 +21,7 @@ if os.environ.get("PFX_DET") == "1":
     torch.randn_like = lambda t, **kw: _pat(t.shape, kw.get("dtype", t.dtype), t.device)
     torch.rand_like = lambda t, **kw: _pat(t.shape, kw.get("dtype", t.dtype), t.device).abs()
     torch.randperm = lambda n, **kw: torch.arange(n, device=kw.get("device"))
-os.environ["PFX_G4_TIME"] = "0"
+pfx_options.OPTIONS.g4_time = False
 g4 = runpy.run_path(str(Path(__file__).with_name("whole_graph.py")))
 m, G, gr, whole, L = g4["m"], g4["G"], g4["gr"], g4["whole"], g4["L"]
 PARAMS, OPT, SHADOW, OPTP = G["PARAMS"], G["OPT"], G["EMA_SHADOW"], G["OPT_PARAMS"]

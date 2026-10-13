@@ -217,9 +217,20 @@ def average_gradients(params, world):
 
 
 class RecycleGraphs:
-    def __init__(self, model, batch, loss_fn, ga, max_recycle, *, forward_kwargs=None):
+    def __init__(
+        self,
+        model,
+        batch,
+        loss_fn,
+        ga,
+        max_recycle,
+        *,
+        forward_kwargs=None,
+        amp_bf16=False,
+    ):
         self.model, self.batch, self.loss_fn, self.ga = model, batch, loss_fn, ga
         self.forward_kwargs = dict(forward_kwargs or {})
+        self.amp_bf16 = amp_bf16
         self.graphs = {}
         self.losses = {}
         self.metrics = {}
@@ -278,7 +289,7 @@ class RecycleGraphs:
 
         with (
             torch.autocast("cuda", dtype=torch.bfloat16)
-            if os.environ.get("MW_GRAPH_AMP") == "1"
+            if self.amp_bf16
             else model_autocast(
                 self.model
             )  # bf16 autocast for an fp32-master (bf16-mixed) model
@@ -384,7 +395,7 @@ def resolve_run_directory(cfg, ckpt, run_dir, state):
         checkpoint = Path(ckpt).resolve()
         if checkpoint.parent.name == "checkpoints":
             return checkpoint.parent.parent
-        raise ValueError("A copied checkpoint requires MW_RESUME_RUN_SUBDIR")
+        raise ValueError("A copied checkpoint requires train.resume_run_subdir")
     root = Path(cfg.train.run_dir).resolve()
     if (root / "wandb_run_id.txt").exists() or (root / "latest_run.txt").exists():
         raise ValueError(f"Existing training run in {root}; pass --ckpt to resume it")
@@ -456,7 +467,16 @@ def restore_training_state(model, optimizer, scheduler, state):
         scheduler.load_state_dict(copy.deepcopy(state["scheduler_state_dict"]))
 
 
-def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_name=None):
+def train(
+    cfg,
+    ckpt,
+    run_dir=None,
+    *,
+    diagnostic_steps=0,
+    repeat_diagnostic_inputs=False,
+    validate=True,
+    job_name=None,
+):
     configure_graph_cublas()
     if getattr(cfg.train, "forbid_triton", False):
         from miniworld.training import no_triton
@@ -467,7 +487,10 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
     from miniworld.configs import TemplateConfig
     from miniworld.data.dataloader.dataloader import BioMolData
     from miniworld.models.distogram_only import MiniSWAModel
-    from miniworld.training.engine_backend import configure_engine_backend
+    from miniworld.training.engine_backend import (
+        configure_engine_backend,
+        configure_fused_msa_train,
+    )
     from miniworld.training.precision import apply_precision
     from miniworld.utils import get_step_decay_scheduler_with_warmup
 
@@ -479,13 +502,7 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
     if world > 1 and not dist.is_initialized():
         dist.init_process_group("nccl")
     configure_engine_backend(cfg.train.engine_backend)
-    os.environ["MINIWORLD_OPM_TRAIN"] = os.environ["MINIWORLD_PWA_TRAIN"] = (
-        "1"
-        if getattr(
-            cfg.train, "fused_msa_train", os.environ.get("MINIWORLD_PWA_TRAIN") == "1"
-        )
-        else "0"
-    )
+    configure_fused_msa_train(bool(getattr(cfg.train, "fused_msa_train", False)))
     torch.manual_seed(cfg.train.seed or 0)
     torch.set_float32_matmul_precision("medium")
     # Keep BF16 operands/output with FP32 GEMM partial reductions. This policy
@@ -614,7 +631,7 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
     if diagnostic_steps:
         Path(run_dir).mkdir(parents=True, exist_ok=True)
         torch.save([first, second], Path(run_dir) / f"input-rank{rank}.pt")
-        if os.environ.get("MW_GRAPH_REPEAT_DIAGNOSTIC_INPUTS") == "1":
+        if repeat_diagnostic_inputs:
             # Short numerical/compute check; deliberately excludes loader throughput.
             it = itertools.cycle([first, second])
     static = first.to(device=dev)
@@ -634,6 +651,7 @@ def train(cfg, ckpt, run_dir=None, *, diagnostic_steps=0, validate=True, job_nam
         cfg.train.grad_accum_steps,
         cfg.model.trunk.n_recycle_max,
         forward_kwargs=forward_kwargs,
+        amp_bf16=cfg.train.graph_amp,
     )
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)

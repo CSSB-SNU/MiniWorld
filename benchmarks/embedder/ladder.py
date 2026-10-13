@@ -6,7 +6,7 @@ once per state of the code to build a ladder; each ``--before-*`` flag puts one 
     python -m benchmarks.embedder.ladder                                   # everything on
     python -m benchmarks.embedder.ladder --before-scatter-add              # the one-hot einsum atom -> token mean
     python -m benchmarks.embedder.ladder --before-fa4-lse                  # FA4 backward recomputes its forward
-    MINIWORLD_FUSED_PAIR_INIT=0 python -m benchmarks.embedder.ladder       # the unfused token-pair initialisation
+    python -m benchmarks.embedder.ladder --engine-setting token_pair_init_fused=false   # the unfused token-pair initialisation
 
 Measured on one B200 (engine ``5d8bb030`` + the embedder branches): 1.84 ms before, 1.41 with the FA4 lse, 1.38 with the scatter-add,
 1.08 with the fused token-pair initialisation.

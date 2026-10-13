@@ -86,12 +86,14 @@ def test_the_fused_pair_stream_stays_off_without_cuda():
 
 
 def test_the_fused_pair_stream_can_be_switched_off(monkeypatch):
-    monkeypatch.setenv("MINIWORLD_FUSED_PAIR_INIT", "0")
+    from miniworld_engine import settings
+
+    monkeypatch.setattr(settings, "_ACTIVE", settings.current())  # restored at teardown
+    settings.configure(token_pair_init_fused=False)
     assert _call_fused(SimpleNamespace(is_cuda=True)) is None
 
 
 def test_the_fused_pair_stream_falls_back_on_an_engine_without_the_op(monkeypatch):
-    monkeypatch.delenv("MINIWORLD_FUSED_PAIR_INIT", raising=False)
     monkeypatch.setitem(
         sys.modules, "miniworld_engine.kernels.token_pair_init", None
     )  # import raises ImportError

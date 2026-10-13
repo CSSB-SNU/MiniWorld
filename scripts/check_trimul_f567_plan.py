@@ -5,7 +5,9 @@ import json
 import os
 from pathlib import Path
 
-os.environ["MINIWORLD_COMPILE_WRAP"] = "disable"
+os.environ["MINIWORLD_COMPILE_WRAP"] = (
+    "disable"  # read when the kernel modules import: environment by design
+)
 from miniworld_engine.autotune import derive
 from miniworld_engine.autotune.builder import cases, op_units
 

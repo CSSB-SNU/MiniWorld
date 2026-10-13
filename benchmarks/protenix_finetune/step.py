@@ -1,29 +1,31 @@
 """One Protenix v1 fine-tuning step without the data pipeline: trunk (N_cycle recycles, grad on the last), mini-rollout (no grad),
 confidence head, diffusion training (N_sample samples), distogram; a surrogate loss over every head, backward. Features from featurize.py,
 ground-truth coordinates synthetic (they only feed the noise / augmentation)."""
+import pfx_options
 import os, sys, time
+sys.argv = pfx_options.parse(sys.argv)
 from pfx_common import *
 from protenix.model.generator import sample_diffusion_training
 from protenix.utils.torch_utils import autocasting_disable_decorator
 name = sys.argv[1] if len(sys.argv) > 1 else "7r6r"
-NCYC = int(os.environ.get("NCYC", "4")); NSAMP = int(os.environ.get("NSAMP", "48"))
+NCYC = pfx_options.OPTIONS.ncyc; NSAMP = pfx_options.OPTIONS.nsamp
 torch.manual_seed(0)
-cfg, m = build_model("cuda", extra=os.environ.get("PFX_EXTRA", ""))
+cfg, m = build_model("cuda", extra=pfx_options.OPTIONS.extra)
 import pfx_graphsafe
 pfx_graphsafe.install()
-if os.environ.get("CAPTURE"):
+if pfx_options.OPTIONS.capture:
     _cap = {}
     def _hook(name):
         def f(mod, args, kwargs):
             if torch.is_grad_enabled() and name not in _cap:
                 _cap[name] = [t.detach().clone() if torch.is_tensor(t) else t for t in args[:3]]
-                torch.save(_cap, os.environ["CAPTURE"])
+                torch.save(_cap, pfx_options.OPTIONS.capture)
         return f
     for _n in ("atom_attention_encoder", "atom_attention_decoder"):
         getattr(m.diffusion_module, _n).atom_transformer.register_forward_pre_hook(_hook(_n), with_kwargs=True)
-if os.environ.get("PATCH"):
+if pfx_options.OPTIONS.patch:
     import patch_engine
-    patch_engine.install(m, cfg, os.environ["PATCH"])
+    patch_engine.install(m, cfg, pfx_options.OPTIONS.patch)
 m.train()
 d = torch.load(FEATS / f"{name}.pt", weights_only=False)
 from protenix.model.protenix import update_input_feature_dict
@@ -31,7 +33,7 @@ f = {k: (v.cuda() if torch.is_tensor(v) else v) for k, v in d["input_feature_dic
 f = update_input_feature_dict(m.relative_position_encoding.generate_relp(f))
 N_TOKEN = int(d['N_token'])
 pfx_graphsafe.N_TOKEN = N_TOKEN
-if os.environ.get('PFX_DIFF_CACHE') == '1':
+if pfx_options.OPTIONS.diff_cache:
     m.enable_diffusion_shared_vars_cache = True     # Protenix's own option (its inference config sets it): pair_z / p_lm once per step
 f['distogram_rep_atom_idx'] = f['distogram_rep_atom_mask'].bool().nonzero().squeeze(-1)
 
@@ -64,7 +66,7 @@ def _sample_diffusion_gs(denoise_net, input_feature_dict, s_inputs, s_trunk, z_t
 # deterministic schedule, built once (its scalar fill is a host copy, not capturable)
 NOISE_SCHED = m.inference_noise_scheduler(N_step=cfg.sample_diffusion['N_step_mini_rollout'], device='cuda', dtype=torch.float32)
 NOISE_SCHED_HOST = NOISE_SCHED.tolist()
-SAMPLE_DIFFUSION = _sample_diffusion_gs if os.environ.get('PFX_GRAPH_SAFE', '1') == '1' else m.sample_diffusion
+SAMPLE_DIFFUSION = _sample_diffusion_gs if pfx_options.OPTIONS.graph_safe else m.sample_diffusion
 n_atom = f["atom_to_token_idx"].shape[-1]
 lab = {"coordinate": torch.randn(n_atom, 3, device="cuda") * 10, "coordinate_mask": torch.ones(n_atom, device="cuda")}
 print(f"{name}: N_token {d['N_token'].item()} N_atom {n_atom} N_msa {d['N_msa'].item()}  N_cycle {NCYC} N_sample {NSAMP}  "
@@ -72,17 +74,17 @@ print(f"{name}: N_token {d['N_token'].item()} N_atom {n_atom} N_msa {d['N_msa'].
 
 T = {}
 def mark(k):
-    if os.environ.get('STAGES'):
+    if pfx_options.OPTIONS.stages:
         torch.cuda.synchronize(); T[k] = time.time()
 
 
-if os.environ.get("PFX_DIFF_ONLY") == "1":   # diffusion-only training (as MiniWorld phase 2): the heads are not trained
+if pfx_options.OPTIONS.diff_only:   # diffusion-only training (as MiniWorld phase 2): the heads are not trained
     for _n, _p in m.named_parameters():
         if _n.startswith(("confidence_head.", "distogram_head.")):
             _p.requires_grad_(False)
-# ---- full training step (PFX_FULL=1): Protenix loss + grad clip + Adam + EMA, as runner/train.py's train_step ----
-FULL = os.environ.get("PFX_FULL") == "1"
-if os.environ.get("PFX_FREEZE_TRUNK") == "1":        # ablation: trunk params frozen -> no trunk backward (heads still train)
+# ---- full training step (--full): Protenix loss + grad clip + Adam + EMA, as runner/train.py's train_step ----
+FULL = pfx_options.OPTIONS.full
+if pfx_options.OPTIONS.freeze_trunk:        # ablation: trunk params frozen -> no trunk backward (heads still train)
     FREEZE_KEEP = ("diffusion_module.", "confidence_head.", "distogram_head.")
     for _n, _p in m.named_parameters():
         if not _n.startswith(FREEZE_KEEP):
@@ -90,7 +92,7 @@ if os.environ.get("PFX_FREEZE_TRUNK") == "1":        # ablation: trunk params fr
     m.train_confidence_only = True          # Protenix's own switch: every recycle cycle under no_grad
     for _t in ("input_embedder", "template_embedder", "msa_module", "pairformer_stack", "relative_position_encoding"):
         getattr(m, _t).eval()                # frozen trunk in eval mode (no dropout), as MiniWorld phase 2
-TRAINER = os.environ.get("PFX_TRAINER", "protenix")      # protenix: its own loop (EMAWrapper, empty_cache, host NaN check); fast: fused / foreach, graph-capturable
+TRAINER = pfx_options.OPTIONS.trainer      # protenix: its own loop (EMAWrapper, empty_cache, host NaN check); fast: fused / foreach, graph-capturable
 if FULL:
     from protenix.model.loss import ProtenixLoss
     LOSS = ProtenixLoss(cfg)
@@ -105,9 +107,9 @@ if FULL:
         # fused Adam (one launch per dtype group) -- but it does not bump the parameters' _version, which the engine's weight-pack
         # caches key on, so the step below bumps it explicitly (no kernel); otherwise an eager call would reuse old weights' packs
         # Protenix trains fp32 parameters (autocast computes in bf16); the engine blocks hold bf16 weights for their kernels, so
-        # (PFX_FP32_MASTER, default on) clip / Adam / EMA run on fp32 masters made from the original Protenix weights: each step
+        # (--fp32_master, default on; --no-fp32_master turns it off) clip / Adam / EMA run on fp32 masters made from the original Protenix weights: each step
         # casts the bf16 grads up into the masters' grad buffers and the updated masters back down into the bf16 weights
-        LOWP = [p for p in PARAMS if p.dtype != torch.float32] if os.environ.get("PFX_FP32_MASTER", "1") == "1" else []
+        LOWP = [p for p in PARAMS if p.dtype != torch.float32] if pfx_options.OPTIONS.fp32_master else []
         MASTERS = [getattr(p, "_pfx_src32", None) for p in LOWP]
         MASTERS = [(s32.to(p.device, torch.float32) if s32 is not None and s32.shape == p.shape else p.detach().float().clone())
                    for p, s32 in zip(LOWP, MASTERS)]
@@ -135,7 +137,7 @@ if FULL:
             _EMA_G.setdefault(_p.dtype, ([], []))
             _EMA_G[_p.dtype][0].append(_s); _EMA_G[_p.dtype][1].append(_p.detach())
         FOPT = None
-        if os.environ.get("PFX_FUSED_OPT") == "1":           # clip + Adam + master->weight cast + EMA in 3 launches (pfx_fused_opt)
+        if pfx_options.OPTIONS.fused_opt:           # clip + Adam + master->weight cast + EMA in 3 launches (pfx_fused_opt)
             import pfx_fused_opt
             FOPT = pfx_fused_opt.FusedTrainerOpt(PARAMS, OPT_PARAMS, cfg.adam.lr, (cfg.adam.beta1, cfg.adam.beta2), 1e-8,
                                                  cfg.adam.weight_decay, EMA_DECAY, cfg.grad_clip_norm)
@@ -187,9 +189,9 @@ def opt_part():
         opt_core()
         torch.autograd.graph.increment_version(PARAMS)
 
-SIDE_CONF = os.environ.get("PFX_SIDE_CONF") == "1"
-NOJOIN = SIDE_CONF and os.environ.get("PFX_SIDE_NOJOIN") == "1"     # whole_graph.py only
-LATE = os.environ.get("PFX_CONF_LATE") == "1"                       # whole_graph.py only: confidence head after the main backward
+SIDE_CONF = pfx_options.OPTIONS.side_conf
+NOJOIN = SIDE_CONF and pfx_options.OPTIONS.side_nojoin     # whole_graph.py only
+LATE = pfx_options.OPTIONS.conf_late                       # whole_graph.py only: confidence head after the main backward
 LATE_CTX = []
 SIDE_LOSS = [None]
 CONF_ST = torch.cuda.Stream() if SIDE_CONF else None
@@ -198,7 +200,7 @@ def forward_preds():
     mark('t0')
     # cache_enabled=False as Protenix's Trainer.train_step (and required for CUDA-graphed callables)
     with torch.autocast("cuda", dtype=torch.bfloat16, cache_enabled=False):
-        if os.environ.get("PFX_FREEZE_TRUNK") == "1":           # ablation: trunk forward only (no trunk backward)
+        if pfx_options.OPTIONS.freeze_trunk:           # ablation: trunk forward only (no trunk backward)
             with torch.no_grad():
                 s_inputs, s, z = m.get_pairformer_output(input_feature_dict=f, N_cycle=NCYC, inplace_safe=False, chunk_size=None)
         else:
@@ -214,7 +216,7 @@ def forward_preds():
                 ref_pos=f["ref_pos"], ref_charge=f["ref_charge"], ref_mask=f["ref_mask"], ref_element=f["ref_element"],
                 ref_atom_name_chars=f["ref_atom_name_chars"], atom_to_token_idx=f["atom_to_token_idx"], d_lm=f["d_lm"], v_lm=f["v_lm"],
                 pad_info=f["pad_info"], r_l=True, z=cache["pair_z"], inplace_safe=False)
-        # PFX_SIDE_CONF=1: the mini-rollout (no grad) and the confidence head (stop_gradient: detached trunk inputs) form a branch
+        # --side_conf: the mini-rollout (no grad) and the confidence head (stop_gradient: detached trunk inputs) form a branch
         # independent of the diffusion-training branch up to the loss sum -> issue it on a second stream so the two overlap (its
         # backward runs on that stream too: autograd replays each op's backward on its forward stream)
         main_st = torch.cuda.current_stream()
@@ -225,7 +227,7 @@ def forward_preds():
                 if t_ is not None:
                     t_.record_stream(CONF_ST)
         with torch.cuda.stream(CONF_ST if side else main_st):
-            if os.environ.get("PFX_NO_ROLLOUT") == "1":          # ablation: no mini-rollout; the confidence head gets the label coords
+            if pfx_options.OPTIONS.no_rollout:          # ablation: no mini-rollout; the confidence head gets the label coords
                 cm = lab["coordinate"][None].detach()
             else:
               with torch.no_grad():
@@ -245,7 +247,7 @@ def forward_preds():
                 # only carries the rollout -- no TriMul B200 backward (persistent, inter-CTA spin waits) on two streams at once
                 LATE_CTX[:] = [s_inputs.detach(), s.detach(), z.detach(), cm]
                 plddt = pae = pde = resolved = None
-            elif os.environ.get("PFX_DIFF_ONLY") == "1":
+            elif pfx_options.OPTIONS.diff_only:
                 plddt = pae = pde = resolved = None
             else:
               plddt, pae, pde, resolved = m.run_confidence_head(input_feature_dict=f, s_inputs=s_inputs, s_trunk=s, z_trunk=z, pair_mask=None,
@@ -267,7 +269,7 @@ def forward_preds():
         mark('diffusion_train')
         if xd is not None: DBG['xd'] = xd.detach()
         if sig is not None: DBG['sig'] = sig.detach()
-        dg = None if os.environ.get("PFX_DIFF_ONLY") == "1" else autocasting_disable_decorator(True)(m.distogram_head)(z)
+        dg = None if pfx_options.OPTIONS.diff_only else autocasting_disable_decorator(True)(m.distogram_head)(z)
         if side and not NOJOIN:                               # join the confidence branch
             main_st.wait_stream(CONF_ST)
             for t_ in side_out:
@@ -277,11 +279,11 @@ def forward_preds():
 
 
 GSL = None
-if FULL and os.environ.get("PFX_LOSS_GS") == "1":
+if FULL and pfx_options.OPTIONS.loss_gs:
     # graph-safe ProtenixLoss: sample-only data precomputed here, the per-step part has no host syncs
     import pfx_loss_gs
     GSL = pfx_loss_gs.GraphSafeLoss(LOSS, cfg, f, lab)
-    if os.environ.get("PFX_LOSS_COMPILE") == "1":
+    if pfx_options.OPTIONS.loss_compile:
         GSL.forward = torch.compile(GSL.forward, dynamic=False)
 
 
@@ -292,7 +294,7 @@ def pred_dict(preds):
 
 
 def compute_loss(preds):
-    """the graph-safe loss (PFX_LOSS_GS=1) on the forward outputs (NOJOIN: the diffusion / distogram part; the confidence part
+    """the graph-safe loss (--loss_gs) on the forward outputs (NOJOIN: the diffusion / distogram part; the confidence part
     is SIDE_LOSS[0], made on the side stream)"""
     return autocasting_disable_decorator(cfg.skip_amp.loss)(GSL)(pred_dict(preds), which="diff" if NOJOIN else "all")[0]
 
@@ -304,7 +306,7 @@ def finish(preds, loss=None):
         pass
     elif GSL is not None:
         loss = compute_loss(preds)
-    elif FULL and os.environ.get("PFX_LOSS_SURROGATE") == "1":
+    elif FULL and pfx_options.OPTIONS.loss_surrogate:
         # measurement only: a trivial loss over the same outputs (the cost of Protenix's loss = the difference)
         loss = sum(t.float().mean() for t in (plddt, pae, pde, resolved, dg, xd) if t is not None)
     elif FULL:
@@ -339,7 +341,7 @@ def finish(preds, loss=None):
     else:
         loss.backward()
     mark('bwd')
-    if FULL and os.environ.get("PFX_NO_OPT") != "1" and _DO_OPT[0]:
+    if FULL and (not pfx_options.OPTIONS.no_opt) and _DO_OPT[0]:
         opt_part()
     mark('backward')
     return loss.detach()
@@ -352,7 +354,7 @@ for i in range(2):
     l = step(); m.zero_grad(set_to_none=True)
 torch.cuda.synchronize()
 times = []
-for i in range(int(os.environ.get("NREP", "4"))):
+for i in range(pfx_options.OPTIONS.nrep):
     torch.cuda.synchronize(); t0 = time.time()
     l = step(); m.zero_grad(set_to_none=True)
     torch.cuda.synchronize(); times.append(time.time() - t0)

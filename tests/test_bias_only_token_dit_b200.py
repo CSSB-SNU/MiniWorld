@@ -8,6 +8,7 @@ import pytest
 import torch
 from miniworld_engine.architecture.exceptions import ImplementationType
 from miniworld_engine.integrations import bias_only_dit, bias_only_dit_train
+from settings_helpers import override_setting
 
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
 
@@ -80,13 +81,13 @@ def calls(monkeypatch):
 
 def test_training_takes_the_fused_path(calls, monkeypatch):
     # The fp32 (TF32) kernels exist now, so the reference is pinned to the module path explicitly.
-    with monkeypatch.context() as ctx:
-        ctx.setenv("MINIWORLD_BIAS_ONLY_DIT_TRAIN", "0")
-        truth = _train(torch.float32)
+    override_setting(monkeypatch, "bias_only_dit_train", False)
+    truth = _train(torch.float32)
+    override_setting(monkeypatch, "bias_only_dit_train", None)
     assert calls == []
     fused = _train(torch.bfloat16)
     assert calls == ["block", "block"]
-    monkeypatch.setenv("MINIWORLD_BIAS_ONLY_DIT_TRAIN", "0")
+    override_setting(monkeypatch, "bias_only_dit_train", False)
     module = _train(torch.bfloat16)
     assert calls == ["block", "block"]
     assert set(fused) == set(truth)
@@ -103,9 +104,9 @@ def test_inference_takes_the_fused_path(calls, monkeypatch):
         ("module", torch.bfloat16),
     ):
         if key == "fused":
-            monkeypatch.delenv("MINIWORLD_BIAS_ONLY_DIT", raising=False)
+            override_setting(monkeypatch, "bias_only_dit", None)
         else:  # the reference and the module path both run the unfused modules
-            monkeypatch.setenv("MINIWORLD_BIAS_ONLY_DIT", "0")
+            override_setting(monkeypatch, "bias_only_dit", False)
         dit = _dit(dtype)
         (single, cond, pair), mask = _inputs(dtype)
         with torch.no_grad():

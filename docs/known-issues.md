@@ -23,7 +23,8 @@ those wrong angles, and have adapted to them.
 | engine main with only `5aeb1297` reverted | 0.0576 |
 | MiniWorld after the architecture move, engine `995ea01e` | 0.130 |
 
-**Workaround:** resume or evaluate those checkpoints with `MINIWORLD_ROPE_ANGLES_BF16=1` (or
+**Workaround:** resume or evaluate those checkpoints with the engine setting `rope_angles_bf16_compat` on:
+`train.engine_settings={rope_angles_bf16_compat: true}` as a config override (or
 `miniworld_engine.settings.configure(rope_angles_bf16_compat=True)`). Models trained from scratch with the current engine
 must leave it off. Mixing the two silently doubles the loss, so record which one a checkpoint needs next to it.
 

@@ -25,7 +25,6 @@ def test_cli_fresh_diffusion_goes_directly_to_graph(
     graph, monkeypatch, trainer, tmp_path
 ):
     entry = importlib.import_module("run_miniworld_distogram_train")
-    monkeypatch.delenv("MW_RESUME_RUN_SUBDIR", raising=False)
     calls = []
     monkeypatch.setattr(
         graph, "train", lambda *args, **kwargs: calls.append((args, kwargs))

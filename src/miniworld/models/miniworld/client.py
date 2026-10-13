@@ -18,6 +18,7 @@ from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
 from miniworld.configs import XPredDecoupledDiffuserConfig
+from miniworld.configs.run_options import RunOptions
 from miniworld.data.features.batch import Batch
 from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
@@ -97,7 +98,7 @@ def cal_smooth_lddt(
 class Client(BaseClient):
     """Client for training and inference of MiniWorld (VE x-prediction)."""
 
-    class TrainConfig(BaseModel):
+    class TrainConfig(RunOptions):
         """Configuration for trains."""
 
         comment: str = "default"

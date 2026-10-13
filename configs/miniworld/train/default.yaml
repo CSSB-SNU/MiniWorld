@@ -7,7 +7,7 @@ run_dir: "runs/distogram_swa_af3_mix/"
 # distance/get_shortest_distances) puts the whole fwd + loss + bwd chain
 # into reusable compiled regions. Random-recycle auto mode still uses Fabric.
 # Explicit resume with +train.force_trainer=random_cudagraph uses one CUDA graph
-# per recycle count and requires --ckpt plus MW_RESUME_RUN_SUBDIR.
+# per recycle count and requires --ckpt plus train.resume_run_subdir.
 
 num_batch: 1
 num_epoch: 1000

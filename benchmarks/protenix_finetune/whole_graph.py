@@ -1,21 +1,23 @@
 """The whole training step -- forward, graph-safe Protenix loss, backward, clip + fused Adam + EMA -- as ONE CUDA graph.
-With PFX_SIDE_CONF=1 PFX_SIDE_NOJOIN=1 the mini-rollout + confidence-head branch (its forward, its loss and its backward) is
+With --side_conf --side_nojoin the mini-rollout + confidence-head branch (its forward, its loss and its backward) is
 issued on its own stream and never joined before the backward, so inside the graph it runs concurrently with the diffusion /
 trunk path (two backward roots; autograd joins the streams at the end of backward, before the optimizer)."""
+import pfx_options
 import os, sys, runpy, time
+sys.argv = pfx_options.parse(sys.argv)
 from pathlib import Path
-os.environ["NREP"] = "0"
+pfx_options.OPTIONS.nrep = 0
 sys.argv = ["step.py", sys.argv[1]]
 import torch
 SIDE = torch.cuda.Stream(); torch.cuda.set_stream(SIDE)
 g = runpy.run_path(str(Path(__file__).with_name("step.py")))
 step, m = g["step"], g["m"]
 G = step.__globals__
-assert G["GSL"] is not None and G["FULL"] and G["TRAINER"] == "fast", "needs PFX_FULL=1 PFX_TRAINER=fast PFX_LOSS_GS=1"
-if os.environ.get("PFX_COMPILE"):
+assert G["GSL"] is not None and G["FULL"] and G["TRAINER"] == "fast", "needs --full --trainer=fast --loss_gs"
+if pfx_options.OPTIONS.compile:
     import torch._dynamo
     torch._dynamo.config.cache_size_limit = 64
-    for name in os.environ["PFX_COMPILE"].split(","):
+    for name in pfx_options.OPTIONS.compile.split(","):
         mod = m
         for part in name.split("."):
             mod = getattr(mod, part)
@@ -75,7 +77,7 @@ def gstep():
     return L
 
 
-if os.environ.get("PFX_G4_TIME", "1") == "1":
+if pfx_options.OPTIONS.g4_time:
     for _ in range(3):
         gstep()
     torch.cuda.synchronize()
@@ -85,7 +87,7 @@ if os.environ.get("PFX_G4_TIME", "1") == "1":
         gstep(); ls.append(L.item())
     bad = sorted({n.split(".")[0] for n, p in m.named_parameters() if p.grad is not None and not torch.isfinite(p.grad).all()})
     nog = sum(p.grad is None for p in PARAMS)
-    ns = int(os.environ.get("PFX_G4_STRESS", "0"))         # extra replays: a concurrency hang would show here
+    ns = pfx_options.OPTIONS.g4_stress         # extra replays: a concurrency hang would show here
     for _ in range(ns):
         gstep()
     torch.cuda.synchronize()

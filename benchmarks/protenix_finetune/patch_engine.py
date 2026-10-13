@@ -3,6 +3,7 @@
 The engine module owns the (mapped) weights while it is installed; ``to_protenix`` writes them back into the Protenix layout.
 Blocks run in bf16 inside (the engine kernels are bf16) and return the caller's dtype.
 """
+import pfx_options
 import os
 import torch
 import torch.utils.checkpoint
@@ -14,7 +15,7 @@ from miniworld_engine.modules import PairformerBlock as EPairformerBlock, Pairfo
 from miniworld_engine.modules.exceptions import ImplementationType
 
 IMPL = ImplementationType.MINIWORLD
-NO_REZERO = os.environ.get("PFX_NO_REZERO") == "1"     # diagnostic: no re-zeroing of padded positions between ops
+NO_REZERO = pfx_options.OPTIONS.no_rezero     # diagnostic: no re-zeroing of padded positions between ops
 BF = torch.bfloat16
 
 # (engine name, protenix name) for one Pairformer block's pair track
@@ -201,11 +202,11 @@ class EngineTokenTransformer(nn.Module):
             _copy(e, b, DIT_MAP)
             self.blocks.append(e)
         self.to(device=b0.attention_pair_bias.linear_a_last.weight.device)
-        if os.environ.get("PFX_DIT_BF16") == "1":
+        if pfx_options.OPTIONS.dit_bf16:
             # bf16 weights from the start (before the trainer builds its fp32 masters / pointer tables): converting lazily in the
             # first forward would swap the parameters' storage under the optimizer
             self.to(BF)
-        self.ckpt = os.environ.get("PFX_DIT_CKPT", "0") == "1"
+        self.ckpt = pfx_options.OPTIONS.dit_ckpt
 
     def forward(self, a, s, z, n_queries=None, n_keys=None, inplace_safe=False, chunk_size=None, enable_efficient_fusion=False):
         assert not (n_queries and n_keys), "token transformer only"
@@ -225,9 +226,9 @@ class EngineTokenTransformer(nn.Module):
             pair = F.pad(pair, (0, 0, 0, Np - N, 0, Np - N))
             mask = torch.zeros(1, Np, dtype=torch.bool, device=a.device)
             mask[:, :N] = True
-        if os.environ.get("PFX_DIT_BF16") == "1":      # ablation: the token DiT in bf16 (MiniWorld v200 runs its diffusion in bf16)
+        if pfx_options.OPTIONS.dit_bf16:      # ablation: the token DiT in bf16 (MiniWorld v200 runs its diffusion in bf16)
             single, cond, pair = single.to(BF), cond.to(BF), pair.to(BF)
-        if not torch.is_grad_enabled() and os.environ.get("PFX_DIT_FUSED_INFER", "1") == "1":
+        if not torch.is_grad_enabled() and pfx_options.OPTIONS.dit_fused_infer:
             out = self._infer_fused(single.contiguous(), cond.contiguous(), pair, z, mask)
             return out[:, :, :N].reshape(*lead, N, ca).to(a.dtype)
         dt = single.dtype
@@ -351,7 +352,7 @@ def batched_template_forward(self, input_feature_dict, z, pair_mask=None, triang
 def _swap_pairformer_blocks(model: nn.Module, report):
     from protenix.model.modules.pairformer import PairformerBlock as PBlock, PairformerStack as PStack
     ok = lambda b: b.tri_mul_out.layer_norm_in.weight.shape[0] == b.tri_mul_out.linear_a_p.weight.shape[0]
-    stack_mode = os.environ.get("PFX_PAIR_STACK", "1") == "1"
+    stack_mode = pfx_options.OPTIONS.pair_stack
     for name, mod in list(model.named_modules()):
         for cname, child in list(mod.named_children()):
             full = f"{name}.{cname}" if name else cname
@@ -363,7 +364,7 @@ def _swap_pairformer_blocks(model: nn.Module, report):
             if isinstance(child, PBlock):
                 full = f"{name}.{cname}" if name else cname
                 if not ok(child):                   # Protenix templates: c_pair 64, c_hidden 128 -- no engine TriMul for it
-                    if os.environ.get("PFX_TEMPLATE", "1") == "1":
+                    if pfx_options.OPTIONS.template:
                         setattr(mod, cname, EngineTemplateBlock(child))
                         report.setdefault("template block: engine TriMul (D64 kernels, 128-ch contraction) + TriAttn + transition", []).append(full)
                     else:
@@ -479,7 +480,7 @@ def _swap_msa(model, report):
     for name, blk in model.msa_module.blocks.named_children():
         blk.outer_product_mean_msa = EngineOPM(blk.outer_product_mean_msa).to(next(blk.parameters()).device)
         report.setdefault("msa.opm", []).append(name)
-        if os.environ.get("PFX_MSA_STACK", "1") != "0" and getattr(blk, "msa_stack", None) is not None and not blk.is_last_block:
+        if pfx_options.OPTIONS.msa_stack and getattr(blk, "msa_stack", None) is not None and not blk.is_last_block:
             blk.msa_stack = EngineMSAStack(blk.msa_stack).to(next(blk.parameters()).device)
             report.setdefault("msa.stack", []).append(name)
 
@@ -508,7 +509,7 @@ class EngineAtomTransformer(nn.Module):
             _copy(e, b, DIT_MAP + KV_MAP)
             self.blocks.append(e)
         self.to(device=src.diffusion_transformer.blocks[0].attention_pair_bias.linear_a_last.weight.device, dtype=BF)
-        self.ckpt = os.environ.get("PFX_DIT_CKPT", "0") == "1"
+        self.ckpt = pfx_options.OPTIONS.dit_ckpt
 
     def forward(self, q, c, p, inplace_safe=False, chunk_size=None):
         N, ca = q.shape[-2], q.shape[-1]
@@ -535,7 +536,7 @@ def _swap_atom_transformers(model, report):
         mod = getattr(dm, part)
         mod.atom_transformer = EngineAtomTransformer(mod.atom_transformer)
         report.setdefault("engine atom transformer (LocalDiTBlock, bf16)", []).append(f"diffusion_module.{part}.atom_transformer")
-    if os.environ.get("PFX_EMB_ATOM") == "1":
+    if pfx_options.OPTIONS.emb_atom:
         # the input embedder's atom transformer (same 3 cross blocks, 32 x 128 windows); it already runs under bf16 autocast
         enc = model.input_embedder.atom_attention_encoder
         enc.atom_transformer = EngineAtomTransformer(enc.atom_transformer)
@@ -546,7 +547,7 @@ def _swap_atom_transformers(model, report):
 def install(model: nn.Module, cfg, which: str = "pair"):
     report = {}
     parts = set(which.split(","))
-    if os.environ.get("PFX_FAST_T", "1") == "1":       # TriAttn ending direction: fast row-permuting transpose (pfx_pair_t)
+    if pfx_options.OPTIONS.fast_t:       # TriAttn ending direction: fast row-permuting transpose (pfx_pair_t)
         import pfx_pair_t
         pfx_pair_t.install()
         report["TriAttn ending transposes on pfx_pair_t"] = ["miniworld_engine.integrations.triattn_b200.rearrange"]
@@ -554,7 +555,7 @@ def install(model: nn.Module, cfg, which: str = "pair"):
         _swap_pairformer_blocks(model, report)
     if "msa" in parts:
         _swap_msa(model, report)
-    if "pair" in parts and os.environ.get("PFX_TEMPLATE", "1") == "1" and os.environ.get("PFX_TEMPLATE_BATCH", "1") == "1":
+    if "pair" in parts and pfx_options.OPTIONS.template and pfx_options.OPTIONS.template_batch:
         import types
         model.template_embedder.forward = types.MethodType(batched_template_forward, model.template_embedder)
         report["template embedder: templates batched (one [T, L, L, 64] pass)"] = ["template_embedder"]

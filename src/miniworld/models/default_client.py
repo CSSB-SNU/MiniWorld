@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from torch.utils.data import DataLoader
 
 from miniworld.configs import EDMDiffuserConfig
+from miniworld.configs.run_options import RunOptions
 from miniworld.data.features.batch import Batch
 from miniworld.loss import metrics
 from miniworld.loss.auxiliary import (
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 class Client(BaseClient):
     """Client for training and inference of AF3Like model."""
 
-    class TrainConfig(BaseModel):
+    class TrainConfig(RunOptions):
         """Configuration for trains."""
 
         comment: str = "default"

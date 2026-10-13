@@ -17,8 +17,8 @@ CUDA 그래프 하나로 재는 하네스다. MiniWorld 모델이 아니라 외�
 2. 체크포인트 `protenix_base_default_v1.0.0.pt`를 받는다.
 3. 특징 파일을 만든다. Protenix 자체 환경에서 `featurize.py`를 돌린 뒤, 학습 크롭처럼 앞 384 토큰으로 자른다.
    ```bash
-   PROTENIX_SRC=/path/to/Protenix python featurize.py          # PFX_FEATS/<이름>.pt
-   python crop_feats.py 7pzb 384                               # PFX_FEATS/7pzb_c384.pt
+   PROTENIX_SRC=/path/to/Protenix python featurize.py          # <feats>/<이름>.pt
+   python crop_feats.py 7pzb 384                               # <feats>/7pzb_c384.pt
    ```
 4. 학습 환경(MiniWorld pixi 환경, miniworld-engine과 team-gm 포함)에 Protenix가 쓰는 패키지 중 빠진 것(absl, ml_collections)이 있으면
    한 디렉터리에 설치하고 `PROTENIX_EXTRA_SITE`로 넘긴다.
@@ -27,17 +27,17 @@ CUDA 그래프 하나로 재는 하네스다. MiniWorld 모델이 아니라 외�
 
 ```bash
 export PROTENIX_SRC=/path/to/Protenix PROTENIX_CKPT=/path/to/protenix_base_default_v1.0.0.pt
-export PFX_FEATS=/path/to/feats                # 기본값: 이 디렉터리의 feats/
+# 모든 스크립트가 --feats=/path/to/feats 를 받는다(기본값: 이 디렉터리의 feats/)
 export PROTENIX_EXTRA_SITE=/path/to/site       # 선택
 source benchmarks/protenix_finetune/settings.sh
 D=benchmarks/protenix_finetune
-NCYC=1 PYTHONPATH=$D python $D/whole_graph.py 7pzb_c384           # recycle 1 (NCYC=4: recycle 4)
-PFX_DET=1 NCYC=1 PYTHONPATH=$D python $D/check_whole_graph.py 7r6r  # 그래프 재생 대 eager 정확성
+PYTHONPATH=$D python $D/whole_graph.py 7pzb_c384 --ncyc=1          # recycle 1 (--ncyc=4: recycle 4)
+PYTHONPATH=$D python $D/check_whole_graph.py 7r6r --det --ncyc=1  # 그래프 재생 대 eager 정확성
 ```
 
 `whole_graph.py`는 eager 스텝을 재고 스텝 전체를 캡처한 뒤 재생 시간, 손실, 비유한 기울기, 최대 메모리를 찍는다.
-`PFX_G4_STRESS=N`이면 N번 더 재생한다(동시 실행 정지 확인용). `check_whole_graph.py`는 같은 상태(파라미터, Adam 상태, EMA)와
-같은 시드에서 eager 스텝과 그래프 재생의 손실, 기울기, 마스터 가중치 갱신, EMA 갱신을 비교한다. `PFX_DET=1`이면 모든 난수를
+`--g4_stress=N`이면 N번 더 재생한다(동시 실행 정지 확인용). `check_whole_graph.py`는 같은 상태(파라미터, Adam 상태, EMA)와
+같은 시드에서 eager 스텝과 그래프 재생의 손실, 기울기, 마스터 가중치 갱신, EMA 갱신을 비교한다. `--det`이면 모든 난수를
 고정 패턴으로 바꾼다.
 
 ## 파일
@@ -61,13 +61,13 @@ PFX_DET=1 NCYC=1 PYTHONPATH=$D python $D/check_whole_graph.py 7r6r  # 그래프 
 
 | 변수 | 뜻 |
 |---|---|
-| `NCYC` | recycle 수(Protenix 학습은 1~4에서 뽑는다) |
+| `--ncyc` | recycle 수(Protenix 학습은 1~4에서 뽑는다) |
 | `NSAMP` | 확산 학습 샘플 수(기본 48) |
 | `PATCH` | 엔진으로 바꿀 부분(`pair,tokendit,msa,atom`); 비우면 Protenix 원래 모듈 |
-| `PFX_TRAINER` | `fast`(그래프 가능 트레이너) 또는 `protenix`(Protenix 자체 루프: EMAWrapper, empty_cache, 호스트 NaN 검사) |
-| `PFX_SIDE_CONF`, `PFX_SIDE_NOJOIN`, `PFX_CONF_LATE` | mini-rollout을 두 번째 스트림에서 돌리고 confidence 헤드는 주 역전파 뒤로 |
-| `PFX_DIT_BF16` | token DiT를 bf16으로(정밀도 변경, 기본 끔) |
-| `PFX_CKPT=1` | 활성 체크포인팅 켬(기본 끔) |
+| `--trainer=fast\|protenix` | `fast`(그래프 가능 트레이너) 또는 `protenix`(Protenix 자체 루프: EMAWrapper, empty_cache, 호스트 NaN 검사) |
+| `--side_conf`, `--side_nojoin`, `--conf_late` | mini-rollout을 두 번째 스트림에서 돌리고 confidence 헤드는 주 역전파 뒤로 |
+| `--dit_bf16` | token DiT를 bf16으로(정밀도 변경, 기본 끔) |
+| `--ckpt` | 활성 체크포인팅 켬(기본 끔) |
 
 ## 한계
 

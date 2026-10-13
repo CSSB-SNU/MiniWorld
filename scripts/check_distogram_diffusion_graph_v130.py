@@ -47,7 +47,6 @@ def main():
     # Only two real examples are needed per rank. Reduce CPU prefetch pressure.
     cfg.train.num_workers = 2
     cfg.train.prefetch_factor = 2
-    os.environ["MW_GRAPH_REPEAT_DIAGNOSTIC_INPUTS"] = "1"
     os.environ["WANDB_MODE"] = "disabled"
     rank = int(os.environ.get("RANK", "0"))
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -59,7 +58,14 @@ def main():
         f"accumulation={cfg.train.grad_accum_steps}; real batches, no recycling",
         flush=True,
     )
-    train(cfg, None, args.output_dir, diagnostic_steps=2, validate=True)
+    train(
+        cfg,
+        None,
+        args.output_dir,
+        diagnostic_steps=2,
+        repeat_diagnostic_inputs=True,
+        validate=True,
+    )
     checks = json.loads((args.output_dir / f"validation-rank{rank}.json").read_text())
     after = next(x for x in checks if x["stage"] == "after_optimizer")
     grads = after["gradient_details"]

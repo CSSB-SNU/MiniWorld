@@ -126,8 +126,8 @@ def diffusion_config(recycles=1, cb=True):
 
 
 def test_diffusion_graph_uses_model_loss_and_passes_interface_weight(monkeypatch):
-    monkeypatch.delenv("MW_GRAPH_AMP", raising=False)
     graph = object.__new__(m.RecycleGraphs)
+    graph.amp_bf16 = False
     graph.batch = batch(0)
     graph.loss_fn, graph.forward_kwargs = m.graph_objective(diffusion_config())
     graph.ga = 4

@@ -7,6 +7,7 @@ together with the model. The rigid alignment of the MSE term uses Horn's quatern
 by repeated squaring) instead of torch.linalg.svd, whose error check syncs; it gives the same proper rotation as the SVD with
 the reflection fix. Cross entropies against one-hot labels are gathers of log_softmax (same value and gradient).
 """
+import pfx_options
 import os
 import torch
 import torch.nn.functional as F
@@ -73,7 +74,7 @@ class GraphSafeLoss(torch.nn.Module):
             reg("lddt_l", li); reg("lddt_m", mi)
             reg("lddt_true", torch.linalg.vector_norm(xt.index_select(-2, li) - xt.index_select(-2, mi), ord=2, dim=-1))
             self.csr = None
-            if os.environ.get("PFX_LOSS_SLDDT_CUDA", "1") == "1":     # one-kernel forward + gradient (pfx_slddt_cuda)
+            if pfx_options.OPTIONS.loss_slddt_cuda:     # one-kernel forward + gradient (pfx_slddt_cuda)
                 import pfx_slddt_cuda
                 self.csr = pfx_slddt_cuda.build_csr(li, mi, self.lddt_true, xt.size(-2))
             # bond (sparse)

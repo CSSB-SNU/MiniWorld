@@ -53,12 +53,12 @@ fi
 # resume source: RESUME=<run subdir>; phase 1b always continues the run of phase 1a (the newest subdir of RUN_DIR)
 CKPT_ARGS=()
 if [[ -n ${RESUME:-} ]]; then
-  export MW_RESUME_RUN_SUBDIR=$RESUME
+  EXTRA+=("train.resume_run_subdir=$RESUME")
   CKPT_ARGS=(--ckpt "$RESUME/checkpoints/last.pt")
 elif [[ $PHASE == 1b ]]; then
   SUB=$(ls -dt "$RUN_DIR"/*/*/ 2>/dev/null | head -1 || true)
   [[ -n $SUB && -f ${SUB%/}/checkpoints/last.pt ]] || { echo "no phase 1a run with checkpoints/last.pt under $RUN_DIR" >&2; exit 3 ;}
-  export MW_RESUME_RUN_SUBDIR=${SUB%/}
+  EXTRA+=("train.resume_run_subdir=${SUB%/}")
   CKPT_ARGS=(--ckpt "${SUB%/}/checkpoints/last.pt")
 fi
 

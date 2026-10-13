@@ -1,5 +1,7 @@
 """Run Protenix's inference featurizer (its own venv) on the copied examples; save the feature dicts for the engine-env harness."""
+import pfx_options
 import os, sys
+sys.argv = pfx_options.parse(sys.argv)
 sys.path.insert(0, os.environ["PROTENIX_SRC"])        # run in Protenix's own environment
 os.environ.setdefault("LAYERNORM_TYPE", "torch")
 import torch
@@ -8,10 +10,10 @@ from configs.configs_data import data_configs
 from configs.configs_inference import inference_configs
 from protenix.config.config import parse_configs
 from protenix.data.inference.infer_dataloader import InferenceDataset
-out = os.environ.get("PFX_FEATS", os.path.join(os.path.dirname(os.path.abspath(__file__)), "feats"))
+out = pfx_options.OPTIONS.feats or os.path.join(os.path.dirname(os.path.abspath(__file__)), "feats")
 os.makedirs(out, exist_ok=True)
 cfg = {**configs_base, **{"data": data_configs}, **inference_configs}
-cfg = parse_configs(cfg, arg_str=f"--input_json_path {os.environ.get('PFX_INPUT_JSON', os.path.join(os.environ['PROTENIX_SRC'], 'examples/example.json'))} --dump_dir {out}/dump --model_name protenix_base_default_v1.0.0", fill_required_with_null=True)
+cfg = parse_configs(cfg, arg_str=f"--input_json_path {pfx_options.OPTIONS.input_json or os.path.join(os.environ['PROTENIX_SRC'], 'examples/example.json')} --dump_dir {out}/dump --model_name protenix_base_default_v1.0.0", fill_required_with_null=True)
 ds = InferenceDataset(cfg) if "configs" in InferenceDataset.__init__.__code__.co_varnames else InferenceDataset(cfg)
 for i in range(len(ds)):
     try:

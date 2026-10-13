@@ -2,7 +2,8 @@
 
 Environment (README.md): PROTENIX_SRC -- a Protenix checkout (bytedance/Protenix 2475421) with protenix.patch applied;
 PROTENIX_CKPT -- protenix_base_default_v1.0.0.pt; PROTENIX_EXTRA_SITE (optional) -- a directory with the packages Protenix
-imports that the training env lacks (absl, ml_collections); PFX_FEATS -- the feature dicts (featurize.py; default ./feats)."""
+imports that the training env lacks (absl, ml_collections); --feats=<dir> -- the feature dicts (featurize.py; default ./feats)."""
+import pfx_options
 import os, sys
 from pathlib import Path
 from collections.abc import Mapping
@@ -21,18 +22,18 @@ sys.path.insert(0, _need("PROTENIX_SRC"))
 os.environ.setdefault("LAYERNORM_TYPE", "fast_layernorm")
 import torch
 CKPT = _need("PROTENIX_CKPT")
-FEATS = Path(os.environ.get("PFX_FEATS", Path(__file__).resolve().parent / "feats"))
+FEATS = Path(pfx_options.OPTIONS.feats or Path(__file__).resolve().parent / "feats")
 
 def build_configs(extra=""):
     from configs.configs_base import configs as configs_base
     from configs.configs_data import data_configs
     from configs.configs_model_type import model_configs
     from protenix.config.config import parse_configs
-    configs_base["triangle_attention"] = os.environ.get("TRIANGLE_ATTENTION", "cuequivariance")
-    configs_base["triangle_multiplicative"] = os.environ.get("TRIANGLE_MULTIPLICATIVE", "cuequivariance")
+    configs_base["triangle_attention"] = pfx_options.OPTIONS.triangle_attention
+    configs_base["triangle_multiplicative"] = pfx_options.OPTIONS.triangle_multiplicative
     arg = ("--model_name protenix_base_default_v1.0.0 --dtype bf16 --diffusion_batch_size 48 --train_crop_size 384 "
            "--model.N_cycle 4 --sample_diffusion.N_step 20 --use_wandb false "
-           + ("" if os.environ.get("PFX_CKPT") == "1" else "--blocks_per_ckpt None ")       # activation checkpointing off (default)
+           + ("" if pfx_options.OPTIONS.ckpt else "--blocks_per_ckpt None ")       # activation checkpointing off (default)
            + extra)
     base = {**configs_base, **{"data": data_configs}}
     def deep_update(d, u):

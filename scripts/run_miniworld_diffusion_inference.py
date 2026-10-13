@@ -622,6 +622,25 @@ def _diffusion_client_from_config(
     default="query",
     show_default=True,
 )
+@click.option(
+    "--shard",
+    type=int,
+    default=0,
+    show_default=True,
+    help="This worker's shard of the index (stride).",
+)
+@click.option(
+    "--n-shards",
+    type=int,
+    default=1,
+    show_default=True,
+    help="Number of shards the index is split into.",
+)
+@click.option(
+    "--compile-timeout",
+    is_flag=True,
+    help="Install the fork+SIGKILL compile guard so one uncached monster autotune config cannot stall the run.",
+)
 @click.argument("overrides", type=str, nargs=-1)
 def foldbench(  # noqa: PLR0913
     config: Path,
@@ -642,11 +661,14 @@ def foldbench(  # noqa: PLR0913
     msa_subsample: bool,
     no_pairing_msa: bool,
     missing_policy: str,
+    shard: int,
+    n_shards: int,
+    compile_timeout: bool,
     overrides: tuple[str, ...],
 ) -> None:
     """Run the phase 2 model over FoldBench targets -> predicted CIFs.
 
-    One GPU worker walks its shard (env ``SHARD``/``N_SHARDS``, stride) of the
+    One GPU worker walks its shard (``--shard`` / ``--n-shards``, stride) of the
     index, holding the model in memory. Finished targets (an existing CIF) are
     skipped, so resubmitting the same shard resumes. Predictions land in
     ``<output_dir>/<target>/<target>_seed{s}_sample{k}_pred.cif`` — feed the dir to
@@ -672,8 +694,6 @@ def foldbench(  # noqa: PLR0913
         targets = [(data_path.parent.name, data_path)]
     elif index_file is not None:
         ids = [ln.strip() for ln in index_file.read_text().splitlines() if ln.strip()]
-        shard = int(os.environ.get("SHARD", "0"))
-        n_shards = int(os.environ.get("N_SHARDS", "1"))
         ids = ids[shard::n_shards]  # stride shard
         targets = [(tid, inputs_root / tid / "data.yaml") for tid in ids]
     else:
@@ -690,16 +710,11 @@ def foldbench(  # noqa: PLR0913
         fabric,
         list(overrides),
     )
-    # MW_COMPILE_TIMEOUT=1: install the fork+SIGKILL compile guard so uncached-shape
+    # --compile-timeout: install the fork+SIGKILL compile guard so uncached-shape
     # autotune bounds each "monster" config (e.g. transition_b2b full grid) to 60s
     # instead of hanging indefinitely. FoldBench targets are arbitrary sizes with no
     # prebuilt cache, so without this the first uncached op stalls the run.
-    if os.getenv("MW_COMPILE_TIMEOUT", "0").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }:
+    if compile_timeout:
         from miniworld_engine.autotune import capture
 
         capture.install()

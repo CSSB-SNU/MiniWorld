@@ -10,6 +10,7 @@ from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel, Discriminator, Field, Tag
 from torch.utils.data import DataLoader
 
+from miniworld.configs.run_options import RunOptions
 from miniworld.data.features.batch import Batch
 from miniworld.loss.auxiliary import (
     cal_atom_distogram_loss,
@@ -79,7 +80,7 @@ def _pair_weight(lc, batch: Batch) -> torch.Tensor | None:
 class Client(BaseClient):
     """Client for training the distogram-only trunk model."""
 
-    class TrainConfig(BaseModel):
+    class TrainConfig(RunOptions):
         """Configuration for trains."""
 
         comment: str = "default"

@@ -51,14 +51,9 @@ from miniworld.utils.script_utils import MetricsAggregator
 
 torch.set_float32_matmul_precision("medium")
 # AdaLN training forward. For the token width the engine defaults to its fused Triton GEMM + gate (chosen on an A6000);
-# on H100 in fp32 that Triton TF32 GEMM runs at ~54 TF/s, 5x its bf16 speed. MINIWORLD_ADALN_FWD=cublas routes it to
+# on H100 in fp32 that Triton TF32 GEMM runs at ~54 TF/s, 5x its bf16 speed. train.adaln_fwd=cublas routes it to
 # the cuBLAS GEMM + epilogue instead: v1 token DiT fwd + bwd -8.4 % a block at L384, -6.6 % at L768 (A = 48, fp32,
 # matmul "medium"), and closer to an fp32 reference (output 1.9e-3 vs 2.8e-3). Unset = the engine's own choice.
-_ADALN_FWD = os.environ.get("MINIWORLD_ADALN_FWD", "")
-if _ADALN_FWD:
-    from miniworld_engine.kernels.adaln.triton import training as _adaln_training
-
-    _adaln_training.set_forward_mode(_ADALN_FWD)
 torch.autograd.set_detect_anomaly(False)
 
 
@@ -500,6 +495,9 @@ def train(  # noqa: PLR0912, PLR0915
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
+    from miniworld.training.engine_backend import apply_run_options
+
+    apply_run_options(cfg.train)
 
     if cfg.train.cuda_graph:
         from phase2_graph_trainer import GraphFabric, configure_graph_cublas
@@ -649,10 +647,10 @@ def train(  # noqa: PLR0912, PLR0915
                         type(e).__name__,
                     )
 
-    # Memory-PROFILE mode (guarded, off by default). MW_MEM_PROFILE=1 hooks the diffusion
+    # Memory-PROFILE mode (guarded, off by default). train.mem_profile=true hooks the diffusion
     # sub-modules (+ trunk) and logs each one's retained-activation delta AS IT RUNS, so the
     # per-module 768 x num_augment footprint is visible even when a later module OOMs.
-    if os.getenv("MW_MEM_PROFILE", "0").strip().lower() in {"1", "true", "yes", "on"}:
+    if cfg.train.mem_profile:
         _raw = _find_recycle_model(client.model)
         _GB = 1024**3
 
@@ -686,27 +684,17 @@ def train(  # noqa: PLR0912, PLR0915
                 _mk_memhook("trunk." + _nm, _m)
         client.logger.info("[memprof] hooks installed (diffusion children + trunk)")
 
-    # Autotune cache-BUILD mode (guarded, off by default). MW_CAPTURE_CACHE=1 (+ set
+    # Autotune cache-BUILD mode (guarded, off by default). train.capture_cache=true (+ set
     # MINIWORLD_RUN_AUTOTUNE=1 to unlock the full grid) installs the capture hook so the warmup
     # fwd/bwd records the winning triton config per (op,dtype,bucket) — with the fork+SIGKILL
     # compile-timeout guard so register-spill "monster" configs (5-20 min ptxas at 768) get
     # killed at 60s instead of stalling the run. Then flush the cache and exit WITHOUT training.
-    _capture_cache = os.getenv("MW_CAPTURE_CACHE", "0").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
-    # MW_COMPILE_TIMEOUT=1 (without capture-build): install ONLY the fork+SIGKILL compile
+    _capture_cache = cfg.train.capture_cache
+    # train.compile_timeout=true (without capture-build): install ONLY the fork+SIGKILL compile
     # guard so 768 warmup autotune bounds each monster config to 60s and TRAINING CONTINUES
     # (no flush/exit). Lets a run get past the uncached-768 monster-compile stall without a
     # prebuilt cache. (capture.install patches _bench too — harmless overhead, never flushed.)
-    _compile_timeout = os.getenv("MW_COMPILE_TIMEOUT", "0").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
+    _compile_timeout = cfg.train.compile_timeout
     if _capture_cache or _compile_timeout:
         from miniworld_engine.autotune import capture
 

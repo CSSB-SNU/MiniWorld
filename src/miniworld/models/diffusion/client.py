@@ -34,6 +34,7 @@ from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
 
 from miniworld.configs import EDMDiffuserConfig
+from miniworld.configs.run_options import RunOptions
 from miniworld.data.features.batch import Batch
 from miniworld.loss.smooth_lddt import cal_smooth_lddt
 from miniworld.models.diffusion.model import (
@@ -56,7 +57,7 @@ if TYPE_CHECKING:
 class Client(BaseClient):
     """Client for phase 2: train ONLY the diffusion head with EDM diffusion loss."""
 
-    class TrainConfig(BaseModel):
+    class TrainConfig(RunOptions):
         """Configuration for training."""
 
         comment: str = "v1.0.0-phase2-diffusion"

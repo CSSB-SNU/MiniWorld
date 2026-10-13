@@ -673,6 +673,9 @@ def train(  # noqa: PLR0912, PLR0915
     with initialize_config_dir(str(config.parent.absolute()), version_base=None):
         cfg = compose(config_name=config.name, overrides=list(overrides))
     cfg = Config.model_validate(cfg)
+    from miniworld.training.engine_backend import apply_run_options
+
+    apply_run_options(cfg.train)
     if cfg.train.forbid_triton:
         from miniworld.training import no_triton
 
@@ -700,18 +703,18 @@ def train(  # noqa: PLR0912, PLR0915
             from random_recycle_graph_trainer import train as train_diffusion_graph
 
             train_diffusion_graph(
-                cfg, ckpt, os.environ.get("MW_RESUME_RUN_SUBDIR"), job_name=job_name
+                cfg, ckpt, cfg.train.resume_run_subdir, job_name=job_name
             )
             return
     if _force == "random_cudagraph":
-        # One CUDA graph per recycle count. Continuing a run needs both --ckpt and MW_RESUME_RUN_SUBDIR (the run/log
+        # One CUDA graph per recycle count. Continuing a run needs both --ckpt and train.resume_run_subdir (the run/log
         # identity is preserved); neither starts a fresh run.
         from random_recycle_graph_trainer import train as train_random_graph
 
-        existing_run = os.environ.get("MW_RESUME_RUN_SUBDIR")
+        existing_run = cfg.train.resume_run_subdir
         if (ckpt is None) != (not existing_run):
             raise ValueError(
-                "random_cudagraph: pass both --ckpt and MW_RESUME_RUN_SUBDIR to continue a run, or neither to start one"
+                "random_cudagraph: pass both --ckpt and train.resume_run_subdir to continue a run, or neither to start one"
             )
         train_random_graph(
             cfg, ckpt, Path(existing_run) if existing_run else None, job_name=job_name
@@ -844,11 +847,11 @@ def train(  # noqa: PLR0912, PLR0915
         state_dict = torch.load(ckpt, map_location="cpu")
         client.load_state_dict(state_dict, strict=ckpt_strict)
 
-    # Memory-PROFILE mode (guarded, off by default). MW_MEM_PROFILE=1 registers forward
+    # Memory-PROFILE mode (guarded, off by default). train.mem_profile=true registers forward
     # hooks on the top-level trunk modules and logs each one's retained-activation delta and
     # cumulative allocation AS IT RUNS (so numbers survive an OOM later in the pass), to show
     # where the 768-token footprint goes (atom vs template vs MSA vs pairformer).
-    if os.getenv("MW_MEM_PROFILE", "0").strip().lower() in {"1", "true", "yes", "on"}:
+    if cfg.train.mem_profile:
         _raw = _find_recycle_model(client.model)
         _targets = {
             "atom_input_embedder": getattr(_raw, "input_feature_embedder", None),
@@ -901,17 +904,12 @@ def train(  # noqa: PLR0912, PLR0915
         )
         return
 
-    # Autotune cache-BUILD mode (guarded, off by default). With MW_CAPTURE_CACHE=1 (and
+    # Autotune cache-BUILD mode (guarded, off by default). With train.capture_cache=true (and
     # MINIWORLD_RUN_AUTOTUNE=1 to unlock the full grid), install the capture hook so the
     # warmup fwd/bwd sweep records the winning triton config per (op,dtype,bucket) — with
     # the fork+SIGKILL compile-timeout guard so monster configs can't stall — then flush
     # the cache and exit WITHOUT training. Used to pre-fill the 768-token (2x crop) shapes.
-    _capture_cache = os.getenv("MW_CAPTURE_CACHE", "0").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
+    _capture_cache = cfg.train.capture_cache
     if _capture_cache:
         from miniworld_engine.autotune import capture
 
@@ -934,12 +932,12 @@ def train(  # noqa: PLR0912, PLR0915
     world_size = fabric.world_size
     train_num_item = cfg.train.train_item // world_size
 
-    if os.getenv("MW_SYNTH_DATA", "0").strip().lower() in {"1", "true", "yes", "on"}:
+    if cfg.train.synth_data:
         # Real training path, synthetic data source: swap the BioMolDB dataloader
         # for a static synthetic Batch at the config's max bucket shape. Loss/backward/
         # grad-accum/optimizer/capture callbacks are all unchanged.
         client.logger.info(
-            "MW_SYNTH_DATA=1: using synthetic dataloader (real train path, fake data)",
+            "train.synth_data: using synthetic dataloader (real train path, fake data)",
         )
         synth_batch = _build_precompile_batch(
             device=client.device,

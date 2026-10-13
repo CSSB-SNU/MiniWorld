@@ -1,9 +1,8 @@
 """Engine 2 integration must retain Adam values when parameter strides change."""
 
-import os
-
 import pytest
 import torch
+from miniworld_engine import settings
 
 from miniworld.training.engine_backend import (
     align_engine_optimizer_state,
@@ -34,11 +33,10 @@ def test_adam_resume_layout_preserves_values():
 
 
 def test_msa_disabled_is_explicit(monkeypatch):
-    for key in ("MINIWORLD_PWA_TRAIN", "MINIWORLD_OPM_TRAIN"):
-        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setattr(settings, "_ACTIVE", settings.current())  # restored at teardown
     configure_fused_msa_train(False)
-    assert os.environ["MINIWORLD_PWA_TRAIN"] == "0"
-    assert os.environ["MINIWORLD_OPM_TRAIN"] == "0"
+    assert settings.current().pwa_train is False
+    assert settings.current().opm_train is False
     configure_fused_msa_train(True)
-    assert os.environ["MINIWORLD_PWA_TRAIN"] == "1"
-    assert os.environ["MINIWORLD_OPM_TRAIN"] == "1"
+    assert settings.current().pwa_train is True
+    assert settings.current().opm_train is True

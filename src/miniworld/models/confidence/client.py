@@ -29,6 +29,7 @@ from miniworld_engine.architecture.diffusion import (
 from pydantic import BaseModel
 
 from miniworld.configs import EDMDiffuserConfig
+from miniworld.configs.run_options import RunOptions
 from miniworld.data.features.batch import Batch
 from miniworld.loss import confidence as conf
 from miniworld.models.confidence.model import ConfidenceModel, ConfidenceOutput
@@ -42,7 +43,7 @@ from miniworld.training.precision import Precision, apply_precision
 class Client(DiffusionClient):
     """Client for phase 3: train ONLY the confidence head."""
 
-    class TrainConfig(BaseModel):
+    class TrainConfig(RunOptions):
         """Configuration for training (mirrors phase 2, + prediction/eval knobs)."""
 
         comment: str = "v1.0.0-phase3-confidence"

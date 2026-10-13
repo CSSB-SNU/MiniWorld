@@ -1,6 +1,7 @@
 """Device-side replacements for the host syncs in Protenix's training step (same distributions / values), and a fixed MSA
 depth (Protenix draws a random depth on the host every call) so the step has static shapes for CUDA graphs. A real module
 (not the runpy'd step script) so torch.compile can resolve these functions' globals."""
+import pfx_options
 import os
 import torch
 
@@ -28,7 +29,7 @@ def random_masked_msa(feat_dict, dim_dict, cutoff=512, lower_bound=1, strategy="
 
 def fixed_msa(feat_dict, dim_dict, cutoff=512, lower_bound=1, strategy="random"):
     n = feat_dict["msa"].size(dim_dict["msa"])
-    want = os.environ["PFX_MSA_DEPTH"]
+    want = pfx_options.OPTIONS.msa_depth
     d = (n + 1) // 2 if want == "half" else int(want)
     d = max(1, min(n, d, cutoff if cutoff > 0 else n))
     idx = torch.randperm(n, device=feat_dict["msa"].device)[:d]
@@ -58,11 +59,11 @@ def install():
     import protenix.model.utils as pu
     import protenix.model.modules.transformer as pt
     import protenix.model.modules.pairformer as pf
-    if os.environ.get("PFX_MSA_DEPTH") == "random_masked":
+    if pfx_options.OPTIONS.msa_depth == "random_masked":
         pf.sample_msa_feature_dict_random_without_replacement = random_masked_msa
-    elif os.environ.get("PFX_MSA_DEPTH"):
+    elif pfx_options.OPTIONS.msa_depth:
         pf.sample_msa_feature_dict_random_without_replacement = fixed_msa
-    if os.environ.get("PFX_GRAPH_SAFE", "1") == "1":
+    if pfx_options.OPTIONS.graph_safe:
         pu.uniform_random_rotation = rot_dev
         if _agg is None:
             _agg = pt.aggregate_atom_to_token
