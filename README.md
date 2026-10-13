@@ -8,7 +8,7 @@
 | `libs/` | `patches/` for FoldBench (StructCooker, which builds the databases, is a separate repository) |
 | `scripts/` | Python entry points and tools; `slurm/` holds sbatch launchers (mostly local, untracked) |
 | `docs/` | Guides; `kernels/` kernel diagrams and status reports; `archive/` dated validation records ([index](docs/README.md)) |
-| `runs/` | Every run output: training runs, `logs/`, `outputs/`, `eval_results/`, `wandb/` (ignored by Git except reviewed benchmark records) |
+| `runs/` | Every run output: training runs, `logs/`, `outputs/`, `eval_results/`, `wandb/` (ignored by Git). The H100 kernel-experiment records that used to be tracked here are under the tag `archive/h100-kernel-experiments-20260927`; `scripts/restore_kernel_experiments.sh` extracts them |
 
 ## Development
 

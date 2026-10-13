@@ -43,3 +43,10 @@ fields (`configs/run_options.py`). Variables that are still read from the enviro
 tool reads (`CUDA_*`, `XDG_CACHE_HOME`, `OPT_CORE_DIR`, `TRIMUL_NATIVE_BUILD_DIR`, ...) and the ones that have to reach child
 processes or be read when the kernel modules import (`MINIWORLD_COMPILE_WRAP`, `MINIWORLD_BUILD_*`, ...). A removed variable that is
 still exported is reported once when the engine imports its settings.
+
+## Kernel-experiment records (`runs/`)
+
+The raw experiment directories that `docs/kernels/*` and `docs/graphical-abstract/*` link to (`runs/triattn_20260921`,
+`runs/trimul_*`, `runs/anthropic_*`, `runs/norm_cuda_20260926`, ...) are no longer tracked. They are kept, unchanged, under the git tag
+`archive/h100-kernel-experiments-20260927` (commit `df0d94b5`). `bash scripts/restore_kernel_experiments.sh` extracts them into `runs/`, after which the links and
+`docs/graphical-abstract/collect_evidence.py` resolve again.
