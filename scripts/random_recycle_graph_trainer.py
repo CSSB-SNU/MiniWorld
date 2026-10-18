@@ -71,8 +71,12 @@ def copy_static(dst, src):
                 raise ValueError(f"Graph optional input changed: {group}.{name}")
     weight_fn = getattr(dst, "_pair_weight_fn", None)
     if weight_fn is not None:
-        # outside the graph, on the caller's stream, into the buffer the captured loss reads (chain counts vary per batch)
-        dst.pair_weight.copy_(weight_fn(src))
+        # outside the graph, on the caller's stream, into the buffer the captured loss reads (chain counts vary per batch).
+        # On the GPU: the token chain ids are already in the static batch; only the small per-chain entity types move. Computed
+        # from the host batch this was ~150 ms of CPU per sample at L384 -- as long as the whole forward + backward.
+        token_asym_id = dst.scheme.token_asym_id
+        entity_type = src.chain.entity_type.to(token_asym_id.device, non_blocking=True)
+        dst.pair_weight.copy_(weight_fn(entity_type, token_asym_id))
 
 
 def template_graph_forward(self, pair, template, token_asym_id, token_mask):
@@ -381,8 +385,20 @@ def attach_pair_weight(static, loss_cfg):
 
     if not _pair_weights_enabled(loss_cfg):
         return False
-    static._pair_weight_fn = lambda batch: _pair_weight(loss_cfg, batch)
-    static.pair_weight = static._pair_weight_fn(static).clone()
+    from miniworld.loss.auxiliary import distogram_pair_weight
+
+    def weight(entity_type, token_asym_id):
+        return distogram_pair_weight(
+            entity_type,
+            token_asym_id,
+            alpha_dna=loss_cfg.distogram_alpha_dna,
+            alpha_rna=loss_cfg.distogram_alpha_rna,
+            alpha_ligand=loss_cfg.distogram_alpha_ligand,
+            ab_ag_weight=loss_cfg.distogram_ab_ag_weight,
+        )
+
+    static._pair_weight_fn = weight
+    static.pair_weight = _pair_weight(loss_cfg, static).clone()
     return True
 
 
