@@ -97,7 +97,7 @@ miniworld = { path = ".", editable = true }
 # miniworld-engine is an upstream package. The blocks / layers / diffusion / training loop that used to live in team-gm are
 # part of this package (miniworld.modules, miniworld.diffusion, miniworld.training); there is no team-gm dependency.
 # Pinned to engine main; see docs/repositories.md.
-miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "87759fdc123d5761c59dbaaa6af02a36295fc929" }
+miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "08e5e4bce8c34c93b9f2979bffee438c5e063907" }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"
