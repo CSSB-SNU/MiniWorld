@@ -255,7 +255,9 @@ class RecycleGraphs:
                     )
                 self.clear()
                 g = torch.cuda.CUDAGraph()
-                with torch.cuda.graph(g, stream=self.stream):
+                # thread_local: the DataLoader's pin-memory thread keeps allocating pinned host buffers during the capture;
+                # in the default global mode that CUDA call from another thread invalidates the capture (seen with 40 workers)
+                with torch.cuda.graph(g, stream=self.stream, capture_error_mode="thread_local"):
                     self.losses[r] = self.compute()
                 self.graphs[r] = g
                 self.metrics[r] = self.last_metrics

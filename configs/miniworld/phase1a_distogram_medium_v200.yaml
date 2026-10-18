@@ -6,4 +6,7 @@ defaults:
 train:
   comment: "v2.0.0-phase1a-distogram-medium"
   run_dir: "runs/v2.0.0/phase1a/medium_distogram_L384"
+  # 4 workers (the default) feed ~1 sample per 75-125 ms at L384 / 4096 atoms / MSA 2048 -- slower than the H100 step (~76 ms per
+  # sample once the distogram pair weight left the CPU); 16 keep the data wait under 1 % of the step (measured, 2026-10-18).
+  num_workers: 16
   precision: bf16-mixed  # fp32 master parameters, bf16-autocast forward (miniworld.training.precision); native = earlier
