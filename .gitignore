@@ -44,3 +44,4 @@ docs/paper/main.pdf
 # Separate engine worktrees and local proof environment.
 /.engine-release-2.0.0/
 /.engine-v2-proof/
+.cutlass/

@@ -68,9 +68,18 @@ cuda = "12.9"
 [tool.pixi.feature.cuda129.pypi-dependencies]
 torch = "==2.13.0"
 cuequivariance-ops-torch-cu12 = "==0.12.*"
-# FA4 (CuTeDSL) — same story as the cu13 feature, but install with the cu12
-# extra so the JIT wheel picks up cu12-compatible CUTLASS:
-#   uv pip install --python .pixi/envs/cu128/bin/python --prerelease=allow "flash-attn-4[cu12]"
+# FlashAttention-4 (CuTeDSL), pinned: miniworld-engine 2.2.0 unpacks the four values flash_attn.cute returns in 4.0.0b32; a later
+# beta returns more and the SWA atom attention fails with "too many values to unpack". The exact pre-release pin lets the
+# solver take it; the cu12 extra picks the CUTLASS DSL built for CUDA 12.
+flash-attn-4 = { version = "==4.0.0b32", extras = ["cu12"] }
+
+# The H100 TriMul / TriangleAttention kernels JIT-compile against CUTLASS 4.2 headers: `pixi run -e cu128 setup-cutlass` fetches
+# them once into ./.cutlass, and the environment points CUTLASS_PATH there.
+[tool.pixi.feature.cuda129.tasks]
+setup-cutlass = "test -f .cutlass/include/cute/tensor.hpp || git clone --depth 1 --branch v4.2.1 https://github.com/NVIDIA/cutlass.git .cutlass"
+
+[tool.pixi.feature.cuda129.activation.env]
+CUTLASS_PATH = "$PIXI_PROJECT_ROOT/.cutlass"
 
 [tool.pixi.feature.cuda129.pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/cu129"]
@@ -88,7 +97,7 @@ miniworld = { path = ".", editable = true }
 # miniworld-engine is an upstream package. The blocks / layers / diffusion / training loop that used to live in team-gm are
 # part of this package (miniworld.modules, miniworld.diffusion, miniworld.training); there is no team-gm dependency.
 # Pinned to engine main; see docs/repositories.md.
-miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "b7dd8462ccb312ef5e2ad351777ef7bfe90dbe39" }
+miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "275d36eed0fa04e7a42e6d6425a84cff63fa0290" }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"

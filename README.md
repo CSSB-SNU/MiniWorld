@@ -55,22 +55,23 @@ See [backend selection and scope](docs/triton-backend-option.md), and the
 [full-model CUDA graph training comparison](docs/miniworld-training-cudagraph-ab.md).
 
 miniworld-engine is a git dependency pinned by `rev` in [pyproject.toml](pyproject.toml); there are no submodules.
-Install the selected Pixi environment and check the pinned package:
+Install the Pixi environment, fetch the CUTLASS headers the H100 kernels compile against, and check the pinned package:
 
 ```bash
 pixi install -e cu128
+pixi run -e cu128 setup-cutlass     # clones CUTLASS v4.2.1 into ./.cutlass once; the environment sets CUTLASS_PATH to it
 pixi run -e cu128 engine-setup
 ```
 
 The `cu128` environment keeps its historical name; since miniworld-engine v2.2.0 it
-installs torch 2.13.0+cu129 and cuequivariance 0.12. On the B200 boxes the engine is the local checkout
+installs torch 2.13.0+cu129 and cuequivariance 0.12. FlashAttention-4 is in the lock, pinned to `4.0.0b32`: the engine unpacks
+the four values `flash_attn.cute` returns in that beta, and a later beta returns more. Do not upgrade it by hand.
+On the B200 boxes the engine is the local checkout
 (`$W/mwenv`, see [docs/operations/b200-environment.md](docs/operations/b200-environment.md)) because they cannot fetch the GitHub pin.
 
 Run `engine-setup` again after reinstalling the engine dependency. It verifies
 the consolidated engine version, recorded Git pin and required source files.
-FlashAttention-4 (a pre-release CuTeDSL JIT wheel) is left out of the lock on purpose and is installed by hand:
-`uv pip install --python .pixi/envs/cu128/bin/python --prerelease=allow "flash-attn-4[cu12]"`; without it the SWA
-atom attention falls back to O(S^2) SDPA on Blackwell. MathDx and the other kernel prerequisites are listed in the
+MathDx and the other kernel prerequisites are listed in the
 environment comments of [pyproject.toml](pyproject.toml).
 
 The integration preserves the SWA block equations and checkpoint layout.
