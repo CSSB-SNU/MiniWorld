@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Literal, cast
 
@@ -79,6 +80,15 @@ def extract_lmdb_keys(env_path: Path, max_keys: int | None = None) -> list[str]:
     return key_list
 
 
+def _shard_paths(env_path: Path) -> list[Path]:
+    """The lmdb directories behind ``env_path``: its shards when ``shards.json`` lists them, else itself."""
+    manifest = env_path / "shards.json"
+    if not manifest.is_file():
+        return [env_path]
+    shards = json.loads(manifest.read_text())["shards"]
+    return [env_path / shard["path"] for shard in shards]
+
+
 def load_raw_data(key: str, env_path: Path) -> bytes | None:
     """Read a value from the LMDB database by key.
 
@@ -98,28 +108,36 @@ def load_raw_data(key: str, env_path: Path) -> bytes | None:
         load_raw_data._env_cache = cache  # pyright: ignore[reportFunctionMemberAccess] # noqa: SLF001
 
     env_key = str(env_path)
-    entry = cache.get(env_key)
-    if entry is None:
+    txns = cache.get(env_key)
+    if txns is None:
+        # A shard collection (``shards.json`` next to ``shards/NNN.lmdb``, e.g. the BioMolDB distillation_long
+        # cif / msa / template) is a list of plain lmdbs; a key lives in exactly one of them.
+        shard_dirs = _shard_paths(Path(env_path))
         # readahead=False (MDB_NORDAHEAD): these are random key lookups into DBs
         # far larger than RAM (e.g. msa_long_d2k ~2.7T over a shared FS), where OS
         # readahead only wastes I/O on pages we never touch.
-        env = lmdb.open(
-            env_key,
-            readonly=True,
-            lock=False,
-            max_readers=4096,
-            readahead=False,
-        )
-        # One long-lived read transaction reused for every get: the DBs are
+        # One long-lived read transaction per lmdb reused for every get: the DBs are
         # read-only + static during training, so there is no snapshot to grow or
         # reclaim, and this removes the per-read `env.begin()` cost (~87ms/call on
         # the huge lmdbs — ~23s over a 40-item profile).
-        txn = env.begin(buffers=True)
-        entry = (env, txn)
-        cache[env_key] = entry
+        txns = []
+        for shard in shard_dirs:
+            env = lmdb.open(
+                str(shard),
+                readonly=True,
+                lock=False,
+                max_readers=4096,
+                readahead=False,
+            )
+            txns.append((env, env.begin(buffers=True)))
+        cache[env_key] = txns
 
-    _env, txn = entry
-    value = txn.get(key.encode())
+    key_bytes = key.encode()
+    value = None
+    for _env, txn in txns:
+        value = txn.get(key_bytes)
+        if value is not None:
+            break
 
     if value is None:
         return None
