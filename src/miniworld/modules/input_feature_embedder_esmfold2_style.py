@@ -10,12 +10,8 @@ from __future__ import annotations
 
 import torch
 from jaxtyping import Bool, Float, Int
-from miniworld_engine.architecture.blocks._engine_impl import to_engine_impl
-from miniworld_engine.architecture.primitives import Linear
 from miniworld_engine.architecture.typing import typecheck
-from miniworld_engine.modules import RMSNorm
-from miniworld_engine.modules.swa_atom_attention.module import build_attention_params
-from torch import nn
+from miniworld_engine.modules import InputFeatureEmbedder as EngineInputFeatureEmbedder
 
 from miniworld.configs import SharedConfig
 from miniworld.configs.models import AtomSWAConfig
@@ -24,16 +20,16 @@ from miniworld.data.features.features import (
     SchemeFeatures,
     StructureFeatures,
 )
-from miniworld.modules import DiffusionTransformer, SWAAtomTransformer
-from miniworld.modules.input_embedder import InputFeatureEmbedder, init_atom_features
+from miniworld.modules import DiffusionTransformer
+from miniworld.modules.input_embedder import InputFeatureEmbedder
 
 
-class ESMFold2InputAtomAttentionEncoder(nn.Module):
-    """Input atom encoder without atom pair bias.
+class ESMFold2InputAtomAttentionEncoder(EngineInputFeatureEmbedder):
+    """Input atom encoder without atom pair bias: the engine's ``InputFeatureEmbedder`` (``miniworld_engine.modules``).
 
-    The encoder follows the ESMFold2-style SWA path used by the diffusion atom
-    encoder: atom single features condition a sliding-window transformer whose
-    attention uses 3D RoPE and QK-norm instead of additive pair bias.
+    Atom single features condition a sliding-window (or global) 3D-RoPE atom transformer -- the SWA atom DiT's fused CUDA block where
+    its contract holds -- followed by an affine-free terminal RMSNorm and the mean over each token's atoms. The parameter names are
+    the ones this class always had, so checkpoints load unchanged; this adapter only unpacks MiniWorld's feature containers.
     """
 
     def __init__(
@@ -42,55 +38,22 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
         diffusion_config: DiffusionTransformer.Config,
         atom_swa_config: AtomSWAConfig | None = None,
     ) -> None:
-        super().__init__()
+        atom_swa_config = atom_swa_config or AtomSWAConfig(enabled=True, backend="sdpa")
+        super().__init__(
+            shared_config.d_single_atom,
+            shared_config.d_single,
+            n_head=diffusion_config.n_head,
+            n_block=diffusion_config.n_block,
+            swa_window_size=atom_swa_config.swa_window_size,
+            expansion_ratio=atom_swa_config.expansion_ratio,
+            n_spatial_rope_pairs_per_axis=atom_swa_config.n_spatial_rope_pairs_per_axis,
+            n_uid_rope_pairs=atom_swa_config.n_uid_rope_pairs,
+            spatial_rope_base_frequency=atom_swa_config.spatial_rope_base_frequency,
+            uid_rope_base_frequency=atom_swa_config.uid_rope_base_frequency,
+            implementation=diffusion_config.implementation,
+        )
         self.d_single_token = shared_config.d_single
-        self.atom_swa_config = atom_swa_config or AtomSWAConfig(
-            enabled=True,
-            backend="sdpa",
-        )
-        self.to_atom_single_cond = Linear(
-            6,
-            shared_config.d_single_atom,
-            init="default",
-            bias=False,
-        )
-        self.atom_transformer = SWAAtomTransformer(
-            SWAAtomTransformer.Config(
-                d_atom=shared_config.d_single_atom,
-                d_cond=shared_config.d_single_atom,
-                implementation=diffusion_config.implementation,
-                n_block=diffusion_config.n_block,
-                n_head=diffusion_config.n_head,
-                swa_window_size=self.atom_swa_config.swa_window_size,
-                expansion_ratio=self.atom_swa_config.expansion_ratio,
-                n_spatial_rope_pairs_per_axis=self.atom_swa_config.n_spatial_rope_pairs_per_axis,
-                n_uid_rope_pairs=self.atom_swa_config.n_uid_rope_pairs,
-                spatial_rope_base_frequency=self.atom_swa_config.spatial_rope_base_frequency,
-                uid_rope_base_frequency=self.atom_swa_config.uid_rope_base_frequency,
-                block_style="esmfold2",
-            ),
-        )
-        # Final (post-)norm for the pre-norm atom transformer. A pre-norm stack returns
-        # an UN-normalized residual stream whose magnitude grows with depth — pre-norm
-        # transformers need a terminal norm (GPT-2/LLaMA ``ln_f``). Without it the raw
-        # ``atom_single`` fed ``atom_single_rep_to_token_single`` unbounded — the measured
-        # activation blow-up source (86 -> 221 through the ep25-28 excursion). Affine-free
-        # RMSNorm adds NO parameters (state_dict unchanged, checkpoint-compatible) and just
-        # bounds the output magnitude.
-        self.atom_out_norm = RMSNorm(
-            shared_config.d_single_atom,
-            elementwise_affine=False,
-            implementation=to_engine_impl(diffusion_config.implementation),
-        )
-        self.atom_single_rep_to_token_single = nn.Sequential(
-            Linear(
-                shared_config.d_single_atom,
-                self.d_single_token,
-                init="default",
-                bias=False,
-            ),
-            nn.ReLU(),
-        )
+        self.atom_swa_config = atom_swa_config
         self.head_dim = shared_config.d_single_atom // diffusion_config.n_head
 
     @typecheck
@@ -101,55 +64,25 @@ class ESMFold2InputAtomAttentionEncoder(nn.Module):
         atom_to_token_idx_map: Int[torch.Tensor, "B L_atom"],
         atom_single_rep: Float[torch.Tensor, "B L_atom d_single_atom"],
     ) -> Float[torch.Tensor, "B L_token d_single_token"]:
-        atom_single_rep = atom_single_rep * atom_mask[..., None]
-        to_add_single_token_rep = self.atom_single_rep_to_token_single(atom_single_rep)
-        # Mean over the atoms of each token as a scatter-add (the backward is a gather) instead of a one-hot
-        # [B, L_atom, L_token] mapping and two einsums over it: the whole embedder's forward + backward CUDA-graph step goes
-        # 1.41 -> 1.38 ms at 384 tokens / 4096 atoms. The sums run in fp32 whatever the activation dtype (the einsum
-        # accumulated in fp32 too); the order of the atomic adds is not fixed.
-        token_length = int(token_idx.shape[1])
-        idx = atom_to_token_idx_map.long()
-        src = to_add_single_token_rep.float()
-        token_sum = src.new_zeros(idx.shape[0], token_length, src.shape[-1]).scatter_add(
-            1,
-            idx.unsqueeze(-1).expand_as(src),
-            src,
-        )
-        count = src.new_zeros(idx.shape[0], token_length).scatter_add(
-            1, idx, atom_mask.to(src.dtype)
-        )
-        return (token_sum / count.unsqueeze(-1).clamp(min=1.0)).to(
-            to_add_single_token_rep.dtype
-        )
+        # unbound on purpose: tests call it on a stand-in that holds only ``atom_single_rep_to_token_single``
+        return EngineInputFeatureEmbedder.to_tokens(self, atom_single_rep, atom_mask, atom_to_token_idx_map, int(token_idx.shape[1]))
 
     @typecheck
-    def forward(
+    def forward(  # ty: ignore[invalid-method-override]  # MiniWorld's feature containers in place of the engine's tensors
         self,
         reference: ReferenceFeatures,
         scheme: SchemeFeatures,
         structure: StructureFeatures,
     ) -> Float[torch.Tensor, "B L_token d_single_token"]:
-        atom_single_init, _ = init_atom_features(reference)
-        atom_single = self.to_atom_single_cond(atom_single_init)
-        cos, sin = self.atom_transformer.build_rope(
+        return super().forward(
             reference.pos,
+            reference.mask,
+            reference.element,
+            reference.charge,
             reference.space_uid,
-        )
-        attention_params = build_attention_params(
-            cos,
-            sin,
-            structure.atom_mask,
-            num_aug=1,
-        )
-        atom_single = self.atom_transformer(atom_single, atom_single, attention_params)
-        atom_single = self.atom_out_norm(
-            atom_single
-        )  # terminal norm for the pre-norm stack
-        return self._scatter_atom_to_token(
-            scheme.token_idx,
             structure.atom_mask,
             scheme.atom_to_token_idx_map,
-            atom_single,
+            int(scheme.token_idx.shape[1]),
         )
 
 
