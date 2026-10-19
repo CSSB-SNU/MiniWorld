@@ -1,4 +1,4 @@
-"""AF3TemplateEmbedder on a B200: the templates as one batch of the engine's native TriMul, the four small projections as one linear map.
+"""AF3TemplateEmbedder on a B200 or an H100: the templates as one batch of the engine's native TriMul, the four small projections as one linear map.
 
 bf16 is the training dtype (the model builds the embedder in bf16 and feeds it the bf16 trunk pair). Both are the same function as the
 per-template loop / the four projections up to bf16 rounding. fp32 keeps the original projections: the aligned fused GEMM would run on
@@ -15,32 +15,38 @@ import torch.nn.functional as F
 from miniworld.modules import template_embedder_af3 as te
 from miniworld.modules.template_embedder_af3 import AF3TemplateEmbedder
 
-b200 = pytest.mark.skipif(
-    not torch.cuda.is_available() or torch.cuda.get_device_capability() != (10, 0),
-    reason="B200 (sm_100)",
+native = pytest.mark.skipif(
+    not torch.cuda.is_available() or torch.cuda.get_device_capability() not in ((10, 0), (9, 0)),
+    reason="B200 (sm_100) or H100 (sm_90)",
 )
 
+CARDS = [((10, 0), "trimul_b200", 8), ((9, 0), "trimul_h100", 48)]
 
-def _engine_with(monkeypatch, **attrs):
-    stub = types.ModuleType("miniworld_engine.integrations.trimul_b200")
+
+def _engine_with(monkeypatch, module="trimul_b200", **attrs):
+    stub = types.ModuleType(f"miniworld_engine.integrations.{module}")
     for name, value in attrs.items():
         setattr(stub, name, value)
     monkeypatch.setitem(sys.modules, stub.__name__, stub)
 
 
-def test_an_engine_without_batched_samples_has_a_limit_of_one(monkeypatch):
-    _engine_with(
-        monkeypatch
-    )  # the module exists, ``MAX_BATCH`` does not: the import raises ImportError
-    assert te._engine_batch_limit() == 1
+@pytest.mark.parametrize(("capability", "module", "limit"), CARDS)
+def test_an_engine_without_batched_samples_has_a_limit_of_one(monkeypatch, capability, module, limit):
+    _engine_with(monkeypatch, module)  # the module exists, ``MAX_BATCH`` does not: the import raises ImportError
+    assert te._engine_batch_limit(capability) == 1
 
 
-def test_the_limit_is_what_the_engine_states(monkeypatch):
-    _engine_with(monkeypatch, MAX_BATCH=8)
-    assert te._engine_batch_limit() == 8
+@pytest.mark.parametrize(("capability", "module", "limit"), CARDS)
+def test_the_limit_is_what_the_engine_states(monkeypatch, capability, module, limit):
+    _engine_with(monkeypatch, module, MAX_BATCH=limit)
+    assert te._engine_batch_limit(capability) == limit
 
 
-def test_the_templates_are_not_batched_without_a_b200(monkeypatch):
+def test_another_card_takes_one_sample():
+    assert te._engine_batch_limit((8, 0)) == 1
+
+
+def test_the_templates_are_not_batched_without_a_gpu(monkeypatch):
     monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
     assert not AF3TemplateEmbedder(d_pair=16)._batch_templates
 
@@ -75,7 +81,7 @@ def _rel(x, ref):
     return float((x.float() - ref.float()).norm() / ref.float().norm())
 
 
-@b200
+@native
 def test_bf16_fused_projections_match_the_four_projections():
     emb = _embedder(torch.bfloat16)
     emb._batch_templates = False
@@ -89,12 +95,12 @@ def test_bf16_fused_projections_match_the_four_projections():
     assert _rel(fused, plain) < 2e-2
 
 
-@b200
+@native
 def test_bf16_batched_templates_match_the_loop():
     emb = _embedder(torch.bfloat16)
     args = _inputs(torch.bfloat16)
     n_templates = args[1].mask.shape[1]
-    if te._engine_batch_limit() < n_templates:
+    if te._engine_batch_limit(torch.cuda.get_device_capability()) < n_templates:
         pytest.skip("the pinned engine takes one sample per TriMul call")
     with torch.no_grad():
         emb._batch_templates = True
@@ -128,7 +134,7 @@ def _assert_same_gradients(got, want):
         assert cosine > 0.99, (name, float(cosine))
 
 
-@b200
+@native
 def test_bf16_batched_templates_give_the_loops_gradients():
     emb = _embedder(torch.bfloat16)
     args = _inputs(torch.bfloat16)
@@ -140,7 +146,7 @@ def test_bf16_batched_templates_give_the_loops_gradients():
     )
 
 
-@b200
+@native
 def test_bf16_fused_projections_give_the_four_projections_gradients():
     emb = _embedder(torch.bfloat16)
     args = _inputs(torch.bfloat16)
@@ -150,7 +156,7 @@ def test_bf16_fused_projections_give_the_four_projections_gradients():
     )
 
 
-@b200
+@native
 def test_fp32_keeps_the_four_projections(monkeypatch):
     """fp32 never takes the fused map, whatever the flag says: the output is the independent reference's, exactly."""
     from tests.test_af3_template import ref_loop

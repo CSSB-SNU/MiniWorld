@@ -257,7 +257,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026c-h151e31d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.8.3-pyhcf101f3_0.conda
       - pypi: ./
-      - pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=ea7e871766fba568b70516e00bd536c53cd65dd7#ea7e871766fba568b70516e00bd536c53cd65dd7
+      - pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=545b68508f4b7a9bfbf742633549079a723a427b#545b68508f4b7a9bfbf742633549079a723a427b
       - pypi: https://download-r2.pytorch.org/whl/cu129/torch-2.13.0%2Bcu129-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://download-r2.pytorch.org/whl/triton-3.7.1-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://download.pytorch.org/whl/certifi-2022.12.7-py3-none-any.whl
@@ -586,7 +586,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.6.0-pyhd8ed1ab_0.conda
       - pypi: ./
-      - pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=ea7e871766fba568b70516e00bd536c53cd65dd7#ea7e871766fba568b70516e00bd536c53cd65dd7
+      - pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=545b68508f4b7a9bfbf742633549079a723a427b#545b68508f4b7a9bfbf742633549079a723a427b
       - pypi: https://download-r2.pytorch.org/whl/cu130/torch-2.13.0%2Bcu130-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://download-r2.pytorch.org/whl/triton-3.7.1-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://download.pytorch.org/whl/certifi-2022.12.7-py3-none-any.whl
@@ -6369,7 +6369,7 @@ packages:
   - click>=8.3,<9
   - ninja>=1.13,<2
   requires_python: '>=3.10'
-- pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=ea7e871766fba568b70516e00bd536c53cd65dd7#ea7e871766fba568b70516e00bd536c53cd65dd7
+- pypi: git+ssh://git@github.com/SanggeunParrk/miniworld-engine.git?rev=545b68508f4b7a9bfbf742633549079a723a427b#545b68508f4b7a9bfbf742633549079a723a427b
   name: miniworld-engine
   version: 2.2.0
   requires_dist:

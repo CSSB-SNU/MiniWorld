@@ -31,13 +31,17 @@ from miniworld.data.features import TemplateFeatures
 from miniworld.modules.mini_pairformer import MiniPairformer
 
 
-def _engine_batch_limit() -> int:
-    """Return the samples one call of the engine's native B200 TriMul takes (1 for an engine that predates batched samples)."""
+def _engine_batch_limit(capability: tuple[int, int]) -> int:
+    """Return the samples one call of the engine's native TriMul takes on this card: B200 (sm_100) and H100 (sm_90) each state it
+    (``integrations.trimul_b200.MAX_BATCH`` / ``trimul_h100.MAX_BATCH``); 1 for another card or an engine that predates batched samples."""
     try:
-        from miniworld_engine.integrations.trimul_b200 import (  # noqa: PLC0415
-            MAX_BATCH,
-        )
-    except ImportError:  # an engine that predates batched samples has no such name
+        if capability == (10, 0):
+            from miniworld_engine.integrations.trimul_b200 import MAX_BATCH  # noqa: PLC0415
+        elif capability == (9, 0):
+            from miniworld_engine.integrations.trimul_h100 import MAX_BATCH  # noqa: PLC0415
+        else:
+            return 1
+    except ImportError:  # an engine that predates batched samples on this card has no such name
         return 1
     return MAX_BATCH
 
@@ -163,17 +167,17 @@ class AF3TemplateEmbedder(nn.Module):
         # choice — the pathway trains large, so starting dead only lengthens the ramp).
         # Set via TemplateEmbedderConfig.out_init (default vs zero).
         self.proj_out = Linear(num_channels, d_pair, bias=False, init=out_init)
-        # B200: the templates are B samples of one pair stack, and the engine's native TriMul / Transition take them as ONE batch
-        # (one launch per stage instead of one call per template, the row-dropout scale drawn per sample) where they serve it:
+        # B200 and H100: the templates are B samples of one pair stack, and the engine's native TriMul / Transition take them as ONE
+        # batch (one launch per stage instead of one call per template, the row-dropout scale drawn per sample) where they serve it:
         # bf16, a 64-channel stack, at most ``_engine_batch_limit()`` templates. Anything else keeps the per-template loop.
+        capability = torch.cuda.get_device_capability() if torch.cuda.is_available() else (0, 0)
         self._batch_templates = (
-            torch.cuda.is_available()
-            and torch.cuda.get_device_capability() == (10, 0)
+            capability in ((10, 0), (9, 0))
             and ImplementationType[implementation] == ImplementationType.MINIWORLD_ENGINE
             and num_channels == 64
         )
         self._batch_limit = (
-            _engine_batch_limit()
+            _engine_batch_limit(capability)
         )  # asked once, here: a traced forward must not import or query the engine
         # The four small per-pair projections as ONE linear map (bf16 only, see ``forward``).
         self._fuse_projections = True
@@ -194,7 +198,7 @@ class AF3TemplateEmbedder(nn.Module):
         trimul kernel only supports batch size 1, so the template axis cannot be folded
         into B. ``N_temp`` is static, so the unrolled loop stays CUDA-graph capturable.
 
-        Where the engine's native B200 TriMul takes samples (bf16, 64 channels, at most
+        Where the engine's native TriMul takes samples (B200, H100; bf16, 64 channels, at most
         ``_engine_batch_limit()`` templates) the templates are folded into the batch
         dim instead: one pair stack over ``[N_temp * B, L, L, C]``, then the sum over
         the template axis. The result is the same function (up to bf16 rounding).
