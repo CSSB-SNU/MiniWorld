@@ -17,6 +17,11 @@
 - nvcc는 conda gcc 14 헤더를 해석하지 못하므로 `NVCC_PREPEND_FLAGS="-ccbin /usr/bin/g++"`가 필요하다.
   [scripts/b200/run_tests.sh](../../scripts/b200/run_tests.sh)가 이 설정을 포함한다.
 
+- 엔진 체크아웃을 갱신(빨리감기)하거나 환경을 다시 만든 뒤에는 B200(sm_100) 커널을 미리 빌드한다. 노드 2에서, 예:
+  `NVCC_PREPEND_FLAGS="-ccbin /usr/bin/g++" CUDA_VISIBLE_DEVICES=4,5 pixi run --frozen --manifest-path $W/mwenv/pixi.toml python scripts/prebuild_engine.py --jobs 8`
+  (`source $W/pixi_env.sh` 후, `$W/MiniWorld`에서). 결과 스탬프는 `engine-setup`이 확인한다.
+  자세한 내용: [engine-prebuild.md](engine-prebuild.md).
+
 ## GPU
 
 - 노드 1: GPU는 `gpuq`로 잡는다(`$W/gpuq/gpuq run -g <gpu> -n <이름> -- <명령>`).

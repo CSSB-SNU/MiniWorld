@@ -70,7 +70,26 @@ On the B200 boxes the engine is the local checkout
 (`$W/mwenv`, see [docs/operations/b200-environment.md](docs/operations/b200-environment.md)) because they cannot fetch the GitHub pin.
 
 Run `engine-setup` again after reinstalling the engine dependency. It verifies
-the consolidated engine version, recorded Git pin and required source files.
+the consolidated engine version, recorded Git pin and required source files, and says whether the engine kernels have been
+prebuilt for this revision.
+
+**After creating the environment or bumping the engine pin, prebuild the engine kernels on a GPU node of each architecture
+(sm_90 H100, sm_100 B200).** The engine JIT-compiles its CUDA extensions with nvcc on first use, one at a time: without the
+prebuild the first model call of every new environment / pin waits on nvcc (840-2000 s for the first FoldBench target on an
+H100). `engine-prebuild` runs the production models (random weights) at every inference rung and training crop, then checks in
+a new process that nothing compiles any more, and leaves a stamp `engine-setup` reads. On H100 it takes ~36 min with 8 workers
+on 2 GPUs (~59 min with one); afterwards the first FoldBench call takes ~5 s instead of 840-2000 s:
+
+```bash
+sbatch scripts/slurm/engine_prebuild_h100.sbatch          # H100: 2 GPUs, 8 workers (--mode all)
+pixi run -e cu128 engine-prebuild --jobs 8                # any GPU node (B200: python scripts/prebuild_engine.py --jobs 8)
+pixi run -e cu128 engine-prebuild --verify-only           # only check that nothing would compile
+```
+
+The kernels land in the environment's own cache (`~/.cache/miniworld_engine_jit/py310-<env hash>`, torch extensions in its
+`torch_extensions/`), so other environments (checkouts on other engine pins) neither share nor rebuild them. Shapes, timings and what is not
+covered: [docs/operations/engine-prebuild.md](docs/operations/engine-prebuild.md).
+
 MathDx and the other kernel prerequisites are listed in the
 environment comments of [pyproject.toml](pyproject.toml).
 

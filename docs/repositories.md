@@ -180,7 +180,10 @@ DataCooker의 과거 `gh-pages`는 생성된 사이트 배포 이력이므로 �
 
 새 서버에서는 MiniWorld main을 clone하고 `git submodule update --init --recursive`로
 정확한 team-gm/StructCooker gitlink를 복원한다. `pixi install -e cu128` 후
-`pixi run -e cu128 engine-setup`으로 pin과 필수 파일을 검사한다.
+`pixi run -e cu128 engine-setup`으로 pin과 필수 파일을 검사한다. 환경을 새로 만들거나 engine pin을 올린 뒤에는
+아키텍처마다(H100 sm_90, B200 sm_100) GPU 노드에서 `pixi run -e cu128 engine-prebuild`(H100:
+`sbatch scripts/slurm/engine_prebuild_h100.sbatch`)로 engine CUDA 커널을 미리 빌드한다. 하지 않으면 첫 모델 호출이
+nvcc를 기다린다. 절차와 소요 시간: [engine-prebuild](operations/engine-prebuild.md).
 engine 1.x용 `apply_engine_audit_patches.py`는 역사 자료이며 main에는 자동 적용하지 않는다.
 
 커널 개발에는 engine main을 별도로 clone해 사용한다. 연구 harness의 기존 절대경로와
