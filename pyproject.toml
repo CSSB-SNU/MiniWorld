@@ -59,7 +59,7 @@ cuequivariance-ops-torch-cu13 = "==0.12.*"
 [tool.pixi.feature.cuda13.pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/cu130"]
 
-# miniworld-engine v2.2.0 runtime: torch 2.13.0+cu129 / cuequivariance 0.12. CUDA 12.9 is
+# miniworld-engine 2.3 runtime: torch 2.13.0+cu129 / cuequivariance 0.12. CUDA 12.9 is
 # the newest the cluster's 575 driver runs. The environment keeps its historical `cu128`
 # name because run scripts address `.pixi/envs/cu128` and `-e cu128`.
 [tool.pixi.feature.cuda129.system-requirements]
@@ -73,13 +73,13 @@ cuequivariance-ops-torch-cu12 = "==0.12.*"
 # solver take it; the cu12 extra picks the CUTLASS DSL built for CUDA 12.
 flash-attn-4 = { version = "==4.0.0b32", extras = ["cu12"] }
 
-# The H100 TriMul / TriangleAttention kernels JIT-compile against CUTLASS 4.2 headers: `pixi run -e cu128 setup-cutlass` fetches
+# Kernels the engine wheel does not ship (B200 sm_100, opt-in ones) JIT-compile against CUTLASS 4.2 headers: `pixi run -e cu128 setup-cutlass` fetches
 # them once into ./.cutlass, and the environment points CUTLASS_PATH there.
 [tool.pixi.feature.cuda129.tasks]
 setup-cutlass = "test -f .cutlass/include/cute/tensor.hpp || git clone --depth 1 --branch v4.2.1 https://github.com/NVIDIA/cutlass.git .cutlass"
 # Build every engine CUDA extension the production models use (all shapes, inference + training) and verify that a new
-# process builds nothing, so the first model call never waits on nvcc. Run on a GPU node of each architecture after creating
-# the environment or bumping the engine pin: `pixi run -e cu128 engine-prebuild [--jobs 8]` (H100: scripts/slurm/engine_prebuild_h100.sbatch).
+# process builds nothing, so the first model call never waits on nvcc. The engine wheel already ships the H100 (sm_90) kernels;
+# run this on a B200 node after creating the environment or bumping the engine pin: `pixi run -e cu128 engine-prebuild [--jobs 8]`.
 engine-prebuild = "python scripts/prebuild_engine.py --mode all"
 
 [tool.pixi.feature.cuda129.activation.env]
@@ -100,8 +100,9 @@ engine-setup = "python scripts/check_engine_install.py"
 miniworld = { path = ".", editable = true }
 # miniworld-engine is an upstream package. The blocks / layers / diffusion / training loop that used to live in team-gm are
 # part of this package (miniworld.modules, miniworld.diffusion, miniworld.training); there is no team-gm dependency.
-# Pinned to engine main; see docs/repositories.md.
-miniworld-engine = { git = "ssh://git@github.com/SanggeunParrk/miniworld-engine.git", rev = "545b68508f4b7a9bfbf742633549079a723a427b" }
+# Pinned to an engine release on PyPI. Its wheel ships the H100 (sm_90) kernels compiled for CUDA 12.9 and 13.0, so nothing
+# compiles on first use there; see docs/repositories.md.
+miniworld-engine = "==2.3.2"
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"

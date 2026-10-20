@@ -103,7 +103,15 @@ def prebuild_status(
     return status
 
 
-def report_prebuild(identity: str) -> None:
+def shipped_arches(package: Path) -> set[str]:
+    """Architectures whose kernels ship compiled inside the engine wheel (``_prebuilt/<arch>-cu<ver>/manifest.json``)."""
+    return {
+        path.parent.name.split("-", 1)[0]
+        for path in (package / "_prebuilt").glob("*/manifest.json")
+    }
+
+
+def report_prebuild(identity: str, package: Path) -> None:
     try:
         from miniworld import engine_jit_root
     except ImportError:
@@ -112,29 +120,34 @@ def report_prebuild(identity: str) -> None:
     if root is None:
         return
     status = prebuild_status(root, identity)
+    for arch in shipped_arches(package) & status.keys():
+        status[arch] = "ok (shipped in the engine wheel)"
     print(f"Engine JIT cache: {root}")
     for arch, state in status.items():
         print(f"  prebuilt kernels for {arch} ({PREBUILD_ARCHES[arch]}): {state}")
     todo = [
         f"{arch} ({PREBUILD_ARCHES[arch]})"
         for arch, state in status.items()
-        if state != "ok"
+        if not state.startswith("ok")
     ]
     if todo:
         print(
             "HINT: the engine kernels are not prebuilt for this engine revision on "
             + ", ".join(todo)
-            + ". Without it the first model call compiles them (14-35 min for the first call on an H100). Run once on a GPU node of each "
-            "architecture: `pixi run -e cu128 engine-prebuild` (H100: `sbatch scripts/slurm/engine_prebuild_h100.sbatch`)."
+            + ". The engine wheel does not ship them, so without it the first model call compiles them (14-35 min). Run once on a "
+            "GPU node of that architecture: `python scripts/prebuild_engine.py --jobs 8` (or `pixi run -e cu128 engine-prebuild`)."
         )
 
 
 def main():
     root = Path(__file__).resolve().parents[1]
     project = (root / "pyproject.toml").read_text()
-    expected = re.search(
+    # The release pin (`miniworld-engine = "==2.3.0"`, from PyPI) or a Git pin (`{ git = ..., rev = "<sha>" }`).
+    pinned_version = re.search(r'^miniworld-engine = "==([^"]+)"', project, re.M)
+    pinned_rev = re.search(
         r'^miniworld-engine = .*rev = "([0-9a-f]{40})"', project, re.M
-    ).group(1)
+    )
+    expected = pinned_rev.group(1) if pinned_rev else None
     dist = metadata.distribution("miniworld-engine")
     direct_url = json.loads(dist.read_text("direct_url.json") or "{}")
     spec = util.find_spec("miniworld_engine")
@@ -142,16 +155,23 @@ def main():
         raise RuntimeError("miniworld_engine cannot be imported")
     package = Path(spec.origin).parent
     check_installation(package, dist.version, direct_url, expected)
-    print(f"Engine {dist.version}: {package}")
-    print(f"Pinned main revision: {expected}")
-    if not direct_url.get("vcs_info"):
-        print(
-            "Local/wheel install: VCS revision is not recorded in distribution metadata."
+    if pinned_version and not direct_url and dist.version != pinned_version.group(1):
+        raise RuntimeError(
+            f"engine {dist.version} installed; pyproject.toml pins {pinned_version.group(1)}"
         )
+    print(f"Engine {dist.version}: {package}")
+    if pinned_version:
+        print(f"Pinned release: {pinned_version.group(1)} (PyPI)")
+    else:
+        print(f"Pinned main revision: {expected}")
+        if not direct_url.get("vcs_info"):
+            print(
+                "Local/wheel install: VCS revision is not recorded in distribution metadata."
+            )
     print(
         "No legacy patches applied. GPU dispatch and native rebuilds require separate validation."
     )
-    report_prebuild(engine_identity(package, dist.version, direct_url))
+    report_prebuild(engine_identity(package, dist.version, direct_url), package)
 
 
 if __name__ == "__main__":

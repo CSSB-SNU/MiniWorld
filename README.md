@@ -54,41 +54,36 @@ Add `train.engine_backend=triton` to pin training to the engine Triton paths.
 See [backend selection and scope](docs/triton-backend-option.md), and the
 [full-model CUDA graph training comparison](docs/miniworld-training-cudagraph-ab.md).
 
-miniworld-engine is a git dependency pinned by `rev` in [pyproject.toml](pyproject.toml); there are no submodules.
-Install the Pixi environment, fetch the CUTLASS headers the H100 kernels compile against, and check the pinned package:
+miniworld-engine is a PyPI dependency pinned by version in [pyproject.toml](pyproject.toml) (`miniworld-engine==2.3.2`);
+there are no submodules. Install the Pixi environment and check the pinned package:
 
 ```bash
 pixi install -e cu128
-pixi run -e cu128 setup-cutlass     # clones CUTLASS v4.2.1 into ./.cutlass once; the environment sets CUTLASS_PATH to it
 pixi run -e cu128 engine-setup
 ```
 
-The `cu128` environment keeps its historical name; since miniworld-engine v2.2.0 it
-installs torch 2.13.0+cu129 and cuequivariance 0.12. FlashAttention-4 is in the lock, pinned to `4.0.0b32`: the engine unpacks
-the four values `flash_attn.cute` returns in that beta, and a later beta returns more. Do not upgrade it by hand.
-On the B200 boxes the engine is the local checkout
-(`$W/mwenv`, see [docs/operations/b200-environment.md](docs/operations/b200-environment.md)) because they cannot fetch the GitHub pin.
+The engine wheel ships its H100 (sm_90) CUDA kernels compiled for both CUDA builds of torch 2.13, so on an H100 the first
+model call loads binaries and runs no nvcc, and there is nothing to prebuild. The `cu128` environment keeps its historical
+name; it installs torch 2.13.0+cu129 (CUDA 12.9, the newest the cluster's 575 driver runs) and cuequivariance 0.12.
+FlashAttention-4 is in the lock, pinned to `4.0.0b32`: the engine unpacks the four values `flash_attn.cute` returns in that
+beta, and a later beta returns more. Do not upgrade it by hand. On the B200 boxes the engine is the local checkout
+(`$W/mwenv`, see [docs/operations/b200-environment.md](docs/operations/b200-environment.md)).
 
-Run `engine-setup` again after reinstalling the engine dependency. It verifies
-the consolidated engine version, recorded Git pin and required source files, and says whether the engine kernels have been
-prebuilt for this revision.
+Run `engine-setup` again after reinstalling the engine dependency. It verifies the installed engine version against the pin
+and the required files, and says per architecture whether the kernels ship in the wheel or still have to be prebuilt.
 
-**After creating the environment or bumping the engine pin, prebuild the engine kernels on a GPU node of each architecture
-(sm_90 H100, sm_100 B200).** The engine JIT-compiles its CUDA extensions with nvcc on first use, one at a time: without the
-prebuild the first model call of every new environment / pin waits on nvcc (840-2000 s for the first FoldBench target on an
-H100). `engine-prebuild` runs the production models (random weights) at every inference rung and training crop, then checks in
-a new process that nothing compiles any more, and leaves a stamp `engine-setup` reads. On H100 it takes ~36 min with 8 workers
-on 2 GPUs (~59 min with one); afterwards the first FoldBench call takes ~5 s instead of 840-2000 s:
+**B200 (sm_100), and kernels the wheel does not carry, still compile on first use.** The engine wheel has no sm_100 kernels
+yet; prebuild them once on a B200 node after creating the environment or bumping the engine pin. That and the opt-in
+kernels outside the wheel (the fused SWA atom DiT) need the CUTLASS headers: `pixi run -e cu128 setup-cutlass` clones
+CUTLASS v4.2.1 into ./.cutlass once and the environment sets CUTLASS_PATH to it.
 
 ```bash
-sbatch scripts/slurm/engine_prebuild_h100.sbatch          # H100: 2 GPUs, 8 workers (--mode all)
-pixi run -e cu128 engine-prebuild --jobs 8                # any GPU node (B200: python scripts/prebuild_engine.py --jobs 8)
+python scripts/prebuild_engine.py --jobs 8                # B200 node
 pixi run -e cu128 engine-prebuild --verify-only           # only check that nothing would compile
 ```
 
-The kernels land in the environment's own cache (`~/.cache/miniworld_engine_jit/py310-<env hash>`, torch extensions in its
-`torch_extensions/`), so other environments (checkouts on other engine pins) neither share nor rebuild them. Shapes, timings and what is not
-covered: [docs/operations/engine-prebuild.md](docs/operations/engine-prebuild.md).
+The kernels built locally land in the environment's own cache (`~/.cache/miniworld_engine_jit/py310-<env hash>`). Shapes,
+timings and what is not covered: [docs/operations/engine-prebuild.md](docs/operations/engine-prebuild.md).
 
 MathDx and the other kernel prerequisites are listed in the
 environment comments of [pyproject.toml](pyproject.toml).

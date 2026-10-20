@@ -180,10 +180,10 @@ DataCooker의 과거 `gh-pages`는 생성된 사이트 배포 이력이므로 �
 
 새 서버에서는 MiniWorld main을 clone하고 `git submodule update --init --recursive`로
 정확한 team-gm/StructCooker gitlink를 복원한다. `pixi install -e cu128` 후
-`pixi run -e cu128 engine-setup`으로 pin과 필수 파일을 검사한다. 환경을 새로 만들거나 engine pin을 올린 뒤에는
-아키텍처마다(H100 sm_90, B200 sm_100) GPU 노드에서 `pixi run -e cu128 engine-prebuild`(H100:
-`sbatch scripts/slurm/engine_prebuild_h100.sbatch`)로 engine CUDA 커널을 미리 빌드한다. 하지 않으면 첫 모델 호출이
-nvcc를 기다린다. 절차와 소요 시간: [engine-prebuild](operations/engine-prebuild.md).
+`pixi run -e cu128 engine-setup`으로 버전 pin과 필수 파일을 검사한다. 엔진은 PyPI 릴리스(`miniworld-engine==2.3.2`)이고
+wheel에 H100(sm_90) CUDA 커널이 CUDA 12.9·13.0 빌드로 들어 있어 H100에서는 첫 호출에 nvcc가 돌지 않는다. B200(sm_100)은
+아직 wheel에 커널이 없으므로 환경을 새로 만들거나 engine pin을 올린 뒤 B200 노드에서 한 번 미리 빌드한다.
+절차와 소요 시간: [engine-prebuild](operations/engine-prebuild.md).
 engine 1.x용 `apply_engine_audit_patches.py`는 역사 자료이며 main에는 자동 적용하지 않는다.
 
 커널 개발에는 engine main을 별도로 clone해 사용한다. 연구 harness의 기존 절대경로와
@@ -234,3 +234,9 @@ GPU 테스트 232 passed, CPU 테스트는 engine main 대비 새 실패 없음.
   `train.engine_settings={rope_angles_bf16_compat: true}`가 필요하다([known-issues](known-issues.md)).
 - 미커밋 작업이 있던 `team-gm` detached HEAD `b0ca024`(원격에 없는 커밋 4개)는 번들로 보존했다
   (`team-gm-b0ca024-unpushed-20261013.bundle`).
+
+2026-10-20: engine 의존성을 git pin(`545b6850`)에서 PyPI 릴리스 `miniworld-engine==2.3.2`로 바꿨다. 2.3.2 wheel은 H100(sm_90)
+커널 336개(CUDA 12.9·13.0 각 168개, 이 저장소의 SWA atom DiT·bias-only DiT 포함)를 미리 컴파일해 싣고, 커널은 include 그래프
+기반 내용 키로 찾는다. 그래서 H100에서 `engine-prebuild`가 더는 필요 없다: 빈 캐시·CUTLASS 없음 상태에서
+`prebuild_engine.py --mode all`의 26개 프로덕션 shape(추론 rung·학습 crop)이 컴파일 0건으로 돈다. 이 pin에는 545b6850 이후의
+H100 TriMul D128~512 배치와 TriangleAttention 배치, OOM 대신 B 분할, bias-only DiT 증강별 pair bias도 들어 있다.
