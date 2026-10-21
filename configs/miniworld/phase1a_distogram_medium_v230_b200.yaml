@@ -19,6 +19,7 @@ train:
   compile: true
   forbid_triton: true   # an engine Triton fallback stops the run (miniworld.training.no_triton); inductor's own kernels are fine
   force_trainer: random_cudagraph   # one CUDA graph per recycle count (scripts/random_recycle_graph_trainer.py)
+  precision: bf16-mixed   # fp32 master parameters, bf16-autocast forward (v1.2.0 trained "native": bf16 parameters)
 
 loss:
   # v1.2.0 had no chemistry weights; the code default turned them on later (AF3 alphas 5 / 5 / 10), so they are switched off
