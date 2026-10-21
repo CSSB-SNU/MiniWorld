@@ -575,21 +575,23 @@ def train(
         align_optimizer_state_layout_(opt)
 
     restore(state)
-    if is_diffusion:
-        # Weights start identically on all ranks; diffusion draws are independent.
-        torch.cuda.manual_seed((cfg.train.seed or 0) + rank)
     epoch = int(state["epoch"])
     global_step = int(state["global_step"])
+    # Weights start identically on all ranks (same seed above); from here every rank draws its own dropout masks, MSA row
+    # subsets and diffusion noise. Before v2.3.0 a distogram run kept the one shared stream on every rank, so the ranks of
+    # a step applied identical masks, and the rank states it saved were identical too: those are not restored as they are.
     saved_rng = state.get("rng_states")
-    if saved_rng and len(saved_rng) == world:
+    if saved_rng and len(saved_rng) == world and state.get("rng_per_rank"):
         restore_rng_state(saved_rng[rank])
     elif saved_rng:
         torch.manual_seed((cfg.train.seed or 0) + global_step * world + rank)
         if rank == 0:
             log.warning(
-                "World size changed; starting independent RNG streams for %d ranks",
+                "Saved RNG states are shared across ranks or the world size changed; starting independent RNG streams for %d ranks",
                 world,
             )
+    else:
+        torch.manual_seed((cfg.train.seed or 0) + rank)
     startup_rng = capture_rng_state()
     if rank == 0:
         print(
@@ -911,6 +913,7 @@ def train(
             "run_dir": str(run_dir),
             "wandb_run_id": wandb_id,
             "rng_states": rng_states,
+            "rng_per_rank": True,
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": opt.state_dict(),
             "scheduler_state_dict": sched.state_dict() if sched else None,
