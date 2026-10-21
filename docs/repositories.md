@@ -180,7 +180,7 @@ DataCooker의 과거 `gh-pages`는 생성된 사이트 배포 이력이므로 �
 
 새 서버에서는 MiniWorld main을 clone하고 `git submodule update --init --recursive`로
 정확한 team-gm/StructCooker gitlink를 복원한다. `pixi install -e cu128` 후
-`pixi run -e cu128 engine-setup`으로 버전 pin과 필수 파일을 검사한다. 엔진은 PyPI 릴리스(`miniworld-engine==2.3.5`)이고
+`pixi run -e cu128 engine-setup`으로 버전 pin과 필수 파일을 검사한다. 엔진은 PyPI 릴리스(`miniworld-engine==2.3.6`)이고
 wheel에 H100(sm_90) CUDA 커널이 CUDA 12.9·13.0 빌드로 들어 있어 H100에서는 첫 호출에 nvcc가 돌지 않는다. B200(sm_100)은
 아직 wheel에 커널이 없으므로 환경을 새로 만들거나 engine pin을 올린 뒤 B200 노드에서 한 번 미리 빌드한다.
 절차와 소요 시간: [engine-prebuild](operations/engine-prebuild.md).
@@ -249,3 +249,4 @@ shape는 빈 캐시·CUTLASS 없음에서 컴파일 0건으로 돈다.
 
 2026-10-21: engine pin을 `miniworld-engine==2.3.4`로 올렸다. 커널은 2.3.3과 같고, wheel에 FoldForge가 쓰는 512폭 single attention 커널이 추가됐다.
 2026-10-21: engine pin을 `miniworld-engine==2.3.5`로 올렸다. 커널은 2.3.4와 같고, wheel에 fp32 master 가중치용 단방향 TriMul 학습 backward(`MASTER_FP32=1`, pdall이 쓰는 경로)가 추가됐다.
+2026-10-21: engine pin을 `miniworld-engine==2.3.6`으로 올렸다. H100에서 hidden이 pair 폭의 2배인 단방향 TriMul(템플릿 블록, 이 저장소의 템플릿 임베더 포함)이 PyTorch 대신 CUDA 커널로 돈다(추론·학습). ESMFold2 atom 블록(추론)도 추가됐다.
