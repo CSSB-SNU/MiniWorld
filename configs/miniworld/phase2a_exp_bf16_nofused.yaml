@@ -1,0 +1,13 @@
+# 2a precision ablation (bf16_nofused): bias-only token DiT, frozen medium trunk, 12 epochs. See runs/v1.2.0/phase2a/analysis.
+defaults:
+  - phase2a_diffusion_medium_v120
+  - _self_
+
+train:
+  comment: "v1.2.0-phase2a-exp-bf16_nofused"
+  run_dir: "runs/v1.2.0/phase2a/exp_bf16_nofused"
+  num_epoch: 12
+model:
+  diffusion:
+    atom_swa:
+      fused_triton: false

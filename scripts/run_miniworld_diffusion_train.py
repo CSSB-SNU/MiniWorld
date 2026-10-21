@@ -105,12 +105,14 @@ def _fabric_from_torchrun() -> Fabric:
     """Create Fabric with node/device counts inherited from torchrun."""
     world_size = os.environ.get("WORLD_SIZE")
     local_world_size = os.environ.get("LOCAL_WORLD_SIZE")
+    # MW_FABRIC_PRECISION (e.g. "bf16-mixed"): Lightning precision plugin; unset = "32-true" (the module's own dtype).
+    precision = os.environ.get("MW_FABRIC_PRECISION") or None
     if world_size is None or local_world_size is None:
-        return Fabric()
+        return Fabric(precision=precision)
 
     devices = int(local_world_size)
     num_nodes = int(world_size) // devices
-    return Fabric(devices=devices, num_nodes=num_nodes)
+    return Fabric(devices=devices, num_nodes=num_nodes, precision=precision)
 
 
 def _ceil_to_multiple(value: int, multiple: int | None) -> int:
@@ -576,19 +578,30 @@ def train(  # noqa: PLR0912, PLR0915
             # phase 2 is a NEW run: keep a stable id in THIS run_dir so preempt/
             # resume appends to the same phase 2 run (never reuse a phase 1b id).
             wandb_id_file = Path(cfg.train.run_dir) / "wandb_run_id.txt"
-            if wandb_id_file.exists():
+            fresh_id = not wandb_id_file.exists()
+            if not fresh_id:
                 wandb_id = wandb_id_file.read_text().strip()
             else:
                 wandb_id = new_wandb_run_id()
                 wandb_id_file.parent.mkdir(parents=True, exist_ok=True)
                 wandb_id_file.write_text(wandb_id)
-            wandb.init(
-                project=cfg.train.wandb_project,
-                name=job_name,
-                id=wandb_id,
-                resume="allow",
-                config=config_dict,
-            )
+            # MW_WANDB_FORK_FROM="<run id>?_step=<n>": the FIRST launch of a continuation that must not append to a run whose later
+            # history is no longer valid (it forks a new run carrying the history up to step n); later resumes append as usual.
+            fork_from = os.environ.get("MW_WANDB_FORK_FROM") if fresh_id else None
+            run_name = job_name + os.environ.get("MW_WANDB_NAME_SUFFIX", "")
+            try:
+                if fork_from:
+                    wandb.init(project=cfg.train.wandb_project, name=run_name, id=wandb_id, fork_from=fork_from, config=config_dict)
+                else:
+                    wandb.init(project=cfg.train.wandb_project, name=run_name, id=wandb_id, resume="allow", config=config_dict)
+            except Exception as exc:  # noqa: BLE001
+                if not fork_from:
+                    raise
+                # the failed fork already claimed ``wandb_id`` on the server ("run ID is in use"): continue under a fresh id
+                wandb_id = new_wandb_run_id()
+                wandb_id_file.write_text(wandb_id)
+                client.logger.warning("W&B fork_from=%s failed (%r); starting a plain run %s instead", fork_from, exc, wandb_id)
+                wandb.init(project=cfg.train.wandb_project, name=run_name, id=wandb_id, resume="allow", config=config_dict)
 
     # Load the checkpoint BEFORE building the optimizer so param_policy can
     # load + freeze the trunk and the optimizer only ever sees the trainable

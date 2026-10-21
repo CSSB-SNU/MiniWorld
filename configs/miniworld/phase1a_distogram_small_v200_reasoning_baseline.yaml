@@ -1,0 +1,29 @@
+# Baseline for the recycle-as-reasoning experiments: v2.0.0 phase 1a distogram on a SMALL trunk, no template stack.
+# MSA module 2 blocks, MiniPairformer 8 blocks, random recycle (n_recycle ~ U[1, 4] per step, the model default).
+# 4 H100 x 1 sample x grad_accum 64 = effective batch 256.
+# Distogram objective = v2.0.0 (phase1a_distogram_medium_v200_b200): interchain x2 retired, AF3 chemistry weights
+# DNA 5 / RNA 5 / ligand 10 on token pairs, antibody-antigen pairs x10.
+defaults:
+  - phase1a_distogram_v200
+  - _self_
+
+model:
+  trunk:
+    n_recycle_max: 4
+    use_template: false
+    msa_module:
+      n_block: 2
+    pairformer:
+      n_block: 8
+
+train:
+  comment: "v2.0.0-phase1a-distogram-small-pf8-msa2-notemplate-L384"
+  run_dir: "runs/v2.0.0/reasoning/baseline_small_pf8_msa2"
+  grad_accum_steps: 64
+
+loss:
+  distogram_interchain_weight: 1.0
+  distogram_alpha_dna: 5.0
+  distogram_alpha_rna: 5.0
+  distogram_alpha_ligand: 10.0
+  distogram_ab_ag_weight: 10.0

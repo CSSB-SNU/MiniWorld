@@ -1,0 +1,30 @@
+# v1.2.0 phase 2b (L768 / 8192 atoms, +20 epochs: counter 200 -> 220) after phase2a_diffusion_medium_v120_bias_bf16mixed:
+# bias-only token DiT, fp32 master parameters + bf16 autocast, fused atom DiT, no block checkpointing (the phase2b v200 defaults;
+# bf16 L768 peaked at 40.9 GiB upstream). --ckpt = the finished 2a last.pt.
+defaults:
+  - phase2b_diffusion_v200
+  - _self_
+
+model:
+  trunk:
+    pairformer:
+      n_block: 16
+      n_checkpoint_segments: 16
+    msa_subsample_per_recycle: 1024
+
+data:
+  crop:
+    ab_ag_interface_only: true
+    prefer_nonprotein_focus: true
+  msa:
+    sample_depth_by_source:
+      pdb: af3
+    max_msa_depth_by_source:
+      pdb: 8192
+
+train:
+  comment: "v1.2.0-phase2b-diffusion-medium-bias-bf16mixed-L768"
+  run_dir: "runs/v1.2.0/phase2b/medium_diffusion_bias_bf16mixed_L768"
+  num_epoch: 220
+  bucket_msa_multiple: 8192
+  precision: bf16-mixed
