@@ -1,0 +1,27 @@
+# MiniWorld v2.3.0 phase 1a, medium trunk (PF16 / MSA 4, recycle <= 4), L384, on the B200 server (graph trainer).
+# The v1.2.0 medium recipe (the best phase-1 model on FoldBench protein-RNA / protein-DNA once the FoldBench inputs were
+# corrected, 2026-10-21), with the v2.2.x AF3 crop dropped again:
+#   * crop: v1.2.0's spatial_segment crop with prefer_nonprotein_focus / ab_ag_interface_only (inherited from v1.1), which
+#     centres a protein-nucleic-acid item on the nucleic-acid chain; the v2.2.x AF3 crop skipped that focus selection
+#   * loss: v1.2.0's (interchain x2, no chemistry alphas, no antibody-antigen weight)
+# Code changes that come with v2.3.0 (not config): per-rank dropout / MSA-subsampling RNG streams (every rank shared one
+# before), and DNA/RNA hybrid chains keep their deoxy residues in the restype / MSA query.
+# 4 GPUs x 1 sample x grad_accum 64 = effective batch 256, as v1.2.0.
+defaults:
+  - phase1a_distogram_medium_v120
+  - override data: B200_default
+  - _self_
+
+train:
+  comment: "v2.3.0-phase1a-distogram-medium-L384-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v230/medium_distogram"
+  use_wandb: true
+  compile: true
+  forbid_triton: true   # an engine Triton fallback stops the run (miniworld.training.no_triton); inductor's own kernels are fine
+  force_trainer: random_cudagraph   # one CUDA graph per recycle count (scripts/random_recycle_graph_trainer.py)
+
+loss:
+  # v1.2.0 had no chemistry weights; the code default turned them on later (AF3 alphas 5 / 5 / 10), so they are switched off
+  distogram_alpha_dna: 0.0
+  distogram_alpha_rna: 0.0
+  distogram_alpha_ligand: 0.0
