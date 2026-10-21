@@ -102,7 +102,7 @@ miniworld = { path = ".", editable = true }
 # part of this package (miniworld.modules, miniworld.diffusion, miniworld.training); there is no team-gm dependency.
 # Pinned to an engine release on PyPI. Its wheel ships the H100 (sm_90) kernels compiled for CUDA 12.9 and 13.0, so nothing
 # compiles on first use there; see docs/repositories.md.
-miniworld-engine = "==2.3.4"
+miniworld-engine = "==2.3.5"
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"

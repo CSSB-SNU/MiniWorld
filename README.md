@@ -54,7 +54,7 @@ Add `train.engine_backend=triton` to pin training to the engine Triton paths.
 See [backend selection and scope](docs/triton-backend-option.md), and the
 [full-model CUDA graph training comparison](docs/miniworld-training-cudagraph-ab.md).
 
-miniworld-engine is a PyPI dependency pinned by version in [pyproject.toml](pyproject.toml) (`miniworld-engine==2.3.4`);
+miniworld-engine is a PyPI dependency pinned by version in [pyproject.toml](pyproject.toml) (`miniworld-engine==2.3.5`);
 there are no submodules. Install the Pixi environment and check the pinned package:
 
 ```bash
