@@ -319,7 +319,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/d6/50/56cf20e2ee5127b603b81d5a69580a1a325083e2b921aa8f067da83927c0/backports_strenum-1.3.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d9/92/28a838b2da70a9fab8c3ef435c1ee431ceb979f479a941166bebaa683f4d/biomol-1.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/db/f3/3996583dd2906297a637af12114deddf7658af6e683fedb83be061983fb5/protobuf-7.36.2-cp310-abi3-manylinux2014_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/e4/c9/16a76cdf9421cbc9ec47823cab765eb5e1aa3189319274c557d0f690bcfe/miniworld_engine-2.3.3-cp310-cp310-manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/e5/8d/511ae8ff27361a09037256530b52dbc9083d1d6ff4eaa3db96e717e7799c/miniworld_engine-2.3.4-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/e7/18/875e0ee47e035f324e42eda9aab47d58381a4412181dca251d3504e24680/opentelemetry_exporter_otlp_proto_http-1.45.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/eb/47/c95ffc2009878c7aac0c5e08528022dcb885933252a88b5f170058014464/pydantic-2.13.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ec/d7/9a5eb56a1182fa6c0cfc303e223724f65a277a86a8b7bda6614f61ea34da/nvidia_cutlass_dsl_libs_base-4.8.1-cp310-cp310-manylinux_2_28_x86_64.whl
@@ -636,7 +636,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/dc/9b/47798a6c91d8bdb567fe2698fe81e0c6b7cb7ef4d13da4114b41d239f65d/typing_inspection-0.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/36/2b2a43c8a6f8d8ff7a5ec7de1357ba3f1438ea69281c9deb90df29d55d56/cuda_bindings-13.0.3-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/e3/94/1843518e420fa3ed6919835845df698c7e27e183cb997394e4a670973a65/omegaconf-2.3.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/e4/c9/16a76cdf9421cbc9ec47823cab765eb5e1aa3189319274c557d0f690bcfe/miniworld_engine-2.3.3-cp310-cp310-manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/e5/8d/511ae8ff27361a09037256530b52dbc9083d1d6ff4eaa3db96e717e7799c/miniworld_engine-2.3.4-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/e6/ab/fb21f4c939bb440104cc2b396d3be1d9b7a9fd3c6c2a53d98c45b3d7c954/fsspec-2026.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ed/de/0e6edf44d6a04dabd0318a519125ed0415ce437ad5a1ec9b9be03d9048cf/ninja-1.13.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/f0/e8/ff37c10fe5cf51fab00455d5e8f245e016b782248627c6d06e5ba4998884/lmdb-1.8.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
@@ -8207,10 +8207,10 @@ packages:
   - pyyaml>=5.1.0
   - dataclasses ; python_full_version == '3.6.*'
   requires_python: '>=3.6'
-- pypi: https://files.pythonhosted.org/packages/e4/c9/16a76cdf9421cbc9ec47823cab765eb5e1aa3189319274c557d0f690bcfe/miniworld_engine-2.3.3-cp310-cp310-manylinux_2_28_x86_64.whl
+- pypi: https://files.pythonhosted.org/packages/e5/8d/511ae8ff27361a09037256530b52dbc9083d1d6ff4eaa3db96e717e7799c/miniworld_engine-2.3.4-cp310-cp310-manylinux_2_28_x86_64.whl
   name: miniworld-engine
-  version: 2.3.3
-  sha256: cb7f7e2064b6cc7279dc8d1d18861b6586c0fab821a30bb38d3f95eae3cd03cc
+  version: 2.3.4
+  sha256: 1d7592a36c560665ead67fe3f044c69d0f5c88943091918fc87c6e866ff11335
   requires_dist:
   - torch==2.13.*
   - triton>=3.3
