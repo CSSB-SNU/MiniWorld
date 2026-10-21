@@ -60,6 +60,7 @@ _ENTITY_TYPE_TO_TAG: dict[EntityType, str] = {
     EntityType.PROTEIN: "P",
     EntityType.RNA: "R",
     EntityType.DNA: "D",
+    EntityType.NA_HYBRID: "N",
     EntityType.NON_POLYMER: "L",
     EntityType.BRANCHED: "B",
 }
@@ -69,6 +70,7 @@ _ENTITY_TYPE_TO_POLYMER: dict[EntityType, str] = {
     EntityType.PROTEIN: "protein",
     EntityType.RNA: "rna",
     EntityType.DNA: "dna",
+    EntityType.NA_HYBRID: "na",
 }
 
 # Per-chain "terminal" atom that the dataloader strips via
@@ -80,6 +82,7 @@ _TERMINAL_ATOM_BY_ENTITY: dict[EntityType, str] = {
     EntityType.PROTEIN: "OXT",
     EntityType.RNA: "OP3",
     EntityType.DNA: "OP3",
+    EntityType.NA_HYBRID: "OP3",
 }
 
 
@@ -648,6 +651,9 @@ def _encode_query_only(cs: ChainSpec, rm: ResidueMapping) -> np.ndarray:
         return rm.rna.map(cs.one_letter_seq).astype(np.int32)
     if cs.entity_type == EntityType.DNA:
         return rm.dna.map(cs.one_letter_seq).astype(np.int32)
+    if cs.entity_type == EntityType.NA_HYBRID:
+        # as the dataloader's get_query_sequence for molecule type N: the NA view of the CCD codes
+        return rm.na.map(cs.chemcomp_ids).astype(np.int32)
     return np.full(len(cs.chemcomp_ids), rm.LIGAND_INDEX, dtype=np.int32)
 
 

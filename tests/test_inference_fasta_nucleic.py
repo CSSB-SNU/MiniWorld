@@ -28,3 +28,15 @@ def test_rna_parenthesized(tmp_path):
     cs = parse_fasta_file(_write(tmp_path, "polyribonucleotide", "AC(PSU)(G)"), 0)
     assert cs.chemcomp_ids == ["A", "C", "PSU", "G"]
     assert cs.one_letter_seq == ["A", "C", "X", "G"]
+
+
+def test_hybrid_chain_as_in_training(tmp_path):
+    """A DNA/RNA hybrid in the training data's form: ribo bare letters, everything else "(CCD)"; restype = NA view of the CCDs."""
+    from miniworld.data.constants import ResidueMapping
+
+    cs = parse_fasta_file(_write(tmp_path, "polydeoxyribonucleotide/polyribonucleotide hybrid", "C(DC)(DG)G(BRU)U"), 0)
+    assert cs.entity_type == EntityType.NA_HYBRID
+    assert cs.chemcomp_ids == ["C", "DC", "DG", "G", "BRU", "U"]
+    assert cs.one_letter_seq == ["C", "DC", "DG", "G", "BRU", "U"]
+    rm = ResidueMapping()
+    assert rm.na.map(cs.chemcomp_ids).tolist() == [rm.RNA2NUM["C"], rm.DNA2NUM["DC"], rm.DNA2NUM["DG"], rm.RNA2NUM["G"], rm.NA_UNKNOWN, rm.RNA2NUM["U"]]

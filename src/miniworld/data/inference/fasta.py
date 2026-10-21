@@ -17,6 +17,7 @@ class EntityType(str, Enum):
     PROTEIN = "polypeptide(L)"
     RNA = "polyribonucleotide"
     DNA = "polydeoxyribonucleotide"
+    NA_HYBRID = "polydeoxyribonucleotide/polyribonucleotide hybrid"
     NON_POLYMER = "non-polymer"
     BRANCHED = "branched"
 
@@ -209,6 +210,9 @@ def parse_fasta_file(path: Path, chain_index: int) -> ChainSpec:
     elif entity_type == EntityType.DNA:
         ccds, one_letter = _parse_dna_body(body, path)
         bonds = []
+    elif entity_type == EntityType.NA_HYBRID:
+        ccds, one_letter = _parse_hybrid_body(body, path)
+        bonds = []
     elif entity_type == EntityType.NON_POLYMER:
         ccds, one_letter = _parse_non_polymer_body(body, path)
         bonds = []
@@ -329,6 +333,44 @@ def _parse_rna_body(body: str, path: Path) -> tuple[list[str], list[str]]:
 
 def _parse_dna_body(body: str, path: Path) -> tuple[list[str], list[str]]:
     return _parse_nucleic_body(body, path, _DNA_1TO_CCD, "DN", "DNA")
+
+
+def _parse_hybrid_body(body: str, path: Path) -> tuple[list[str], list[str]]:
+    """Parse a DNA/RNA hybrid body written as the training data writes it.
+
+    A ribonucleotide is its bare letter (``A``, ``U``, ``G``, ``C``: CCD code = letter); any other residue, the
+    deoxyribonucleotides included, is its CCD code in parentheses -- ``C(DC)(DG)G`` is C, DC, DG, G. The restype /
+    MSA query is ``ResidueMapping.na.map`` of the CCD codes, as ``io.load.get_query_sequence`` does for molecule type N
+    (ribo 21-24, deoxy 26-29, anything else unknown); the 1-letter entries are those CCD codes. A bare letter outside
+    A / U / G / C is an unidentified nucleotide (CCD ``N``).
+    """
+    ccds: list[str] = []
+    one_letter: list[str] = []
+    i = 0
+    while i < len(body):
+        ch = body[i]
+        if ch == "(":
+            close = body.find(")", i)
+            if close == -1:
+                msg = f"Unterminated '(' in hybrid body of {path}: {body!r}."
+                raise ValueError(msg)
+            code = body[i + 1 : close].strip().upper()
+            if not code:
+                msg = f"Empty '()' CCD token in hybrid body of {path}."
+                raise ValueError(msg)
+            ccds.append(code)
+            one_letter.append(code)
+            i = close + 1
+            continue
+        letter = ch.upper()
+        if letter in _RNA_1TO_CCD:
+            ccds.append(letter)
+            one_letter.append(letter)
+        else:
+            ccds.append("N")
+            one_letter.append("N")
+        i += 1
+    return ccds, one_letter
 
 
 def _parse_non_polymer_body(body: str, path: Path) -> tuple[list[str], list[str]]:
