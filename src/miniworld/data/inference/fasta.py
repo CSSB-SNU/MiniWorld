@@ -284,12 +284,16 @@ def _parse_nucleic_body(
     strand with an inosine. The parenthesized CCD becomes that residue's
     ``chemcomp_id`` (so its real atoms come from the CCD reference), while the
     1-letter code used for the MSA/restype embedding falls back to ``'X'``,
-    which the RNA/DNA views map to their unknown index.
+    which the RNA/DNA views map to their unknown index. A parenthesized
+    *canonical* code keeps its letter: FoldBench writes every DNA base that way
+    (``(DC)(DG)(DT)``), and mapping those to ``'X'`` left the whole strand
+    "unknown DNA" in restype and the MSA query.
 
     A bare letter outside the canonical four (``N``, ``X``, and the ``I``/``U``
     an entity's canonical spelling can carry) is an unidentified nucleotide
     rather than an error, so it takes ``unknown_ccd``.
     """
+    ccd_to_one = {ccd: letter for letter, ccd in one_to_ccd.items()}
     ccds: list[str] = []
     one_letter: list[str] = []
     i = 0
@@ -305,7 +309,7 @@ def _parse_nucleic_body(
                 msg = f"Empty '()' CCD token in {label} body of {path}."
                 raise ValueError(msg)
             ccds.append(code)
-            one_letter.append("X")
+            one_letter.append(ccd_to_one.get(code, "X"))
             i = close + 1
             continue
         ccd = one_to_ccd.get(ch.upper())
