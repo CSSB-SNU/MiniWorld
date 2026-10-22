@@ -45,6 +45,7 @@ atom_swa:
   n_uid_rope_pairs: 10
   spatial_rope_base_frequency: 20.0
   uid_rope_base_frequency: 10000.0
+  input_features: legacy   # "esmfold2": ESMFold2's input atom encoder without atom names (element one-hot, LayerNorm'd condition)
 
 
 trunk:
