@@ -1,0 +1,15 @@
+# MiniWorld v2.3.2 phase 1a = v2.3.1 (ESMFold2's input atom encoder without atom names) with the atom attention global again.
+# v2.3.1 changed two things at once -- the encoder and the window (1e6 -> 128) -- and fell below v2.3.0 on FoldBench protein-RNA /
+# protein-DNA at epochs 100 / 200 (2026-10-23); v2.2.1 (window 128, legacy encoder) was the weakest v2.2.x as well. This run keeps the
+# ESMFold2 encoder and restores the global window, to separate the two.
+defaults:
+  - phase1a_distogram_medium_v231_b200
+  - _self_
+
+model:
+  atom_swa:
+    swa_window_size: 1000000   # global: past any atom count
+
+train:
+  comment: "v2.3.2-phase1a-distogram-medium-L384-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v232/medium_distogram"
