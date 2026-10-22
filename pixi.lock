@@ -271,7 +271,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/11/59/6474c44460037b8474d85c1a82311ec7244f3aabd53197be5b06a4db778e/googleapis_common_protos-1.75.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/12/43/7da7fe42f254ce57777d1a86eece3f86d1b3329fc568d48e2bc16c8b7ebc/lightning-2.6.6-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/12/51/55fe51e48bf8f187896506cf25e361d7dc1665d2a7a39ec99ef2c1fae5eb/nvidia_cutlass_dsl_libs_cu12-4.8.1-cp310-cp310-manylinux_2_28_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/1c/61/70bc8dfd1091526efeba05fafe96847121362d4749e5ff43aa481df5eac5/miniworld_engine-2.3.7-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/23/cd/066e86230ae37ed0be70aae89aabf03ca8d9f39c8aea0dec8029455b5540/opt_einsum-3.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/25/0c/21890c10cc94da917c8e47efc1c55cd3e56a1d25ab5947bdd35abaf9fdc1/hydra_core-1.3.7-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/26/13/775a4c7d87fb771a2ddb104ce7c5c5d393e48720e448b4e8c43aac7cd4ce/wandb-0.30.0-py3-none-manylinux_2_28_x86_64.whl
@@ -312,6 +311,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/a4/0e/152509871bf30df6fc38569f52a2db9b55dd41aae957adae50a053ac7778/omegaconf-2.3.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a7/8e/50f46a9c0ce8d2861a394c1347caae037ea0431d2f67d7feb151cbc4649a/filelock-3.32.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b1/65/34d7106eb45acda40f016c5b31b313ffbbf4744acd5f099f29eaf2958b4d/opentelemetry_exporter_http_transport-0.66b0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/b8/7e/a0191246d7cbb4bfe6dc36aab0360f1e0af7a0cb77be42ff9bf14da61fa2/miniworld_engine-2.3.8-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/b9/54/dd730b32ea14ea797530a4479b2ed46a6fb250f682a9cfb997e968bf0261/networkx-3.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/53/f65ed68b96eea2b4f6fa4f9031bdfccd8f3097c429e3d371c545d1c40ca4/multidict-6.9.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/bd/ce/a590b929285faf0aa285c5ccee2b88e0b5259fb39a6326206e0f140ea3fc/nvidia_cutlass_dsl-4.8.1-py3-none-any.whl
@@ -602,7 +602,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/0f/15/5bf3b99495fb160b63f95972b81750f18f7f4e02ad051373b669d17d44f2/aiohappyeyeballs-2.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/16/92/d1e32e3e0d894fe00b15ce28ad4944ab692713f2e7f0a99787405e43533a/protobuf-6.33.6-cp39-abi3-manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/1b/52/3131b6dc9577eaa556b2b66584a44df32a9d4356aa641ff5d33c8b797225/cuequivariance-0.10.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/1c/61/70bc8dfd1091526efeba05fafe96847121362d4749e5ff43aa481df5eac5/miniworld_engine-2.3.7-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/1c/66/a17ff4a0f2c874395673e24c8d20d2d52d53596b47cbdb2f63cafb301ac0/cuequivariance_ops_cu13-0.12.0-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/23/cd/066e86230ae37ed0be70aae89aabf03ca8d9f39c8aea0dec8029455b5540/opt_einsum-3.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2a/09/f8d8f8f31e4483c10a906437b4ce31bdf3d6d417b73fe33f1a8b59e34228/einops-0.8.2-py3-none-any.whl
@@ -630,6 +629,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/a0/61/5c78b91c3143ed5c14207f463aecfc8f9dbb5092fb2869baf37c273b2705/gitdb-4.0.12-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a4/a5/842ae8f0c08b61d6484b52f99a03510a3a72d23141942d216ebe81fefbce/filelock-3.25.2-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/b8/7e/a0191246d7cbb4bfe6dc36aab0360f1e0af7a0cb77be42ff9bf14da61fa2/miniworld_engine-2.3.8-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/b9/54/dd730b32ea14ea797530a4479b2ed46a6fb250f682a9cfb997e968bf0261/networkx-3.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/d4/59e74daffcb57a07668852eeeb6035af9f32cbfd7a1d2511f17d2fe6a738/smmap-5.0.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c6/50/e0edd38dcd63fb26a8547f13d28f7a008bc4a3fd4eb4ff030673f22ad41a/hydra_core-1.3.2-py3-none-any.whl
@@ -7031,30 +7031,6 @@ packages:
   - graphviz ; extra == 'dev'
   - pytest ; extra == 'dev'
   requires_python: '>=3.10'
-- pypi: https://files.pythonhosted.org/packages/1c/61/70bc8dfd1091526efeba05fafe96847121362d4749e5ff43aa481df5eac5/miniworld_engine-2.3.7-cp310-cp310-manylinux_2_28_x86_64.whl
-  name: miniworld-engine
-  version: 2.3.7
-  sha256: 35327aba74b3e22adf7d350191d51302100b90165b1362c11b14f6a875c08675
-  requires_dist:
-  - torch==2.13.*
-  - triton>=3.3
-  - einops
-  - jaxtyping
-  - numpy
-  - scipy
-  - pydantic
-  - cuequivariance-torch>=0.12,<0.13 ; extra == 'baselines'
-  - hydra-core ; extra == 'bench'
-  - lightning ; extra == 'bench'
-  - omegaconf ; extra == 'bench'
-  - pydantic ; extra == 'bench'
-  - matplotlib ; extra == 'bench'
-  - pytest ; extra == 'dev'
-  - ruff==0.16.9 ; extra == 'dev'
-  - ty==0.0.84 ; extra == 'dev'
-  - flash-attn-4 ; extra == 'flash'
-  - flash-attn>=2.8,<3 ; extra == 'flash2'
-  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/1c/66/a17ff4a0f2c874395673e24c8d20d2d52d53596b47cbdb2f63cafb301ac0/cuequivariance_ops_cu13-0.12.0-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
   name: cuequivariance-ops-cu13
   version: 0.12.0
@@ -8077,6 +8053,30 @@ packages:
   - opentelemetry-api~=1.15
   - requests~=2.25 ; extra == 'requests'
   - urllib3>=1.26 ; extra == 'urllib3'
+  requires_python: '>=3.10'
+- pypi: https://files.pythonhosted.org/packages/b8/7e/a0191246d7cbb4bfe6dc36aab0360f1e0af7a0cb77be42ff9bf14da61fa2/miniworld_engine-2.3.8-cp310-cp310-manylinux_2_28_x86_64.whl
+  name: miniworld-engine
+  version: 2.3.8
+  sha256: bc209a5b7c8f3b5d39f1ef0ce10dd6fb1ce000276bd06e40d0d15d111d67e8ea
+  requires_dist:
+  - torch==2.13.*
+  - triton>=3.3
+  - einops
+  - jaxtyping
+  - numpy
+  - scipy
+  - pydantic
+  - cuequivariance-torch>=0.12,<0.13 ; extra == 'baselines'
+  - hydra-core ; extra == 'bench'
+  - lightning ; extra == 'bench'
+  - omegaconf ; extra == 'bench'
+  - pydantic ; extra == 'bench'
+  - matplotlib ; extra == 'bench'
+  - pytest ; extra == 'dev'
+  - ruff==0.16.9 ; extra == 'dev'
+  - ty==0.0.84 ; extra == 'dev'
+  - flash-attn-4 ; extra == 'flash'
+  - flash-attn>=2.8,<3 ; extra == 'flash2'
   requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/b9/54/dd730b32ea14ea797530a4479b2ed46a6fb250f682a9cfb997e968bf0261/networkx-3.4.2-py3-none-any.whl
   name: networkx
