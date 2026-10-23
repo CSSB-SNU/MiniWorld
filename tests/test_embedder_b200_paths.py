@@ -121,3 +121,9 @@ def test_the_esmfold2_input_features_reach_the_engine_encoder():
     assert legacy.to_atom_single_cond.weight.shape == (128, 6) and not hasattr(legacy, "atom_norm")
     assert esm2.to_atom_single_cond.weight.shape == (128, 133)
     assert isinstance(esm2.atom_norm, torch.nn.LayerNorm) and isinstance(esm2.atom_out_norm, torch.nn.Identity)
+    if "token_pool" in inspect.signature(EngineInputFeatureEmbedder).parameters:
+        linear = ESMFold2InputAtomAttentionEncoder(
+            shared, diffusion, AtomSWAConfig(enabled=True, input_features="esmfold2", input_token_pool="linear")
+        )
+        assert isinstance(linear.atom_out_norm, torch.nn.LayerNorm)
+        assert not any(isinstance(m, torch.nn.ReLU) for m in linear.atom_single_rep_to_token_single)
