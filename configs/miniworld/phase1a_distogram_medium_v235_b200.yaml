@@ -1,0 +1,16 @@
+# MiniWorld v2.3.5 phase 1a = v2.3.4 (v2.3.3 = v1.2.0's recipe on the current engine, CUDA-graph trainer, native precision) with the template
+# embedder masking of v1.2.0 put back (model.trunk.template_embedder.legacy_interchain). From 2026-09-27 (commit 15ccef06) the code masks
+# only the template geometry for inter-chain pairs (AF3 paper); v1.2.0 zeroed the whole per-template input of those pairs. v2.3.3 / v2.3.4
+# match v1.2.0's training loss but trail it on FoldBench protein-RNA (300 epochs: 0.12 against 0.23-0.25); this run tests that difference.
+defaults:
+  - phase1a_distogram_medium_v234_b200
+  - _self_
+
+model:
+  trunk:
+    template_embedder:
+      legacy_interchain: true
+
+train:
+  comment: "v2.3.5-phase1a-distogram-medium-L384-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v235/medium_distogram"

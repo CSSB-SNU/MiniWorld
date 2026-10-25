@@ -63,6 +63,10 @@ class TemplateEmbedderConfig(BaseModel):
     out_init: Literal["default", "zero"] = "default"
     # Per-template MiniPairformer backend. Was MW_TEMPLATE_IMPL.
     implementation: Literal["MINIWORLD_ENGINE", "PYTORCH"] = "MINIWORLD_ENGINE"
+    # v1.2.0 masking (the code before commit 15ccef06, 2026-09-27): the whole per-template input of an inter-chain pair is zeroed
+    # (query pair and residue-type features included), templates are not masked by their own validity, and a sample without
+    # templates still adds the value computed from the query pair. False = the AF3-paper masking used since v2.0.0.
+    legacy_interchain: bool = False
 
 
 class MiniSWAModel(nn.Module):
@@ -162,6 +166,7 @@ class MiniSWAModel(nn.Module):
                 dropout_prob=te.dropout_prob,
                 out_init=te.out_init,
                 implementation=te.implementation,
+                legacy_interchain=te.legacy_interchain,
             ).to(torch.bfloat16)
 
         # Minimal trunk (bidir trimul + transition; MSA folded via OuterProductMean)

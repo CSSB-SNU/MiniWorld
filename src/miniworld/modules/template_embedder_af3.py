@@ -101,8 +101,10 @@ class AF3TemplateEmbedder(nn.Module):
         dropout_prob: float = 0.25,
         out_init: str = "default",
         implementation: str = "MINIWORLD_ENGINE",
+        legacy_interchain: bool = False,
     ) -> None:
         super().__init__()
+        self._legacy = legacy_interchain  # v1.2.0 masking, see TemplateEmbedderConfig.legacy_interchain
         self.num_channels = num_channels
         self.num_res_class = num_res_class
         self.dgram_min = dgram_min
@@ -219,6 +221,9 @@ class AF3TemplateEmbedder(nn.Module):
             and 1 < n_temp <= self._batch_limit
         )
         acts: list[torch.Tensor] = []
+        # legacy (v1.2.0): geometry features are not restricted to intra-chain pairs here; instead the whole summed input is
+        # multiplied by the intra-chain mask below.
+        geom_chain = 1.0 if self._legacy else multichain
         fuse = self._fuse_projections and dtype == torch.bfloat16
         if fuse:
             # The four per-pair features with a small input width (distogram 39, pseudo-beta mask 1, unit vector 3, backbone
@@ -244,10 +249,10 @@ class AF3TemplateEmbedder(nn.Module):
             # nan_to_num keeps everything finite; per-residue validity is still carried by
             # the pb/bb mask features, and whole-template validity by the ``mask`` multiply.
             cb = torch.nan_to_num(template.cb_xyz[:, t])  # [B, L, 3]
-            cb_mask = template.cb_mask[:, t] & template.mask[:, t, None]  # [B, L]
+            cb_mask = template.cb_mask[:, t] if self._legacy else template.cb_mask[:, t] & template.mask[:, t, None]  # [B, L]
             res_type = template.res_type[:, t].clamp(0, self.num_res_class - 1)
             bb = torch.nan_to_num(template.bb_xyz[:, t])  # [B, L, 3, 3]
-            bb_mask = template.bb_mask[:, t] & template.mask[:, t, None]  # [B, L]
+            bb_mask = template.bb_mask[:, t] if self._legacy else template.bb_mask[:, t] & template.mask[:, t, None]  # [B, L]
 
             dgram = _dgram_from_positions(
                 cb,
@@ -256,12 +261,12 @@ class AF3TemplateEmbedder(nn.Module):
             ).to(dtype)
             pb2d = (cb_mask[:, :, None] & cb_mask[:, None, :]).to(dtype)[
                 ..., None
-            ] * multichain
+            ] * geom_chain
             aatype = F.one_hot(res_type, self.num_res_class).to(dtype)  # [B, L, C_res]
             unit_vec = _backbone_unit_vectors(bb).to(dtype)  # [B, L, L, 3]
             bb2d = (bb_mask[:, :, None] & bb_mask[:, None, :]).to(dtype)[
                 ..., None
-            ] * multichain
+            ] * geom_chain
 
             # AF3 masks the geometric features by the pseudo-beta / backbone masks
             # BEFORE projection: a missing residue's coord is nan_to_num->origin, so
@@ -286,6 +291,8 @@ class AF3TemplateEmbedder(nn.Module):
                     + self.proj_unit_vec(unit_vec * bb2d)
                     + self.proj_bb_mask(bb2d)
                 )
+            if self._legacy:
+                act = act * multichain  # v1.2.0: zero the whole input of every inter-chain pair
             if batched:
                 acts.append(act)
                 continue
@@ -312,4 +319,6 @@ class AF3TemplateEmbedder(nn.Module):
         n_temp_div = template.mask.shape[1]
         avg = summed / (1e-7 + n_temp_div)
         present = template.mask.any(dim=1)[:, None, None, None]
+        if self._legacy:
+            return self.proj_out(F.relu(avg))
         return self.proj_out(F.relu(avg)) * present
