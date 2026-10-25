@@ -1,0 +1,11 @@
+# MiniWorld v2.3.4 phase 1a = v2.3.3 (v1.2.0's recipe in full on the current engine) with only the trainer changed: the CUDA-graph
+# trainer (one graph per recycle count) instead of Fabric + torch.compile. v2.3.3 runs 300 s / epoch with the GPUs ~50% busy
+# (Python kernel launches per microbatch); the graph trainer runs ~150 s. Precision stays native (bf16 parameters, as v1.2.0).
+defaults:
+  - phase1a_distogram_medium_v233_b200
+  - _self_
+
+train:
+  comment: "v2.3.4-phase1a-distogram-medium-L384-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v234/medium_distogram"
+  force_trainer: random_cudagraph

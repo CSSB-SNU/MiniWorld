@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel
 
 from miniworld.modules import ImplementationType
@@ -54,3 +56,10 @@ class AtomSWAConfig(BaseModel):
     n_uid_rope_pairs: int = 10
     spatial_rope_base_frequency: float = 20.0
     uid_rope_base_frequency: float = 10000.0
+    # Input atom encoder layout (the engine's InputFeatureEmbedder ``features``; the diffusion module ignores it):
+    # "legacy" = position, mask, atomic number, arcsinh(charge) and a terminal RMSNorm (MiniWorld through v2.3.0);
+    # "esmfold2" = ESMFold2's encoder without atom names (element one-hot, LayerNorm'd condition, no terminal norm).
+    input_features: Literal["legacy", "esmfold2"] = "legacy"
+    # Input atom encoder read-out (the engine's InputFeatureEmbedder ``token_pool``): "relu" = Linear + ReLU then the token mean
+    # (AF3 / ESMFold2); "linear" = LayerNorm -> Linear -> token mean, no activation (the LLM / ViT read-out).
+    input_token_pool: Literal["relu", "linear"] = "relu"

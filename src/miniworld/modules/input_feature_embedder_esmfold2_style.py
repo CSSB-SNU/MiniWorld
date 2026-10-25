@@ -50,6 +50,8 @@ class ESMFold2InputAtomAttentionEncoder(EngineInputFeatureEmbedder):
             n_uid_rope_pairs=atom_swa_config.n_uid_rope_pairs,
             spatial_rope_base_frequency=atom_swa_config.spatial_rope_base_frequency,
             uid_rope_base_frequency=atom_swa_config.uid_rope_base_frequency,
+            features=atom_swa_config.input_features,
+            token_pool=atom_swa_config.input_token_pool,
             implementation=diffusion_config.implementation,
         )
         self.d_single_token = shared_config.d_single

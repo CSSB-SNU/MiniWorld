@@ -1,0 +1,24 @@
+# MiniWorld v2.3.3 phase 1a = v1.2.0 phase 1a as it trained (epochs 0-470 on H100), on the current engine (0db51077, B200).
+# v2.3.0 / v2.3.1 / v2.3.2 all trail v1.2.0 on FoldBench protein-RNA / protein-DNA; this run puts v1.2.0's recipe back in full
+# on today's engine (2026-10-23, user) so the engine is the main difference left:
+#   * model: the legacy input atom encoder (atomic-number features, terminal RMSNorm, Linear + ReLU), global atom attention
+#   * precision: native, as v1.2.0 (bf16 parameters / gradients / Adam state; no fp32 masters, no autocast)
+#   * trainer: Fabric + torch.compile, as v1.2.0 epochs 0-470 (not the CUDA-graph trainer)
+#   * crop / loss / sampler / MSA sampling / optimiser / seed: v1.2.0's (inherited through v2.3.0)
+# Kept from v2.3.0 (bug fixes): per-rank dropout / MSA-subsampling RNG streams, hybrid DNA/RNA chains keep their deoxy restype.
+# 8 GPUs x grad_accum 32 = effective batch 256 (v1.2.0: 4 x 64).
+defaults:
+  - phase1a_distogram_medium_v230_b200
+  - _self_
+
+model:
+  atom_swa:
+    swa_window_size: 1000000
+    input_features: legacy
+    input_token_pool: relu
+
+train:
+  comment: "v2.3.3-phase1a-distogram-medium-L384-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v233/medium_distogram"
+  force_trainer: fabric
+  precision: native

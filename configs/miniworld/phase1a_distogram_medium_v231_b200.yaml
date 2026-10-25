@@ -1,0 +1,19 @@
+# MiniWorld v2.3.1 phase 1a = v2.3.0 with ESMFold2's input atom encoder (without atom names), on the B200 server.
+# The v2.3.0 / earlier input atom encoder (scalar atomic number, un-normalised condition, terminal RMSNorm, global attention) blew
+# its atom stream up along one direction and killed the bias-free ReLU after it (v2.3.0: every unit dead by epoch 225; 2026-10-22).
+#   * model.atom_swa.input_features: esmfold2 -- position, charge, atom mask, 128-class element one-hot -> Linear -> LayerNorm
+#     (the stream start and every block's condition) -> SWA transformer -> ReLU(Linear), no terminal norm (engine 40dce9c8)
+#   * model.atom_swa.swa_window_size: 128 -- ESMFold2's sliding window (was 1e6 = global)
+# Everything else as v2.3.0.
+defaults:
+  - phase1a_distogram_medium_v230_b200
+  - _self_
+
+model:
+  atom_swa:
+    input_features: esmfold2
+    swa_window_size: 128
+
+train:
+  comment: "v2.3.1-phase1a-distogram-medium-L384-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v231/medium_distogram"

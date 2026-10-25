@@ -788,6 +788,11 @@ def train(  # noqa: PLR0912, PLR0915
             client.model.compile(dynamic=False)
             client.logger.info("Compiled model")
 
+    if cfg.train.seed is not None:
+        # The weights above came out identical on every rank from the shared seed; training draws (dropout masks, MSA
+        # row subsets) are per rank from here. Before v2.3.0 every rank kept the shared stream and applied the same masks.
+        torch.manual_seed(cfg.train.seed + fabric.global_rank)
+
     config_dict = cfg.model_dump(mode="json")
     msg = f"config:\n{OmegaConf.to_yaml(OmegaConf.create(config_dict))}"
     client.logger.debug(msg)

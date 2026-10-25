@@ -1,0 +1,42 @@
+"""Nucleic fasta bodies: parenthesized canonical CCD codes keep their 1-letter code (FoldBench DNA is written as ``(DC)(DG)...``)."""
+
+from pathlib import Path
+
+from miniworld.data.inference.fasta import EntityType, parse_fasta_file
+
+
+def _write(tmp_path: Path, kind: str, body: str) -> Path:
+    p = tmp_path / "chain_a.fasta"
+    p.write_text(f"> t_a | {kind} | Chain:a\n{body}\n")
+    return p
+
+
+def test_dna_parenthesized_canonical_bases(tmp_path):
+    cs = parse_fasta_file(_write(tmp_path, "polydeoxyribonucleotide", "(DC)(DG)(DT)(DA)(8NI)"), 0)
+    assert cs.entity_type == EntityType.DNA
+    assert cs.chemcomp_ids == ["DC", "DG", "DT", "DA", "8NI"]
+    assert cs.one_letter_seq == ["C", "G", "T", "A", "X"]
+
+
+def test_dna_plain_letters_unchanged(tmp_path):
+    cs = parse_fasta_file(_write(tmp_path, "polydeoxyribonucleotide", "CGTA"), 0)
+    assert cs.chemcomp_ids == ["DC", "DG", "DT", "DA"]
+    assert cs.one_letter_seq == ["C", "G", "T", "A"]
+
+
+def test_rna_parenthesized(tmp_path):
+    cs = parse_fasta_file(_write(tmp_path, "polyribonucleotide", "AC(PSU)(G)"), 0)
+    assert cs.chemcomp_ids == ["A", "C", "PSU", "G"]
+    assert cs.one_letter_seq == ["A", "C", "X", "G"]
+
+
+def test_hybrid_chain_as_in_training(tmp_path):
+    """A DNA/RNA hybrid in the training data's form: ribo bare letters, everything else "(CCD)"; restype = NA view of the CCDs."""
+    from miniworld.data.constants import ResidueMapping
+
+    cs = parse_fasta_file(_write(tmp_path, "polydeoxyribonucleotide/polyribonucleotide hybrid", "C(DC)(DG)G(BRU)U"), 0)
+    assert cs.entity_type == EntityType.NA_HYBRID
+    assert cs.chemcomp_ids == ["C", "DC", "DG", "G", "BRU", "U"]
+    assert cs.one_letter_seq == ["C", "DC", "DG", "G", "BRU", "U"]
+    rm = ResidueMapping()
+    assert rm.na.map(cs.chemcomp_ids).tolist() == [rm.RNA2NUM["C"], rm.DNA2NUM["DC"], rm.DNA2NUM["DG"], rm.RNA2NUM["G"], rm.NA_UNKNOWN, rm.RNA2NUM["U"]]

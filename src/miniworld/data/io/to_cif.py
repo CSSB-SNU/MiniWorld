@@ -61,6 +61,11 @@ def batch_to_cif(  # noqa: PLR0915
     )  # if no prediction, use input coords
     xyz = xyz[0]
     mask = batch.structure.atom_pos_mask[0].bool()
+    if not mask.any():
+        # An inference input has no experimental coordinates (atom_pos_mask is all False, build_inference_batch): the atoms
+        # that exist are atom_mask. Without this every inference CIF came out with zero atoms ("max() arg is an empty
+        # sequence") since the 2026-09-27 data change.
+        mask = batch.structure.atom_mask[0].bool()
     length = mask.sum().item()
     atom_to_token = batch.scheme.atom_to_token_idx_map[0]
     atom_to_res = batch.reference.space_uid[0]

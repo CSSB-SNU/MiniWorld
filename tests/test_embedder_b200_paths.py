@@ -98,3 +98,32 @@ def test_the_fused_pair_stream_falls_back_on_an_engine_without_the_op(monkeypatc
         sys.modules, "miniworld_engine.kernels.token_pair_init", None
     )  # import raises ImportError
     assert _call_fused(SimpleNamespace(is_cuda=True)) is None
+
+
+def test_the_esmfold2_input_features_reach_the_engine_encoder():
+    """``model.atom_swa.input_features: esmfold2`` builds ESMFold2's encoder (element one-hot, LayerNorm'd condition, no terminal
+    norm); the default keeps the legacy layout that existing checkpoints were trained with."""
+    import inspect
+
+    from miniworld_engine.modules import InputFeatureEmbedder as EngineInputFeatureEmbedder
+
+    if "features" not in inspect.signature(EngineInputFeatureEmbedder).parameters:
+        pytest.skip("the installed engine predates features='esmfold2'")
+    from miniworld.configs import SharedConfig
+    from miniworld.configs.models import AtomSWAConfig
+    from miniworld.modules import DiffusionTransformer, ImplementationType
+
+    shared = SharedConfig(d_single=384, d_single_atom=128, implementation=ImplementationType.PYTORCH)
+    diffusion = DiffusionTransformer.Config(d_single=128, d_cond=128, d_pair=16, n_head=4, n_block=3,
+                                            implementation=ImplementationType.PYTORCH)
+    legacy = ESMFold2InputAtomAttentionEncoder(shared, diffusion, AtomSWAConfig(enabled=True))
+    esm2 = ESMFold2InputAtomAttentionEncoder(shared, diffusion, AtomSWAConfig(enabled=True, input_features="esmfold2"))
+    assert legacy.to_atom_single_cond.weight.shape == (128, 6) and not hasattr(legacy, "atom_norm")
+    assert esm2.to_atom_single_cond.weight.shape == (128, 133)
+    assert isinstance(esm2.atom_norm, torch.nn.LayerNorm) and isinstance(esm2.atom_out_norm, torch.nn.Identity)
+    if "token_pool" in inspect.signature(EngineInputFeatureEmbedder).parameters:
+        linear = ESMFold2InputAtomAttentionEncoder(
+            shared, diffusion, AtomSWAConfig(enabled=True, input_features="esmfold2", input_token_pool="linear")
+        )
+        assert isinstance(linear.atom_out_norm, torch.nn.LayerNorm)
+        assert not any(isinstance(m, torch.nn.ReLU) for m in linear.atom_single_rep_to_token_single)

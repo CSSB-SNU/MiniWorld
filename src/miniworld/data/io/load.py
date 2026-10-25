@@ -286,10 +286,13 @@ def get_query_sequence(
     if molecule_type == "R":
         return rm.rna.map(cropped_seq_can)
     if molecule_type == "N":
-        cropped_seq = cifmol.chains[
+        # A DNA/RNA hybrid keeps ribo vs deoxy per residue, which one_letter_code_can loses. The CCD codes are what
+        # NA2NUM is keyed on (A U G C / DA DT DG DC; modified residues -> NA_UNKNOWN). one_letter_code was used before
+        # v2.3.0: it writes every deoxy residue as "(DC)", which NA2NUM never matches, so they all became unknown.
+        cropped_ccd = cifmol.chains[
             cifmol.chains.chain_id == chain_id
-        ].residues.one_letter_code.value
-        return rm.na.map(cropped_seq)
+        ].residues.chem_comp_id.value
+        return rm.na.map(cropped_ccd)
     return rm.ligand.map(cropped_seq_can)
 
 
