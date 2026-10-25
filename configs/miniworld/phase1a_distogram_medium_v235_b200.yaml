@@ -14,3 +14,4 @@ model:
 train:
   comment: "v2.3.5-phase1a-distogram-medium-L384-b200"
   run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v235/medium_distogram"
+  precision: bf16-mixed   # fp32 master weights with the CUDA-graph trainer (v2.3.4 / v2.3.3 were native)
