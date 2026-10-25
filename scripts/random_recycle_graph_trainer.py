@@ -804,7 +804,7 @@ def train(
                 for d in details
                 if not np.isfinite(d["relative_l2"])
                 or (
-                    d["relative_l2"] >= 1e-3
+                    d["relative_l2"] >= float(os.environ.get("MW_GRAPH_GRAD_RTOL", "1e-3"))
                     and not (d["max_abs"] <= 1e-8 and d["reference_max"] <= 1e-6)
                 )
             ]
