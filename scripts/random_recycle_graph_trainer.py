@@ -522,6 +522,9 @@ def train(
     configure_engine_backend(cfg.train.engine_backend)
     configure_fused_msa_train(bool(getattr(cfg.train, "fused_msa_train", False)))
     torch.manual_seed(cfg.train.seed or 0)
+    # The weight init draws from numpy too (scipy truncnorm in the engine's Linear), which torch.manual_seed does not seed.
+    np.random.seed(cfg.train.seed or 0)
+    random.seed(cfg.train.seed or 0)
     torch.set_float32_matmul_precision("medium")
     # Keep BF16 operands/output with FP32 GEMM partial reductions. This policy
     # alone does not fix the D64 Transition input-buffer race; that requires
@@ -530,6 +533,18 @@ def train(
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     model = apply_precision(MiniSWAModel(cfg.model), cfg.train.precision).to(dev).train()
+    if world > 1:
+        # Every rank builds its own model and nothing here is DDP, so start every rank from rank 0's weights (Fabric's DDP does
+        # the same). Before 2026-10-25 the ranks of a fresh run started from different weights -- the init's numpy draws were
+        # unseeded -- and then applied the same averaged updates to them for the whole run.
+        with torch.no_grad():
+            for tensor in [*model.parameters(), *model.buffers()]:
+                if tensor.is_contiguous():
+                    dist.broadcast(tensor, src=0)
+                else:  # the engine's column-major TriMul weights: NCCL takes contiguous buffers only
+                    flat = tensor.contiguous()
+                    dist.broadcast(flat, src=0)
+                    tensor.copy_(flat)
     is_diffusion = getattr(cfg.model.trunk, "diffusion", None) is not None
     fresh = ckpt is None
     opt = (
