@@ -1,12 +1,13 @@
-# MiniWorld v2.3.8 phase 1a = v2.3.7 with antibody-antigen items sampled twice as often: the antibody_protein bucket's
+# MiniWorld v2.3.8 phase 1a = v2.3.6 with antibody-antigen items sampled twice as often: the antibody_protein bucket's
 # sampler weight 15 -> 30 (PDB buckets now sum to 115, so antibody-antigen goes from 15% to 26% of PDB items, 7.4% to
-# 12.8% of all items; every other bucket shrinks by 100/115). Loss weights stay v2.3.7's (AF3 chemistry 5 / 5 / 10,
-# antibody-antigen x2, interchain x2).
+# 12.8% of all items; every other bucket shrinks by 100/115). Loss stays v2.3.6's (interchain x2 only): v2.3.7's
+# distogram chemistry weights (5 / 5 / 10) + antibody-antigen x2 lost on every FoldBench class at epoch 200
+# (protein-RNA 0.160 -> 0.096, protein-DNA 0.353 -> 0.275, antibody-antigen 0.077 -> 0.048).
 # The sampler weights are part of the catalog fingerprint, so this run reads its own catalog: the B200 catalog with only
 # the antibody_protein rows' raw weights doubled ($W/scratch/v238/reweight_catalog_abag.py). Pointing it at the shared
 # catalog would rebuild 26M rows and overwrite the cache v2.3.0-v2.3.7 resume from.
 defaults:
-  - phase1a_distogram_medium_v237_b200
+  - phase1a_distogram_medium_v236_b200
   - _self_
 
 data:
