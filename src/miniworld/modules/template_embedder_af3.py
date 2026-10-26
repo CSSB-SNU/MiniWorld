@@ -318,7 +318,7 @@ class AF3TemplateEmbedder(nn.Module):
 
         n_temp_div = template.mask.shape[1]
         avg = summed / (1e-7 + n_temp_div)
-        present = template.mask.any(dim=1)[:, None, None, None]
-        if self._legacy:
-            return self.proj_out(F.relu(avg))
-        return self.proj_out(F.relu(avg)) * present
+        # A sample without templates still runs its (padded, empty) slots and adds the result, as AF3 does (template_modules.py:
+        # no template-presence gate; evoformer.py adds the template embedding unconditionally) and as v1.2.0 did. Until 2026-10-26
+        # the output was multiplied by "any template present", so such samples got no template update at all.
+        return self.proj_out(F.relu(avg))

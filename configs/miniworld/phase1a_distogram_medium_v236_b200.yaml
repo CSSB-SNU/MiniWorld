@@ -1,0 +1,25 @@
+# MiniWorld v2.3.6 phase 1a = v2.3.5 (CUDA-graph trainer with the rank-sync fix, fp32 masters, v1.2 crop with nucleic-acid focus,
+# v1.2 loss) with
+#   * ESMFold2's input atom encoder (no atom names): element one-hot, LayerNorm'd condition, no terminal norm, Linear + ReLU token pool,
+#     with GLOBAL atom attention (ESMFold2 uses window 128; windowed runs v2.2.1 / v2.3.1 lost protein-DNA)
+#   * the AF3 template embedder: inter-chain pairs lose only the template geometry (query pair and residue types stay), and a sample
+#     without templates still runs its empty slots and adds the result (the "* present" gate is gone from the code, 2026-10-26)
+# Empty template slots keep the UNKNOWN residue type (AF3 pads with 0).
+defaults:
+  - phase1a_distogram_medium_v235_b200
+  - _self_
+
+model:
+  atom_swa:
+    input_features: esmfold2
+    swa_window_size: 1000000
+    input_token_pool: relu
+  trunk:
+    template_embedder:
+      legacy_interchain: false
+
+train:
+  comment: "v2.3.6-phase1a-distogram-medium-L384-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v236/medium_distogram"
+  precision: bf16-mixed
+  force_trainer: random_cudagraph

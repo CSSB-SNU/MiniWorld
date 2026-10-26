@@ -137,10 +137,11 @@ def test_template_masks_geometry_but_preserves_interchain_query():
         pair, template, torch.tensor([[0, 1]]), torch.ones(1, 2, dtype=torch.bool)
     )
     torch.testing.assert_close(out, pair)
+    # no template at all: the empty slots still run and their (query) update is added, as in AF3 -- not a zero update
     template.mask.zero_()
-    assert not model(
-        pair, template, torch.tensor([[0, 1]]), torch.ones(1, 2, dtype=torch.bool)
-    ).count_nonzero()
+    torch.testing.assert_close(
+        model(pair, template, torch.tensor([[0, 1]]), torch.ones(1, 2, dtype=torch.bool)), pair
+    )
 
 
 def test_inference_has_representatives_without_ground_truth(tmp_path, monkeypatch):

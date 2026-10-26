@@ -37,7 +37,7 @@ def make_inputs(dev="cuda"):
 def ref_loop(emb, pair, tmpl, asym, tmask):
     """AF3 template embedding written out independently of the module: geometric features are
     masked by the pseudo-beta / backbone masks (intra-chain only) before projection, and every
-    template slot is averaged over the FIXED slot count; no template at all gives zero."""
+    template slot is averaged over the FIXED slot count; a sample without templates still runs its empty slots (AF3)."""
     dt = pair.dtype
     query = emb.proj_query(emb.ln_query(pair))
     mc = (asym[:, :, None] == asym[:, None, :])[..., None].to(dt)
@@ -72,8 +72,7 @@ def ref_loop(emb, pair, tmpl, asym, tmask):
         )
         act = emb.template_pairformer(act, mask=tmask)
         summed = summed + emb.ln_out(act)
-    present = tmpl.mask.any(dim=1).to(dt)[:, None, None, None]
-    return emb.proj_out(F.relu(summed / n_temp)) * present
+    return emb.proj_out(F.relu(summed / n_temp))
 
 
 def test_embedder_matches_independent_reference():
