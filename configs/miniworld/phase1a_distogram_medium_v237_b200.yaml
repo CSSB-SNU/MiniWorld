@@ -1,0 +1,20 @@
+# MiniWorld v2.3.7 phase 1a = v2.3.6 (graph trainer with the rank-sync fix, fp32 masters, ESMFold2 input atom encoder with global
+# attention, AF3 template embedder without the presence gate, v1.2 nucleic-acid-focus crop) with the distogram loss re-weighted:
+#   * AF3 chemistry weights (Eq. 4 carried over to token pairs): a pair counts as DNA / RNA / ligand when EITHER token is, weight
+#     1 + 5 [dna] + 5 [rna] + 10 [ligand] (v2.2.1 used these too, but together with window-128 atom attention and the graph-trainer
+#     rank bug, so they were never tested cleanly)
+#   * antibody-antigen interface pairs x2 (antibody-antigen AP falls with training in every version so far)
+# Interchain x2 stays (multiplies on top). The CE is still divided by the number of valid pairs, not the sum of weights.
+defaults:
+  - phase1a_distogram_medium_v236_b200
+  - _self_
+
+loss:
+  distogram_alpha_dna: 5.0
+  distogram_alpha_rna: 5.0
+  distogram_alpha_ligand: 10.0
+  distogram_ab_ag_weight: 2.0
+
+train:
+  comment: "v2.3.7-phase1a-distogram-medium-L384-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1_v237/medium_distogram"
