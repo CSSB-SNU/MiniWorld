@@ -157,6 +157,16 @@ _entity_tag_to_idx_mapping = {
     "X": 6,  # unknown molecule type treated as ligand
 }
 
+def molecule_tag(seq_id: str, antibody_seq_ids: frozenset[str] = frozenset()) -> str:
+    """Molecule type letter of a chain: seq_id's first letter, 'A' for a listed antibody.
+
+    The cif LMDBs stamp antibody chains 'P', so the antibody label comes from the list
+    (``miniworld.data.io.load.load_antibody_seq_ids``).
+    """
+    seq_id = str(seq_id)
+    return "A" if seq_id in antibody_seq_ids else seq_id[:1]
+
+
 _entity_idx_to_type_mapping = {
     0: MoleculeType.ANTIBODY,
     1: MoleculeType.PROTEIN,

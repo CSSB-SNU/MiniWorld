@@ -13,6 +13,7 @@ import numpy as np
 
 from miniworld.data.features import Batch, make_batch
 from miniworld.data.io import load_cifmol
+from miniworld.data.constants.mapping import molecule_tag
 from miniworld.data.pipeline import (
     get_chain_crop_indices,
     sample_msa,
@@ -67,6 +68,7 @@ class Preprocessor:
         template_config: TemplateConfig,
         tokenizer_config: TokenizerConfig,
         resources: ResourceLocator | None = None,
+        antibody_seq_ids: frozenset[str] = frozenset(),
     ) -> None:
         self.tokenizer = tokenizer
         self.fragmented_ccd_mols = fragmented_ccd_mols
@@ -78,6 +80,8 @@ class Preprocessor:
         # Unified location authority (train_item mode); resolves the exact msa
         # shard by seq_id at runtime instead of scanning the shard list.
         self.resources = resources
+        # seq_ids whose chains are antibodies (the cif seq_id says 'P' for them).
+        self.antibody_seq_ids = antibody_seq_ids
 
     # -- top-level entry --------------------------------------------------
 
@@ -187,6 +191,7 @@ class Preprocessor:
             token_to_residue_idx_map=token_to_residue_idx_map,
             rng=rng,
             ccd_mols=self.fragmented_ccd_mols,
+            antibody_seq_ids=self.antibody_seq_ids,
         )
 
     # -- feature-key resolution (compat records) --------------------------
@@ -365,10 +370,13 @@ class Preprocessor:
                     self.crop_config.ab_ag_interface_only
                     or self.crop_config.prefer_nonprotein_focus
                 ):
-                    # seq_id's first letter is the attached molecule type, also
-                    # used by to_chain_features and remove_terminal_oxygen.
+                    # seq_id's first letter is the attached molecule type ('A' from
+                    # the antibody list), as in to_chain_features.
                     tags = [
-                        str(cifmol.chains.select(chain_id=c).seq_id.value[0])[:1]
+                        molecule_tag(
+                            cifmol.chains.select(chain_id=c).seq_id.value[0],
+                            self.antibody_seq_ids,
+                        )
                         for c in candidates
                     ]
                     if any(

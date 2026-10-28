@@ -8,6 +8,7 @@ import torch
 from jaxtyping import Int
 
 from miniworld.data.constants import CANONICAL_CHEMCOMPS, AtomMapping, EntityMapping
+from miniworld.data.constants.mapping import molecule_tag
 from miniworld.data.pipeline.template import ProteinTemplate
 from miniworld.data.reference import (
     augment_reference,
@@ -416,11 +417,12 @@ def _build_atom_is_rep(
 
 def to_chain_features(
     cifmol: CIFMolAttached,
+    antibody_seq_ids: frozenset[str] = frozenset(),
 ) -> ChainFeatures:
-    """Convert CIFMol to ChainFeatures."""
+    """Convert CIFMol to ChainFeatures (antibody chains from ``antibody_seq_ids``)."""
     entity_mapping = EntityMapping()
     seq_id_list = cifmol.chains.seq_id.value.tolist()
-    entity_id_list = [seq_id[0] for seq_id in seq_id_list]
+    entity_id_list = [molecule_tag(seq_id, antibody_seq_ids) for seq_id in seq_id_list]
     entity_types = entity_mapping.tag_to_idx(entity_id_list)
 
     return ChainFeatures.from_sample(
@@ -610,6 +612,7 @@ def make_batch(
     token_to_residue_idx_map: np.ndarray,
     rng: np.random.Generator | None = None,
     ccd_mols=None,
+    antibody_seq_ids: frozenset[str] = frozenset(),
 ) -> Batch:
     """Make features from cifmol and MSA."""
     if rng is None:
@@ -625,7 +628,7 @@ def make_batch(
         atom_to_token_idx_map,
         token_to_residue_idx_map,
     )
-    chain = to_chain_features(cifmol)
+    chain = to_chain_features(cifmol, antibody_seq_ids)
 
     hetero = cifmol.residues.hetero
     atom_ids = cifmol.atoms.id

@@ -63,6 +63,12 @@ class BioMolDBV2Config(BaseModel):
     # to force a rebuild when the sources change.
     catalog_cache_path: Path | None = None
 
+    # Antibody chains by seq_id: a TSV with a header whose first column is seq_id
+    # (metadata/ab_seq_id*.tsv). The cif LMDBs stamp antibody chains 'P' like every
+    # protein, so the crop's Ab-Ag focus and the chain entity type read the antibody
+    # label from this list. Not part of the catalog (excluded from its fingerprint).
+    antibody_seq_id_path: Path | None = None
+
     # Source/db sampling probabilities. PDB still uses SamplerConfig inside this mass.
     source_weights: dict[str, float] = {}
     default_source_weight: float = 1.0

@@ -46,6 +46,10 @@ train_db:
   # shard is resolved at runtime by seq_id via resources_index_path).
   catalog_cache_path: /home/psk6950/data/BioMolDB_20260224/catalog_trainitem_no_disordered_bioai_unified.arrow
 
+  # Antibody chains by seq_id (the cif LMDB stamps them 'P'): the train_item 'cA' clusters
+  # mapped to their cif seq_ids, plus Ab-Ag pairs resolved by metadata/ab_seq_id.tsv.
+  antibody_seq_id_path: /home/psk6950/data/BioMol/metadata/ab_seq_id_train_20210930.tsv
+
   # Unified item list (source-tagged edge_node). Routes each row to its source's
   # LMDBs (pdb below + distillation_sources) and derives AF3-style raw weights.
   train_item_path: /home/psk6950/data/filtering/edge_node/train_item_20210930.tsv

@@ -32,6 +32,7 @@ from miniworld.configs.data import (
     TokenizerConfig,
 )
 from miniworld.data.io import extract_lmdb_keys
+from miniworld.data.io.load import load_antibody_seq_ids
 from miniworld.data.pipeline import Tokenizer
 
 from .collate import bucketed_collate
@@ -69,8 +70,8 @@ _CATALOG_CHUNK = 1_000_000  # rows per Arrow record batch when building the cach
 def _catalog_fingerprint(db_config: object, sampler_config: object) -> str:
     """Stable hash of the config that DETERMINES the cached catalog (items + RAW weights):
     all DB paths/manifests + the sampler config. EXCLUDES ``source_weights`` /
-    ``default_source_weight`` (re-applied on every load) and ``catalog_cache_path`` (the
-    cache location itself). A mismatch means the cache was built from different data, so it
+    ``default_source_weight`` (re-applied on every load), ``catalog_cache_path`` (the
+    cache location itself) and ``antibody_seq_id_path`` (read per item). A mismatch means the cache was built from different data, so it
     is rebuilt — otherwise a changed DB path would be silently ignored (paths are baked into
     each cached item). Path-based: an in-place edit at the SAME path is not detected (delete
     the cache for that)."""
@@ -83,7 +84,12 @@ def _catalog_fingerprint(db_config: object, sampler_config: object) -> str:
         return cfg
 
     db = dict(_dump(db_config)) if isinstance(_dump(db_config), dict) else {}
-    for k in ("source_weights", "default_source_weight", "catalog_cache_path"):
+    for k in (
+        "source_weights",
+        "default_source_weight",
+        "catalog_cache_path",
+        "antibody_seq_id_path",
+    ):
         db.pop(k, None)
     blob = json.dumps(
         {"db": db, "sampler": _dump(sampler_config)}, sort_keys=True, default=str
@@ -345,6 +351,9 @@ class BioMolData(torch.utils.data.Dataset):
             template_config=config.template_config,
             tokenizer_config=config.tokenizer_config,
             resources=self.resources,
+            antibody_seq_ids=load_antibody_seq_ids(
+                config.DB_config.antibody_seq_id_path
+            ),
         )
 
     def set_epoch(self, epoch: int) -> None:

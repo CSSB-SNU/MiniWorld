@@ -20,6 +20,15 @@ from miniworld.data.pipeline import (
 CIFMOL = CIFMol | CIFMolAttached
 
 
+def load_antibody_seq_ids(path: Path | None) -> frozenset[str]:
+    """Read the antibody seq_ids (first column of a TSV with a header); empty without a path."""
+    if path is None:
+        return frozenset()
+    with Path(path).open("r") as f:
+        next(f)
+        return frozenset(line.split("\t", 1)[0].strip() for line in f if line.strip())
+
+
 def load_seq_cluster(
     seq_cluster_tsv_path: Path,
     merge_ab: bool = False,

@@ -14,13 +14,14 @@ from miniworld.data.dataloader.preprocess import Preprocessor, WrongCroppingErro
 from miniworld.data.pipeline.utils import NoInterfaceError
 
 
-def setup_pair(monkeypatch, tags, *, draw=0.25, **overrides):
+def setup_pair(monkeypatch, tags, *, draw=0.25, antibody_seq_ids=frozenset(), **overrides):
     chains = {
-        name: NS(seq_id=NS(value=np.array([tag + "000001"])), atoms=object())
-        for name, tag in zip(["left", "right"], tags, strict=True)
+        name: NS(seq_id=NS(value=np.array([f"{tag}00000{i}"])), atoms=object())
+        for i, (name, tag) in enumerate(zip(["left", "right"], tags, strict=True))
     }
     mol = NS(id="test", chains=NS(select=lambda *, chain_id: chains[chain_id]))
     pre = Preprocessor.__new__(Preprocessor)
+    pre.antibody_seq_ids = frozenset(antibody_seq_ids)
     pre.crop_config = CropConfig(
         **{
             "ab_ag_interface_only": True,
@@ -81,6 +82,58 @@ def test_other_pairs_retain_interface_half(monkeypatch, tags, draw):
         is interface.return_value.atoms
     )
     rng.choice.assert_not_called()
+
+
+@pytest.mark.parametrize(("antibody", "draw"), [("left", 0.0), ("right", 0.99)])
+def test_listed_antibody_seq_id_makes_ab_ag(monkeypatch, antibody, draw):
+    # the DB stamps antibody chains 'P'; the antibody list turns a P-P pair into Ab-Ag
+    seq_id = "P000000" if antibody == "left" else "P000001"
+    pre, mol, _, rng, interface = setup_pair(
+        monkeypatch, "PP", draw=draw, chain_crop_prob=1.0, antibody_seq_ids={seq_id}
+    )
+    assert (
+        pre._select_focus_atoms(mol, ["left", "right"], rng)
+        is interface.return_value.atoms
+    )
+    interface.assert_called_once_with(mol, "left", "right")
+    rng.random.assert_not_called()
+
+
+def test_both_listed_antibodies_are_not_ab_ag(monkeypatch):
+    pre, mol, chains, rng, interface = setup_pair(
+        monkeypatch, "PP", antibody_seq_ids={"P000000", "P000001"}
+    )
+    assert pre._select_focus_atoms(mol, ["left", "right"], rng) is chains["right"].atoms
+    rng.choice.assert_called_once_with(["left", "right"])
+    interface.assert_not_called()
+
+
+def test_molecule_tag_and_chain_entity_type(tmp_path):
+    from miniworld.data.constants import EntityMapping
+    from miniworld.data.constants.mapping import molecule_tag
+    from miniworld.data.features.convert import to_chain_features
+    from miniworld.data.io.load import load_antibody_seq_ids
+
+    path = tmp_path / "ab_seq_id.tsv"
+    path.write_text("seq_id\tcluster40\nP000007\tcA000007\n")
+    ab = load_antibody_seq_ids(path)
+    assert ab == {"P000007"}
+    assert load_antibody_seq_ids(None) == frozenset()
+    assert [molecule_tag(s, ab) for s in ["P000007", "P000008", "L000001"]] == ["A", "P", "L"]
+    mol = NS(chains=NS(seq_id=NS(value=np.array(["P000007", "P000008", "R000002"]))))
+    tags = EntityMapping().tag_to_idx(["A", "P", "R"]).tolist()
+    assert to_chain_features(mol, ab).entity_type.flatten().tolist() == tags
+    assert to_chain_features(mol).entity_type.flatten().tolist() == EntityMapping().tag_to_idx(["P", "P", "R"]).tolist()
+
+
+def test_antibody_list_is_not_in_the_catalog_fingerprint():
+    from miniworld.configs.data import SamplerConfig
+    from miniworld.data.dataloader.dataloader import _catalog_fingerprint
+    from miniworld.data.dataloader.types import BioMolDBV2Config
+
+    plain = BioMolDBV2Config()
+    listed = BioMolDBV2Config(antibody_seq_id_path=Path("/x/ab_seq_id.tsv"))
+    assert _catalog_fingerprint(plain, SamplerConfig()) == _catalog_fingerprint(listed, SamplerConfig())
 
 
 def test_ab_ag_without_interface_fails_instead_of_using_chain(monkeypatch):
