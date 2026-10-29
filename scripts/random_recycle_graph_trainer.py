@@ -432,7 +432,7 @@ def prepare_wandb_id(root, run_dir, state, fresh, generate_id):
         ids.add(state["wandb_run_id"])
     if "" in ids or len(ids) > 1 or (fresh and ids):
         raise ValueError("Conflicting/existing W&B run identity; resume its checkpoint")
-    if not fresh and not ids:
+    if not fresh and not ids and os.environ.get("MW_WANDB_NEW_RUN") != "1":
         raise ValueError("Resuming with W&B requires the original run identity")
     run_id = next(iter(ids)) if ids else generate_id()
     for path in paths:
@@ -950,7 +950,7 @@ def train(
                     project=cfg.train.wandb_project,
                     id=wandb_id,
                     name=job_name or cfg.train.comment,
-                    resume="allow" if (is_diffusion or fresh) else "must",
+                    resume="allow" if (is_diffusion or fresh or os.environ.get("MW_WANDB_NEW_RUN") == "1") else "must",
                     config=cfg.model_dump(mode="json"),
                 )
         if world > 1:
