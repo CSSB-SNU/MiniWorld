@@ -1,0 +1,33 @@
+# MiniWorld v2.3.9 phase 1b, medium trunk (PF16 / MSA 4), L768, on the B200 server (CUDA-graph trainer, fp32 masters).
+# Continues v1.2.0's epoch-900 full state (weights, EMA, Adam, step-decay scheduler, global step 90000; the H100 run
+# runs/v1.2.0/phase1b/main_20260930/.../epoch=0900.pt) for 200 more epochs (num_epoch 1100) with the phase-1b crop
+# (768 tokens / 8192 atoms, one 768 bucket) and antibody-antigen items sampled twice as often (antibody_protein 15 -> 30,
+# the v2.3.8 catalog). The model is v2.3.5's (v1.2.0's legacy input atom encoder, global atom attention, legacy template
+# masking); only the trainer differs from v1.2.0 (CUDA graph per recycle count, bf16-mixed autocast over fp32 masters,
+# per-block activation checkpointing: without it L768 needs more than a B200's 178 GB, 2026-10-27). 8 GPUs x 1 sample x grad_accum 32 = effective batch 256, as v1.2.0.
+defaults:
+  - phase1a_distogram_medium_v235_b200
+  - _self_
+
+model:
+  trunk:
+    msa_module:
+      n_checkpoint_segments: 4     # = n_block: checkpoint every MSA block (v1.2.0 phase 1b)
+    pairformer:
+      n_checkpoint_segments: 16    # = n_block: checkpoint every pairformer block (v1.2.0 phase 1b medium)
+
+data:
+  crop:
+    max_tokens: 768
+    max_atoms: 8192
+  sampler:
+    antibody_protein: 30.0
+  train_db:
+    catalog_cache_path: /NHNHOME/WORKSPACE/26mohw002_A/psk6950/data/BioMolDB_20260224/catalog_trainitem_no_disordered_bioai_unified_b200_abag30.arrow
+
+train:
+  comment: "v2.3.9-phase1b-distogram-medium-L768-b200"
+  run_dir: "/NHNHOME/WORKSPACE/26mohw002_A/psk6950/runs/b200/phase1b_v239/medium_distogram"
+  num_epoch: 1100            # the checkpoint is at epoch 900: 200 more epochs
+  bucket_token_multiple: 768
+  bucket_atom_multiple: 8192
