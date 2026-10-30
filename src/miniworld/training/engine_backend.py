@@ -13,10 +13,11 @@ def configure_engine_backend(backend: EngineBackend) -> None:
     if backend not in ("auto", "triton"):
         message = f"Unknown engine backend: {backend}"
         raise ValueError(message)
-    if not hasattr(settings.current(), "engine_backend"):
-        message = "Engine backend option requires the current engine-setup patches."
+    # Engine >= 2.3.12 has no ``engine_backend``: "triton" is ``force_portable_kernels=True`` (A/B work only), "auto" the default routing.
+    if not hasattr(settings.current(), "force_portable_kernels"):
+        message = "Engine backend option requires engine >= 2.3.12 (settings.force_portable_kernels)."
         raise RuntimeError(message)
-    settings.configure(engine_backend=backend)
+    settings.configure(force_portable_kernels=backend == "triton")
     logging.getLogger(__name__).info(
         "Engine backend=%s (process-wide; FlashAttention and library GEMMs retain their own backends)",
         backend,

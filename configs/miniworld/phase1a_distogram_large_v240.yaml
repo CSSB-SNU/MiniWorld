@@ -1,0 +1,13 @@
+# MiniWorld v2.4.0 phase 1a, LARGE trunk (pairformer 48 blocks): phase1a_distogram_medium_v240 with the pairformer at 48 blocks.
+defaults:
+  - phase1a_distogram_medium_v240
+  - _self_
+
+model:
+  trunk:
+    pairformer:
+      n_block: 48
+
+train:
+  comment: "v2.4.0-phase1a-distogram-large-L384-h100"
+  run_dir: "runs/v2.4.0/phase1a/large_distogram_L384"

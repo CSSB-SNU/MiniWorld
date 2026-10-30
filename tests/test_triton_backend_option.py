@@ -80,8 +80,8 @@ def test_mini_model_all_engine_modules_and_checkpoint_layout():
     engine_chosen = [
         m for m in modules if getattr(m, "implementation", None) != EngineImpl.PYTORCH
     ]
-    assert engine_chosen and all(m._backend.value == "triton" for m in engine_chosen)
-    assert all(m._backend.value in ("triton", "pytorch") for m in modules)
+    assert engine_chosen and all(m._backend.value == "portable" for m in engine_chosen)
+    assert all(m._backend.value in ("portable", "pytorch") for m in modules)
     assert any(isinstance(m, Transition) for m in modules)
 
 

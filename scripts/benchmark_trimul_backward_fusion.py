@@ -6,9 +6,12 @@ from pathlib import Path
 
 import torch
 from check_trimul_f567_runtime import capture, paired
+from miniworld_engine import settings
 from miniworld_engine.autotune import cache
 from miniworld_engine.kernels.trimul_inproj.triton import bidirectional as bt
 from miniworld_engine.modules import BidirectionalTriangleMultiplication
+
+settings.configure(force_portable_kernels=True)  # these scripts exercise the portable (Triton) kernel family
 
 p = argparse.ArgumentParser()
 p.add_argument("--length", type=int, required=True)
@@ -89,7 +92,7 @@ try:
         torch.compiler.reset()
         torch.manual_seed(911)
         model = (
-            BidirectionalTriangleMultiplication(128, implementation="triton", p_drop=0)
+            BidirectionalTriangleMultiplication(128, implementation="miniworld", p_drop=0)
             .cuda()
             .bfloat16()
             .train()

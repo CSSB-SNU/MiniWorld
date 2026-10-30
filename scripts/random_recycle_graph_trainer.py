@@ -243,6 +243,10 @@ class RecycleGraphs:
         self.stream = torch.cuda.Stream()
         self.stream.wait_stream(torch.cuda.current_stream())
         rng = torch.cuda.get_rng_state()
+        # ONE memory pool for every recycle depth (as phase2_graph_trainer): a pool per graph keeps the activations of all
+        # depths alive at once. Safe because each graph is self-contained (backward included), writes the one static .grad and
+        # its loss is read right after the replay, before the next replay.
+        pool = torch.cuda.graph_pool_handle()
         with torch.cuda.stream(self.stream):
             for r in range(1, max_recycle + 1):
                 model._forced_n_recycle = r
@@ -257,7 +261,7 @@ class RecycleGraphs:
                 g = torch.cuda.CUDAGraph()
                 # thread_local: the DataLoader's pin-memory thread keeps allocating pinned host buffers during the capture;
                 # in the default global mode that CUDA call from another thread invalidates the capture (seen with 40 workers)
-                with torch.cuda.graph(g, stream=self.stream, capture_error_mode="thread_local"):
+                with torch.cuda.graph(g, pool=pool, stream=self.stream, capture_error_mode="thread_local"):
                     self.losses[r] = self.compute()
                 self.graphs[r] = g
                 self.metrics[r] = self.last_metrics
@@ -476,6 +480,35 @@ def save_checkpoint(run_dir, payload, archive=False):
         torch.save(payload, directory / f"epoch={payload['epoch']:04d}.pt")
 
 
+def drop_removed_parameters(model, state):
+    """Make a checkpoint saved before a parameter left the model loadable: drop that parameter's Adam slots and EMA entry.
+
+    Engine 2.4.0 builds the MSA pair-weighted-averaging ``ln_pair`` without an offset (the offset adds the same logit to every key of a
+    head, which the softmax cancels, so the old ``ln_pair.bias`` had an exactly zero gradient). Checkpoints up to v1.2.0 / v2.3.x still
+    hold it; ``model.load_state_dict`` skips the key but the optimizer's one param group is indexed by parameter, so it must lose the slot.
+    """
+    live = dict(model.named_parameters())
+    saved = list(state["model_state_dict"])
+    group = state["optimizer_state_dict"]["param_groups"][0]
+    removed = [k for k in saved if k not in live]
+    if not removed:
+        return state
+    if len(saved) != len(group["params"]):
+        raise ValueError(f"cannot map the optimizer slots: {len(saved)} state_dict keys, {len(group['params'])} optimizer parameters")
+    kept = [i for i, k in enumerate(saved) if k in live]
+    if [saved[i] for i in kept] != list(live):
+        raise ValueError("the checkpoint's parameters are not the model's in the same order once the removed ones are dropped")
+    osd = state["optimizer_state_dict"]
+    peak = max(float(osd["state"][i]["exp_avg"].abs().max()) for i, k in enumerate(saved) if k not in live)
+    print(f"[ckpt] dropping parameters the model no longer has: {removed} (max |Adam exp_avg| {peak:.3g})", flush=True)
+    osd["state"] = {new: osd["state"][old] for new, old in enumerate(kept) if old in osd["state"]}
+    group["params"] = list(range(len(kept)))
+    state["model_state_dict"] = {k: v for k, v in state["model_state_dict"].items() if k in live or k not in removed}
+    if state.get("ema_state_dict"):
+        state["ema_state_dict"] = {k: v for k, v in state["ema_state_dict"].items() if k not in removed}
+    return state
+
+
 def restore_training_state(model, optimizer, scheduler, state):
     model.load_state_dict(state["model_state_dict"], strict=True)
     # Adam's CPU step tensors otherwise alias the loaded checkpoint. A temporary
@@ -574,7 +607,7 @@ def train(
             "global_step": 0,
         }
     else:
-        state = torch.load(ckpt, map_location="cpu", weights_only=False)
+        state = drop_removed_parameters(model, torch.load(ckpt, map_location="cpu", weights_only=False))
     selection = [
         str(resolve_run_directory(cfg, ckpt, run_dir, state)) if rank == 0 else None
     ]

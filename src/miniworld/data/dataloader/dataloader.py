@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -612,7 +613,7 @@ class BioMolData(torch.utils.data.Dataset):
     # -- fetch / DDP loader -----------------------------------------------
 
     def __getitem__(self, idx: int) -> Batch:
-        """Get a data sample by index (retries on WrongCroppingError)."""
+        """Get a data sample by index (retries on WrongCroppingError and on a record absent from its LMDB)."""
         rng = np.random.default_rng()
         record = self.items[idx]
 
@@ -620,6 +621,14 @@ class BioMolData(torch.utils.data.Dataset):
             try:
                 return self.preprocessor.process(record, rng=rng)
             except WrongCroppingError:  # noqa: PERF203
+                idx = int(rng.integers(0, len(self)))
+                record = self.items[idx]
+            except KeyError as exc:
+                # BioMolDB_20261014: train_item lists 16,099,470 long-distillation records, the cif LMDB holds 16,099,404; a
+                # sampled one of the missing 66 used to end the run (a DataLoader worker error). Draw another item instead.
+                if "not found in LMDB database" not in str(exc):
+                    raise
+                logger.warning("record %s is not in its LMDB (%s); sampling another item", record.item_id, exc)
                 idx = int(rng.integers(0, len(self)))
                 record = self.items[idx]
 
@@ -709,6 +718,12 @@ class BioMolData(torch.utils.data.Dataset):
         worker_seed_rng = torch.Generator()
         worker_seed_rng.manual_seed(int(seed) + int(rank))
 
+        if num_workers > 0:
+            # The workers are spawned (fresh interpreters that inherit this environment). A sample's numpy / BLAS work is
+            # small; with the BLAS default of one thread per core, 12-48 workers per node oversubscribe the CPUs (measured on
+            # an H100 node, 1 rank: 32 workers 16.6 -> 25.8 samples/s with one thread each). A value the caller set stays.
+            for var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+                os.environ.setdefault(var, "1")
         params = {
             "shuffle": False,
             "drop_last": False,

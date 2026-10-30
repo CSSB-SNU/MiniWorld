@@ -14,6 +14,7 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 import trimul_output_fusion as fusion
+from miniworld_engine import settings
 from miniworld_engine.kernels.layernorm_linear.triton.te_style import (
     _te_backward,
     _te_forward,
@@ -24,6 +25,8 @@ from miniworld_engine.kernels.trimul_inproj.triton.gate_elem import (
     gate_elem_train,
 )
 from miniworld_engine.modules import BidirectionalTriangleMultiplication
+
+settings.configure(force_portable_kernels=True)  # these scripts exercise the portable (Triton) kernel family
 from trimul_fusion_training import BidirFusionA, BidirFusionB
 
 
@@ -262,7 +265,7 @@ def whole(length, report):
             torch.manual_seed(631)
             model = (
                 BidirectionalTriangleMultiplication(
-                    128, implementation="triton", p_drop=0
+                    128, implementation="miniworld", p_drop=0
                 )
                 .cuda()
                 .bfloat16()

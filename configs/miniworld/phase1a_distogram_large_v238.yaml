@@ -1,0 +1,22 @@
+# MiniWorld v2.3.8 phase 1a, LARGE trunk (pairformer 48 blocks, MSA module as the medium), L384, on the H100 server with
+# the BioMolDB_20261014 data. phase1a_distogram_medium_v238_b200 (v2.3.6 model + antibody-antigen x2 sampling) with the
+# pairformer back at 48 blocks, the data config switched from B200_default to BioMolDB_20261014, and the H100 catalog.
+# 4 GPUs x 1 sample x grad_accum 64 = effective batch 256. Used first to time an epoch (20 steps, 4 GPUs).
+defaults:
+  - phase1a_distogram_medium_v238_b200
+  - override data: BioMolDB_20261014
+  - _self_
+
+model:
+  trunk:
+    pairformer:
+      n_block: 48
+
+data:
+  train_db:
+    catalog_cache_path: /home/psk6950/data/BioMolDB_20261014/catalog_trainitem_no_disordered_unified.arrow
+
+train:
+  comment: "v2.3.8-phase1a-distogram-large-L384-h100"
+  run_dir: "runs/v2.3.8/phase1a/large_distogram_L384"
+  grad_accum_steps: 64

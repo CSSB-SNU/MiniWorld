@@ -6,9 +6,12 @@ from pathlib import Path
 
 import torch
 from check_trimul_f567_runtime import capture
+from miniworld_engine import settings
 from miniworld_engine.autotune import cache
 from miniworld_engine.kernels.trimul_inproj.triton import bidirectional as bt
 from miniworld_engine.modules import BidirectionalTriangleMultiplication
+
+settings.configure(force_portable_kernels=True)  # these scripts exercise the portable (Triton) kernel family
 
 p = argparse.ArgumentParser()
 p.add_argument("--length", type=int, required=True)
@@ -35,7 +38,7 @@ def split_dual(g, f, w, v, length):
 cache._miss = reject_miss
 torch.manual_seed(117)
 model = (
-    BidirectionalTriangleMultiplication(128, implementation="triton")
+    BidirectionalTriangleMultiplication(128, implementation="miniworld")
     .cuda()
     .bfloat16()
     .train()

@@ -20,6 +20,11 @@ train_db:
   manifest_validation: paths
   catalog_cache_path: /home/psk6950/data/BioMolDB_20261014/catalog_trainitem_no_disordered_unified.arrow
 
+  # Antibody chains by seq_id (the cif LMDB stamps them 'P'), as H100_default.yaml: without it no chain is an antibody, so the crop's
+  # Ab-Ag interface focus (ab_ag_interface_only) and the distogram's ab_ag weight never apply. The same seq_ids are in this release
+  # (metadata/ab_seq_id.tsv of this release is a superset of this train list).
+  antibody_seq_id_path: /home/psk6950/data/BioMol/metadata/ab_seq_id_train_20210930.tsv
+
   train_item_path: /home/psk6950/data/filtering/edge_node/train_item_20210930.tsv
   resources_index_path: /home/psk6950/data/BioMolDB_20261014/metadata/resources.lmdb
   resources_base: /home/psk6950/data/BioMolDB_20261014/

@@ -169,7 +169,7 @@ def test_confidence_head_backward_and_native_selection(batch_size):
         .train()
     )
     for block in head.pairformer.blocks:
-        assert block.attention_pair_bias._backend == KernelBackend.TRITON
+        assert block.attention_pair_bias._backend == KernelBackend.PORTABLE
     with torch.no_grad():
         for layer in (head.to_pae, head.to_pde, head.to_plddt):
             layer.weight.normal_(std=0.02)

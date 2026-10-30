@@ -273,6 +273,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/12/51/55fe51e48bf8f187896506cf25e361d7dc1665d2a7a39ec99ef2c1fae5eb/nvidia_cutlass_dsl_libs_cu12-4.8.1-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/23/cd/066e86230ae37ed0be70aae89aabf03ca8d9f39c8aea0dec8029455b5540/opt_einsum-3.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/25/0c/21890c10cc94da917c8e47efc1c55cd3e56a1d25ab5947bdd35abaf9fdc1/hydra_core-1.3.7-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/25/3b/a67bdf4ffddd56a36c948ad003f23e26e9f45855e685210a35cc4a8bd310/miniworld_engine_kernels_sm90_cu129-2.4.0-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/26/13/775a4c7d87fb771a2ddb104ce7c5c5d393e48720e448b4e8c43aac7cd4ce/wandb-0.30.0-py3-none-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/28/b9/7818ac6dec7fbcd16be2d19495807c01e2c38834e57d41c63356a75e786b/yarl-1.25.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/2a/09/f8d8f8f31e4483c10a906437b4ce31bdf3d6d417b73fe33f1a8b59e34228/einops-0.8.2-py3-none-any.whl
@@ -298,6 +299,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/73/d8/f5e56c38b286308d115a171e3c5c44f24e9d03980c3cfd22588df40261fa/quack_kernels-0.6.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/78/42/caf65e9a0576a3abadc537e2f831701ba9081f21317fb3be87d64451587a/jaxtyping-0.3.7-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/7a/1e/7acc4f0e74c4b3d9531e24739e0ab832a5edf40e64fbae1a9c01941cabd7/pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/7c/23/df7b5394f3907501e9d0e6dd346645b46035b21326f878de2b9787d47bde/miniworld_engine-2.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/1f/0809c53f694693d703c9efee0379875089db17ab50196845e08f6c686fd4/cuda_bindings-12.9.7-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/8a/ae/46963201ce58d6b86f9e54087a39720a35ac9f57c3a9e440d275995c2b02/opentelemetry_sdk-1.45.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8d/96/04e7b441807b26b794da5b11e59ed7f83b2cf8af202bd7eba8ad2fa6046e/wadler_lindig-0.1.7-py3-none-any.whl
@@ -308,10 +310,10 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a1/e9/a1f9584a3af4ac6ae5ad5cf86927d8c3a9b6bb50d54e54d19313411216a0/torch_c_dlpack_ext-0.1.5-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a2/45/c9eba2814816f0a51dc975e6e63863fd909646f20d3a28508150ceee6096/miniworld_engine_kernels_sm90_cu130-2.4.0-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/a4/0e/152509871bf30df6fc38569f52a2db9b55dd41aae957adae50a053ac7778/omegaconf-2.3.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a7/8e/50f46a9c0ce8d2861a394c1347caae037ea0431d2f67d7feb151cbc4649a/filelock-3.32.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b1/65/34d7106eb45acda40f016c5b31b313ffbbf4744acd5f099f29eaf2958b4d/opentelemetry_exporter_http_transport-0.66b0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/b8/7e/a0191246d7cbb4bfe6dc36aab0360f1e0af7a0cb77be42ff9bf14da61fa2/miniworld_engine-2.3.8-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/b9/54/dd730b32ea14ea797530a4479b2ed46a6fb250f682a9cfb997e968bf0261/networkx-3.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/53/f65ed68b96eea2b4f6fa4f9031bdfccd8f3097c429e3d371c545d1c40ca4/multidict-6.9.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/bd/ce/a590b929285faf0aa285c5ccee2b88e0b5259fb39a6326206e0f140ea3fc/nvidia_cutlass_dsl-4.8.1-py3-none-any.whl
@@ -604,6 +606,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/1b/52/3131b6dc9577eaa556b2b66584a44df32a9d4356aa641ff5d33c8b797225/cuequivariance-0.10.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1c/66/a17ff4a0f2c874395673e24c8d20d2d52d53596b47cbdb2f63cafb301ac0/cuequivariance_ops_cu13-0.12.0-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/23/cd/066e86230ae37ed0be70aae89aabf03ca8d9f39c8aea0dec8029455b5540/opt_einsum-3.4.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/25/3b/a67bdf4ffddd56a36c948ad003f23e26e9f45855e685210a35cc4a8bd310/miniworld_engine_kernels_sm90_cu129-2.4.0-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/2a/09/f8d8f8f31e4483c10a906437b4ce31bdf3d6d417b73fe33f1a8b59e34228/einops-0.8.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2a/6d/c228219080817bec4982f9531cadb18da6aaa770fdeb114f49c237ac2c9f/pydantic_core-2.46.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/2f/86/a6f3ff1fd795f49545a7c74b2c92f62729135d73e7e4055bf74da5a26c82/aiohttp-3.13.5-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
@@ -617,10 +620,12 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/50/12/95a1d33f04a79c402664070d43b8b9f72dc18914e135b345b611b0b1f8cc/yarl-1.23.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/5d/ed/c7895fd2fde7f3ee70d248175f9b6cdf792fb741ab92dc59cd9ef3bd241b/frozenlist-1.8.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/67/f4/58e4e91b6919367c7aafb8e36fce9aad1a3047e536bf7e2fd560927d3a4c/nvidia_nccl_cu13-2.29.7-py3-none-manylinux_2_18_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/76/e2/7a5064aba235ddb855b8c2250e07e6187fcc8382332e237e545d4de094ee/wandb-0.27.2-py3-none-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/78/42/caf65e9a0576a3abadc537e2f831701ba9081f21317fb3be87d64451587a/jaxtyping-0.3.7-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/7a/1e/7acc4f0e74c4b3d9531e24739e0ab832a5edf40e64fbae1a9c01941cabd7/pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/7c/23/df7b5394f3907501e9d0e6dd346645b46035b21326f878de2b9787d47bde/miniworld_engine-2.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8a/24/fc256107d23597fa33d319505ce77160fa1a2349c096d01901ffc7cb7fc4/nvidia_ml_py-13.595.45-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8d/96/04e7b441807b26b794da5b11e59ed7f83b2cf8af202bd7eba8ad2fa6046e/wadler_lindig-0.1.7-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8e/6d/41991e503e51fc1134502694c5fa7a1671501a17ffa12716a4a9151af3df/scipy-1.15.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
@@ -628,8 +633,8 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/9b/c0/3cf324a6a3419e8f6ee44fbdf1d9297cc9b353f30c77b2827a8df66ca90d/cuda_pathfinder-1.2.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a0/61/5c78b91c3143ed5c14207f463aecfc8f9dbb5092fb2869baf37c273b2705/gitdb-4.0.12-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a2/45/c9eba2814816f0a51dc975e6e63863fd909646f20d3a28508150ceee6096/miniworld_engine_kernels_sm90_cu130-2.4.0-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/a4/a5/842ae8f0c08b61d6484b52f99a03510a3a72d23141942d216ebe81fefbce/filelock-3.25.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/b8/7e/a0191246d7cbb4bfe6dc36aab0360f1e0af7a0cb77be42ff9bf14da61fa2/miniworld_engine-2.3.8-cp310-cp310-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/b9/54/dd730b32ea14ea797530a4479b2ed46a6fb250f682a9cfb997e968bf0261/networkx-3.4.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/d4/59e74daffcb57a07668852eeeb6035af9f32cbfd7a1d2511f17d2fe6a738/smmap-5.0.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c6/50/e0edd38dcd63fb26a8547f13d28f7a008bc4a3fd4eb4ff030673f22ad41a/hydra_core-1.3.2-py3-none-any.whl
@@ -658,7 +663,6 @@ environments:
       - pypi: https://pypi.nvidia.com/nvidia-cusolver/nvidia_cusolver-12.0.4.66-py3-none-manylinux_2_27_x86_64.whl
       - pypi: https://pypi.nvidia.com/nvidia-cusparse/nvidia_cusparse-12.6.3.3-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://pypi.nvidia.com/nvidia-cusparselt-cu13/nvidia_cusparselt_cu13-0.8.1-py3-none-manylinux2014_x86_64.whl
-      - pypi: https://pypi.nvidia.com/nvidia-nccl-cu13/nvidia_nccl_cu13-2.29.7-py3-none-manylinux_2_18_x86_64.whl
       - pypi: https://pypi.nvidia.com/nvidia-nvjitlink/nvidia_nvjitlink-13.0.88-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl
       - pypi: https://pypi.nvidia.com/nvidia-nvshmem-cu13/nvidia_nvshmem_cu13-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://pypi.nvidia.com/nvidia-nvtx/nvidia_nvtx-13.0.85-py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.whl
@@ -7057,6 +7061,13 @@ packages:
   - antlr4-python3-runtime==4.9.*
   - importlib-resources ; python_full_version < '3.9'
   - packaging
+- pypi: https://files.pythonhosted.org/packages/25/3b/a67bdf4ffddd56a36c948ad003f23e26e9f45855e685210a35cc4a8bd310/miniworld_engine_kernels_sm90_cu129-2.4.0-cp310-cp310-manylinux_2_28_x86_64.whl
+  name: miniworld-engine-kernels-sm90-cu129
+  version: 2.4.0
+  sha256: c3358ba05f7a2adeb81f1b5037ef950561bbcce4e8d11c7b0f0793f612d16e74
+  requires_dist:
+  - torch==2.13.*
+  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/26/13/775a4c7d87fb771a2ddb104ce7c5c5d393e48720e448b4e8c43aac7cd4ce/wandb-0.30.0-py3-none-manylinux_2_28_x86_64.whl
   name: wandb
   version: 0.30.0
@@ -7642,6 +7653,12 @@ packages:
   requires_dist:
   - typing-extensions>=4.15.0
   requires_python: '>=3.10'
+- pypi: https://files.pythonhosted.org/packages/67/f4/58e4e91b6919367c7aafb8e36fce9aad1a3047e536bf7e2fd560927d3a4c/nvidia_nccl_cu13-2.29.7-py3-none-manylinux_2_18_x86_64.whl
+  name: nvidia-nccl-cu13
+  version: 2.29.7
+  sha256: edd81538446786ec3b73972543e53bb43bcaf0bfc8ef76cb679fcc390ffe136d
+  index: https://download.pytorch.org/whl/cu130
+  requires_python: '>=3'
 - pypi: https://files.pythonhosted.org/packages/6b/45/814d55714507c7ce9c9cd86a4f83ceb5a74ab0bffcc63ff493943f138de2/opentelemetry_proto-1.45.0-py3-none-any.whl
   name: opentelemetry-proto
   version: 1.45.0
@@ -7792,6 +7809,32 @@ packages:
   version: 6.0.3
   sha256: 9c7708761fccb9397fe64bbc0395abcae8c4bf7b0eac081e12b809bf47700d0b
   requires_python: '>=3.8'
+- pypi: https://files.pythonhosted.org/packages/7c/23/df7b5394f3907501e9d0e6dd346645b46035b21326f878de2b9787d47bde/miniworld_engine-2.4.0-py3-none-any.whl
+  name: miniworld-engine
+  version: 2.4.0
+  sha256: 0928c19ec6d76f0a356ce870a33b7963accf4ea2d286cbe0604d8d55c88470d7
+  requires_dist:
+  - torch>=2.8
+  - triton>=3.3
+  - einops
+  - jaxtyping
+  - numpy
+  - scipy
+  - pydantic
+  - cuequivariance-torch>=0.12,<0.13 ; extra == 'baselines'
+  - hydra-core ; extra == 'bench'
+  - lightning ; extra == 'bench'
+  - omegaconf ; extra == 'bench'
+  - pydantic ; extra == 'bench'
+  - matplotlib ; extra == 'bench'
+  - pytest ; extra == 'dev'
+  - ruff==0.16.9 ; extra == 'dev'
+  - ty==0.0.84 ; extra == 'dev'
+  - flash-attn-4 ; extra == 'flash'
+  - flash-attn>=2.8,<3 ; extra == 'flash2'
+  - miniworld-engine-kernels-sm90-cu129==2.4.0 ; (python_full_version == '3.10.*' and platform_machine == 'x86_64' and sys_platform == 'linux') or (python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'linux')
+  - miniworld-engine-kernels-sm90-cu130==2.4.0 ; (python_full_version == '3.10.*' and platform_machine == 'x86_64' and sys_platform == 'linux') or (python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'linux')
+  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/82/1f/0809c53f694693d703c9efee0379875089db17ab50196845e08f6c686fd4/cuda_bindings-12.9.7-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
   name: cuda-bindings
   version: 12.9.7
@@ -8024,6 +8067,13 @@ packages:
   - pytest>=7.1.0 ; extra == 'dev'
   - hypothesis>=6.70.0 ; extra == 'dev'
   requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/a2/45/c9eba2814816f0a51dc975e6e63863fd909646f20d3a28508150ceee6096/miniworld_engine_kernels_sm90_cu130-2.4.0-cp310-cp310-manylinux_2_28_x86_64.whl
+  name: miniworld-engine-kernels-sm90-cu130
+  version: 2.4.0
+  sha256: 2984f81bb4b75460d4b0d1128af09f03f392570430b06cc08d03a28572818538
+  requires_dist:
+  - torch==2.13.*
+  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/a4/0e/152509871bf30df6fc38569f52a2db9b55dd41aae957adae50a053ac7778/omegaconf-2.3.1-py3-none-any.whl
   name: omegaconf
   version: 2.3.1
@@ -8053,30 +8103,6 @@ packages:
   - opentelemetry-api~=1.15
   - requests~=2.25 ; extra == 'requests'
   - urllib3>=1.26 ; extra == 'urllib3'
-  requires_python: '>=3.10'
-- pypi: https://files.pythonhosted.org/packages/b8/7e/a0191246d7cbb4bfe6dc36aab0360f1e0af7a0cb77be42ff9bf14da61fa2/miniworld_engine-2.3.8-cp310-cp310-manylinux_2_28_x86_64.whl
-  name: miniworld-engine
-  version: 2.3.8
-  sha256: bc209a5b7c8f3b5d39f1ef0ce10dd6fb1ce000276bd06e40d0d15d111d67e8ea
-  requires_dist:
-  - torch==2.13.*
-  - triton>=3.3
-  - einops
-  - jaxtyping
-  - numpy
-  - scipy
-  - pydantic
-  - cuequivariance-torch>=0.12,<0.13 ; extra == 'baselines'
-  - hydra-core ; extra == 'bench'
-  - lightning ; extra == 'bench'
-  - omegaconf ; extra == 'bench'
-  - pydantic ; extra == 'bench'
-  - matplotlib ; extra == 'bench'
-  - pytest ; extra == 'dev'
-  - ruff==0.16.9 ; extra == 'dev'
-  - ty==0.0.84 ; extra == 'dev'
-  - flash-attn-4 ; extra == 'flash'
-  - flash-attn>=2.8,<3 ; extra == 'flash2'
   requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/b9/54/dd730b32ea14ea797530a4479b2ed46a6fb250f682a9cfb997e968bf0261/networkx-3.4.2-py3-none-any.whl
   name: networkx
@@ -8911,12 +8937,6 @@ packages:
   version: 2.29.7
   sha256: ecd0a012051abc20c1aa87328841efa8cade3ced65803046e38c2f03c0891fea
   index: https://download.pytorch.org/whl/cu129
-  requires_python: '>=3'
-- pypi: https://pypi.nvidia.com/nvidia-nccl-cu13/nvidia_nccl_cu13-2.29.7-py3-none-manylinux_2_18_x86_64.whl
-  name: nvidia-nccl-cu13
-  version: 2.29.7
-  sha256: edd81538446786ec3b73972543e53bb43bcaf0bfc8ef76cb679fcc390ffe136d
-  index: https://download.pytorch.org/whl/cu130
   requires_python: '>=3'
 - pypi: https://pypi.nvidia.com/nvidia-nvjitlink-cu12/nvidia_nvjitlink_cu12-12.9.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl
   name: nvidia-nvjitlink-cu12

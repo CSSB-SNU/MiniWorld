@@ -1,0 +1,15 @@
+# MiniWorld v2.3.9 phase 1b, medium, on the H100 server with the BioMolDB_20261014 data: phase1b_distogram_medium_v239_b200 with
+# the data config switched from B200_default to BioMolDB_20261014 (its antibody_seq_id_path is what makes the antibody-antigen crop focus and
+# loss weight reach the samples) and the H100 catalog, built with this sampler (antibody_protein 30). 4 GPUs x 1 sample x grad_accum 64.
+defaults:
+  - phase1b_distogram_medium_v239_b200
+  - override data: BioMolDB_20261014
+  - _self_
+
+data:
+  train_db:
+    catalog_cache_path: /home/psk6950/data/BioMolDB_20261014/catalog_trainitem_no_disordered_unified.arrow
+
+train:
+  comment: "v2.3.9-phase1b-distogram-medium-L768-h100"
+  run_dir: "runs/v2.3.9/phase1b/medium_distogram_h100"

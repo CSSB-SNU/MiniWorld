@@ -1,0 +1,24 @@
+# MiniWorld v2.4.0 phase 1a, MEDIUM trunk (pairformer 16 blocks), L384, H100 server, BioMolDB_20261014, engine 2.4.0.
+# v2.3.6's model (v1.2.0's legacy input atom encoder, global atom attention, AF3-style empty template slots; CUDA-graph trainer, bf16-mixed
+# over fp32 masters) with the antibody-antigen and protein-RNA emphasis changed against v2.3.8 (antibody_protein 30, protein_rna 10):
+#   * sampler antibody_protein 30 -> 10 (1/3)
+#   * sampler protein_rna 10 -> 20 (x2)
+# The Ab-Ag crop focus and the Ab-Ag loss weight need the antibody list (data BioMolDB_20261014 carries antibody_seq_id_path; without it no
+# chain is an antibody). The loss weights are v2.3.6's (distogram_ab_ag_weight 1, chemistry alphas 0). 4 GPUs x 1 sample x grad_accum 64 = 256.
+defaults:
+  - phase1a_distogram_medium_v236_b200
+  - override data: BioMolDB_20261014
+  - _self_
+
+data:
+  sampler:
+    antibody_protein: 10.0
+    protein_rna: 20.0
+  train_db:
+    # built with this sampler (the sampler config is part of the catalog fingerprint)
+    catalog_cache_path: /home/psk6950/data/BioMolDB_20261014/catalog_trainitem_no_disordered_unified_v240.arrow
+
+train:
+  comment: "v2.4.0-phase1a-distogram-medium-L384-h100"
+  run_dir: "runs/v2.4.0/phase1a/medium_distogram_L384"
+  grad_accum_steps: 64
