@@ -385,7 +385,10 @@ class Phase2GraphTrainer:
             self.stream.wait_stream(torch.cuda.current_stream())
             with (
                 torch.cuda.stream(self.stream),
-                torch.cuda.graph(graph, pool=pool, stream=self.stream),
+                # thread_local: the DataLoader's pin-memory thread keeps allocating pinned host buffers during the capture; in the default
+                # global mode that CUDA call from another thread invalidates it (cudaErrorStreamCaptureInvalidated with 32 workers on 4 GPUs;
+                # the phase-1 trainer captures the same way)
+                torch.cuda.graph(graph, pool=pool, stream=self.stream, capture_error_mode="thread_local"),
             ):
                 loss = self._body()
             torch.cuda.current_stream().wait_stream(self.stream)
