@@ -672,6 +672,8 @@ def train(
             tokenizer_config=cfg.data.tokenizer,
         )
     )
+    # MW_CHAIN_EPOCHS=0 restores one iterator per epoch (the first step of each epoch then waits 25-50 s for the workers to refill)
+    chain_epochs = os.environ.get("MW_CHAIN_EPOCHS", "1") == "1"
     dl = ds.create_ddp_dataloader(
         world_size=world,
         rank=rank,
@@ -688,6 +690,7 @@ def train(
         bucket_token_multiple=cfg.train.bucket_token_multiple,
         bucket_atom_multiple=cfg.train.bucket_atom_multiple,
         bucket_template_multiple=TemplateConfig().n_templates,
+        chain_epochs=chain_epochs,
     )
     dl.sampler.set_epoch(epoch)
     ds.set_epoch(epoch)
@@ -998,6 +1001,8 @@ def train(
         recycles = np.random.default_rng((cfg.train.seed or 0) + epoch)
         if done == 0:
             batches = itertools.chain([first, second], it)
+        elif chain_epochs:
+            ds.set_epoch(epoch)
         else:
             dl.sampler.set_epoch(epoch)
             ds.set_epoch(epoch)
@@ -1065,6 +1070,9 @@ def train(
             end_opt.record()
             if world > 1:
                 dist.all_reduce(acc)
+                wait_max = torch.tensor(timing["data_next_ms"], device=dev)
+                dist.all_reduce(wait_max, op=dist.ReduceOp.MAX)
+                timing["data_wait_max_ms"] = float(wait_max)
             value = float(acc / (ga * world))
             torch.cuda.synchronize()
             global_step += 1
@@ -1082,7 +1090,7 @@ def train(
             if diagnostic_steps:
                 records.append(timing)
             if rank == 0:
-                message = f"Step {global_step:8d} (Epoch {epoch:5d}) | train/distogram_loss={value:.6f} step_time_ms={timing['wall_ms']:.1f}"
+                message = f"Step {global_step:8d} (Epoch {epoch:5d}) | train/distogram_loss={value:.6f} step_time_ms={timing['wall_ms']:.1f} data_wait_ms={timing['data_next_ms']:.0f} data_wait_max_ms={timing.get('data_wait_max_ms', 0):.0f} comm_ms={timing['comm_ms']:.0f}"
                 if diagnostic_steps:
                     print(message, flush=True)
                 else:

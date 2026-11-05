@@ -16,6 +16,7 @@ from __future__ import annotations
 import functools
 import logging
 import os
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -39,7 +40,7 @@ from miniworld.data.pipeline import Tokenizer
 from .collate import bucketed_collate
 from .loading import FragmentedCCDMolCache
 from .preprocess import Preprocessor, WrongCroppingError
-from .sampler import WeightedSampler
+from .sampler import EpochChainSampler, WeightedSampler
 from .sources import (
     SourceDBs,
     configured_source_weights,
@@ -278,6 +279,21 @@ def _load_catalog_arrow(
     fingerprint = (meta.get(b"build_fingerprint") or b"").decode()
     return _LazyArrowCatalog(table, path=path), weights, sources, is_raw, fingerprint
 
+
+
+def _log_slow_sample(record, wall: float, cpu: float, n_try: int, rng: np.random.Generator) -> None:
+    """MW_SAMPLE_TIMING_DIR=<dir>: append "pid item wall cpu tries" for samples slower than 2 s and for 2% of the others (the baseline).
+
+    wall >> cpu means the worker waited (file system); wall ~ cpu means it computed (or was starved of a CPU).
+    """
+    d = os.environ.get("MW_SAMPLE_TIMING_DIR")
+    if not d or (wall < 2.0 and rng.random() > 0.02):
+        return
+    try:
+        with open(os.path.join(d, f"samples-{os.getpid()}.tsv"), "a") as f:  # noqa: PTH123
+            f.write(f"{time.time():.0f}\t{record.item_id}\t{wall:.2f}\t{cpu:.2f}\t{n_try}\t{type(record).__name__}\n")
+    except OSError:
+        pass
 
 class BioMolData(torch.utils.data.Dataset):
     """Dataset for biomolecular complexes (multi-source manifest + legacy PDB)."""
@@ -616,10 +632,14 @@ class BioMolData(torch.utils.data.Dataset):
         """Get a data sample by index (retries on WrongCroppingError and on a record absent from its LMDB)."""
         rng = np.random.default_rng()
         record = self.items[idx]
+        t_wall, t_cpu, n_try = time.perf_counter(), time.process_time(), 0
 
         while True:
+            n_try += 1
             try:
-                return self.preprocessor.process(record, rng=rng)
+                out = self.preprocessor.process(record, rng=rng)
+                _log_slow_sample(record, time.perf_counter() - t_wall, time.process_time() - t_cpu, n_try, rng)
+                return out
             except WrongCroppingError:  # noqa: PERF203
                 idx = int(rng.integers(0, len(self)))
                 record = self.items[idx]
@@ -629,6 +649,14 @@ class BioMolData(torch.utils.data.Dataset):
                 if "not found in LMDB database" not in str(exc):
                     raise
                 logger.warning("record %s is not in its LMDB (%s); sampling another item", record.item_id, exc)
+                idx = int(rng.integers(0, len(self)))
+                record = self.items[idx]
+            except ValueError as exc:
+                # A record whose cif holds an empty coordinate field ("could not convert string to float: ''", the same record every
+                # restart of the same epoch) ended a run in epoch 14; draw another item and name the record.
+                if "could not convert string to float" not in str(exc):
+                    raise
+                logger.warning("record %s has an unparsable coordinate (%s); sampling another item", record.item_id, exc)
                 idx = int(rng.integers(0, len(self)))
                 record = self.items[idx]
 
@@ -686,6 +714,7 @@ class BioMolData(torch.utils.data.Dataset):
         bucket_token_multiple: int | None = None,
         bucket_atom_multiple: int | None = None,
         bucket_template_multiple: int | None = None,
+        chain_epochs: bool = False,
         **kwargs: object,
     ) -> DataLoader:
         """Create a distributed DataLoader with WeightedSampler.
@@ -711,6 +740,9 @@ class BioMolData(torch.utils.data.Dataset):
 
         kwargs.pop("shuffle", None)
         kwargs.pop("world_size", None)
+        if chain_epochs:
+            # one endless iterator for the whole run: the workers keep prefetching through the epoch boundary
+            sampler = EpochChainSampler(sampler)
         kwargs.update({"sampler": sampler})
         if num_workers == 0:
             kwargs.pop("prefetch_factor", None)

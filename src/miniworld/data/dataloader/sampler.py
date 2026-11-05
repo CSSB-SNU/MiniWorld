@@ -97,3 +97,29 @@ class WeightedSampler(DistributedSampler):
 
     def __len__(self) -> int:
         return self.num_samples
+
+
+class EpochChainSampler(torch.utils.data.Sampler[int]):
+    """Endless index stream: epoch ``e``'s draw, then ``e + 1``'s, and so on.
+
+    A DataLoader built on a per-epoch sampler ends its iterator at every epoch boundary. With persistent workers the
+    next ``iter(loader)`` then waits for the workers' in-flight samples and starts again with empty prefetch queues, so the
+    first step of every epoch stalls for the time the workers need to rebuild a whole step of samples (25-50 s on the
+    long-distillation data). Chaining the epochs keeps the queues full across the boundary. Each epoch still draws exactly
+    the indices ``base.set_epoch(e)`` + ``iter(base)`` would, so a run resumed at epoch ``e`` sees the same samples.
+    """
+
+    def __init__(self, base: WeightedSampler) -> None:
+        self.base = base
+        self.epoch = 0
+
+    def set_epoch(self, epoch: int) -> None:
+        """Epoch the stream starts at (call before the loader's iterator is created)."""
+        self.epoch = int(epoch)
+
+    def __iter__(self) -> Iterator[int]:
+        epoch = self.epoch
+        while True:
+            self.base.set_epoch(epoch)
+            yield from iter(self.base)
+            epoch += 1

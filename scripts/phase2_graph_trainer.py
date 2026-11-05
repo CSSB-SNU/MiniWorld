@@ -553,7 +553,15 @@ class Phase2GraphTrainer:
         """Yield one result dict per micro-batch, like ``Client.training_epoch``; the optimizer step runs every ``ga`` of them."""
         client = self.client
         ga = client.gradient_accumulation_steps
-        iterator = iter(dataloader)
+        from miniworld.data.dataloader.sampler import EpochChainSampler
+
+        if isinstance(getattr(dataloader, "sampler", None), EpochChainSampler):
+            # chained epochs: ONE iterator for the whole run, so the workers keep prefetching through the epoch boundary
+            if getattr(self, "_chain_iter", None) is None:
+                self._chain_iter = iter(dataloader)
+            iterator = self._chain_iter
+        else:
+            iterator = iter(dataloader)
         if not self.graphs:
             first = next(iterator)
             self._build(first)

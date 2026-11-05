@@ -809,6 +809,10 @@ def train(  # noqa: PLR0912, PLR0915
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
     client.logger.info("Start training")
+        # One endless iterator across the epochs (Phase2GraphTrainer keeps it): without it the first step of every epoch waits for the
+        # workers to rebuild their prefetch queues (25-50 s on the distillation data, measured in phase 1). MW_CHAIN_EPOCHS=0 restores one
+        # iterator per epoch.
+        chain_epochs=cfg.train.cuda_graph and os.environ.get("MW_CHAIN_EPOCHS", "1") == "1",
     while client.epoch < cfg.train.num_epoch:
         client.logger.info("Training Epoch %d", client.epoch)
         train_dataloader.sampler.set_epoch(client.epoch)  # pyright: ignore[reportAttributeAccessIssue]

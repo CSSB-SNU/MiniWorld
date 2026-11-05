@@ -1,0 +1,32 @@
+# MiniWorld v2.4.0 phase 2a, medium trunk, L384, on the H100 server (node02 local NVMe): connects to the v2.4.0 phase-1a run
+# (phase1a_distogram_medium_v240_local, scratch run, stopped at epoch 600). The trunk is FROZEN and seeded with that run's epoch-600 online
+# EMA weights, weights only, epoch 0 (the hand-off v1.2.0 / v2.0.0 used):
+#   runs/v2.4.0/phase2a/seed_ema600/epoch=0600_ema.pt   (pass via --ckpt --no-ckpt-strict)
+# Recipe = phase2a_diffusion_medium_v120 (bias-only token DiT, bf16-mixed with fp32 master parameters, v1.2 data policy). Compared with the
+# v1.2.0 2a the only model difference to the phase-1a trunk is the input atom encoder (atom_swa.input_features: esmfold2, v2.3.6 on);
+# `scripts/check_2a_config` style check (CPU): every trunk tensor of the seed must match the 2a model tensor-for-tensor.
+# Data = the phase-1a v2.4.0 data (BioMolDB_20261014 on /local_data1, sampler antibody_protein 10 / protein_rna 20, the catalog built with that
+# sampler), so the frozen trunk sees the inputs it was trained on. The epochs are chained (no loader reset at the epoch boundary).
+defaults:
+  - phase2a_diffusion_medium_v120
+  - override data: BioMolDB_20261014_local
+  - _self_
+
+model:
+  atom_swa:
+    input_features: esmfold2
+
+data:
+  sampler:
+    antibody_protein: 10.0
+    protein_rna: 20.0
+  train_db:
+    # built with this sampler (the sampler config is part of the catalog fingerprint): the phase-1a v2.4.0 catalog, memory-mapped
+    catalog_cache_path: /local_data1/psk6950/BioMolDB_20261014/catalog_trainitem_no_disordered_unified_v240_local.arrow
+
+train:
+  comment: "v2.4.0-phase2a-diffusion-medium-L384-h100"
+  run_dir: "runs/v2.4.0/phase2a/medium_diffusion_L384"
+  num_epoch: 200
+  use_wandb: true
+  cuda_graph: true
