@@ -26,10 +26,10 @@ from typing import TYPE_CHECKING
 import torch
 
 if TYPE_CHECKING:
-    from miniworld_engine.architecture.diffusion.decoupled_xpred.scheduler import (
+    from foldforge.diffusion.decoupled_xpred.scheduler import (
         DecoupledXPredScheduler,
     )
-    from miniworld_engine.architecture.diffusion.decoupled_xpred.solver import (
+    from foldforge.diffusion.decoupled_xpred.solver import (
         XPredDecoupledSolver,
     )
 
@@ -309,7 +309,7 @@ def build_step_schedule(
         # with a single trailing singleton — yields (1, d_time) which feeds
         # the LayerNorm+Linear in add_time_embedding.
         t_emb_t = scheduler.noise_condition(sigma_t).reshape(1)
-        from miniworld_engine.architecture.layers import fourier_embedding
+        from miniworld.layers import fourier_embedding
 
         time_embedding = fourier_embedding(t_emb_t)  # (1, d_time)
         single = base + cond.add_time_embedding(time_embedding)  # (B, L_token, d_single)

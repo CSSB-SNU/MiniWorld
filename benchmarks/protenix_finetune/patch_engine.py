@@ -252,7 +252,7 @@ class EngineTokenTransformer(nn.Module):
         (pointer / version); the bias is reused while the pair is the same tensor object at the same version."""
         import weakref
         from miniworld_engine.kernels.conditioned_transition.triton.token_dit_runner import FusedTokenDiT
-        import miniworld_engine.integrations.token_dit as TD
+        import miniworld_engine.kernels.integrations.token_dit as TD
         dt = single.dtype
         for p_ in self.blocks.parameters():
             if p_.dtype != dt:
@@ -550,7 +550,7 @@ def install(model: nn.Module, cfg, which: str = "pair"):
     if pfx_options.OPTIONS.fast_t:       # TriAttn ending direction: fast row-permuting transpose (pfx_pair_t)
         import pfx_pair_t
         pfx_pair_t.install()
-        report["TriAttn ending transposes on pfx_pair_t"] = ["miniworld_engine.integrations.triattn_b200.rearrange"]
+        report["TriAttn ending transposes on pfx_pair_t"] = ["miniworld_engine.kernels.integrations.triattn_b200.rearrange"]
     if "pair" in parts:
         _swap_pairformer_blocks(model, report)
     if "msa" in parts:

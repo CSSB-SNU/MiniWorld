@@ -19,31 +19,23 @@ from __future__ import annotations
 
 import torch
 import torch.nn.functional as F
+from foldforge.layers.implementation import ImplementationType, to_engine_impl
 from jaxtyping import Bool, Float, Int
-from miniworld_engine.architecture.blocks._engine_impl import to_engine_impl
-from miniworld_engine.architecture.exceptions import ImplementationType
-from miniworld_engine.architecture.primitives import Linear
-from miniworld_engine.architecture.typing import typecheck
 from miniworld_engine.modules import LayerNorm
+from miniworld_engine.utils.typecheck import typecheck
 from torch import nn
 
 from miniworld.data.features import TemplateFeatures
+from miniworld.layers.primitives import Linear
 from miniworld.modules.mini_pairformer import MiniPairformer
 
 
 def _engine_batch_limit(capability: tuple[int, int]) -> int:
-    """Return the samples one call of the engine's native TriMul takes on this card: B200 (sm_100) and H100 (sm_90) each state it
-    (``integrations.trimul_b200.MAX_BATCH`` / ``trimul_h100.MAX_BATCH``); 1 for another card or an engine that predates batched samples."""
-    try:
-        if capability == (10, 0):
-            from miniworld_engine.integrations.trimul_b200 import MAX_BATCH  # noqa: PLC0415
-        elif capability == (9, 0):
-            from miniworld_engine.integrations.trimul_h100 import MAX_BATCH  # noqa: PLC0415
-        else:
-            return 1
-    except ImportError:  # an engine that predates batched samples on this card has no such name
-        return 1
-    return MAX_BATCH
+    """The templates one call of the engine's TriMul may fold into its batch on this card (``modules.runtime.trimul_batch_limit``: any
+    number on H100, which splits the call itself; the batched path's bound on B200; 1 elsewhere: the per-template loop)."""
+    from miniworld_engine.modules import runtime
+
+    return runtime.trimul_batch_limit(capability)
 
 
 def _dgram_from_positions(

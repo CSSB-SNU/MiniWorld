@@ -21,7 +21,7 @@ from __future__ import annotations
 from typing import Literal, cast
 
 import torch
-from miniworld_engine.architecture.diffusion import (
+from foldforge.diffusion import (
     AF3Solver,
     EDMScheduler,
     EuclideanDiffuser,

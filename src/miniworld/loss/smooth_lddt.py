@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import torch
-from miniworld_engine.architecture.typing import typecheck
+from miniworld_engine.utils.typecheck import typecheck
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

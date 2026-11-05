@@ -533,7 +533,7 @@ def train(
         from miniworld.training import no_triton
 
         no_triton.install()
-    from miniworld_engine.integrations.optimizer import align_optimizer_state_layout_
+    from miniworld_engine.utils.optimizer import align_optimizer_state_layout_
 
     from miniworld.configs import TemplateConfig
     from miniworld.data.dataloader.dataloader import BioMolData

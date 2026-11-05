@@ -6,7 +6,7 @@ output-format bugs that had to be fixed before any of it worked.
 FoldBench (BEAM-Labs, *Nat. Commun.* 2025) lives at `/home/psk6950/data/foldbench`:
 `upstream/` is the benchmark repo, `targets/` the nine task CSVs, `ground_truth/`
 the 1,522 answer CIFs, `meta/paper_scores/` the published per-target scores for
-AlphaFold 3, Protenix, Boltz-1, Chai-1 and HelixFold 3.
+AlphaFold 3, Protenix (labelled v0.2), Boltz-1, Chai-1 and HelixFold 3.
 
 ## Sampling: 5 seeds x 5 diffusion samples
 

@@ -11,7 +11,7 @@ from miniworld.training.engine_backend import (
 
 
 def test_adam_resume_layout_preserves_values():
-    pytest.importorskip("miniworld_engine.integrations.optimizer")
+    pytest.importorskip("miniworld_engine.utils.optimizer")
     p = torch.nn.Parameter(torch.randn(8, 4))
     old = torch.optim.Adam([p])
     p.square().sum().backward()

@@ -22,13 +22,13 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 import torch
-from jaxtyping import Bool, Float
-from lightning.fabric.wrappers import _FabricDataLoader
-from miniworld_engine.architecture.diffusion import (
+from foldforge.diffusion import (
     AF3Solver,
     EDMScheduler,
     EuclideanDiffuser,
 )
+from jaxtyping import Bool, Float
+from lightning.fabric.wrappers import _FabricDataLoader
 from pydantic import BaseModel
 from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader

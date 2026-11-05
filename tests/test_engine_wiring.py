@@ -51,7 +51,7 @@ def test_condition_loop_fullgraph_preserves_last_recycle_grad(recycles, grad_ena
 @pytest.mark.parametrize("kind", ["opm", "pwa", "pair_cond", "single_cond"])
 @pytest.mark.parametrize("training", [False, True])
 def test_connected_paths_amp(kind, training):
-    from miniworld_engine.architecture.exceptions import ImplementationType
+    from foldforge.layers.implementation import ImplementationType
     from miniworld_engine.modules.dispatch import KernelBackend, resolve_layernorm
 
     from miniworld.configs.models import SharedConfig

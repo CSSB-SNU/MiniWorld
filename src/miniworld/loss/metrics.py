@@ -3,7 +3,7 @@ from collections.abc import Sequence
 import numpy as np
 import torch
 from jaxtyping import Bool, Float, Int
-from miniworld_engine.architecture.typing import typecheck
+from miniworld_engine.utils.typecheck import typecheck
 
 from miniworld.data.constants import EntityMapping, MoleculeType
 from miniworld.data.features import Batch

@@ -76,7 +76,7 @@ def pair_transpose(t):
 def install():
     """swap the rearrange used by the engine's TriAttn B200 integration (ending direction) for the fast transpose"""
     import einops
-    import miniworld_engine.integrations.triattn_b200 as TB
+    import miniworld_engine.kernels.integrations.triattn_b200 as TB
     orig = einops.rearrange
 
     def fast_rearrange(t, pattern, **kw):

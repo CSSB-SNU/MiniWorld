@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from miniworld_engine.architecture.diffusion import (
+from foldforge.diffusion import (
     DecoupledXPredScheduler,
     EDMScheduler,
     XPredDecoupledSolver,

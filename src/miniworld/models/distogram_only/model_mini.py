@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
-from miniworld_engine.architecture.primitives import (
-    LayerNorm,
-    Linear,
-)
 from pydantic import BaseModel
 from torch import nn
 
 from miniworld.configs import SharedConfig
+from miniworld.layers.primitives import (
+    LayerNorm,
+    Linear,
+)
 from miniworld.modules import DiffusionTransformer
 from miniworld.modules.heads import DistogramHead
 from miniworld.modules.input_embedder import InputFeatureEmbedder

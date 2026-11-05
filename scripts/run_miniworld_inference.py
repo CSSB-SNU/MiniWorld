@@ -20,7 +20,7 @@ import numpy as np
 import torch
 from hydra import compose, initialize_config_dir
 from lightning import Fabric
-from miniworld_engine.architecture.diffusion.decoupled_xpred import (
+from foldforge.diffusion.decoupled_xpred import (
     DecoupledXPredScheduler,
 )
 from omegaconf import OmegaConf

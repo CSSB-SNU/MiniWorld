@@ -36,10 +36,10 @@ from miniworld.inference.cache import (
 from miniworld.inference.solver import sample_trajectory
 
 if TYPE_CHECKING:
-    from miniworld_engine.architecture.diffusion.decoupled_xpred.scheduler import (
+    from foldforge.diffusion.decoupled_xpred.scheduler import (
         DecoupledXPredScheduler,
     )
-    from miniworld_engine.architecture.diffusion.decoupled_xpred.solver import (
+    from foldforge.diffusion.decoupled_xpred.solver import (
         XPredDecoupledSolver,
     )
 
@@ -130,7 +130,7 @@ class Predictor:
         num_steps: int,
         start_sigma_y: float | None,
     ) -> StepSchedule:
-        from miniworld_engine.architecture.diffusion.decoupled_xpred.solver import (
+        from foldforge.diffusion.decoupled_xpred.solver import (
             XPredDecoupledSolver,
         )
 

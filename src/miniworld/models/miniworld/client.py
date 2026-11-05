@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 import torch
-from jaxtyping import Bool, Float, Int
-from lightning.fabric.wrappers import _FabricDataLoader
-from miniworld_engine.architecture.diffusion import (
+from foldforge.diffusion import (
     DecoupledXPredScheduler,
     XPredDecoupledDiffuser,
     XPredDecoupledSolver,
 )
-from miniworld_engine.architecture.typing import typecheck
+from jaxtyping import Bool, Float, Int
+from lightning.fabric.wrappers import _FabricDataLoader
+from miniworld_engine.utils.typecheck import typecheck
 from pydantic import BaseModel
 from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader
@@ -741,7 +741,7 @@ class Client(BaseClient):
         ``(n_samples, L, 3)`` and each trajectory is ``(n_samples, T, L, 3)``.
 
         ``init_x0`` / ``start_sigma_y``: flexible-docking warm start; see
-        :meth:`miniworld_engine.architecture.diffusion.decoupled_xpred.solver.XPredDecoupledSolver.sample`.
+        :meth:`foldforge.diffusion.decoupled_xpred.solver.XPredDecoupledSolver.sample`.
         """
         if n_samples < 1:
             msg = f"n_samples must be >= 1, got {n_samples}."

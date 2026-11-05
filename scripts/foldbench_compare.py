@@ -144,6 +144,10 @@ def category_metrics(rows: list[dict], cat: str) -> dict[str, float | None]:
     }
 
 
+# The paper CSVs name the method only "Protenix" (no version); labelled v0.2 by user choice.
+DISPLAY_NAME = {"Protenix": "Protenix v0.2"}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -202,7 +206,7 @@ def main() -> None:
             if key_of(r, cat) in keys:
                 by_model[r["model"]].append(r)
         for model in sorted(by_model):
-            cols[model] = category_metrics(by_model[model], cat)
+            cols[DISPLAY_NAME.get(model, model)] = category_metrics(by_model[model], cat)
 
         n_t = len({k[0] for k in keys})
         lines.append(f"\n{cat}  —  {len(keys)} interfaces over {n_t} targets")
@@ -212,20 +216,20 @@ def main() -> None:
                 "DockQv2 here, so this column is not strictly comparable"
             )
         metrics = list(cols["ours@1"])
-        head = "  " + "metric".ljust(26) + "".join(c.rjust(12) for c in cols)
+        head = "  " + "metric".ljust(26) + "".join(c.rjust(14) for c in cols)
         lines.append(head)
         lines.append("  " + "-" * (len(head) - 2))
         for m in metrics:
             row = "  " + m.ljust(26)
             for c in cols:
                 v = cols[c].get(m)
-                row += ("n/a" if v is None else f"{v:.2f}").rjust(12)
+                row += ("n/a" if v is None else f"{v:.2f}").rjust(14)
             lines.append(row)
         # paper coverage warning: a method missing rows for some interfaces
         for model, rs in by_model.items():
             if len({key_of(r, cat) for r in rs}) != len(keys):
                 lines.append(
-                    f"    note: {model} covers "
+                    f"    note: {DISPLAY_NAME.get(model, model)} covers "
                     f"{len({key_of(r, cat) for r in rs})}/{len(keys)} interfaces"
                 )
 

@@ -15,11 +15,11 @@ un-fuse the residual and lose the speed win).
 """
 
 import torch
-from jaxtyping import Bool, Float
-from miniworld_engine.architecture.exceptions import (
+from foldforge.layers.implementation import (
     ImplementationType,
     InvalidImplementationError,
 )
+from jaxtyping import Bool, Float
 from miniworld_engine.modules import (
     AttentionPairBias,
     BidirectionalTriangleMultiplication,

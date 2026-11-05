@@ -1,6 +1,11 @@
-"""PyTorch modules for MiniWorld; the blocks and layers live in miniworld_engine.architecture."""
+"""PyTorch modules for MiniWorld; the blocks and layers live in miniworld.blocks and miniworld.layers (the Pairformer in foldforge.blocks)."""
 
-from miniworld_engine.architecture.blocks import (
+from foldforge.layers.implementation import (
+    ImplementationType,
+    InvalidImplementationError,
+)
+
+from miniworld.blocks import (
     DiffusionTransformer,
     DiffusionTransformerBlock,
     MSAModule,
@@ -12,11 +17,7 @@ from miniworld_engine.architecture.blocks import (
     TemplatePairformer,
     TemplatePairformerBlock,
 )
-from miniworld_engine.architecture.exceptions import (
-    ImplementationType,
-    InvalidImplementationError,
-)
-from miniworld_engine.architecture.primitives import Dropout, Linear
+from miniworld.layers.primitives import Dropout, Linear
 
 __all__ = [
     "DiffusionTransformer",

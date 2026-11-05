@@ -22,7 +22,7 @@ def check_installation(package, version, direct_url, expected_commit):
             f"engine revision mismatch: {actual}; expected {expected_commit}"
         )
     required = (
-        "ops/__init__.py",
+        "modules/__init__.py",  # engine >= 2.4.2 has no `ops` package
         "kernels/transition/cuda/fused_sm90a.py",
         "kernels/layernorm/dispatch.py",
         "kernels/triangle_attention/cuda/ln_backward.py",

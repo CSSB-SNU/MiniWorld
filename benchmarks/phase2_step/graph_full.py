@@ -65,7 +65,7 @@ def rel(a_, b_):
 
 
 def selfcheck(device):
-    from miniworld_engine.architecture.utils.align import weighted_align
+    from foldforge.diffusion.geometry.alignment import weighted_align
 
     g = torch.Generator(device=device)
     g.manual_seed(7)

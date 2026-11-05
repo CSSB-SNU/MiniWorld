@@ -1,6 +1,6 @@
 """``BiasOnlyTokenDiT`` -- the v2.0.0 token DiT: attention logits are the pair bias alone.
 
-The v1 token DiT (``miniworld_engine.architecture.blocks.DiffusionTransformer`` over the engine's
+The v1 token DiT (``miniworld.blocks.DiffusionTransformer`` over the engine's
 ``AugmentedAttentionPairBias``) computes ``softmax(q k^T / sqrt(d) + bias(pair)) v`` in every
 block, for every augmentation: 24 blocks x 48 augments of [L, L] logits, two QK GEMMs per
 block, QK-norm on top. In the phase-2 profile that is 74-76% of the diffusion step
@@ -47,14 +47,13 @@ from __future__ import annotations
 
 import torch
 import torch.nn.functional as F
+from foldforge.layers.implementation import ImplementationType, to_engine_impl
 from jaxtyping import Bool, Float
-from miniworld_engine.architecture.blocks._engine_impl import to_engine_impl
-from miniworld_engine.architecture.exceptions import ImplementationType
-from miniworld_engine.architecture.typing import typecheck
 from miniworld_engine.modules import AdaptiveLayerNorm, ConditionedTransition
 from miniworld_engine.modules.bias_only_dit import BiasOnlyDiTBlock
 from miniworld_engine.modules.functional import sigmoid_gate
 from miniworld_engine.modules.primitives import LayerNorm, Linear
+from miniworld_engine.utils.typecheck import typecheck
 from pydantic import BaseModel
 from torch import nn
 from torch.utils.checkpoint import checkpoint_sequential
@@ -214,7 +213,7 @@ class BiasOnlyTokenDiT(nn.Module):
         pair: Float[torch.Tensor, "B L L d_pair"],
         mask: Bool[torch.Tensor, "B L"] | Bool[torch.Tensor, "A B L"] | None = None,
     ) -> Float[torch.Tensor, "A B L d_single"]:
-        """Same call signature as ``miniworld_engine.architecture.blocks.DiffusionTransformer`` (drop-in in ``DiffusionModule``)."""
+        """Same call signature as ``miniworld.blocks.DiffusionTransformer`` (drop-in in ``DiffusionModule``)."""
         if mask is not None and mask.ndim == 3:
             mask = mask[0]  # augment-invariant key mask
         if self.config.hoist_pair_bias and torch.is_grad_enabled():

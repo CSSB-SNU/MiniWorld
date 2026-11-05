@@ -43,11 +43,11 @@ def configure_fused_msa_train(enabled: bool) -> None:
 def align_engine_optimizer_state(optimizer) -> int:
     """Adapt restored Adam moments to Engine 2 parameter strides, once on resume."""
     try:
-        from miniworld_engine.integrations.optimizer import align_optimizer_state_layout_
+        from miniworld_engine.utils.optimizer import align_optimizer_state_layout_
     except ModuleNotFoundError as exc:
         if exc.name in {
-            "miniworld_engine.integrations",
-            "miniworld_engine.integrations.optimizer",
+            "miniworld_engine.utils",
+            "miniworld_engine.utils.optimizer",
         }:
             return 0  # Older engines do not change the parameter layout.
         raise
@@ -66,6 +66,6 @@ def apply_run_options(options) -> None:
 
         settings.configure(**options.engine_settings)
     if options.adaln_fwd:
-        from miniworld_engine.kernels.adaln.triton import training
+        from miniworld_engine.modules import runtime
 
-        training.set_forward_mode(options.adaln_fwd)
+        runtime.set_adaln_forward_mode(options.adaln_fwd)

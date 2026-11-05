@@ -1,9 +1,7 @@
 import torch
 from einops import rearrange
 from jaxtyping import Bool, Float, Int
-from miniworld_engine.architecture.layers import RelativePositionEmbedding
-from miniworld_engine.architecture.primitives import Linear
-from miniworld_engine.architecture.typing import typecheck
+from miniworld_engine.utils.typecheck import typecheck
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
@@ -13,6 +11,8 @@ from miniworld.data.features.features import (
     SchemeFeatures,
     StructureFeatures,
 )
+from miniworld.layers import RelativePositionEmbedding
+from miniworld.layers.primitives import Linear
 from miniworld.modules import DiffusionTransformer
 
 
@@ -374,7 +374,10 @@ class InputFeatureEmbedder(nn.Module):
         if not settings.current().token_pair_init_fused or not token_left.is_cuda:
             return None
         try:
-            from miniworld_engine.kernels.token_pair_init import refusal, token_pair_init
+            from miniworld_engine.kernels.token_pair_init import (
+                refusal,
+                token_pair_init,
+            )
         except ImportError:  # an engine that predates the op: the unfused ops below run
             return None
 

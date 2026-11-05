@@ -9,9 +9,10 @@ pair tensor is not materialized.
 from __future__ import annotations
 
 import torch
+from foldforge.layers.implementation import to_engine_impl
 from jaxtyping import Bool, Float, Int
-from miniworld_engine.architecture.typing import typecheck
 from miniworld_engine.modules import InputFeatureEmbedder as EngineInputFeatureEmbedder
+from miniworld_engine.utils.typecheck import typecheck
 
 from miniworld.configs import SharedConfig
 from miniworld.configs.models import AtomSWAConfig
@@ -52,7 +53,7 @@ class ESMFold2InputAtomAttentionEncoder(EngineInputFeatureEmbedder):
             uid_rope_base_frequency=atom_swa_config.uid_rope_base_frequency,
             features=atom_swa_config.input_features,
             token_pool=atom_swa_config.input_token_pool,
-            implementation=diffusion_config.implementation,
+            implementation=to_engine_impl(diffusion_config.implementation),
         )
         self.d_single_token = shared_config.d_single
         self.atom_swa_config = atom_swa_config

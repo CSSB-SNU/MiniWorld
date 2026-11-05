@@ -22,13 +22,14 @@ from __future__ import annotations
 
 import torch
 import torch.nn.functional as F
+from foldforge.diffusion import EDMScheduler
 from jaxtyping import Bool, Float, Int
-from miniworld_engine.architecture.diffusion import EDMScheduler
-from miniworld_engine.architecture.layers.embeddings import fourier_embedding
-from miniworld_engine.architecture.primitives import Linear
-from miniworld_engine.architecture.typing import typecheck
+from miniworld_engine.utils.typecheck import typecheck
 from pydantic import BaseModel, Field, model_validator
 from torch import nn
+
+from miniworld.layers.embeddings import fourier_embedding
+from miniworld.layers.primitives import Linear
 
 
 class DistogramDiffusionConfig(BaseModel):

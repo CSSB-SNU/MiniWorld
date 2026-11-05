@@ -1,7 +1,7 @@
 """v2.0.0 BiasOnlyTokenDiT: per-block pattern, masking, gradients, checkpoint parity, wiring."""
 
 import torch
-from miniworld_engine.architecture.exceptions import ImplementationType
+from foldforge.layers.implementation import ImplementationType
 
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
 
@@ -148,7 +148,7 @@ def test_v200_configs_compose_and_select_bias_only():
 
 def test_the_block_is_the_engine_block_and_keeps_its_keys():
     """The engine's BiasOnlyDiTBlock (its B200 paths) with the same parameter names as before."""
-    from miniworld_engine.integrations import bias_only_dit_train
+    from miniworld_engine.kernels.integrations import bias_only_dit_train
     from miniworld_engine.modules.bias_only_dit import BiasOnlyDiTBlock
 
     dit = _dit()

@@ -26,11 +26,11 @@ team-gm no longer exists as a dependency. MiniWorld and miniworld-engine are the
 |---|---|
 | `core.client`, `core.batch` | `miniworld.training.client`, `miniworld.training.batch` |
 | `core.callbacks` (incl. `ModelEMA`) | `miniworld.training.callbacks` |
-| `diffusion` (base, edm, decoupled_xpred, augmentation) | `miniworld_engine.architecture.diffusion` |
-| `modules.blocks`, `modules.layers`, `modules.primitives`, `modules.exceptions`, `modules.tensor_layout` | `miniworld_engine.architecture.{blocks,layers,primitives,exceptions,tensor_layout}` |
-| `utils.se3`, `utils.align`, `utils.transform` | `miniworld_engine.architecture.utils.*` |
+| `diffusion` (base, edm, decoupled_xpred, augmentation) | `foldforge.diffusion` |
+| `modules.blocks`, `modules.layers`, `modules.primitives`, `modules.exceptions`, `modules.tensor_layout` | `miniworld.blocks` (Pairformer: `foldforge.blocks`), `miniworld.layers`, `miniworld.layers.primitives`, `foldforge.layers.implementation`, `foldforge.diffusion.tensor_layout` |
+| `utils.se3`, `utils.align`, `utils.transform` | `foldforge.diffusion.geometry.{alignment,se3,kabsch}` |
 | `utils.script_utils` | `miniworld.utils.script_utils` |
-| `typing.typecheck` | `miniworld_engine.architecture.typing` |
+| `typing.typecheck` | `miniworld_engine.utils.typecheck` |
 
 Parameter names are unchanged, so checkpoints written by team-gm-based versions load as before. Documents below that
 link into `libs/team-gm/...` describe the code as it was when they were written.

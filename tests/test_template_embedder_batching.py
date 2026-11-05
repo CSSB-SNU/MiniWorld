@@ -5,8 +5,6 @@ per-template loop / the four projections up to bf16 rounding. fp32 keeps the ori
 tensor cores under the "medium" matmul precision the training scripts set, the misaligned original ones do not.
 """
 
-import sys
-import types
 
 import pytest
 import torch
@@ -20,26 +18,19 @@ native = pytest.mark.skipif(
     reason="B200 (sm_100) or H100 (sm_90)",
 )
 
-CARDS = [((10, 0), "trimul_b200", 8), ((9, 0), "trimul_h100", 48)]
+
+def test_the_limit_is_what_the_engine_states(monkeypatch):
+    from miniworld_engine.modules import runtime
+
+    monkeypatch.setattr(runtime, "trimul_batch_limit", lambda capability: 7 if capability == (10, 0) else 1)
+    assert te._engine_batch_limit((10, 0)) == 7
 
 
-def _engine_with(monkeypatch, module="trimul_b200", **attrs):
-    stub = types.ModuleType(f"miniworld_engine.integrations.{module}")
-    for name, value in attrs.items():
-        setattr(stub, name, value)
-    monkeypatch.setitem(sys.modules, stub.__name__, stub)
+def test_an_h100_folds_any_number_of_templates_a_b200_its_batched_bound():
+    from miniworld_engine.kernels.integrations.trimul_b200 import MAX_BATCH
 
-
-@pytest.mark.parametrize(("capability", "module", "limit"), CARDS)
-def test_an_engine_without_batched_samples_has_a_limit_of_one(monkeypatch, capability, module, limit):
-    _engine_with(monkeypatch, module)  # the module exists, ``MAX_BATCH`` does not: the import raises ImportError
-    assert te._engine_batch_limit(capability) == 1
-
-
-@pytest.mark.parametrize(("capability", "module", "limit"), CARDS)
-def test_the_limit_is_what_the_engine_states(monkeypatch, capability, module, limit):
-    _engine_with(monkeypatch, module, MAX_BATCH=limit)
-    assert te._engine_batch_limit(capability) == limit
+    assert te._engine_batch_limit((9, 0)) > 48              # the H100 module splits the call into launches itself
+    assert te._engine_batch_limit((10, 0)) == MAX_BATCH
 
 
 def test_another_card_takes_one_sample():

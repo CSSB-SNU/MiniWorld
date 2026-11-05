@@ -5,10 +5,7 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import torch
-from miniworld_engine.architecture.blocks._engine_impl import to_engine_impl
-from miniworld_engine.architecture.primitives import (
-    Linear,
-)
+from foldforge.layers.implementation import to_engine_impl
 from miniworld_engine.modules import LayerNorm
 from pydantic import BaseModel
 from torch import nn
@@ -16,6 +13,9 @@ from torch import nn
 from miniworld.configs import SharedConfig
 from miniworld.configs.models import AtomSWAConfig
 from miniworld.data.features import MSAFeatures
+from miniworld.layers.primitives import (
+    Linear,
+)
 from miniworld.loss.auxiliary import atom_distogram_target
 from miniworld.modules import DiffusionTransformer
 from miniworld.modules.distogram_diffusion import (

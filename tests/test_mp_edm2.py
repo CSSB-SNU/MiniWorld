@@ -1,8 +1,9 @@
 """Smoke + numeric tests for EDM2 magnitude-preservation building blocks.
 
 Covers: magnitude_normalize / MPLinear (forced weight norm), mp_sum
-(variance preservation), apply_pairwise_rotation (norm preservation),
-AdaptiveLayerNorm rotation modulation and the MP pair-bias projection. The
+(variance preservation), apply_pairwise_rotation (norm preservation). The MiniWorld
+AdaptiveLayerNorm / AugmentedAttentionPairBias forks (rotation modulation, MP pair-bias projection) were removed
+(no live config set them; the model uses the engine modules), and so were their tests. The
 DiffusionTransformer MP/rotation options were removed (engine architecture package)
 (2026-08-03), so the block-level MP tests went with them.
 """
@@ -10,13 +11,13 @@ DiffusionTransformer MP/rotation options were removed (engine architecture packa
 import math
 
 import torch
-from miniworld_engine.architecture.layers.adaln import AdaptiveLayerNorm
-from miniworld_engine.architecture.layers.ops import (
+
+from miniworld.layers.functional import (
     apply_pairwise_rotation,
     mp_sum,
     mp_swish_gate,
 )
-from miniworld_engine.architecture.primitives import (
+from miniworld.layers.primitives import (
     Linear,
     MPLinear,
     convert_linears_to_mp,
@@ -78,34 +79,6 @@ def test_rotation_preserves_norm():
         torch.linalg.vector_norm(x, dim=-1),
         torch.linalg.vector_norm(y, dim=-1),
         atol=1e-5,
-    )
-
-
-def test_adaln_rotation_identity_at_init():
-    # to_angle is zero-init -> rotation is identity at init, so output equals
-    # the scaled (no-shift) path.
-    torch.manual_seed(0)
-    ln = AdaptiveLayerNorm(d_hidden=8, d_cond=6, use_rotation=True)
-    ln.eval()
-    x = torch.randn(3, 8)
-    cond = torch.randn(3, 6)
-    out = ln(x, cond)
-    scaled = torch.sigmoid(ln.to_scale(ln.ln_cond(cond))) * ln.ln_in(x)
-    assert torch.allclose(out, scaled, atol=1e-5)
-
-
-def test_pair_bias_projection_is_mp_under_flag():
-    from miniworld_engine.architecture.layers.augmented_attention import (
-        AugmentedAttentionPairBias,
-    )
-
-    plain = AugmentedAttentionPairBias(16, 8, 4, 2, magnitude_preserving=False)
-    assert not isinstance(plain.to_bias, MPLinear)  # original zero-init Linear
-    mp = AugmentedAttentionPairBias(16, 8, 4, 2, magnitude_preserving=True)
-    assert isinstance(mp.to_bias, MPLinear)  # pair-bias projection now forced-WN
-    rows = torch.linalg.vector_norm(mp.to_bias.weight, dim=1)
-    assert torch.allclose(
-        rows, torch.full_like(rows, math.sqrt(mp.to_bias.in_features)), atol=5e-2
     )
 
 

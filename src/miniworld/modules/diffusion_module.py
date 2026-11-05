@@ -1,31 +1,29 @@
 import torch
+from foldforge.layers.implementation import to_engine_impl
 from jaxtyping import Bool, Float, Int
-from miniworld_engine.architecture.blocks._engine_impl import to_engine_impl
-from miniworld_engine.architecture.blocks.rope_swa_af3_transformer import (
-    RoPESWAAF3Transformer,
-)
-from miniworld_engine.architecture.layers import (
-    RelativePositionEmbedding,
-    fourier_embedding,
-)
-from miniworld_engine.architecture.primitives import (
-    Linear,
-)
-from miniworld_engine.architecture.typing import typecheck
 from miniworld_engine.modules import LayerNorm, Transition
-from miniworld_engine.modules.swa_atom_attention.module import (
-    build_attention_params,
-    build_local_structure_neighbor_indices,
-)
+from miniworld_engine.modules.swa_atom_attention.module import build_attention_params
+from miniworld_engine.utils.typecheck import typecheck
 from pydantic import BaseModel
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
+from miniworld.blocks.rope_swa_af3_transformer import (
+    RoPESWAAF3Transformer,
+)
+from miniworld.blocks.swa_neighbors import build_local_structure_neighbor_indices
 from miniworld.configs import SharedConfig
 from miniworld.data.features import (
     ReferenceFeatures,
     SchemeFeatures,
     StructureFeatures,
+)
+from miniworld.layers import (
+    RelativePositionEmbedding,
+    fourier_embedding,
+)
+from miniworld.layers.primitives import (
+    Linear,
 )
 from miniworld.modules import DiffusionTransformer, SWAAtomTransformer
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT
