@@ -104,6 +104,12 @@ class MiniSWAModel(nn.Module):
         # bin-index image (replacing the DistogramHead + CE). Set n_recycle_max=1 to
         # make the trunk a single conditioning pass (diffusion does the refinement).
         diffusion: DistogramDiffusionConfig | None = None
+        # The residue-type one-hot (AF3 f_restype = one-hot of ``sequence.token_type``) reaches ONLY the MSA module: the input
+        # embedder's pair init (and, in phase 2, the diffusion conditioning; see ``conditioning_single``) read the input single
+        # with those channels zeroed, while the MSA module's single projection and its one-hot MSA rows (query row included)
+        # keep them. The parameters are the ones of False (the zeroed channels' weights get no gradient), so a run with the
+        # same seed starts from the same weights. The MSA profile and the atom read-out still carry residue identity.
+        restype_msa_only: bool = False
 
     class Config(BaseModel):
         """Configuration for the SWA-embedder mini distogram-only model."""
@@ -465,17 +471,39 @@ class MiniSWAModel(nn.Module):
             sequence,
             num_res_class=self.config.shared.num_res_class,
         )
+        restype_msa_only = self.config.trunk.restype_msa_only
+        embedder_single_msa = (
+            init_token_single_msa(
+                msa,
+                sequence,
+                num_res_class=self.config.shared.num_res_class,
+                include_restype=False,
+            )
+            if restype_msa_only
+            else token_single_msa
+        )
         # input feature embedding — token_single_init is None (single-track off)
         (
             token_single_input,
             _,
             token_pair_init,
         ) = self.input_feature_embedder(
-            token_single_msa,
+            embedder_single_msa,
             reference,
             scheme,
             structure,
         )
+        if restype_msa_only:
+            # The returned single feeds the MSA module: the same atom read-out (it never sees these features) with f_restype
+            # back in, i.e. exactly the single of restype_msa_only=False. Only the pair init above went without it.
+            d_atom = token_single_input.shape[-1] - token_single_msa.shape[-1]
+            token_single_input = torch.cat(
+                [
+                    token_single_input[..., :d_atom],
+                    token_single_msa.to(token_single_input.dtype),
+                ],
+                dim=-1,
+            )
         if self.config.trunk.msa_subsample_per_recycle is None:
             # legacy: embed the whole pool once, every recycle reuses it
             msa_feat, msa_mask = init_msa(
@@ -493,6 +521,32 @@ class MiniSWAModel(nn.Module):
             msa_feat,
             msa_mask,
             structure.token_mask,
+        )
+
+    def conditioning_single(self, token_single_input: torch.Tensor) -> torch.Tensor:
+        """The input single for every consumer but the MSA module (phase 2: the diffusion conditioning).
+
+        ``_embed`` returns the MSA module's single. With ``trunk.restype_msa_only`` the f_restype channels -- right after the
+        atom read-out (``shared.d_single`` wide), as the input embedder concatenates ``init_token_single_msa`` -- are zeroed
+        here; otherwise the tensor comes back unchanged.
+        """
+        if not self.config.trunk.restype_msa_only:
+            return token_single_input
+        start = self.config.shared.d_single
+        stop = start + self.config.shared.num_res_class
+        if token_single_input.shape[-1] != self.config.shared.d_single_token_input:
+            msg = (
+                f"input single is {token_single_input.shape[-1]} wide, expected shared.d_single_token_input="
+                f"{self.config.shared.d_single_token_input}"
+            )
+            raise ValueError(msg)
+        return torch.cat(
+            [
+                token_single_input[..., :start],
+                torch.zeros_like(token_single_input[..., start:stop]),
+                token_single_input[..., stop:],
+            ],
+            dim=-1,
         )
 
     def _msa_for_step(self, msa_feat, msa_mask):

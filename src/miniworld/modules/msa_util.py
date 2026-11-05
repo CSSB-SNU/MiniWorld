@@ -129,13 +129,20 @@ def init_token_single_msa(
     sequence: SequenceFeatures,
     num_res_class: int = 32,
     dtype: torch.dtype = torch.float32,
+    *,
+    include_restype: bool = True,
 ) -> Float[torch.Tensor, "B L_token d_single_token_init"]:
-    """Initialize token single features with token embedding."""
+    """Token input features ``[restype one-hot, MSA profile, deletion mean]`` (AF3 f_restype, f_profile, f_deletion_mean).
+
+    ``include_restype=False`` keeps the layout and zeroes the restype one-hot (``MiniSWAModel.TrunkConfig.restype_msa_only``).
+    """
     device = msa.aligned_sequences.device
     token_type = torch.nn.functional.one_hot(
         sequence.token_type.long(),
         num_classes=num_res_class,
     ).to(device, dtype=dtype)
+    if not include_restype:
+        token_type = torch.zeros_like(token_type)
 
     return torch.concat(
         [

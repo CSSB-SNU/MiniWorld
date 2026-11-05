@@ -314,6 +314,8 @@ class DiffusionModel(MiniSWAModel):
                     scheme.token_asym_id,
                     template,
                 )
+        # trunk.restype_msa_only: the MSA module above read f_restype, the diffusion conditioning does not (no-op otherwise)
+        token_single_input_bf16 = self.conditioning_single(token_single_input_bf16)
         return (
             token_single_input_bf16.to(self.dit_dtype),
             token_pair.to(self.dit_dtype),
