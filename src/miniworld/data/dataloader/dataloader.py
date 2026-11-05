@@ -99,6 +99,36 @@ def _catalog_fingerprint(db_config: object, sampler_config: object) -> str:
     return hashlib.sha256(blob.encode()).hexdigest()
 
 
+# A catalog whose weights do NOT depend on the sampler (``weight_kind == "bucket_unit"``): every row carries its sampler bucket
+# (``bucket``, an index into the schema's ``bucket_names``) and a UNIT weight, ``1 / (clusters of its bucket x rows of its cluster)``
+# for a pdb row and ``1 / rows of its cluster`` for the other sources, i.e. the ``raw`` weight divided by the sampler weight of the
+# bucket. The sampler weights are multiplied in on every load, so changing ``sampler.antibody_protein`` needs no new catalog.
+CATALOG_BUCKET_UNIT = "bucket_unit"
+CATALOG_NO_BUCKET = "-"  # bucket name of the rows whose weight does not use a sampler weight (the distillation sources)
+
+
+def _catalog_fingerprint_unit(db_config: object) -> str:
+    """Fingerprint of a sampler-independent catalog: the DB config only (same exclusions as ``_catalog_fingerprint``)."""
+    import hashlib
+    import json
+
+    dumped = db_config.model_dump(mode="json") if hasattr(db_config, "model_dump") else db_config
+    db = dict(dumped) if isinstance(dumped, dict) else {}
+    for k in ("source_weights", "default_source_weight", "catalog_cache_path", "antibody_seq_id_path"):
+        db.pop(k, None)
+    blob = json.dumps({"db": db, "weight_kind": CATALOG_BUCKET_UNIT}, sort_keys=True, default=str)
+    return hashlib.sha256(blob.encode()).hexdigest()
+
+
+def _catalog_weight_kind(path: Path) -> str:
+    """``weight_kind`` of an Arrow catalog ("raw", "bucket_unit", or "" for a legacy file), read from the schema only."""
+    import pyarrow as pa
+
+    with pa.memory_map(str(path), "r") as source:
+        meta = pa.ipc.open_file(source).schema.metadata or {}
+    return (meta.get(b"weight_kind") or b"").decode()
+
+
 def _write_catalog_arrow(
     path: Path,
     items: list[DataRecord],
@@ -261,13 +291,19 @@ class _LazyArrowCatalog:
 
 def _load_catalog_arrow(
     path: Path,
+    sampler_config: object | None = None,
 ) -> tuple[_LazyArrowCatalog, np.ndarray, np.ndarray, bool]:
     """mmap an Arrow catalog. Returns (lazy items view, raw weights, per-item source, is_raw).
 
     ``is_raw`` is True when the cache stores RAW (pre-source_weights) weights — the current
     format. Legacy caches (no marker) stored source-balanced weights and MUST be rebuilt,
     else the config ``source_weights`` would be silently ignored on a cache hit.
+
+    A ``bucket_unit`` catalog (see ``CATALOG_BUCKET_UNIT``) stores sampler-independent unit weights plus a ``bucket`` column; the
+    raw weights returned are ``unit x sampler_config.<bucket>``, so ``sampler_config`` is required for it.
     """
+    import json
+
     import pyarrow as pa
 
     source = pa.memory_map(str(path), "r")
@@ -275,7 +311,19 @@ def _load_catalog_arrow(
     weights = table.column("weight").to_numpy(zero_copy_only=False)
     sources = table.column("source").to_numpy(zero_copy_only=False)
     meta = table.schema.metadata or {}
-    is_raw = meta.get(b"weight_kind") == b"raw"
+    kind = meta.get(b"weight_kind")
+    is_raw = kind == b"raw"
+    if kind == CATALOG_BUCKET_UNIT.encode():
+        if sampler_config is None:
+            msg = f"{path} is a bucket_unit catalog: its weights need the sampler config (sampler_config=...)"
+            raise ValueError(msg)
+        names = json.loads(meta[b"bucket_names"].decode())
+        lut = np.array(
+            [1.0 if n == CATALOG_NO_BUCKET else float(getattr(sampler_config, n)) for n in names],
+            dtype=np.float64,
+        )
+        weights = weights * lut[table.column("bucket").to_numpy(zero_copy_only=False)]
+        is_raw = True
     fingerprint = (meta.get(b"build_fingerprint") or b"").decode()
     return _LazyArrowCatalog(table, path=path), weights, sources, is_raw, fingerprint
 
@@ -390,17 +438,29 @@ class BioMolData(torch.utils.data.Dataset):
         # (re)applied AFTER load below, so a cache hit no longer silently ignores
         # source_weights. ``sources`` is the per-item source array (cheap, straight off the
         # Arrow ``source`` column on a hit; from the records on a miss).
-        expected_fp = _catalog_fingerprint(
+        build_fp = _catalog_fingerprint(
             self.config.DB_config,
             self.config.sampler_config,
-        )
+        )  # what a build here writes (the ``raw`` format: sampler weights baked in)
+        expected_fp = build_fp
         sources: Sequence[str] | None = None
         if cache is not None and Path(cache).exists():
+            # A sampler-independent catalog is keyed by the DB config only; a mismatch is an error, never a rebuild (a rebuild would
+            # overwrite the bucketed file with a ``raw`` one).
+            bucketed = _catalog_weight_kind(Path(cache)) == CATALOG_BUCKET_UNIT
+            if bucketed:
+                expected_fp = _catalog_fingerprint_unit(self.config.DB_config)
             # mmap the prebuilt Arrow catalog: instant, zero Python-object build,
             # shared across DDP ranks via the OS page cache.
             items, raw_weights, cache_sources, is_raw, fp = _load_catalog_arrow(
-                Path(cache)
+                Path(cache), self.config.sampler_config
             )
+            if bucketed and fp != expected_fp:
+                msg = (
+                    f"bucket_unit catalog {cache} was built for another DB config (fingerprint {fp[:12]}, this config {expected_fp[:12]}): "
+                    "rebuild it with scripts/build_catalog_bucketed.py"
+                )
+                raise RuntimeError(msg)
             if is_raw and fp == expected_fp:
                 self.items, self.weights, sources = items, raw_weights, cache_sources
                 logger.info(
@@ -455,7 +515,7 @@ class BioMolData(torch.utils.data.Dataset):
             sources = [r.source for r in self.items]
             if cache is not None:
                 # cache the RAW weights (+ marker + build fingerprint), NOT balanced ones
-                _write_catalog_arrow(Path(cache), self.items, self.weights, expected_fp)
+                _write_catalog_arrow(Path(cache), self.items, self.weights, build_fp)
                 logger.info(
                     "wrote catalog Arrow cache %s (%d items) — future inits mmap it",
                     cache,
