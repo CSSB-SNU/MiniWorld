@@ -1,0 +1,12 @@
+# v1.2.0 phase 2a, continued from the fp32-native run (same run_dir, same W&B run) with fp32 MASTER parameters + a bf16-autocast
+# forward (train.precision: bf16-mixed; engine h100/master-weights): bias-only token DiT, bf16 activations, fused atom DiT.
+# Resumes the run's last.pt (fp32 params, fp32 Adam moments, EMA, scheduler, epoch). H100: 1.9x the fp32-native micro-step.
+defaults:
+  - phase2a_diffusion_medium_v120
+  - _self_
+
+train:
+  comment: "v1.2.0-phase2a-diffusion-medium-bias-fp32-L384"
+  run_dir: "runs/v1.2.0/phase2a/medium_diffusion_bias_fp32_L384"
+  num_epoch: 200
+  precision: bf16-mixed
