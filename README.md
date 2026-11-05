@@ -10,6 +10,21 @@
 | `docs/` | Guides; `kernels/` kernel diagrams and status reports; `archive/` dated validation records ([index](docs/README.md)) |
 | `runs/` | Every run output: training runs, `logs/`, `outputs/`, `eval_results/`, `wandb/` (ignored by Git). The H100 kernel-experiment records that used to be tracked here are under the tag `archive/h100-kernel-experiments-20260927`; `scripts/restore_kernel_experiments.sh` extracts them |
 
+## Install
+
+MiniWorld imports `foldforge.diffusion`, `foldforge.blocks` and `foldforge.layers` from [FoldForge](https://github.com/SanggeunParrk/FoldForge), declared as
+path dependencies (`../FoldForge`, `../FoldForge/third_party/af3-data`). Clone the two repositories side by side:
+
+```bash
+git clone https://github.com/CSSB-SNU/MiniWorld.git
+git clone https://github.com/SanggeunParrk/FoldForge.git      # must sit next to MiniWorld/
+cd MiniWorld
+pixi install -e cu128 && pixi run -e cu128 engine-setup        # python 3.12, torch 2.13.0+cu129, miniworld-engine 2.4.4 from PyPI
+```
+
+Needs an NVIDIA GPU (H100 kernels ship in the engine wheel; B200 compiles on first use). The training database (BioMolDB) and the
+trained checkpoints are not part of either repository.
+
 ## Development
 
 MiniWorld depends on `miniworld-engine` directly; the training loop, EMA, diffusion, blocks and layers that used to live in
@@ -54,7 +69,7 @@ Add `train.engine_backend=triton` to pin training to the engine Triton paths.
 See [backend selection and scope](docs/triton-backend-option.md), and the
 [full-model CUDA graph training comparison](docs/miniworld-training-cudagraph-ab.md).
 
-miniworld-engine is a PyPI dependency pinned by version in [pyproject.toml](pyproject.toml) (`miniworld-engine==2.3.6`);
+miniworld-engine is a PyPI dependency pinned by version in [pyproject.toml](pyproject.toml) (`miniworld-engine==2.4.4`, python 3.12);
 there are no submodules. Install the Pixi environment and check the pinned package:
 
 ```bash
@@ -82,7 +97,7 @@ python scripts/prebuild_engine.py --jobs 8                # B200 node
 pixi run -e cu128 engine-prebuild --verify-only           # only check that nothing would compile
 ```
 
-The kernels built locally land in the environment's own cache (`~/.cache/miniworld_engine_jit/py310-<env hash>`). Shapes,
+The kernels built locally land in the environment's own cache (`~/.cache/miniworld_engine_jit/py312-<env hash>`). Shapes,
 timings and what is not covered: [docs/operations/engine-prebuild.md](docs/operations/engine-prebuild.md).
 
 MathDx and the other kernel prerequisites are listed in the
