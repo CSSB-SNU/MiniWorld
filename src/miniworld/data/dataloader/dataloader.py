@@ -613,7 +613,7 @@ class BioMolData(torch.utils.data.Dataset):
     # -- fetch / DDP loader -----------------------------------------------
 
     def __getitem__(self, idx: int) -> Batch:
-        """Get a data sample by index (retries on WrongCroppingError and on a record absent from its LMDB)."""
+        """Get a data sample by index (retries on WrongCroppingError, a record absent from its LMDB, or an unparsable coordinate)."""
         rng = np.random.default_rng()
         record = self.items[idx]
 
@@ -629,6 +629,15 @@ class BioMolData(torch.utils.data.Dataset):
                 if "not found in LMDB database" not in str(exc):
                     raise
                 logger.warning("record %s is not in its LMDB (%s); sampling another item", record.item_id, exc)
+                idx = int(rng.integers(0, len(self)))
+                record = self.items[idx]
+            except ValueError as exc:
+                # A record whose cif holds an empty coordinate field ("could not convert string to float: ''", the same record every
+                # restart of the same epoch) ended a run in epoch 14; draw another item and name the record.
+                # (psk6950's guard from his working tree, 2026-11-01; disordered_pdb:2yze:* records.)
+                if "could not convert string to float" not in str(exc):
+                    raise
+                logger.warning("record %s has an unparsable coordinate (%s); sampling another item", record.item_id, exc)
                 idx = int(rng.integers(0, len(self)))
                 record = self.items[idx]
 
