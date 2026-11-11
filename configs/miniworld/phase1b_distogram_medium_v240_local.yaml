@@ -1,0 +1,27 @@
+# MiniWorld v2.4.0 phase 1b, medium trunk (PF16 / MSA 4), L768 / 8192 atoms, H100 server, BioMolDB_20261014 on node-local NVMe.
+# Continues the v2.4.0 phase-1a full state (weights, EMA, Adam, scheduler, epoch counter; started from epoch=0600.pt of
+# runs/v2.4.0/phase1a/medium_distogram_L384_scratch) with the phase-1b crop (768 tokens / 8192 atoms, one 768 bucket) and per-block
+# activation checkpointing (v1.2.0 phase 1b). Model, data, sampler (antibody_protein 10, protein_rna 20) and loss are phase 1a v2.4.0's.
+# 4 GPUs x 1 sample x grad_accum 64 = 256. num_epoch 700: 100 more epochs after the epoch-600 state (the pipeline's 1b length, docs/pipeline.md).
+defaults:
+  - phase1a_distogram_medium_v240_local
+  - _self_
+
+model:
+  trunk:
+    msa_module:
+      n_checkpoint_segments: 4     # = n_block
+    pairformer:
+      n_checkpoint_segments: 16    # = n_block
+
+data:
+  crop:
+    max_tokens: 768
+    max_atoms: 8192
+
+train:
+  comment: "v2.4.0-phase1b-distogram-medium-L768-h100"
+  run_dir: "runs/v2.4.0/phase1b/medium_distogram_L768"
+  num_epoch: 700
+  bucket_token_multiple: 768
+  bucket_atom_multiple: 8192
