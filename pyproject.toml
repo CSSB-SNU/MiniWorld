@@ -105,10 +105,10 @@ miniworld = { path = ".", editable = true }
 miniworld-engine = "==2.4.4"
 # The diffusion processes (``foldforge.diffusion``), the Pairformer block (``foldforge.blocks``) and the backend names
 # (``foldforge.layers``) live in FoldForge since miniworld-engine 2.4.2 removed ``architecture``. MiniWorld imports only those
-# self-contained subpackages, never the rest of FoldForge. FoldForge requires python >=3.12 (so does this environment now) and its
+# self-contained subpackages, never the rest of FoldForge. FoldForge is a git submodule (libs/FoldForge, pinned to the commit MiniWorld runs with). It requires python >=3.12 (so does this environment now) and its
 # third_party ``foldforge-af3-data``, declared on the next line (FoldForge's own pixi table is not visible from here).
-foldforge = { path = "../FoldForge", editable = true }
-foldforge-af3-data = { path = "../FoldForge/third_party/af3-data" }
+foldforge = { path = "libs/FoldForge", editable = true }
+foldforge-af3-data = { path = "libs/FoldForge/third_party/af3-data" }
 
 [tool.pixi.dependencies]
 pytest = ">=8.3.5,<9"

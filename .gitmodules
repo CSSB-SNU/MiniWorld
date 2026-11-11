@@ -1,0 +1,3 @@
+[submodule "libs/FoldForge"]
+	path = libs/FoldForge
+	url = https://github.com/SanggeunParrk/FoldForge.git

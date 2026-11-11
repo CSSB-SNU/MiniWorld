@@ -36,7 +36,7 @@ for attempt in 1 2 3 4 5; do
     export WANDB_BASE_URL=https://api.forge.coreweave.com WANDB_ENTITY=team_gm WANDB_PROJECT=MiniWorld WANDB__SERVICE_WAIT=300
     export MW_SAMPLE_TIMING_DIR=/home/psk6950/MiniWorld-scratch/phase1a-v240/sample_timing_${SLURM_JOB_ID}; mkdir -p "$MW_SAMPLE_TIMING_DIR"
     export TRITON_CACHE_DIR="/tmp/triton_cache_${USER}_v240"; mkdir -p "$TRITON_CACHE_DIR"
-    export PYTHONPATH=/home/psk6950/MiniWorld/scripts:${PYTHONPATH:-}
+    export PYTHONPATH=/home/psk6950/MiniWorld/libs/FoldForge/src:/home/psk6950/MiniWorld/scripts:${PYTHONPATH:-}  # FoldForge submodule (libs/FoldForge); the old ~/FoldForge sibling moved to the engine 2.5.0 port
     if [ -n "$RESUME" ]; then export MW_WANDB_NEW_RUN=1; fi
     torchrun --standalone --nproc_per_node=4 scripts/run_miniworld_distogram_train.py train \
       --config configs/miniworld/phase1a_distogram_medium_v240_local.yaml \

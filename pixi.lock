@@ -262,8 +262,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.16.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026c-h151e31d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.8.3-pyhcf101f3_0.conda
-      - pypi: ../FoldForge
-      - pypi: ../FoldForge/third_party/af3-data
+      - pypi: libs/FoldForge
+      - pypi: libs/FoldForge/third_party/af3-data
       - pypi: ./
       - pypi: https://download-r2.pytorch.org/whl/cu129/torch-2.13.0%2Bcu129-cp312-cp312-manylinux_2_28_x86_64.whl
       - pypi: https://download-r2.pytorch.org/whl/triton-3.7.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
@@ -611,8 +611,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.15.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.6.0-pyhd8ed1ab_0.conda
-      - pypi: ../FoldForge
-      - pypi: ../FoldForge/third_party/af3-data
+      - pypi: libs/FoldForge
+      - pypi: libs/FoldForge/third_party/af3-data
       - pypi: ./
       - pypi: https://download-r2.pytorch.org/whl/cu130/torch-2.13.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl
       - pypi: https://download-r2.pytorch.org/whl/triton-3.7.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
@@ -5857,7 +5857,7 @@ packages:
   run_exports: {}
   size: 146490
   timestamp: 1788174996551
-- pypi: ../FoldForge
+- pypi: libs/FoldForge
   name: foldforge
   requires_dist:
   - torch==2.13.0
@@ -5890,7 +5890,7 @@ packages:
   - transformers==4.57.6 ; extra == 'language'
   - flash-attn==2.8.3.post1 ; extra == 'flash2'
   requires_python: '>=3.12,<3.13'
-- pypi: ../FoldForge/third_party/af3-data
+- pypi: libs/FoldForge/third_party/af3-data
   name: foldforge-af3-data
   requires_dist:
   - absl-py>=2,<3

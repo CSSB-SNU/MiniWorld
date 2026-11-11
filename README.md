@@ -12,12 +12,11 @@
 
 ## Install
 
-MiniWorld imports `foldforge.diffusion`, `foldforge.blocks` and `foldforge.layers` from [FoldForge](https://github.com/SanggeunParrk/FoldForge), declared as
-path dependencies (`../FoldForge`, `../FoldForge/third_party/af3-data`). Clone the two repositories side by side:
+MiniWorld imports `foldforge.diffusion`, `foldforge.blocks` and `foldforge.layers` from [FoldForge](https://github.com/SanggeunParrk/FoldForge), a git submodule at `libs/FoldForge`
+pinned to the commit MiniWorld runs with (path dependencies `libs/FoldForge` and `libs/FoldForge/third_party/af3-data`). Clone with the submodule:
 
 ```bash
-git clone https://github.com/CSSB-SNU/MiniWorld.git
-git clone https://github.com/SanggeunParrk/FoldForge.git      # must sit next to MiniWorld/
+git clone --recurse-submodules https://github.com/CSSB-SNU/MiniWorld.git
 cd MiniWorld
 pixi install -e cu128 && pixi run -e cu128 engine-setup        # python 3.12, torch 2.13.0+cu129, miniworld-engine 2.4.4 from PyPI
 ```
