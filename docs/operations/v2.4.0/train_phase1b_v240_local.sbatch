@@ -7,14 +7,15 @@
 #SBATCH --nodelist=node01
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:h100:4
-#SBATCH --cpus-per-task=140
-#SBATCH --mem=800G
+#SBATCH --cpus-per-task=40
+#SBATCH --mem=256G
 #SBATCH --time=8-00:00:00
 #SBATCH --output=/home/psk6950/MiniWorld-scratch/phase1b-v240/train_%j.out
 #SBATCH --error=/home/psk6950/MiniWorld-scratch/phase1b-v240/train_%j.out
 # MiniWorld v2.4.0 phase 1b (L768 / 8192 atoms), started from the phase-1a epoch-600 full state, in a NEW run directory
 # (--ckpt + train.resume_run_subdir = the new directory: the trainer loads weights / optimizer / scheduler / epoch from the checkpoint and
 # writes into the given directory; without resume_run_subdir it would continue the phase-1a run directory). A crash restarts from this run's last.pt.
+# Resources: the first run asked 140 CPUs / 800 GB and used ~14 cores on average (TotalCPU 7d11h over 12.5 h; data_wait ~30 ms of a 20 s step), so 40 CPUs / 256 GB / 8 loader workers per rank.
 set -uo pipefail
 mkdir -p /home/psk6950/MiniWorld-scratch/phase1b-v240
 cd /home/psk6950/MiniWorld
@@ -43,7 +44,7 @@ for attempt in 1 2 3 4 5; do
     torchrun --standalone --nproc_per_node=4 scripts/run_miniworld_distogram_train.py train \
       --config configs/miniworld/phase1b_distogram_medium_v240_local.yaml \
       --job-name v240-phase1b-medium-L768-local --ckpt "$CKPT" +train.resume_run_subdir="$RUN" \
-      train.run_dir="$ROOT" train.use_wandb=true train.num_workers=32 train.prefetch_factor=16
+      train.run_dir="$ROOT" train.use_wandb=true train.num_workers=8 train.prefetch_factor=4
   '
   rc=$?
   echo "==== attempt $attempt EXIT $rc ===="
