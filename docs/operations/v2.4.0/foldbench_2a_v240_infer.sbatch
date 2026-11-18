@@ -8,14 +8,14 @@
 #SBATCH --gres=gpu:h100:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
-#SBATCH --time=2-00:00:00
-#SBATCH --array=0-7
+#SBATCH --time=8-00:00:00
+#SBATCH --array=0-1
 #SBATCH --output=/home/psk6950/MiniWorld/runs/foldbench/v2.4.0-2a-from1b/fb_%A_%a.out
 #SBATCH --error=/home/psk6950/MiniWorld/runs/foldbench/v2.4.0-2a-from1b/fb_%A_%a.out
 # FoldBench inference of the v2.4.0 phase-2a model (frozen phase-1b trunk, epoch 700 EMA seed + EDM diffusion head), submitted with
 # --dependency=afterok:<2a training job>. FULL FoldBench (1,522 targets) x 5 seeds x 5 diffusion samples, 10 recycles, 200 steps (the AF3 /
 # Protenix protocol of docs/foldbench-evaluate), EMA weights, sequential sample path (--sample-batch corrupts the CUDA context, docs/known-issues.md).
-# 8 array tasks = 8 stride shards of the size-sorted index, 1 GPU each; finished targets are skipped, so a rerun of a task resumes.
+# 2 array tasks = 2 stride shards of the size-sorted index, 1 GPU each (2 GPUs total); finished targets are skipped, so a rerun of a task resumes.
 # Inputs: ~/data/foldbench_v240eval = original FoldBench + the fixed nucleic inputs. Scoring afterwards: scripts/slurm/phase2b/foldbench_score.sbatch.
 set -uo pipefail
 cd /home/psk6950/MiniWorld
@@ -37,7 +37,7 @@ CONDA_OVERRIDE_CUDA=12.8 CK="$CK" OUT="$OUT" pixi run --frozen -e cu128 bash -c 
     --index docs/operations/v2.4.0/foldbench_full_index.txt \
     --inputs-root /home/psk6950/data/foldbench_v240eval/inputs \
     --output-dir "$OUT" \
-    --shard $SLURM_ARRAY_TASK_ID --n-shards 8 \
+    --shard $SLURM_ARRAY_TASK_ID --n-shards 2 \
     --n-seeds 5 --n-samples 5 --num-recycles 10 --timesteps 200 --msa-subsample --use-ema'
 rc=$?
 echo "==== task $SLURM_ARRAY_TASK_ID EXIT $rc ===="
