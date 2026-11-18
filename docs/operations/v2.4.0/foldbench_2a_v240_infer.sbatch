@@ -20,9 +20,9 @@
 set -uo pipefail
 cd /home/psk6950/MiniWorld
 ROOT=/home/psk6950/MiniWorld/runs/v2.4.0/phase2a/medium_diffusion_L384_from1b
-OUT=/home/psk6950/MiniWorld/runs/foldbench/v2.4.0-2a-from1b
+OUT=${MW_OUT:-/home/psk6950/MiniWorld/runs/foldbench/v2.4.0-2a-from1b}
 mkdir -p "$OUT"
-CK=$(ls -t "$ROOT"/*/*/checkpoints/last.pt 2>/dev/null | head -1)
+CK=${MW_CKPT:-$(ls -t "$ROOT"/*/*/checkpoints/last.pt 2>/dev/null | head -1)}
 [ -f "$CK" ] || { echo "FATAL: no last.pt under $ROOT"; exit 1; }
 echo "=== FoldBench 2a | job ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID} node $SLURM_JOB_NODELIST | ckpt $CK"
 export LD_LIBRARY_PATH="$HOME/MiniWorld/.pixi/envs/cu128/lib:${LD_LIBRARY_PATH:-}"
