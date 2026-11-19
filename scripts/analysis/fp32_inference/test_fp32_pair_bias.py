@@ -10,6 +10,7 @@ REPO = Path(__file__).resolve().parents[3]
 sys.path[:0] = [str(REPO / "src")]
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT  # noqa: E402
 
+torch.set_float32_matmul_precision("medium")  # what the training scripts set: the fp32 projection runs on TF32 tensor cores
 torch.manual_seed(0)
 dev = "cuda"
 A, L, DS, DC, DP, H, NB = 6, 32, 64, 32, 128, 4, 3

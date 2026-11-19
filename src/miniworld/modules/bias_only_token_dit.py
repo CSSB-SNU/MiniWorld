@@ -209,25 +209,19 @@ class BiasOnlyTokenDiT(nn.Module):
 
     def _pair_biases_fp32(self, pair: torch.Tensor) -> list[torch.Tensor]:
         """Every block's attention logits [B, H, L, L] in fp32: ``to_bias(LN(pair))`` with the per-block LayerNorm weight folded into ``to_bias``
-        (``ln_pair`` has no offset), from ONE shared LayerNorm of the pair. Autocast is off and the projection runs in exact fp32: under bf16-mixed
+        (``ln_pair`` has no offset), from ONE shared LayerNorm of the pair. Autocast is off and the projection is an fp32 matmul: under bf16-mixed
         the Linear would return bf16, and the logits (1e3..2e5 here) would be rounded to a resolution of 32..1024 before the softmax."""
         dp = pair.shape[-1]
         eps = float(self.blocks[0].attention.ln_pair.eps)
-        try:
-            prev = torch.get_float32_matmul_precision()
-        except RuntimeError:  # legacy / new matmul-precision APIs mixed by another library: assume the training scripts' "medium"
-            prev = "medium"
-        torch.set_float32_matmul_precision("highest")  # the training script's "medium" would run this fp32 matmul on TF32
-        try:
-            with torch.autocast("cuda", enabled=False):
-                xhat = F.layer_norm(pair.float(), (dp,), eps=eps)  # [B, L, L, dp], shared by the blocks
-                out = []
-                for block in self.blocks:
-                    attn = block.attention
-                    w = attn.to_bias.weight.float() * attn.ln_pair.weight.float()  # [H, dp]
-                    out.append((xhat @ w.t()).permute(0, 3, 1, 2))  # [B, H, L, L]
-        finally:
-            torch.set_float32_matmul_precision(prev)
+        # An fp32 matmul at the process's float32 matmul precision (the training scripts' "medium": TF32 tensor cores, like the engine's own fp32 path,
+        # whose pair-bias projection is a single TF32 pass): the logit only has to be kept out of a bf16 output buffer.
+        with torch.autocast("cuda", enabled=False):
+            xhat = F.layer_norm(pair.float(), (dp,), eps=eps)  # [B, L, L, dp], shared by the blocks
+            out = []
+            for block in self.blocks:
+                attn = block.attention
+                w = attn.to_bias.weight.float() * attn.ln_pair.weight.float()  # [H, dp]
+                out.append((xhat @ w.t()).permute(0, 3, 1, 2))  # [B, H, L, L]
         return out
 
     @typecheck
