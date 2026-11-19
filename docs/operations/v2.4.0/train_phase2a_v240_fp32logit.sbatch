@@ -7,8 +7,8 @@
 #SBATCH --nodelist=node01
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:h100:4
-#SBATCH --cpus-per-task=32
-#SBATCH --mem=128G
+#SBATCH --cpus-per-task=64
+#SBATCH --mem=400G
 #SBATCH --time=8-00:00:00
 #SBATCH --output=/home/psk6950/MiniWorld-scratch/phase2a-v240-fp32logit/train_%j.out
 #SBATCH --error=/home/psk6950/MiniWorld-scratch/phase2a-v240-fp32logit/train_%j.out
@@ -42,7 +42,7 @@ for attempt in 1 2 3 4 5; do
     torchrun --standalone --nproc_per_node=4 scripts/run_miniworld_diffusion_train.py train \
       --config configs/miniworld/phase2a_diffusion_medium_v240_fp32logit.yaml \
       --job-name v240-phase2a-medium-L384-fp32logit $CK --no-ckpt-strict \
-      train.run_dir="$ROOT" train.use_wandb=true train.num_workers=6 train.prefetch_factor=8
+      train.run_dir="$ROOT" train.use_wandb=true train.num_workers=32 train.prefetch_factor=16
   '
   rc=$?
   echo "==== attempt $attempt EXIT $rc ===="
