@@ -147,6 +147,10 @@ class DiffusionTransformer(nn.Module):
         # BiasOnlyTokenDiT's switch (token_dit_kind: bias_only): every block's pair bias from one LayerNorm + one GEMM.
         # This stack no longer hoists (see the module docstring): True raises for it.
         hoist_pair_bias: bool = False
+        # BiasOnlyTokenDiT's switch (token_dit_kind: bias_only), under autograd (training) only: the attention logits to_bias(LN(pair)) are made in
+        # fp32 (one shared LayerNorm, one exact-fp32 projection per block) and handed to the blocks as ``bias=``. Under bf16-mixed they are
+        # bf16 Linear outputs with values of 1e3..2e5 (resolution 32..1024), which moves the softmax and breaks the peptide bonds.
+        fp32_pair_bias: bool = False
         # Precision the attention CORE runs in: "model" (the tensors' own), "bf16" or "fp32" -- the engine's compute_dtype,
         # which routes a bf16 core to its sm_90 kernels where they apply. "bf16_sm90" / "tdt" were removed.
         attention_core_dtype: str = "model"

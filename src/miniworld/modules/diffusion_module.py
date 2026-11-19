@@ -941,6 +941,7 @@ class DiffusionModule(nn.Module):
                     implementation=token_dit_config.implementation,
                     # DiffusionTransformer.Config field: every block's pair bias from one LayerNorm + GEMM
                     hoist_pair_bias=getattr(token_dit_config, "hoist_pair_bias", False),
+                    fp32_pair_bias=getattr(token_dit_config, "fp32_pair_bias", False),
                 )
             )
         else:

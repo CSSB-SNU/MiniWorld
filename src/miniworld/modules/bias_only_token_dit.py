@@ -188,6 +188,8 @@ class BiasOnlyTokenDiT(nn.Module):
         # All blocks' pair biases from one LayerNorm + one GEMM (the engine's ``pair_bias_all``), outside the
         # checkpointed blocks, under autograd only. Same parameters, same result to rounding.
         hoist_pair_bias: bool = False
+        # Under autograd only: every block's attention logits in fp32 (see ``_pair_biases_fp32``), passed to the blocks as ``bias=``.
+        fp32_pair_bias: bool = False
 
     def __init__(self, config: Config) -> None:
         super().__init__()
@@ -205,6 +207,29 @@ class BiasOnlyTokenDiT(nn.Module):
             ]
         )
 
+    def _pair_biases_fp32(self, pair: torch.Tensor) -> list[torch.Tensor]:
+        """Every block's attention logits [B, H, L, L] in fp32: ``to_bias(LN(pair))`` with the per-block LayerNorm weight folded into ``to_bias``
+        (``ln_pair`` has no offset), from ONE shared LayerNorm of the pair. Autocast is off and the projection runs in exact fp32: under bf16-mixed
+        the Linear would return bf16, and the logits (1e3..2e5 here) would be rounded to a resolution of 32..1024 before the softmax."""
+        dp = pair.shape[-1]
+        eps = float(self.blocks[0].attention.ln_pair.eps)
+        try:
+            prev = torch.get_float32_matmul_precision()
+        except RuntimeError:  # legacy / new matmul-precision APIs mixed by another library: assume the training scripts' "medium"
+            prev = "medium"
+        torch.set_float32_matmul_precision("highest")  # the training script's "medium" would run this fp32 matmul on TF32
+        try:
+            with torch.autocast("cuda", enabled=False):
+                xhat = F.layer_norm(pair.float(), (dp,), eps=eps)  # [B, L, L, dp], shared by the blocks
+                out = []
+                for block in self.blocks:
+                    attn = block.attention
+                    w = attn.to_bias.weight.float() * attn.ln_pair.weight.float()  # [H, dp]
+                    out.append((xhat @ w.t()).permute(0, 3, 1, 2))  # [B, H, L, L]
+        finally:
+            torch.set_float32_matmul_precision(prev)
+        return out
+
     @typecheck
     def forward(
         self,
@@ -216,7 +241,13 @@ class BiasOnlyTokenDiT(nn.Module):
         """Same call signature as ``miniworld.blocks.DiffusionTransformer`` (drop-in in ``DiffusionModule``)."""
         if mask is not None and mask.ndim == 3:
             mask = mask[0]  # augment-invariant key mask
-        if self.config.hoist_pair_bias and torch.is_grad_enabled():
+        if self.config.fp32_pair_bias and torch.is_grad_enabled():
+            biases = self._pair_biases_fp32(pair)
+            block_fns = [
+                (lambda s, block=b, bias=bb: block(s, cond, None, mask, bias=bias))
+                for b, bb in zip(self.blocks, biases, strict=True)
+            ]
+        elif self.config.hoist_pair_bias and torch.is_grad_enabled():
             # one LayerNorm + one GEMM for every block's bias, OUTSIDE the checkpointed segments (where ``DiffusionTransformer`` puts it)
             # imported here: only an engine with the hoist (89f5ab28 and later) has it; the default path keeps working
             # with older pinned engines

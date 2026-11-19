@@ -1,0 +1,17 @@
+# v2.4.0 phase 2a, medium trunk, L384 -- the same recipe as phase2a_diffusion_medium_v240 (frozen phase-1b epoch-700 EMA trunk seed, new EDM diffusion head, same data and
+# sampler) with ONE change: the attention logits of the bias-only token DiT, to_bias(LN(pair)), are made in fp32 in training (token_dit.fp32_pair_bias).
+# Why: under bf16-mixed they are bf16 Linear outputs; their values are 1e3..2e5 (resolution 32..1024), which moves the attention softmax and gives peptide C-N
+# bonds 0.1 A too long (40-50% of them off by > 0.1 A) and a halved FoldBench lDDT on targets with the right fold (docs: see the v2.4.0 2a bf16 pair-bias finding).
+# The epoch-100 head of the bf16-logit run (runs/v2.4.0/phase2a/medium_diffusion_L384_from1b) is NOT reused: its weights were fit to bf16-rounded logits.
+defaults:
+  - phase2a_diffusion_medium_v240
+  - _self_
+
+model:
+  diffusion:
+    token_dit:
+      fp32_pair_bias: true
+
+train:
+  comment: "v2.4.0-phase2a-diffusion-medium-L384-h100-fp32logit"
+  run_dir: "runs/v2.4.0/phase2a/medium_diffusion_L384_fp32logit"
