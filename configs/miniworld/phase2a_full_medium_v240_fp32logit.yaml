@@ -1,0 +1,19 @@
+# v2.4.0 phase 2a_full, medium trunk, L384: phase2a_diffusion_medium_v240_fp32logit with the TRUNK UNFROZEN (the diffusion head and the trunk train together, AF3-style).
+# Same start as 2a: the phase-1b epoch-700 EMA trunk seed + a NEW EDM diffusion head, same data / sampler / fp32 pair-bias logits, trained from epoch 0 for 100 epochs.
+# Unfreezing follows the earlier joint recipe (phase2a_diffusion_medium_v200_b200_joint): trunk modules in train mode, trunk forward with gradients through the LAST recycle only
+# (earlier recycles under no_grad), ONE learning rate for every parameter (train.trunk_lr_scale = 1.0), the distogram head trains through the auxiliary distogram loss (AF3 alpha 0.03).
+defaults:
+  - phase2a_diffusion_medium_v240_fp32logit
+  - _self_
+train:
+  comment: "v2.4.0-phase2a-full-diffusion-medium-L384-h100-fp32logit"
+  run_dir: "runs/v2.4.0/phase2a_full/medium_L384_fp32logit"
+  num_epoch: 100
+  trunk_lr_scale: 1.0
+  param_policy:
+    freeze: []
+    default: load_existing
+model:
+  freeze_trunk: false
+loss:
+  distogram_loss: 0.03
