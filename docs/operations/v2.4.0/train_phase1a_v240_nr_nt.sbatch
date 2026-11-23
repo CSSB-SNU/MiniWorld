@@ -14,7 +14,7 @@
 #SBATCH --error=/home/psk6950/MiniWorld-scratch/phase1a-nr-nt/train_%x_%j.out
 # MiniWorld v2.4.0 phase 1a, NO recycling + NO template module, from scratch, 600 epochs, 2 GPUs (grad_accum 128 keeps 256 samples per optimizer step), data on node02's local NVMe.
 # env: PF = pairformer blocks (8 or 16) -> configs/miniworld/phase1a_distogram_medium_v240_nr_nt_pf${PF}.yaml, run root runs/v2.4.0/phase1a/medium_distogram_L384_nr_nt_pf${PF}.
-# Submit one job per PF: sbatch --job-name=pf8 --export=ALL,PF=8 ...; a crash restarts from this run's own last.pt (up to 5 times).
+# Submit one job per PF: sbatch --job-name=p1a_nr_nt_pf8 --export=ALL,PF=8,WORKERS=40 ... (MW_SKIP_SOURCES defaults to the two distillation sources whose every draw fails: chain_ids bug, see the loader notes) (--nodelist/--cpus-per-task on the command line override the header). Resumes from this run's last.pt when latest_run.txt exists; a crash restarts from it (up to 5 times).
 set -uo pipefail
 cd /home/psk6950/MiniWorld
 : "${PF:?set PF=8 or 16}"
@@ -24,14 +24,14 @@ echo "=== job $SLURM_JOB_ID node $SLURM_JOB_NODELIST  commit $(git rev-parse --s
 before=""
 for attempt in 1 2 3 4 5; do
   echo "=== attempt $attempt  $(date)"
-  if [ "$attempt" = 1 ]; then
+  if [ "$attempt" = 1 ] && [ ! -s "$ROOT/latest_run.txt" ]; then
     RESUME=""
   else
     RUN=$(sed -n 1p "$ROOT/latest_run.txt")
     RESUME="--ckpt $RUN/checkpoints/last.pt +train.resume_run_subdir=$RUN"
     echo "resuming $RUN"
   fi
-  CONDA_OVERRIDE_CUDA=12.8 RESUME="$RESUME" ROOT=$ROOT CFG=$CFG PF=$PF pixi run --frozen -e cu128 bash -c '
+  CONDA_OVERRIDE_CUDA=12.8 RESUME="$RESUME" ROOT=$ROOT CFG=$CFG PF=$PF WORKERS="${WORKERS:-32}" PREFETCH="${PREFETCH:-4}" MW_SKIP_SOURCES="${MW_SKIP_SOURCES-protein_monomer,short_protein_monomer}" pixi run --frozen -e cu128 bash -c '
     export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
     export NCCL_DEBUG=WARN TORCH_NCCL_ASYNC_ERROR_HANDLING=1 MW_COMPILE_TIMEOUT=1
     export PYTHONFAULTHANDLER=1
@@ -43,7 +43,7 @@ for attempt in 1 2 3 4 5; do
     torchrun --standalone --nproc_per_node=2 scripts/run_miniworld_distogram_train.py train \
       --config $CFG \
       --job-name v240-phase1a-medium-L384-nr-nt-pf${PF} $RESUME \
-      train.run_dir="$ROOT" train.use_wandb=true train.num_workers=32 train.prefetch_factor=16
+      train.run_dir="$ROOT" train.use_wandb=true train.num_workers=${WORKERS:-32} train.prefetch_factor=${PREFETCH:-4}
   '
   rc=$?
   echo "==== attempt $attempt EXIT $rc ===="
