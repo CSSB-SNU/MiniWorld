@@ -42,12 +42,12 @@ def _inputs(dtype):
     return pair.to(dtype), tmpl, asym, tmask
 
 
-def _embedder(dtype):
+def _embedder(dtype, implementation="MINIWORLD_ENGINE"):
     """A trained-like embedder: the pair stack's output projections start at zero (the stack is the identity then, and a
     batched stack that mixed up its samples would go unnoticed), so every matrix gets weights."""
     from tests.test_af3_template import D_PAIR
 
-    emb = AF3TemplateEmbedder(d_pair=D_PAIR).cuda().eval().to(dtype)
+    emb = AF3TemplateEmbedder(d_pair=D_PAIR, implementation=implementation).cuda().eval().to(dtype)
     gen = torch.Generator(device="cuda").manual_seed(1234)
     with torch.no_grad():
         for p in emb.parameters():
@@ -145,7 +145,9 @@ def test_fp32_keeps_the_four_projections(monkeypatch):
     """fp32 never takes the fused map, whatever the flag says: the output is the independent reference's, exactly."""
     from tests.test_af3_template import ref_loop
 
-    emb = _embedder(torch.float32)
+    # engine 3.x: the CUDA TriMul is bf16 only (no fp32 TriMul by policy; it raises BackendUnsupported instead of falling back as 2.x did),
+    # so the fp32 reference comparison runs the PyTorch implementation
+    emb = _embedder(torch.float32, implementation="PYTORCH")
     args = _inputs(torch.float32)
     torch.set_float32_matmul_precision(
         "medium"
