@@ -40,7 +40,7 @@ def test_output_shape_and_pattern_is_a_masked_softmax():
     out = dit(single, cond, pair, mask=mask)
     assert out.shape == (A, B, L, D) and torch.isfinite(out).all()
     for blk in dit.blocks:
-        p = blk.attention.attention_pattern(pair, mask)
+        p = blk.attention_pattern(pair, mask)
         assert p.shape == (B, H, L, L) and p.dtype == torch.float32
         assert torch.allclose(p.sum(-1), torch.ones(B, H, L))
         assert torch.all(p[..., -3:] == 0), "masked keys must receive zero probability"
@@ -50,25 +50,21 @@ def test_each_block_owns_its_pattern_and_has_no_qk(monkeypatch):
     dit = _dit(n_block=3)
     single, cond, pair = _inputs()
     calls = []
+    # engine 3.x: the reference attention applies ``to_bias`` through its own statements, so count the attention calls instead
     for i, blk in enumerate(dit.blocks):
-        orig = blk.attention.to_bias.forward
-        monkeypatch.setattr(
-            blk.attention.to_bias,
-            "forward",
-            lambda x, i=i, orig=orig: calls.append(i) or orig(x),
-        )
+        blk.attention.register_forward_hook(lambda *_a, i=i: calls.append(i))
     dit(single, cond, pair)
     assert calls == [0, 1, 2], (
-        "every block projects the pair bias exactly once per forward"
+        "every block runs its own attention (own ln_pair / to_bias) exactly once per forward"
     )
     # the pattern depends on pair only: same pair -> same pattern regardless of single
-    blk0 = dit.blocks[0].attention
+    blk0 = dit.blocks[0]
     assert torch.equal(blk0.attention_pattern(pair), blk0.attention_pattern(pair))
     # blocks can differ from one another once their to_bias weights differ
     with torch.no_grad():
         dit.blocks[1].attention.to_bias.weight.normal_()
     assert not torch.allclose(
-        blk0.attention_pattern(pair), dit.blocks[1].attention.attention_pattern(pair)
+        blk0.attention_pattern(pair), dit.blocks[1].attention_pattern(pair)
     )
     for blk in dit.blocks:
         names = set(dict(blk.attention.named_parameters()))
@@ -147,12 +143,12 @@ def test_v200_configs_compose_and_select_bias_only():
 
 
 def test_the_block_is_the_engine_block_and_keeps_its_keys():
-    """The engine's BiasOnlyDiTBlock (its B200 paths) with the same parameter names as before."""
+    """The engine's TokenDiTMiniWorldBiasOnly (its fused CUDA paths) with the same parameter names as before."""
     from miniworld_engine.kernels.integrations import bias_only_dit_train
-    from miniworld_engine.modules.bias_only_dit import BiasOnlyDiTBlock
+    from miniworld_engine.modules import TokenDiTMiniWorldBiasOnly
 
     dit = _dit()
     blk = dit.blocks[0]
-    assert isinstance(blk, BiasOnlyDiTBlock)
+    assert isinstance(blk, TokenDiTMiniWorldBiasOnly)
     names = [n for n, _ in blk.named_parameters()]
     assert sorted(names) == sorted(bias_only_dit_train.NAMES)

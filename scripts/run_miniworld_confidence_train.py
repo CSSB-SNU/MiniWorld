@@ -665,7 +665,7 @@ def train(  # noqa: PLR0912, PLR0915
     # prebuilt cache. (capture.install patches _bench too — harmless overhead, never flushed.)
     _compile_timeout = cfg.train.compile_timeout
     if _capture_cache or _compile_timeout:
-        from miniworld_engine.autotune import capture
+        raise NotImplementedError("miniworld_engine.autotune (Triton autotune capture / compile-timeout guard) does not exist in miniworld-engine 3.x")
 
         capture.install()
         client.logger.info(
@@ -686,7 +686,7 @@ def train(  # noqa: PLR0912, PLR0915
         )
 
     if _capture_cache:
-        from miniworld_engine.autotune import capture
+        raise NotImplementedError("miniworld_engine.autotune (Triton autotune capture / compile-timeout guard) does not exist in miniworld-engine 3.x")
 
         capture.flush(top_k=5)
         client.logger.info(

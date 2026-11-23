@@ -77,7 +77,7 @@ def test_bias_only_token_dit_runs_in_bf16_with_fp32_norms():
     assert out.dtype == torch.bfloat16 and torch.isfinite(out).all()
     out.float().pow(2).mean().backward()
     assert torch.isfinite(single.grad).all()
-    p = dit.blocks[0].attention.attention_pattern(pair)
+    p = dit.blocks[0].attention_pattern(pair)
     assert p.dtype == torch.float32, "the attention softmax is taken in fp32"
 
 

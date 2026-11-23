@@ -46,6 +46,7 @@ from miniworld.training import ParamPolicyConfig
 from miniworld.training.callbacks import ModelEMA
 from miniworld.training.client import BaseClient, _SetEpochProtocol
 from miniworld.training.engine_backend import EngineBackend, configure_engine_backend
+from miniworld.training.optimizer_state import remap_optimizer_state
 from miniworld.training.phase2_graph_safe import cal_loss_gs
 from miniworld.training.precision import Precision, apply_precision, model_autocast
 
@@ -337,6 +338,8 @@ class Client(BaseClient):
             optimizer_state = state_dict.get("optimizer_state_dict")
             scheduler_state = state_dict.get("scheduler_state_dict")
             if optimizer_state is not None and self._optimizer is not None:
+                # engine 3.x registers some parameters in another order than the checkpoint's engine: re-key the moments by name
+                optimizer_state = remap_optimizer_state(optimizer_state, model_state_dict, self.model, self.optimizer)
                 self.optimizer.load_state_dict(optimizer_state)
             if scheduler_state is not None and self.scheduler is not None:
                 self.scheduler.load_state_dict(scheduler_state)

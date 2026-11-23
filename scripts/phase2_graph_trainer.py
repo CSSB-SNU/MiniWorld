@@ -43,7 +43,17 @@ from miniworld.training.phase2_graph_safe import (
     graph_safe_sampling,
 )
 from miniworld.training.precision import model_autocast
-from miniworld_engine.kernels.smooth_lddt import smooth_lddt as smooth_lddt_loss
+from miniworld_engine.modules import SmoothLddtLoss
+
+# engine 3.x: the fused kernel is the module ``SmoothLddtLoss`` (``kernels.smooth_lddt.smooth_lddt`` of 2.x is gone); "cuda" = H100 sm_90a kernels,
+# strict (no PyTorch fallback: an unsupported call raises BackendUnsupported)
+_SMOOTH_LDDT = SmoothLddtLoss(backend="cuda")
+
+
+def smooth_lddt_loss(x_pred, gt, is_nuc, mask):
+    """AF3 Alg. 27 smooth lDDT on the engine's CUDA kernels."""
+    return _SMOOTH_LDDT(x_pred, gt, is_nuc, mask)
+
 
 __all__ = ["GraphFabric", "Phase2GraphTrainer", "configure_graph_cublas"]
 

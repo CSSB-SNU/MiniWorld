@@ -46,6 +46,7 @@ from miniworld.data.features.batch import Batch
 from miniworld.models.diffusion import Client, Model
 from miniworld.training import trainable_parameters
 from miniworld.training.callbacks import Callback
+from miniworld.training.optimizer_state import remap_optimizer_state
 from miniworld.utils import get_step_decay_scheduler_with_warmup, new_wandb_run_id
 from miniworld.utils.script_utils import MetricsAggregator
 
@@ -673,6 +674,8 @@ def train(  # noqa: PLR0912, PLR0915
             sch_sd = state_dict.get("scheduler_state_dict")
             if opt_sd is not None:
                 try:
+                    # engine 3.x registers some parameters in another order than the checkpoint's engine: re-key the moments by name
+                    opt_sd = remap_optimizer_state(opt_sd, state_dict["model_state_dict"], client.model, client.optimizer)
                     client.optimizer.load_state_dict(opt_sd)
                     if sch_sd is not None and client.scheduler is not None:
                         client.scheduler.load_state_dict(sch_sd)
@@ -756,7 +759,7 @@ def train(  # noqa: PLR0912, PLR0915
     # prebuilt cache. (capture.install patches _bench too — harmless overhead, never flushed.)
     _compile_timeout = cfg.train.compile_timeout
     if _capture_cache or _compile_timeout:
-        from miniworld_engine.autotune import capture
+        raise NotImplementedError("miniworld_engine.autotune (Triton autotune capture / compile-timeout guard) does not exist in miniworld-engine 3.x")
 
         capture.install()
         client.logger.info(
@@ -768,7 +771,7 @@ def train(  # noqa: PLR0912, PLR0915
         _warmup_bucket_shapes(client, cfg)
 
     if _capture_cache:
-        from miniworld_engine.autotune import capture
+        raise NotImplementedError("miniworld_engine.autotune (Triton autotune capture / compile-timeout guard) does not exist in miniworld-engine 3.x")
 
         capture.flush(top_k=5)
         client.logger.info(

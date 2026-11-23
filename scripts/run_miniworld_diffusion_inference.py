@@ -715,7 +715,7 @@ def foldbench(  # noqa: PLR0913
     # instead of hanging indefinitely. FoldBench targets are arbitrary sizes with no
     # prebuilt cache, so without this the first uncached op stalls the run.
     if compile_timeout:
-        from miniworld_engine.autotune import capture
+        raise NotImplementedError("miniworld_engine.autotune (Triton autotune capture / compile-timeout guard) does not exist in miniworld-engine 3.x")
 
         capture.install()
         client.logger.info(
