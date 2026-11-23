@@ -19,13 +19,6 @@ native = pytest.mark.skipif(
 )
 
 
-def test_the_limit_is_what_the_engine_states(monkeypatch):
-    from miniworld_engine.modules import runtime
-
-    monkeypatch.setattr(runtime, "trimul_batch_limit", lambda capability: 7 if capability == (10, 0) else 1)
-    assert te._engine_batch_limit((10, 0)) == 7
-
-
 def test_an_h100_folds_any_number_of_templates_a_b200_its_batched_bound():
     from miniworld_engine.kernels.integrations.trimul_b200 import MAX_BATCH
 

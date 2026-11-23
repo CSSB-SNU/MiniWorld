@@ -85,11 +85,8 @@ def test_the_fused_pair_stream_stays_off_without_cuda():
     assert _call_fused(torch.zeros(1, 4, 128)) is None
 
 
-def test_the_fused_pair_stream_can_be_switched_off(monkeypatch):
-    from miniworld_engine import settings
-
-    monkeypatch.setattr(settings, "_ACTIVE", settings.current())  # restored at teardown
-    settings.configure(token_pair_init_fused=False)
+def test_the_fused_pair_stream_is_not_wired_on_engine_3():
+    # engine 3.x has no settings.token_pair_init_fused and packages the op as the module TokenPairInit: the unfused ops always run
     assert _call_fused(SimpleNamespace(is_cuda=True)) is None
 
 
