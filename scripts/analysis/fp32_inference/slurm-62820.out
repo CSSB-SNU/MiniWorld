@@ -1,0 +1,39 @@
+ WARN Encountered 2 warnings while parsing the manifest:
+  ⚠ the `[system-requirements]` table is deprecated in favor of virtual
+  │ packages on `platforms`
+    ╭─[/home/psk6950/MiniWorld/pyproject.toml:45:1]
+ 44 │     
+ 45 │ ╭─▶ [tool.pixi.feature.cuda13.system-requirements]
+ 46 │ ├─▶ cuda = "13"
+    · ╰──── declare these on the `platforms` entries instead
+ 47 │     
+    ╰────
+  help: e.g. platforms = [{ platform = "linux-64", cuda = "12" }]
+
+  ⚠ the `[system-requirements]` table is deprecated in favor of virtual
+  │ packages on `platforms`
+    ╭─[/home/psk6950/MiniWorld/pyproject.toml:65:1]
+ 64 │     # name because run scripts address `.pixi/envs/cu128` and `-e cu128`.
+ 65 │ ╭─▶ [tool.pixi.feature.cuda129.system-requirements]
+ 66 │ ├─▶ cuda = "12.9"
+    · ╰──── declare these on the `platforms` entries instead
+ 67 │     
+    ╰────
+  help: e.g. platforms = [{ platform = "linux-64", cuda = "12" }]
+
+ WARN cache for Repodata at /home/psk6950/.cache/rattler/cache/repodata is on a network/parallel filesystem (NFS/SMB/FUSE/BeeGFS/Lustre/GPFS/CephFS), redirected to /tmp/pixi-cache-psk6950/repodata for this run. Set [cache.repodata] in config.toml or PIXI_CACHE_DIR to override, or [cache.netfs-redirect] = "never" to keep the original path.
+You are using a CUDA device ('NVIDIA H100 80GB HBM3') that has Tensor Cores. To properly utilize them, you should set `torch.set_float32_matmul_precision('medium' | 'high')` which will trade-off precision for performance. For more details, read https://pytorch.org/docs/stable/generated/torch.set_float32_matmul_precision.html#torch.set_float32_matmul_precision
+[rank: 0] Seed set to 0
+Replaced 565 params with EMA.
+Loaded checkpoint (epoch=100, step=20400)
+FoldBench phase 2 inference: 2 targets | 5 seeds x 5 samples = 25 preds/target | recycles=10 timesteps=200 msa=2048(subsampled) ema=True
+/home/psk6950/MiniWorld/.pixi/envs/cu128/lib/python3.12/site-packages/nvidia_cutlass_dsl/dsl_packages/cutlass/base_dsl/dsl.py:2300: UserWarning: Argument aux_data (position 17) cannot be converted to a JitArgument for function 'cutlass___call___flash_attncuteflash_fwd_sm90FlashAttentionForwardSm90_object_at__Tensorgmemoi64i64i641_Tensorgmemoi64i64i641_Tensorgmemoi64i64i641_Tensorgmemoi64i64i641_Tensorgmem'. Its type `<class 'flash_attn.cute.utils.AuxData'>` is not supported. If the value is known at compile time, annotate it: `aux_data: Constexpr`. Otherwise, implement the `JitArgument` or `DynamicExpression` protocol for type `<class 'flash_attn.cute.utils.AuxData'>`, or register a custom argument adapter.
+  exe_args, func_types, adapted_args = self.generate_mlir_function_types(
+[W1121 08:58:25.564202231 ln_vg.cu:311] Warning: ln_vg_kernel<3,1>: 91200 B smem -> 2 blocks/SM (132 SMs) (function launch_nst)
+[W1121 08:58:25.564692501 pwa_fwd3.cu:413] Warning: pwa_fwd3_kernel<3,1>: 214136 B smem -> 1 blocks/SM (function launch_fwd2)
+[1/2] 7xi5-assembly1: OK tok=65 atom=499 (pad->1024) -> 25 CIFs (5x5, steps=200)
+[2/2] 7yhr-assembly1: OK tok=60 atom=479 (pad->1024) -> 25 CIFs (5x5, steps=200)
+FoldBench inference complete. Results in /home/psk6950/MiniWorld/runs/foldbench/fusedlogit/newfp32_p1_a
+
+=== hoist calls: {'PATCHED hoist (bf16 runner, logits + softmax in fp32)': 240} | MW_LOGIT_FP32 = True
+==== EXIT 0 ====

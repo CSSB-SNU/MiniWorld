@@ -13,7 +13,7 @@
 set -uo pipefail
 cd /home/psk6950/MiniWorld
 OUT=/home/psk6950/MiniWorld/runs/foldbench/fusedlogit/${OUTN}
-CK=/home/psk6950/MiniWorld/runs/v2.4.0/phase2a/medium_diffusion_L384_from1b/2026-11-18/101134_v240-phase2a-medium-L384-local/checkpoints/epoch=0100.pt
+CK=${CKPT:-/home/psk6950/MiniWorld/runs/v2.4.0/phase2a/medium_diffusion_L384_from1b/2026-11-18/101134_v240-phase2a-medium-L384-local/checkpoints/epoch=0100.pt}
 export MW_COMPILE_TIMEOUT=1 MINIWORLD_TRANSITION_FORCE_SPLIT=1 PYTORCH_ALLOC_CONF=expandable_segments:True
 export TRITON_CACHE_DIR=/tmp/triton_${USER}_fb_shared; mkdir -p "$TRITON_CACHE_DIR"
 CONDA_OVERRIDE_CUDA=12.8 CK="$CK" OUT="$OUT" INDEX="$INDEX" MW_LOGIT_FP32="${MW_LOGIT_FP32:-0}" pixi run --frozen -e cu128 bash -c '
