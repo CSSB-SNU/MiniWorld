@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING
 
 import torch
 import torch.nn.functional as F
-from foldforge.layers.implementation import ImplementationType, to_engine_impl
+from miniworld.layers.implementation import ImplementationType, to_engine_impl
 from miniworld_engine.modules import (
     Transition,
     TriangleAttention,
     TriangleMultiplication,
 )
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld.utils.typecheck import typecheck
 from pydantic import BaseModel
 from torch import nn
 
@@ -41,20 +41,20 @@ class TemplatePairformerBlock(nn.Module):
         self.tri_multi_outgoing = TriangleMultiplication(
             d_pair=d_hidden,
             outgoing=True,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
             p_drop=p_drop,
         )
         self.tri_multi_incoming = TriangleMultiplication(
             d_pair=d_hidden,
             outgoing=False,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
             p_drop=p_drop,
         )
         self.tri_atten_starting = TriangleAttention(
             d_pair=d_hidden,
             n_head=n_head_tri_attention,
             starting=True,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
             use_self_attention=use_self_attention,
             p_drop=p_drop,
         )
@@ -62,7 +62,7 @@ class TemplatePairformerBlock(nn.Module):
             d_pair=d_hidden,
             n_head=n_head_tri_attention,
             starting=False,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
             use_self_attention=use_self_attention,
             p_drop=p_drop,
         )
@@ -71,7 +71,7 @@ class TemplatePairformerBlock(nn.Module):
         self.transition_pair = Transition(
             d_pair,
             n=2,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
         )
 
     @typecheck

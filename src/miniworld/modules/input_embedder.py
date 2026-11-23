@@ -1,7 +1,7 @@
 import torch
 from einops import rearrange
 from jaxtyping import Bool, Float, Int
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld.utils.typecheck import typecheck
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
@@ -365,51 +365,15 @@ class InputFeatureEmbedder(nn.Module):
         return _out
 
     def _fused_token_pair_init(self, token_left, token_right, scheme, structure):
-        """The pair stream ``left_i + right_j + Linear(relative-position one-hot) + Linear(bond one-hot)`` as one engine kernel
-        pair (``miniworld_engine.kernels.token_pair_init``; B200, fp32, d_pair 128, dense ``token_bond_feat``), or None when it
-        does not serve the call (the unfused ops below run). ``settings.token_pair_init_fused=False`` turns it off. It never builds the
-        139-wide fp32 one-hot of the relative-position features (82 MB at 384 tokens) and does its sums in exact fp32."""
-        from miniworld_engine import settings
+        """Always ``None``: the unfused ops below run.
 
-        if not settings.current().token_pair_init_fused or not token_left.is_cuda:
-            return None
-        try:
-            from miniworld_engine.kernels.token_pair_init import (
-                refusal,
-                token_pair_init,
-            )
-        except ImportError:  # an engine that predates the op: the unfused ops below run
-            return None
-
-        rel = self.relative_position_embedder
-        w_rel, w_bond = rel.embed_rel_pos.weight, self.add_token_bond.weight
-        if (
-            refusal(
-                token_left,
-                token_right,
-                w_rel,
-                w_bond,
-                structure.token_bond_feat,
-                r_max=rel.r_max,
-                s_max=rel.s_max,
-            )
-            is not None
-        ):
-            return None
-        return token_pair_init(
-            token_left,
-            token_right,
-            w_rel,
-            w_bond,
-            scheme.token_asym_id,
-            scheme.token_residue_idx,
-            scheme.token_idx,
-            scheme.token_entity_id,
-            scheme.token_sym_id,
-            structure.token_bond_feat,
-            r_max=rel.r_max,
-            s_max=rel.s_max,
-        )
+        With miniworld-engine 2.x this was the B200-only fused kernel pair ``miniworld_engine.kernels.token_pair_init``
+        (``refusal`` / ``token_pair_init`` functions; ``settings.token_pair_init_fused``). Engine 3.x packages it as the module
+        ``miniworld_engine.modules.TokenPairInit`` with its own ``w_rel`` / ``w_bond`` parameters (different checkpoint keys than
+        this embedder's ``relative_position_embedder`` / ``add_token_bond``), so it is not wired here; the unfused path is the
+        reference the fused one matched (it served B200 only, never H100).
+        """
+        return None
 
     def forward(
         self,

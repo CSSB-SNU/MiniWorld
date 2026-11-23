@@ -18,7 +18,7 @@ never re-adds ``pair + drop(...)`` itself.
 """
 
 import torch
-from foldforge.layers.implementation import (
+from miniworld.layers.implementation import (
     ImplementationType,
     InvalidImplementationError,
 )
@@ -29,8 +29,7 @@ from miniworld_engine.modules import (
     OuterProductMean,
     Transition,
 )
-from miniworld_engine.modules.exceptions import ImplementationType as _EngineImpl
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld.utils.typecheck import typecheck
 from pydantic import BaseModel, model_validator
 from torch import nn
 from torch.utils.checkpoint import checkpoint_sequential
@@ -39,7 +38,7 @@ from typing_extensions import Self
 from miniworld.layers.primitives import Linear
 
 
-def _to_engine_impl(impl: ImplementationType) -> _EngineImpl:
+def _to_engine_impl(impl: ImplementationType) -> str:
     """Map MiniWorld's public impl selector to the miniworld-engine one.
 
     Only PYTORCH and MINIWORLD_ENGINE are valid for the mini modules; CUEQUIVARIANCE has
@@ -47,9 +46,9 @@ def _to_engine_impl(impl: ImplementationType) -> _EngineImpl:
     reroute).
     """
     if impl == ImplementationType.PYTORCH:
-        return _EngineImpl.PYTORCH
+        return "pytorch"
     if impl == ImplementationType.MINIWORLD_ENGINE:
-        return _EngineImpl.MINIWORLD
+        return "cuda"
     raise InvalidImplementationError(impl)
 
 
@@ -85,7 +84,7 @@ class MiniMSAModuleBlock(nn.Module):
             d_pair=d_pair,
             d_hidden=d_hidden_msa,
             mask_interchain=mask_interchain,
-            implementation=eng,
+            backend=eng,
         )
         if not last_block:
             # MSA self-update (pair-weighted averaging + MSA transition), as in
@@ -95,20 +94,20 @@ class MiniMSAModuleBlock(nn.Module):
                 d_pair=d_pair,
                 d_hidden=d_hidden_msa,
                 p_drop=p_drop_msa,
-                implementation=eng,
+                backend=eng,
             )
             self.transition_msa = Transition(
                 d_msa,
-                implementation=eng,
+                backend=eng,
             )
         self.tri_multi = BidirectionalTriangleMultiplication(
             d_pair=d_pair,
-            implementation=eng,
+            backend=eng,
             p_drop=p_drop,
         )
         self.transition_pair = Transition(
             d_pair,
-            implementation=eng,
+            backend=eng,
         )
 
     @typecheck

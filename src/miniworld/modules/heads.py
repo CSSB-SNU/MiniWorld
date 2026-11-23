@@ -1,6 +1,6 @@
 import torch
 from jaxtyping import Float
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld.utils.typecheck import typecheck
 from torch import nn
 
 from miniworld.layers.primitives import Linear

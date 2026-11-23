@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 
 import torch
-from foldforge.layers.implementation import ImplementationType
+from miniworld.layers.implementation import ImplementationType
 
 from miniworld.modules import DiffusionTransformer
 from miniworld.modules.bias_only_token_dit import BiasOnlyTokenDiT

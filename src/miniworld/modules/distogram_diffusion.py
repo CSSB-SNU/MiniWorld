@@ -24,7 +24,7 @@ import torch
 import torch.nn.functional as F
 from foldforge.diffusion import EDMScheduler
 from jaxtyping import Bool, Float, Int
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld.utils.typecheck import typecheck
 from pydantic import BaseModel, Field, model_validator
 from torch import nn
 

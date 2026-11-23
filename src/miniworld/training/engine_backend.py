@@ -1,4 +1,9 @@
-"""Choose the engine policy before model construction, once per training process."""
+"""Choose the engine policy before model construction, once per training process.
+
+miniworld-engine 3.x has no process-wide ``settings`` object: the backend is a per-module ``backend=`` string (MiniWorld's
+``implementation`` config value, see ``miniworld.layers.implementation``). The helpers below keep their names and call sites; what
+cannot be expressed any more raises (or warns) instead of silently doing something else.
+"""
 
 import logging
 from typing import Literal
@@ -7,36 +12,25 @@ EngineBackend = Literal["auto", "triton"]
 
 
 def configure_engine_backend(backend: EngineBackend) -> None:
-    """Set the engine backend policy before constructing a training model."""
-    from miniworld_engine import settings
-
+    """Engine backend policy before constructing a training model: ``"auto"`` is the only one left (a no-op)."""
     if backend not in ("auto", "triton"):
         message = f"Unknown engine backend: {backend}"
         raise ValueError(message)
-    # Engine >= 2.3.12 has no ``engine_backend``: "triton" is ``force_portable_kernels=True`` (A/B work only), "auto" the default routing.
-    if not hasattr(settings.current(), "force_portable_kernels"):
-        message = "Engine backend option requires engine >= 2.3.12 (settings.force_portable_kernels)."
-        raise RuntimeError(message)
-    settings.configure(force_portable_kernels=backend == "triton")
-    logging.getLogger(__name__).info(
-        "Engine backend=%s (process-wide; FlashAttention and library GEMMs retain their own backends)",
-        backend,
-    )
+    if backend == "triton":
+        message = (
+            "train.engine_backend='triton' (engine 2.x settings.force_portable_kernels) does not exist in miniworld-engine 3.x: "
+            "the backend is chosen per module (implementation=...), there is no process-wide Triton switch."
+        )
+        raise NotImplementedError(message)
+    logging.getLogger(__name__).info("Engine backend=auto (per-module backend= from the model config's implementation)")
 
 
 def configure_fused_msa_train(enabled: bool) -> None:
-    """Explicitly select fused MSA training before constructing the model.
-
-    Setting both flags preserves the config on older opt-in engines and Engine 2,
-    which enables supported native paths by default. Unsupported inputs still
-    use each module's general implementation.
-    """
-    from miniworld_engine import settings
-
-    # Engine 2 defaults to native MSA: None (automatic) is not "disabled", so the choice is always explicit.
-    settings.configure(opm_train=enabled, pwa_train=enabled)
-    logging.getLogger(__name__).info(
-        "Fused MSA training paths (PWA/OPM kernels): %s", "on" if enabled else "off"
+    """Engine 2.x ``settings.opm_train`` / ``pwa_train``: gone in 3.x (the OPM / PWA backend is the module's ``backend=``)."""
+    logging.getLogger(__name__).warning(
+        "fused_msa_train=%s: engine 3.x has no global fused-MSA switch; the OuterProductMean / MSAPairWeightedAveraging modules "
+        "run the backend they were built with (MSAModule builds them without a backend, i.e. the PyTorch reference).",
+        enabled,
     )
 
 
@@ -60,12 +54,10 @@ def align_engine_optimizer_state(optimizer) -> int:
 
 
 def apply_run_options(options) -> None:
-    """Apply ``train.engine_settings`` and ``train.adaln_fwd``; call it before the model is built."""
+    """``train.engine_settings`` / ``train.adaln_fwd``: engine 2.x ``settings`` and ``runtime`` are gone in 3.x; setting either raises."""
     if options.engine_settings:
-        from miniworld_engine import settings
-
-        settings.configure(**options.engine_settings)
+        message = f"train.engine_settings={options.engine_settings!r}: miniworld-engine 3.x has no Settings object (engine 2.x only)."
+        raise NotImplementedError(message)
     if options.adaln_fwd:
-        from miniworld_engine.modules import runtime
-
-        runtime.set_adaln_forward_mode(options.adaln_fwd)
+        message = f"train.adaln_fwd={options.adaln_fwd!r}: miniworld-engine 3.x has no runtime.set_adaln_forward_mode (engine 2.x only)."
+        raise NotImplementedError(message)

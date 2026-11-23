@@ -5,15 +5,13 @@ engine's, built from the architecture ``ImplementationType`` (a constructor adap
 
 import torch
 import torch.nn as nn
-from foldforge.layers.implementation import ImplementationType, to_engine_impl
+from miniworld.layers.implementation import ImplementationType, to_engine_impl
+from miniworld_engine.modules import norm as _engine_norm
 from miniworld_engine.modules import primitives as _modules_primitives
-from miniworld_engine.modules.exceptions import (
-    ImplementationType as EngineImplementation,
-)
+from miniworld_engine.modules.norm import _Fp32ParamsMixin  # noqa: F401 -- re-exported
 from miniworld_engine.modules.primitives import (  # noqa: F401 -- re-exported
     Dropout,
     InitType,
-    _Fp32ParamsMixin,
     _trunc_normal_init,
     magnitude_normalize,
 )
@@ -46,8 +44,8 @@ def convert_linears_to_mp(
     """
     converted = 0
     for name, child in list(root.named_modules()):
-        if hasattr(child, "implementation"):
-            child.implementation = ImplementationType.PYTORCH
+        if hasattr(child, "set_backend"):
+            child.set_backend("pytorch")
     for name, child in list(root.named_modules()):
         if not isinstance(child, Linear) or isinstance(child, MPLinear):
             continue
@@ -74,16 +72,16 @@ def convert_linears_to_mp(
 _shape_t = int | list[int] | Size
 
 
-def _layernorm_impl(implementation: ImplementationType) -> EngineImplementation:
+def _layernorm_impl(implementation: ImplementationType) -> str:
     """The engine backend for an architecture ``ImplementationType``: cuEquivariance supplies no standalone LayerNorm kernel, so
     its model backend runs the PyTorch reference (as before); ``miniworld_engine`` is the engine's ``miniworld`` (auto-routing)."""
     implementation = ImplementationType(implementation)
     if implementation == ImplementationType.CUEQUIVARIANCE:
-        return EngineImplementation.PYTORCH
+        return "pytorch"
     return to_engine_impl(implementation)
 
 
-class LayerNorm(_modules_primitives.LayerNorm):
+class LayerNorm(_engine_norm.LayerNorm):
     """The engine's ``modules.primitives.LayerNorm`` (fp32-pinned affine, the activation dtype preserved, the engine's own kernel
     routing), built from the architecture ``ImplementationType``. Same parameters (``weight`` / ``bias``)."""
 
@@ -105,5 +103,5 @@ class LayerNorm(_modules_primitives.LayerNorm):
             bias=bias,
             device=device,
             dtype=dtype,
-            implementation=_layernorm_impl(implementation),
+            backend=_layernorm_impl(implementation),
         )

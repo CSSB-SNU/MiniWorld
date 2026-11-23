@@ -19,10 +19,10 @@ from __future__ import annotations
 
 import torch
 import torch.nn.functional as F
-from foldforge.layers.implementation import ImplementationType, to_engine_impl
+from miniworld.layers.implementation import ImplementationType, to_engine_impl
 from jaxtyping import Bool, Float, Int
 from miniworld_engine.modules import LayerNorm
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld.utils.typecheck import typecheck
 from torch import nn
 
 from miniworld.data.features import TemplateFeatures
@@ -31,11 +31,18 @@ from miniworld.modules.mini_pairformer import MiniPairformer
 
 
 def _engine_batch_limit(capability: tuple[int, int]) -> int:
-    """The templates one call of the engine's TriMul may fold into its batch on this card (``modules.runtime.trimul_batch_limit``: any
-    number on H100, which splits the call itself; the batched path's bound on B200; 1 elsewhere: the per-template loop)."""
-    from miniworld_engine.modules import runtime
+    """The templates one call of the engine's TriMul may fold into its batch on this card (engine 2.x ``modules.runtime.trimul_batch_limit``,
+    removed in 3.x, restated here: any number on H100, which splits the call itself; the batched path's bound on B200; 1 elsewhere: the
+    per-template loop)."""
+    import sys
 
-    return runtime.trimul_batch_limit(capability)
+    if capability == (9, 0):
+        return sys.maxsize
+    if capability == (10, 0):
+        from miniworld_engine.kernels.integrations.trimul_b200 import MAX_BATCH
+
+        return MAX_BATCH
+    return 1
 
 
 def _dgram_from_positions(
@@ -119,7 +126,7 @@ class AF3TemplateEmbedder(nn.Module):
         # We follow the reproduction consensus (default) to smooth the early ramp.
         self.ln_query = LayerNorm(
             d_pair,
-            implementation=to_engine_impl(ImplementationType[implementation]),
+            backend=to_engine_impl(ImplementationType[implementation]),
         )
         self.proj_query = Linear(d_pair, num_channels, bias=False, init="default")
         self.proj_dgram = Linear(dgram_bins, num_channels, bias=False, init="default")
@@ -149,7 +156,7 @@ class AF3TemplateEmbedder(nn.Module):
         )
         self.ln_out = LayerNorm(
             num_channels,
-            implementation=to_engine_impl(ImplementationType[implementation]),
+            backend=to_engine_impl(ImplementationType[implementation]),
         )
         # Template-injection output (token_pair += temp_embedder(...)). This is NOT a
         # "keep-it-small residual": in trained AF3 (af3.bin) this projection converges

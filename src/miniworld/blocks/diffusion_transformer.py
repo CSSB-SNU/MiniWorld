@@ -1,4 +1,4 @@
-"""The token / AF3 atom Diffusion Transformer: a stack of the engine's ``DiTBlock`` (``modules.dit``).
+"""The token / AF3 atom Diffusion Transformer: a stack of the engine's token DiT blocks (``TokenDiTProtenix`` / ``TokenDiTMiniWorld``).
 
 Every block is the engine block (attention, conditioned transition, and the engine's fused paths where they serve the call).
 This file only stacks the blocks, keeps the MiniWorld checkpoint names (``attention_pair_bias.`` -> ``attention.``) and the
@@ -16,11 +16,10 @@ from collections.abc import Mapping
 from typing import TypeVar
 
 import torch
-from foldforge.layers.implementation import ImplementationType, to_engine_impl
+from miniworld.layers.implementation import ImplementationType, to_engine_impl
 from jaxtyping import Bool, Float
-from miniworld_engine.modules import AugmentedAttentionPairBias
-from miniworld_engine.modules.dit import DiTBlock
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld_engine.modules import AugmentedAttentionPairBias, TokenDiTMiniWorld, TokenDiTProtenix
+from miniworld.utils.typecheck import typecheck
 from pydantic import BaseModel
 from torch import nn
 from torch.utils.checkpoint import checkpoint, checkpoint_sequential
@@ -75,12 +74,13 @@ def upgrade_legacy_keys(model: nn.Module, state_dict: Mapping[str, T]) -> dict[s
     return out
 
 
-class DiffusionTransformerBlock(DiTBlock):
-    """A single block of the Diffusion Transformer: the engine's ``DiTBlock``.
+class DiffusionTransformerBlock(TokenDiTProtenix):
+    """A single block of the Diffusion Transformer: the engine's ``TokenDiTProtenix`` (``use_qk_norm=True``: ``TokenDiTMiniWorld``).
 
     ``AugmentedAttentionPairBias`` -> ``ConditionedTransition``, each returning its
     residual output ``x + f(x)``. Being the engine's block, a call takes its fused
-    paths where they serve it and the module path otherwise.
+    paths where they serve it; a call the selected backend cannot serve raises
+    ``BackendUnsupported`` (engine 3.x: no silent fallback).
 
     The attention is ``self.attention`` (the engine's name); its keys are
     ``attention.`` in ``named_parameters`` and ``state_dict`` alike, and
@@ -88,6 +88,11 @@ class DiffusionTransformerBlock(DiTBlock):
     spell the keys ``attention_pair_bias.`` still load (a load pre-hook;
     :func:`upgrade_legacy_keys` for raw state dicts).
     """
+
+    def __new__(cls, *args, use_qk_norm: bool = False, **kwargs):
+        if cls is DiffusionTransformerBlock and use_qk_norm:
+            cls = DiffusionTransformerQKNormBlock
+        return super().__new__(cls)
 
     def __init__(
         self,
@@ -104,8 +109,7 @@ class DiffusionTransformerBlock(DiTBlock):
             d_cond,
             d_pair,
             n_head,
-            use_qk_norm=use_qk_norm,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
         )
         self.register_load_state_dict_pre_hook(_load_legacy_names)
 
@@ -115,7 +119,7 @@ class DiffusionTransformerBlock(DiTBlock):
         return self.attention
 
     @typecheck
-    def forward(  # ty: ignore[invalid-method-override] - extends DiTBlock's call
+    def forward(  # ty: ignore[invalid-method-override] - extends the engine block's call
         self,
         single: Float[torch.Tensor, "A B L d_single"],
         cond: Float[torch.Tensor, "A B L d_cond"],
@@ -123,10 +127,14 @@ class DiffusionTransformerBlock(DiTBlock):
         mask: Bool[torch.Tensor, "B L"] | Bool[torch.Tensor, "A B L"] | None = None,
         core_dtype: torch.dtype | None = None,
     ) -> Float[torch.Tensor, "A B L d_single"]:
-        """``DiTBlock.forward`` (each part returns its residual output). ``core_dtype`` is the attention core's
+        """The engine block's call (each part returns its residual output). ``core_dtype`` is the attention core's
         compute dtype (the engine's ``compute_dtype``; ``None`` = the tensors' own)."""
-        return DiTBlock.forward(self, single, cond, pair, mask, compute_dtype=core_dtype)
+        kw = {} if core_dtype is None else {"compute_dtype": core_dtype}
+        return TokenDiTProtenix.forward(self, single, cond, pair, mask, **kw)
 
+
+class DiffusionTransformerQKNormBlock(DiffusionTransformerBlock, TokenDiTMiniWorld):
+    """``DiffusionTransformerBlock`` with the per-head q / k RMSNorm (engine ``TokenDiTMiniWorld``)."""
 
 class DiffusionTransformer(nn.Module):
     """A Diffusion Transformer module."""

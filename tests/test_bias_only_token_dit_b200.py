@@ -6,7 +6,7 @@ bf16 module path.
 
 import pytest
 import torch
-from foldforge.layers.implementation import ImplementationType
+from miniworld.layers.implementation import ImplementationType
 from miniworld_engine.kernels.integrations import bias_only_dit, bias_only_dit_train
 from settings_helpers import override_setting
 

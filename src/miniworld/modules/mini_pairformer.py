@@ -15,7 +15,7 @@ un-fuse the residual and lose the speed win).
 """
 
 import torch
-from foldforge.layers.implementation import (
+from miniworld.layers.implementation import (
     ImplementationType,
     InvalidImplementationError,
 )
@@ -25,14 +25,13 @@ from miniworld_engine.modules import (
     BidirectionalTriangleMultiplication,
     Transition,
 )
-from miniworld_engine.modules.exceptions import ImplementationType as _EngineImpl
 from pydantic import BaseModel, model_validator
 from torch import nn
 from torch.utils.checkpoint import checkpoint_sequential
 from typing_extensions import Self
 
 
-def _to_engine_impl(impl: ImplementationType) -> _EngineImpl:
+def _to_engine_impl(impl: ImplementationType) -> str:
     """Map MiniWorld's public impl selector to the miniworld-engine one.
 
     Only PYTORCH and MINIWORLD_ENGINE are valid for the mini modules; CUEQUIVARIANCE has
@@ -40,9 +39,9 @@ def _to_engine_impl(impl: ImplementationType) -> _EngineImpl:
     reroute).
     """
     if impl == ImplementationType.PYTORCH:
-        return _EngineImpl.PYTORCH
+        return "pytorch"
     if impl == ImplementationType.MINIWORLD_ENGINE:
-        return _EngineImpl.MINIWORLD
+        return "cuda"
     raise InvalidImplementationError(impl)
 
 
@@ -75,12 +74,12 @@ class MiniPairformerBlock(nn.Module):
         eng = _to_engine_impl(implementation)
         self.tri_multi = BidirectionalTriangleMultiplication(
             d_pair=d_pair,
-            implementation=eng,
+            backend=eng,
             p_drop=p_drop,
         )
         self.transition_pair = Transition(
             d_pair,
-            implementation=eng,
+            backend=eng,
         )
         if use_single:
             # AttentionPairBias owns its residual; single Transition owns its own.
@@ -89,9 +88,9 @@ class MiniPairformerBlock(nn.Module):
                 d_pair=d_pair,
                 n_head=n_head_attention,
                 use_qk_norm=use_qk_norm,
-                implementation=eng,
+                backend=eng,
             )
-            self.transition_single = Transition(d_single, implementation=eng)
+            self.transition_single = Transition(d_single, backend=eng)
 
     def forward(
         self,

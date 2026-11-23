@@ -27,9 +27,9 @@ from __future__ import annotations
 
 import torch
 import torch.nn.functional as F
-from foldforge.layers.implementation import ImplementationType
+from miniworld.layers.implementation import ImplementationType
 from jaxtyping import Bool, Float, Int
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld.utils.typecheck import typecheck
 from pydantic import BaseModel
 from torch import nn
 

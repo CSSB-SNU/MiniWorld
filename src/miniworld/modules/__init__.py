@@ -1,6 +1,6 @@
-"""PyTorch modules for MiniWorld; the blocks and layers live in miniworld.blocks and miniworld.layers (the Pairformer in foldforge.blocks)."""
+"""PyTorch modules for MiniWorld; the blocks and layers live in miniworld.blocks and miniworld.layers (the Pairformer in miniworld.blocks.pairformer)."""
 
-from foldforge.layers.implementation import (
+from miniworld.layers.implementation import (
     ImplementationType,
     InvalidImplementationError,
 )

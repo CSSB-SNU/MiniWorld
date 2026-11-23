@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import torch
-from foldforge.layers.implementation import to_engine_impl
+from miniworld.layers.implementation import to_engine_impl
 from miniworld_engine.modules import LayerNorm
 from pydantic import BaseModel
 from torch import nn
@@ -141,7 +141,7 @@ class MiniSWAModel(nn.Module):
                 LayerNorm(
                     config.shared.d_pair,
                     dtype=torch.bfloat16,
-                    implementation=to_engine_impl(config.shared.implementation),
+                    backend=to_engine_impl(config.shared.implementation),
                 ),
                 Linear(
                     config.shared.d_pair,

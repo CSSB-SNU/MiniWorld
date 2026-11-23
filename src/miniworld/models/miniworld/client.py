@@ -12,7 +12,7 @@ from foldforge.diffusion import (
 )
 from jaxtyping import Bool, Float, Int
 from lightning.fabric.wrappers import _FabricDataLoader
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld.utils.typecheck import typecheck
 from pydantic import BaseModel
 from torch.utils.checkpoint import checkpoint
 from torch.utils.data import DataLoader

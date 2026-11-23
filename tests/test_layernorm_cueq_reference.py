@@ -4,7 +4,7 @@ import copy
 
 import pytest
 import torch
-from foldforge.layers.implementation import ImplementationType
+from miniworld.layers.implementation import ImplementationType
 
 
 @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])

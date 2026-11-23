@@ -1,9 +1,9 @@
 """PyTorch module blocks MiniWorld builds on (moved from ``miniworld.blocks``, removed in miniworld-engine 2.4.2).
 
-The Pairformer is shared with FoldForge and lives in ``foldforge.blocks``.
+The Pairformer (FoldForge's former ``foldforge.blocks.pairformer``) lives in ``miniworld.blocks.pairformer``.
 """
 
-from foldforge.blocks.pairformer import Pairformer, PairformerBlock
+from miniworld.blocks.pairformer import Pairformer, PairformerBlock
 
 from miniworld.blocks.diffusion_transformer import (
     DiffusionTransformer,

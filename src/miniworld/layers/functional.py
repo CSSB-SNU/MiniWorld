@@ -8,7 +8,7 @@ from miniworld_engine.modules.functional import (  # noqa: F401 -- the engine's 
     sigmoid_gate,
     swish_gate,
 )
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld.utils.typecheck import typecheck
 
 
 @typecheck

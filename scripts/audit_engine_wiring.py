@@ -76,7 +76,7 @@ def main():
     with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
         baseline = None
         if args.compare_before_wiring:
-            from foldforge.layers.implementation import ImplementationType
+            from miniworld.layers.implementation import ImplementationType
             from miniworld_engine.modules.dispatch import KernelBackend
 
             changes = []

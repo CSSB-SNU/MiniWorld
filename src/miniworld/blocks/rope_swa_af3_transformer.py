@@ -19,17 +19,15 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from foldforge.layers.implementation import ImplementationType, to_engine_impl
+from miniworld.layers.implementation import ImplementationType, to_engine_impl
 from jaxtyping import Float, Int
 from miniworld_engine.modules import AdaptiveLayerNorm, ConditionedTransition, RMSNorm
-from miniworld_engine.modules.swa_atom_attention import (
+from miniworld_engine.modules.functional import (
     apply_rotary_emb_3d,
     build_3d_rope,
-    flash_window_seqused,
     sparse_neighbor_attention,
 )
-from miniworld_engine.modules.swa_atom_attention.module import _flash_backend
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld.utils.typecheck import typecheck
 
 from miniworld.blocks.swa_atom_transformer import SWAAtomTransformer
 from miniworld.layers.functional import mp_sum, sigmoid_gate
@@ -80,7 +78,7 @@ class RoPESWAAttentionAF3(nn.Module):
         # AF3 block pieces, with DiT-MP/EDM2 init when mp_full is enabled.
         dense = MPLinear if magnitude_preserving else Linear
         self.ada_ln_in = AdaptiveLayerNorm(
-            d_single, d_cond, implementation=to_engine_impl(implementation)
+            d_single, d_cond, backend=to_engine_impl(implementation)
         )
         self.to_query = dense(
             d_single, self.head_dim * n_head, bias=True, init="normal"
@@ -91,10 +89,10 @@ class RoPESWAAttentionAF3(nn.Module):
         )
         if use_qk_norm:
             self.norm_query = RMSNorm(
-                self.head_dim, implementation=to_engine_impl(implementation)
+                self.head_dim, backend=to_engine_impl(implementation)
             )
             self.norm_key = RMSNorm(
-                self.head_dim, implementation=to_engine_impl(implementation)
+                self.head_dim, backend=to_engine_impl(implementation)
             )
         gate_cls = MPLinear if mp_full else Linear
         out_cls = MPLinear if mp_full else Linear
@@ -154,34 +152,18 @@ class RoPESWAAttentionAF3(nn.Module):
             )
         elif self.implementation == ImplementationType.PYTORCH or not single.is_cuda:
             out = self._sdpa_band(q, k, v, valid)
-        elif _flash_backend(single.device) is not None:
-            out = self._flash_window(
-                q, k, v, cu_seqlens, seqused, max_seqlen, valid, n, s
-            )
         else:
-            raise RuntimeError(
-                "Engine AF3 SWA attention requires a usable FlashAttention backend on CUDA"
+            # engine 3.x removed ``swa_atom_attention.flash_window_seqused`` (the FlashAttention varlen window core of this
+            # block_style="af3" flavor); the dense band is the only core left and is O(S^2): refuse instead of silently using it on CUDA.
+            raise NotImplementedError(
+                "block_style=\"af3\" SWA attention on CUDA: the FlashAttention window core was removed with miniworld-engine 3.x; "
+                "use implementation=pytorch (dense band, O(S^2)) or block_style=\"esmfold2\" (the engine AtomDiTMiniWorld)"
             )
 
         out = out.reshape(n, s, -1)
         out = sigmoid_gate(self.to_gate(x), out)
         out = self.to_out(out)
         return sigmoid_gate(self.to_scale(cond), out)
-
-    def _flash_window(self, q, k, v, cu_seqlens, seqused, max_seqlen, valid, n, s):
-        return flash_window_seqused(
-            q,
-            k,
-            v,
-            cu_seqlens,
-            seqused,
-            max_seqlen,
-            valid,
-            n,
-            s,
-            self.scale,
-            self.half_window,
-        )
 
     def _sdpa_band(self, q, k, v, valid):
         """Dense fallback (CPU / no flash). O(S^2) — tests only. half_window<0=global."""
@@ -241,7 +223,7 @@ class RoPESWAAF3Block(nn.Module):
             d_atom,
             d_cond,
             n=transition_n,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
         )
 
     def forward(

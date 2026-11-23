@@ -1,5 +1,5 @@
 import torch
-from foldforge.layers.implementation import ImplementationType, to_engine_impl
+from miniworld.layers.implementation import ImplementationType, to_engine_impl
 from jaxtyping import Bool, Float, Int
 from miniworld_engine.modules import (
     MSAPairWeightedAveraging,
@@ -8,7 +8,7 @@ from miniworld_engine.modules import (
     TriangleAttention,
     TriangleMultiplication,
 )
-from miniworld_engine.utils.typecheck import typecheck
+from miniworld.utils.typecheck import typecheck
 from pydantic import BaseModel, model_validator
 from torch import nn
 from torch.utils.checkpoint import checkpoint, checkpoint_sequential
@@ -60,34 +60,34 @@ class MSAPairformerBlock(nn.Module):
         self.tri_multi_outgoing = TriangleMultiplication(
             d_pair=d_pair,
             outgoing=True,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
             p_drop=p_drop_pair,
         )
         self.tri_multi_incoming = TriangleMultiplication(
             d_pair=d_pair,
             outgoing=False,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
             p_drop=p_drop_pair,
         )
         self.tri_atten_starting = TriangleAttention(
             d_pair=d_pair,
             n_head=n_head_tri_attention,
             starting=True,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
             p_drop=p_drop_pair,
         )
         self.tri_atten_ending = TriangleAttention(
             d_pair=d_pair,
             n_head=n_head_tri_attention,
             starting=False,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
             p_drop=p_drop_pair,
         )
         # Transition has no cuequivariance backend: implementation=CUEQUIVARIANCE
         # errors here (honest dispatch — no silent reroute to miniworld_engine).
         self.transition_pair = Transition(
             d_pair,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
         )
 
     @typecheck
@@ -260,7 +260,7 @@ class MSAModuleBlock(nn.Module):
             )
             self.transition_msa = Transition(
                 d_msa,
-                implementation=to_engine_impl(implementation),
+                backend=to_engine_impl(implementation),
             )
 
         # residual + drop_row/drop_col owned by the miniworld_engine modules; dropout passed via
@@ -268,13 +268,13 @@ class MSAModuleBlock(nn.Module):
         self.tri_multi_outgoing = TriangleMultiplication(
             d_pair=d_pair,
             outgoing=True,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
             p_drop=p_drop,
         )
         self.tri_multi_incoming = TriangleMultiplication(
             d_pair=d_pair,
             outgoing=False,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
             p_drop=p_drop,
         )
 
@@ -284,7 +284,7 @@ class MSAModuleBlock(nn.Module):
                 n_head=n_head_tri_attention,
                 starting=True,
                 use_self_attention=use_self_attention,
-                implementation=to_engine_impl(implementation),
+                backend=to_engine_impl(implementation),
                 p_drop=p_drop,
             )
             self.tri_atten_ending = TriangleAttention(
@@ -292,12 +292,12 @@ class MSAModuleBlock(nn.Module):
                 n_head=n_head_tri_attention,
                 starting=False,
                 use_self_attention=use_self_attention,
-                implementation=to_engine_impl(implementation),
+                backend=to_engine_impl(implementation),
                 p_drop=p_drop,
             )
         self.transition_pair = Transition(
             d_pair,
-            implementation=to_engine_impl(implementation),
+            backend=to_engine_impl(implementation),
         )
 
     @typecheck

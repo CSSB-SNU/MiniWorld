@@ -6,47 +6,38 @@ __version__ = "1.0.0"
 
 
 def engine_jit_root():
-    """This environment's cache of JIT-built engine kernels (a ``Path``), or ``None`` without an engine.
+    """This environment's directory for JIT-built extensions (a ``Path``), or ``None`` without an engine.
 
-    The engine caches them under ``$XDG_CACHE_HOME/miniworld_engine_jit`` whatever interpreter built them, so two environments
-    (another Python, another torch) on one account load each other's ``.so`` and fail with "Python version mismatch". The cache is
-    keyed by the interpreter prefix here unless the run set ``engine_jit_root`` itself.
+    miniworld-engine 3.x caches its JIT-built kernels under ``$XDG_CACHE_HOME/miniworld_engine_jit`` (no ``settings`` to relocate it;
+    prebuilt kernels ship in the wheel and are looked up first). Torch-extension ``.so`` files, which depend on the interpreter and
+    torch, must not be shared between environments of one account ("Python version mismatch"), so they live in a sub-directory
+    keyed by the interpreter prefix (see :func:`_separate_engine_jit_cache_per_environment`).
     """
     import hashlib
-    import os
     import sys
-    from pathlib import Path
 
     try:
-        from miniworld_engine import settings
+        from miniworld_engine.kernels._nvcc import engine_jit_root as _engine_jit_root
     except ImportError:  # no engine installed: nothing builds kernels
         return None
-    if settings.current().engine_jit_root:
-        return Path(settings.current().engine_jit_root)
-    base = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
     tag = hashlib.sha1(sys.prefix.encode()).hexdigest()[:10]  # noqa: S324 - a directory name, not security
     py = f"py{sys.version_info.major}{sys.version_info.minor}"
-    return base / "miniworld_engine_jit" / f"{py}-{tag}"
+    return _engine_jit_root() / f"{py}-{tag}"
 
 
 def _separate_engine_jit_cache_per_environment() -> None:
-    """Point the engine and torch's extension builder at this environment's own cache.
+    """Point torch's extension builder at this environment's own cache (unless the run set ``TORCH_EXTENSIONS_DIR``).
 
     Part of the engine's extensions load without a ``build_directory`` and therefore build under torch's
-    ``TORCH_EXTENSIONS_DIR`` (default ``~/.cache/torch_extensions/py310_cu129``), which every environment with the same Python and
-    CUDA shares: two checkouts on different engine pins rebuilt each other's extensions on every switch. Unless the run set it,
-    it goes next to the engine's own cache. torch reads the variable at every build, so setting it here, at the first
-    ``import miniworld``, is early enough for every extension the engine loads later.
+    ``TORCH_EXTENSIONS_DIR`` (default ``~/.cache/torch_extensions/py312_cu129``), which every environment with the same Python and
+    CUDA shares: two checkouts on different engine pins rebuilt each other's extensions on every switch. torch reads the variable at
+    every build, so setting it here, at the first ``import miniworld``, is early enough for every extension the engine loads later.
     """
     import os
-
-    from miniworld_engine import settings
 
     root = engine_jit_root()
     if root is None:
         return
-    if not settings.current().engine_jit_root:
-        settings.configure(engine_jit_root=str(root))
     os.environ.setdefault("TORCH_EXTENSIONS_DIR", str(root / "torch_extensions"))
 
 
