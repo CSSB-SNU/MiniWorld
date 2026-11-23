@@ -329,6 +329,57 @@ def _load_catalog_arrow(
 
 
 
+def _cgroup_cpuset() -> set[int] | None:
+    """CPUs the job's cgroup may use (Slurm's cpuset), or None when it cannot be read."""
+    try:
+        with open("/proc/self/cgroup") as f:  # noqa: PTH123
+            lines = f.read().splitlines()
+    except OSError:
+        return None
+    candidates: list[str] = []
+    for line in lines:
+        _, controllers, path = line.split(":", 2)
+        if "cpuset" in controllers.split(","):  # cgroup v1
+            candidates.append(f"/sys/fs/cgroup/cpuset{path}/cpuset.cpus")
+        elif controllers == "":  # cgroup v2
+            candidates.append(f"/sys/fs/cgroup{path}/cpuset.cpus.effective")
+    for cand in candidates:
+        try:
+            with open(cand) as f:  # noqa: PTH123
+                text = f.read().strip()
+        except OSError:
+            continue
+        cpus: set[int] = set()
+        for part in text.split(","):
+            if not part:
+                continue
+            lo, _, hi = part.partition("-")
+            cpus.update(range(int(lo), int(hi or lo) + 1))
+        if cpus:
+            return cpus
+    return None
+
+
+def widen_worker_affinity(_worker_id: int = 0) -> None:
+    """DataLoader ``worker_init_fn``: let the worker run on every CPU of the job, not on the CPUs its parent was narrowed to.
+
+    After NCCL / CUDA initialisation a rank process is bound to the CPUs local to its GPU (``nvidia-smi topo -m``: CPU Affinity), and
+    the spawned workers inherit that mask. On an H100 node a 64-CPU job (32 cores x 2 hyper-threads on each of the two sockets)
+    then runs its ranks and all its data workers on the 32 hardware threads of one socket and leaves the other 32 idle (measured on
+    node02: workers of a 2-GPU job all on 72-87,184-199). The worker reads the job's own cpuset (Slurm's cgroup) and widens its
+    mask to it. MW_WORKER_AFFINITY=0 turns this off. Never changes what a sample contains.
+    """
+    if os.environ.get("MW_WORKER_AFFINITY", "1") == "0" or not hasattr(os, "sched_setaffinity"):
+        return
+    allowed = _cgroup_cpuset()
+    if not allowed:
+        return
+    try:
+        os.sched_setaffinity(0, allowed & set(range(os.cpu_count() or 0)) or allowed)
+    except OSError:
+        pass
+
+
 def _log_slow_sample(record, wall: float, cpu: float, n_try: int, rng: np.random.Generator) -> None:
     """MW_SAMPLE_TIMING_DIR=<dir>: append "pid item wall cpu tries" for samples slower than 2 s and for 2% of the others (the baseline).
 
@@ -358,6 +409,8 @@ class BioMolData(torch.utils.data.Dataset):
         crop_config: CropConfig = CropConfig()
         msa_config: MSAConfig = MSAConfig()
         template_config: TemplateConfig = TemplateConfig()
+        # False: skip the template LMDB read (a model with model.trunk.use_template=false never reads the template group)
+        load_templates: bool = True
         DB_config: BioMolDBV2Config
         tokenizer_config: TokenizerConfig = TokenizerConfig()
         sampler_config: SamplerConfig = SamplerConfig()
@@ -390,6 +443,8 @@ class BioMolData(torch.utils.data.Dataset):
         self.config = config
         self.epoch: int = 0
         self.seed: int = 0
+        # MW_SKIP_SOURCES=protein_monomer,short_protein_monomer: sources whose every draw ends in WrongCroppingError (opt-in, see __getitem__)
+        self._skip_sources = frozenset(s for s in os.environ.get("MW_SKIP_SOURCES", "").split(",") if s)
         self.tokenizer = Tokenizer(config=config.tokenizer_config)
 
         self.weights: list[float] = []
@@ -419,6 +474,7 @@ class BioMolData(torch.utils.data.Dataset):
             antibody_seq_ids=load_antibody_seq_ids(
                 config.DB_config.antibody_seq_id_path
             ),
+            load_templates=config.load_templates,
         )
 
     def set_epoch(self, epoch: int) -> None:
@@ -696,6 +752,12 @@ class BioMolData(torch.utils.data.Dataset):
 
         while True:
             n_try += 1
+            if record.source in self._skip_sources:
+                # a source that is known to fail every draw (MW_SKIP_SOURCES): the same redraw as the WrongCroppingError below,
+                # without reading the record (a failing try consumes no rng before the redraw, so the sample stream is unchanged)
+                idx = int(rng.integers(0, len(self)))
+                record = self.items[idx]
+                continue
             try:
                 out = self.preprocessor.process(record, rng=rng)
                 _log_slow_sample(record, time.perf_counter() - t_wall, time.process_time() - t_cpu, n_try, rng)
@@ -822,6 +884,7 @@ class BioMolData(torch.utils.data.Dataset):
             "num_workers": num_workers,
             "pin_memory": False,
             "generator": worker_seed_rng,
+            "worker_init_fn": (widen_worker_affinity if num_workers > 0 else None),
             "multiprocessing_context": ("spawn" if num_workers > 0 else None),
             "collate_fn": functools.partial(
                 bucketed_collate,

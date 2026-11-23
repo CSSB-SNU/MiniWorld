@@ -69,8 +69,11 @@ class Preprocessor:
         tokenizer_config: TokenizerConfig,
         resources: ResourceLocator | None = None,
         antibody_seq_ids: frozenset[str] = frozenset(),
+        load_templates: bool = True,
     ) -> None:
         self.tokenizer = tokenizer
+        # False: the model never reads the template group (use_template=false) -> no template LMDB read (see load_record_templates)
+        self.load_templates = load_templates
         self.fragmented_ccd_mols = fragmented_ccd_mols
         self.pdb_config = pdb_config
         self.crop_config = crop_config
@@ -181,6 +184,7 @@ class Preprocessor:
             record=record,
             n_templates=self.template_config.n_templates,
             rng=rng,
+            read=self.load_templates,
         )
 
         return make_batch(

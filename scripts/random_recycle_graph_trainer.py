@@ -672,6 +672,8 @@ def train(
             DB_config=cfg.data.train_db,
             sampler_config=cfg.data.sampler,
             tokenizer_config=cfg.data.tokenizer,
+            # model.trunk.use_template=false: the model never reads the template group, so do not read the template LMDB for it
+            load_templates=bool(getattr(model, "use_template", True)),
         )
     )
     # MW_CHAIN_EPOCHS=0 restores one iterator per epoch (the first step of each epoch then waits 25-50 s for the workers to refill)

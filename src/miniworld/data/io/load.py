@@ -223,6 +223,42 @@ def load_cif(key: str, env_path: Path) -> dict[str, dict[str, CIFMol]]:
     return cifmol_dict
 
 
+def load_bytes_entry(byte_data: bytes, key: str):
+    """``biomol.core.utils.load_bytes(byte_data).get(key)``, rebuilding only the ``key`` sub-tree.
+
+    The stream is one zstd frame, so it is still decompressed whole, but the (expensive) per-array ``np.load`` runs only for the
+    arrays under ``key``: a PDB cif value holds every assembly / model / alt of the entry and ``load_cifmol`` needs one. The result is
+    identical to ``load_bytes(byte_data).get(key)`` (same header, same array bytes, same ``np.load``).
+    """
+    import io  # noqa: PLC0415
+
+    from zstandard import ZstdDecompressor  # noqa: PLC0415
+
+    with ZstdDecompressor().stream_reader(io.BytesIO(byte_data)) as reader:
+        raw = reader.read()
+    hlen = int.from_bytes(raw[:8], "little")
+    header = json.loads(raw[8 : 8 + hlen].decode("utf-8"))
+    template = header["template"]
+    if key not in template:
+        return None
+    payload = memoryview(raw)[8 + hlen :]
+    spans: dict[str, tuple[int, int]] = {}
+    offset = 0
+    for name, length in header["arrays"].items():
+        spans[name] = (offset, length)
+        offset += length
+
+    def rebuild(value):
+        if isinstance(value, str) and value in spans:
+            start, length = spans[value]
+            return np.load(io.BytesIO(payload[start : start + length]), allow_pickle=False)
+        if isinstance(value, dict):
+            return {k: rebuild(v) for k, v in value.items()}
+        return value
+
+    return rebuild(template[key])
+
+
 def load_cifmol(
     db_path: Path,
     pdb_id: str,
@@ -237,8 +273,7 @@ def load_cifmol(
         msg = f"Key '{pdb_id}' not found in LMDB database at '{db_path}'."
         raise KeyError(msg)
 
-    value = load_bytes(value)
-    item = value.get(f"{assembly_id}_{model_id}_{alt_id}")
+    item = load_bytes_entry(value, f"{assembly_id}_{model_id}_{alt_id}")
     if item is None:
         msg = f"CIFMolAttached '{pdb_id}_{assembly_id}_{model_id}_{alt_id}' not found in LMDB database at '{db_path}'."
         raise KeyError(msg)

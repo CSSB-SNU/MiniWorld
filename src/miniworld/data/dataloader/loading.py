@@ -219,6 +219,7 @@ def load_record_templates(
     record: DataRecord,
     n_templates: int,
     rng: np.random.Generator | None,
+    read: bool = True,
 ) -> ProteinTemplate:
     """Load template features by each chain's ``{RECORD}_{auth}`` key.
 
@@ -227,6 +228,10 @@ def load_record_templates(
     (e.g. MiniSWAModel's pair-only trunk) then avoid paying the biomol
     ``load_bytes`` deserialize cost, which was ~55% of preprocess wall time
     at the default ``n_templates=4``.
+
+    ``read=False`` skips the template LMDB read for every chain and returns what a record whose chains have no template
+    would give (empty slots padded to ``n_templates``): for a model that never reads the template group
+    (``model.trunk.use_template=false``) the read + deserialize + crop of up to ``n_templates`` templates per chain is wasted.
     """
     if n_templates <= 0:
         return ProteinTemplate.concat(
@@ -241,7 +246,7 @@ def load_record_templates(
     templates_list: list[ProteinTemplate] = []
     template_id = 0
     for chain_id, crop_indices in chain_id_to_crop_indices.items():
-        template_env = template_path(record, chain_id)
+        template_env = template_path(record, chain_id) if read else None
         if template_env is None or len(crop_indices) == 0:
             templates_list.append(
                 ProteinTemplate(n_residues=crop_indices.shape[0], ids=[template_id]),
