@@ -1,0 +1,17 @@
+# v2.4.0 phase 1a, pairformer 16 blocks, NO recycling (n_recycle_max 1) and NO template module (model.trunk.use_template=false), from scratch, 600 epochs.
+# Otherwise phase1a_distogram_medium_v240_local (same data, sampler, crop L384, loss, bf16-mixed CUDA-graph trainer). Run on 2 GPUs with grad_accum 128 (2 x 1 x 128 = 256, the same
+# samples per optimizer step as the 4-GPU run).
+defaults:
+  - phase1a_distogram_medium_v240_local
+  - _self_
+model:
+  trunk:
+    use_template: false
+    n_recycle_max: 1
+    pairformer:
+      n_block: 16
+train:
+  comment: "v2.4.0-phase1a-distogram-medium-L384-nr-nt-pf16"
+  run_dir: "runs/v2.4.0/phase1a/medium_distogram_L384_nr_nt_pf16"
+  num_epoch: 600
+  grad_accum_steps: 128

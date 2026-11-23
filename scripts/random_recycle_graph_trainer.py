@@ -30,6 +30,8 @@ def copy_static(dst, src):
     """Fail on an incompatible batch instead of replaying stale input fields."""
     for group in CONSUMED:
         a, b = getattr(dst, group), getattr(src, group)
+        if group == "template" and not hasattr(a, "_graph_present"):
+            continue  # model.trunk.use_template=false: the template tensors are never read, their shape may vary
         for name, value in vars(a).items():
             if group == "template" and name == "_graph_present":
                 value.fill_(b.mask.shape[1] > 0)
