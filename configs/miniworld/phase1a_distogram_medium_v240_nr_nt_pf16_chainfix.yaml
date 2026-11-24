@@ -1,0 +1,13 @@
+# phase1a_distogram_medium_v240_nr_nt_pf16 on the distillation-chain-fixed catalog: protein_monomer / short_protein_monomer now yield samples
+# (corrected table train_item_20210930_distfix.tsv, node-local catalog ..._distfix.arrow). Launch with MW_SKIP_SOURCES= (EMPTY) -- the launch script's
+# default MW_SKIP_SOURCES=protein_monomer,short_protein_monomer would still skip them. Use a NEW run_dir (below): this is a new run, not a resume.
+defaults:
+  - phase1a_distogram_medium_v240_nr_nt_pf16
+  - override data: BioMolDB_20261014_local_chainfix
+  - _self_
+data:
+  train_db:
+    catalog_cache_path: /local_data1/psk6950/BioMolDB_20261014/catalog_trainitem_no_disordered_unified_v240_local_distfix.arrow
+train:
+  comment: "v2.4.0-phase1a-distogram-medium-L384-nr-nt-pf16-chainfix"
+  run_dir: "runs/v2.4.0/phase1a/medium_distogram_L384_nr_nt_pf16_chainfix"

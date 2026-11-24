@@ -1,0 +1,35 @@
+# BioMolDB_20261014_local with the distillation chain-id fix: the corrected train_item table has chain_id1 = 'A' for protein_monomer and
+# short_protein_monomer (the cif LMDBs of distillation_long / distillation_short store their single protein chain as 'A'; the old table said '1',
+# so every draw of those two sources failed with WrongCroppingError "No valid atoms found for chain_ids ['1']"). disordered_pdb keeps '1'
+# (distillation_disordered stores numeric chains). Everything else is inherited from BioMolDB_20261014_local (metadata paths included).
+defaults:
+  - BioMolDB_20261014_local
+  - _self_
+
+train_db:
+  train_item_path: /home/psk6950/data/filtering/edge_node/train_item_20210930_distfix.tsv
+
+  distillation_sources:
+    - name: protein_monomer
+      cif_db_path: /local_data1/psk6950/BioMolDB_20261014/lmdb/distillation_long/cif_attached/cif_long_attached.lmdb
+      template_db_path: /local_data1/psk6950/BioMolDB_20261014/lmdb/distillation_long/template/template_topn_long.lmdb
+      chain_ids: ["A"]
+      lookup_mode: record_id
+      a3m_db_paths:
+        - /local_data1/psk6950/BioMolDB_20261014/lmdb/distillation_long/msa/msa_long_d2k.lmdb
+
+    - name: short_protein_monomer
+      cif_db_path: /local_data1/psk6950/BioMolDB_20261014/lmdb/distillation_short/cif_attached/cif_short_attached.lmdb
+      template_db_path: /local_data1/psk6950/BioMolDB_20261014/lmdb/distillation_short/template/template_topn_short.lmdb
+      chain_ids: ["A"]
+      lookup_mode: record_id
+      a3m_db_paths:
+        - /local_data1/psk6950/BioMolDB_20261014/lmdb/distillation_short/msa/msa_short_d2k.lmdb
+
+    - name: disordered_pdb
+      cif_db_path: /local_data1/psk6950/BioMolDB_20261014/lmdb/distillation_disordered/cif_attached/cif_disordered_attached.lmdb
+      template_db_path: /local_data1/psk6950/BioMolDB_20261014/lmdb/distillation_disordered/template/template_disordered.lmdb
+      chain_ids: ["1"]
+      lookup_mode: record_id
+      a3m_db_paths:
+        - /local_data1/psk6950/BioMolDB_20261014/lmdb/distillation_disordered/msa/msa_disordered_d2k.lmdb
