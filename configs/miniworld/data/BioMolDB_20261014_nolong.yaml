@@ -26,6 +26,8 @@ train_db:
     a3m_db_path: /home/psk6950/data/BioMolDB_20261014/lmdb/pdb/msa/a3m.lmdb
     a3m_rna_db_path: /home/psk6950/data/BioMolDB_20261014/lmdb/pdb/msa/msa_rna.lmdb
     template_db_path: /home/psk6950/data/BioMolDB_20261014/lmdb/chain/template/template.lmdb
+    # NOT read in train_item mode (the catalog comes from train_item_path / the Arrow cache); the string is part of the catalog fingerprint, so it must stay
+    # as it was when the cached catalogs were built (the file itself no longer exists). Changing it makes every cached catalog stale -> full rebuild.
     edge_id_to_bias_path: /home/psk6950/data/BioMol/metadata/train_20210930_edge_node_reldate.tsv
     ccd_preprocessed_path: /home/psk6950/data/CCD/preprocessed_CCD.lmdb
 
