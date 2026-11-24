@@ -735,6 +735,19 @@ def train(
     it = iter(dl)
     first = next(it)
     second = next(it)
+    if cfg.train.synth_data:
+        # train.synth_data=true: GPU-only speed of the real train path. The loader is read ONCE (a small pool of real batches: the real
+        # shapes, padding, MSA row counts) and the pool is replayed, so a step never waits for data. (This trainer used to ignore the flag
+        # and run the real loader, so a "synthetic" speed run measured the loader.)
+        pool = [first, second] + [next(it) for _ in range(int(os.environ.get("MW_SYNTH_POOL", "6")))]
+        try:
+            it._shutdown_workers()
+        except Exception:  # noqa: BLE001
+            pass
+        it = itertools.cycle(pool)
+        chain_epochs = True
+        if rank == 0:
+            print(f"[graph] train.synth_data: replaying a pool of {len(pool)} real batches (no data loading)", flush=True)
     if rank == 0:
         print("[graph] real batches ready; compile/capture begins", flush=True)
     if diagnostic_steps:
