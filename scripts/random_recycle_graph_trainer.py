@@ -26,6 +26,16 @@ log = logging.getLogger("random_recycle_graph")
 CONSUMED = ("sequence", "structure", "reference", "scheme", "msa", "template")
 
 
+def pad_static_msa(static, rows):
+    """Zero-pad the (real-rows-only) MSA of a device batch to the static row count the graphs are captured with."""
+    if not rows:
+        return
+    for name, value in vars(static.msa).items():
+        if isinstance(value, torch.Tensor) and value.ndim >= 2 and value.shape[1] < rows and name not in {"profile", "deletion_mean"}:
+            pad = value.new_zeros((value.shape[0], rows - value.shape[1], *value.shape[2:]))
+            setattr(static.msa, name, torch.cat([value, pad], dim=1))
+
+
 def copy_static(dst, src):
     """Fail on an incompatible batch instead of replaying stale input fields."""
     for group in CONSUMED:
@@ -59,6 +69,23 @@ def copy_static(dst, src):
                     raise ValueError("Phase1 graph requires dense token_bond_feat")
                 continue
             other = getattr(b, name)
+            if (
+                group == "msa"
+                and isinstance(value, torch.Tensor)
+                and isinstance(other, torch.Tensor)
+                and value.dtype == other.dtype
+                and value.ndim == other.ndim
+                and value.ndim >= 2
+                and value.shape[0] == other.shape[0]
+                and other.shape[1] < value.shape[1]
+                and value.shape[2:] == other.shape[2:]
+            ):
+                # the loader hands over the MSA with its real rows only (MW_PACKED_LOADER): write them into the static buffer and zero the
+                # padding rows, which is exactly the tensor the zero-padded 8192-row batch used to deliver
+                n_rows = other.shape[1]
+                value[:, :n_rows].copy_(other, non_blocking=True)
+                value[:, n_rows:].zero_()
+                continue
             if isinstance(value, torch.Tensor):
                 if (
                     not isinstance(other, torch.Tensor)
@@ -674,10 +701,14 @@ def train(
             tokenizer_config=cfg.data.tokenizer,
             # model.trunk.use_template=false: the model never reads the template group, so do not read the template LMDB for it
             load_templates=bool(getattr(model, "use_template", True)),
+            # MW_COMPACT_MSA=1: MSA host tensors as int8 / float32 (the model casts them itself, same values), fewer bytes to build and move
+            compact_msa=os.environ.get("MW_COMPACT_MSA", "0") == "1",
+            skip_unread_structure=os.environ.get("MW_SKIP_UNREAD_STRUCTURE", "0") == "1",
         )
     )
     # MW_CHAIN_EPOCHS=0 restores one iterator per epoch (the first step of each epoch then waits 25-50 s for the workers to refill)
     chain_epochs = os.environ.get("MW_CHAIN_EPOCHS", "1") == "1"
+    packed_loader = os.environ.get("MW_PACKED_LOADER", "0") == "1"
     dl = ds.create_ddp_dataloader(
         world_size=world,
         rank=rank,
@@ -695,6 +726,9 @@ def train(
         bucket_atom_multiple=cfg.train.bucket_atom_multiple,
         bucket_template_multiple=TemplateConfig().n_templates,
         chain_epochs=chain_epochs,
+        # MW_PACKED_LOADER=0 restores the per-tensor hand-off and the 8192-row padded MSA in the workers
+        pack=packed_loader,
+        unpadded_msa=packed_loader,
     )
     dl.sampler.set_epoch(epoch)
     ds.set_epoch(epoch)
@@ -710,6 +744,7 @@ def train(
             # Short numerical/compute check; deliberately excludes loader throughput.
             it = itertools.cycle([first, second])
     static = first.to(device=dev)
+    pad_static_msa(static, cfg.train.bucket_msa_multiple)
     if attach_pair_weight(static, cfg.loss) and rank == 0:
         print(
             "[graph] distogram chemistry pair weights ride in the static batch",

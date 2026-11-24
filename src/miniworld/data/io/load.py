@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import Literal, cast
 
@@ -223,19 +224,67 @@ def load_cif(key: str, env_path: Path) -> dict[str, dict[str, CIFMol]]:
     return cifmol_dict
 
 
-def load_bytes_entry(byte_data: bytes, key: str):
+_NPY_HEADERS: dict = {}
+
+
+def _fast_npy(buf, view=False):
+    """``np.load(BytesIO(buf), allow_pickle=False)`` for a C-order .npy blob; the header text is parsed once per distinct text.
+
+    ``np.load`` evaluates every array's header with ``ast.literal_eval`` (an entry holds ~85 arrays); the headers of equal dtype /
+    shape repeat, so their parsed form is cached. The array owns its writable C-contiguous memory, like ``np.load``'s. Fortran-order
+    and object arrays take the ``np.load`` path.
+    """
+    import io  # noqa: PLC0415
+
+    major = buf[6]
+    hlen, start = (int.from_bytes(buf[8:10], "little"), 10) if major == 1 else (int.from_bytes(buf[8:12], "little"), 12)
+    key = bytes(buf[start : start + hlen])
+    meta = _NPY_HEADERS.get(key)
+    if meta is None:
+        import ast  # noqa: PLC0415
+
+        d = ast.literal_eval(key.decode("latin1" if major < 3 else "utf8"))
+        dtype = np.dtype(d["descr"])
+        meta = (dtype, tuple(d["shape"]), bool(d["fortran_order"]) or dtype.hasobject)
+        if len(_NPY_HEADERS) < 4096:
+            _NPY_HEADERS[key] = meta
+    dtype, shape, slow = meta
+    if slow or bytes(buf[:6]) != b"\x93NUMPY":
+        return np.load(io.BytesIO(buf), allow_pickle=False)
+    count = 1
+    for s in shape:
+        count *= s
+    arr = np.frombuffer(buf, dtype=dtype, count=count, offset=start + hlen).reshape(shape)
+    # view=True (callers that only index / read the array): a read-only view of the decompressed bytes, no copy; byte arrays only
+    # (always aligned), so the data is the same bytes the copy would hold
+    return arr if (view and dtype.itemsize == 1) else arr.copy()
+
+
+def _zstd_all(byte_data: bytes) -> bytes:
+    """Decompress the (single) zstd frame of a value. When the frame header carries the content size (the LMDB values do), one call
+    into the decompressor is ~2x faster than reading a stream in chunks (15.6 vs 29.5 ms per cif entry, 6.8 vs 12.6 ms per a3m entry)."""
+    import io  # noqa: PLC0415
+
+    from zstandard import ZstdDecompressor, frame_content_size  # noqa: PLC0415
+
+    try:
+        size = frame_content_size(byte_data)
+    except Exception:  # noqa: BLE001
+        size = -1
+    if size is not None and size >= 0:
+        return ZstdDecompressor().decompress(byte_data, max_output_size=size)
+    with ZstdDecompressor().stream_reader(io.BytesIO(byte_data)) as reader:
+        return reader.read()
+
+
+def load_bytes_entry(byte_data: bytes, key: str, *, views: bool = False):
     """``biomol.core.utils.load_bytes(byte_data).get(key)``, rebuilding only the ``key`` sub-tree.
 
     The stream is one zstd frame, so it is still decompressed whole, but the (expensive) per-array ``np.load`` runs only for the
     arrays under ``key``: a PDB cif value holds every assembly / model / alt of the entry and ``load_cifmol`` needs one. The result is
     identical to ``load_bytes(byte_data).get(key)`` (same header, same array bytes, same ``np.load``).
     """
-    import io  # noqa: PLC0415
-
-    from zstandard import ZstdDecompressor  # noqa: PLC0415
-
-    with ZstdDecompressor().stream_reader(io.BytesIO(byte_data)) as reader:
-        raw = reader.read()
+    raw = _zstd_all(byte_data)
     hlen = int.from_bytes(raw[:8], "little")
     header = json.loads(raw[8 : 8 + hlen].decode("utf-8"))
     template = header["template"]
@@ -251,12 +300,52 @@ def load_bytes_entry(byte_data: bytes, key: str):
     def rebuild(value):
         if isinstance(value, str) and value in spans:
             start, length = spans[value]
-            return np.load(io.BytesIO(payload[start : start + length]), allow_pickle=False)
+            return _fast_npy(payload[start : start + length], views)
         if isinstance(value, dict):
             return {k: rebuild(v) for k, v in value.items()}
         return value
 
     return rebuild(template[key])
+
+
+_MAGIC_V2 = b"MWF2"
+
+
+def split_entry_keys(byte_data: bytes) -> list[str]:
+    """Top-level keys (assembly_model_alt) of an old-format value, in stored order."""
+    raw = _zstd_all(byte_data)
+    hlen = int.from_bytes(raw[:8], "little")
+    return list(json.loads(raw[8 : 8 + hlen].decode("utf-8"))["template"].keys())
+
+
+def load_bytes_entry_v2(value: bytes, key: str):
+    """Decoded sub-tree of one assembly from a per-assembly ("MWF2") value written by tools/rewrite_cif_lmdb.py, or None."""
+    import pickle  # noqa: PLC0415
+    import struct  # noqa: PLC0415
+
+    (n,) = struct.unpack("<I", value[4:8])
+    index = pickle.loads(value[8 : 8 + n])  # noqa: S301  (our own local database)
+    if key not in index:
+        return None
+    off, length = index[key]
+    start = 8 + n + off
+    return pickle.loads(_zstd_all(value[start : start + length]))  # noqa: S301
+
+
+_FAST_DB_CACHE: dict = {}
+
+
+def _cif_db_path(db_path: Path) -> Path:
+    """MW_CIF_FAST_DB=<dir>: use ``<dir>/<lmdb name>`` (the per-assembly rewrite of this cif LMDB) when it exists on this node."""
+    root = os.environ.get("MW_CIF_FAST_DB")
+    if not root:
+        return db_path
+    got = _FAST_DB_CACHE.get(db_path)
+    if got is None:
+        cand = Path(root) / Path(db_path).name
+        got = cand if (cand / "data.mdb").is_file() else db_path
+        _FAST_DB_CACHE[db_path] = got
+    return got
 
 
 def load_cifmol(
@@ -267,13 +356,18 @@ def load_cifmol(
     alt_id: str | None = None,
 ) -> CIFMolAttached:
     """Load CIFMolAttached from LMDB by cif_id."""
+    db_path = _cif_db_path(db_path)
     value = load_raw_data(pdb_id, db_path)
 
     if value is None:
         msg = f"Key '{pdb_id}' not found in LMDB database at '{db_path}'."
         raise KeyError(msg)
 
-    item = load_bytes_entry(value, f"{assembly_id}_{model_id}_{alt_id}")
+    entry_key = f"{assembly_id}_{model_id}_{alt_id}"
+    if value[:4] == _MAGIC_V2:
+        item = load_bytes_entry_v2(value, entry_key)
+    else:
+        item = load_bytes_entry(value, entry_key)
     if item is None:
         msg = f"CIFMolAttached '{pdb_id}_{assembly_id}_{model_id}_{alt_id}' not found in LMDB database at '{db_path}'."
         raise KeyError(msg)

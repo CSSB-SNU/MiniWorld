@@ -70,8 +70,14 @@ class Preprocessor:
         resources: ResourceLocator | None = None,
         antibody_seq_ids: frozenset[str] = frozenset(),
         load_templates: bool = True,
+        compact_msa: bool = False,
+        skip_unread_structure: bool = False,
     ) -> None:
         self.tokenizer = tokenizer
+        # True: MSA host tensors as int8 / float32 (see sample_msa)
+        self.compact_msa = compact_msa
+        # True: do not build the structure fields the phase-1 graph never reads (token_contacts, bond_atom_pairs)
+        self.skip_unread_structure = skip_unread_structure
         # False: the model never reads the template group (use_template=false) -> no template LMDB read (see load_record_templates)
         self.load_templates = load_templates
         self.fragmented_ccd_mols = fragmented_ccd_mols
@@ -196,6 +202,7 @@ class Preprocessor:
             rng=rng,
             ccd_mols=self.fragmented_ccd_mols,
             antibody_seq_ids=self.antibody_seq_ids,
+            skip_unread_structure=self.skip_unread_structure,
         )
 
     # -- feature-key resolution (compat records) --------------------------
@@ -282,6 +289,7 @@ class Preprocessor:
             max_msa_depth=self.msa_config.depth_for(record.source),
             rng=rng,
             sample_depth=self.msa_config.policy_for(record.source),
+            compact=self.compact_msa,
         )
 
     # -- cropping ---------------------------------------------------------

@@ -7,8 +7,8 @@
 #SBATCH --nodelist=node02
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:h100:2
-#SBATCH --cpus-per-task=64
-#SBATCH --mem=400G
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=128G
 #SBATCH --time=8-00:00:00
 #SBATCH --output=/home/psk6950/MiniWorld-scratch/phase1a-nr-nt/train_%x_%j.out
 #SBATCH --error=/home/psk6950/MiniWorld-scratch/phase1a-nr-nt/train_%x_%j.out
@@ -31,7 +31,7 @@ for attempt in 1 2 3 4 5; do
     RESUME="--ckpt $RUN/checkpoints/last.pt +train.resume_run_subdir=$RUN"
     echo "resuming $RUN"
   fi
-  CONDA_OVERRIDE_CUDA=12.8 RESUME="$RESUME" ROOT=$ROOT CFG=$CFG PF=$PF WORKERS="${WORKERS:-32}" PREFETCH="${PREFETCH:-4}" MW_SKIP_SOURCES="${MW_SKIP_SOURCES-protein_monomer,short_protein_monomer}" pixi run --frozen -e cu128 bash -c '
+  CONDA_OVERRIDE_CUDA=12.8 RESUME="$RESUME" ROOT=$ROOT CFG=$CFG PF=$PF WORKERS="${WORKERS:-16}" PREFETCH="${PREFETCH:-4}" MW_PACKED_LOADER="${MW_PACKED_LOADER-1}" MW_COMPACT_MSA="${MW_COMPACT_MSA-1}" MW_SKIP_UNREAD_STRUCTURE="${MW_SKIP_UNREAD_STRUCTURE-1}" MW_SKIP_SOURCES="${MW_SKIP_SOURCES-protein_monomer,short_protein_monomer}" pixi run --frozen -e cu128 bash -c '
     export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
     export NCCL_DEBUG=WARN TORCH_NCCL_ASYNC_ERROR_HANDLING=1 MW_COMPILE_TIMEOUT=1
     export PYTHONFAULTHANDLER=1
@@ -43,7 +43,7 @@ for attempt in 1 2 3 4 5; do
     torchrun --standalone --nproc_per_node=2 scripts/run_miniworld_distogram_train.py train \
       --config $CFG \
       --job-name v240-phase1a-medium-L384-nr-nt-pf${PF} $RESUME \
-      train.run_dir="$ROOT" train.use_wandb=true train.num_workers=${WORKERS:-32} train.prefetch_factor=${PREFETCH:-4}
+      train.run_dir="$ROOT" train.use_wandb=true train.num_workers=${WORKERS:-16} train.prefetch_factor=${PREFETCH:-4}
   '
   rc=$?
   echo "==== attempt $attempt EXIT $rc ===="

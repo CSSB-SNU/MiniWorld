@@ -199,6 +199,7 @@ def to_structure_features(
     cifmol: CIFMolAttached,
     atom_to_token_idx_map: np.ndarray,
     token_to_residue_idx_map: np.ndarray,
+    skip_unread: bool = False,
 ) -> StructureFeatures:
     """Convert CIFMol to StructureFeatures."""
     cropped_token_len = len(token_to_residue_idx_map)
@@ -206,7 +207,10 @@ def to_structure_features(
     atom_pos_mask = np.isfinite(atom_pos).all(axis=1)
     atom_mask = np.ones_like(atom_pos_mask, dtype=bool)
 
-    token_contacts = to_token_contacts(
+    if skip_unread:  # phase-1 graphs never read the sampled contact list (copy_static skips it; the loss and the embedder do not use it)
+        token_contacts = torch.zeros((0, 3), dtype=torch.long)
+    else:
+        token_contacts = to_token_contacts(
         x0=torch.from_numpy(atom_pos.astype(np.float32, copy=False)).unsqueeze(0),
         atom_to_token_idx_map=torch.from_numpy(
             atom_to_token_idx_map.astype(np.int64, copy=False),
@@ -215,7 +219,7 @@ def to_structure_features(
             atom_pos_mask.astype(np.bool_, copy=False),
         ).unsqueeze(0),
         token_length=cropped_token_len,
-    ).squeeze(0)
+        ).squeeze(0)
 
     # centering atom_pos
     valid_pos = atom_pos[atom_pos_mask]  # (N_valid, 3)
@@ -274,11 +278,14 @@ def to_structure_features(
     # (``covale``) bonds — polymer-ligand / ligand-ligand / glycan links — kept
     # only when both endpoints survive the crop, have a valid GT position, and are
     # < 2.4 Å apart in the ground truth (AF3's training bond filter). [n_bond, 2].
-    bond_atom_pairs = _build_bond_atom_pairs(
-        cifmol=cifmol,
-        atom_pos=atom_pos,
-        atom_pos_mask=atom_pos_mask,
-    )
+    if skip_unread:  # only the symmetry / bond losses of the diffusion phases read it
+        bond_atom_pairs = np.zeros((0, 2), dtype=np.int64)
+    else:
+        bond_atom_pairs = _build_bond_atom_pairs(
+            cifmol=cifmol,
+            atom_pos=atom_pos,
+            atom_pos_mask=atom_pos_mask,
+        )
 
     # AF3 §4.3.2 PAE frames: per-token 3-atom frame — (N, CA, C) for protein,
     # (C1', C3', C4') for nucleotides; single-atom tokens (ligand/ion) invalid.
@@ -613,6 +620,7 @@ def make_batch(
     rng: np.random.Generator | None = None,
     ccd_mols=None,
     antibody_seq_ids: frozenset[str] = frozenset(),
+    skip_unread_structure: bool = False,
 ) -> Batch:
     """Make features from cifmol and MSA."""
     if rng is None:
@@ -621,12 +629,13 @@ def make_batch(
     template_token = to_template_features(templates, token_to_residue_idx_map)
 
     scheme = to_scheme_features(cifmol, token_to_residue_idx_map, atom_to_token_idx_map)
-    sequence = SequenceFeatures(token_type=msa_token.aligned_sequences[:, 0])
+    sequence = SequenceFeatures(token_type=msa_token.aligned_sequences[:, 0].to(torch.long))
     reference = to_reference_features(cifmol, rng, ccd_mols=ccd_mols)
     structure = to_structure_features(
         cifmol,
         atom_to_token_idx_map,
         token_to_residue_idx_map,
+        skip_unread=skip_unread_structure,
     )
     chain = to_chain_features(cifmol, antibody_seq_ids)
 

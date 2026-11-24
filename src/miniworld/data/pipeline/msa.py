@@ -29,7 +29,10 @@ class MSA:
         self.seq_id = seq_id
         self.query_sequence: ndarray = sequences["query_sequence"]  # (L, )
         self.aligned_sequences: ndarray = sequences["aligned_sequences"]  # (N_seqs, L)
-        self.deletions: ndarray = sequences["deletions"]  # (N_seqs, L)
+        # (N_seqs, L); ``cropped`` leaves it None and gathers it on first use (``deletion_rows`` reads only the rows that are needed)
+        self._deletions: ndarray | None = sequences["deletions"]
+        self._del_parent: ndarray | None = None
+        self._del_crop: ndarray | None = None
         self.deletion_mean: ndarray = sequences["deletion_mean"]  # (L, )
         self.profile: ndarray = sequences["profile"]  # (L, 21) for now, protein only
         self.species: ndarray = headers["species"]  # (N_seqs, )
@@ -43,32 +46,40 @@ class MSA:
         # MSAs with |S121 species arrays — presumably GC/malloc thrash from
         # the 10k+ Python bytes objects the ``.tolist()`` allocates. numpy
         # sort at C speed sidesteps that entirely and is ~5 ms worst case.
-        if species_to_idx is not None:
-            self.species_to_idx = species_to_idx
-        else:
-            species_arr = self.species
-            n = species_arr.shape[0]
-            if n == 0:
-                self.species_to_idx = {}
-            else:
-                order = np.argsort(species_arr, kind="stable")
-                sorted_sp = species_arr[order]
-                boundaries = np.concatenate(
-                    (
-                        np.array([0], dtype=np.int64),
-                        np.nonzero(sorted_sp[1:] != sorted_sp[:-1])[0] + 1,
-                        np.array([n], dtype=np.int64),
-                    )
-                )
-                uniques = sorted_sp[boundaries[:-1]].tolist()
-                self.species_to_idx = {
-                    uniques[i]: order[boundaries[i] : boundaries[i + 1]]
-                    for i in range(len(uniques))
-                }
+        # built on first use: only species pairing reads it (never under ``no_pairing``, the training config), and the argsort over
+        # the 12k+ species strings of every a3m entry cost ~8 ms per item
+        self._species_to_idx = species_to_idx
+        self._species_parent = None
 
         self.num_seqs = self.aligned_sequences.shape[0]
         self.length = self.aligned_sequences.shape[1]
         self.shape = (self.num_seqs, self.length)
+
+    @property
+    def species_to_idx(self):
+        if self._species_to_idx is None:
+            if self._species_parent is not None:
+                self._species_to_idx = self._species_parent.species_to_idx
+            else:
+                self._species_to_idx = self._build_species_to_idx()
+        return self._species_to_idx
+
+    def _build_species_to_idx(self):
+        species_arr = self.species
+        n = species_arr.shape[0]
+        if n == 0:
+            return {}
+        order = np.argsort(species_arr, kind="stable")
+        sorted_sp = species_arr[order]
+        boundaries = np.concatenate(
+            (
+                np.array([0], dtype=np.int64),
+                np.nonzero(sorted_sp[1:] != sorted_sp[:-1])[0] + 1,
+                np.array([n], dtype=np.int64),
+            )
+        )
+        uniques = sorted_sp[boundaries[:-1]].tolist()
+        return {uniques[i]: order[boundaries[i] : boundaries[i + 1]] for i in range(len(uniques))}
 
     @classmethod
     def from_query(
@@ -134,12 +145,16 @@ class MSA:
         profile = msa.profile[crop_idx]
         deletion_mean = msa.deletion_mean[crop_idx]
         aligned_sequences = msa.aligned_sequences[:, crop_idx]
-        deletions = msa.deletions[:, crop_idx]
+        # deletions (the largest array of an a3m entry) are cropped lazily: see ``deletion_rows``
+        if msa._deletions is None:
+            del_parent, del_crop = msa._del_parent, msa._del_crop[crop_idx]
+        else:
+            del_parent, del_crop = msa._deletions, crop_idx
 
         sequences = {
             "query_sequence": query_sequence,
             "aligned_sequences": aligned_sequences,
-            "deletions": deletions,
+            "deletions": None,
             "deletion_mean": deletion_mean,
             "profile": profile,
         }
@@ -149,12 +164,27 @@ class MSA:
         # 3. Create a new instance — reuse the parent's species_to_idx since the
         # residue-axis crop does not touch the sequence axis, so species remain
         # aligned index-for-index.
-        return cls(
+        new = cls(
             seq_id=msa.seq_id,
             sequences=sequences,
             headers=headers,
-            species_to_idx=msa.species_to_idx,
+            species_to_idx=msa._species_to_idx,  # may still be None: the cropped copy then resolves it through its parent on first use
         )
+        new._species_parent = msa
+        new._del_parent, new._del_crop = del_parent, del_crop
+        return new
+
+    @property
+    def deletions(self) -> ndarray:
+        if self._deletions is None:
+            self._deletions = self._del_parent[:, self._del_crop]
+        return self._deletions
+
+    def deletion_rows(self, rows: ndarray, lo: int, hi: int) -> ndarray:
+        """``self.deletions[rows, lo:hi]`` without materialising the cropped alignment."""
+        if self._deletions is not None:
+            return self._deletions[rows, lo:hi]
+        return self._del_parent[np.asarray(rows)[:, None], self._del_crop[lo:hi][None, :]]
 
     def get_query_sequence(self) -> ndarray:
         """Return the query sequence."""
@@ -223,8 +253,9 @@ class ComplexMSA:
         out = True
         for _value in input_dict.values():
             # remove -1
-            value = [v for v in _value if v != -1]
-            out = (len(value) == len(set(value))) and out
+            value = np.asarray(_value)
+            value = value[value != -1]
+            out = (np.unique(value).size == value.size) and out
             if not out:
                 msg = "Values in the dictionary are not unique for key."
                 raise ValueError(msg)
@@ -484,12 +515,21 @@ class ComplexMSA:
                     missing_indices = [-1] * max(0, max_msa_depth - paired_num_of_seqs)
                 else:
                     # add missing indices at the end
-                    missing_indices = set(full_indices) - set(paired_indices)
-                    missing_indices = sorted(missing_indices)
+                    # rows not already used by the pairing, ascending (a boolean mask instead of two python sets over up to 16k rows)
+                    used = np.asarray(paired_indices)
+                    used = used[(used >= 0) & (used < msa_depth)]
+                    not_used = np.ones(msa_depth, dtype=bool)
+                    not_used[used] = False
+                    missing_indices = np.flatnonzero(not_used)
 
                     # if msa_depth < max_msa_depth, add -1 to the end
                     if msa_depth < max_msa_depth:
-                        missing_indices += [-1] * (max_msa_depth - msa_depth)
+                        missing_indices = np.concatenate(
+                            [
+                                missing_indices,
+                                np.full(max_msa_depth - msa_depth, -1, dtype=missing_indices.dtype),
+                            ],
+                        )
                     else:
                         missing_indices = missing_indices[
                             : max_msa_depth - paired_num_of_seqs
@@ -511,7 +551,7 @@ class ComplexMSA:
             raise ValueError(msg)
 
         seq_blocks: list[np.ndarray] = []
-        del_blocks: list[np.ndarray] = []
+        del_src: list[tuple] = []  # per chain: (MSA, source rows, missing mask or None): the deletion blocks are built only for the drawn rows
         for _key, msa in MSAs.items():
             # Only the first max_msa_depth rows are consumed (the original loop
             # ran `for ii in range(max_msa_depth)`); final_msa_indices[key] can be
@@ -520,7 +560,6 @@ class ComplexMSA:
             missing = fmi == -1
             safe = np.where(missing, 0, fmi)
             seq_block = msa.aligned_sequences[safe]  # advanced-index -> copy
-            del_block = msa.deletions[safe]
             if missing.any():
                 if self.missing_policy == "gap":
                     seq_block[missing] = GAP_IDX
@@ -528,9 +567,8 @@ class ComplexMSA:
                     seq_block[missing] = msa.get_query_sequence().astype(
                         seq_block.dtype,
                     )
-                del_block[missing] = 0
             seq_blocks.append(seq_block)
-            del_blocks.append(del_block)
+            del_src.append((msa, safe, missing if missing.any() else None))
 
         # Column span of each chain inside the stacked alignment. Row filtering
         # below never touches columns, so these stay valid for self.sequence and
@@ -542,7 +580,6 @@ class ComplexMSA:
         self.chain_col_spans = spans
 
         full_seq = np.concatenate(seq_blocks, axis=1)
-        full_del = np.concatenate(del_blocks, axis=1)
 
         query_row = full_seq[0]
         skip = (full_seq == query_row).all(axis=1) | (full_seq == GAP_IDX).all(axis=1)
@@ -552,13 +589,12 @@ class ComplexMSA:
         )
         keep = ~skip
         final_sequence = full_seq[keep]
-        final_deletion = full_del[keep]
-        final_has_deletion = (final_deletion > 0).astype(np.uint8)
+        sel = np.flatnonzero(keep)  # rows of the stacked alignment that survive; deletion values are read from the sources at these rows
 
         gap_idx = np.where((final_sequence == GAP_IDX).all(axis=1))[0]
-        final_sequence = np.delete(final_sequence, gap_idx, axis=0)
-        final_deletion = np.delete(final_deletion, gap_idx, axis=0)
-        final_has_deletion = np.delete(final_has_deletion, gap_idx, axis=0)
+        if gap_idx.size:  # np.delete copies the whole array even when nothing is deleted (the all-gap rows were already dropped by ``skip``)
+            final_sequence = np.delete(final_sequence, gap_idx, axis=0)
+            sel = np.delete(sel, gap_idx)
         # Keep ``msa_indices`` ROW-ALIGNED with ``sequence``: apply the same
         # ``[:max_msa_depth]`` slice the blocks used, the same ``keep`` filter, then the
         # same ``gap_idx`` deletion (whose indices are relative to the kept rows).
@@ -567,7 +603,7 @@ class ComplexMSA:
         # enough) pointed one or more rows too far, and per-chain subsampling either
         # read the wrong homolog or ran off the end (IndexError on an 8679-row stack).
         final_msa_indices = {
-            key: np.delete(indices[:max_msa_depth][keep], gap_idx, axis=0)
+            key: (np.delete(indices[:max_msa_depth][keep], gap_idx, axis=0) if gap_idx.size else indices[:max_msa_depth][keep])
             for key, indices in final_msa_indices.items()
         }
 
@@ -581,8 +617,12 @@ class ComplexMSA:
         self.msa_indices = final_msa_indices
 
         self.sequence = final_sequence
-        self.has_deletion = final_has_deletion
-        self.deletion_value = 2 * np.arctan(final_deletion / 3) / np.pi
+        # the (N x L) deletion count, has_deletion and arctan value matrices are NOT built for the whole alignment (up to 16384 x L):
+        # ``_deletion_rows`` reads the counts of the rows that are drawn from the per-chain sources, and has_deletion / deletion_value
+        # are elementwise functions of them (``deletion_value`` and ``has_deletion`` still give the full matrices on request)
+        self._del_src = [(m, s[sel], None if mk is None else mk[sel]) for m, s, mk in del_src]
+        self._dv_full = None
+        self._hd_full = None
         self.profile = profile
         self.deletion_mean = deletion_mean
 
@@ -590,10 +630,50 @@ class ComplexMSA:
         self.num_of_unpaired = self.sequence.shape[0] - filtered_paired_num_of_seqs
         self.total_depth = self.num_of_paired + self.num_of_unpaired
 
+    def _deletion_rows(self, rows, lo=None, hi=None):
+        """``final_deletion[rows, lo:hi]`` (uint8): the deletion counts of the given rows (column span lo:hi, default all)."""
+        rows = np.atleast_1d(np.asarray(rows))
+        total = self.sequence.shape[1]
+        lo = 0 if lo is None else lo
+        hi = total if hi is None else hi
+        dt = np.result_type(*[(m._deletions if m._deletions is not None else m._del_parent).dtype for m, _, _ in self._del_src])  # as np.concatenate promoted before
+        out = np.zeros((rows.shape[0], hi - lo), dtype=dt)
+        for (msa, safe, missing), (clo, chi) in zip(self._del_src, self.chain_col_spans.values(), strict=True):
+            a, b = max(lo, clo), min(hi, chi)
+            if a >= b:
+                continue
+            blk = msa.deletion_rows(safe[rows], a - clo, b - clo)
+            if missing is not None:
+                blk = blk.copy() if not blk.flags.writeable else blk
+                blk[missing[rows]] = 0
+            out[:, a - lo : b - lo] = blk
+        return out
+
+    def _has_deletion_rows(self, rows, lo=None, hi=None):
+        return (self._deletion_rows(rows, lo, hi) > 0).astype(np.uint8)
+
+    @property
+    def has_deletion(self):
+        if self._hd_full is None:
+            self._hd_full = self._has_deletion_rows(np.arange(self.sequence.shape[0]))
+        return self._hd_full
+
+    @staticmethod
+    def _dv_of(deletion):
+        return 2 * np.arctan(deletion / 3) / np.pi
+
+    @property
+    def deletion_value(self):
+        """Deletion value of every row (computed on first use; the drawn rows are transformed directly by ``_dv_of``)."""
+        if self._dv_full is None:
+            self._dv_full = self._dv_of(self._deletion_rows(np.arange(self.sequence.shape[0])))
+        return self._dv_full
+
     def _subsample_no_pairing(
         self,
         depth: int,
         rng: np.random.Generator,
+        compact: bool = False,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Pick each chain's homologs independently, then re-stack positionally.
 
@@ -625,12 +705,14 @@ class ComplexMSA:
             else np.full(length, GAP_IDX, dtype=self.sequence.dtype)
         )
         out_seq = np.repeat(fill[None], depth, axis=0)
-        out_hd = np.zeros((depth, length), dtype=self.has_deletion.dtype)
-        out_dv = np.zeros((depth, length), dtype=self.deletion_value.dtype)
+        # compact: int8 / float32 outputs (see sample_msa); the float32 rounding of the float64 value is the one the model applies itself
+        out_hd = np.zeros((depth, length), dtype=np.int8 if compact else np.uint8)
+        out_dv = np.zeros((depth, length), dtype=np.float32 if compact else np.float64)
         # Row 0 is the query and is never sampled over.
         out_seq[0] = self.sequence[0]
-        out_hd[0] = self.has_deletion[0]
-        out_dv[0] = self.deletion_value[0]
+        row0 = self._deletion_rows([0])[0]
+        out_hd[0] = (row0 > 0)
+        out_dv[0] = self._dv_of(row0)
 
         for key, (lo, hi) in self.chain_col_spans.items():
             rows = np.flatnonzero(np.asarray(self.msa_indices[key]) != -1)
@@ -642,8 +724,9 @@ class ComplexMSA:
             rows = np.sort(rows)  # keep better hits first, as the trunk saw
             dst = np.arange(1, 1 + rows.size)
             out_seq[dst, lo:hi] = self.sequence[rows, lo:hi]
-            out_hd[dst, lo:hi] = self.has_deletion[rows, lo:hi]
-            out_dv[dst, lo:hi] = self.deletion_value[rows, lo:hi]
+            del_rows = self._deletion_rows(rows, lo, hi)
+            out_hd[dst, lo:hi] = del_rows > 0
+            out_dv[dst, lo:hi] = self._dv_of(del_rows)
 
         return np.arange(depth, dtype=int), out_seq, out_hd, out_dv
 
@@ -653,6 +736,7 @@ class ComplexMSA:
         ratio: tuple[float, float] = (0.5, 0.5),
         rng: np.random.Generator | None = None,
         randomize: bool = False,
+        compact: bool = False,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Randomly sample sequences from the complex MSA.
 
@@ -675,13 +759,14 @@ class ComplexMSA:
             total = int(self.sequence.shape[0])
             n = min(max_msa_depth, total)
             if randomize and n > 1:
-                return self._subsample_no_pairing(n, rng)
+                return self._subsample_no_pairing(n, rng, compact)
             idx = np.arange(n, dtype=int)
+            del_rows = self._deletion_rows(idx)
             return (
                 idx,
                 self.sequence[idx],
-                self.has_deletion[idx],
-                self.deletion_value[idx],
+                (del_rows > 0).astype(np.uint8),
+                self._dv_of(del_rows),
             )
 
         max_msa_depth = min(max_msa_depth, self.total_depth)
@@ -731,8 +816,9 @@ class ComplexMSA:
         sampled_indices = np.sort(sampled_indices)
 
         sampled_sequence = self.sequence[sampled_indices]
-        sampled_has_deletion = self.has_deletion[sampled_indices]
-        sampled_deletion_value = self.deletion_value[sampled_indices]
+        del_rows = self._deletion_rows(sampled_indices)
+        sampled_has_deletion = (del_rows > 0).astype(np.uint8)
+        sampled_deletion_value = self._dv_of(del_rows)
 
         return (
             sampled_indices,
@@ -747,6 +833,7 @@ def sample_msa(
     max_msa_depth: int,
     rng: np.random.Generator | None = None,
     sample_depth: Literal["uniform", "fixed", "random", "af3"] = "uniform",
+    compact: bool = False,
 ) -> MSAFeatures:
     """Sample and process MSA for model input.
 
@@ -790,14 +877,24 @@ def sample_msa(
         effective_depth,
         rng=rng,
         randomize=sample_depth in ("random", "af3"),
+        compact=compact,
     )
     n_seq, _ = aligned_sequences.shape
     mask = np.ones((n_seq), dtype=np.float32)
 
+    if compact:
+        # Host tensors at the width the values need (residue classes < 32, has_deletion 0/1, float32 deletion value). The model casts them
+        # itself before use (``.long()`` one-hot, concat with float features, ``.float()``), so what it computes from them is unchanged.
+        aligned_sequences = aligned_sequences.astype(np.int8, copy=False)
+        has_deletion_t = torch.from_numpy(has_deletion.astype(np.int8, copy=False))
+        deletion_value = deletion_value.astype(np.float32, copy=False)
+    else:
+        has_deletion_t = torch.from_numpy(has_deletion).int()
+
     return MSAFeatures.from_sample(
         aligned_sequences=torch.from_numpy(aligned_sequences),
         mask=torch.from_numpy(mask),
-        has_deletion=torch.from_numpy(has_deletion).int(),
+        has_deletion=has_deletion_t,
         deletion_value=torch.from_numpy(deletion_value),
         profile=torch.from_numpy(profile),
         deletion_mean=torch.from_numpy(deletion_mean),

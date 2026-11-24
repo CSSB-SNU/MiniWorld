@@ -37,7 +37,7 @@ from miniworld.data.io import extract_lmdb_keys
 from miniworld.data.io.load import load_antibody_seq_ids
 from miniworld.data.pipeline import Tokenizer
 
-from .collate import bucketed_collate
+from .collate import PackedBatch, bucketed_collate, bucketed_collate_packed
 from .loading import FragmentedCCDMolCache
 from .preprocess import Preprocessor, WrongCroppingError
 from .sampler import EpochChainSampler, WeightedSampler
@@ -386,7 +386,7 @@ def _log_slow_sample(record, wall: float, cpu: float, n_try: int, rng: np.random
     wall >> cpu means the worker waited (file system); wall ~ cpu means it computed (or was starved of a CPU).
     """
     d = os.environ.get("MW_SAMPLE_TIMING_DIR")
-    if not d or (wall < 2.0 and rng.random() > 0.02):
+    if not d or (wall < 2.0 and rng.random() > float(os.environ.get("MW_SAMPLE_TIMING_FRAC", "0.02"))):
         return
     try:
         with open(os.path.join(d, f"samples-{os.getpid()}.tsv"), "a") as f:  # noqa: PTH123
@@ -411,6 +411,10 @@ class BioMolData(torch.utils.data.Dataset):
         template_config: TemplateConfig = TemplateConfig()
         # False: skip the template LMDB read (a model with model.trunk.use_template=false never reads the template group)
         load_templates: bool = True
+        # True: MSA host tensors as int8 / float32 (the model casts them itself; see sample_msa)
+        compact_msa: bool = False
+        # True: skip building token_contacts / bond_atom_pairs (phase-1 graph never reads them)
+        skip_unread_structure: bool = False
         DB_config: BioMolDBV2Config
         tokenizer_config: TokenizerConfig = TokenizerConfig()
         sampler_config: SamplerConfig = SamplerConfig()
@@ -475,6 +479,8 @@ class BioMolData(torch.utils.data.Dataset):
                 config.DB_config.antibody_seq_id_path
             ),
             load_templates=config.load_templates,
+            compact_msa=config.compact_msa,
+            skip_unread_structure=config.skip_unread_structure,
         )
 
     def set_epoch(self, epoch: int) -> None:
@@ -837,6 +843,8 @@ class BioMolData(torch.utils.data.Dataset):
         bucket_atom_multiple: int | None = None,
         bucket_template_multiple: int | None = None,
         chain_epochs: bool = False,
+        pack: bool = False,
+        unpadded_msa: bool = False,
         **kwargs: object,
     ) -> DataLoader:
         """Create a distributed DataLoader with WeightedSampler.
@@ -878,6 +886,13 @@ class BioMolData(torch.utils.data.Dataset):
             # an H100 node, 1 rank: 32 workers 16.6 -> 25.8 samples/s with one thread each). A value the caller set stays.
             for var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
                 os.environ.setdefault(var, "1")
+        collate_kwargs = {
+            "bucket_msa_multiple": None if unpadded_msa else bucket_msa_multiple,
+            "bucket_token_multiple": bucket_token_multiple,
+            "bucket_atom_multiple": bucket_atom_multiple,
+            "bucket_template_multiple": bucket_template_multiple,
+            "compact_msa": self.config.compact_msa,
+        }
         params = {
             "shuffle": False,
             "drop_last": False,
@@ -886,13 +901,38 @@ class BioMolData(torch.utils.data.Dataset):
             "generator": worker_seed_rng,
             "worker_init_fn": (widen_worker_affinity if num_workers > 0 else None),
             "multiprocessing_context": ("spawn" if num_workers > 0 else None),
-            "collate_fn": functools.partial(
-                bucketed_collate,
-                bucket_msa_multiple=bucket_msa_multiple,
-                bucket_token_multiple=bucket_token_multiple,
-                bucket_atom_multiple=bucket_atom_multiple,
-                bucket_template_multiple=bucket_template_multiple,
-            ),
+            "collate_fn": functools.partial(bucketed_collate_packed if pack else bucketed_collate, **collate_kwargs),
         }
         params.update(kwargs)
-        return DataLoader(self, **params)
+        loader = DataLoader(self, **params)
+        return UnpackingLoader(loader) if pack else loader
+
+
+class UnpackingLoader:
+    """A DataLoader whose collate_fn returns PackedBatch: iterating gives the unpacked Batch (zero-copy views of the pinned buffer)."""
+
+    def __init__(self, loader: DataLoader) -> None:
+        self.loader = loader
+        self.sampler = loader.sampler
+        self.dataset = loader.dataset
+
+    def __len__(self) -> int:
+        return len(self.loader)
+
+    def __iter__(self):
+        return _UnpackingIter(iter(self.loader))
+
+
+class _UnpackingIter:
+    def __init__(self, it) -> None:
+        self._it = it
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        item = next(self._it)
+        return item.unpack() if isinstance(item, PackedBatch) else item
+
+    def _shutdown_workers(self) -> None:
+        self._it._shutdown_workers()

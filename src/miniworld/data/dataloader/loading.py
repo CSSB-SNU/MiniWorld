@@ -11,6 +11,7 @@ from biomol.core.types import BioMolDict
 from biomol.core.utils import load_bytes
 
 from miniworld.data.io import load_raw_data
+from miniworld.data.io.load import load_bytes_entry
 from miniworld.data.io.load import get_query_sequence
 from miniworld.data.mols import CCDMol, CIFMolAttached, FragmentedCCDMol, TemplateMol
 from miniworld.data.pipeline import (
@@ -79,7 +80,9 @@ def _load_a3m_from_paths(key: str, env_paths: Sequence[Path]) -> MSA | None:
     raw = _first_raw_data(key, env_paths)
     if raw is None:
         return None
-    msa_dict = load_bytes(bytes(raw))["msa_dict"]
+    msa_dict = load_bytes_entry(bytes(raw), "msa_dict", views=True)
+    if msa_dict is None:
+        raise KeyError("msa_dict")
     return MSA(
         seq_id=key,
         sequences=msa_dict["sequences"],
@@ -112,6 +115,9 @@ def load_record_msa(
     the record's shard list. Otherwise falls back to ``record.msa_db_paths``.
     """
     msa_list: list[MSA] = []
+    # chains with the same seq_id (homo-oligomers: most PDB items) share one a3m entry: read and decode it once per item, crop it per
+    # chain (``MSA.cropped`` never modifies its parent)
+    parents: dict[str, MSA | None] = {}
     for chain_id, crop_indices in chain_id_to_crop_indices.items():
         if len(crop_indices) == 0:
             continue
@@ -121,7 +127,9 @@ def load_record_msa(
             if locator is not None
             else msa_paths(record, chain_id)
         )
-        msa = _load_a3m_from_paths(seq_id, paths)
+        if seq_id not in parents:
+            parents[seq_id] = _load_a3m_from_paths(seq_id, paths)
+        msa = parents[seq_id]
         if msa is None:
             query_seq = get_query_sequence(cifmol, chain_id)
             msa = MSA.from_query(query_sequence=query_seq, seq_id=seq_id)
