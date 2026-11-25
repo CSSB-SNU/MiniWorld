@@ -31,7 +31,7 @@ for attempt in 1 2 3 4 5; do
     RESUME="--ckpt $RUN/checkpoints/last.pt +train.resume_run_subdir=$RUN"
     echo "resuming $RUN"
   fi
-  CONDA_OVERRIDE_CUDA=12.8 RESUME="$RESUME" ROOT=$ROOT CFG=$CFG PF=$PF WORKERS="${WORKERS:-16}" PREFETCH="${PREFETCH:-4}" MW_PACKED_LOADER="${MW_PACKED_LOADER-1}" MW_COMPACT_MSA="${MW_COMPACT_MSA-1}" MW_SKIP_UNREAD_STRUCTURE="${MW_SKIP_UNREAD_STRUCTURE-1}" MW_SKIP_SOURCES="${MW_SKIP_SOURCES-}" pixi run --frozen -e cu128 bash -c '
+  CONDA_OVERRIDE_CUDA=12.8 RESUME="$RESUME" ROOT=$ROOT CFG=$CFG PF=$PF WORKERS="${WORKERS:-16}" NGPU="${NGPU:-2}" PREFETCH="${PREFETCH:-4}" MW_PACKED_LOADER="${MW_PACKED_LOADER-1}" MW_COMPACT_MSA="${MW_COMPACT_MSA-1}" MW_SKIP_UNREAD_STRUCTURE="${MW_SKIP_UNREAD_STRUCTURE-1}" MW_SKIP_SOURCES="${MW_SKIP_SOURCES-}" pixi run --frozen -e cu128 bash -c '
     export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
     export NCCL_DEBUG=WARN TORCH_NCCL_ASYNC_ERROR_HANDLING=1 MW_COMPILE_TIMEOUT=1
     export PYTHONFAULTHANDLER=1
@@ -40,10 +40,10 @@ for attempt in 1 2 3 4 5; do
     export TRITON_CACHE_DIR="/tmp/triton_cache_${USER}_v240"; mkdir -p "$TRITON_CACHE_DIR"
     export PYTHONPATH=/home/psk6950/MiniWorld/scripts:${PYTHONPATH:-}
     if [ -n "$RESUME" ]; then export MW_WANDB_NEW_RUN=1; fi
-    torchrun --standalone --nproc_per_node=2 scripts/run_miniworld_distogram_train.py train \
+    torchrun --standalone --nproc_per_node=${NGPU:-2} scripts/run_miniworld_distogram_train.py train \
       --config $CFG \
       --job-name v240-phase1a-medium-L384-nr-nt-pf${PF} $RESUME \
-      train.run_dir="$ROOT" train.use_wandb=true train.num_workers=${WORKERS:-16} train.prefetch_factor=${PREFETCH:-4}
+      train.run_dir="$ROOT" train.use_wandb=true train.num_workers=${WORKERS:-16} train.prefetch_factor=${PREFETCH:-4} train.grad_accum_steps=$((256 / ${NGPU:-2}))
   '
   rc=$?
   echo "==== attempt $attempt EXIT $rc ===="
